@@ -253,6 +253,63 @@ Repeat with `make benchmark`; update `--input-price` if the provider changes tar
   production build passed. Real Jev visitors were observed sitting, chatting, playing
   darts, drinking, and using the WC.
 
+### An evening at the inn
+
+- **Start / Restart.** The server opens a fresh evening paused at tick 0 with the
+  visitors just inside the front door; *Start the evening* unpauses it. *Restart*
+  sends `reset`, which now opens a new running evening from a new seed.
+- **Arrival.** The optional `arrival.needs` section of the map holds `[low, high]`
+  ranges per need; `create_world(map, seed)` draws each visitor's needs from them
+  (the demo leans towards thirst and fatigue: a seat and a beer first). Arriving
+  visitors glance around the hall: everything in line of sight is known, walls still
+  hide the WC.
+- **Seat appeal.** `window` and `fireplace` objects carry `appeal` (0–1) and `reach`
+  (cells). A comfort lends its whole appeal to every table within `reach` in a
+  straight line; a table's `appeal` is the capped sum, `comforts` lists the kinds
+  involved, and its chairs share both. The four identical 1×1 tables stand in a
+  tidy 2×2 grid clear of the walls: hearth 0.5 (fireplace in the east wall),
+  window 0.4 (two windows), garden 0.2 (one window), corner 0.0.
+- **Two-stage seating.** Without a seat of their own, visitors see one `seating`
+  candidate. Choosing it triggers a second evaluation (`evaluate_seats`, its own
+  rubric) over free table chairs. The chosen chair becomes `favorite_seat_id`; later
+  they return to it with `sit`. `seating` reappears only if it was taken, or to join
+  company seen at a table with a free chair. The decision keeps the second stage
+  under `decision.seat`.
+- **Grievances.** Sitting on someone else's own seat records a `seat_taken`
+  grievance for its owner. A conversation may turn into a `quarrel`: never for a
+  sober pair, more likely with each beer beyond the first and with impatience
+  (`quarrel_per_beer`, `quarrel_max` rules; seeded by evening and tick). Both get a
+  grievance and no social relief.
+- **Watching.** `watch` targets a window or the fireplace with an interaction spot;
+  after 8 seconds it eases boredom by 40, more gently than darts.
+- **Going home.** `leave` walks to the `door` and moves the visitor to
+  `world.departed` with `visit.left_at`; departed visitors stay inspectable.
+  `actor.visit` tracks `seconds`, `beers`, and `grievances`. The Jev prompt
+  describes good reasons to leave (content after a long, well-drunk evening; or an
+  empty tap, a taken seat, a quarrel) and reasons to stay. Because leaving is final,
+  it is only drawn when its score is at least 0.5.
+- **Believable choices.** Jev no longer receives raw maps: `briefing.brief` turns
+  the visitor's own view into a plain-language `situation` (time in the inn, seat,
+  mug, needs and temperament in words, grievances, who is in sight and what they are
+  doing, known places with walking distance and tap stock, tables with appeal and
+  company, recent memories) and one concrete sentence per option. The questions ask
+  how natural the option is for a real guest. `observe_people` adds everyone in
+  sight to decision input; `observe_actor` still lists only seated company. Only
+  options within 0.15 of the best score are drawn, so chance varies among good
+  choices instead of sending guests on random errands. A mug is carried to a seat
+  and drunk there unless no seat is to be had.
+- **Fixes found while playing whole evenings.** Two visitors meeting head-on no
+  longer sidestep in mirror image forever: the one whose ID sorts later waits up to
+  a second. A visitor refused at a known place learns its current state, so an empty
+  tap stops drawing them back; a place seen busy more than 10 seconds ago counts as
+  probably free again. Seated visitors are visible across the hall.
+- Validation: **316 pytest tests passed**, TypeScript check and production build
+  passed. Twelve offline evenings ended with every visitor leaving on their own
+  (about five chats and one quarrel per evening). In live Jev evenings at 4× the
+  guests fetched ale first, drank it seated, chatted in moderation, and left content
+  or aggrieved (a twice-taken seat, repeated quarrels). The briefing cut input to
+  about 5k tokens per request, from 12.6k; a 19-game-minute evening cost $0.05.
+
 From the repository root, install dependencies once and launch both services:
 
 ```sh

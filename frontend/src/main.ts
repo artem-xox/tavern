@@ -47,7 +47,8 @@ function applySnapshot(snapshot: Snapshot): void {
   world = snapshot.state;
   scene.setWorld(world);
   dashboard.apply(snapshot);
-  if (!selectedId || !world.actors.some((actor): boolean => actor.id === selectedId)) {
+  // Departed visitors stay selectable, so their evening can still be inspected.
+  if (!selectedId || ![...world.actors, ...world.departed].some((actor): boolean => actor.id === selectedId)) {
     selectedId = world.actors[0]?.id ?? null;
     scene.select(selectedId);
     dashboard.select(selectedId);

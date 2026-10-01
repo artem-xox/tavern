@@ -60,6 +60,7 @@ def _validate_actor_runtime(world: Mapping[str, Any]) -> None:
         _validate_known_objects(knowledge["objects"], world)
         _validate_progress(actor, world["map"])
         _validate_seat(actor, world)
+        _validate_visit(actor.get("visit"))
     for item in world["map"]["objects"]:
         if item.get("reserved_by") is not None and item["reserved_by"] not in actor_ids:
             raise ValueError("Saved reservation belongs to an unknown actor")
@@ -70,7 +71,7 @@ def _validate_known_objects(objects: Mapping[str, Any], world: Mapping[str, Any]
     for identifier, item in objects.items():
         if not isinstance(item, dict) or identifier not in object_ids or item.get("id") != identifier:
             raise ValueError("Invalid remembered object")
-        if item.get("kind") not in {"tap", "toilet", "chair", "table", "bar", "darts"}:
+        if item.get("kind") not in {"tap", "toilet", "chair", "table", "bar", "darts", "door", "window", "fireplace"}:
             raise ValueError("Invalid remembered object kind")
         seen = item.get("last_seen")
         if type(seen) not in (int, float) or not math.isfinite(seen) or not 0 <= seen <= world["time"]:
@@ -115,7 +116,36 @@ def _validate_geometry(world: Mapping[str, Any]) -> None:
         raise ValueError("Saved visitor occupies a blocked cell")
 
 
+def _validate_visit(visit: Any) -> None:
+    if not isinstance(visit, dict) or not isinstance(visit.get("grievances"), list):
+        raise ValueError("Invalid saved visit")
+    # left_at appears only once the visitor has gone home.
+    times = [visit.get("seconds"), visit.get("left_at", 0.0)]
+    if any(type(value) not in (int, float) or not math.isfinite(value) or value < 0 for value in times):
+        raise ValueError("Invalid saved visit time")
+    if type(visit.get("beers")) is not int or visit["beers"] < 0:
+        raise ValueError("Invalid saved beer count")
+    if any(not isinstance(item, str) for item in visit["grievances"]):
+        raise ValueError("Invalid saved grievance")
+
+
+def _validate_departed(world: Mapping[str, Any]) -> None:
+    departed = world.get("departed")
+    if not isinstance(departed, list) or any(not isinstance(item, dict) for item in departed):
+        raise ValueError("Invalid saved departures")
+    ids = [item.get("id") for item in [*world["actors"], *departed]]
+    if any(not isinstance(item, str) for item in ids) or len(set(ids)) != len(ids):
+        raise ValueError("Saved visitors need unique IDs")
+    for item in departed:
+        _validate_visit(item.get("visit"))
+        if "left_at" not in item["visit"]:
+            raise ValueError("Departed visitor has no departure time")
+
+
 def _validate_seat(actor: Mapping[str, Any], world: Mapping[str, Any]) -> None:
+    chairs = {item["id"] for item in world["map"]["objects"] if item["kind"] == "chair"}
+    if actor.get("favorite_seat_id") is not None and actor["favorite_seat_id"] not in chairs:
+        raise ValueError("Invalid saved own seat")
     seat_id = actor.get("seat_id")
     if seat_id is None:
         return
@@ -128,13 +158,14 @@ def _validate_seat(actor: Mapping[str, Any], world: Mapping[str, Any]) -> None:
 
 def _validate_rules(world: Mapping[str, Any]) -> None:
     rules = world["rules"]
-    values = [rules["move_seconds"], rules["blocked_timeout"],
+    values = [rules["move_seconds"], rules["blocked_timeout"], rules["quarrel_per_beer"], rules["quarrel_max"],
               *rules["durations"].values(), *rules["need_rates"].values()]
     if any(type(value) not in (int, float) or not math.isfinite(value) or value <= 0 for value in values):
         raise ValueError("Invalid saved simulation rates")
     if type(rules["vision_radius"]) is not int or not 0 <= rules["vision_radius"] <= 100:
         raise ValueError("Invalid saved vision radius")
-    if set(rules["durations"]) != {"take_beer", "drink", "rest", "sit", "talk", "play_darts", "use_toilet", "inspect", "wait"}:
+    if set(rules["durations"]) != {"take_beer", "drink", "rest", "sit", "talk", "play_darts", "use_toilet",
+                                   "inspect", "wait", "leave", "watch"}:
         raise ValueError("Invalid saved action definitions")
     if set(rules["need_rates"]) != {"thirst", "fatigue", "bladder", "social", "boredom"}:
         raise ValueError("Invalid saved needs")
@@ -159,6 +190,7 @@ def parse_world(encoded: str) -> dict[str, Any]:
         _validate_geometry(world)
         _validate_rules(world)
         _validate_actor_runtime(world)
+        _validate_departed(world)
         if not isinstance(world.get("events"), list):
             raise ValueError("Invalid saved event log")
         return world

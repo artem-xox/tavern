@@ -15,7 +15,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from tavern.agents import choose_action
 from tavern.database import initialize_database, load_database_world, save_database_world
 from tavern.persistence import load_world, save_world
-from tavern.world import create_world, object_cells, observe_actor, start_action, step_world
+from tavern.world import create_world, object_cells, observe_actor, observe_people, start_action, step_world
 
 
 def _number(value: Any, minimum: float, maximum: float) -> float:
@@ -74,6 +74,8 @@ class TavernRuntime:
         try:
             decision = task.result()
             actor["decision"] = {key: decision[key] for key in ("source", "scores", "error")}
+            if "seat" in decision:
+                actor["decision"]["seat"] = decision["seat"]
             result = start_action(self.world, actor["id"], decision["action"])
             if not result["accepted"]:
                 self._event(f"{actor['name']}: {result['reason']}")
@@ -83,11 +85,17 @@ class TavernRuntime:
         self.next_decision[actor["id"]] = self.world["time"] + 1.0
 
     def _collect_decisions(self) -> None:
-        for actor in self.world["actors"]:
-            pending = self.pending.get(actor["id"])
-            if pending is not None and pending[0].done():
-                del self.pending[actor["id"]]
+        for actor_id, pending in list(self.pending.items()):
+            if not pending[0].done():
+                continue
+            del self.pending[actor_id]
+            actor = next((item for item in self.world["actors"] if item["id"] == actor_id), None)
+            if actor is not None:
                 self._apply_decision(actor, *pending)
+            else:
+                # The visitor has gone home; their late thought has nobody to act on it.
+                with suppress(asyncio.CancelledError, Exception):
+                    pending[0].result()
 
     def _request_decisions(self) -> None:
         for actor in self.world["actors"]:
@@ -96,7 +104,8 @@ class TavernRuntime:
                 continue
             if self.world["time"] < self.next_decision.get(actor_id, 0):
                 continue
-            observation = observe_actor(self.world, actor_id)
+            # Decisions also see who else is about and what they are visibly doing.
+            observation = {**observe_actor(self.world, actor_id), "people": observe_people(self.world, actor_id)}
             task = asyncio.create_task(choose_action(observation, self.ai_config, self.rng))
             self.pending[actor_id] = (task, self.revisions.get(actor_id, 0))
 
@@ -190,7 +199,8 @@ class TavernRuntime:
         self.world = restored
 
     def _reset(self, command: Mapping[str, Any]) -> None:
-        restored = create_world(self.map_data)
+        # Restart opens a new, running evening: new arrival needs, visitors back at the door.
+        restored = create_world(self.map_data, self.rng.randrange(1 << 30))
         self._invalidate_requests()
         self.world = restored
 
@@ -253,7 +263,7 @@ async def _serve_socket(socket: WebSocket, runtime: TavernRuntime) -> None:
 
 
 def create_app(map_path: Path, save_path: Path, ai_config: Mapping[str, Any],
-               run_loop: bool = True, database_url: str | None = None) -> FastAPI:
+               run_loop: bool = True, database_url: str | None = None, seed: int = 0) -> FastAPI:
     """Construct the local server with explicit paths and AI configuration.
 
     Args:
@@ -262,18 +272,21 @@ def create_app(map_path: Path, save_path: Path, ai_config: Mapping[str, Any],
         ai_config: Evaluator settings, including an optional server-only key.
         run_loop: Whether to start automatic ticking; false for focused API tests.
         database_url: Optional PostgreSQL URL for persistent world snapshots.
+        seed: Seed of the first evening's arrivals and of the decision policy.
     Returns:
-        Application serving JSON state and a bidirectional WebSocket.
+        Application serving JSON state and a bidirectional WebSocket. A new evening
+        starts paused, with its visitors at the door, until someone presses Start.
     """
     map_data = json.loads(map_path.read_text())
+    restored = None
     if database_url:
         initialize_database(database_url)
         restored = load_database_world(database_url)
-        runtime = TavernRuntime(map_data, save_path, ai_config, database_url=database_url)
-        if restored is not None:
-            runtime.world = restored
+    runtime = TavernRuntime(map_data, save_path, ai_config, seed, database_url)
+    if restored is not None:
+        runtime.world = restored
     else:
-        runtime = TavernRuntime(map_data, save_path, ai_config)
+        runtime.world["paused"] = True
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         ticker = asyncio.create_task(_run_world(runtime, 0.1)) if run_loop else None
@@ -317,4 +330,4 @@ def create_default_app() -> FastAPI:
     database_url = (os.environ.get("DATABASE_URL")
                      if os.environ.get("TAVERN_DATABASE_ENABLED") == "true" else None)
     return create_app(root / "data" / "tavern.json", root / "saves" / "demo.json", config,
-                      database_url=database_url)
+                      database_url=database_url, seed=Random().randrange(1 << 30))
