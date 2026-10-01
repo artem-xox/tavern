@@ -1,11 +1,12 @@
 """Personal-observation candidates and explicitly labeled local/Jev decisions."""
 
 import math
-from collections.abc import Mapping, Sequence
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 from random import Random
 from typing import Any, TypedDict
 
-from tavern.jev import JevError, evaluate_actions
+from tavern.briefing import brief, in_use
+from tavern.jev import JevError, evaluate_actions, evaluate_seats
 
 
 class Action(TypedDict):
@@ -49,7 +50,24 @@ def _actor(observation: Mapping[str, Any]) -> Mapping[str, Any]:
         raise ValueError("Own beer inventory must be a nonnegative integer")
     for name in ("patience", "comfort", "curiosity"):
         _number(traits.get(name, 0.5), name, 1)
+    _validate_visit(actor)
     return actor
+
+
+def _validate_visit(actor: Mapping[str, Any]) -> None:
+    # Observations built outside the world may omit the visit; that reads as a fresh arrival.
+    visit = actor.get("visit", {})
+    if not isinstance(visit, Mapping):
+        raise ValueError("Visit must be a mapping")
+    _number(visit.get("seconds", 0), "Visit seconds", math.inf)
+    beers, grievances = visit.get("beers", 0), visit.get("grievances", [])
+    if isinstance(beers, bool) or not isinstance(beers, int) or beers < 0:
+        raise ValueError("Beers drunk must be a nonnegative integer")
+    if not isinstance(grievances, list) or any(not isinstance(item, str) for item in grievances):
+        raise ValueError("Grievances must be a list of strings")
+    own = actor.get("favorite_seat_id")
+    if own is not None and (not isinstance(own, str) or not own):
+        raise ValueError("Own seat must be a chair ID or null")
 
 
 def _known_objects(observation: Mapping[str, Any]) -> list[Mapping[str, Any]]:
@@ -60,8 +78,12 @@ def _known_objects(observation: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     for item in objects:
         if not isinstance(item, Mapping) or not isinstance(item.get("id"), str) or not item["id"]:
             raise ValueError("Observed objects must have nonempty string IDs")
-        if item.get("kind") not in ("tap", "chair", "toilet", "table", "bar", "darts"):
+        if item.get("kind") not in ("tap", "chair", "toilet", "table", "bar", "darts", "door", "window", "fireplace"):
             raise ValueError("Unknown observed object kind")
+        if "appeal" in item:
+            _number(item["appeal"], "Seat appeal", 1)
+        if not isinstance(item.get("interaction_spots", []), list):
+            raise ValueError("Observed interaction spots must be a list")
         if item["id"] in known and known[item["id"]] != item:
             raise ValueError("Conflicting observations of the same object")
         reservation = item.get("reserved_by")
@@ -87,25 +109,78 @@ def build_candidates(observation: Mapping[str, Any]) -> list[dict[str, Any]]:
 
     Returns:
         Stable, unique action dictionaries. Inspection and waiting are always offered.
+        Table chairs appear as one `seating` wish until the visitor owns a seat; their
+        own free seat appears as `sit`, with `seating` again only while company they could
+        join is in sight. Leaving needs a known, free door.
 
     Raises:
         ValueError: Observation, needs, inventory or object records are malformed.
     """
     actor, objects = _actor(observation), _known_objects(observation)
-    actions = [_action("drink")] if actor["inventory"]["beer"] else []
-    verbs = {"tap": "take_beer", "chair": "rest", "toilet": "use_toilet", "darts": "play_darts"}
+    talks = _social_candidates(observation, actor, objects)  # also validates the visible visitors
+    # A mug is carried to a seat and drunk there, unless there is no seat to be had.
+    seatless = not actor.get("seat_id") and not _free_seats(observation, objects)
+    actions = [_action("drink")] if actor["inventory"]["beer"] and (actor.get("seat_id") or seatless) else []
+    verbs = {"tap": "take_beer", "chair": "rest", "toilet": "use_toilet", "darts": "play_darts", "door": "leave"}
     for item in sorted(objects, key=lambda item: item["id"]):
-        if item["kind"] not in verbs:
+        if item["kind"] not in verbs or item.get("table_id"):
             continue
-        if item.get("reserved_by") not in (None, actor["id"]):
+        if in_use(observation, item):
             continue
         if item["kind"] == "tap" and (not item.get("stock") or actor["inventory"]["beer"]):
             continue
         if item["kind"] == "tap" and "social" in actor["needs"] and actor["needs"]["thirst"] < 35:
             continue
-        verb = "sit" if item["kind"] == "chair" and item.get("table_id") else verbs[item["kind"]]
-        actions.append(_action(verb, item["id"]))
-    return [*actions, *_social_candidates(observation, actor, objects), _action("inspect"), _action("wait")]
+        actions.append(_action(verbs[item["kind"]], item["id"]))
+    return [*actions, *_seat_wish(observation, objects), *_views(observation, objects),
+            *talks, _action("inspect"), _action("wait")]
+
+
+def _views(observation: Mapping[str, Any], objects: Sequence[Mapping[str, Any]]) -> list[Action]:
+    # Any window shows the same road, so only the nearest free one is offered beside the fireplace;
+    # a view needs somewhere to stand.
+    actor = observation["actor"]
+    free = [item for item in sorted(objects, key=lambda item: item["id"])
+            if item["kind"] in ("window", "fireplace") and item.get("interaction_spots")
+            and not in_use(observation, item)]
+    nearest = min((item for item in free if item["kind"] == "window"), default=None,
+                  key=lambda item: abs(item["x"] - actor["x"]) + abs(item["y"] - actor["y"]))
+    return [_action("watch", item["id"]) for item in free if item["kind"] == "fireplace" or item is nearest]
+
+
+def _free_seats(observation: Mapping[str, Any], objects: Sequence[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
+    return [item for item in sorted(objects, key=lambda item: item["id"])
+            if item["kind"] == "chair" and item.get("table_id") and not in_use(observation, item)]
+
+
+def _seat_wish(observation: Mapping[str, Any], objects: Sequence[Mapping[str, Any]]) -> list[Action]:
+    # Choosing a table seat takes two decisions: first whether to sit, then which chair.
+    # Once seated, that chair is the visitor's own and they return to it; they choose again
+    # only if it was taken, or to join company seen at a table with a free chair.
+    actor, visitors = observation["actor"], observation.get("visitors", [])
+    free = _free_seats(observation, objects)
+    own = next((item for item in free if item["id"] == actor.get("favorite_seat_id")), None)
+    if own is None:
+        return [_action("seating")] if free else []
+    company = {item.get("table_id") for item in visitors if item.get("seat_id")} - {own["table_id"]}
+    joinable = any(item["table_id"] in company for item in free)
+    return [_action("sit", own["id"]), *([_action("seating")] if joinable else [])]
+
+
+def build_seat_candidates(observation: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """List the chairs a visitor who decided to sit down can choose between.
+
+    Args:
+        observation: Own actor state and known/visible object records.
+
+    Returns:
+        A `sit` action for every known table chair nobody else holds, in stable ID order.
+
+    Raises:
+        ValueError: Observation, visit or object records are malformed.
+    """
+    _actor(observation)
+    return [_action("sit", item["id"]) for item in _free_seats(observation, _known_objects(observation))]
 
 
 def _social_candidates(observation: Mapping[str, Any], actor: Mapping[str, Any],
@@ -130,19 +205,52 @@ def _local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[s
     traits, verbs = actor.get("traits", {}), {action["verb"] for action in candidates}
     # Inspection gains priority when the agent lacks a known way to relieve a need.
     missing_relief = max(thirst if not {"drink", "take_beer"} & verbs else 0,
-                         fatigue if not {"rest", "sit"} & verbs else 0, bladder if "use_toilet" not in verbs else 0)
+                         fatigue if not {"rest", "sit", "seating"} & verbs else 0,
+                         bladder if "use_toilet" not in verbs else 0)
+    seated_rest = 0.42 + 0.4 * fatigue + (0.15 if actor["inventory"]["beer"] else 0)
+    # With their own seat free, choosing a seat again means moving to join company.
+    moving = any(action["verb"] == "sit" for action in candidates)
     utility = {
         "drink": 0.9 * thirst + 0.1,
         "take_beer": max(0.0, 0.8 * thirst - 0.3 * bladder),
         "rest": fatigue * (0.85 + 0.15 * traits.get("comfort", 0.5)),
-        "sit": 0.42 + 0.4 * fatigue + (0.15 if actor["inventory"]["beer"] else 0),
+        "sit": seated_rest,
+        "seating": 0.15 + 0.6 * actor["needs"].get("social", 0) / 100 if moving else seated_rest,
         "talk": 0.4 + 0.6 * actor["needs"].get("social", 0) / 100,
         "play_darts": 0.15 + 0.65 * actor["needs"].get("boredom", 0) / 100,
+        # A gentler pastime than darts that comfort-loving visitors favour, once nothing presses.
+        "watch": ((0.05 + 0.45 * actor["needs"].get("boredom", 0) / 100 + 0.3 * traits.get("comfort", 0.5))
+                  * (1 - max(thirst, fatigue, bladder))),
         "use_toilet": bladder,
         "inspect": 0.08 + 0.12 * traits.get("curiosity", 0.5) + 0.4 * missing_relief,
         "wait": max(0.0, 0.08 + 0.12 * traits.get("patience", 0.5) - 0.08 * max(thirst, fatigue, bladder)),
+        "leave": _leave_utility(observation),
     }
     scores = {action["id"]: utility[action["verb"]] for action in candidates}
+    _score_seats(observation, candidates, scores)
+    return scores
+
+
+def _leave_utility(observation: Mapping[str, Any]) -> float:
+    # Visitors go home content after a long evening with a few beers, or early when it goes wrong.
+    actor = observation["actor"]
+    needs, visit = actor["needs"], actor.get("visit", {})
+    seconds, patience = visit.get("seconds", 0), actor.get("traits", {}).get("patience", 0.5)
+    calm = 1 - sum(needs.get(name, 0) for name in ("thirst", "fatigue", "bladder", "social", "boredom")) / 500
+    content = min(1.0, seconds / 240) * min(1.0, visit.get("beers", 0) / 3) * calm
+    taps = [item for item in observation["objects"] if item["kind"] == "tap"]
+    run_dry = bool(taps) and not any(item.get("stock") for item in taps) and not actor["inventory"]["beer"]
+    upset = min(1.0, 0.35 * len(visit.get("grievances", [])) * (1.5 - patience)
+                + (needs["thirst"] / 100 if run_dry else 0.0))
+    return 0.05 + 0.75 * max(content, upset * min(1.0, seconds / 60))
+
+
+def _local_seat_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]]) -> dict[str, float]:
+    # Comfort-loving visitors care most about a cosy spot; company and distance adjust as for any seat.
+    objects = {item["id"]: item for item in observation["objects"]}
+    comfort = observation["actor"].get("traits", {}).get("comfort", 0.5)
+    scores = {action["id"]: 0.3 + objects[action["target_id"]].get("appeal", 0.0) * (0.2 + 0.4 * comfort)
+              for action in candidates}
     _score_seats(observation, candidates, scores)
     return scores
 
@@ -190,19 +298,52 @@ async def choose_action(
 
     Returns:
         Action, normalized scores, actual decision source and visible fallback error.
-        A missing key selects intentional local mode with no error.
+        A missing key selects intentional local mode with no error. When the visitor
+        chooses `seating`, a second evaluation picks the chair: the action then sits
+        there and `seat` holds that stage's source, scores and error.
 
     Raises:
         ValueError: Observation or configuration is malformed.
     """
     candidates = build_candidates(observation)
     temperature = _temperature(config)
-    scores, source, error = _local_scores(observation, candidates), "local", None
+    decision = await _decide(observation, candidates, config, rng, temperature, _local_scores, evaluate_actions)
+    if decision["action"]["verb"] != "seating":
+        return decision
+    seat = await _decide(observation, build_seat_candidates(observation), config, rng, temperature,
+                         _local_seat_scores, evaluate_seats)
+    return {**decision, "action": seat["action"], "seat": {key: seat[key] for key in ("source", "scores", "error")}}
+
+
+def _evaluator_view(observation: Mapping[str, Any], candidates: Sequence[Action]) -> dict[str, Any]:
+    # The evaluator reads the situation in plain words plus the visitor's exact numbers;
+    # raw cell lists, maps and earlier scores are noise to it.
+    actor = observation["actor"]
+    keys = ("name", "needs", "traits", "inventory", "visit", "seat_id", "favorite_seat_id")
+    return {**brief(observation, candidates), "self": {key: actor.get(key) for key in keys}}
+
+
+async def _decide(
+    observation: Mapping[str, Any], candidates: Sequence[Action], config: Mapping[str, Any], rng: Random,
+    temperature: float, local: Callable[[Mapping[str, Any], Sequence[Action]], dict[str, float]],
+    remote: Callable[[Mapping[str, Any], Sequence[Action], Mapping[str, Any]], Awaitable[dict[str, float]]],
+) -> dict[str, Any]:
+    scores, source, error = local(observation, candidates), "local", None
     if config.get("typesafe_api_key"):
         try:
-            scores = await evaluate_actions(observation, candidates, config)
+            scores = await remote(_evaluator_view(observation, candidates), candidates, config)
             source = "jev"
         except JevError as failure:
             error = str(failure)
-    return {"action": _select(candidates, scores, temperature, rng),
+    return {"action": _select(_drawable(candidates, scores), scores, temperature, rng),
             "source": source, "scores": scores, "error": error}
+
+
+def _drawable(candidates: Sequence[Action], scores: Mapping[str, float]) -> list[Action]:
+    # Walking out is final, so chance alone must not decide it: it is drawn only when the
+    # evaluator finds leaving at least moderately worthwhile (level 2 of the 0–4 rubric).
+    eligible = [action for action in candidates if action["verb"] != "leave" or scores[action["id"]] >= 0.5]
+    # People weigh only the options nearly as good as their best; chance picks among those,
+    # never a clearly worse one (0.15 is just over half a rubric level).
+    best = max(scores[action["id"]] for action in eligible)
+    return [action for action in eligible if scores[action["id"]] >= best - 0.15]

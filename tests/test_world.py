@@ -293,3 +293,25 @@ def test_visitors_do_not_choose_the_same_inspection_destination() -> None:
     assert start_action(world, "ada", action("inspect"))["accepted"]
     assert start_action(world, "bea", action("inspect"))["accepted"]
     assert world["actors"][0]["_spot"] != world["actors"][1]["_spot"]
+
+
+def corridor(ada_y: int, bea_y: int) -> dict[str, Any]:
+    """Build an open room where Ada walks east to the darts while Bea walks west to the tap."""
+    return {"width": 10, "height": 5, "blocked": [], "objects": [
+        {"id": "tap", "kind": "tap", "x": 0, "y": 2, "interaction_spots": [[1, 2]], "stock": 3},
+        {"id": "darts", "kind": "darts", "x": 9, "y": 2, "interaction_spots": [[8, 2]]},
+    ], "actors": [{"id": "ada", "name": "Ada", "x": 2, "y": ada_y}, {"id": "bea", "name": "Bea", "x": 7, "y": bea_y}]}
+
+
+@pytest.mark.parametrize("ada_y, bea_y", [
+    pytest.param(2, 2, id="head-on-in-the-same-row"),
+    pytest.param(2, 1, id="offset-by-one-row"),
+    pytest.param(1, 3, id="parallel-rows"),
+])
+def test_visitors_walking_towards_each_other_get_past(ada_y: int, bea_y: int) -> None:
+    world = create_world(corridor(ada_y, bea_y))
+    assert start_action(world, "ada", action("play_darts", "darts"))["accepted"]
+    assert start_action(world, "bea", action("take_beer", "tap"))["accepted"]
+    advance(world, 20)
+    assert [(actor["x"], actor["y"], actor["action"]) for actor in world["actors"]] == [(8, 2, None), (1, 2, None)]
+    assert world["actors"][1]["inventory"]["beer"] == 1

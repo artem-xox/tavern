@@ -2,7 +2,8 @@
 
 from collections.abc import Mapping, Sequence
 from copy import deepcopy
-from math import isfinite
+from math import hypot, isfinite
+from random import Random
 from typing import Any
 
 from tavern.navigation import find_path, select_interaction_spot
@@ -43,7 +44,28 @@ def _create_map(data: Mapping[str, Any]) -> dict[str, Any]:
     if type(result["tile_size"]) is not int or result["tile_size"] <= 0:
         raise ValueError("Tile size must be a positive integer")
     _validate_objects(result)
+    _rate_tables(result)
     return result
+
+
+def _comfort(source: Mapping[str, Any], table: Mapping[str, Any]) -> float:
+    # A window or fireplace lends its whole appeal to tables within `reach` cells in a straight line.
+    distance = min(hypot(x - a, y - b) for x, y in object_cells(source) for a, b in object_cells(table))
+    return source["appeal"] if distance <= source["reach"] else 0.0
+
+
+def _rate_tables(world_map: dict[str, Any]) -> None:
+    sources = [item for item in world_map["objects"] if item["kind"] in ("window", "fireplace")]
+    ratings = {}
+    for table in (item for item in world_map["objects"] if item["kind"] == "table"):
+        shares = [(source["kind"], _comfort(source, table)) for source in sources]
+        ratings[table["id"]] = (min(1.0, sum(share for _, share in shares)),
+                                sorted({kind for kind, share in shares if share > 0}))
+    # Chairs share their table's rating: guests choose seats, but appeal comes from the spot.
+    for item in world_map["objects"]:
+        rating = ratings.get(item["id"] if item["kind"] == "table" else item.get("table_id"))
+        if rating:
+            item.update(appeal=rating[0], comforts=list(rating[1]))
 
 
 def _obstacles(world_map: Mapping[str, Any]) -> list[tuple[int, int]]:
@@ -86,8 +108,7 @@ def _validate_objects(world_map: dict[str, Any]) -> None:
         cells = set(object_cells(item))
         if cells & (occupied | set(map(tuple, world_map["blocked"]))):
             raise ValueError("Objects must occupy distinct unblocked cells")
-        if item.get("kind") not in ("tap", "chair", "toilet", "table", "bar", "darts"):
-            raise ValueError("Unknown object kind")
+        _validate_kind(item)
         occupied.update(cells)
         item.setdefault("interaction_spots", [])
         item.setdefault("name", item["id"])
@@ -97,13 +118,23 @@ def _validate_objects(world_map: dict[str, Any]) -> None:
     _validate_spots(world_map)
 
 
+def _validate_kind(item: Mapping[str, Any]) -> None:
+    kinds = ("tap", "chair", "toilet", "table", "bar", "darts", "door", "window", "fireplace")
+    if item.get("kind") not in kinds:
+        raise ValueError("Unknown object kind")
+    if item["kind"] in ("window", "fireplace"):
+        _number(item.get("appeal"), "Comfort appeal", 0, 1)
+        if type(item.get("reach")) is not int or item["reach"] <= 0:
+            raise ValueError("Comfort reach must be a positive integer")
+
+
 def _validate_spots(world_map: Mapping[str, Any]) -> None:
     obstacles = _obstacles(world_map)
     # find_path performs strict validation of every static obstacle coordinate.
     find_path((0, 0), (0, 0), world_map["width"], world_map["height"], obstacles)
     for item in world_map["objects"]:
         spots = item.get("interaction_spots", [])
-        if not spots and item["kind"] not in ("table", "bar"):
+        if not spots and item["kind"] not in ("table", "bar", "window", "fireplace"):
             raise ValueError("Every object needs an interaction spot")
         for spot in spots:
             if not find_path(spot, spot, world_map["width"], world_map["height"], obstacles):
@@ -126,33 +157,75 @@ def _create_actor(data: Mapping[str, Any], world_map: Mapping[str, Any]) -> dict
         raise ValueError("Inventory beer must be a nonnegative integer")
     return dict(id=data["id"], name=data.get("name", data["id"]), color=data.get("color", "#d8ad68"),
                 x=x, y=y, traits=traits, needs=needs, inventory={"beer": beer}, status="idle",
-                action=None, path=[], seat_id=None, knowledge={"objects": {}, "cells": []}, memory=[],
+                action=None, path=[], seat_id=None, favorite_seat_id=None,
+                visit={"seconds": 0.0, "beers": 0, "grievances": []},
+                knowledge={"objects": {}, "cells": []}, memory=[],
                 decision={"source": "local", "scores": {}, "error": None},
                 _move_elapsed=0.0, _remaining=0.0, _blocked_for=0.0, _spot=None)
+
+
+def _arrival_ranges(map_data: Mapping[str, Any]) -> dict[str, tuple[float, float]] | None:
+    if "arrival" not in map_data:
+        return None
+    arrival = map_data["arrival"]
+    if not isinstance(arrival, Mapping) or not isinstance(arrival.get("needs"), Mapping):
+        raise ValueError("Arrival must map needs to [low, high] ranges")
+    ranges = {}
+    for need, bounds in arrival["needs"].items():
+        if need not in ("thirst", "fatigue", "bladder", "social", "boredom"):
+            raise ValueError("Arrival ranges must name known needs")
+        if not isinstance(bounds, Sequence) or isinstance(bounds, str) or len(bounds) != 2:
+            raise ValueError("Arrival need range must be [low, high]")
+        low, high = (_number(value, need, 0, 100) for value in bounds)
+        if low > high:
+            raise ValueError("Arrival need range must not be reversed")
+        ranges[need] = (low, high)
+    return ranges
+
+
+def _arriving(actors: Sequence[Mapping[str, Any]], ranges: Mapping[str, tuple[float, float]],
+              seed: int) -> list[dict[str, Any]]:
+    # Each evening draws fresh needs from its own seed; unlisted needs keep the room's values.
+    rng = Random(seed)
+    return [{**item, "needs": {**item.get("needs", {}),
+                               **{need: rng.uniform(low, high) for need, (low, high) in ranges.items()}}}
+            for item in actors]
+
+
+def _look_around(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
+    # Stepping in through the door, a visitor takes in the whole hall; walls still hide what lies behind.
+    radius = world["map"]["width"] + world["map"]["height"]
+    _refresh_knowledge(world, actor, _visible_cells(world, actor, radius))
 
 
 def create_world(map_data: Mapping[str, Any], seed: int = 0) -> dict[str, Any]:
     """Create and validate an independently owned, serializable room snapshot.
 
     Args:
-        map_data: Flat room definition with geometry, objects, and initial actors.
-        seed: Saved deterministic decision-policy seed.
+        map_data: Flat room definition with geometry, objects, and initial actors. An optional
+            `arrival` section maps needs to [low, high] ranges: visitors then arrive with needs
+            drawn from them and look around the hall as they come in.
+        seed: Saved deterministic seed of the evening's arrivals and decision policy.
 
     Returns:
         New world state containing no references to the supplied room definition.
 
     Raises:
-        ValueError: Layout, IDs, resources, or actor values are invalid.
+        ValueError: Layout, IDs, resources, arrival ranges, or actor values are invalid.
     """
     world_map = _create_map(map_data)
     _unique(map_data.get("actors", []), "actor")
-    actors = [_create_actor(item, world_map) for item in map_data.get("actors", [])]
+    ranges, listed = _arrival_ranges(map_data), map_data.get("actors", [])
+    actors = [_create_actor(item, world_map)
+              for item in (listed if ranges is None else _arriving(listed, ranges, seed))]
     if len({(item["x"], item["y"]) for item in actors}) != len(actors):
         raise ValueError("Actors cannot overlap at startup")
     world = dict(schema_version=1, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
-                 map=world_map, actors=actors, events=[], rules=_rules())
+                 map=world_map, actors=actors, departed=[], events=[], rules=_rules())
     for actor in actors:
         observe_actor(world, actor["id"])
+        if ranges is not None:
+            _look_around(world, actor)
     return world
 
 
@@ -162,7 +235,10 @@ def _rules() -> dict[str, Any]:
                            "social": 0.18, "boredom": 0.25},
             "durations": {"take_beer": 0.8, "drink": 3.0, "rest": 3.0, "sit": 14.0,
                           "talk": 8.0, "play_darts": 10.0,
-                          "use_toilet": 2.0, "inspect": 0.8, "wait": 1.0}}
+                          "use_toilet": 2.0, "inspect": 0.8, "wait": 1.0, "leave": 1.0, "watch": 8.0},
+            # Each beer the pair has drunk beyond the first adds this much quarrel chance,
+            # scaled by impatience (2 − both patience traits), up to quarrel_max.
+            "quarrel_per_beer": 0.1, "quarrel_max": 0.5}
 
 
 def _actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any] | None:
@@ -191,7 +267,7 @@ def _action_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Ma
         return _talk_error(world, actor, action)
     if verb == "drink" and actor["inventory"]["beer"] <= 0:
         return "No beer in inventory"
-    if verb in ("take_beer", "rest", "sit", "use_toilet", "play_darts"):
+    if verb in ("take_beer", "rest", "sit", "use_toilet", "play_darts", "leave", "watch"):
         return _target_error(world, actor, action)
     if action.get("target_id") is not None:
         return "This action does not take a target"
@@ -202,9 +278,9 @@ def _target_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Ma
     target = _target(world, action)
     if target is None:
         return "Target no longer exists"
-    kind = {"take_beer": "tap", "rest": "chair", "sit": "chair",
-            "use_toilet": "toilet", "play_darts": "darts"}[action["verb"]]
-    if target["kind"] != kind:
+    kinds = {"take_beer": ("tap",), "rest": ("chair",), "sit": ("chair",), "use_toilet": ("toilet",),
+             "play_darts": ("darts",), "leave": ("door",), "watch": ("window", "fireplace")}[action["verb"]]
+    if target["kind"] not in kinds:
         return "Target does not support this action"
     if target["reserved_by"] not in (None, actor["id"]):
         return "Target is reserved by another visitor"
@@ -326,12 +402,21 @@ def start_action(world: dict[str, Any], actor_id: str, action: Mapping[str, Any]
         return {"accepted": False, "reason": "Unknown visitor"}
     reason = _action_error(world, actor, action)
     if reason:
+        _notice_target(world, actor, action)
         return _reject(world, actor, reason)
     plan = _plan(world, actor, action)
     if plan is None:
         return _reject(world, actor, "No reachable interaction spot")
     _activate(world, actor, action, plan)
     return {"accepted": True, "reason": None}
+
+
+def _notice_target(world: Mapping[str, Any], actor: dict[str, Any], action: Mapping[str, Any]) -> None:
+    # A visitor turned away from a known place learns why (it is busy or has run dry), so stale
+    # memories do not send them back again and again.
+    target = _target(world, action)
+    if target is not None and target["id"] in actor["knowledge"]["objects"]:
+        actor["knowledge"]["objects"][target["id"]] = {**deepcopy(target), "last_seen": world["time"]}
 
 
 def _activate(world: Mapping[str, Any], actor: dict[str, Any], action: Mapping[str, Any],
@@ -399,9 +484,20 @@ def _move(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float) -> No
         _begin_interaction(world, actor)
 
 
+def _gives_way(world: Mapping[str, Any], actor: Mapping[str, Any]) -> bool:
+    # Two walkers meeting head-on would sidestep in mirror image forever: the one whose ID sorts
+    # later holds still for up to a second while the other steps around it.
+    if not actor["path"] or actor["_blocked_for"] >= 1.0:
+        return False
+    occupant = next((item for item in world["actors"] if [item["x"], item["y"]] == list(actor["path"][0])), None)
+    return occupant is not None and occupant["status"] in ("walking", "waiting") and occupant["id"] < actor["id"]
+
+
 def _wait_for_route(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float) -> None:
     actor.update(status="waiting", _move_elapsed=0.0)
     actor["_blocked_for"] += elapsed
+    if _gives_way(world, actor):
+        return
     if _replan(world, actor):
         actor["status"] = "walking"
     elif actor["_blocked_for"] >= world["rules"]["blocked_timeout"]:
@@ -415,7 +511,22 @@ def _begin_interaction(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
     else:
         actor.update(status="interacting", _move_elapsed=0.0, _blocked_for=0.0)
         if actor["action"]["verb"] == "sit":
-            actor["seat_id"] = actor["action"]["target_id"]
+            _settle(world, actor, _target(world, actor["action"]))
+
+
+def _settle(world: Mapping[str, Any], actor: dict[str, Any], seat: Mapping[str, Any]) -> None:
+    # The chair a visitor sits down on becomes their own; taking someone else's own seat wrongs them.
+    if actor["seat_id"] != seat["id"]:
+        for owner in world["actors"]:
+            if owner["id"] != actor["id"] and owner["favorite_seat_id"] == seat["id"]:
+                _grieve(owner, f"{actor['name']} took my seat ({seat['name']})")
+                _record(world, owner, "seat_taken", f"{actor['name']} took {owner['name']}'s seat ({seat['name']})")
+    actor.update(seat_id=seat["id"], favorite_seat_id=seat["id"])
+
+
+def _grieve(actor: dict[str, Any], grievance: str) -> None:
+    actor["visit"]["grievances"].append(grievance)
+    del actor["visit"]["grievances"][:-5]
 
 
 def _interaction_error(world: Mapping[str, Any], actor: Mapping[str, Any]) -> str | None:
@@ -438,6 +549,7 @@ def _apply_effect(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
         actor["inventory"]["beer"] += 1
     elif verb == "drink":
         actor["inventory"]["beer"] -= 1
+        actor["visit"]["beers"] += 1
         actor["needs"]["thirst"] = max(0, actor["needs"]["thirst"] - 60)
         actor["needs"]["bladder"] = min(100, actor["needs"]["bladder"] + 25)
     elif verb in ("rest", "sit", "use_toilet"):
@@ -447,8 +559,14 @@ def _apply_effect(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
         actor["needs"][need] = max(0, actor["needs"][need] - 65)
     elif verb == "play_darts":
         actor["needs"]["boredom"] = max(0, actor["needs"]["boredom"] - 65)
+    elif verb == "watch":
+        # Gazing at the flames or the road outside is a gentler pastime than darts.
+        actor["needs"]["boredom"] = max(0, actor["needs"]["boredom"] - 40)
     elif verb == "talk":
         _complete_conversation(world, actor)
+    elif verb == "leave":
+        # step_world moves the visitor out once every actor has finished this tick.
+        actor["visit"]["left_at"] = world["time"]
 
 
 def _complete_conversation(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
@@ -456,11 +574,30 @@ def _complete_conversation(world: Mapping[str, Any], actor: dict[str, Any]) -> N
     topics = ("stories from the road", "the inn's beer", "their next journey", "a game of darts")
     count = sum(item["type"] == "conversation" for item in actor["memory"])
     topic = topics[count % len(topics)]
+    if _quarrels(world, actor, partner):
+        _quarrel(world, actor, partner, topic)
+        return
     _share_places(actor, partner)
     _share_places(partner, actor)
     for visitor in (actor, partner):
         visitor["needs"]["social"] = max(0, visitor["needs"]["social"] - 60)
         _record(world, visitor, "conversation", f"{actor['name']} and {partner['name']} chatted about {topic}")
+
+
+def _quarrels(world: Mapping[str, Any], left: Mapping[str, Any], right: Mapping[str, Any]) -> bool:
+    # Ale loosens tongues: a sober pair never quarrels, a tipsy impatient pair often does.
+    rules = world["rules"]
+    tipsy = max(0, left["visit"]["beers"] + right["visit"]["beers"] - 1)
+    temper = 2 - left["traits"].get("patience", 0.5) - right["traits"].get("patience", 0.5)
+    chance = min(rules["quarrel_max"], rules["quarrel_per_beer"] * tipsy * temper)
+    # Seeded by the evening and tick, so a replay or a reloaded save rolls the same dice.
+    return Random(f"{world['seed']}:{world['tick']}:{left['id']}:{right['id']}").random() < chance
+
+
+def _quarrel(world: Mapping[str, Any], actor: dict[str, Any], partner: dict[str, Any], topic: str) -> None:
+    for visitor, other in ((actor, partner), (partner, actor)):
+        _grieve(visitor, f"Quarreled with {other['name']} about {topic}")
+        _record(world, visitor, "quarrel", f"{actor['name']} and {partner['name']} quarreled about {topic}")
 
 
 def _share_places(speaker: Mapping[str, Any], listener: dict[str, Any]) -> None:
@@ -487,6 +624,7 @@ def _interact(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float) -
 def _step_actor(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float) -> None:
     for name, rate in world["rules"]["need_rates"].items():
         actor["needs"][name] = min(100, actor["needs"][name] + rate * elapsed)
+    actor["visit"]["seconds"] += elapsed
     if actor["action"]:
         if actor["status"] == "waiting":
             _wait_for_route(world, actor, elapsed)
@@ -518,6 +656,17 @@ def step_world(world: dict[str, Any], dt: float) -> None:
     world["tick"] += 1
     for actor in world["actors"]:
         _step_actor(world, actor, elapsed)
+    _see_off(world)
+
+
+def _see_off(world: dict[str, Any]) -> None:
+    # Visitors who stepped out keep their record, so the evening stays inspectable.
+    for actor in [item for item in world["actors"] if "left_at" in item["visit"]]:
+        world["actors"].remove(actor)
+        world["departed"].append(actor)
+        beers = actor["visit"]["beers"]
+        _record(world, actor, "departure",
+                f"{actor['name']} left the inn after {beers} {'beer' if beers == 1 else 'beers'}")
 
 
 def _line_visible(origin: tuple[int, int], target: tuple[int, int], blocked: set[tuple[int, int]]) -> bool:
@@ -540,8 +689,7 @@ def _line_visible(origin: tuple[int, int], target: tuple[int, int], blocked: set
     return True
 
 
-def _visible_cells(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[list[int]]:
-    radius = world["rules"]["vision_radius"]
+def _visible_cells(world: Mapping[str, Any], actor: Mapping[str, Any], radius: int) -> list[list[int]]:
     origin = actor["x"], actor["y"]
     # Low tables and chairs block feet, but do not hide seated company.
     blocked = set(map(tuple, world["map"]["blocked"]))
@@ -578,23 +726,53 @@ def observe_actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
     actor = _actor(world, actor_id)
     if actor is None:
         raise ValueError("Unknown visitor")
-    visible = _visible_cells(world, actor)
+    visible = _visible_cells(world, actor, world["rules"]["vision_radius"])
     _refresh_knowledge(world, actor, visible)
     return {"actor": deepcopy(actor), "objects": deepcopy(list(actor["knowledge"]["objects"].values())),
-            "visitors": _visible_visitors(world, actor, visible),
-            "memory": deepcopy(actor["memory"][-10:]), "visible_cells": visible,
+            "visitors": _visible_visitors(world, actor),
+            "memory": deepcopy(actor["memory"][-10:]), "visible_cells": visible, "time": world["time"],
             "map": {"width": world["map"]["width"], "height": world["map"]["height"]}}
 
 
-def _visible_visitors(world: Mapping[str, Any], actor: Mapping[str, Any], visible: list[list[int]]) -> list[dict[str, Any]]:
-    cells = set(map(tuple, visible))
-    visitors = []
+def _in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[dict[str, Any]]:
+    walls = set(map(tuple, world["map"]["blocked"]))
+    people = []
     for visitor in world["actors"]:
-        # Only observable seated company is actionable in this small social demo.
-        if visitor["id"] == actor["id"] or not visitor.get("seat_id") or (visitor["x"], visitor["y"]) not in cells:
+        # People in the hall are in plain sight from anywhere in it, so walls alone hide them.
+        # What someone is doing is public; their needs, purse and memories are not.
+        if visitor["id"] == actor["id"] or not _line_visible(
+                (actor["x"], actor["y"]), (visitor["x"], visitor["y"]), walls):
             continue
-        seat = _seat(world, visitor)
-        visitors.append({key: visitor[key] for key in ("id", "name", "x", "y", "seat_id")})
-        visitors[-1].update(table_id=seat.get("table_id") if seat else None,
-                            available=_conversation(world, visitor["id"]) is None)
-    return visitors
+        seat, action = _seat(world, visitor), visitor["action"] or {}
+        target = _target(world, action) or _actor(world, action.get("target_id"))
+        people.append({key: visitor[key] for key in ("id", "name", "x", "y", "seat_id")})
+        people[-1].update(table_id=seat.get("table_id") if seat else None,
+                          available=_conversation(world, visitor["id"]) is None,
+                          doing=action.get("verb"), target=target["name"] if target else None)
+    return people
+
+
+def _visible_visitors(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[dict[str, Any]]:
+    # Only seated company is actionable in this small social demo.
+    return [person for person in _in_sight(world, actor) if person["seat_id"]]
+
+
+def observe_people(world: Mapping[str, Any], actor_id: str) -> list[dict[str, Any]]:
+    """List everyone a visitor can see and what they are visibly doing.
+
+    Args:
+        world: Current world; it is not modified.
+        actor_id: Visitor doing the looking.
+
+    Returns:
+        Public facts about each visible person: ID, name, cell, seat and table, whether they
+        are free to talk, and their current action verb and target name. Needs, inventory,
+        traits and memories stay private.
+
+    Raises:
+        ValueError: Visitor ID does not exist.
+    """
+    actor = _actor(world, actor_id)
+    if actor is None:
+        raise ValueError("Unknown visitor")
+    return _in_sight(world, actor)

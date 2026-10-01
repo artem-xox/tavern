@@ -1,10 +1,10 @@
 export type Cell = [number, number];
-export type Verb = "take_beer" | "drink" | "rest" | "sit" | "talk" | "play_darts" | "use_toilet" | "inspect" | "wait";
+export type Verb = "take_beer" | "drink" | "rest" | "sit" | "talk" | "play_darts" | "watch" | "use_toilet" | "inspect" | "wait" | "leave";
 export type Mode = "local" | "jev";
 
 export interface WorldObject {
   id: string;
-  kind: "tap" | "toilet" | "chair" | "bar" | "table" | "darts";
+  kind: "tap" | "toilet" | "chair" | "bar" | "table" | "darts" | "door" | "window" | "fireplace";
   name: string;
   x: number;
   y: number;
@@ -16,6 +16,15 @@ export interface WorldObject {
   interaction_spots: Cell[];
   stock: number | null;
   reserved_by: string | null;
+  appeal?: number;
+  comforts?: string[];
+  reach?: number;
+}
+
+export interface DecisionStage {
+  source: Mode;
+  scores: unknown;
+  error: string | null;
 }
 
 export interface Action {
@@ -36,10 +45,12 @@ export interface Actor {
   status: "idle" | "walking" | "interacting" | "waiting";
   action: Action | null;
   seat_id: string | null;
+  favorite_seat_id: string | null;
+  visit: { seconds: number; beers: number; grievances: string[]; left_at?: number };
   path: Cell[];
   knowledge: { objects: Record<string, Record<string, unknown>> };
   memory: unknown[];
-  decision: { source: Mode; scores: unknown; error: string | null } | null;
+  decision: (DecisionStage & { seat?: DecisionStage }) | null;
 }
 
 export interface WorldEvent {
@@ -63,6 +74,7 @@ export interface World {
     objects: WorldObject[];
   };
   actors: Actor[];
+  departed: Actor[];
   events: WorldEvent[];
 }
 

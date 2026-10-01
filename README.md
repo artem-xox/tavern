@@ -1,8 +1,9 @@
 # The Last Inn
 
 A small sandbox game about running a border inn alongside autonomous AI characters.
-The browser demo puts three autonomous visitors in a tavern: they sit, chat,
-share known places, drink beer, use the toilet, and play darts. Persistent agreements follow.
+The browser demo puts three autonomous visitors in a tavern: they come in, pick
+seats by their appeal, chat or quarrel, share known places, drink beer, watch the fire,
+use the toilet, play darts, and go home when content or wronged. Persistent agreements follow.
 
 Run locally: `make install` once, then `make run`. Open http://127.0.0.1:5173.
 The backend reads an optional `.env` for Jev; Ctrl+C stops both services.
