@@ -1,0 +1,32 @@
+{
+  "group_id": "802a1eda-2bcb-483d-96b6-4b64966d1b12",
+  "states": [
+    {
+      "character": {
+        "id": "038be54f-6f1a-41f0-a6e9-b54e7f55f11c",
+        "name": "Idle",
+        "prompt": "adult female inn guest, sharp-eyed traveling mapmaker and courier, braided dark hair, hooded green cloak over a simple linen dress, rolled map case and small satchel, road dust on her hem, alert but approachable expression, muted forest green and ochre colors, medieval frontier inn setting",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 4,
+        "view": "low top-down",
+        "created_at": "2026-10-01T15:39:45.139726+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "west": "Idle/rotations/west.png",
+          "east": "Idle/rotations/east.png",
+          "north": "Idle/rotations/north.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-01T15:42:32.798761"
+}

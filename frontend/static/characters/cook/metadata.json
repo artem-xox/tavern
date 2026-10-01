@@ -1,0 +1,32 @@
+{
+  "group_id": "b9b94f69-871e-4126-9e3c-9e1e09bb3286",
+  "states": [
+    {
+      "character": {
+        "id": "ca3a47a1-2c17-459d-af10-9e9343b33804",
+        "name": "Idle",
+        "prompt": "medieval tavern cook, older woman with tied-back hair, worn apron over plain poor clothes",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 4,
+        "view": "low top-down",
+        "created_at": "2026-10-01T14:07:46.933497+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "west": "Idle/rotations/west.png",
+          "east": "Idle/rotations/east.png",
+          "north": "Idle/rotations/north.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-01T14:11:08.394313"
+}
