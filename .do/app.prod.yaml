@@ -35,7 +35,7 @@ ingress:
       name: backend
     match:
       path:
-        exact: /health
+        prefix: /health
   - component:
       name: frontend
     match:
