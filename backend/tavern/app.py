@@ -307,7 +307,9 @@ def create_default_app() -> FastAPI:
     Returns:
         Server initialized from the repository's map and environment variables.
     """
-    root = Path(__file__).resolve().parents[2]
+    working_root = Path.cwd()
+    root = (working_root if (working_root / "data" / "tavern.json").is_file()
+            else Path(__file__).resolve().parents[2])
     config = {"typesafe_api_key": os.environ.get("TYPESAFE_API_KEY"),
               "model": os.environ.get("TYPESAFE_MODEL", "jev-latest"),
               "timeout": float(os.environ.get("AI_TIMEOUT", "8")),
