@@ -1,0 +1,32 @@
+{
+  "group_id": "6002a580-f853-466f-bd88-7a05578d3511",
+  "states": [
+    {
+      "character": {
+        "id": "ae07cd2a-45be-4315-b244-eed68b3c8830",
+        "name": "Idle",
+        "prompt": "medieval border courier, young man in patched travel clothes with a small satchel",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 4,
+        "view": "low top-down",
+        "created_at": "2026-10-01T14:10:52.043553+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "west": "Idle/rotations/west.png",
+          "east": "Idle/rotations/east.png",
+          "north": "Idle/rotations/north.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-01T15:23:33.445439"
+}
