@@ -314,5 +314,7 @@ def create_default_app() -> FastAPI:
               "model": os.environ.get("TYPESAFE_MODEL", "jev-latest"),
               "timeout": float(os.environ.get("AI_TIMEOUT", "8")),
               "temperature": float(os.environ.get("AI_TEMPERATURE", "0.25"))}
+    database_url = (os.environ.get("DATABASE_URL")
+                     if os.environ.get("TAVERN_DATABASE_ENABLED") == "true" else None)
     return create_app(root / "data" / "tavern.json", root / "saves" / "demo.json", config,
-                      database_url=os.environ.get("DATABASE_URL"))
+                      database_url=database_url)

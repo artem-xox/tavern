@@ -45,6 +45,13 @@ def test_default_factory_resolves_repository_map() -> None:
     assert (app.state.runtime.world["map"]["width"], len(app.state.runtime.world["actors"])) == (20, 3)
 
 
+def test_default_factory_does_not_use_unenabled_database(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "postgresql://unreachable")
+    monkeypatch.delenv("TAVERN_DATABASE_ENABLED", raising=False)
+    app = create_default_app()
+    assert app.state.runtime.database_url is None
+
+
 @pytest.mark.parametrize("command,field,expected", [
     pytest.param({"type": "pause", "paused": True}, "paused", True, id="pause"),
     pytest.param({"type": "speed", "value": 2}, "speed", 2, id="speed"),
