@@ -3,6 +3,16 @@
 Build the smallest playable prototype that tests the central question in
 [DESIGN.md](DESIGN.md). Each stage has an observable completion criterion.
 
+## 0. Validate agents in a browser tavern
+
+Start with a Phaser/TypeScript frontend and Python/FastAPI backend before Godot.
+Three NPCs move, obtain and drink beer, rest, and use a toilet. Validate individual
+observations, real resource effects, and adaptation to unavailable objects before
+adding NPC conversations. See [Stage 0 tasks](stages/0_DEMO.md).
+
+**Done when:** three visitors act autonomously, interact at reachable locations,
+and respond to resource shortages or blocked routes with inspectable decisions.
+
 ## 1. Define the prototype rules
 
 Choose the engine and define the three NPCs, their overlapping goals, available
