@@ -61,9 +61,6 @@ services:
   - key: DATABASE_URL
     scope: RUN_TIME
     value: ${tavern-db.DATABASE_URL}
-  - key: TYPESAFE_API_KEY
-    scope: RUN_TIME
-    type: SECRET
   - key: TYPESAFE_MODEL
     scope: RUN_TIME
     value: jev-latest
