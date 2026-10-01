@@ -13,6 +13,7 @@ from typing import Any, AsyncIterator, Mapping
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 from tavern.agents import choose_action
+from tavern.database import initialize_database, load_database_world, save_database_world
 from tavern.persistence import load_world, save_world
 from tavern.world import create_world, object_cells, observe_actor, start_action, step_world
 
@@ -36,10 +37,12 @@ class TavernRuntime:
     """Own world state and one asynchronous decision request per visitor."""
 
     def __init__(self, map_data: Mapping[str, Any], save_path: Path,
-                 ai_config: Mapping[str, Any], seed: int = 0) -> None:
+                 ai_config: Mapping[str, Any], seed: int = 0,
+                 database_url: str | None = None) -> None:
         self.map_data = deepcopy(dict(map_data))
         self.world = create_world(self.map_data, seed)
         self.save_path = save_path
+        self.database_url = database_url
         self.ai_config = {"model": "jev-latest", "timeout": 8.0, "temperature": 0.25, **ai_config}
         self.rng = Random(seed)
         self.pending: dict[str, tuple[asyncio.Task[Any], int]] = {}
@@ -174,10 +177,15 @@ class TavernRuntime:
         self.next_decision.clear()
 
     def _save(self, command: Mapping[str, Any]) -> None:
-        save_world(self.world, self.save_path)
+        if self.database_url:
+            save_database_world(self.world, self.database_url)
+        else:
+            save_world(self.world, self.save_path)
 
     def _load(self, command: Mapping[str, Any]) -> None:
-        restored = load_world(self.save_path)
+        restored = load_database_world(self.database_url) if self.database_url else load_world(self.save_path)
+        if restored is None:
+            raise ValueError("No saved world exists")
         self._invalidate_requests()
         self.world = restored
 
@@ -245,7 +253,7 @@ async def _serve_socket(socket: WebSocket, runtime: TavernRuntime) -> None:
 
 
 def create_app(map_path: Path, save_path: Path, ai_config: Mapping[str, Any],
-               run_loop: bool = True) -> FastAPI:
+               run_loop: bool = True, database_url: str | None = None) -> FastAPI:
     """Construct the local server with explicit paths and AI configuration.
 
     Args:
@@ -253,10 +261,19 @@ def create_app(map_path: Path, save_path: Path, ai_config: Mapping[str, Any],
         save_path: Snapshot destination used by save/load controls.
         ai_config: Evaluator settings, including an optional server-only key.
         run_loop: Whether to start automatic ticking; false for focused API tests.
+        database_url: Optional PostgreSQL URL for persistent world snapshots.
     Returns:
         Application serving JSON state and a bidirectional WebSocket.
     """
-    runtime = TavernRuntime(json.loads(map_path.read_text()), save_path, ai_config)
+    map_data = json.loads(map_path.read_text())
+    if database_url:
+        initialize_database(database_url)
+        restored = load_database_world(database_url)
+        runtime = TavernRuntime(map_data, save_path, ai_config, database_url=database_url)
+        if restored is not None:
+            runtime.world = restored
+    else:
+        runtime = TavernRuntime(map_data, save_path, ai_config)
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         ticker = asyncio.create_task(_run_world(runtime, 0.1)) if run_loop else None
@@ -295,4 +312,5 @@ def create_default_app() -> FastAPI:
               "model": os.environ.get("TYPESAFE_MODEL", "jev-latest"),
               "timeout": float(os.environ.get("AI_TIMEOUT", "8")),
               "temperature": float(os.environ.get("AI_TEMPERATURE", "0.25"))}
-    return create_app(root / "data" / "tavern.json", root / "saves" / "demo.json", config)
+    return create_app(root / "data" / "tavern.json", root / "saves" / "demo.json", config,
+                      database_url=os.environ.get("DATABASE_URL"))

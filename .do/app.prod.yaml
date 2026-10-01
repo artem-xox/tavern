@@ -1,0 +1,87 @@
+alerts:
+- rule: DEPLOYMENT_FAILED
+- rule: DOMAIN_FAILED
+
+features:
+- buildpack-stack=ubuntu-22
+
+name: tavern-prod
+region: fra
+
+domains:
+- domain: tavern.iamxox.space
+  type: PRIMARY
+
+databases:
+- name: tavern-db
+  engine: PG
+  version: "16"
+
+ingress:
+  rules:
+  - component:
+      name: backend
+      preserve_path_prefix: true
+    match:
+      path:
+        prefix: /api
+  - component:
+      name: backend
+      preserve_path_prefix: true
+    match:
+      path:
+        prefix: /ws
+  - component:
+      name: backend
+    match:
+      path:
+        exact: /health
+  - component:
+      name: frontend
+    match:
+      path:
+        prefix: /
+
+services:
+- name: backend
+  environment_slug: python
+  github:
+    repo: artem-xox/tavern
+    branch: main
+    deploy_on_push: false
+  source_dir: /
+  build_command: pip install .
+  run_command: uvicorn tavern.app:create_default_app --factory --host 0.0.0.0 --port 8080
+  http_port: 8080
+  instance_count: 1
+  instance_size_slug: apps-s-1vcpu-0.5gb
+  health_check:
+    http_path: /health
+  envs:
+  - key: DATABASE_URL
+    scope: RUN_TIME
+    value: ${tavern-db.DATABASE_URL}
+  - key: TYPESAFE_API_KEY
+    scope: RUN_TIME
+    type: SECRET
+  - key: TYPESAFE_MODEL
+    scope: RUN_TIME
+    value: jev-latest
+  - key: AI_TIMEOUT
+    scope: RUN_TIME
+    value: "8"
+  - key: AI_TEMPERATURE
+    scope: RUN_TIME
+    value: "0.25"
+
+static_sites:
+- name: frontend
+  environment_slug: node-js
+  github:
+    repo: artem-xox/tavern
+    branch: main
+    deploy_on_push: false
+  source_dir: /frontend
+  build_command: npm ci && npm run build
+  output_dir: dist
+  catchall_document: index.html

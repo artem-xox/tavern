@@ -140,18 +140,18 @@ def _validate_rules(world: Mapping[str, Any]) -> None:
         raise ValueError("Invalid saved needs")
 
 
-def load_world(path: Path) -> dict[str, Any]:
-    """Read and validate a saved world before replacing the running state.
+def parse_world(encoded: str) -> dict[str, Any]:
+    """Validate a serialized world before it replaces the running state.
 
     Args:
-        path: Existing snapshot file.
+        encoded: JSON snapshot from a file or database.
     Returns:
         Complete world with action progress and memories preserved.
     Raises:
-        ValueError: File is missing, malformed, or uses an unsupported state shape.
+        ValueError: The snapshot is malformed or uses an unsupported state shape.
     """
     try:
-        world = json.loads(path.read_text())
+        world = json.loads(encoded)
         if not isinstance(world, dict) or world.get("schema_version") != 1:
             raise ValueError("Unsupported snapshot version")
         json.dumps(world, allow_nan=False)
@@ -162,5 +162,21 @@ def load_world(path: Path) -> dict[str, Any]:
         if not isinstance(world.get("events"), list):
             raise ValueError("Invalid saved event log")
         return world
-    except (OSError, KeyError, TypeError, ValueError, AttributeError) as error:
+    except (KeyError, TypeError, ValueError, AttributeError) as error:
+        raise ValueError(f"Could not load the world: {error}") from error
+
+
+def load_world(path: Path) -> dict[str, Any]:
+    """Read and validate a saved world from disk.
+
+    Args:
+        path: Existing snapshot file.
+    Returns:
+        Validated world state.
+    Raises:
+        ValueError: The file is missing, unreadable, or invalid.
+    """
+    try:
+        return parse_world(path.read_text())
+    except OSError as error:
         raise ValueError(f"Could not load the world: {error}") from error
