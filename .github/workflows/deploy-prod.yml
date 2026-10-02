@@ -29,8 +29,8 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: python -m pip install -e '.[dev]'
-      - run: pytest
       - run: npm ci --prefix frontend
+      - run: pytest
       - run: npm run check --prefix frontend
       - run: npm run build --prefix frontend
       - name: Deploy App Platform spec
@@ -41,6 +41,7 @@ jobs:
           app_spec_location: .do/app.prod.yaml
           project_id: 83ffb589-ca2f-4f99-8921-0b0e86fa08fd
           print_build_logs: true
+          print_deploy_logs: true
       - name: Health check
         env:
           APP: ${{ steps.deploy.outputs.app }}
