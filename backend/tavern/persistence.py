@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from tavern.activities import ACTIVITIES
+from tavern.expression import EMOTES
 from tavern.hearing import Sound
 from tavern.navigation import find_path
 from tavern.scenario import Guest, parse_guest
@@ -67,6 +68,7 @@ def _validate_actor_runtime(world: Mapping[str, Any]) -> None:
         _validate_progress(actor, world["map"])
         _validate_seat(actor, world)
         _validate_visit(actor.get("visit"))
+        _validate_expression(actor, world)
     for item in world["map"]["objects"]:
         if item.get("reserved_by") is not None and item["reserved_by"] not in actor_ids:
             raise ValueError("Saved reservation belongs to an unknown actor")
@@ -200,6 +202,30 @@ def _validate_rules(world: Mapping[str, Any]) -> None:
     if set(rules["need_rates"]) != {"thirst", "fatigue", "bladder", "social", "boredom"}:
         raise ValueError("Invalid saved needs")
     _validate_attention_rules(rules.get("attention"))
+    lifetimes = rules.get("emote_seconds")
+    if not isinstance(lifetimes, dict) or set(lifetimes) != set(EMOTES):
+        raise ValueError("Invalid saved emote lifetimes")
+    for value in [*lifetimes.values(), rules.get("long_wait")]:
+        number(value, "Saved emote time", 0, math.inf)
+
+
+def _validate_expression(actor: Mapping[str, Any], world: Mapping[str, Any]) -> None:
+    if actor.get("facing") not in (None, "north", "south", "east", "west"):
+        raise ValueError("Invalid saved facing")
+    gaze, emote, interrupted_at = actor["gaze"], actor["emote"], actor["interrupted_at"]
+    if gaze is not None:
+        if not isinstance(gaze, dict) or set(gaze) != {"cell", "until", "stimulus_id"}:
+            raise ValueError("Invalid saved gaze")
+        _validate_cell(gaze["cell"], world["map"])
+        number(gaze["until"], "Saved gaze end", 0, math.inf)
+        if type(gaze["stimulus_id"]) is not int:
+            raise ValueError("Invalid saved gaze cause")
+    if emote is not None:
+        if not isinstance(emote, dict) or set(emote) != {"kind", "until"} or emote["kind"] not in EMOTES:
+            raise ValueError("Invalid saved emote")
+        number(emote["until"], "Saved emote end", 0, math.inf)
+    if interrupted_at is not None:
+        number(interrupted_at, "Saved interruption time", 0, world["time"])
 
 
 def _validate_attention_rules(attention: Any) -> None:

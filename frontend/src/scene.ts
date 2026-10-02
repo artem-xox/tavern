@@ -1,7 +1,13 @@
 import Phaser from "phaser";
 import { drawBar, drawChair, drawDarts, drawDoor, drawFireplace, drawTable, drawTap, drawToilet, drawWindow, hearthFacing } from "./furniture";
 import { shippedPose, spriteOf, stills } from "./sprites";
-import type { ActivityView, Actor, Cell, Verb, World, WorldObject } from "./types";
+import type { ActivityView, Actor, Cell, EmoteKind, Verb, World, WorldObject } from "./types";
+
+/** Glyph and colour of each emote above a visitor's head. */
+const EMOTE_GLYPHS: Record<EmoteKind, [string, string]> = {
+  alert: ["!", "#c0392b"], confused: ["?", "#2e6f9e"], angry: ["✹", "#b03a2e"],
+  affection: ["♥", "#c2457a"], sleep: ["z", "#5b6c8f"], waiting: ["…", "#6b5a45"],
+};
 
 interface SceneCallbacks {
   select: (actorId: string) => void;
@@ -17,6 +23,7 @@ interface ActorView {
   selection: Phaser.GameObjects.Arc;
   mug: Phaser.GameObjects.Container;
   speech: Phaser.GameObjects.Text;
+  emote: Phaser.GameObjects.Text;
   targetX: number;
   targetY: number;
   cellX: number;
@@ -258,8 +265,9 @@ export class TavernScene extends Phaser.Scene {
     const foam: Phaser.GameObjects.Ellipse = this.add.ellipse(0, -5, 8, 4, 0xffebc2);
     const mug: Phaser.GameObjects.Container = this.add.container(12, 3, [mugBody, foam]);
     const speech: Phaser.GameObjects.Text = this.add.text(0, -70, "", { fontFamily: "Georgia", fontSize: "10px", color: "#48392b", backgroundColor: "#f4e6c6", padding: { x: 6, y: 4 } }).setOrigin(0.5).setVisible(false);
-    const container: Phaser.GameObjects.Container = this.add.container(0, 0, [shadow, selection, sprite, name, status, mug, speech]);
-    return { container, sprite, name, status, selection, mug, speech, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south" };
+    const emote: Phaser.GameObjects.Text = this.add.text(17, -44, "", { fontFamily: "system-ui", fontSize: "12px", fontStyle: "bold", backgroundColor: "#f4e6c6", padding: { x: 4, y: 1 } }).setOrigin(0.5).setVisible(false);
+    const container: Phaser.GameObjects.Container = this.add.container(0, 0, [shadow, selection, sprite, name, status, mug, speech, emote]);
+    return { container, sprite, name, status, selection, mug, speech, emote, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south" };
   }
 
   private updateVisitor(view: ActorView, actor: Actor, size: number, reset: boolean): void {
@@ -267,7 +275,8 @@ export class TavernScene extends Phaser.Scene {
     const target: WorldObject | undefined = this.world?.map.objects.find((object: WorldObject): boolean => object.id === actor.action?.target_id);
     view.direction = actor.x > view.cellX ? "east" : actor.x < view.cellX ? "west" : actor.y > view.cellY ? "south" : actor.y < view.cellY ? "north" : view.direction;
     if (actor.status !== "walking") {
-      view.direction = seat?.facing ?? (target && actor.status === "interacting" ? this.facingTarget(actor, target, view.direction) : view.direction);
+      // The server turns heads toward sounds and partners; otherwise the seat or the task decides.
+      view.direction = actor.facing ?? seat?.facing ?? (target && actor.status === "interacting" ? this.facingTarget(actor, target, view.direction) : view.direction);
     }
     const { name: character, sheet } = spriteOf(actor);
     const pose: string = shippedPose(sheet, this.actorPose(actor));
@@ -290,7 +299,15 @@ export class TavernScene extends Phaser.Scene {
     view.mug.setVisible(actor.inventory.beer > 0 && pose !== "Drinking" && pose !== "TakeBeer");
     view.speech.setVisible(chatting);
     view.speech.setText(incoming ? "Quite a story!" : "News from the road…");
+    this.showEmote(view, actor);
     view.container.setDepth(10 + y / 1000);
+  }
+
+  private showEmote(view: ActorView, actor: Actor): void {
+    view.emote.setVisible(actor.emote !== null);
+    if (actor.emote === null) return;
+    const [glyph, color] = EMOTE_GLYPHS[actor.emote.kind];
+    view.emote.setText(glyph).setColor(color);
   }
 
   private actorPose(actor: Actor): string {

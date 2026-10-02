@@ -63,7 +63,17 @@ export interface Actor {
   knowledge: { objects: Record<string, Record<string, unknown>> };
   memory: unknown[];
   decision: (DecisionStage & { seat?: DecisionStage }) | null;
+  /** Where the server turns the visitor; null keeps the seat's, the task's, or the walking direction. */
+  facing: Facing | null;
+  /** A cell the visitor looks at until a game time, drawn by a stimulus. */
+  gaze: { cell: Cell; until: number; stimulus_id: number } | null;
+  emote: { kind: EmoteKind; until: number } | null;
+  /** Game time of the last interrupt that asked for a fresh decision. */
+  interrupted_at: number | null;
 }
+
+export type Facing = "north" | "south" | "east" | "west";
+export type EmoteKind = "alert" | "confused" | "angry" | "affection" | "sleep" | "waiting";
 
 /** A scenario guest still on the way, with tonight's needs already drawn. */
 export interface ExpectedGuest {

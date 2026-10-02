@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 
+from tavern.expression import look_at
 from tavern.memory import record_event
 from tavern.persistence import parse_world
 from tavern.world import create_world
@@ -52,6 +53,44 @@ def stimulus(world: dict[str, Any]) -> dict[str, Any]:
 ])
 def test_damaged_sounds_are_rejected(damage: Callable[[dict[str, Any]], Any]) -> None:
     world = noisy_world()
+    damage(world)
+    with pytest.raises(ValueError, match="Could not load the world"):
+        parse_world(json.dumps(world))
+
+
+def expressive_world() -> dict[str, Any]:
+    """Build a room where Ada glances, frowns, and was just interrupted."""
+    world = noisy_world()
+    look_at(world["actors"][0], [3, 1], 6.0, 0)
+    world["actors"][0].update(facing="east", interrupted_at=4.0)
+    return world
+
+
+def test_gaze_and_emotes_survive_a_save() -> None:
+    world = expressive_world()
+    assert world["actors"][0]["emote"] == {"kind": "angry", "until": 8.0}
+    assert parse_world(json.dumps(world)) == world
+
+
+def ada(world: dict[str, Any]) -> dict[str, Any]:
+    """The first visitor."""
+    return world["actors"][0]
+
+
+@pytest.mark.parametrize("damage", [
+    pytest.param(lambda world: ada(world).update(facing="up"), id="unknown-facing"),
+    pytest.param(lambda world: ada(world).pop("gaze"), id="missing-gaze"),
+    pytest.param(lambda world: ada(world).update(gaze={"cell": [3, 1]}), id="gaze-without-end"),
+    pytest.param(lambda world: ada(world)["gaze"].update(cell=[9, 9]), id="gaze-outside-the-map"),
+    pytest.param(lambda world: ada(world)["gaze"].update(stimulus_id="0"), id="gaze-cause-not-an-id"),
+    pytest.param(lambda world: ada(world)["emote"].update(kind="smug"), id="unknown-emote"),
+    pytest.param(lambda world: ada(world)["emote"].update(until=-1.0), id="emote-ending-before-the-evening"),
+    pytest.param(lambda world: ada(world).update(interrupted_at=5.0), id="interrupted-in-the-future"),
+    pytest.param(lambda world: world["rules"]["emote_seconds"].pop("alert"), id="missing-emote-lifetime"),
+    pytest.param(lambda world: world["rules"].update(long_wait=-1), id="negative-long-wait"),
+])
+def test_damaged_expressions_are_rejected(damage: Callable[[dict[str, Any]], Any]) -> None:
+    world = expressive_world()
     damage(world)
     with pytest.raises(ValueError, match="Could not load the world"):
         parse_world(json.dumps(world))

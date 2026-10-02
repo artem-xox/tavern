@@ -7,6 +7,7 @@ from typing import Any
 from tavern.activities import ACTIVITIES
 from tavern.arrival import admit_arrivals, arrival_ranges, arriving, create_actor
 from tavern.closing import call_closing, inn_closed
+from tavern.expression import update_expression
 from tavern.hearing import sound_activity
 from tavern.memory import record_event
 from tavern.room import create_map, find_object, impassable_cells
@@ -60,7 +61,11 @@ def _rules() -> dict[str, Any]:
             # Salience at which a visitor glances at a sound, and at which it interrupts them;
             # each wall cell between a sound and a listener multiplies its loudness by wall_damping.
             "attention": {"glance": 0.15, "interrupt": 0.5, "wall_damping": 0.5,
-                          "glance_seconds": 2.0, "turn_seconds": 3.0}}
+                          "glance_seconds": 2.0, "turn_seconds": 3.0},
+            # How long each emote shows; a route blocked for long_wait seconds shows `waiting`.
+            "emote_seconds": {"alert": 1.5, "confused": 2.5, "angry": 4.0, "affection": 3.0, "sleep": 5.0,
+                              "waiting": 0.5},
+            "long_wait": 2.0}
 
 
 def _actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any] | None:
@@ -328,6 +333,7 @@ def step_world(world: dict[str, Any], dt: float) -> None:
     _see_off(world)
     call_closing(world, since)
     admit_arrivals(world)
+    update_expression(world)
 
 
 def _see_off(world: dict[str, Any]) -> None:
