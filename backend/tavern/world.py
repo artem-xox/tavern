@@ -6,6 +6,7 @@ from typing import Any
 
 from tavern.activities import ACTIVITIES
 from tavern.arrival import admit_arrivals, arrival_ranges, arriving, create_actor
+from tavern.attention import attend
 from tavern.closing import call_closing, inn_closed
 from tavern.expression import update_expression
 from tavern.hearing import sound_activity
@@ -309,7 +310,7 @@ def _step_actor(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float)
 
 
 def step_world(world: dict[str, Any], dt: float) -> None:
-    """Advance time, needs, movement, once-only action consequences, and arrivals.
+    """Advance time, needs, movement, once-only action consequences, arrivals, and attention.
 
     Args:
         world: Authoritative mutable world state.
@@ -333,6 +334,8 @@ def step_world(world: dict[str, Any], dt: float) -> None:
     _see_off(world)
     call_closing(world, since)
     admit_arrivals(world)
+    for actor in attend(world):
+        _clear_action(world, actor)
     update_expression(world)
 
 

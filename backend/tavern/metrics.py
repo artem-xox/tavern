@@ -16,6 +16,33 @@ class StuckTime(TypedDict):
     longest: float
 
 
+class AttentionCounts(TypedDict):
+    """How often guests turned to a sound: interrupted, alerted while busy, or merely glanced."""
+
+    interrupts: int
+    alerts: int
+    glances: int
+
+
+def attention_counts(evening: Evening) -> AttentionCounts:
+    """Split the evening's turned heads into interrupts, alerts and glances.
+
+    Args:
+        evening: What the lockstep runner logged; every interrupt or alert also turned a head.
+
+    Returns:
+        Logged `interrupted` and `alerted` events, and the remaining turned heads as glances.
+
+    Raises:
+        ValueError: More interrupts and alerts were logged than heads turned.
+    """
+    interrupts = sum(event["type"] == "interrupted" for event in evening.events)
+    alerts = sum(event["type"] == "alerted" for event in evening.events)
+    if interrupts + alerts > evening.gazes:
+        raise ValueError(f"{interrupts + alerts} interrupts and alerts but only {evening.gazes} turned heads")
+    return {"interrupts": interrupts, "alerts": alerts, "glances": evening.gazes - interrupts - alerts}
+
+
 class Metrics(TypedDict):
     """The measures of one evening; durations in game seconds, cost in USD per call kind."""
 

@@ -7,7 +7,7 @@ from random import Random
 from typing import Any, TypedDict
 
 from tavern.agents import Evaluators, choose_action
-from tavern.decisions import apply_decision, decision_requests, free_to_decide
+from tavern.decisions import apply_decision, decision_requests, free_to_decide, stale_requests
 from tavern.world import step_world
 
 
@@ -57,7 +57,8 @@ class Evening:
 
     `events` is the complete event log in order, `choices` every decision stage asked for,
     `spells` every stalled stretch, `guests` everyone who was in the hall in order of first
-    sight, and `end_time` the game time it ended.
+    sight, `end_time` the game time it ended, and `gazes` how many times a guest turned to
+    look at a sound: glances, alerts and interrupts alike.
     """
 
     events: list[dict[str, Any]]
@@ -65,17 +66,20 @@ class Evening:
     spells: list[Spell]
     guests: list[str]
     end_time: float
+    gazes: int = 0
 
 
 @dataclass
 class _Run:
-    pending: dict[str, tuple[float, Mapping[str, Any]]] = field(default_factory=dict)
+    # Per visitor: when they asked, when the answer is due, and the answer.
+    pending: dict[str, tuple[float, float, Mapping[str, Any]]] = field(default_factory=dict)
     next_decision: dict[str, float] = field(default_factory=dict)
     events: list[dict[str, Any]] = field(default_factory=list)
     choices: list[Choice] = field(default_factory=list)
     spells: list[Spell] = field(default_factory=list)
     stalled_since: dict[str, float] = field(default_factory=dict)
     guests: list[str] = field(default_factory=list)
+    gazes: set[tuple[str, int]] = field(default_factory=set)
 
 
 def evening_over(world: Mapping[str, Any], time_limit: float) -> bool:
@@ -147,16 +151,23 @@ async def run_evening(world: dict[str, Any], config: Mapping[str, Any], rng: Ran
     _track(world, run)
     while not evening_over(world, pace.time_limit):
         step_world(world, pace.step)
+        _drop_stale(world, run)
         _apply_due(world, run)
         await _ask(world, run, config, rng, evaluators, pace.model_latency)
         _collect(world, run)
         _track(world, run)
     _close(run, list(run.stalled_since), world["time"])
-    return Evening(run.events, run.choices, run.spells, run.guests, world["time"])
+    return Evening(run.events, run.choices, run.spells, run.guests, world["time"], len(run.gazes))
+
+
+def _drop_stale(world: Mapping[str, Any], run: _Run) -> None:
+    # As in the live runtime, an interrupted visitor's pending answer is dropped and they ask anew.
+    for actor_id in stale_requests(world, {actor_id: asked for actor_id, (asked, _, _) in run.pending.items()}):
+        del run.pending[actor_id]
 
 
 def _apply_due(world: dict[str, Any], run: _Run) -> None:
-    for actor_id, (due, decision) in list(run.pending.items()):
+    for actor_id, (_, due, decision) in list(run.pending.items()):
         # Game time sums float steps; the margin absorbs rounding far below one step.
         if world["time"] + 1e-9 < due:
             continue
@@ -171,7 +182,7 @@ async def _ask(world: dict[str, Any], run: _Run, config: Mapping[str, Any], rng:
                evaluators: Evaluators, latency: float) -> None:
     for actor_id, observation in decision_requests(world, run.pending, run.next_decision):
         decision = await choose_action(observation, config, rng, evaluators)
-        run.pending[actor_id] = (world["time"] + latency, decision)
+        run.pending[actor_id] = (world["time"], world["time"] + latency, decision)
         stages = [("actions", decision), *([("seats", decision["seat"])] if "seat" in decision else [])]
         run.choices.extend({"time": world["time"], "actor_id": actor_id, "kind": kind,
                             "source": stage["source"], "error": stage["error"]} for kind, stage in stages)
@@ -194,6 +205,8 @@ def _track(world: Mapping[str, Any], run: _Run) -> None:
     for actor_id, actor in present.items():
         if actor_id not in run.guests:
             run.guests.append(actor_id)
+        if actor["gaze"]:
+            run.gazes.add((actor_id, actor["gaze"]["stimulus_id"]))
         stalled = free_to_decide(world, actor) or actor["status"] == "waiting"
         if stalled and actor_id not in run.stalled_since:
             run.stalled_since[actor_id] = world["time"]

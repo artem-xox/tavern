@@ -46,6 +46,21 @@ def decision_requests(world: Mapping[str, Any], pending: Container[str],
     return requests
 
 
+def stale_requests(world: Mapping[str, Any], asked_at: Mapping[str, float]) -> list[str]:
+    """List the visitors whose pending request an interrupt has overtaken.
+
+    Args:
+        world: Current world.
+        asked_at: Game time each pending request was made, per visitor.
+
+    Returns:
+        Visitors in actor order who were interrupted after asking: their answer no longer fits
+        and they should ask again. A request made on the interrupt's own tick already saw it.
+    """
+    return [actor["id"] for actor in world["actors"] if actor["id"] in asked_at
+            and actor["interrupted_at"] is not None and actor["interrupted_at"] > asked_at[actor["id"]]]
+
+
 def apply_decision(world: dict[str, Any], actor: dict[str, Any],
                    outcome: Callable[[], Mapping[str, Any]]) -> float:
     """Record a visitor's decision and start its action.
