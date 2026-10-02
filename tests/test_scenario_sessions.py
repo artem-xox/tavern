@@ -7,9 +7,12 @@ from typing import Any, Callable
 
 import pytest
 
+from tavern.app import TavernRuntime, TavernSessions, create_app, create_default_app
 from tavern.persistence import load_world, save_world
 from tavern.scenario import Scenario, open_evening, parse_scenario
 from tavern.world import step_world
+
+SESSION = "device-first"
 
 
 def hall() -> dict[str, Any]:
@@ -71,3 +74,81 @@ def test_old_or_corrupt_evening_saves_are_rejected(tmp_path: Path, corrupt: Call
     save_world(world, tmp_path / "corrupt.json")
     with pytest.raises(ValueError):
         load_world(tmp_path / "corrupt.json")
+
+
+def sessions(tmp_path: Path, scenario: Scenario | None = None) -> TavernSessions:
+    """Serve the hall's scenario evenings from per-session files under tmp_path."""
+    return TavernSessions(hall(), tmp_path, {"typesafe_api_key": None}, scenario=scenario or plan(0, 60))
+
+
+def present(world: dict[str, Any]) -> tuple[list[str], list[str]]:
+    """List who is inside and who is still expected."""
+    return [item["id"] for item in world["actors"]], [item["id"] for item in world["expected"]]
+
+
+def test_new_session_opens_the_scenarios_evening_at_the_door(tmp_path: Path) -> None:
+    world = sessions(tmp_path).open(SESSION).world
+    assert (present(world), world["closes_at"], world["tick"], world["paused"]) == ((["ada"], ["bea"]), 300, 0, True)
+
+
+def version_1_save() -> str:
+    """Encode an evening as the previous saved-world format did."""
+    return json.dumps({**walked_in(0, 60), "schema_version": 1})
+
+
+@pytest.mark.parametrize("autosave", [
+    pytest.param("", id="empty-autosave"),
+    pytest.param("{", id="malformed-autosave"),
+    pytest.param(version_1_save(), id="version-1-autosave"),
+])
+def test_rejected_autosave_opens_a_new_evening_instead_of_failing(tmp_path: Path, autosave: str) -> None:
+    (tmp_path / SESSION).mkdir()
+    (tmp_path / SESSION / "autosave.json").write_text(autosave)
+    world = sessions(tmp_path).open(SESSION).world
+    assert (present(world), world["tick"], world["paused"]) == ((["ada"], ["bea"]), 0, True)
+    assert any("could not be restored" in event["message"] for event in world["events"])
+
+
+@pytest.mark.parametrize("seed, same", [
+    pytest.param(7, True, id="seeded-scenario-replays"),
+    pytest.param(None, False, id="unseeded-sessions-differ"),
+])
+def test_scenario_seed_opens_the_same_evening_in_every_session(tmp_path: Path, seed: int | None, same: bool) -> None:
+    hub = sessions(tmp_path, plan(0, 60, seed=seed))
+    worlds = [hub.open(session).world for session in ("device-first", "device-second")]
+    thirst = [[item["needs"]["thirst"] for item in [*world["actors"], *world["expected"]]] for world in worlds]
+    assert (thirst[0] == thirst[1]) is same
+
+
+def test_restart_opens_a_new_evening_from_the_scenario(tmp_path: Path) -> None:
+    runtime = TavernRuntime(hall(), tmp_path / "save.json", {"temperature": 0}, seed=5, scenario=plan(0, 60))
+    first = runtime.world["actors"][0]["needs"]["thirst"]
+    runtime.command({"type": "force_action", "actor_id": "ada",
+                     "action": {"id": "take_beer:tap", "verb": "take_beer", "target_id": "tap"}})
+    for _ in range(140):
+        step_world(runtime.world, 0.5)
+    arrived = present(runtime.world)
+    runtime.command({"type": "reset"})
+    world = runtime.world
+    assert (arrived, present(world), world["tick"], world["paused"]) == (
+        (["ada", "bea"], []), (["ada"], ["bea"]), 0, False)
+    assert world["actors"][0]["needs"]["thirst"] != first
+
+
+def test_default_app_opens_the_repository_scenario() -> None:
+    world = create_default_app().state.sessions.open("device-scenario-test").world
+    guests = [*world["actors"], *world["expected"]]
+    assert (len(world["actors"]), len(world["expected"])) == (3, 3)
+    assert {item["sprite"] for item in guests} == {"edda", "rurik", "toren", "veteran", "traveler", "merchant"}
+
+
+@pytest.mark.parametrize("content", [
+    pytest.param("", id="empty-file"),
+    pytest.param(json.dumps({"guests": [], "arrival": {"needs": {}}, "closes_at": 300}), id="no-guests"),
+])
+def test_server_refuses_a_malformed_scenario_file(tmp_path: Path, content: str) -> None:
+    (tmp_path / "map.json").write_text(json.dumps(hall()))
+    (tmp_path / "scenario.json").write_text(content)
+    with pytest.raises(ValueError):
+        create_app(tmp_path / "map.json", tmp_path / "saves", {}, run_loop=False,
+                   scenario_path=tmp_path / "scenario.json")
