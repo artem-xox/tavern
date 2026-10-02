@@ -35,7 +35,8 @@ Exact fields are frozen in each task before implementation; this is the outline.
 
 - **Activity:** `verb`, `roles`, `target_kinds`, `duration`, `interruptible`,
   `effects`, `stimulus` (`kind`, `loudness`), `pose`, model-facing `description` and
-  `guidance`, and an optional named handler for effects that need code.
+  `guidance`, and, for effects that need code, a direct reference to a core function
+  (never a handler looked up by name).
 - **Character card:** `id`, `name`, `sprite`, text (`occupation`, `background`,
   `temperament`, `speech`, `quirks`, `secret`, `goal`) and params in 0–1
   (`patience`, `temper`, `sociability`, `courage`, `strength`, `brawling`,
@@ -57,6 +58,9 @@ Exact fields are frozen in each task before implementation; this is the outline.
 
 ### Determinism and cost
 
+Stage 1 changes the saved-world format and adds the `anthropic` SDK; both need the
+user's approval before the first task that does so ([AGENTS.md](../../AGENTS.md)).
+
 Every model call goes through one gateway that records request, response, and usage.
 Headless evenings run in lockstep with fixed virtual model latency, so a recorded
 evening replays to the same event log. Live sessions keep asynchronous calls.
@@ -74,12 +78,14 @@ Write tests first for all business logic, as in [AGENTS.md](../../AGENTS.md).
 
 ### M1 — Foundations
 
-- [ ] **E01 — Activity table.** Move every verb's target kinds, duration, effects,
-  interruptibility, model descriptions, and pose into one declarative table passed
-  to the world; world, candidates, briefing, Jev, and frontend read it. Done: all
-  existing tests pass unchanged; a new verb needs one entry and an optional handler.
-- [ ] **E02 — Model gateway.** One async boundary for Jev and Claude with recording,
-  replay, a test fake, and usage accounting. Done: a recorded evening replays to an
+- [ ] **E01 — Activity table.** First split `world.py` (778 lines) by concept as its
+  own step. Then move every verb's target kinds, duration, effects, interruptibility,
+  model descriptions, and pose into one typed table in the core, passed to the world;
+  world, candidates, briefing, Jev, and frontend read it. Done: all existing tests pass
+  unchanged; a new verb needs one entry and, if needed, one effect function.
+- [ ] **E02 — Model gateway.** One async port for Jev and Claude with recording,
+  replay, a test fake, and usage accounting. The core receives it as an argument, which
+  also removes the `agents.py` → `jev.py` import. Done: a recorded evening replays to an
   identical event log; cost per call kind is reported.
 - [ ] **E03 — Headless evening runner.** `make evening` runs a scenario to closing in
   lockstep (local, live, or replay) and writes the event log, metrics, chronicle, and
