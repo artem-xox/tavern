@@ -7,6 +7,7 @@ from typing import Any
 from tavern.activities import ACTIVITIES
 from tavern.arrival import admit_arrivals, arrival_ranges, arriving, create_actor
 from tavern.closing import call_closing, inn_closed
+from tavern.hearing import sound_activity
 from tavern.memory import record_event
 from tavern.room import create_map, find_object, impassable_cells
 from tavern.routes import gives_way, occupied_cells, plan_route, replan, reserved_spots
@@ -37,9 +38,9 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> dict[str, Any]:
               for item in (listed if ranges is None else arriving(listed, ranges, seed))]
     if len({(item["x"], item["y"]) for item in actors}) != len(actors):
         raise ValueError("Actors cannot overlap at startup")
-    world = dict(schema_version=2, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
+    world = dict(schema_version=3, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
                  map=world_map, actors=actors, departed=[], expected=[], closes_at=None,
-                 events=[], rules=_rules())
+                 events=[], stimuli=[], next_stimulus_id=0, rules=_rules())
     for actor in actors:
         _look(world, actor)
         if ranges is not None:
@@ -55,7 +56,11 @@ def _rules() -> dict[str, Any]:
                           if activity.duration is not None},
             # Each beer the pair has drunk beyond the first adds this much quarrel chance,
             # scaled by impatience (2 − both patience traits), up to quarrel_max.
-            "quarrel_per_beer": 0.1, "quarrel_max": 0.5}
+            "quarrel_per_beer": 0.1, "quarrel_max": 0.5,
+            # Salience at which a visitor glances at a sound, and at which it interrupts them;
+            # each wall cell between a sound and a listener multiplies its loudness by wall_damping.
+            "attention": {"glance": 0.15, "interrupt": 0.5, "wall_damping": 0.5,
+                          "glance_seconds": 2.0, "turn_seconds": 3.0}}
 
 
 def _actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any] | None:
@@ -240,9 +245,11 @@ def _begin_interaction(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
         _fail(world, actor, reason)
     else:
         actor.update(status="interacting", _move_elapsed=0.0, _blocked_for=0.0)
-        arrival = ACTIVITIES[actor["action"]["verb"]].on_arrival
-        if arrival:
-            arrival(world, actor, _target(world, actor["action"]))
+        activity = ACTIVITIES[actor["action"]["verb"]]
+        if activity.on_arrival:
+            activity.on_arrival(world, actor, _target(world, actor["action"]))
+        if activity.sound:
+            sound_activity(world, actor, activity.sound, activity.doing)
 
 
 def _interaction_error(world: Mapping[str, Any], actor: Mapping[str, Any]) -> str | None:

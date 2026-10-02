@@ -6,6 +6,7 @@ from types import MappingProxyType
 from typing import Any
 
 from tavern.conversation import complete_conversation
+from tavern.hearing import Sound
 from tavern.memory import grieve, record_event
 
 # An effect receives the world, the visitor, and the target: an object, a partner, or None.
@@ -34,6 +35,8 @@ class Activity:
         done: How a visitor remembers having done it, in the briefing.
         what: Wording for the evaluator; `{target}` stands for the quoted target ID.
         guidance: When the evaluator should consider it natural.
+        interruptible: Whether a loud enough stimulus stops it; otherwise the visitor finishes first.
+        sound: What others hear when the interaction begins, or None for a silent activity.
     """
 
     verb: str
@@ -53,6 +56,8 @@ class Activity:
     pose: str | None = None
     doing: str | None = None
     done: str | None = None
+    interruptible: bool = False
+    sound: Sound | None = None
 
 
 def _pour(world: Mapping[str, Any], actor: dict[str, Any], tap: dict[str, Any] | None) -> None:
@@ -92,31 +97,34 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              guidance="Thirsty guests and newcomers naturally fetch a drink. It is pointless while they already "
                       "hold a mug, or when the tap has run dry."),
     Activity(verb="drink", duration=3.0, requires_item="beer",
-             needs=MappingProxyType({"thirst": -60, "bladder": 25}), effect=_drink, label="Drink beer",
+             needs=MappingProxyType({"thirst": -60, "bladder": 25}), effect=_drink, label="Drink beer", interruptible=True,
              status="sipping ale", pose="Drinking", doing="drinking", done="drank a beer",
              what="drink the mug of ale they are holding",
              guidance="Sipping ale at the table is the heart of a tavern evening; it quenches thirst but fills "
                       "the bladder."),
     Activity(verb="rest", target_kinds=("chair",), duration=3.0, needs=MappingProxyType({"fatigue": -65}),
-             label="Rest", pose="Seated", doing="resting", done="rested",
+             label="Rest", pose="Seated", interruptible=True, doing="resting", done="rested",
              what="rest on the chair {target}",
              guidance="It eases tiredness."),
     Activity(verb="sit", target_kinds=("chair",), duration=14.0, needs=MappingProxyType({"fatigue": -65}),
              on_arrival=_settle, label="Sit at a table", status="seated", pose="Seated",
+             interruptible=True,
              doing="heading to a seat", done="sat a while",
              what="sit in their own seat {target} for a while",
              guidance="Sitting in their own seat is a guest's natural resting state: it eases tiredness, it is "
                       "where they sip their ale, and it lets them chat with whoever shares the table. Getting "
                       "up needs a reason."),
     Activity(verb="talk", partner=True, duration=8.0, effect=_chat, label="Chat with a neighbor",
-             status="chatting", pose="Talking", doing="talking", done="chatted",
+             status="chatting", pose="Talking",
+             sound=Sound("chat", 0.25, 6.0, "a conversation"), doing="talking", done="chatted",
              what="chat with {target}, who sits at their table",
              guidance="It eases the wish for company of both and lets them share where the beer, WC and darts "
                       "are. After a few beers an impatient pair may quarrel instead, leaving both aggrieved; "
                       "someone who wronged them tonight is poor company. Right after a chat, with their wish "
                       "for company satisfied, a quiet sip or a rest is more natural than yet another chat."),
     Activity(verb="play_darts", target_kinds=("darts",), duration=10.0, leaves_seat=True,
-             needs=MappingProxyType({"boredom": -65}), label="Play darts", status="darts", pose="Darts",
+             needs=MappingProxyType({"boredom": -65}), label="Play darts", status="darts", pose="Darts", interruptible=True,
+             sound=Sound("thud", 0.25, 10.0, "darts thudding into the board"),
              doing="playing darts", done="played darts",
              what="play a round of darts at {target}",
              guidance="A lively pastime for a bored guest; it means leaving their seat for a while."),
@@ -125,12 +133,12 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              doing="heading to the WC", done="used the WC",
              what="use the WC {target}",
              guidance="Necessary once the bladder presses, pointless before."),
-    Activity(verb="inspect", duration=0.8, label="Explore the room", doing="looking around",
+    Activity(verb="inspect", duration=0.8, label="Explore the room", doing="looking around", interruptible=True,
              done="looked around",
              what="explore the room to discover or re-check places",
              guidance="Worthwhile only when something they need has not been found yet; otherwise it is aimless "
                       "wandering."),
-    Activity(verb="wait", duration=1.0, label="Wait a little", doing="waiting", done="waited",
+    Activity(verb="wait", duration=1.0, label="Wait a little", doing="waiting", interruptible=True, done="waited",
              what="wait a moment and do nothing",
              guidance="Idling where they stand is rarely the most natural thing."),
     Activity(verb="leave", target_kinds=("door",), duration=1.0, effect=_go_home, label="Go home",
@@ -150,7 +158,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "linger in a cosy seat."),
     # Gazing at the flames or the road outside is a gentler pastime than darts.
     Activity(verb="watch", target_kinds=("window", "fireplace"), duration=8.0,
-             needs=MappingProxyType({"boredom": -40}), label="Watch the fire or the view",
+             needs=MappingProxyType({"boredom": -40}), label="Watch the fire or the view", interruptible=True,
              status="at the window", doing="admiring the view", done="admired the view",
              what="stand by {target} and watch it for a while",
              guidance="Gazing into the flames of the fireplace or out of a window at the road is a quiet "

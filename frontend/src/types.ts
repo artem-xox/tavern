@@ -84,6 +84,23 @@ export interface WorldEvent {
   message: string;
 }
 
+/** A sound in the hall waiting for the listeners' attention at the end of the tick. */
+export interface Stimulus {
+  id: number;
+  kind: string;
+  noun: string;
+  /** Visitors who made it; empty for a call from a place. */
+  sources: string[];
+  cell: Cell;
+  loudness: number;
+  reach: number;
+  time: number;
+  /** Visitors it concerns without having made it. */
+  about: string[];
+  cause: string;
+  event: string | null;
+}
+
 export interface World {
   schema_version: number;
   tick: number;
@@ -104,6 +121,8 @@ export interface World {
   /** Game seconds after opening when the inn closes; null for an evening that never closes. */
   closes_at: number | null;
   events: WorldEvent[];
+  stimuli: Stimulus[];
+  next_stimulus_id: number;
 }
 
 export interface Snapshot {
