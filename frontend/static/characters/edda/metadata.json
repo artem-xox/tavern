@@ -1,0 +1,214 @@
+{
+  "group_id": "b846223d-49fb-4387-ab84-3063bbfc30d3",
+  "states": [
+    {
+      "character": {
+        "id": "70cb1b10-0d43-480d-93e7-6a0920d55778",
+        "name": "Idle",
+        "prompt": "Full-body pixel art game sprite of Edda, an older female traveling healer at a medieval border inn. Silver braid, muted oxblood red hood and scarf, moss green tunic, leather satchel, simple brown boots, friendly weathered face. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, warm muted palette, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T08:50:08.046813+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "north": "Idle/rotations/north.png",
+          "south": "Idle/rotations/south.png",
+          "east": "Idle/rotations/east.png",
+          "west": "Idle/rotations/west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "a76df051-a453-40e2-95ed-cdf1d0e0591d",
+        "name": "Seated",
+        "prompt": "Full-body pixel art game sprite of Edda, an older female traveling healer at a medieval border inn. Silver braid, muted oxblood red hood and scarf, moss green tunic, leather satchel, simple brown boots, friendly weathered face. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, warm muted palette, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T08:52:48.220640+00:00"
+      },
+      "folder": "Seated",
+      "frames": {
+        "rotations": {
+          "north": "Seated/rotations/north.png",
+          "south": "Seated/rotations/south.png",
+          "east": "Seated/rotations/east.png",
+          "west": "Seated/rotations/west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "4b329c01-6c44-4def-96d3-5c009ca1fa6f",
+        "name": "Darts",
+        "prompt": "Full-body pixel art game sprite of Edda, an older female traveling healer at a medieval border inn. Silver braid, muted oxblood red hood and scarf, moss green tunic, leather satchel, simple brown boots, friendly weathered face. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, warm muted palette, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T08:54:11.233812+00:00"
+      },
+      "folder": "Darts",
+      "frames": {
+        "rotations": {
+          "north": "Darts/rotations/north.png",
+          "south": "Darts/rotations/south.png",
+          "east": "Darts/rotations/east.png",
+          "west": "Darts/rotations/west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "6f890123-4ce2-469e-b3ea-e5bdd8adc8a3",
+        "name": "Bathroom",
+        "prompt": "Full-body pixel art game sprite of Edda, an older female traveling healer at a medieval border inn. Silver braid, muted oxblood red hood and scarf, moss green tunic, leather satchel, simple brown boots, friendly weathered face. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, warm muted palette, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T08:56:41.786550+00:00"
+      },
+      "folder": "Bathroom",
+      "frames": {
+        "rotations": {
+          "north": "Bathroom/rotations/north.png",
+          "south": "Bathroom/rotations/south.png",
+          "east": "Bathroom/rotations/east.png",
+          "west": "Bathroom/rotations/west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "ac2b947d-fc05-4586-9a0a-8fc1b274735c",
+        "name": "Drinking",
+        "prompt": "Full-body pixel art game sprite of Edda, an older female traveling healer at a medieval border inn. Silver braid, muted oxblood red hood and scarf, moss green tunic, leather satchel, simple brown boots, friendly weathered face. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, warm muted palette, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T08:56:42.236774+00:00"
+      },
+      "folder": "Drinking",
+      "frames": {
+        "rotations": {
+          "north": "Drinking/rotations/north.png",
+          "south": "Drinking/rotations/south.png",
+          "east": "Drinking/rotations/east.png",
+          "west": "Drinking/rotations/west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "adbc5b62-8af1-49e5-8e87-780ab38f057f",
+        "name": "TakeBeer",
+        "prompt": "Full-body pixel art game sprite of Edda, an older female traveling healer at a medieval border inn. Silver braid, muted oxblood red hood and scarf, moss green tunic, leather satchel, simple brown boots, friendly weathered face. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, warm muted palette, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T08:56:42.631269+00:00"
+      },
+      "folder": "TakeBeer",
+      "frames": {
+        "rotations": {
+          "north": "TakeBeer/rotations/north.png",
+          "south": "TakeBeer/rotations/south.png",
+          "east": "TakeBeer/rotations/east.png",
+          "west": "TakeBeer/rotations/west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "955940d7-7e34-4eeb-9d10-a6d50557b70a",
+        "name": "Walking",
+        "prompt": "Full-body pixel art game sprite of Edda, an older female traveling healer at a medieval border inn. Silver braid, muted oxblood red hood and scarf, moss green tunic, leather satchel, simple brown boots, friendly weathered face. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, warm muted palette, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T08:56:42.908757+00:00"
+      },
+      "folder": "Walking",
+      "frames": {
+        "rotations": {
+          "north": "Walking/rotations/north.png",
+          "south": "Walking/rotations/south.png",
+          "east": "Walking/rotations/east.png",
+          "west": "Walking/rotations/west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "4ec12ed2-c48b-4282-a42c-d2e6ef124878",
+        "name": "Talking",
+        "prompt": "Full-body pixel art game sprite of Edda, an older female traveling healer at a medieval border inn. Silver braid, muted oxblood red hood and scarf, moss green tunic, leather satchel, simple brown boots, friendly weathered face. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, warm muted palette, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T08:56:44.477955+00:00"
+      },
+      "folder": "Talking",
+      "frames": {
+        "rotations": {
+          "north": "Talking/rotations/north.png",
+          "south": "Talking/rotations/south.png",
+          "east": "Talking/rotations/east.png",
+          "west": "Talking/rotations/west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-02T09:27:12.106197",
+  "exported_directions": [
+    "north",
+    "south",
+    "east",
+    "west"
+  ],
+  "source_directions": 8
+}

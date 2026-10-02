@@ -1,0 +1,214 @@
+{
+  "group_id": "7cac920b-56f8-4f3d-9256-2f4fdf0565ad",
+  "states": [
+    {
+      "character": {
+        "id": "ca874ea8-7b06-410b-9d4e-7ea585b9b93c",
+        "name": "Idle",
+        "prompt": "Adult male border trader at a medieval frontier inn. Short curly auburn hair, close-cropped red beard, alert eyes, ochre wool hooded vest over dark moss-green tunic, narrow brown leather belt with a small coin pouch, worn brown trousers and sturdy boots. Compact full-body humanoid sprite centered on transparent 68x68 canvas, readable silhouette, dark clean pixel outline, restrained earthy colors, low top-down three-quarter game view. Empty hands, no props, no furniture. Distinct from a healer and armored guard.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T09:25:05.960798+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "north": "Idle/rotations/north.png",
+          "south": "Idle/rotations/south.png",
+          "east": "Idle/rotations/east.png",
+          "west": "Idle/rotations/west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "2f65a5b1-0320-443e-af3a-793c8afd4666",
+        "name": "Seated",
+        "prompt": "Adult male border trader at a medieval frontier inn. Short curly auburn hair, close-cropped red beard, alert eyes, ochre wool hooded vest over dark moss-green tunic, narrow brown leather belt with a small coin pouch, worn brown trousers and sturdy boots. Compact full-body humanoid sprite centered on transparent 68x68 canvas, readable silhouette, dark clean pixel outline, restrained earthy colors, low top-down three-quarter game view. Empty hands, no props, no furniture. Distinct from a healer and armored guard.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T10:38:29.034278+00:00"
+      },
+      "folder": "Seated",
+      "frames": {
+        "rotations": {
+          "north": "Seated/rotations/north.png",
+          "south": "Seated/rotations/south.png",
+          "east": "Seated/rotations/east.png",
+          "west": "Seated/rotations/west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "73ed2a18-7f8c-4780-beb2-282cd7545147",
+        "name": "Darts",
+        "prompt": "Adult male border trader at a medieval frontier inn. Short curly auburn hair, close-cropped red beard, alert eyes, ochre wool hooded vest over dark moss-green tunic, narrow brown leather belt with a small coin pouch, worn brown trousers and sturdy boots. Compact full-body humanoid sprite centered on transparent 68x68 canvas, readable silhouette, dark clean pixel outline, restrained earthy colors, low top-down three-quarter game view. Empty hands, no props, no furniture. Distinct from a healer and armored guard.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T10:38:29.297934+00:00"
+      },
+      "folder": "Darts",
+      "frames": {
+        "rotations": {
+          "north": "Darts/rotations/north.png",
+          "south": "Darts/rotations/south.png",
+          "east": "Darts/rotations/east.png",
+          "west": "Darts/rotations/west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "b6d5d6d9-c583-4259-a29f-7583524120d8",
+        "name": "Bathroom",
+        "prompt": "Adult male border trader at a medieval frontier inn. Short curly auburn hair, close-cropped red beard, alert eyes, ochre wool hooded vest over dark moss-green tunic, narrow brown leather belt with a small coin pouch, worn brown trousers and sturdy boots. Compact full-body humanoid sprite centered on transparent 68x68 canvas, readable silhouette, dark clean pixel outline, restrained earthy colors, low top-down three-quarter game view. Empty hands, no props, no furniture. Distinct from a healer and armored guard.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T10:38:29.491765+00:00"
+      },
+      "folder": "Bathroom",
+      "frames": {
+        "rotations": {
+          "north": "Bathroom/rotations/north.png",
+          "south": "Bathroom/rotations/south.png",
+          "east": "Bathroom/rotations/east.png",
+          "west": "Bathroom/rotations/west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "957ae78b-e465-41ad-90da-82f2f04024e6",
+        "name": "Drinking",
+        "prompt": "Adult male border trader at a medieval frontier inn. Short curly auburn hair, close-cropped red beard, alert eyes, ochre wool hooded vest over dark moss-green tunic, narrow brown leather belt with a small coin pouch, worn brown trousers and sturdy boots. Compact full-body humanoid sprite centered on transparent 68x68 canvas, readable silhouette, dark clean pixel outline, restrained earthy colors, low top-down three-quarter game view. Empty hands, no props, no furniture. Distinct from a healer and armored guard.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T10:38:29.666168+00:00"
+      },
+      "folder": "Drinking",
+      "frames": {
+        "rotations": {
+          "north": "Drinking/rotations/north.png",
+          "south": "Drinking/rotations/south.png",
+          "east": "Drinking/rotations/east.png",
+          "west": "Drinking/rotations/west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "e1e67432-381f-47b5-9474-a7d801e6f588",
+        "name": "TakeBeer",
+        "prompt": "Adult male border trader at a medieval frontier inn. Short curly auburn hair, close-cropped red beard, alert eyes, ochre wool hooded vest over dark moss-green tunic, narrow brown leather belt with a small coin pouch, worn brown trousers and sturdy boots. Compact full-body humanoid sprite centered on transparent 68x68 canvas, readable silhouette, dark clean pixel outline, restrained earthy colors, low top-down three-quarter game view. Empty hands, no props, no furniture. Distinct from a healer and armored guard.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T10:38:29.846218+00:00"
+      },
+      "folder": "TakeBeer",
+      "frames": {
+        "rotations": {
+          "north": "TakeBeer/rotations/north.png",
+          "south": "TakeBeer/rotations/south.png",
+          "east": "TakeBeer/rotations/east.png",
+          "west": "TakeBeer/rotations/west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "feae7f97-da77-4045-85cc-178e3b4fed26",
+        "name": "Walking",
+        "prompt": "Adult male border trader at a medieval frontier inn. Short curly auburn hair, close-cropped red beard, alert eyes, ochre wool hooded vest over dark moss-green tunic, narrow brown leather belt with a small coin pouch, worn brown trousers and sturdy boots. Compact full-body humanoid sprite centered on transparent 68x68 canvas, readable silhouette, dark clean pixel outline, restrained earthy colors, low top-down three-quarter game view. Empty hands, no props, no furniture. Distinct from a healer and armored guard.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T10:38:30.017772+00:00"
+      },
+      "folder": "Walking",
+      "frames": {
+        "rotations": {
+          "north": "Walking/rotations/north.png",
+          "south": "Walking/rotations/south.png",
+          "east": "Walking/rotations/east.png",
+          "west": "Walking/rotations/west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "4fb7de07-a422-406a-95d0-47f7bbe996c2",
+        "name": "Talking",
+        "prompt": "Adult male border trader at a medieval frontier inn. Short curly auburn hair, close-cropped red beard, alert eyes, ochre wool hooded vest over dark moss-green tunic, narrow brown leather belt with a small coin pouch, worn brown trousers and sturdy boots. Compact full-body humanoid sprite centered on transparent 68x68 canvas, readable silhouette, dark clean pixel outline, restrained earthy colors, low top-down three-quarter game view. Empty hands, no props, no furniture. Distinct from a healer and armored guard.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T10:38:30.231326+00:00"
+      },
+      "folder": "Talking",
+      "frames": {
+        "rotations": {
+          "north": "Talking/rotations/north.png",
+          "south": "Talking/rotations/south.png",
+          "east": "Talking/rotations/east.png",
+          "west": "Talking/rotations/west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-02T10:42:33.095516",
+  "exported_directions": [
+    "north",
+    "south",
+    "east",
+    "west"
+  ],
+  "source_directions": 8
+}
