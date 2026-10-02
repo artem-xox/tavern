@@ -6,9 +6,10 @@ from dataclasses import dataclass
 from random import Random
 from typing import Any, TypedDict
 
-from tavern.briefing import brief, in_use
+from tavern.briefing import brief, in_use, line_place
 from tavern.families import family_scores, group_families
 from tavern.jev import JevError, evaluate_actions, evaluate_seats
+from tavern.observation import known_objects, own_actor
 from tavern.selection import bounded, drawable, read_temperature, select
 
 
@@ -46,76 +47,6 @@ class Decision(TypedDict):
     source: str
     scores: dict[str, float]
     error: str | None
-
-
-def _number(value: Any, label: str, maximum: float) -> float:
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise ValueError(f"{label} must be numeric")
-    if not math.isfinite(value) or not 0 <= value <= maximum:
-        raise ValueError(f"{label} must be finite and between 0 and {maximum}")
-    return float(value)
-
-
-def _actor(observation: Mapping[str, Any]) -> Mapping[str, Any]:
-    actor = observation.get("actor")
-    if not isinstance(actor, Mapping) or not isinstance(actor.get("id"), str) or not actor["id"]:
-        raise ValueError("Observation must contain the NPC's own actor")
-    needs, inventory, traits = actor.get("needs"), actor.get("inventory"), actor.get("traits", {})
-    if not all(isinstance(value, Mapping) for value in (needs, inventory, traits)):
-        raise ValueError("Actor needs, inventory and traits must be mappings")
-    for name in ("thirst", "fatigue", "bladder"):
-        _number(needs.get(name), name, 100)
-    for name in ("social", "boredom"):
-        _number(needs.get(name, 0), name, 100)
-    beer = inventory.get("beer")
-    if isinstance(beer, bool) or not isinstance(beer, int) or beer < 0:
-        raise ValueError("Own beer inventory must be a nonnegative integer")
-    for name in ("patience", "comfort", "curiosity"):
-        _number(traits.get(name, 0.5), name, 1)
-    _validate_visit(actor)
-    return actor
-
-
-def _validate_visit(actor: Mapping[str, Any]) -> None:
-    # Observations built outside the world may omit the visit; that reads as a fresh arrival.
-    visit = actor.get("visit", {})
-    if not isinstance(visit, Mapping):
-        raise ValueError("Visit must be a mapping")
-    _number(visit.get("seconds", 0), "Visit seconds", math.inf)
-    beers, grievances = visit.get("beers", 0), visit.get("grievances", [])
-    if isinstance(beers, bool) or not isinstance(beers, int) or beers < 0:
-        raise ValueError("Beers drunk must be a nonnegative integer")
-    if not isinstance(grievances, list) or any(not isinstance(item, str) for item in grievances):
-        raise ValueError("Grievances must be a list of strings")
-    own = actor.get("favorite_seat_id")
-    if own is not None and (not isinstance(own, str) or not own):
-        raise ValueError("Own seat must be a chair ID or null")
-
-
-def _known_objects(observation: Mapping[str, Any]) -> list[Mapping[str, Any]]:
-    objects = observation.get("objects")
-    if not isinstance(objects, Sequence) or isinstance(objects, (str, bytes)):
-        raise ValueError("Observation objects must be a sequence")
-    known = {}
-    for item in objects:
-        if not isinstance(item, Mapping) or not isinstance(item.get("id"), str) or not item["id"]:
-            raise ValueError("Observed objects must have nonempty string IDs")
-        if item.get("kind") not in ("tap", "chair", "toilet", "table", "bar", "darts", "door", "window", "fireplace"):
-            raise ValueError("Unknown observed object kind")
-        if "appeal" in item:
-            _number(item["appeal"], "Seat appeal", 1)
-        if not isinstance(item.get("interaction_spots", []), list):
-            raise ValueError("Observed interaction spots must be a list")
-        if item["id"] in known and known[item["id"]] != item:
-            raise ValueError("Conflicting observations of the same object")
-        reservation = item.get("reserved_by")
-        if reservation is not None and (not isinstance(reservation, str) or not reservation):
-            raise ValueError("Observed reservation must be an actor ID or null")
-        stock = item.get("stock")
-        if stock is not None and (isinstance(stock, bool) or not isinstance(stock, int) or stock < 0):
-            raise ValueError("Observed stock must be a nonnegative integer or unknown")
-        known[item["id"]] = item
-    return list(known.values())
 
 
 def _action(verb: str, target: str | None = None) -> Action:
@@ -156,7 +87,7 @@ def _concrete_candidates(observation: Mapping[str, Any]) -> list[Action]:
     Raises:
         ValueError: Observation, needs, inventory, closing flag or object records are malformed.
     """
-    actor, objects = _actor(observation), _known_objects(observation)
+    actor, objects = own_actor(observation), known_objects(observation)
     talks = _social_candidates(observation, actor, objects)  # also validates the visible visitors
     if _closed(observation):
         return _going_home(observation, objects)
@@ -167,15 +98,24 @@ def _concrete_candidates(observation: Mapping[str, Any]) -> list[Action]:
     for item in sorted(objects, key=lambda item: item["id"]):
         if item["kind"] not in verbs or item.get("table_id"):
             continue
-        if in_use(observation, item):
-            continue
         if item["kind"] == "tap" and (not item.get("stock") or actor["inventory"]["beer"]):
             continue
         if item["kind"] == "tap" and "social" in actor["needs"] and actor["needs"]["thirst"] < 35:
             continue
-        actions.append(_action(verbs[item["kind"]], item["id"]))
+        actions.extend(_line_options(observation, item, _action(verbs[item["kind"]], item["id"])))
     return [*actions, *_seat_wish(observation, objects), *_views(observation, objects),
             *talks, _action("inspect"), _action("wait")]
+
+
+def _line_options(observation: Mapping[str, Any], item: Mapping[str, Any], action: Action) -> list[Action]:
+    # A busy place with a line is still offered: choosing it means waiting in line, or keeping
+    # one's place in it. Cutting in is offered while others wait ahead, unless the line is full.
+    if "queue_spots" not in item:
+        return [] if in_use(observation, item) else [action]
+    ahead, joined = line_place(observation, item)
+    if not joined and ahead >= len(item["queue_spots"]):
+        return []
+    return [action, *([_action("cut_in_line", item["id"])] if ahead else [])]
 
 
 def _closed(observation: Mapping[str, Any]) -> bool:
@@ -235,8 +175,8 @@ def build_seat_candidates(observation: Mapping[str, Any]) -> list[dict[str, Any]
     Raises:
         ValueError: Observation, visit or object records are malformed.
     """
-    _actor(observation)
-    return [_action("sit", item["id"]) for item in _free_seats(observation, _known_objects(observation))]
+    own_actor(observation)
+    return [_action("sit", item["id"]) for item in _free_seats(observation, known_objects(observation))]
 
 
 def _social_candidates(observation: Mapping[str, Any], actor: Mapping[str, Any],
@@ -281,10 +221,31 @@ def _local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[s
         "inspect": 0.08 + 0.12 * traits.get("curiosity", 0.5) + 0.4 * missing_relief,
         "wait": max(0.0, 0.08 + 0.12 * traits.get("patience", 0.5) - 0.08 * max(thirst, fatigue, bladder)),
         "leave": _leave_utility(observation),
+        "cut_in_line": 0.0,  # weighed against the wait in _score_lines
     }
     scores = {action["id"]: utility[action["verb"]] for action in candidates}
     _score_seats(observation, candidates, scores)
+    _score_lines(observation, candidates, scores)
     return scores
+
+
+def _score_lines(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
+                 scores: dict[str, float]) -> None:
+    # Each person ahead, including whoever uses the place, makes waiting less worthwhile, more so
+    # for the impatient. Cutting in skips the wait but is rude, which the patient mind more.
+    patience = observation["actor"].get("traits", {}).get("patience", 0.5)
+    objects = {item["id"]: item for item in observation["objects"]}
+    uses = {}
+    for action in candidates:
+        item = objects.get(action["target_id"])
+        if item is None or "queue_spots" not in item or action["verb"] == "cut_in_line":
+            continue
+        ahead = line_place(observation, item)[0] + in_use(observation, item)
+        uses[item["id"]] = scores[action["id"]]
+        scores[action["id"]] = max(0.0, scores[action["id"]] - 0.1 * ahead * (1.5 - patience))
+    for action in candidates:
+        if action["verb"] == "cut_in_line":
+            scores[action["id"]] = max(0.0, uses[action["target_id"]] - 0.35 - 0.4 * patience)
 
 
 def _leave_utility(observation: Mapping[str, Any]) -> float:

@@ -179,6 +179,12 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "visit. Visitors who have just come in usually want to sit down and have a beer first. If "
                       "they already have a seat of their own, this means moving to another table, which is "
                       "worth it mainly to join company when they feel lonely."),
+    # Not a world action of its own: the world reads it as using the place, from the front of its line.
+    Activity(verb="cut_in_line", target_kinds=("tap", "toilet", "darts"), duration=None, family="cutting_in",
+             label="Cut in line",
+             what="push to the front of the line for {target}, ahead of everyone waiting",
+             guidance="Rude: everyone pushed past resents it and remembers who did it. Only an impatient guest "
+                      "with a pressing need and a long line ahead would consider it."),
 )})
 
 
@@ -195,6 +201,7 @@ FAMILIES: Mapping[str, str] = MappingProxyType({
     "exploring": "explore the room",
     "idling": "wait a moment",
     "going_home": "go home for the night",
+    "cutting_in": "push to the front of a line instead of waiting",
 })
 
 

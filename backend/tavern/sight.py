@@ -66,6 +66,9 @@ def look_around(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
 def refresh_knowledge(world: Mapping[str, Any], actor: dict[str, Any], visible: list[list[int]]) -> None:
     """Remember the cells seen and the current state of every object anchored in them.
 
+    A line is seen where it stands: a place whose queue spot is in sight is remembered too,
+    with who waits for it, even when the place itself (a WC round a corner) is not.
+
     Args:
         world: Current world.
         actor: Viewer whose knowledge is updated in place.
@@ -75,7 +78,7 @@ def refresh_knowledge(world: Mapping[str, Any], actor: dict[str, Any], visible: 
     remembered = set(map(tuple, actor["knowledge"]["cells"]))
     actor["knowledge"]["cells"] = [list(cell) for cell in sorted(remembered | cells)]
     for item in world["map"]["objects"]:
-        if (item["x"], item["y"]) in cells:
+        if (item["x"], item["y"]) in cells or any(tuple(spot) in cells for spot in item.get("queue_spots", [])):
             record = deepcopy(item)
             record["last_seen"] = world["time"]
             actor["knowledge"]["objects"][item["id"]] = record

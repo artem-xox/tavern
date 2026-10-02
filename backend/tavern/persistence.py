@@ -7,6 +7,7 @@ from typing import Any, Mapping
 
 from tavern.activities import ACTIVITIES
 from tavern.navigation import find_path
+from tavern.room import find_object
 from tavern.scenario import Guest, parse_guest
 from tavern.validation import number
 from tavern.world import create_world
@@ -46,7 +47,7 @@ def _validate_actor_runtime(world: Mapping[str, Any]) -> None:
     actor_ids = {actor["id"] for actor in world["actors"]}
     verbs = set(world["rules"]["durations"])
     for actor in world["actors"]:
-        if actor.get("status") not in {"idle", "walking", "interacting", "waiting"}:
+        if actor.get("status") not in {"idle", "walking", "interacting", "waiting", "queued"}:
             raise ValueError("Invalid saved actor status")
         action = actor.get("action")
         if action is not None and (not isinstance(action, dict) or action.get("verb") not in verbs):
@@ -69,6 +70,36 @@ def _validate_actor_runtime(world: Mapping[str, Any]) -> None:
     for item in world["map"]["objects"]:
         if item.get("reserved_by") is not None and item["reserved_by"] not in actor_ids:
             raise ValueError("Saved reservation belongs to an unknown actor")
+
+
+def _validate_lines(world: Mapping[str, Any]) -> None:
+    waiting: set[str] = set()
+    for item in world["map"]["objects"]:
+        if "queue_spots" in item:
+            _validate_line(world, item, waiting)
+    for actor in world["actors"]:
+        target = find_object(world["map"], (actor["action"] or {}).get("target_id"))
+        lined = target is not None and "queue_spots" in target
+        if (actor["status"] == "queued" or lined) and actor["id"] not in waiting and not (
+                lined and target["reserved_by"] == actor["id"]):
+            raise ValueError("Saved guest waits for a place without standing in its line")
+
+
+def _validate_line(world: Mapping[str, Any], item: Mapping[str, Any], waiting: set[str]) -> None:
+    # Adds everyone in this line to `waiting`, so a guest standing in two lines is caught.
+    actors, line = {actor["id"]: actor for actor in world["actors"]}, item.get("queue")
+    if not isinstance(line, list) or len(line) > len(item["queue_spots"]):
+        raise ValueError("Invalid saved line")
+    for entry in line:
+        if not isinstance(entry, dict) or set(entry) != {"actor_id", "since"}:
+            raise ValueError("Invalid saved place in line")
+        number(entry["since"], "Saved time in line", 0, world["time"])
+        actor = actors.get(entry["actor_id"])
+        if actor is None or actor["id"] in waiting or item["reserved_by"] == actor["id"]:
+            raise ValueError("Saved line holds an unknown, repeated or served guest")
+        if not actor["action"] or actor["action"].get("target_id") != item["id"]:
+            raise ValueError("Saved guest in line is not waiting for that place")
+        waiting.add(actor["id"])
 
 
 def _validate_known_objects(objects: Mapping[str, Any], world: Mapping[str, Any]) -> None:
@@ -198,6 +229,13 @@ def _validate_rules(world: Mapping[str, Any]) -> None:
         raise ValueError("Invalid saved action definitions")
     if set(rules["need_rates"]) != {"thirst", "fatigue", "bladder", "social", "boredom"}:
         raise ValueError("Invalid saved needs")
+    patience = rules["queue_patience"]
+    if set(patience) != {"base", "patience", "urgency"}:
+        raise ValueError("Invalid saved patience in line")
+    for value in patience.values():
+        number(value, "Saved patience in line", 0, math.inf)
+    if not isinstance(rules["queue_needs"], dict) or not set(rules["queue_needs"].values()) <= set(rules["need_rates"]):
+        raise ValueError("Invalid saved needs behind lines")
 
 
 def parse_world(encoded: str) -> dict[str, Any]:
@@ -212,13 +250,14 @@ def parse_world(encoded: str) -> dict[str, Any]:
     """
     try:
         world = json.loads(encoded)
-        if not isinstance(world, dict) or world.get("schema_version") != 2:
+        if not isinstance(world, dict) or world.get("schema_version") != 3:
             raise ValueError("Unsupported snapshot version")
         json.dumps(world, allow_nan=False)
         _validate_clock(world)
         _validate_geometry(world)
         _validate_rules(world)
         _validate_actor_runtime(world)
+        _validate_lines(world)
         _validate_departed(world)
         _validate_expected(world)
         if not isinstance(world.get("events"), list):

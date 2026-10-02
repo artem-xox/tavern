@@ -103,12 +103,16 @@ Write tests first for all business logic, as in [AGENTS.md](../../AGENTS.md).
 
 ### M2 — Body and choice
 
-- [ ] **E05 — Queues.** Tap, WC, and darts get capacity and queue spots; guests join,
+- [x] **E05 — Queues.** Tap, WC, and darts get capacity and queue spots; guests join,
   advance, give up after patience, and leave the line on interrupt; `cut_in_line`
   gives thoughts to those behind. Done: five guests at one tap form a line without
   overlaps or stuck reservations; an impatient guest gives up. Also fixes a deadlock seen
   in a live evening: one guest on the WC spot and another in the WC doorway waiting for it
-  block each other for minutes, since only idle guests step aside.
+  block each other for minutes, since only idle guests step aside. `queues.py` keeps each
+  place's line (`queue_spots` in `data/tavern.json`, `queue` in the world; capacity stays
+  one per place, its single reservation); the front goes in only once nobody stands on the
+  way in, so the WC deadlock is gone. Saves are `schema_version` 3; grievances stand in
+  for thoughts until E12.
 - [ ] **E06 — Stimuli and hearing.** Activities and events emit stimuli; perception
   applies distance and wall damping; salience adds relevance (me, a friend, my name)
   and temperament. Done: parametrized cases show a fight heard from the WC and a quiet
