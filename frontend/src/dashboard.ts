@@ -269,6 +269,7 @@ export class Dashboard {
     if (this.departed(actor)) return "gone home";
     if (this.world?.actors.some((visitor: Actor): boolean => visitor.action?.verb === "talk" && visitor.action.target_id === actor.id)) return "chatting";
     if (actor.status === "walking" || actor.status === "waiting") return actor.status;
+    if (actor.status === "queued") return "in line";
     if (actor.action?.verb === "talk") return "chatting";
     if (actor.action?.verb === "play_darts") return "playing darts";
     if (actor.action?.verb === "watch") return "admiring the view";

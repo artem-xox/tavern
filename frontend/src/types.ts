@@ -17,6 +17,10 @@ export interface WorldObject {
   interaction_spots: Cell[];
   stock: number | null;
   reserved_by: string | null;
+  /** Cells a line stands on, front first, for places used one visitor at a time. */
+  queue_spots?: Cell[];
+  /** Who waits in that line, front first, and since when (game seconds). */
+  queue?: { actor_id: string; since: number }[];
   appeal?: number;
   comforts?: string[];
   reach?: number;
@@ -54,7 +58,7 @@ export interface Actor {
   traits: Record<string, unknown>;
   needs: { thirst: number; fatigue: number; bladder: number; social: number; boredom: number };
   inventory: { beer: number };
-  status: "idle" | "walking" | "interacting" | "waiting";
+  status: "idle" | "walking" | "interacting" | "waiting" | "queued";
   action: Action | null;
   seat_id: string | null;
   favorite_seat_id: string | null;
