@@ -41,7 +41,7 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> dict[str, Any]:
                  map=world_map, actors=actors, departed=[], expected=[], closes_at=None,
                  events=[], rules=_rules())
     for actor in actors:
-        observe_actor(world, actor["id"])
+        _look(world, actor)
         if ranges is not None:
             look_around(world, actor)
     return world
@@ -133,7 +133,7 @@ def _clear_action(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
 
 def _reject(world: Mapping[str, Any], actor: dict[str, Any], reason: str) -> dict[str, Any]:
     record_event(world, actor, "action_failed", reason)
-    observe_actor(world, actor["id"])
+    _look(world, actor)
     return {"accepted": False, "reason": reason}
 
 
@@ -279,7 +279,7 @@ def _interact(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float) -
         _apply_effect(world, actor)
         record_event(world, actor, "action_completed", f"{actor['name']} completed {verb}")
         _clear_action(world, actor)
-        observe_actor(world, actor["id"])
+        _look(world, actor)
 
 
 def _step_actor(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float) -> None:
@@ -293,7 +293,7 @@ def _step_actor(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float)
             _move(world, actor, elapsed)
         elif actor["status"] == "interacting":
             _interact(world, actor, elapsed)
-    observe_actor(world, actor["id"])
+    _look(world, actor)
 
 
 def step_world(world: dict[str, Any], dt: float) -> None:
@@ -333,6 +333,14 @@ def _see_off(world: dict[str, Any]) -> None:
                 f"{actor['name']} left the inn after {beers} {'beer' if beers == 1 else 'beers'}")
 
 
+def _look(world: Mapping[str, Any], actor: dict[str, Any]) -> list[list[int]]:
+    # The world refreshes what each visitor knows every tick; only a decision needs the full,
+    # copied observation, so the copying stays in observe_actor.
+    visible = visible_cells(world, actor, world["rules"]["vision_radius"])
+    refresh_knowledge(world, actor, visible)
+    return visible
+
+
 def observe_actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
     """Refresh and return a visitor's personal observation without private leaks.
 
@@ -351,8 +359,7 @@ def observe_actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
     actor = _actor(world, actor_id)
     if actor is None:
         raise ValueError("Unknown visitor")
-    visible = visible_cells(world, actor, world["rules"]["vision_radius"])
-    refresh_knowledge(world, actor, visible)
+    visible = _look(world, actor)
     return {"actor": deepcopy(actor), "objects": deepcopy(list(actor["knowledge"]["objects"].values())),
             "visitors": _visible_visitors(world, actor),
             "memory": deepcopy(actor["memory"][-10:]), "visible_cells": visible, "time": world["time"],
