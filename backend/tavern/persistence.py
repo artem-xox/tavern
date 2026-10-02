@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from tavern.activities import ACTIVITIES
+from tavern.expression import EMOTES
+from tavern.hearing import Sound
 from tavern.navigation import find_path
 from tavern.room import find_object
 from tavern.scenario import Guest, parse_guest
@@ -67,6 +69,7 @@ def _validate_actor_runtime(world: Mapping[str, Any]) -> None:
         _validate_progress(actor, world["map"])
         _validate_seat(actor, world)
         _validate_visit(actor.get("visit"))
+        _validate_expression(actor, world)
     for item in world["map"]["objects"]:
         if item.get("reserved_by") is not None and item["reserved_by"] not in actor_ids:
             raise ValueError("Saved reservation belongs to an unknown actor")
@@ -236,6 +239,66 @@ def _validate_rules(world: Mapping[str, Any]) -> None:
         number(value, "Saved patience in line", 0, math.inf)
     if not isinstance(rules["queue_needs"], dict) or not set(rules["queue_needs"].values()) <= set(rules["need_rates"]):
         raise ValueError("Invalid saved needs behind lines")
+    _validate_attention_rules(rules.get("attention"))
+    lifetimes = rules.get("emote_seconds")
+    if not isinstance(lifetimes, dict) or set(lifetimes) != set(EMOTES):
+        raise ValueError("Invalid saved emote lifetimes")
+    for value in [*lifetimes.values(), rules.get("long_wait")]:
+        number(value, "Saved emote time", 0, math.inf)
+
+
+def _validate_expression(actor: Mapping[str, Any], world: Mapping[str, Any]) -> None:
+    if actor.get("facing") not in (None, "north", "south", "east", "west"):
+        raise ValueError("Invalid saved facing")
+    gaze, emote, interrupted_at = actor["gaze"], actor["emote"], actor["interrupted_at"]
+    if gaze is not None:
+        if not isinstance(gaze, dict) or set(gaze) != {"cell", "until", "stimulus_id"}:
+            raise ValueError("Invalid saved gaze")
+        _validate_cell(gaze["cell"], world["map"])
+        number(gaze["until"], "Saved gaze end", 0, math.inf)
+        if type(gaze["stimulus_id"]) is not int:
+            raise ValueError("Invalid saved gaze cause")
+    if emote is not None:
+        if not isinstance(emote, dict) or set(emote) != {"kind", "until"} or emote["kind"] not in EMOTES:
+            raise ValueError("Invalid saved emote")
+        number(emote["until"], "Saved emote end", 0, math.inf)
+    if interrupted_at is not None:
+        number(interrupted_at, "Saved interruption time", 0, world["time"])
+
+
+def _validate_attention_rules(attention: Any) -> None:
+    keys = {"glance", "interrupt", "wall_damping", "glance_seconds", "turn_seconds"}
+    if not isinstance(attention, dict) or set(attention) != keys:
+        raise ValueError("Invalid saved attention rules")
+    for key in keys:
+        number(attention[key], f"Saved attention rule {key}", 0, math.inf)
+    if not 0 < attention["glance"] <= attention["interrupt"] or attention["wall_damping"] > 1:
+        raise ValueError("Saved attention thresholds are out of order")
+
+
+def _validate_stimuli(world: Mapping[str, Any]) -> None:
+    stimuli, issued = world.get("stimuli"), world.get("next_stimulus_id")
+    if type(issued) is not int or issued < 0 or not isinstance(stimuli, list):
+        raise ValueError("Invalid saved stimuli")
+    for item in stimuli:
+        _validate_stimulus(item, world)
+    ids = [item["id"] for item in stimuli]
+    if len(set(ids)) != len(ids) or any(type(value) is not int or not 0 <= value < issued for value in ids):
+        raise ValueError("Saved stimuli need unique issued IDs")
+
+
+def _validate_stimulus(item: Any, world: Mapping[str, Any]) -> None:
+    keys = {"id", "kind", "noun", "sources", "cell", "loudness", "reach", "time", "about", "cause", "event"}
+    if not isinstance(item, dict) or set(item) != keys:
+        raise ValueError("Invalid saved stimulus")
+    Sound(item["kind"], number(item["loudness"], "Saved loudness", 0, 1), item["reach"], item["noun"])
+    number(item["time"], "Saved stimulus time", 0, world["time"])
+    _validate_cell(item["cell"], world["map"])
+    for key in ("sources", "about"):
+        if not isinstance(item[key], list) or any(not isinstance(value, str) for value in item[key]):
+            raise ValueError(f"Invalid saved stimulus {key}")
+    if not isinstance(item["cause"], str) or not isinstance(item["event"], (str, type(None))):
+        raise ValueError("Invalid saved stimulus cause")
 
 
 def parse_world(encoded: str) -> dict[str, Any]:
@@ -260,6 +323,7 @@ def parse_world(encoded: str) -> dict[str, Any]:
         _validate_lines(world)
         _validate_departed(world)
         _validate_expected(world)
+        _validate_stimuli(world)
         if not isinstance(world.get("events"), list):
             raise ValueError("Invalid saved event log")
         return world

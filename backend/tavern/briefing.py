@@ -26,7 +26,8 @@ def brief(observation: Observation, candidates: Sequence[Action]) -> dict[str, A
     Raises:
         ValueError: A candidate's verb or target cannot be described.
     """
-    parts = (_closing(observation), _stay(observation), _whereabouts(observation), _own_seat(observation),
+    parts = (_closing(observation), _stay(observation), _whereabouts(observation), _trigger(observation),
+             _own_seat(observation),
              _needs(observation), _temperament(observation), _grievances(observation), _people(observation),
              _places(observation), _tables(observation), _recent(observation))
     return {"situation": " ".join(part for part in parts if part),
@@ -148,6 +149,15 @@ def _whereabouts(observation: Observation) -> str:
     places = [item for item in observation["objects"] if item["kind"] != "chair"]
     near = min(places, key=lambda item: _steps(observation, item), default=None)
     return f"They are standing{f' near {_place(near)}' if near else ''}, {hands}."
+
+
+def _trigger(observation: Observation) -> str:
+    # What just caught their attention leads the choice it triggered; after 15 s it is old news.
+    now = observation.get("time")
+    noticed = [item for item in observation.get("memory", []) if item["type"] in ("interrupted", "alerted")]
+    if now is None or not noticed or now - noticed[-1]["time"] >= 15:
+        return ""
+    return f"Just now: {noticed[-1]['message']}."
 
 
 def _own_seat(observation: Observation) -> str:
@@ -272,7 +282,8 @@ def _memory(memory: Mapping[str, Any]) -> str:
 def _recent(observation: Observation) -> str:
     now = observation.get("time")
     # A finished chat is already remembered as the conversation itself.
-    memories = [item for item in observation.get("memory", []) if item["type"] != "action_started"
+    memories = [item for item in observation.get("memory", [])
+                if item["type"] not in ("action_started", "interrupted", "alerted")
                 and not (item["type"] == "action_completed" and item["message"].endswith(" talk"))][-5:]
     if now is None or not memories:
         return ""

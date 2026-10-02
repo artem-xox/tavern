@@ -7,8 +7,11 @@ from typing import Any
 from tavern.actions import action_error
 from tavern.activities import ACTIVITIES
 from tavern.arrival import admit_arrivals, arrival_ranges, arriving, create_actor
+from tavern.attention import attend
 from tavern.closing import call_closing, inn_closed
 from tavern.conversation import conversation_of
+from tavern.expression import update_expression
+from tavern.hearing import sound_activity
 from tavern.memory import record_event
 from tavern.queues import (check_lines, cut_in, join_line, leave_line, line_full, line_of, must_wait,
                            stay_in_line, step_line)
@@ -43,7 +46,7 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> dict[str, Any]:
         raise ValueError("Actors cannot overlap at startup")
     world = dict(schema_version=3, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
                  map=world_map, actors=actors, departed=[], expected=[], closes_at=None,
-                 events=[], rules=_rules())
+                 events=[], stimuli=[], next_stimulus_id=0, rules=_rules())
     check_lines(world)
     for actor in actors:
         _look(world, actor)
@@ -64,7 +67,15 @@ def _rules() -> dict[str, Any]:
             # Seconds a visitor waits in line before reconsidering: base, plus this much per unit
             # of the patience trait and per unit of urgency of the need the place relieves.
             "queue_patience": {"base": 5.0, "patience": 40.0, "urgency": 30.0},
-            "queue_needs": {"tap": "thirst", "toilet": "bladder", "darts": "boredom"}}
+            "queue_needs": {"tap": "thirst", "toilet": "bladder", "darts": "boredom"},
+            # Salience at which a visitor glances at a sound, and at which it interrupts them;
+            # each wall cell between a sound and a listener multiplies its loudness by wall_damping.
+            "attention": {"glance": 0.15, "interrupt": 0.5, "wall_damping": 0.5,
+                          "glance_seconds": 2.0, "turn_seconds": 3.0},
+            # How long each emote shows; a route blocked for long_wait seconds shows `waiting`.
+            "emote_seconds": {"alert": 1.5, "confused": 2.5, "angry": 4.0, "affection": 3.0, "sleep": 5.0,
+                              "waiting": 0.5},
+            "long_wait": 2.0}
 
 
 def _actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any] | None:
@@ -226,9 +237,11 @@ def _begin_interaction(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
         _fail(world, actor, reason)
     else:
         actor.update(status="interacting", _move_elapsed=0.0, _blocked_for=0.0)
-        arrival = ACTIVITIES[actor["action"]["verb"]].on_arrival
-        if arrival:
-            arrival(world, actor, _target(world, actor["action"]))
+        activity = ACTIVITIES[actor["action"]["verb"]]
+        if activity.on_arrival:
+            activity.on_arrival(world, actor, _target(world, actor["action"]))
+        if activity.sound:
+            sound_activity(world, actor, activity.sound, activity.doing)
 
 
 def _interaction_error(world: Mapping[str, Any], actor: Mapping[str, Any]) -> str | None:
@@ -284,7 +297,7 @@ def _step_actor(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float)
 
 
 def step_world(world: dict[str, Any], dt: float) -> None:
-    """Advance time, needs, movement, once-only action consequences, and arrivals.
+    """Advance time, needs, movement, once-only action consequences, arrivals, and attention.
 
     Args:
         world: Authoritative mutable world state.
@@ -308,6 +321,9 @@ def step_world(world: dict[str, Any], dt: float) -> None:
     _see_off(world)
     call_closing(world, since)
     admit_arrivals(world)
+    for actor in attend(world):
+        _clear_action(world, actor)
+    update_expression(world)
 
 
 def _see_off(world: dict[str, Any]) -> None:

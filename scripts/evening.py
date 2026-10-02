@@ -13,7 +13,7 @@ from dotenv import dotenv_values
 from tavern import jev
 from tavern.agents import Evaluators
 from tavern.lockstep import Pace, evening_mode, run_evening
-from tavern.metrics import evening_metrics
+from tavern.metrics import attention_counts, evening_metrics
 from tavern.recording import Record, format_record, parse_records, record_calls, replay_calls
 from tavern.scenario import open_evening, parse_scenario
 
@@ -139,7 +139,8 @@ def main(root: Path) -> None:
                       "model": settings["model"], "temperature": settings["temperature"], "step": pace.step,
                       "model_latency": pace.model_latency, "time_limit": pace.time_limit,
                       "stuck_threshold": args.stuck_threshold, "input_usd_per_million": args.input_price},
-              **evening_metrics(evening, calls, args.input_price, args.stuck_threshold)}
+              **evening_metrics(evening, calls, args.input_price, args.stuck_threshold),
+              "attention": attention_counts(evening)}
     (args.out / "events.jsonl").write_text("".join(json.dumps(event, sort_keys=True) + "\n" for event in evening.events))
     (args.out / "metrics.json").write_text(json.dumps(rounded(report), indent=2) + "\n")
     print(json.dumps(rounded(report), indent=2))

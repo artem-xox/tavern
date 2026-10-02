@@ -16,7 +16,7 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from tavern import agents
 from tavern.activities import ACTIVITIES, client_activities
 from tavern.database import initialize_database, load_database_world, save_database_world
-from tavern.decisions import apply_decision, decision_requests, free_to_decide, log_control
+from tavern.decisions import apply_decision, decision_requests, free_to_decide, log_control, stale_requests
 from tavern.jev import evaluate_actions, evaluate_seats
 from tavern.persistence import load_world, save_world
 from tavern.room import object_cells
@@ -77,6 +77,8 @@ class TavernRuntime:
         self.pending: dict[str, tuple[asyncio.Task[Any], int]] = {}
         self.revisions: dict[str, int] = {}
         self.next_decision: dict[str, float] = {}
+        # Game time each pending request was made, to drop those an interrupt overtakes.
+        self.asked_at: dict[str, float] = {}
 
     def _open(self, seed: int) -> dict[str, Any]:
         # A scenario says who comes tonight; without one, the room's own visitors are already in.
@@ -112,6 +114,7 @@ class TavernRuntime:
             if not pending[0].done():
                 continue
             del self.pending[actor_id]
+            self.asked_at.pop(actor_id, None)
             actor = next((item for item in self.world["actors"] if item["id"] == actor_id), None)
             if actor is not None:
                 self._apply_decision(actor, *pending)
@@ -124,6 +127,13 @@ class TavernRuntime:
         for actor_id, observation in decision_requests(self.world, self.pending, self.next_decision):
             task = asyncio.create_task(choose_action(observation, self.ai_config, self.rng))
             self.pending[actor_id] = (task, self.revisions.get(actor_id, 0))
+            self.asked_at[actor_id] = self.world["time"]
+
+    def _drop_stale_requests(self) -> None:
+        # As in the lockstep runner, an interrupted visitor's pending thought is dropped and they ask anew.
+        for actor_id in stale_requests(self.world, self.asked_at):
+            self.pending.pop(actor_id)[0].cancel()
+            del self.asked_at[actor_id]
 
     def advance(self, dt: float) -> None:
         """Advance the world without waiting for AI requests.
@@ -133,6 +143,7 @@ class TavernRuntime:
         """
         step_world(self.world, dt)
         if not self.world["paused"]:
+            self._drop_stale_requests()
             self._collect_decisions()
             self._request_decisions()
 
@@ -194,6 +205,7 @@ class TavernRuntime:
         for task, _revision in self.pending.values():
             task.cancel()
         self.pending.clear()
+        self.asked_at.clear()
         self.revisions.clear()
         self.next_decision.clear()
 
