@@ -246,7 +246,7 @@ def parse_world(encoded: str) -> dict[str, Any]:
     """
     try:
         world = json.loads(encoded)
-        if not isinstance(world, dict) or world.get("schema_version") != 2:
+        if not isinstance(world, dict) or world.get("schema_version") != 3:
             raise ValueError("Unsupported snapshot version")
         json.dumps(world, allow_nan=False)
         _validate_clock(world)

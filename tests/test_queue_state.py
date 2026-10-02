@@ -114,3 +114,15 @@ def test_corrupt_lines_are_rejected(tmp_path: Path, corrupt: Callable[[dict[str,
     save_world(world, tmp_path / "corrupt.json")
     with pytest.raises(ValueError):
         load_world(tmp_path / "corrupt.json")
+
+
+@pytest.mark.parametrize("version", [
+    pytest.param(1, id="version-1-save"),
+    pytest.param(2, id="version-2-save-without-lines"),
+])
+def test_saves_from_before_lines_are_rejected(tmp_path: Path, version: int) -> None:
+    world = lined_up()
+    world["schema_version"] = version
+    save_world(world, tmp_path / "old.json")
+    with pytest.raises(ValueError):
+        load_world(tmp_path / "old.json")
