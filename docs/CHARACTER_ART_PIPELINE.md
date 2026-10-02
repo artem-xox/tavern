@@ -118,7 +118,46 @@ group `7cac920b-56f8-4f3d-9256-2f4fdf0565ad`.
 - Walking: `feae7f97-da77-4045-85cc-178e3b4fed26`
 - Talking: `4fb7de07-a422-406a-95d0-47f7bbe996c2`
 
-All 24 native assets (three Idle plus 21 action states) completed at 68 × 68.
+**Brida, inn cook** — base `8727bfef-dd64-40c9-b344-a390bff7cb51`,
+group `38504e4a-e0e8-40d9-b905-c3525abacefd`. Replaces the first evening's
+old Idle-only veteran at 40 seconds, using the existing `cook` folder.
+
+- Idle: `8727bfef-dd64-40c9-b344-a390bff7cb51`
+- Seated: `7dd07b8a-5e93-4ecd-b759-bc103492443e`
+- Darts: `e7cba64c-bdec-45f7-8b79-e366cd492d44`
+- Bathroom: `ae1e63e8-0bb3-4815-b60e-21c23235c05b`
+- Drinking: `8a86431e-3e7a-414c-b45d-ac982950c0ed`
+- TakeBeer: `72841ad4-a481-4e58-b150-802908bcbfa8`
+- Walking: `66c491ee-035c-44e9-85b0-c1fb8d78cdd0`
+- Talking: `7642140b-b6a4-4ab1-9aad-7dfb69b462ab`
+
+**Calder, road courier** — base `243262aa-8424-4bad-9100-433ddd43d8dc`,
+group `bf431630-5232-41c8-96b7-6be67c003f4a`. Replaces the first evening's
+old Idle-only traveler at 110 seconds, using the `courier` folder.
+
+- Idle: `243262aa-8424-4bad-9100-433ddd43d8dc`
+- Seated: `faa9208e-0691-4d02-a540-20cc93353330`
+- Darts: `081c01f9-28ee-4ba3-b63f-4c1f6caa0388`
+- Bathroom: `9979469e-25e6-416e-8888-0f33f668238e`
+- Drinking: `522cabf3-93e2-410c-8ed1-7befc0f4d0ef`
+- TakeBeer: `58b5978c-b055-4f37-91a7-7a1e21ddd4fe`
+- Walking: `d6766c3c-4a1d-467c-bc4e-a855632f8c28`
+- Talking: `dcab5a35-bac4-410c-856d-0e128ed9f02b`
+
+**Saye, traveling storyteller** — base `1e854b26-bd3f-4425-945c-baa541f8a0e5`,
+group `6c8f78b2-3ea2-4174-8a1e-8f1cd6be218c`. Replaces the first evening's
+old Idle-only merchant at 190 seconds, using the generic `visitor` folder.
+
+- Idle: `1e854b26-bd3f-4425-945c-baa541f8a0e5`
+- Seated: `fdf264fb-1849-490e-b216-220f721eee41`
+- Darts: `d944b799-4656-49d4-a35d-9097545503b2`
+- Bathroom: `324dc530-ac0e-4a8a-bde5-9b9fcbbb2c6e`
+- Drinking: `036e6e97-aaa3-4f33-9669-323ce052b8b1`
+- TakeBeer: `434836a1-0968-43c1-acc6-b4f02e7b43b0`
+- Walking: `16ef800f-fa48-4726-8fac-a4a9c1e9ded2`
+- Talking: `cb3a5e4f-8bcc-4079-835d-e130705f0766`
+
+All 48 native assets (six Idle plus 42 action states) completed at 68 × 68.
 Their PixelLab groups have eight rotations each, but only the four cardinal
 rotations are in the browser build. `get_character` confirmed every state is
 in its intended eight-state group. The two discarded
@@ -143,9 +182,9 @@ South-view inspection found these issues:
   and foot pivots should be checked in the running tavern as art review.
 
 The connected account reported 2,000 Tier 1 generations for this cycle.
-The first two characters used 294 generations. Toren added 147: one discarded
-standard base × 1, one Pro Flash base × 6, and seven named states × 20.
-The balance after completion was 1,559/2,000. PixelLab quotes 20–40
+The first three characters used 441 generations. Brida, Calder, and Saye each
+used one Pro Flash base and seven named states. The balance after the six-character
+run was 1,041/2,000. PixelLab quotes 20–40
 generations for `create_character_state`; check `get_balance` before
 batching or retrying.
 The native character states cost much more than a
@@ -170,10 +209,9 @@ direction. [PixelLab API cost estimates](https://www.pixellab.ai/pixellab-api).
    target="character:<state_id>:<direction>")`. This replaces one existing
    rotation and offers an undo call; it does **not** create a new state. Do
    not save a new action over Idle.
-5. Download the group from the `download` URL in `get_character`; keep only
-   the four cardinal PNGs per state in source control. Retain `metadata.json`
-   with source IDs and `source_directions=8`, while `exported_directions` and
-   file paths list the four shipped views. A state result's download bundles
+5. Download the group from the `download` URL in `get_character`; copy only
+   the four cardinal PNGs per state into the game. Keep its `metadata.json`
+   and the source IDs in this document. A state result's download bundles
    every sibling state. The PixelLab library retains the full originals.
 
 For example, after reviewing Edda, a new “Reading” pose would use
@@ -184,9 +222,10 @@ using another character creation call would make a new individual instead.
 
 ## Game integration
 
-The default visitor IDs remain `mara`, `ivo`, and `nell` so saved sessions and
-force-action commands stay compatible; new evenings display Edda, Rurik, and
-Toren respectively. Each guest's `sprite` in the scenario
+The first evening now has six 68 px guests: Edda, Rurik, and Toren arrive at
+opening; Brida, Calder, and Saye replace the old Idle-only later arrivals.
+The original guest IDs remain stable so saved sessions and force-action commands
+stay compatible. Each guest's `sprite` in the scenario
 (`data/scenarios/first_evening.json`) names their folder, and
 `frontend/src/sprites.ts` lists every shipped folder with its display size and
 the poses it has in all four directions. `frontend/src/scene.ts` loads those
@@ -196,12 +235,8 @@ Walking. Active actions select their named pose; an occupied seat otherwise
 selects Seated. Idle covers watch, inspect, wait, and arrival/departure when
 not moving. The actor faces its seat or action target when stationary.
 The separate mug overlay is hidden during Drinking and TakeBeer, whose art
-already includes a tankard. The generic visitor fallback remains 92 px.
-
-The older 92 px traveler, veteran, and merchant stills dress the first
-evening's later guests (Wenna, Brannoc, and Osric). They ship Idle in four
-directions only (their single-direction Seated, Darts, and Bathroom stills are
-not used), so these guests stay in Idle, drawn at 92 px like the visitor.
+already includes a tankard. The old 92 px traveler, veteran, and merchant
+folders remain available but are no longer assigned in the first evening.
 
 The existing [tavern pixel art plan](PIXEL_ART_REDESIGN.md) remains the room
 counterpart to this character workflow.

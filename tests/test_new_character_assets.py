@@ -1,4 +1,4 @@
-"""The three named PixelLab visitors must have complete local still exports."""
+"""Every named PixelLab visitor must have complete local still exports."""
 
 import json
 import struct
@@ -8,6 +8,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
+SCENARIO = ROOT / "data" / "scenarios" / "first_evening.json"
 STATES = ("Idle", "Seated", "Darts", "Bathroom", "Drinking", "TakeBeer", "Walking", "Talking")
 DIRECTIONS = ("north", "south", "east", "west")
 
@@ -18,6 +19,9 @@ DIRECTIONS = ("north", "south", "east", "west")
         pytest.param("edda", "mara", "Edda", id="healer"),
         pytest.param("rurik", "ivo", "Rurik", id="guard"),
         pytest.param("toren", "nell", "Toren", id="trader"),
+        pytest.param("cook", "brannoc", "Brida", id="cook"),
+        pytest.param("courier", "wenna", "Calder", id="courier"),
+        pytest.param("visitor", "osric", "Saye", id="storyteller"),
     ],
 )
 def test_character_group_is_ready_for_tavern(character: str, actor_id: str, display_name: str) -> None:
@@ -31,5 +35,6 @@ def test_character_group_is_ready_for_tavern(character: str, actor_id: str, disp
             assert png.is_file(), f"Missing {png}"
             assert struct.unpack(">II", png.read_bytes()[16:24]) == (68, 68)
 
-    layout = json.loads((ROOT / "data" / "tavern.json").read_text())
-    assert next(actor["name"] for actor in layout["actors"] if actor["id"] == actor_id) == display_name
+    scenario = json.loads(SCENARIO.read_text())
+    guest = next(guest for guest in scenario["guests"] if guest["id"] == actor_id)
+    assert (guest["name"], guest["sprite"]) == (display_name, character)

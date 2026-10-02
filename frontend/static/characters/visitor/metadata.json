@@ -1,32 +1,239 @@
 {
-  "group_id": "16c6dede-e726-40c5-8d98-7cf79b7c8d11",
+  "group_id": "6c8f78b2-3ea2-4174-8a1e-8f1cd6be218c",
   "states": [
     {
       "character": {
-        "id": "4e51472a-52db-416c-881b-efa52916073a",
+        "id": "1e854b26-bd3f-4425-945c-baa541f8a0e5",
         "name": "Idle",
-        "prompt": "medieval tavern visitor, male with a beard wearing poor clothes",
+        "prompt": "Adult female medieval traveling storyteller, silver-streaked black bob haircut, thoughtful face, plum wool shawl over a charcoal dress, small amber pendant, brown boots and a rolled parchment case at belt. Full-body centered humanoid sprite on transparent 68x68 canvas, clear silhouette, low top-down tavern-game view, dark clean pixel outline and muted earthy colors. Empty hands, no book, furniture, scenery, or text. Distinct from Edda, Rurik, Toren, Brida, and Calder.",
         "size": {
           "width": 68,
           "height": 68
         },
         "template_id": "mannequin",
-        "directions": 4,
+        "directions": 8,
         "view": "low top-down",
-        "created_at": "2026-10-01T14:00:07.580946+00:00"
+        "created_at": "2026-10-02T13:51:36.757280+00:00"
       },
       "folder": "Idle",
       "frames": {
         "rotations": {
           "south": "Idle/rotations/south.png",
-          "west": "Idle/rotations/west.png",
+          "south-east": "Idle/rotations/south-east.png",
           "east": "Idle/rotations/east.png",
-          "north": "Idle/rotations/north.png"
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "fdf264fb-1849-490e-b216-220f721eee41",
+        "name": "Seated",
+        "prompt": "Adult female medieval traveling storyteller, silver-streaked black bob haircut, thoughtful face, plum wool shawl over a charcoal dress, small amber pendant, brown boots and a rolled parchment case at belt. Full-body centered humanoid sprite on transparent 68x68 canvas, clear silhouette, low top-down tavern-game view, dark clean pixel outline and muted earthy colors. Empty hands, no book, furniture, scenery, or text. Distinct from Edda, Rurik, Toren, Brida, and Calder.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T13:55:48.156425+00:00"
+      },
+      "folder": "Seated",
+      "frames": {
+        "rotations": {
+          "south": "Seated/rotations/south.png",
+          "south-east": "Seated/rotations/south-east.png",
+          "east": "Seated/rotations/east.png",
+          "north-east": "Seated/rotations/north-east.png",
+          "north": "Seated/rotations/north.png",
+          "north-west": "Seated/rotations/north-west.png",
+          "west": "Seated/rotations/west.png",
+          "south-west": "Seated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "d944b799-4656-49d4-a35d-9097545503b2",
+        "name": "Darts",
+        "prompt": "Adult female medieval traveling storyteller, silver-streaked black bob haircut, thoughtful face, plum wool shawl over a charcoal dress, small amber pendant, brown boots and a rolled parchment case at belt. Full-body centered humanoid sprite on transparent 68x68 canvas, clear silhouette, low top-down tavern-game view, dark clean pixel outline and muted earthy colors. Empty hands, no book, furniture, scenery, or text. Distinct from Edda, Rurik, Toren, Brida, and Calder.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T13:57:16.927780+00:00"
+      },
+      "folder": "Darts",
+      "frames": {
+        "rotations": {
+          "south": "Darts/rotations/south.png",
+          "south-east": "Darts/rotations/south-east.png",
+          "east": "Darts/rotations/east.png",
+          "north-east": "Darts/rotations/north-east.png",
+          "north": "Darts/rotations/north.png",
+          "north-west": "Darts/rotations/north-west.png",
+          "west": "Darts/rotations/west.png",
+          "south-west": "Darts/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "324dc530-ac0e-4a8a-bde5-9b9fcbbb2c6e",
+        "name": "Bathroom",
+        "prompt": "Adult female medieval traveling storyteller, silver-streaked black bob haircut, thoughtful face, plum wool shawl over a charcoal dress, small amber pendant, brown boots and a rolled parchment case at belt. Full-body centered humanoid sprite on transparent 68x68 canvas, clear silhouette, low top-down tavern-game view, dark clean pixel outline and muted earthy colors. Empty hands, no book, furniture, scenery, or text. Distinct from Edda, Rurik, Toren, Brida, and Calder.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T13:58:12.764500+00:00"
+      },
+      "folder": "Bathroom",
+      "frames": {
+        "rotations": {
+          "south": "Bathroom/rotations/south.png",
+          "south-east": "Bathroom/rotations/south-east.png",
+          "east": "Bathroom/rotations/east.png",
+          "north-east": "Bathroom/rotations/north-east.png",
+          "north": "Bathroom/rotations/north.png",
+          "north-west": "Bathroom/rotations/north-west.png",
+          "west": "Bathroom/rotations/west.png",
+          "south-west": "Bathroom/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "036e6e97-aaa3-4f33-9669-323ce052b8b1",
+        "name": "Drinking",
+        "prompt": "Adult female medieval traveling storyteller, silver-streaked black bob haircut, thoughtful face, plum wool shawl over a charcoal dress, small amber pendant, brown boots and a rolled parchment case at belt. Full-body centered humanoid sprite on transparent 68x68 canvas, clear silhouette, low top-down tavern-game view, dark clean pixel outline and muted earthy colors. Empty hands, no book, furniture, scenery, or text. Distinct from Edda, Rurik, Toren, Brida, and Calder.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T13:58:12.997923+00:00"
+      },
+      "folder": "Drinking",
+      "frames": {
+        "rotations": {
+          "south": "Drinking/rotations/south.png",
+          "south-east": "Drinking/rotations/south-east.png",
+          "east": "Drinking/rotations/east.png",
+          "north-east": "Drinking/rotations/north-east.png",
+          "north": "Drinking/rotations/north.png",
+          "north-west": "Drinking/rotations/north-west.png",
+          "west": "Drinking/rotations/west.png",
+          "south-west": "Drinking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "434836a1-0968-43c1-acc6-b4f02e7b43b0",
+        "name": "TakeBeer",
+        "prompt": "Adult female medieval traveling storyteller, silver-streaked black bob haircut, thoughtful face, plum wool shawl over a charcoal dress, small amber pendant, brown boots and a rolled parchment case at belt. Full-body centered humanoid sprite on transparent 68x68 canvas, clear silhouette, low top-down tavern-game view, dark clean pixel outline and muted earthy colors. Empty hands, no book, furniture, scenery, or text. Distinct from Edda, Rurik, Toren, Brida, and Calder.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T13:58:13.282354+00:00"
+      },
+      "folder": "TakeBeer",
+      "frames": {
+        "rotations": {
+          "south": "TakeBeer/rotations/south.png",
+          "south-east": "TakeBeer/rotations/south-east.png",
+          "east": "TakeBeer/rotations/east.png",
+          "north-east": "TakeBeer/rotations/north-east.png",
+          "north": "TakeBeer/rotations/north.png",
+          "north-west": "TakeBeer/rotations/north-west.png",
+          "west": "TakeBeer/rotations/west.png",
+          "south-west": "TakeBeer/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "16ef800f-fa48-4726-8fac-a4a9c1e9ded2",
+        "name": "Walking",
+        "prompt": "Adult female medieval traveling storyteller, silver-streaked black bob haircut, thoughtful face, plum wool shawl over a charcoal dress, small amber pendant, brown boots and a rolled parchment case at belt. Full-body centered humanoid sprite on transparent 68x68 canvas, clear silhouette, low top-down tavern-game view, dark clean pixel outline and muted earthy colors. Empty hands, no book, furniture, scenery, or text. Distinct from Edda, Rurik, Toren, Brida, and Calder.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T13:58:35.003158+00:00"
+      },
+      "folder": "Walking",
+      "frames": {
+        "rotations": {
+          "south": "Walking/rotations/south.png",
+          "south-east": "Walking/rotations/south-east.png",
+          "east": "Walking/rotations/east.png",
+          "north-east": "Walking/rotations/north-east.png",
+          "north": "Walking/rotations/north.png",
+          "north-west": "Walking/rotations/north-west.png",
+          "west": "Walking/rotations/west.png",
+          "south-west": "Walking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "cb3a5e4f-8bcc-4079-835d-e130705f0766",
+        "name": "Talking",
+        "prompt": "Adult female medieval traveling storyteller, silver-streaked black bob haircut, thoughtful face, plum wool shawl over a charcoal dress, small amber pendant, brown boots and a rolled parchment case at belt. Full-body centered humanoid sprite on transparent 68x68 canvas, clear silhouette, low top-down tavern-game view, dark clean pixel outline and muted earthy colors. Empty hands, no book, furniture, scenery, or text. Distinct from Edda, Rurik, Toren, Brida, and Calder.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T13:58:35.339379+00:00"
+      },
+      "folder": "Talking",
+      "frames": {
+        "rotations": {
+          "south": "Talking/rotations/south.png",
+          "south-east": "Talking/rotations/south-east.png",
+          "east": "Talking/rotations/east.png",
+          "north-east": "Talking/rotations/north-east.png",
+          "north": "Talking/rotations/north.png",
+          "north-west": "Talking/rotations/north-west.png",
+          "west": "Talking/rotations/west.png",
+          "south-west": "Talking/rotations/south-west.png"
         },
         "animations": {}
       }
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-10-01T14:06:39.976290"
+  "export_date": "2026-10-02T14:04:41.816105"
 }
