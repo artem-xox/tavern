@@ -135,7 +135,7 @@ this room's size.
 
 ## Gates for implementation
 
-1. **Style gate:** one floor/wall/table composite beside Mara, Ivo, and Nell at
+1. **Style gate:** one floor/wall/table composite beside Edda, Rurik, and Toren at
    native scale. Verify perspective, palette, seams, and readability before
    generating the rest.
 2. **Shell gate:** new floor and walls in the live scene, including south door,

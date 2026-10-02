@@ -572,7 +572,7 @@
   "actors": [
     {
       "id": "mara",
-      "name": "Mara",
+      "name": "Edda",
       "color": "#e8a86b",
       "traits": {
         "patience": 0.3,
@@ -584,7 +584,7 @@
     },
     {
       "id": "ivo",
-      "name": "Ivo",
+      "name": "Rurik",
       "color": "#81b3c6",
       "traits": {
         "patience": 0.8,
@@ -596,7 +596,7 @@
     },
     {
       "id": "nell",
-      "name": "Nell",
+      "name": "Toren",
       "color": "#b8aa76",
       "traits": {
         "patience": 0.5,

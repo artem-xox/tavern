@@ -9,6 +9,14 @@ Build a small prototype to test whether conversations create persistent agreemen
 that change behavior and produce playable stories. Follow `docs/DESIGN.md` and
 `docs/PLAN.md`; keep the scope small until that loop works.
 
+## Character art rule
+
+Generate and ship only four cardinal views for tavern characters: north, south,
+east, and west. Check the actual PixelLab export size before generating poses;
+the standard 68 px request has returned 96 px. If a tool requires eight views
+for a 68 px character, investigate a four-view route before spending credits.
+See `docs/CHARACTER_ART_PIPELINE.md` for the tested workflow and current limit.
+
 ## Repo layout
 
 - `docs/DESIGN.md` — game concept and prototype scope

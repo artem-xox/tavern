@@ -40,15 +40,13 @@ export class TavernScene extends Phaser.Scene {
     super("tavern");
   }
 
-  /** Load the PixelLab stills used by the current roster and a generic visitor. */
+  /** Load four cardinal stills per pose for the current roster and generic visitor. */
   preload(): void {
     for (const character of new Set([...Object.values(this.characterByActorId), "visitor"])) {
-      for (const direction of ["north", "south", "east", "west"]) {
-        this.load.image(`${character}-${direction}`, `/characters/${character}/Idle/rotations/${direction}.png`);
-      }
-      if (character !== "visitor") {
-        for (const [action, direction] of [["Seated", "south"], ["Darts", "south"], ["Bathroom", "north"]]) {
-          this.load.image(`${character}-${action}`, `/characters/${character}/${action}/${direction}.png`);
+      const states: string[] = character === "visitor" ? ["Idle"] : ["Idle", "Seated", "Darts", "Bathroom", "Drinking", "TakeBeer", "Walking", "Talking"];
+      for (const state of states) {
+        for (const direction of ["north", "south", "east", "west"]) {
+          this.load.image(`${character}-${state}-${direction}`, `/characters/${character}/${state}/rotations/${direction}.png`);
         }
       }
     }
@@ -57,12 +55,10 @@ export class TavernScene extends Phaser.Scene {
   /** Create rendering layers and map pointer events to server cell coordinates. */
   create(): void {
     for (const character of new Set([...Object.values(this.characterByActorId), "visitor"])) {
-      for (const direction of ["north", "south", "east", "west"]) {
-        this.textures.get(`${character}-${direction}`).setFilter(Phaser.Textures.FilterMode.NEAREST);
-      }
-      if (character !== "visitor") {
-        for (const action of ["Seated", "Darts", "Bathroom"]) {
-          this.textures.get(`${character}-${action}`).setFilter(Phaser.Textures.FilterMode.NEAREST);
+      const states: string[] = character === "visitor" ? ["Idle"] : ["Idle", "Seated", "Darts", "Bathroom", "Drinking", "TakeBeer", "Walking", "Talking"];
+      for (const state of states) {
+        for (const direction of ["north", "south", "east", "west"]) {
+          this.textures.get(`${character}-${state}-${direction}`).setFilter(Phaser.Textures.FilterMode.NEAREST);
         }
       }
     }
@@ -404,7 +400,7 @@ export class TavernScene extends Phaser.Scene {
     const shadow: Phaser.GameObjects.Ellipse = this.add.ellipse(0, 9, 25, 12, 0x191815, 0.4);
     const selection: Phaser.GameObjects.Arc = this.add.circle(0, 0, 16).setStrokeStyle(2, 0xffe0a3).setVisible(actor.id === this.selectedId);
     const character: string = this.characterByActorId[actor.id] ?? "visitor";
-    const sprite: Phaser.GameObjects.Image = this.add.image(0, -23, `${character}-south`).setDisplaySize(92, 92);
+    const sprite: Phaser.GameObjects.Image = this.add.image(0, character === "visitor" ? -23 : -16, `${character}-Idle-south`).setDisplaySize(character === "visitor" ? 92 : 68, character === "visitor" ? 92 : 68);
     const name: Phaser.GameObjects.Text = this.add.text(0, -53, actor.name, { fontFamily: "system-ui", fontSize: "11px", color: "#fff4dc", stroke: "#322b24", strokeThickness: 3 }).setOrigin(0.5);
     const status: Phaser.GameObjects.Text = this.add.text(0, 22, actor.status, { fontFamily: "system-ui", fontSize: "9px", color: "#ead6b6", backgroundColor: "#302b25b0", padding: { x: 3, y: 1 } }).setOrigin(0.5);
     const mugBody: Phaser.GameObjects.Rectangle = this.add.rectangle(0, 0, 7, 10, 0xd6a252);
@@ -417,15 +413,17 @@ export class TavernScene extends Phaser.Scene {
 
   private updateVisitor(view: ActorView, actor: Actor, size: number, reset: boolean): void {
     const seat: WorldObject | undefined = this.world?.map.objects.find((object: WorldObject): boolean => object.id === actor.seat_id);
-    view.direction = seat?.facing ?? (actor.x > view.cellX ? "east" : actor.x < view.cellX ? "west" : actor.y > view.cellY ? "south" : actor.y < view.cellY ? "north" : view.direction);
+    const target: WorldObject | undefined = this.world?.map.objects.find((object: WorldObject): boolean => object.id === actor.action?.target_id);
+    view.direction = actor.x > view.cellX ? "east" : actor.x < view.cellX ? "west" : actor.y > view.cellY ? "south" : actor.y < view.cellY ? "north" : view.direction;
+    if (actor.status !== "walking") {
+      view.direction = seat?.facing ?? (target && actor.status === "interacting" ? this.facingTarget(actor, target, view.direction) : view.direction);
+    }
     const character: string = this.characterByActorId[actor.id] ?? "visitor";
-    const pose: string = actor.status === "interacting" && actor.action?.verb === "play_darts" ? "Darts"
-      : actor.status === "interacting" && actor.action?.verb === "use_toilet" ? "Bathroom"
-        : actor.seat_id && actor.status !== "walking" ? "Seated" : view.direction;
-    const texture: string = `${character}-${character === "visitor" ? view.direction : pose}`;
+    const pose: string = character === "visitor" ? "Idle" : this.actorPose(actor);
+    const texture: string = `${character}-${pose}-${view.direction}`;
     if (view.sprite.texture.key !== texture) view.sprite.setTexture(texture);
-    view.sprite.setDisplaySize(pose === "Seated" && character !== "visitor" ? 80 : 92, pose === "Seated" && character !== "visitor" ? 80 : 92);
-    view.sprite.setY(pose === "Seated" && character !== "visitor" ? -16 : -23);
+    view.sprite.setDisplaySize(character === "visitor" ? 92 : 68, character === "visitor" ? 92 : 68);
+    view.sprite.setY(character === "visitor" ? -23 : pose === "Seated" || pose === "Bathroom" ? -13 : -16);
     view.cellX = actor.x;
     view.cellY = actor.y;
     const x: number = (actor.x + 0.5) * size;
@@ -436,14 +434,36 @@ export class TavernScene extends Phaser.Scene {
     view.name.setText(actor.name);
     const incoming: Actor | undefined = this.world?.actors.find((visitor: Actor): boolean => visitor.action?.verb === "talk" && visitor.action.target_id === actor.id);
     const chatting: boolean = !!incoming || actor.action?.verb === "talk";
-    const target: WorldObject | undefined = this.world?.map.objects.find((object: WorldObject): boolean => object.id === actor.action?.target_id);
     const labels: Record<string, string> = { sit: "seated", talk: "chatting", play_darts: "darts", take_beer: "getting ale", drink: "sipping ale", use_toilet: "WC",
       watch: target?.kind === "fireplace" ? "by the fire" : "at the window", leave: "going home" };
     view.status.setText(actor.status === "walking" ? `→ ${labels[actor.action?.verb ?? ""] ?? "exploring"}` : chatting ? "chatting" : actor.action ? labels[actor.action.verb] ?? actor.action.verb : actor.seat_id ? "seated" : "thinking");
-    view.mug.setVisible(actor.inventory.beer > 0);
+    view.mug.setVisible(actor.inventory.beer > 0 && pose !== "Drinking" && pose !== "TakeBeer");
     view.speech.setVisible(chatting);
     view.speech.setText(incoming ? "Quite a story!" : "News from the road…");
     view.container.setDepth(10 + y / 1000);
+  }
+
+  private actorPose(actor: Actor): string {
+    if (actor.status === "walking") return "Walking";
+    if (actor.status === "interacting") {
+      switch (actor.action?.verb) {
+        case "play_darts": return "Darts";
+        case "use_toilet": return "Bathroom";
+        case "drink": return "Drinking";
+        case "take_beer": return "TakeBeer";
+        case "talk": return "Talking";
+        case "rest": case "sit": return "Seated";
+      }
+    }
+    return actor.seat_id ? "Seated" : "Idle";
+  }
+
+  private facingTarget(actor: Actor, target: WorldObject, fallback: string): string {
+    const dx: number = target.x + (target.width ?? 1) / 2 - (actor.x + 0.5);
+    const dy: number = target.y + (target.height ?? 1) / 2 - (actor.y + 0.5);
+    if (Math.abs(dx) >= Math.abs(dy) && dx !== 0) return dx > 0 ? "east" : "west";
+    if (dy !== 0) return dy > 0 ? "south" : "north";
+    return fallback;
   }
 
   private drawRoute(): void {

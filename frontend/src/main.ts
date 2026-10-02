@@ -42,7 +42,7 @@ function editCell(x: number, y: number): void {
 
 const scene: TavernScene = new TavernScene(
   { select: selectVisitor, cell: editCell, hover: (message: string): void => dashboard.hover(message) },
-  { mara: "traveler", ivo: "veteran", nell: "merchant" },
+  { mara: "edda", ivo: "rurik", nell: "toren" },
 );
 const dashboard: Dashboard = new Dashboard(root, {
   command: (command): void => connection.send(command),
