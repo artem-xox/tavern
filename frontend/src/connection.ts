@@ -13,7 +13,7 @@ export class WorldConnection {
   private retryTimer: ReturnType<typeof setTimeout> | undefined;
   private disposed: boolean = false;
 
-  constructor(private readonly callbacks: Callbacks) {
+  constructor(private readonly sessionId: string, private readonly callbacks: Callbacks) {
     this.connect();
   }
 
@@ -36,13 +36,17 @@ export class WorldConnection {
   private connect(): void {
     this.callbacks.status(false, "Connecting to the tavern…");
     const protocol: string = location.protocol === "https:" ? "wss:" : "ws:";
-    this.socket = new WebSocket(`${protocol}//${location.host}/ws`);
+    this.socket = new WebSocket(`${protocol}//${location.host}/ws?session=${encodeURIComponent(this.sessionId)}`);
     this.socket.onopen = (): void => {
       this.retryDelay = 500;
       this.callbacks.status(true, "Live · server connected");
     };
     this.socket.onmessage = (event: MessageEvent<string>): void => this.receive(event.data);
-    this.socket.onclose = (): void => this.reconnect();
+    this.socket.onclose = (event: CloseEvent): void => {
+      // 1008: the server refused this session; reconnecting with it cannot succeed.
+      if (event.code === 1008) this.callbacks.status(false, `Session refused · ${event.reason}`);
+      else this.reconnect();
+    };
     this.socket.onerror = (): void => this.socket?.close();
   }
 
