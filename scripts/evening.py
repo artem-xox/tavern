@@ -71,11 +71,12 @@ def evaluators(mode: str, recording: Path | None, calls: list[Record], log: Path
         calls: Receives the evening's calls: recorded live, or loaded for replay.
         log: JSON-lines file each live call is appended to as soon as it ends.
     Returns:
-        Evaluators for both decision stages.
+        Evaluators for every decision stage; the actions within a chosen family are
+        ordinary actions, so Jev scores them with the action question, recorded as `family`.
     """
     if mode == "replay":
         calls.extend(parse_records(recording.read_text()))
-        return Evaluators(replay_calls("actions", calls, jev.JevError), replay_calls("seats", calls, jev.JevError))
+        return Evaluators(*(replay_calls(kind, calls, jev.JevError) for kind in ("actions", "seats", "family")))
     if mode == "local":
         # Without a key the decisions never ask a model; Jev only fills the port.
         return Evaluators(jev.evaluate_actions, jev.evaluate_seats)
@@ -86,7 +87,8 @@ def evaluators(mode: str, recording: Path | None, calls: list[Record], log: Path
         with log.open("a") as lines:
             lines.write(format_record(record))
     return Evaluators(record_calls("actions", jev.evaluate_actions_metered, keep, time.monotonic, jev.JevError),
-                      record_calls("seats", jev.evaluate_seats_metered, keep, time.monotonic, jev.JevError))
+                      record_calls("seats", jev.evaluate_seats_metered, keep, time.monotonic, jev.JevError),
+                      record_calls("family", jev.evaluate_actions_metered, keep, time.monotonic, jev.JevError))
 
 
 def rounded(value: Any) -> Any:

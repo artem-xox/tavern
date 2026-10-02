@@ -34,7 +34,7 @@ class Pace:
 
 
 class Choice(TypedDict):
-    """One stage of a decision: `kind` is `actions` or `seats`, as in recorded calls."""
+    """One stage of a decision: `kind` is `actions`, `seats` or `family`, as in recorded calls."""
 
     time: float
     actor_id: str
@@ -172,7 +172,8 @@ async def _ask(world: dict[str, Any], run: _Run, config: Mapping[str, Any], rng:
     for actor_id, observation in decision_requests(world, run.pending, run.next_decision):
         decision = await choose_action(observation, config, rng, evaluators)
         run.pending[actor_id] = (world["time"] + latency, decision)
-        stages = [("actions", decision), *([("seats", decision["seat"])] if "seat" in decision else [])]
+        second = [(kind, decision[key]) for kind, key in (("seats", "seat"), ("family", "family")) if key in decision]
+        stages = [("actions", decision), *second]
         run.choices.extend({"time": world["time"], "actor_id": actor_id, "kind": kind,
                             "source": stage["source"], "error": stage["error"]} for kind, stage in stages)
 

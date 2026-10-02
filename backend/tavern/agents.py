@@ -7,7 +7,9 @@ from random import Random
 from typing import Any, TypedDict
 
 from tavern.briefing import brief, in_use
+from tavern.families import family_scores, group_families
 from tavern.jev import JevError, evaluate_actions, evaluate_seats
+from tavern.selection import bounded, drawable, read_temperature, select
 
 
 class Action(TypedDict):
@@ -25,10 +27,16 @@ Evaluator = Callable[[Mapping[str, Any], Sequence[Action], Mapping[str, Any]], A
 
 @dataclass(frozen=True)
 class Evaluators:
-    """The model port of a decision: one evaluator per stage of choosing."""
+    """The model port of a decision: one evaluator per stage of choosing.
+
+    `actions` scores the first stage, one option per activity family; `seats` the chairs
+    after `seating`; `family` the actions within another chosen family. Without `family`,
+    `actions` scores those too: they are ordinary actions.
+    """
 
     actions: Evaluator
     seats: Evaluator
+    family: Evaluator | None = None
 
 
 class Decision(TypedDict):
@@ -116,6 +124,23 @@ def _action(verb: str, target: str | None = None) -> Action:
 
 
 def build_candidates(observation: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """List a visitor's first-stage options: one per activity family.
+
+    Args:
+        observation: Own actor state and known/visible object records.
+
+    Returns:
+        The concrete actions of `_concrete_candidates`, grouped by `families.group_families`:
+        a family with a single action is offered as that action, one with several as a
+        family option holding its members, resolved by a second stage of the choice.
+
+    Raises:
+        ValueError: Observation, needs, inventory, closing flag or object records are malformed.
+    """
+    return group_families(_concrete_candidates(observation))
+
+
+def _concrete_candidates(observation: Mapping[str, Any]) -> list[Action]:
     """Generate actions from personal inventory and individually observed objects.
 
     Args:
@@ -302,24 +327,9 @@ def _score_seats(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
         scores[action["id"]] = min(1.0, scores[action["id"]])
 
 
-def _temperature(config: Mapping[str, Any]) -> float:
-    value = config.get("temperature")
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
-        raise ValueError("Temperature must be a nonnegative finite number")
-    return float(value)
-
-
-def _select(candidates: Sequence[Action], scores: Mapping[str, float], temperature: float, rng: Random) -> Action:
-    best = max(scores.values())
-    if temperature == 0:
-        return max(candidates, key=lambda action: scores[action["id"]])
-    weights = [math.exp((scores[action["id"]] - best) / temperature) for action in candidates]
-    return rng.choices(candidates, weights=weights, k=1)[0]
-
-
 async def choose_action(
     observation: Mapping[str, Any], config: Mapping[str, Any], rng: Random,
-    evaluators: Evaluators | None = None,
+    evaluators: Evaluators | None = None, limit: int = 8,
 ) -> dict[str, Any]:
     """Evaluate and select a candidate without blocking the world simulation.
 
@@ -329,27 +339,40 @@ async def choose_action(
         rng: Seeded random generator owned by the calling simulation.
         evaluators: Model port asked when the config holds a key. New callers pass it;
             None falls back to the Jev adapter (a known leak, see below).
+        limit: Most options one request may hold; the local policy keeps the best ones.
 
     Returns:
         Action, normalized scores, actual decision source and visible fallback error.
-        A missing key selects intentional local mode with no error. When the visitor
-        chooses `seating`, a second evaluation picks the chair: the action then sits
-        there and `seat` holds that stage's source, scores and error.
+        A missing key selects intentional local mode with no error. The first stage scores
+        one option per activity family. When the visitor chooses `seating`, a second
+        evaluation picks the chair and `seat` holds that stage's source, scores and error;
+        when they choose a family of several actions, a second evaluation picks one of them
+        and `family` holds the family's name and that stage's source, scores and error.
 
     Raises:
-        ValueError: Observation or configuration is malformed.
+        ValueError: Observation, configuration or limit is malformed.
     """
     # Known leak: without explicit evaluators the Jev functions imported into this module are
     # looked up at call time, which is the seam the Stage 0 tests patch.
     evaluators = evaluators or Evaluators(evaluate_actions, evaluate_seats)
-    candidates = build_candidates(observation)
-    temperature = _temperature(config)
-    decision = await _decide(observation, candidates, config, rng, temperature, _local_scores, evaluators.actions)
-    if decision["action"]["verb"] != "seating":
+    options, temperature = build_candidates(observation), read_temperature(config)
+    # Every concrete action is scored together, so a family is worth its best member.
+    local = _local_scores(observation, [item for option in options for item in option.get("members", [option])])
+    draw = (config, rng, temperature, limit)
+    decision = await _decide(observation, options, family_scores(options, local), evaluators.actions, *draw)
+    chosen = decision["action"]
+    if chosen["verb"] == "seating":
+        seats = build_seat_candidates(observation)
+        seat = await _decide(observation, seats, _local_seat_scores(observation, seats), evaluators.seats, *draw)
+        return {**decision, "action": seat["action"], "seat": _stage(seat)}
+    if "members" not in chosen:
         return decision
-    seat = await _decide(observation, build_seat_candidates(observation), config, rng, temperature,
-                         _local_seat_scores, evaluators.seats)
-    return {**decision, "action": seat["action"], "seat": {key: seat[key] for key in ("source", "scores", "error")}}
+    member = await _decide(observation, chosen["members"], local, evaluators.family or evaluators.actions, *draw)
+    return {**decision, "action": member["action"], "family": {"name": chosen["id"], **_stage(member)}}
+
+
+def _stage(decision: Mapping[str, Any]) -> dict[str, Any]:
+    return {key: decision[key] for key in ("source", "scores", "error")}
 
 
 def _evaluator_view(observation: Mapping[str, Any], candidates: Sequence[Action]) -> dict[str, Any]:
@@ -361,28 +384,16 @@ def _evaluator_view(observation: Mapping[str, Any], candidates: Sequence[Action]
 
 
 async def _decide(
-    observation: Mapping[str, Any], candidates: Sequence[Action], config: Mapping[str, Any], rng: Random,
-    temperature: float, local: Callable[[Mapping[str, Any], Sequence[Action]], dict[str, float]],
-    remote: Evaluator,
+    observation: Mapping[str, Any], candidates: Sequence[Action], local: Mapping[str, float], remote: Evaluator,
+    config: Mapping[str, Any], rng: Random, temperature: float, limit: int,
 ) -> dict[str, Any]:
-    scores, source, error = local(observation, candidates), "local", None
+    candidates = bounded(candidates, local, limit)
+    scores, source, error = {action["id"]: local[action["id"]] for action in candidates}, "local", None
     if config.get("typesafe_api_key"):
         try:
             scores = await remote(_evaluator_view(observation, candidates), candidates, config)
             source = "jev"
         except JevError as failure:
             error = str(failure)
-    return {"action": _select(_drawable(candidates, scores), scores, temperature, rng),
+    return {"action": select(drawable(candidates, scores), scores, temperature, rng),
             "source": source, "scores": scores, "error": error}
-
-
-def _drawable(candidates: Sequence[Action], scores: Mapping[str, float]) -> list[Action]:
-    # Walking out is final, so chance alone must not decide it: it is drawn only when the
-    # evaluator finds leaving at least moderately worthwhile (level 2 of the 0–4 rubric),
-    # or when going home is all that is left, as after closing time.
-    eligible = [action for action in candidates if action["verb"] != "leave" or scores[action["id"]] >= 0.5]
-    eligible = eligible or list(candidates)
-    # People weigh only the options nearly as good as their best; chance picks among those,
-    # never a clearly worse one (0.15 is just over half a rubric level).
-    best = max(scores[action["id"]] for action in eligible)
-    return [action for action in eligible if scores[action["id"]] >= best - 0.15]
