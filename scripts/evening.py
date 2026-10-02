@@ -122,10 +122,13 @@ def main(root: Path) -> None:
     calls: list[Record] = []
     ports = evaluators(mode, args.calls, calls, args.out / "calls.jsonl")
     world = create_world(json.loads((root / "data" / "tavern.json").read_text()), args.seed)
+    settings = config(values, mode)
     started = time.monotonic()
-    evening = asyncio.run(run_evening(world, config(values, mode), Random(args.seed), ports, pace))
+    evening = asyncio.run(run_evening(world, settings, Random(args.seed), ports, pace))
     wall = time.monotonic() - started
-    report = {"run": {"mode": mode, "decides": DECIDES[mode], "note": note, "seed": args.seed, "step": pace.step,
+    # A replay matches its recording only with the same seed, pace and temperature, so they are shown.
+    report = {"run": {"mode": mode, "decides": DECIDES[mode], "note": note, "seed": args.seed,
+                      "model": settings["model"], "temperature": settings["temperature"], "step": pace.step,
                       "model_latency": pace.model_latency, "time_limit": pace.time_limit,
                       "stuck_threshold": args.stuck_threshold, "input_usd_per_million": args.input_price},
               **evening_metrics(evening, calls, args.input_price, args.stuck_threshold)}

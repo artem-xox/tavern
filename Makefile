@@ -17,6 +17,7 @@ help:
 	@printf 'make evening  Play a headless evening; writes events.jsonl, metrics.json (+ calls.jsonl live) to OUT\n'
 	@printf '              SEED=0 OUT=runs/evening-SEED LIMIT=1200 game seconds\n'
 	@printf '              MODE=live (default when .env has TYPESAFE_API_KEY), local, or replay CALLS=path/calls.jsonl\n'
+	@printf '              (a replay needs the SEED, LIMIT and .env AI settings of the recorded run)\n'
 
 install:
 	@test -x .venv/bin/python || uv venv .venv
