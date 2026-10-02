@@ -10,6 +10,8 @@ from tavern.arrival import admit_arrivals, arrival_ranges, arriving, create_acto
 from tavern.closing import call_closing, inn_closed
 from tavern.conversation import conversation_of
 from tavern.memory import record_event
+from tavern.queues import (check_lines, cut_in, join_line, leave_line, line_full, line_of, must_wait,
+                           stay_in_line, step_line)
 from tavern.room import create_map, find_object, impassable_cells
 from tavern.routes import gives_way, occupied_cells, plan_route, replan, reserved_spots
 from tavern.sight import line_visible, look_around, refresh_knowledge, visible_cells
@@ -42,6 +44,7 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> dict[str, Any]:
     world = dict(schema_version=2, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
                  map=world_map, actors=actors, departed=[], expected=[], closes_at=None,
                  events=[], rules=_rules())
+    check_lines(world)
     for actor in actors:
         _look(world, actor)
         if ranges is not None:
@@ -57,7 +60,11 @@ def _rules() -> dict[str, Any]:
                           if activity.duration is not None},
             # Each beer the pair has drunk beyond the first adds this much quarrel chance,
             # scaled by impatience (2 − both patience traits), up to quarrel_max.
-            "quarrel_per_beer": 0.1, "quarrel_max": 0.5}
+            "quarrel_per_beer": 0.1, "quarrel_max": 0.5,
+            # Seconds a visitor waits in line before reconsidering: base, plus this much per unit
+            # of the patience trait and per unit of urgency of the need the place relieves.
+            "queue_patience": {"base": 5.0, "patience": 40.0, "urgency": 30.0},
+            "queue_needs": {"tap": "thirst", "toilet": "bladder", "darts": "boredom"}}
 
 
 def _actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any] | None:
@@ -73,6 +80,7 @@ def _seat(world: Mapping[str, Any], actor: Mapping[str, Any]) -> dict[str, Any] 
 
 
 def _clear_action(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
+    leave_line(world, actor)
     for target in world["map"]["objects"]:
         if target["reserved_by"] == actor["id"] and target["id"] != actor.get("seat_id"):
             target["reserved_by"] = None
@@ -103,14 +111,40 @@ def start_action(world: dict[str, Any], actor_id: str, action: Mapping[str, Any]
     actor = _actor(world, actor_id)
     if actor is None:
         return {"accepted": False, "reason": "Unknown visitor"}
-    reason = action_error(world, actor, action)
+    cutting = action.get("verb") == "cut_in_line"
+    action, reason = cut_in(world, action)
+    reason = reason or action_error(world, actor, action)
     if reason:
         _notice_target(world, actor, action)
         return _reject(world, actor, reason)
+    if must_wait(world, actor, action):
+        return _line_up(world, actor, action, cutting)
     plan = plan_route(world, actor, action)
     if plan is None:
         return _reject(world, actor, "No reachable interaction spot")
     _activate(world, actor, action, plan)
+    return {"accepted": True, "reason": None}
+
+
+def _line_up(world: Mapping[str, Any], actor: dict[str, Any], action: Mapping[str, Any],
+             front: bool) -> dict[str, Any]:
+    # Joining a line is body work: the visitor stands up and walks to its end, or to its front
+    # when cutting in. Choosing the line they already stand in means waiting on.
+    target = _target(world, action)
+    found = line_of(world, actor["id"])
+    if found is not None and found[0] is target:
+        stay_in_line(world, target, actor, front)
+        return {"accepted": True, "reason": None}
+    full = line_full(target)
+    if full:
+        _notice_target(world, actor, action)
+        return _reject(world, actor, full)
+    actor["seat_id"] = None
+    _clear_action(world, actor)
+    actor.update(action={key: action.get(key) for key in ("id", "verb", "target_id")}, status="queued",
+                 _remaining=world["rules"]["durations"][action["verb"]])
+    record_event(world, actor, "action_started", f"{actor['name']} chose {action['verb']}")
+    join_line(world, target, actor, front)
     return {"accepted": True, "reason": None}
 
 
@@ -184,6 +218,9 @@ def _wait_for_route(world: Mapping[str, Any], actor: dict[str, Any], elapsed: fl
 
 
 def _begin_interaction(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
+    if line_of(world, actor["id"]) is not None:
+        actor.update(status="queued", _move_elapsed=0.0, _blocked_for=0.0)
+        return
     reason = action_error(world, actor, actor["action"])
     if reason:
         _fail(world, actor, reason)
@@ -236,6 +273,7 @@ def _step_actor(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float)
         actor["needs"][name] = min(100, actor["needs"][name] + rate * elapsed)
     actor["visit"]["seconds"] += elapsed
     if actor["action"]:
+        step_line(world, actor)
         if actor["status"] == "waiting":
             _wait_for_route(world, actor, elapsed)
         elif actor["status"] == "walking":

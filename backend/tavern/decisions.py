@@ -3,6 +3,7 @@
 from collections.abc import Callable, Container, Mapping
 from typing import Any
 
+from tavern.queues import out_of_patience
 from tavern.world import observe_actor, observe_people, start_action
 
 
@@ -14,12 +15,12 @@ def free_to_decide(world: Mapping[str, Any], actor: Mapping[str, Any]) -> bool:
         actor: Visitor in that world.
 
     Returns:
-        True when they are idle and nobody is talking to them: a conversation partner
-        is never pulled away mid-chat.
+        True when they are idle, or have run out of patience in a line, and nobody is
+        talking to them: a conversation partner is never pulled away mid-chat.
     """
     addressed = any(item.get("action") and item["action"]["verb"] == "talk"
                     and item["action"]["target_id"] == actor["id"] for item in world["actors"])
-    return actor["status"] == "idle" and not addressed
+    return (actor["status"] == "idle" or out_of_patience(world, actor)) and not addressed
 
 
 def decision_requests(world: Mapping[str, Any], pending: Container[str],

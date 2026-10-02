@@ -55,7 +55,8 @@ def _target_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Ma
     activity = ACTIVITIES[action["verb"]]
     if target["kind"] not in activity.target_kinds:
         return "Target does not support this action"
-    if target["reserved_by"] not in (None, actor["id"]):
+    # A place with a line is never refused for being busy: the visitor joins its line instead.
+    if target["reserved_by"] not in (None, actor["id"]) and "queue" not in target:
         return "Target is reserved by another visitor"
     if activity.empty_target and target["stock"] <= 0:
         return activity.empty_target
