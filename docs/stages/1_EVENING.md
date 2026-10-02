@@ -113,21 +113,29 @@ Write tests first for all business logic, as in [AGENTS.md](../../AGENTS.md).
   one per place, its single reservation); the front goes in only once nobody stands on the
   way in, so the WC deadlock is gone. Saves are `schema_version` 3; grievances stand in
   for thoughts until E12.
-- [ ] **E06 — Stimuli and hearing.** Activities and events emit stimuli; perception
-  applies distance and wall damping; salience adds relevance (me, a friend, my name)
-  and temperament. Done: parametrized cases show a fight heard from the WC and a quiet
-  remark not heard across the hall.
-- [ ] **E07 — Attention and interrupts.** Below the threshold a guest glances; above
-  it, an interruptible activity pauses, the guest turns to the source, and a choice is
-  requested with the trigger in the briefing. Done: a drinking guest turns within
-  0.5 s of a shout; a guest in the WC finishes first.
-- [ ] **E08 — Gaze and emotes.** Facing follows the current speaker, arrivals at the
-  door, and stimulus sources; emotes mark alerts, confusion, anger, affection, sleep,
-  and long waits. Done: tests on facing choice and emote lifetimes.
-- [ ] **E09 — Bounded choices.** Jev chooses an activity family first and a target
-  second, generalizing seating, so requests stay small as guests and verbs grow.
-  Done: candidates per request stay under a fixed limit with six guests; tokens per
-  decision are measured against Stage 0.
+- [x] **E06 — Stimuli and hearing.** `hearing.py`: activities and events make sounds
+  (quarrel 1.0, closing call 1.0, door and darts 0.25, chat 0.25, refusal 0.2, each with a
+  reach). Heard loudness is `loudness × (1 − distance / reach) × 0.5^walls`; salience adds
+  relevance (about me, my name; friends once E12 exists) and curiosity. Quiet sounds can
+  never interrupt.
+- [x] **E07 — Attention and interrupts.** `attention.py`: each tick a guest reacts to the
+  most salient new sound: a glance from 0.15, an interrupt from 0.5. Interruptible
+  activities (sit, rest, drink, watch, darts, wait, inspect) end and the guest turns to the
+  source; the WC, pouring, talking, and leaving carry on. Pending decisions asked before the
+  interrupt are dropped in both runners, and the briefing leads with what happened.
+- [x] **E08 — Gaze and emotes.** `expression.py`: facing follows a gaze, then the
+  conversation partner; emotes for alert, confusion, anger, and long waits (affection and
+  sleep wait for E12 and E13). The scene turns sprites and draws a glyph above the head.
+- [x] **E09 — Bounded choices.** `families.py`, `selection.py`: Jev first chooses among
+  activity families, then among the actions within the chosen one; every request holds at
+  most 8 options (11 before). Over 7 live seeds tokens per decision fell 6% (4,592 → 4,312)
+  and cost per evening $0.043 → $0.040, but conversations fell 67 → 48 and darts 74 → 35.
+  Two stages pay off clearly once a guest has more than about 11–15 options.
+
+M2 result: a live six-guest evening (seed 5) had 12 s of stuck time in total (297 s before
+the queues), no blocked routes, 7 interrupts, 34 glances, and cost $0.033. Open: the door
+is still reserved by one leaver at a time, so guests wait a turn at closing; sharing it
+changes the behavior `test_closing.py` specifies, so it needs a decision.
 
 ### M3 — Characters and conversation
 
