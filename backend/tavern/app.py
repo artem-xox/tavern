@@ -13,9 +13,10 @@ from typing import Any, AsyncIterator, Mapping
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 
-from tavern.agents import choose_action
+from tavern import agents
 from tavern.database import initialize_database, load_database_world, save_database_world
 from tavern.decisions import apply_decision, decision_requests, free_to_decide, log_control
+from tavern.jev import evaluate_actions, evaluate_seats
 from tavern.persistence import load_world, save_world
 from tavern.room import object_cells
 from tavern.world import create_world, start_action, step_world
@@ -37,6 +38,23 @@ def _integer(value: Any, minimum: int, maximum: int) -> int:
         raise ValueError("Expected an integer")
     _number(value, minimum, maximum)
     return value
+
+
+async def choose_action(observation: Mapping[str, Any], config: Mapping[str, Any], rng: Random) -> dict[str, Any]:
+    """Decide a visitor's next action with the Jev adapter wired in as the model.
+
+    Args:
+        observation: Private actor observation.
+        config: Explicit API key, model, timeout and selection temperature.
+        rng: The runtime's seeded random generator.
+
+    Returns:
+        The decision of `tavern.agents.choose_action`.
+
+    Raises:
+        ValueError: Observation or configuration is malformed.
+    """
+    return await agents.choose_action(observation, config, rng, agents.Evaluators(evaluate_actions, evaluate_seats))
 
 
 class TavernRuntime:
