@@ -8,6 +8,21 @@ from typing import Any
 from tavern.memory import grieve, record_event
 
 
+def conversation_of(world: Mapping[str, Any], actor_id: str) -> dict[str, Any] | None:
+    """Find the visitor talking to, or being talked to by, someone.
+
+    Args:
+        world: Current world.
+        actor_id: Visitor whose chat is looked up.
+
+    Returns:
+        The visitor whose `talk` action includes them, or None when they are not chatting.
+    """
+    return next((item for item in world["actors"] if item.get("action")
+                 and item["action"]["verb"] == "talk"
+                 and actor_id in (item["id"], item["action"]["target_id"])), None)
+
+
 def complete_conversation(world: Mapping[str, Any], actor: dict[str, Any], partner: dict[str, Any]) -> None:
     """Settle a finished chat: both share places and feel less lonely, or they quarrel.
 

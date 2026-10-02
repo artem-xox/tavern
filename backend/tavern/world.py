@@ -4,9 +4,11 @@ from collections.abc import Mapping
 from copy import deepcopy
 from typing import Any
 
+from tavern.actions import action_error
 from tavern.activities import ACTIVITIES
 from tavern.arrival import admit_arrivals, arrival_ranges, arriving, create_actor
 from tavern.closing import call_closing, inn_closed
+from tavern.conversation import conversation_of
 from tavern.memory import record_event
 from tavern.room import create_map, find_object, impassable_cells
 from tavern.routes import gives_way, occupied_cells, plan_route, replan, reserved_spots
@@ -66,61 +68,8 @@ def _target(world: Mapping[str, Any], action: Mapping[str, Any]) -> dict[str, An
     return find_object(world["map"], action.get("target_id"))
 
 
-def _action_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any]) -> str | None:
-    if not isinstance(action.get("id"), str) or not action["id"]:
-        return "Action ID must be a nonempty string"
-    verb = action.get("verb")
-    if not isinstance(verb, str) or verb not in world["rules"]["durations"]:
-        return "Unknown action verb"
-    activity = ACTIVITIES[verb]
-    if activity.partner:
-        return _talk_error(world, actor, action)
-    if activity.requires_item and actor["inventory"][activity.requires_item] <= 0:
-        return f"No {activity.requires_item} in inventory"
-    if activity.target_kinds:
-        return _target_error(world, actor, action)
-    if action.get("target_id") is not None:
-        return "This action does not take a target"
-    return None
-
-
-def _target_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any]) -> str | None:
-    target = _target(world, action)
-    if target is None:
-        return "Target no longer exists"
-    activity = ACTIVITIES[action["verb"]]
-    if target["kind"] not in activity.target_kinds:
-        return "Target does not support this action"
-    if target["reserved_by"] not in (None, actor["id"]):
-        return "Target is reserved by another visitor"
-    if activity.empty_target and target["stock"] <= 0:
-        return activity.empty_target
-    return None
-
-
 def _seat(world: Mapping[str, Any], actor: Mapping[str, Any]) -> dict[str, Any] | None:
     return _target(world, {"target_id": actor.get("seat_id")})
-
-
-def _conversation(world: Mapping[str, Any], actor_id: str) -> dict[str, Any] | None:
-    return next((item for item in world["actors"] if item.get("action")
-                 and item["action"]["verb"] == "talk"
-                 and actor_id in (item["id"], item["action"]["target_id"])), None)
-
-
-def _talk_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any]) -> str | None:
-    partner = _actor(world, action.get("target_id"))
-    if partner is None or partner["id"] == actor["id"]:
-        return "Choose another seated visitor to talk to"
-    left, right = _seat(world, actor), _seat(world, partner)
-    if not left or not right or not left.get("table_id") or left.get("table_id") != right.get("table_id"):
-        return "Visitors must be seated at the same table"
-    if abs(actor["x"] - partner["x"]) + abs(actor["y"] - partner["y"]) > 4:
-        return "Conversation partner is too far away"
-    conversation = _conversation(world, partner["id"])
-    if conversation and conversation["id"] != actor["id"]:
-        return "Visitor is already in a conversation"
-    return None
 
 
 def _clear_action(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
@@ -154,7 +103,7 @@ def start_action(world: dict[str, Any], actor_id: str, action: Mapping[str, Any]
     actor = _actor(world, actor_id)
     if actor is None:
         return {"accepted": False, "reason": "Unknown visitor"}
-    reason = _action_error(world, actor, action)
+    reason = action_error(world, actor, action)
     if reason:
         _notice_target(world, actor, action)
         return _reject(world, actor, reason)
@@ -235,7 +184,7 @@ def _wait_for_route(world: Mapping[str, Any], actor: dict[str, Any], elapsed: fl
 
 
 def _begin_interaction(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
-    reason = _action_error(world, actor, actor["action"])
+    reason = action_error(world, actor, actor["action"])
     if reason:
         _fail(world, actor, reason)
     else:
@@ -247,7 +196,7 @@ def _begin_interaction(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
 
 def _interaction_error(world: Mapping[str, Any], actor: Mapping[str, Any]) -> str | None:
     action = actor["action"]
-    reason = _action_error(world, actor, action)
+    reason = action_error(world, actor, action)
     if reason:
         return reason
     if (actor["x"], actor["y"]) in impassable_cells(world["map"]):
@@ -380,7 +329,7 @@ def _in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[dict[s
         target = _target(world, action) or _actor(world, action.get("target_id"))
         people.append({key: visitor[key] for key in ("id", "name", "x", "y", "seat_id")})
         people[-1].update(table_id=seat.get("table_id") if seat else None,
-                          available=_conversation(world, visitor["id"]) is None,
+                          available=conversation_of(world, visitor["id"]) is None,
                           doing=action.get("verb"), target=target["name"] if target else None)
     return people
 
