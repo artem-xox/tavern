@@ -402,7 +402,7 @@ def test_server_opens_an_evening_that_waits_for_start(tmp_path: Path) -> None:
     data["arrival"] = {"needs": {"thirst": [50, 90]}}
     map_path = tmp_path / "map.json"
     map_path.write_text(json.dumps(data))
-    world = create_app(map_path, tmp_path / "save.json", {}, run_loop=False).state.runtime.world
+    world = create_app(map_path, tmp_path / "saves", {}, run_loop=False).state.sessions.open("device-test").world
     assert (world["paused"], world["tick"]) == (True, 0)
     assert [(actor["x"], actor["y"]) for actor in world["actors"]] == [(4, 7), (6, 7)]
 

@@ -108,9 +108,15 @@ The local policy is an explicit offline mode and fallback, visibly labeled in th
 ### HTTP and WebSocket
 
 - `GET /health` reports availability.
-- `GET /api/state` returns the current snapshot envelope.
-- `/ws` sends `{"type": "snapshot", "state": world, "ai": metadata}` on connection
-  and at approximately 10 Hz. Metadata reports configured mode without secrets.
+- `GET /api/state?session=<id>` returns an open session's snapshot envelope (404 otherwise).
+- `/ws?session=<id>` sends `{"type": "snapshot", "state": world, "ai": metadata}` on
+  connection and at approximately 10 Hz. Metadata reports configured mode without
+  secrets. A missing or malformed session ID (8–64 letters, digits, `-`, `_`) is
+  closed with code 1008.
+- Sessions: each browser keeps a private session ID in `localStorage` and gets its own
+  evening. A session advances only while at least one of its pages is open; the last
+  page to close autosaves and unloads it, and server shutdown autosaves every open
+  session. A session restored from its autosave always opens paused.
 - Client commands: `pause` (`paused`), `speed` (`value`), `refill` (`object_id`,
   `amount`), `block` (`x`, `y`, `blocked`), `force_action` (`actor_id`, `action`),
   `save`, `load`, and `reset`. Each includes `type` equal to the command name.
@@ -345,8 +351,10 @@ make check
 make build
 ```
 
-Use one server process: in-memory world state is shared by every connected browser.
-Saves live in `saves/demo.json`; they are created by the Save control and ignored by Git.
+Use one server process: open sessions live in its memory. Without a database, each
+session's manual save and autosave live in `saves/<session>/save.json` and
+`saves/<session>/autosave.json`, ignored by Git. With `TAVERN_DATABASE_ENABLED=true`
+both live in the `tavern_session` table, keyed by session and slot (`manual`, `auto`).
 
 ## Acceptance scenarios
 

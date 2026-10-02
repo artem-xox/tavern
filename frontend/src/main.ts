@@ -13,6 +13,21 @@ let selectedId: string | null = null;
 let editing: boolean = false;
 let connection: WorldConnection;
 
+/** Return this device's private session ID, kept across visits when storage allows. */
+function deviceSession(): string {
+  const key: string = "tavern.session";
+  try {
+    const saved: string | null = localStorage.getItem(key);
+    if (saved) return saved;
+    const created: string = crypto.randomUUID();
+    localStorage.setItem(key, created);
+    return created;
+  } catch {
+    // Without storage (private mode, blocked site data) the evening lasts only for this page.
+    return crypto.randomUUID();
+  }
+}
+
 function selectVisitor(id: string): void {
   selectedId = id;
   scene.select(id);
@@ -55,7 +70,7 @@ function applySnapshot(snapshot: Snapshot): void {
   }
 }
 
-connection = new WorldConnection({
+connection = new WorldConnection(deviceSession(), {
   snapshot: applySnapshot,
   status: (connected: boolean, message: string): void => dashboard.setConnection(connected, message),
   error: (message: string): void => dashboard.showError(message),

@@ -8,14 +8,18 @@ import math
 import os
 from pathlib import Path
 from random import Random
+import re
 from typing import Any, AsyncIterator, Mapping
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 
 from tavern.agents import choose_action
 from tavern.database import initialize_database, load_database_world, save_database_world
 from tavern.persistence import load_world, save_world
 from tavern.world import create_world, object_cells, observe_actor, observe_people, start_action, step_world
+
+# Session IDs also name save directories, so only path-safe characters are allowed.
+SESSION_ID = re.compile(r"[A-Za-z0-9_-]{8,64}")
 
 
 def _number(value: Any, minimum: float, maximum: float) -> float:
@@ -38,11 +42,12 @@ class TavernRuntime:
 
     def __init__(self, map_data: Mapping[str, Any], save_path: Path,
                  ai_config: Mapping[str, Any], seed: int = 0,
-                 database_url: str | None = None) -> None:
+                 database_url: str | None = None, session_id: str = "local") -> None:
         self.map_data = deepcopy(dict(map_data))
         self.world = create_world(self.map_data, seed)
         self.save_path = save_path
         self.database_url = database_url
+        self.session_id = session_id
         self.ai_config = {"model": "jev-latest", "timeout": 8.0, "temperature": 0.25, **ai_config}
         self.rng = Random(seed)
         self.pending: dict[str, tuple[asyncio.Task[Any], int]] = {}
@@ -185,18 +190,57 @@ class TavernRuntime:
         self.revisions.clear()
         self.next_decision.clear()
 
-    def _save(self, command: Mapping[str, Any]) -> None:
+    def _autosave_path(self) -> Path:
+        # Without a database the autosave lives next to the manual save file.
+        return self.save_path.with_name("autosave.json")
+
+    def _write(self, slot: str, path: Path) -> None:
         if self.database_url:
-            save_database_world(self.world, self.database_url)
+            save_database_world(self.world, self.database_url, self.session_id, slot)
         else:
-            save_world(self.world, self.save_path)
+            save_world(self.world, path)
+
+    def _save(self, command: Mapping[str, Any]) -> None:
+        self._write("manual", self.save_path)
 
     def _load(self, command: Mapping[str, Any]) -> None:
-        restored = load_database_world(self.database_url) if self.database_url else load_world(self.save_path)
+        restored = (load_database_world(self.database_url, self.session_id, "manual") if self.database_url
+                    else load_world(self.save_path))
         if restored is None:
             raise ValueError("No saved world exists")
         self._invalidate_requests()
         self.world = restored
+
+    def autosave(self) -> None:
+        """Store the current world in the session's autosave slot.
+
+        Raises:
+            ValueError: The world cannot be serialized or written to a file.
+            psycopg.Error: The database cannot be written.
+        """
+        self._write("auto", self._autosave_path())
+
+    def restore(self) -> bool:
+        """Replace the world with the session's autosave, paused.
+
+        Returns:
+            Whether an autosave existed; the world is unchanged when it did not.
+        Raises:
+            ValueError: The autosave is invalid.
+            psycopg.Error: The database cannot be read.
+        """
+        if self.database_url:
+            restored = load_database_world(self.database_url, self.session_id, "auto")
+        else:
+            path = self._autosave_path()
+            restored = load_world(path) if path.is_file() else None
+        if restored is None:
+            return False
+        self._invalidate_requests()
+        # Nobody watched the inn while it was stored, so it waits for the operator to resume.
+        restored["paused"] = True
+        self.world = restored
+        return True
 
     def _reset(self, command: Mapping[str, Any]) -> None:
         # Restart opens a new, running evening: new arrival needs, visitors back at the door.
@@ -231,9 +275,85 @@ class TavernRuntime:
             await asyncio.gather(*tasks, return_exceptions=True)
 
 
-async def _run_world(runtime: TavernRuntime, tick_seconds: float) -> None:
+class TavernSessions:
+    """Own one runtime per device session; only sessions with an open page advance."""
+
+    def __init__(self, map_data: Mapping[str, Any], save_dir: Path, ai_config: Mapping[str, Any],
+                 seed: int = 0, database_url: str | None = None) -> None:
+        self.map_data = deepcopy(dict(map_data))
+        self.save_dir = save_dir
+        self.ai_config = dict(ai_config)
+        self.database_url = database_url
+        self.rng = Random(seed)
+        self.runtimes: dict[str, TavernRuntime] = {}
+        self.pages: dict[str, int] = {}
+
+    def open(self, session_id: Any) -> TavernRuntime:
+        """Attach a page to its session, restoring or creating the session's world.
+
+        Args:
+            session_id: Device session ID of 8-64 letters, digits, '-' or '_'.
+        Returns:
+            The session's runtime, shared by every page of that session.
+        Raises:
+            ValueError: The ID is malformed or the session's autosave is invalid.
+        """
+        if not isinstance(session_id, str) or not SESSION_ID.fullmatch(session_id):
+            raise ValueError("Invalid session")
+        if session_id not in self.runtimes:
+            self.runtimes[session_id] = self._start(session_id)
+        self.pages[session_id] = self.pages.get(session_id, 0) + 1
+        return self.runtimes[session_id]
+
+    def _start(self, session_id: str) -> TavernRuntime:
+        runtime = TavernRuntime(self.map_data, self.save_dir / session_id / "save.json", self.ai_config,
+                                self.rng.randrange(1 << 30), self.database_url, session_id)
+        if not runtime.restore():
+            # A new evening waits at the door until someone presses Start.
+            runtime.world["paused"] = True
+        return runtime
+
+    async def release(self, session_id: str) -> None:
+        """Detach a page; the last page to leave autosaves and unloads the session.
+
+        Args:
+            session_id: Session previously returned by open.
+        Raises:
+            ValueError: The world cannot be written.
+            psycopg.Error: The database cannot be written.
+        """
+        self.pages[session_id] -= 1
+        if self.pages[session_id] > 0:
+            return
+        runtime = self.runtimes[session_id]
+        # Save before forgetting: if storage fails, the session stays in memory, unticked.
+        runtime.autosave()
+        del self.runtimes[session_id], self.pages[session_id]
+        await runtime.close()
+
+    def advance(self, dt: float) -> None:
+        """Advance sessions that someone is watching; closed sessions keep their clock.
+
+        Args:
+            dt: Real seconds since the previous simulation tick.
+        """
+        for session_id, runtime in self.runtimes.items():
+            if self.pages[session_id] > 0:
+                runtime.advance(dt)
+
+    async def close(self) -> None:
+        """Autosave and unload every session when the server stops."""
+        runtimes = list(self.runtimes.values())
+        for runtime in runtimes:
+            runtime.autosave()
+        self.runtimes.clear()
+        self.pages.clear()
+        await asyncio.gather(*(runtime.close() for runtime in runtimes))
+
+
+async def _run_world(sessions: TavernSessions, tick_seconds: float) -> None:
     while True:
-        runtime.advance(tick_seconds)
+        sessions.advance(tick_seconds)
         await asyncio.sleep(tick_seconds)
 
 
@@ -243,11 +363,21 @@ async def _send_snapshots(socket: WebSocket, runtime: TavernRuntime, interval: f
         await socket.send_json(runtime.snapshot())
 
 
-async def _serve_socket(socket: WebSocket, runtime: TavernRuntime) -> None:
-    await socket.accept()
-    await socket.send_json(runtime.snapshot())
-    sender = asyncio.create_task(_send_snapshots(socket, runtime, 0.1))
+async def _serve_socket(socket: WebSocket, sessions: TavernSessions) -> None:
+    session_id = socket.query_params.get("session")
     try:
+        runtime = sessions.open(session_id)
+    except ValueError as error:
+        # Policy violation: retrying with the same session cannot succeed. Accepting first
+        # lets the browser see the code and reason instead of a bare handshake failure.
+        await socket.accept()
+        await socket.close(code=1008, reason=str(error))
+        return
+    sender = None
+    try:
+        await socket.accept()
+        await socket.send_json(runtime.snapshot())
+        sender = asyncio.create_task(_send_snapshots(socket, runtime, 0.1))
         while True:
             try:
                 runtime.command(await socket.receive_json())
@@ -257,61 +387,60 @@ async def _serve_socket(socket: WebSocket, runtime: TavernRuntime) -> None:
     except WebSocketDisconnect:
         pass
     finally:
-        sender.cancel()
-        with suppress(asyncio.CancelledError, WebSocketDisconnect, RuntimeError):
-            await sender
+        if sender is not None:
+            sender.cancel()
+            with suppress(asyncio.CancelledError, WebSocketDisconnect, RuntimeError):
+                await sender
+        await sessions.release(session_id)
 
 
-def create_app(map_path: Path, save_path: Path, ai_config: Mapping[str, Any],
+def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
                run_loop: bool = True, database_url: str | None = None, seed: int = 0) -> FastAPI:
     """Construct the local server with explicit paths and AI configuration.
 
     Args:
         map_path: JSON layout to initialize the room.
-        save_path: Snapshot destination used by save/load controls.
+        save_dir: Directory of per-session snapshot files, used without a database.
         ai_config: Evaluator settings, including an optional server-only key.
         run_loop: Whether to start automatic ticking; false for focused API tests.
-        database_url: Optional PostgreSQL URL for persistent world snapshots.
-        seed: Seed of the first evening's arrivals and of the decision policy.
+        database_url: Optional PostgreSQL URL for persistent session snapshots.
+        seed: Seed of the sessions' arrivals and decision policies.
     Returns:
-        Application serving JSON state and a bidirectional WebSocket. A new evening
-        starts paused, with its visitors at the door, until someone presses Start.
+        Application serving JSON state and a bidirectional WebSocket per device session.
+        Sessions advance only while a page is open and always reopen paused.
     """
     map_data = json.loads(map_path.read_text())
-    restored = None
     if database_url:
         initialize_database(database_url)
-        restored = load_database_world(database_url)
-    runtime = TavernRuntime(map_data, save_path, ai_config, seed, database_url)
-    if restored is not None:
-        runtime.world = restored
-    else:
-        runtime.world["paused"] = True
+    sessions = TavernSessions(map_data, save_dir, ai_config, seed, database_url)
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-        ticker = asyncio.create_task(_run_world(runtime, 0.1)) if run_loop else None
+        ticker = asyncio.create_task(_run_world(sessions, 0.1)) if run_loop else None
         yield
         if ticker is not None:
             ticker.cancel()
             with suppress(asyncio.CancelledError):
                 await ticker
-        await runtime.close()
+        await sessions.close()
     app = FastAPI(title="The Last Inn", lifespan=lifespan)
-    app.state.runtime = runtime
-    _register_routes(app, runtime)
+    app.state.sessions = sessions
+    _register_routes(app, sessions)
     return app
 
 
-def _register_routes(app: FastAPI, runtime: TavernRuntime) -> None:
+def _register_routes(app: FastAPI, sessions: TavernSessions) -> None:
     @app.get("/health")
     async def health() -> dict[str, str]:
         return {"status": "ok"}
     @app.get("/api/state")
-    async def state() -> dict[str, Any]:
+    async def state(session: str) -> dict[str, Any]:
+        runtime = sessions.runtimes.get(session)
+        if runtime is None:
+            raise HTTPException(status_code=404, detail="Session is not open")
         return runtime.snapshot()
     @app.websocket("/ws")
     async def websocket(socket: WebSocket) -> None:
-        await _serve_socket(socket, runtime)
+        await _serve_socket(socket, sessions)
 
 
 def create_default_app() -> FastAPI:
@@ -329,5 +458,5 @@ def create_default_app() -> FastAPI:
               "temperature": float(os.environ.get("AI_TEMPERATURE", "0.25"))}
     database_url = (os.environ.get("DATABASE_URL")
                      if os.environ.get("TAVERN_DATABASE_ENABLED") == "true" else None)
-    return create_app(root / "data" / "tavern.json", root / "saves" / "demo.json", config,
+    return create_app(root / "data" / "tavern.json", root / "saves", config,
                       database_url=database_url, seed=Random().randrange(1 << 30))

@@ -32,8 +32,9 @@ def client(tmp_path: Path) -> TestClient:
 
 
 def test_snapshot_and_health_never_expose_api_credentials(tmp_path: Path) -> None:
-    with client(tmp_path) as connection:
-        response = connection.get("/api/state")
+    with client(tmp_path) as connection, connection.websocket_connect("/ws?session=device-test") as socket:
+        socket.receive_json()
+        response = connection.get("/api/state?session=device-test")
         assert response.status_code == 200
         assert response.json()["ai"]["mode"] == "jev"
         assert "secret-test-key" not in response.text
@@ -41,15 +42,15 @@ def test_snapshot_and_health_never_expose_api_credentials(tmp_path: Path) -> Non
 
 
 def test_default_factory_resolves_repository_map() -> None:
-    app = create_default_app()
-    assert (app.state.runtime.world["map"]["width"], len(app.state.runtime.world["actors"])) == (20, 3)
+    world = create_default_app().state.sessions.open("device-test").world
+    assert (world["map"]["width"], len(world["actors"])) == (20, 3)
 
 
 def test_default_factory_does_not_use_unenabled_database(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("DATABASE_URL", "postgresql://unreachable")
     monkeypatch.delenv("TAVERN_DATABASE_ENABLED", raising=False)
     app = create_default_app()
-    assert app.state.runtime.database_url is None
+    assert app.state.sessions.database_url is None
 
 
 @pytest.mark.parametrize("command,field,expected", [
@@ -157,7 +158,7 @@ def test_invalid_runtime_snapshot_is_rejected_atomically(tmp_path: Path, field: 
 
 
 def test_websocket_command_errors_do_not_disconnect(tmp_path: Path) -> None:
-    with client(tmp_path) as connection, connection.websocket_connect("/ws") as socket:
+    with client(tmp_path) as connection, connection.websocket_connect("/ws?session=device-test") as socket:
         assert socket.receive_json()["type"] == "snapshot"
         socket.send_json({"type": "speed", "value": -2})
         message = socket.receive_json()
