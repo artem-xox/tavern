@@ -8,6 +8,7 @@ from typing import Any, TypedDict
 
 from tavern.briefing import brief, in_use
 from tavern.jev import JevError, evaluate_actions, evaluate_seats
+from tavern.selection import drawable, read_temperature, select
 
 
 class Action(TypedDict):
@@ -302,21 +303,6 @@ def _score_seats(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
         scores[action["id"]] = min(1.0, scores[action["id"]])
 
 
-def _temperature(config: Mapping[str, Any]) -> float:
-    value = config.get("temperature")
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
-        raise ValueError("Temperature must be a nonnegative finite number")
-    return float(value)
-
-
-def _select(candidates: Sequence[Action], scores: Mapping[str, float], temperature: float, rng: Random) -> Action:
-    best = max(scores.values())
-    if temperature == 0:
-        return max(candidates, key=lambda action: scores[action["id"]])
-    weights = [math.exp((scores[action["id"]] - best) / temperature) for action in candidates]
-    return rng.choices(candidates, weights=weights, k=1)[0]
-
-
 async def choose_action(
     observation: Mapping[str, Any], config: Mapping[str, Any], rng: Random,
     evaluators: Evaluators | None = None,
@@ -343,7 +329,7 @@ async def choose_action(
     # looked up at call time, which is the seam the Stage 0 tests patch.
     evaluators = evaluators or Evaluators(evaluate_actions, evaluate_seats)
     candidates = build_candidates(observation)
-    temperature = _temperature(config)
+    temperature = read_temperature(config)
     decision = await _decide(observation, candidates, config, rng, temperature, _local_scores, evaluators.actions)
     if decision["action"]["verb"] != "seating":
         return decision
@@ -372,17 +358,6 @@ async def _decide(
             source = "jev"
         except JevError as failure:
             error = str(failure)
-    return {"action": _select(_drawable(candidates, scores), scores, temperature, rng),
+    return {"action": select(drawable(candidates, scores), scores, temperature, rng),
             "source": source, "scores": scores, "error": error}
 
-
-def _drawable(candidates: Sequence[Action], scores: Mapping[str, float]) -> list[Action]:
-    # Walking out is final, so chance alone must not decide it: it is drawn only when the
-    # evaluator finds leaving at least moderately worthwhile (level 2 of the 0–4 rubric),
-    # or when going home is all that is left, as after closing time.
-    eligible = [action for action in candidates if action["verb"] != "leave" or scores[action["id"]] >= 0.5]
-    eligible = eligible or list(candidates)
-    # People weigh only the options nearly as good as their best; chance picks among those,
-    # never a clearly worse one (0.15 is just over half a rubric level).
-    best = max(scores[action["id"]] for action in eligible)
-    return [action for action in eligible if scores[action["id"]] >= best - 0.15]
