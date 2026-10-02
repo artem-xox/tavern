@@ -1,72 +1,136 @@
 # The Last Inn — Design
 
-This document defines what we are building and why. The first prototype tests whether
-autonomous characters can create understandable, playable stories through agreements.
+This document defines what we are building and why. The current prototype tests whether
+model-driven guests make a tavern evening believable and produce stories worth retelling.
 
 ## Concept
 
-A small indie sandbox with light economics and strategy. The player runs an inn near
-a border crossing, moving through the inn and yard from a top-down perspective similar
-to Stardew Valley. The appeal is living alongside characters whose choices change the
-inn's economy, relationships, and daily events.
+A life simulation of a border inn: a hybrid of a light economic simulation and a story
+generator. Stories come from believable characters whose choices are made by neural
+models rather than scripts or fixed decision trees. RimWorld is the reference for
+legible, systemic drama: simple visible rules, characters with moods and opinions,
+and incidents that grow out of their interaction.
 
-Player-facing mechanics stay approachable; depth comes from characters interacting
-with each other and shared systems.
+Guests come in to relax, drink, talk, and argue. They react to the room, share news,
+make friends and enemies, get drunk, fall asleep, or start a fight. The player sees why.
 
-## Player loop
+## Player role
 
-- Buy supplies, prepare and sell meals, and rent rooms.
-- Explore the property, improve it, hire workers, and delegate tasks.
-- Talk, negotiate deals, make promises, and build relationships through actions.
-- Manage limited resources and respond to opportunities or conflicts caused by NPCs.
+**Now:** an observer acting as the inn's administrator. Before an evening the player
+chooses the guests (presets or characters they wrote), and the news of the day. During
+the evening the player watches and inspects; there is no direct in-world intervention.
+Debug controls (pause, speed, refill, block, forced actions) remain developer tools.
 
-Property improvements and broader hiring are part of the full concept; the prototype
-focuses on meals, lodging, trading, and agreements.
+**Later:** tavern staff (barkeep, cook, bouncer) who take the player's commands, then
+the inn's economy: prices, supplies, money, and rooms.
 
-## Autonomous characters
+## Guests
 
-Each NPC has personality traits, needs, goals, relationships, memories, and individual
-knowledge. Characters learn through observation, conversations, and rumors; they do
-not automatically know the complete world state.
+Each guest has a character card: name, occupation, background, temperament, values,
+speech style, quirks, an optional secret, and a goal for the evening (“came to forget”,
+“looking for work”, “waiting for someone”). Cards come from presets or are written by
+the player. A model extracts the numeric parameters the simulation needs (patience,
+temper, sociability, strength, alcohol tolerance, money) from the text once; the game
+validates them. The text goes to the dialogue model; the numbers drive the body and
+choices, so an authored character behaves as written, not only speaks that way.
 
-NPCs can initiate conversations, trade, work, request help, make agreements, share
-information, form partnerships, and create conflicts. They use a shared action library:
-verb, target, object, and conditions. For example, a character can deliver ingredients
-in exchange for lodging or prepare meals to repay a debt.
+At runtime a guest has needs, drunkenness, mood made of RimWorld-style thoughts
+(timed mood and opinion effects such as “insulted by Bren”), relationships, and
+individual knowledge. Guests learn only by seeing, hearing, and talking.
 
-## Decisions and dialogue
+## How a guest thinks
 
-Use TypeSafe AI's Jev to evaluate actions and a separate language model for dialogue.
+A guest thinks at three speeds:
 
-1. Gather observations and relevant memories for the NPC.
-2. Generate actions possible in the current situation.
-3. Ask Jev to evaluate them against goals, personality, memories, and commitments.
-4. Select an action with a controlled stochastic policy informed by those evaluations.
-5. Execute it and record its consequences.
+```
+world (10 Hz tick): positions, objects, queues, resources, drunkenness
+   │ stimuli: sound, sight, events          ▲ only actions the game validated
+   ▼                                        │
+attention: salience × temperament × distance × current activity
+   │
+   ├─ every tick ─────────► body (code): queue, wait, step aside, turn to a sound
+   ├─ event / task done ──► choice (Jev, ~1 s): score the legal next activities
+   └─ asynchronously ─────► mind (Claude Haiku 4.5, 1–3 s): lines, intentions, reflection
+```
 
-NPCs reconsider plans after completing a task or encountering a meaningful event.
-Behavior should vary while remaining consistent with personality and commitments.
+- **Body** executes *how*: queuing, waiting, routing, facing a speaker or a noise.
+  It never decides what to do.
+- **Choice** decides *what next*: Jev scores the legal activities from the guest's
+  own briefing, as in Stage 0. It is asked on events, not every tick.
+- **Mind** decides *what to say and intend*: conversation turns with a speech act,
+  a short intention after salient events, and the card compiler.
 
-The game validates resources, permissions, prices, deadlines, and agreement terms.
-A conversation can propose an agreement, but only validated, accepted terms become
-active obligations. Actions produce actual transfers, completed work, relationship
-changes, or new obligations; dialogue alone does not establish those effects.
+The body buys time for thought: when a fight starts, a guest stops and turns to it at
+once, which reads as “looking and thinking” while the choice and the mind respond.
 
-## Emergent stories
+Models decide *what* and *why*; the game decides *whether* and *how*. Text alone never
+changes the world: only validated actions and speech acts have effects.
 
-Stories arise from interacting goals and consequences rather than fixed quest chains.
-A delayed delivery might produce a credit agreement, a new supplier relationship,
-or a community project. Movement, conversations, offers, and agreement records make
-causes and consequences visible so the player can understand and influence them.
+## Actions
 
-## First prototype
+Activities are defined as data: roles (alone, pair, group), preconditions, steps and
+duration, effects, interruptibility, the stimulus they emit, and their pose. Objects
+and people offer activities; the choice layer scores the legal ones.
 
-One inn and yard, one player character, and three autonomous NPCs with overlapping
-interests: a cook, a courier, and a trader.
+- **Needs:** drink, use the WC, sit, warm up by the fire, doze at a table.
+- **Good:** introduce oneself, chat, join a table, buy someone a drink, toast, play darts
+  together, help someone up, leave together.
+- **Bad:** insult, cut in line, shove, start a fight.
+- **Reactions:** glance, watch, cheer, intervene, back away, leave.
 
-Include movement, basic inventory, ingredients and meals, lodging, money, a day cycle,
-dialogue, persistent agreements, and saving of world and character state.
-The engine, AI integration details, and presentation style remain to be chosen.
+Joint activities start as invitations: one guest proposes, the other accepts or declines,
+and the game validates. Later the same protocol carries persistent agreements.
 
-**Central test:** can a conversation create an agreement that changes NPC behavior,
-affects another character, and produces a new playable situation?
+## Reacting to the room
+
+Shared resources (tap, WC, darts) have capacity and a queue. Joining a queue is body
+work; giving up is a choice driven by patience and urgency; cutting in line is a source
+of conflict. Events emit stimuli with loudness; walls dampen them. Attention decides
+between a glance and an interrupt that pauses the current activity and asks for a new
+choice with the cause in the briefing.
+
+## Conversation and news
+
+A conversation is a scene with participants, a topic, and turns; others can join it,
+leave it, or overhear it. Each turn is a line plus a speech act (share news, ask, joke,
+boast, complain, flirt, insult, invite, accept, decline, leave). Only acts have effects:
+thoughts, opinions, names learned, knowledge passed on, invitations.
+
+The evening has news from outside: tolls, robberies, border rumors. Guests know some of
+it from their background and pass it on in their own words, so a story drifts as it
+travels. Strangers are known by appearance until they introduce themselves.
+
+## Conflict
+
+Insults, grievances, drunkenness, and temper unlock hostile options; the choice layer
+still has to pick them. A shove can stagger or knock someone down. A fight is resolved
+in seeded exchanges from strength, brawling, drunkenness, and chance until someone
+yields, is separated, or is knocked out. Bystanders watch, cheer, intervene, back away,
+or help the fallen up. Everyone involved and every witness keeps thoughts about it.
+
+## Looking alive
+
+Guests face whoever speaks and turn to noises, show emotes (`!`, `?`, anger, heart,
+`zzz`, music), speak in short bubbles with their actual lines, sway when drunk, stand in
+visible queues, and form a ring around a fight. Idling over a mug is a valid activity.
+
+## Stories
+
+The event log is the source of truth. After closing, a model writes a short chronicle
+of the evening that cites logged events, so the story can be checked against what
+happened. Every decision keeps its trigger, scores, and intention for the inspector.
+
+## Current prototype
+
+One hall, one evening, four to six guests, an observer player. See
+[Stage 1](stages/1_EVENING.md).
+
+**Central test:** does an evening with four to six model-driven guests look believable
+to an observer, and does it produce at least one story they can retell, with causes
+visible in the event log?
+
+## Later
+
+Staff and commands; the inn's economy; agreements that outlive a conversation;
+several evenings with regulars, memory, and reputation; a storyteller that paces
+incidents; the yard and property improvements.

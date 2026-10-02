@@ -5,9 +5,9 @@ Shared instructions for coding agents. Keep this file tool-agnostic.
 ## Project purpose
 
 The Last Inn is a sandbox game about running a border inn alongside autonomous NPCs.
-Build a small prototype to test whether conversations create persistent agreements
-that change behavior and produce playable stories. Follow `docs/DESIGN.md` and
-`docs/PLAN.md`; keep the scope small until that loop works.
+Build a small prototype to test whether model-driven guests make a believable evening
+that produces retellable stories. Follow `docs/DESIGN.md` and `docs/PLAN.md`; keep the
+scope small until that loop works.
 
 ## Character art rule
 
