@@ -12,7 +12,8 @@ def brief(observation: Observation, candidates: Sequence[Action]) -> dict[str, A
 
     Args:
         observation: Validated personal observation: own actor, known objects, visible
-            visitors, recent memories and, when known, the current world time.
+            visitors, recent memories and, when known, the current world time and whether
+            the inn has closed.
         candidates: Actions the visitor could take next.
 
     Returns:
@@ -22,9 +23,9 @@ def brief(observation: Observation, candidates: Sequence[Action]) -> dict[str, A
     Raises:
         ValueError: A candidate's verb or target cannot be described.
     """
-    parts = (_stay(observation), _whereabouts(observation), _own_seat(observation), _needs(observation),
-             _temperament(observation), _grievances(observation), _people(observation), _places(observation),
-             _tables(observation), _recent(observation))
+    parts = (_closing(observation), _stay(observation), _whereabouts(observation), _own_seat(observation),
+             _needs(observation), _temperament(observation), _grievances(observation), _people(observation),
+             _places(observation), _tables(observation), _recent(observation))
     return {"situation": " ".join(part for part in parts if part),
             "options": {action["id"]: _option(observation, action) for action in candidates}}
 
@@ -87,6 +88,12 @@ def _place(item: Mapping[str, Any]) -> str:
 def _duration(seconds: float) -> str:
     minutes = int(seconds // 60)
     return f"{int(seconds)} seconds" if minutes == 0 else f"{minutes} minute{'' if minutes == 1 else 's'}"
+
+
+def _closing(observation: Observation) -> str:
+    if not observation.get("closed"):
+        return ""
+    return "The inn has closed for the night: the innkeeper is seeing every guest out, so it is time to go home."
 
 
 def _stay(observation: Observation) -> str:

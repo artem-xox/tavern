@@ -111,13 +111,16 @@ def build_candidates(observation: Mapping[str, Any]) -> list[dict[str, Any]]:
         Stable, unique action dictionaries. Inspection and waiting are always offered.
         Table chairs appear as one `seating` wish until the visitor owns a seat; their
         own free seat appears as `sit`, with `seating` again only while company they could
-        join is in sight. Leaving needs a known, free door.
+        join is in sight. Leaving needs a known, free door. Once the inn has closed, going
+        home is the only option, or waiting a turn while every known door is busy.
 
     Raises:
-        ValueError: Observation, needs, inventory or object records are malformed.
+        ValueError: Observation, needs, inventory, closing flag or object records are malformed.
     """
     actor, objects = _actor(observation), _known_objects(observation)
     talks = _social_candidates(observation, actor, objects)  # also validates the visible visitors
+    if _closed(observation):
+        return _going_home(observation, objects)
     # A mug is carried to a seat and drunk there, unless there is no seat to be had.
     seatless = not actor.get("seat_id") and not _free_seats(observation, objects)
     actions = [_action("drink")] if actor["inventory"]["beer"] and (actor.get("seat_id") or seatless) else []
@@ -134,6 +137,20 @@ def build_candidates(observation: Mapping[str, Any]) -> list[dict[str, Any]]:
         actions.append(_action(verbs[item["kind"]], item["id"]))
     return [*actions, *_seat_wish(observation, objects), *_views(observation, objects),
             *talks, _action("inspect"), _action("wait")]
+
+
+def _closed(observation: Mapping[str, Any]) -> bool:
+    # Observations built outside the world may omit the flag; that reads as an open inn.
+    closed = observation.get("closed", False)
+    if not isinstance(closed, bool):
+        raise ValueError("Closing flag must be a boolean")
+    return closed
+
+
+def _going_home(observation: Mapping[str, Any], objects: Sequence[Mapping[str, Any]]) -> list[Action]:
+    doors = [_action("leave", item["id"]) for item in sorted(objects, key=lambda item: item["id"])
+             if item["kind"] == "door" and not in_use(observation, item)]
+    return doors or [_action("wait")]
 
 
 def _views(observation: Mapping[str, Any], objects: Sequence[Mapping[str, Any]]) -> list[Action]:
@@ -341,8 +358,10 @@ async def _decide(
 
 def _drawable(candidates: Sequence[Action], scores: Mapping[str, float]) -> list[Action]:
     # Walking out is final, so chance alone must not decide it: it is drawn only when the
-    # evaluator finds leaving at least moderately worthwhile (level 2 of the 0–4 rubric).
+    # evaluator finds leaving at least moderately worthwhile (level 2 of the 0–4 rubric),
+    # or when going home is all that is left, as after closing time.
     eligible = [action for action in candidates if action["verb"] != "leave" or scores[action["id"]] >= 0.5]
+    eligible = eligible or list(candidates)
     # People weigh only the options nearly as good as their best; chance picks among those,
     # never a clearly worse one (0.15 is just over half a rubric level).
     best = max(scores[action["id"]] for action in eligible)

@@ -5,6 +5,7 @@ from copy import deepcopy
 from typing import Any
 
 from tavern.arrival import admit_arrivals, arrival_ranges, arriving, create_actor
+from tavern.closing import call_closing, inn_closed
 from tavern.conversation import complete_conversation
 from tavern.memory import grieve, record_event
 from tavern.room import create_map, find_object, impassable_cells
@@ -342,11 +343,13 @@ def step_world(world: dict[str, Any], dt: float) -> None:
     if world["paused"] or elapsed == 0:
         return
     elapsed *= number(world["speed"], "Speed", 0.01, 100)
+    since = world["time"]
     world["time"] += elapsed
     world["tick"] += 1
     for actor in world["actors"]:
         _step_actor(world, actor, elapsed)
     _see_off(world)
+    call_closing(world, since)
     admit_arrivals(world)
 
 
@@ -368,8 +371,9 @@ def observe_actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
         actor_id: Visitor making the observation.
 
     Returns:
-        Own actor state, known object records, personal memories, map bounds, and
-        visible cells. Unseen resource changes remain remembered historical values.
+        Own actor state, known object records, personal memories, map bounds, visible
+        cells, and whether the inn has closed. Unseen resource changes remain remembered
+        historical values.
 
     Raises:
         ValueError: Visitor ID does not exist.
@@ -382,7 +386,8 @@ def observe_actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
     return {"actor": deepcopy(actor), "objects": deepcopy(list(actor["knowledge"]["objects"].values())),
             "visitors": _visible_visitors(world, actor),
             "memory": deepcopy(actor["memory"][-10:]), "visible_cells": visible, "time": world["time"],
-            "map": {"width": world["map"]["width"], "height": world["map"]["height"]}}
+            "map": {"width": world["map"]["width"], "height": world["map"]["height"]},
+            "closed": inn_closed(world)}
 
 
 def _in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[dict[str, Any]]:
