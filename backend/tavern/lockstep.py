@@ -86,9 +86,10 @@ def evening_over(world: Mapping[str, Any], time_limit: float) -> bool:
         time_limit: Game time that cuts the evening off.
 
     Returns:
-        True once every visitor has left or the time limit is reached.
+        True once every visitor has left and nobody else is expected, or the time limit is
+        reached. Worlds without a scenario expect nobody.
     """
-    return not world["actors"] or world["time"] >= time_limit
+    return (not world["actors"] and not world.get("expected")) or world["time"] >= time_limit
 
 
 def evening_mode(requested: str | None, keyed: bool) -> tuple[str, str | None]:

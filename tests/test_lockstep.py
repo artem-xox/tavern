@@ -231,3 +231,14 @@ def test_mode_defaults_to_live_when_a_key_is_present(
 def test_impossible_mode_fails_loudly(requested: str, keyed: bool) -> None:
     with pytest.raises(ValueError, match="mode"):
         evening_mode(requested, keyed)
+
+
+@pytest.mark.parametrize(("present", "expected", "over"), [
+    pytest.param([], [], True, id="hall-empty-nobody-due"),
+    pytest.param([], ["cai"], False, id="hall-empty-guest-still-due"),
+    pytest.param(["ada"], [], False, id="guest-inside"),
+])
+def test_evening_waits_for_guests_who_have_not_arrived(present: list[str], expected: list[str], over: bool) -> None:
+    world = create_world(hall(present), seed=0)
+    world["expected"] = [{"id": guest} for guest in expected]
+    assert evening_over(world, time_limit=600.0) is over

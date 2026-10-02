@@ -15,7 +15,7 @@ from tavern.agents import Evaluators
 from tavern.lockstep import Pace, evening_mode, run_evening
 from tavern.metrics import evening_metrics
 from tavern.recording import Record, format_record, parse_records, record_calls, replay_calls
-from tavern.world import create_world
+from tavern.scenario import open_evening, parse_scenario
 
 DECIDES = {"local": "the local policy (no model)", "live": "Jev, recorded", "replay": "Jev answers replayed"}
 
@@ -30,6 +30,8 @@ def arguments(root: Path) -> argparse.ArgumentParser:
     """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--scenario", type=Path, default=root / "data" / "scenarios" / "first_evening.json",
+                        help="who comes tonight, when, and when the inn closes")
     parser.add_argument("--mode", choices=("local", "live", "replay"),
                         help="default: live when TYPESAFE_API_KEY is in the env file, else local")
     parser.add_argument("--out", type=Path, default=root / "runs" / "evening-0")
@@ -121,7 +123,11 @@ def main(root: Path) -> None:
     args.out.mkdir(parents=True, exist_ok=True)
     calls: list[Record] = []
     ports = evaluators(mode, args.calls, calls, args.out / "calls.jsonl")
-    world = create_world(json.loads((root / "data" / "tavern.json").read_text()), args.seed)
+    room = json.loads((root / "data" / "tavern.json").read_text())
+    try:
+        world = open_evening(room, parse_scenario(json.loads(args.scenario.read_text())), args.seed)
+    except (OSError, ValueError) as error:
+        parser.error(f"cannot open the evening: {error}")
     settings = config(values, mode)
     started = time.monotonic()
     evening = asyncio.run(run_evening(world, settings, Random(args.seed), ports, pace))
