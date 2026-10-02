@@ -46,7 +46,8 @@ export class Dashboard {
     this.world = snapshot.state;
     const { state: world, ai } = snapshot;
     element(this.root, "#world-time").textContent = clock(world.time);
-    element(this.root, "#world-tick").textContent = `TICK ${world.tick}`;
+    element(this.root, "#world-tick").textContent = world.closes_at === null ? `TICK ${world.tick}`
+      : world.time >= world.closes_at ? "CLOSED · GUESTS GOING HOME" : `CLOSES AT ${clock(world.closes_at)}`;
     element(this.root, "#pause").textContent = world.paused ? "▶ Resume" : "Ⅱ Pause";
     element<HTMLSelectElement>(this.root, "#speed").value = String(world.speed);
     element(this.root, "#ai-mode").textContent = ai.mode === "jev" ? "Jev configured" : "Local · offline policy";
@@ -145,7 +146,7 @@ export class Dashboard {
   /** Offer Start before the first tick and Restart afterwards; frame the room when it is empty. */
   private renderEveningState(world: World): void {
     const waiting: boolean = world.paused && world.tick === 0;
-    const over: boolean = world.actors.length === 0 && world.departed.length > 0;
+    const over: boolean = world.actors.length === 0 && world.expected.length === 0 && world.departed.length > 0;
     this.root.querySelectorAll<HTMLButtonElement>("[data-evening]").forEach((button: HTMLButtonElement): void => {
       button.textContent = waiting ? "▶ Start the evening" : "↻ Restart the evening";
     });
