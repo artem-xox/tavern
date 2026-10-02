@@ -6,10 +6,9 @@ line must prevent a mistake an agent would otherwise make.
 ## Project
 
 The Last Inn is a sandbox game about running a border inn alongside autonomous NPCs.
-Build a small prototype to test whether conversations create persistent agreements
-that change behavior and produce playable stories. Follow `docs/DESIGN.md` and
-`docs/PLAN.md` (current stage: `docs/stages/0_DEMO.md`); keep the scope small until
-that loop works.
+Build a small prototype to test whether model-driven guests make a believable evening
+that produces retellable stories. Follow `docs/DESIGN.md` and `docs/PLAN.md` (current
+stage: `docs/stages/1_EVENING.md`); keep the scope small until that loop works.
 
 ## Commands
 

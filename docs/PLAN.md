@@ -3,60 +3,43 @@
 Build the smallest playable prototype that tests the central question in
 [DESIGN.md](DESIGN.md). Each stage has an observable completion criterion.
 
-## 0. Validate agents in a browser tavern
+## 0. Validate agents in a browser tavern — done
 
-Start with a Phaser/TypeScript frontend and Python/FastAPI backend before Godot.
-Three NPCs move, obtain and drink beer, rest, and use a toilet. Validate individual
-observations, real resource effects, and adaptation to unavailable objects before
-adding NPC conversations. See [Stage 0 tasks](stages/0_DEMO.md).
+Phaser/TypeScript frontend and Python/FastAPI backend. Visitors move, drink, sit, chat,
+play darts, use the WC, and go home, with Jev scoring their options from a plain-language
+briefing. See [Stage 0](stages/0_DEMO.md).
 
-**Done when:** three visitors act autonomously, interact at reachable locations,
-and respond to resource shortages or blocked routes with inspectable decisions.
+## 1. A believable evening
 
-## 1. Define the prototype rules
+Four to six guests from character cards spend one evening in the hall. They queue,
+react to noise, talk through Claude Haiku 4.5 with speech acts, pass on news, get drunk,
+and sometimes shove or fight. The player only sets up the evening and watches.
+See [Stage 1 tasks](stages/1_EVENING.md).
 
-Choose the engine and define the three NPCs, their overlapping goals, available
-actions, inventory rules, and agreement terms: parties, obligations, compensation,
-deadlines, and status. Keep the initial item and action sets small.
+**Done when:** recorded live evenings meet the Stage 1 metrics, an observer can retell
+a story from at least one of them, and its chronicle cites only logged events.
 
-**Done when:** a delivery-for-lodging example can be described entirely through these
-rules, including rejection, completion, and a missed deadline.
+## 2. Staff and commands
 
-## 2. Build the playable inn and shared simulation
+Add a barkeep and a bouncer whose actions use the same activity system, and let the
+player give them commands: serve, refill, calm someone down, throw someone out.
 
-Add the inn and yard, player and NPC movement, inventory, money, cooking, meals,
-lodging, and a day cycle. Route actions through game-owned validation and execution.
-Add saving and loading for this state.
+**Done when:** a player command changes how an evening's incident ends.
 
-**Done when:** the player can obtain ingredients, make a meal, sell it, rent a room,
-and reload with resources and time preserved.
+## 3. The inn's economy
 
-## 3. Connect conversations to persistent agreements
+Guests carry money; drinks and food have prices; supplies run out and are restocked;
+tabs, tips, and damage cost or earn money.
 
-Add dialogue generation, structured offers and acceptance, obligation tracking,
-relationships, memories, and individual NPC knowledge. Show active terms and outcomes
-in a simple agreement record. Extend saving to preserve these systems.
+**Done when:** an evening ends with a ledger the player can trace to guests' actions.
 
-**Done when:** a conversation creates a validated agreement, and its obligations,
-completion or failure, and character knowledge survive saving and loading.
+## 4. Several evenings and agreements
 
-## 4. Make the three NPCs autonomous
+Guests return as regulars. The evening is summarized into memories, opinions persist,
+and invitations from conversations can become validated obligations: debts, deliveries,
+meetings. Saving and loading preserve them.
 
-Generate feasible actions from each NPC's observations and state. Integrate Jev
-evaluations and controlled stochastic selection. Reconsider plans after tasks and
-meaningful events; make accepted commitments influence behavior.
+**Done when:** an agreement made in one evening changes a guest's behavior in the next
+and creates a new situation for the player.
 
-**Done when:** the cook, courier, and trader act independently, with limited knowledge,
-and their actions change shared resources and agreement state.
-
-## 5. Validate the emergent story loop
-
-Play a small situation: the inn needs ingredients, the courier needs lodging, and the
-cook needs supplies. Negotiate a delivery for lodging and observe its consequences.
-Try successful delivery and delay, allowing further decisions and offers to emerge.
-
-**Done when:** the agreement changes the courier's behavior, affects the cook, and
-creates a new decision for the player without a fixed quest sequence. The player can
-understand why it happened, and saving and loading preserve the consequences.
-
-Expand content and property management after this loop works.
+Expand property, the yard, and lodging after this loop works.
