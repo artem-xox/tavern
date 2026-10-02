@@ -13,12 +13,14 @@ from typing import Any, AsyncIterator, Mapping
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 
+from tavern import agents
 from tavern.activities import ACTIVITIES, client_activities
-from tavern.agents import choose_action
 from tavern.database import initialize_database, load_database_world, save_database_world
+from tavern.decisions import apply_decision, decision_requests, free_to_decide, log_control
+from tavern.jev import evaluate_actions, evaluate_seats
 from tavern.persistence import load_world, save_world
 from tavern.room import object_cells
-from tavern.world import create_world, observe_actor, observe_people, start_action, step_world
+from tavern.world import create_world, start_action, step_world
 
 # Session IDs also name save directories, so only path-safe characters are allowed.
 SESSION_ID = re.compile(r"[A-Za-z0-9_-]{8,64}")
@@ -37,6 +39,23 @@ def _integer(value: Any, minimum: int, maximum: int) -> int:
         raise ValueError("Expected an integer")
     _number(value, minimum, maximum)
     return value
+
+
+async def choose_action(observation: Mapping[str, Any], config: Mapping[str, Any], rng: Random) -> dict[str, Any]:
+    """Decide a visitor's next action with the Jev adapter wired in as the model.
+
+    Args:
+        observation: Private actor observation.
+        config: Explicit API key, model, timeout and selection temperature.
+        rng: The runtime's seeded random generator.
+
+    Returns:
+        The decision of `tavern.agents.choose_action`.
+
+    Raises:
+        ValueError: Observation or configuration is malformed.
+    """
+    return await agents.choose_action(observation, config, rng, agents.Evaluators(evaluate_actions, evaluate_seats))
 
 
 class TavernRuntime:
@@ -70,27 +89,14 @@ class TavernRuntime:
         }, "activities": client_activities(ACTIVITIES)}
 
     def _event(self, message: str) -> None:
-        self.world["events"].append({"time": self.world["time"], "actor_id": None,
-                                      "type": "control", "message": message})
-        self.world["events"] = self.world["events"][-100:]
+        log_control(self.world, message)
 
     def _apply_decision(self, actor: dict[str, Any], task: asyncio.Task[Any], revision: int) -> None:
-        if revision != self.revisions.get(actor["id"], 0) or actor["status"] != "idle" or self._receiving_conversation(actor):
+        if revision != self.revisions.get(actor["id"], 0) or not free_to_decide(self.world, actor):
             with suppress(asyncio.CancelledError, Exception):
                 task.result()
             return
-        try:
-            decision = task.result()
-            actor["decision"] = {key: decision[key] for key in ("source", "scores", "error")}
-            if "seat" in decision:
-                actor["decision"]["seat"] = decision["seat"]
-            result = start_action(self.world, actor["id"], decision["action"])
-            if not result["accepted"]:
-                self._event(f"{actor['name']}: {result['reason']}")
-        except Exception as error:
-            actor["decision"] = {"source": "local", "scores": {}, "error": str(error)}
-            self._event(f"Decision failed for {actor['name']}")
-        self.next_decision[actor["id"]] = self.world["time"] + 1.0
+        self.next_decision[actor["id"]] = apply_decision(self.world, actor, task.result)
 
     def _collect_decisions(self) -> None:
         for actor_id, pending in list(self.pending.items()):
@@ -106,20 +112,9 @@ class TavernRuntime:
                     pending[0].result()
 
     def _request_decisions(self) -> None:
-        for actor in self.world["actors"]:
-            actor_id = actor["id"]
-            if actor["status"] != "idle" or actor_id in self.pending or self._receiving_conversation(actor):
-                continue
-            if self.world["time"] < self.next_decision.get(actor_id, 0):
-                continue
-            # Decisions also see who else is about and what they are visibly doing.
-            observation = {**observe_actor(self.world, actor_id), "people": observe_people(self.world, actor_id)}
+        for actor_id, observation in decision_requests(self.world, self.pending, self.next_decision):
             task = asyncio.create_task(choose_action(observation, self.ai_config, self.rng))
             self.pending[actor_id] = (task, self.revisions.get(actor_id, 0))
-
-    def _receiving_conversation(self, actor: Mapping[str, Any]) -> bool:
-        return any(item.get("action") and item["action"]["verb"] == "talk"
-                   and item["action"]["target_id"] == actor["id"] for item in self.world["actors"])
 
     def advance(self, dt: float) -> None:
         """Advance the world without waiting for AI requests.
