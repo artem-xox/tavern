@@ -62,8 +62,9 @@ def apply_decision(world: dict[str, Any], actor: dict[str, Any],
     try:
         decision = outcome()
         actor["decision"] = {key: decision[key] for key in ("source", "scores", "error")}
-        if "seat" in decision:
-            actor["decision"]["seat"] = decision["seat"]
+        for stage in ("seat", "family"):
+            if stage in decision:
+                actor["decision"][stage] = decision[stage]
         result = start_action(world, actor["id"], decision["action"])
         if not result["accepted"]:
             log_control(world, f"{actor['name']}: {result['reason']}")

@@ -18,7 +18,7 @@ Metered = Callable[[Mapping[str, Any], Sequence[Action], Mapping[str, Any]],
 class Record(TypedDict):
     """One model call, as a line of a recording.
 
-    `kind` names the call (`actions` and `seats` are Jev's; a new model adds its own kind) and
+    `kind` names the call (`actions`, `seats` and `family` are Jev's; a new model adds its own kind) and
     `key` hashes kind and request. `request` is what the model was asked, never credentials;
     `response` is its answer (Jev: scores by candidate ID), or None after a failure whose
     message is `error`. `usage` holds the provider's token counters, None when it reported

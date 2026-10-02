@@ -3,7 +3,7 @@
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
-from tavern.activities import ACTIVITIES
+from tavern.activities import ACTIVITIES, FAMILIES
 
 Observation = Mapping[str, Any]
 Action = Mapping[str, Any]
@@ -20,7 +20,8 @@ def brief(observation: Observation, candidates: Sequence[Action]) -> dict[str, A
 
     Returns:
         `situation`, one paragraph, and `options`, a phrase per candidate ID that
-        completes "How natural is it for them, right now, to ...".
+        completes "How natural is it for them, right now, to ...". A family option (see
+        `families.group_families`) is told as the family's wish with its first members.
 
     Raises:
         ValueError: A candidate's verb or target cannot be described.
@@ -29,7 +30,8 @@ def brief(observation: Observation, candidates: Sequence[Action]) -> dict[str, A
              _needs(observation), _temperament(observation), _grievances(observation), _people(observation),
              _places(observation), _tables(observation), _recent(observation))
     return {"situation": " ".join(part for part in parts if part),
-            "options": {action["id"]: _option(observation, action) for action in candidates}}
+            "options": {action["id"]: _family(observation, action) if action["verb"] in FAMILIES
+                        else _option(observation, action) for action in candidates}}
 
 
 def in_use(observation: Observation, item: Mapping[str, Any]) -> bool:
@@ -341,3 +343,11 @@ def _wait(observation: Observation, action: Action) -> str:
 
 def _leave(observation: Observation, action: Action) -> str:
     return f"walk {_walk(_steps(observation, _target(observation, action)))} to the front door and go home for the night"
+
+
+def _family(observation: Observation, option: Action) -> str:
+    # Three examples tell one wish from another; any further members are only counted.
+    members = option["members"]
+    shown = "; or ".join(_option(observation, item) for item in members[:3])
+    more = f"; or one of {len(members) - 3} more like these" if len(members) > 3 else ""
+    return f"{FAMILIES[option['verb']]}: {shown}{more}"

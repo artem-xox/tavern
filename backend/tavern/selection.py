@@ -5,6 +5,8 @@ from collections.abc import Mapping, Sequence
 from random import Random
 from typing import Any
 
+from tavern.activities import ACTIVITIES
+
 
 def read_temperature(config: Mapping[str, Any]) -> float:
     """Read the selection temperature from the AI config.
@@ -56,10 +58,33 @@ def drawable(candidates: Sequence[Mapping[str, Any]], scores: Mapping[str, float
     """
     # Walking out is final, so chance alone must not decide it: it is drawn only when the
     # evaluator finds leaving at least moderately worthwhile (level 2 of the 0–4 rubric),
-    # or when going home is all that is left, as after closing time.
-    eligible = [action for action in candidates if action["verb"] != "leave" or scores[action["id"]] >= 0.5]
+    # or when going home is all that is left, as after closing time. A choice between doors
+    # is offered as their family, which is just as final.
+    final = ("leave", ACTIVITIES["leave"].family)
+    eligible = [action for action in candidates if action["verb"] not in final or scores[action["id"]] >= 0.5]
     eligible = eligible or list(candidates)
     # People weigh only the options nearly as good as their best; chance picks among those,
     # never a clearly worse one (0.15 is just over half a rubric level).
     best = max(scores[action["id"]] for action in eligible)
     return [action for action in eligible if scores[action["id"]] >= best - 0.15]
+
+
+def bounded(candidates: Sequence[Mapping[str, Any]], scores: Mapping[str, float],
+            limit: int) -> list[Mapping[str, Any]]:
+    """Keep the options worth putting to the evaluator, so one request never grows unbounded.
+
+    Args:
+        candidates: Options in offer order.
+        scores: Local score per option ID, the ranking used to trim.
+        limit: Most options one request may hold.
+
+    Returns:
+        The `limit` best options in offer order; among equal scores the earlier is kept.
+
+    Raises:
+        ValueError: The limit is below one.
+    """
+    if limit < 1:
+        raise ValueError(f"A request needs a limit of at least one option, not {limit!r}")
+    ranked = sorted(range(len(candidates)), key=lambda index: (-scores[candidates[index]["id"]], index))
+    return [candidates[index] for index in sorted(ranked[:limit])]

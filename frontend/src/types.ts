@@ -37,6 +37,11 @@ export interface DecisionStage {
   error: string | null;
 }
 
+/** The second stage after choosing a family of several actions, such as a pastime. */
+export interface FamilyStage extends DecisionStage {
+  name: string;
+}
+
 export interface Action {
   id: string;
   verb: Verb;
@@ -62,7 +67,7 @@ export interface Actor {
   path: Cell[];
   knowledge: { objects: Record<string, Record<string, unknown>> };
   memory: unknown[];
-  decision: (DecisionStage & { seat?: DecisionStage }) | null;
+  decision: (DecisionStage & { seat?: DecisionStage; family?: FamilyStage }) | null;
 }
 
 /** A scenario guest still on the way, with tonight's needs already drawn. */

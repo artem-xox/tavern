@@ -21,6 +21,8 @@ class Activity:
         target_kinds: Object kinds it can target; empty for verbs without an object target.
         partner: Whether it targets another visitor instead of an object.
         duration: Seconds of interaction, or None for a decision step that never runs in the world.
+        family: The `FAMILIES` entry it is chosen under: a first decision picks the family, a
+            second the action within it, so requests stay small as verbs and guests grow.
         requires_item: Inventory item the visitor must hold to start.
         empty_target: Refusal when the target has no stock left, or None when stock does not matter.
         leaves_seat: Whether starting it gives up the visitor's seat even without walking away.
@@ -40,6 +42,7 @@ class Activity:
     what: str
     guidance: str
     duration: float | None
+    family: str
     target_kinds: tuple[str, ...] = ()
     partner: bool = False
     requires_item: str | None = None
@@ -88,28 +91,33 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
     Activity(verb="take_beer", target_kinds=("tap",), duration=0.8, empty_target="Beer tap is empty",
              leaves_seat=True, effect=_pour, label="Get a beer", status="getting ale", pose="TakeBeer",
              doing="fetching ale", done="poured a mug of ale",
+             family="refreshment",
              what="walk to the tap {target} and pour a mug of ale to carry",
              guidance="Thirsty guests and newcomers naturally fetch a drink. It is pointless while they already "
                       "hold a mug, or when the tap has run dry."),
     Activity(verb="drink", duration=3.0, requires_item="beer",
              needs=MappingProxyType({"thirst": -60, "bladder": 25}), effect=_drink, label="Drink beer",
              status="sipping ale", pose="Drinking", doing="drinking", done="drank a beer",
+             family="refreshment",
              what="drink the mug of ale they are holding",
              guidance="Sipping ale at the table is the heart of a tavern evening; it quenches thirst but fills "
                       "the bladder."),
     Activity(verb="rest", target_kinds=("chair",), duration=3.0, needs=MappingProxyType({"fatigue": -65}),
              label="Rest", pose="Seated", doing="resting", done="rested",
+             family="resting",
              what="rest on the chair {target}",
              guidance="It eases tiredness."),
     Activity(verb="sit", target_kinds=("chair",), duration=14.0, needs=MappingProxyType({"fatigue": -65}),
              on_arrival=_settle, label="Sit at a table", status="seated", pose="Seated",
              doing="heading to a seat", done="sat a while",
+             family="resting",
              what="sit in their own seat {target} for a while",
              guidance="Sitting in their own seat is a guest's natural resting state: it eases tiredness, it is "
                       "where they sip their ale, and it lets them chat with whoever shares the table. Getting "
                       "up needs a reason."),
     Activity(verb="talk", partner=True, duration=8.0, effect=_chat, label="Chat with a neighbor",
              status="chatting", pose="Talking", doing="talking", done="chatted",
+             family="company",
              what="chat with {target}, who sits at their table",
              guidance="It eases the wish for company of both and lets them share where the beer, WC and darts "
                       "are. After a few beers an impatient pair may quarrel instead, leaving both aggrieved; "
@@ -118,23 +126,28 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
     Activity(verb="play_darts", target_kinds=("darts",), duration=10.0, leaves_seat=True,
              needs=MappingProxyType({"boredom": -65}), label="Play darts", status="darts", pose="Darts",
              doing="playing darts", done="played darts",
+             family="pastime",
              what="play a round of darts at {target}",
              guidance="A lively pastime for a bored guest; it means leaving their seat for a while."),
     Activity(verb="use_toilet", target_kinds=("toilet",), duration=2.0, leaves_seat=True,
              needs=MappingProxyType({"bladder": -65}), label="Use the toilet", status="WC", pose="Bathroom",
              doing="heading to the WC", done="used the WC",
+             family="wc",
              what="use the WC {target}",
              guidance="Necessary once the bladder presses, pointless before."),
     Activity(verb="inspect", duration=0.8, label="Explore the room", doing="looking around",
              done="looked around",
+             family="exploring",
              what="explore the room to discover or re-check places",
              guidance="Worthwhile only when something they need has not been found yet; otherwise it is aimless "
                       "wandering."),
     Activity(verb="wait", duration=1.0, label="Wait a little", doing="waiting", done="waited",
+             family="idling",
              what="wait a moment and do nothing",
              guidance="Idling where they stand is rarely the most natural thing."),
     Activity(verb="leave", target_kinds=("door",), duration=1.0, effect=_go_home, label="Go home",
              status="going home", doing="heading for the door", done="left",
+             family="going_home",
              what="leave the inn for the night through {target}, ending their visit for good",
              guidance="Going home is the natural end of an evening, not a failure. It is the right move when "
                       "they are content: they have stayed a good while (several minutes of "
@@ -152,6 +165,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
     Activity(verb="watch", target_kinds=("window", "fireplace"), duration=8.0,
              needs=MappingProxyType({"boredom": -40}), label="Watch the fire or the view",
              status="at the window", doing="admiring the view", done="admired the view",
+             family="pastime",
              what="stand by {target} and watch it for a while",
              guidance="Gazing into the flames of the fireplace or out of a window at the road is a quiet "
                       "pleasure that eases boredom more gently than darts. Comfort-loving guests especially "
@@ -159,12 +173,29 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "for a while."),
     # A decision step, not a world action: a second evaluation picks the chair to `sit` on.
     Activity(verb="seating", duration=None,
+             family="seat_choice",
              what="find a seat: choose a free chair at one of the tables and sit down",
              guidance="A separate decision picks the chair, which becomes their own seat for the rest of the "
                       "visit. Visitors who have just come in usually want to sit down and have a beer first. If "
                       "they already have a seat of their own, this means moving to another table, which is "
                       "worth it mainly to join company when they feel lonely."),
 )})
+
+
+# Activity families, each with the words that complete "How natural is it for them, right now, to ...".
+# A family groups the activities that answer the same wish, so the first decision weighs wishes
+# and the second only the ways to fulfil the chosen one.
+FAMILIES: Mapping[str, str] = MappingProxyType({
+    "refreshment": "get something to drink",
+    "resting": "sit down for a rest",
+    "seat_choice": "find a seat at a table, or move to another one",
+    "company": "chat with someone at their table",
+    "pastime": "pass the time",
+    "wc": "use the WC",
+    "exploring": "explore the room",
+    "idling": "wait a moment",
+    "going_home": "go home for the night",
+})
 
 
 def client_activities(activities: Mapping[str, Activity]) -> dict[str, dict[str, Any]]:
