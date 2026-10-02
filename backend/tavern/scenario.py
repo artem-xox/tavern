@@ -1,12 +1,14 @@
 """An evening's scenario, separate from the room: who is expected, when, and closing time."""
 
 from collections.abc import Mapping, Sequence
+from copy import deepcopy
 from dataclasses import dataclass
 from math import inf
 from typing import Any, TypedDict
 
-from tavern.arrival import arrival_ranges
+from tavern.arrival import admit_arrivals, arrival_ranges, arriving
 from tavern.validation import number, unique_ids
+from tavern.world import create_world
 
 
 class Guest(TypedDict):
@@ -18,6 +20,12 @@ class Guest(TypedDict):
     sprite: str
     traits: dict[str, float]
     arrives_at: float
+
+
+class ExpectedGuest(Guest):
+    """A guest still on the way, kept in the world's `expected` list with tonight's needs drawn."""
+
+    needs: dict[str, float]
 
 
 @dataclass(frozen=True)
@@ -91,3 +99,32 @@ def _guests(value: Any, closes_at: float) -> tuple[Guest, ...]:
     if late:
         raise ValueError(f"Guests must arrive before closing time: {', '.join(late)}")
     return guests
+
+
+def open_evening(room: Mapping[str, Any], scenario: Scenario, seed: int) -> dict[str, Any]:
+    """Open the inn for a scenario's evening.
+
+    Args:
+        room: Room definition. Its own `actors` and `arrival` sections are not used: the
+            scenario says who comes tonight and how they arrive.
+        scenario: Validated scenario.
+        seed: Seed of tonight's arrival needs and decision policy.
+    Returns:
+        New world in which the guests due at opening have come in, as far as the door's free
+        spots allow, and the others are expected in order of arrival.
+    Raises:
+        ValueError: The room is invalid or has no door for guests to come in by.
+    """
+    world = create_world({key: value for key, value in room.items() if key not in ("actors", "arrival")}, seed)
+    if not any(item["kind"] == "door" for item in world["map"]["objects"]):
+        raise ValueError("A scenario needs a door for its guests to come in by")
+    world.update(expected=_expected(scenario, seed), closes_at=scenario.closes_at)
+    admit_arrivals(world)
+    return world
+
+
+def _expected(scenario: Scenario, seed: int) -> list[ExpectedGuest]:
+    # Tonight's needs are drawn at opening, in listed order, so the evening replays from its seed.
+    # Sorting is stable: guests due at the same moment keep their listed order at the door.
+    drawn = [ExpectedGuest(**deepcopy(item)) for item in arriving(scenario.guests, scenario.arrival, seed)]
+    return sorted(drawn, key=lambda item: item["arrives_at"])

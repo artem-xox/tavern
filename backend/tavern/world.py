@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from copy import deepcopy
 from typing import Any
 
-from tavern.arrival import arrival_ranges, arriving, create_actor
+from tavern.arrival import admit_arrivals, arrival_ranges, arriving, create_actor
 from tavern.conversation import complete_conversation
 from tavern.memory import grieve, record_event
 from tavern.room import create_map, find_object, impassable_cells
@@ -23,7 +23,8 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> dict[str, Any]:
         seed: Saved deterministic seed of the evening's arrivals and decision policy.
 
     Returns:
-        New world state containing no references to the supplied room definition.
+        New world state containing no references to the supplied room definition. Nobody
+        else is expected and the inn never closes; `scenario.open_evening` sets both.
 
     Raises:
         ValueError: Layout, IDs, resources, arrival ranges, or actor values are invalid.
@@ -36,7 +37,8 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> dict[str, Any]:
     if len({(item["x"], item["y"]) for item in actors}) != len(actors):
         raise ValueError("Actors cannot overlap at startup")
     world = dict(schema_version=1, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
-                 map=world_map, actors=actors, departed=[], events=[], rules=_rules())
+                 map=world_map, actors=actors, departed=[], expected=[], closes_at=None,
+                 events=[], rules=_rules())
     for actor in actors:
         observe_actor(world, actor["id"])
         if ranges is not None:
@@ -324,7 +326,7 @@ def _step_actor(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float)
 
 
 def step_world(world: dict[str, Any], dt: float) -> None:
-    """Advance time, needs, movement, and once-only action consequences.
+    """Advance time, needs, movement, once-only action consequences, and arrivals.
 
     Args:
         world: Authoritative mutable world state.
@@ -345,6 +347,7 @@ def step_world(world: dict[str, Any], dt: float) -> None:
     for actor in world["actors"]:
         _step_actor(world, actor, elapsed)
     _see_off(world)
+    admit_arrivals(world)
 
 
 def _see_off(world: dict[str, Any]) -> None:
