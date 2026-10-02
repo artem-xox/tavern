@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from random import Random
 from typing import Any, TypedDict
 
-from tavern.briefing import brief, in_use
+from tavern.briefing import brief, in_use, line_place
 from tavern.jev import JevError, evaluate_actions, evaluate_seats
 from tavern.observation import known_objects, own_actor
 
@@ -73,15 +73,24 @@ def build_candidates(observation: Mapping[str, Any]) -> list[dict[str, Any]]:
     for item in sorted(objects, key=lambda item: item["id"]):
         if item["kind"] not in verbs or item.get("table_id"):
             continue
-        if in_use(observation, item):
-            continue
         if item["kind"] == "tap" and (not item.get("stock") or actor["inventory"]["beer"]):
             continue
         if item["kind"] == "tap" and "social" in actor["needs"] and actor["needs"]["thirst"] < 35:
             continue
-        actions.append(_action(verbs[item["kind"]], item["id"]))
+        actions.extend(_line_options(observation, item, _action(verbs[item["kind"]], item["id"])))
     return [*actions, *_seat_wish(observation, objects), *_views(observation, objects),
             *talks, _action("inspect"), _action("wait")]
+
+
+def _line_options(observation: Mapping[str, Any], item: Mapping[str, Any], action: Action) -> list[Action]:
+    # A busy place with a line is still offered: choosing it means waiting in line, or keeping
+    # one's place in it. Cutting in is offered while others wait ahead, unless the line is full.
+    if "queue_spots" not in item:
+        return [] if in_use(observation, item) else [action]
+    ahead, joined = line_place(observation, item)
+    if not joined and len(item.get("queue", [])) >= len(item["queue_spots"]):
+        return []
+    return [action, *([_action("cut_in_line", item["id"])] if ahead else [])]
 
 
 def _closed(observation: Mapping[str, Any]) -> bool:
@@ -187,10 +196,31 @@ def _local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[s
         "inspect": 0.08 + 0.12 * traits.get("curiosity", 0.5) + 0.4 * missing_relief,
         "wait": max(0.0, 0.08 + 0.12 * traits.get("patience", 0.5) - 0.08 * max(thirst, fatigue, bladder)),
         "leave": _leave_utility(observation),
+        "cut_in_line": 0.0,  # weighed against the wait in _score_lines
     }
     scores = {action["id"]: utility[action["verb"]] for action in candidates}
     _score_seats(observation, candidates, scores)
+    _score_lines(observation, candidates, scores)
     return scores
+
+
+def _score_lines(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
+                 scores: dict[str, float]) -> None:
+    # Each person ahead, including whoever uses the place, makes waiting less worthwhile, more so
+    # for the impatient. Cutting in skips the wait but is rude, which the patient mind more.
+    patience = observation["actor"].get("traits", {}).get("patience", 0.5)
+    objects = {item["id"]: item for item in observation["objects"]}
+    uses = {}
+    for action in candidates:
+        item = objects.get(action["target_id"])
+        if item is None or "queue_spots" not in item or action["verb"] == "cut_in_line":
+            continue
+        ahead = line_place(observation, item)[0] + in_use(observation, item)
+        uses[item["id"]] = scores[action["id"]]
+        scores[action["id"]] = max(0.0, scores[action["id"]] - 0.1 * ahead * (1.5 - patience))
+    for action in candidates:
+        if action["verb"] == "cut_in_line":
+            scores[action["id"]] = max(0.0, uses[action["target_id"]] - 0.35 - 0.4 * patience)
 
 
 def _leave_utility(observation: Mapping[str, Any]) -> float:

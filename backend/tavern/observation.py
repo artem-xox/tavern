@@ -89,5 +89,17 @@ def known_objects(observation: Mapping[str, Any]) -> list[Mapping[str, Any]]:
         stock = item.get("stock")
         if stock is not None and (isinstance(stock, bool) or not isinstance(stock, int) or stock < 0):
             raise ValueError("Observed stock must be a nonnegative integer or unknown")
+        _check_line(item)
         known[item["id"]] = item
     return list(known.values())
+
+
+def _check_line(item: Mapping[str, Any]) -> None:
+    if "queue_spots" not in item and "queue" not in item:
+        return
+    spots, line = item.get("queue_spots"), item.get("queue", [])
+    if not isinstance(spots, list) or not isinstance(line, list):
+        raise ValueError("Observed queue spots and line must be lists")
+    waiting = [entry.get("actor_id") if isinstance(entry, Mapping) else None for entry in line]
+    if any(not isinstance(actor_id, str) or not actor_id for actor_id in waiting) or len(set(waiting)) != len(waiting):
+        raise ValueError("Observed line must list distinct visitor IDs")
