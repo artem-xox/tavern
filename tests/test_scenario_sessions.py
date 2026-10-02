@@ -139,7 +139,7 @@ def test_default_app_opens_the_repository_scenario() -> None:
     world = create_default_app().state.sessions.open("device-scenario-test").world
     guests = [*world["actors"], *world["expected"]]
     assert (len(world["actors"]), len(world["expected"])) == (3, 3)
-    assert {item["sprite"] for item in guests} == {"edda", "rurik", "toren", "veteran", "traveler", "merchant"}
+    assert {item["sprite"] for item in guests} == {"edda", "rurik", "toren", "cook", "courier", "visitor"}
 
 
 @pytest.mark.parametrize("content", [

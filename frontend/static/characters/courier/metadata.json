@@ -1,32 +1,239 @@
 {
-  "group_id": "6002a580-f853-466f-bd88-7a05578d3511",
+  "group_id": "bf431630-5232-41c8-96b7-6be67c003f4a",
   "states": [
     {
       "character": {
-        "id": "ae07cd2a-45be-4315-b244-eed68b3c8830",
+        "id": "243262aa-8424-4bad-9100-433ddd43d8dc",
         "name": "Idle",
-        "prompt": "medieval border courier, young man in patched travel clothes with a small satchel",
+        "prompt": "Young adult male medieval border courier, slim build, windblown sandy hair, alert face, deep teal hooded cloak over a faded blue tunic, narrow leather belt, small sealed-message satchel, patched boots. Full-body centered humanoid sprite on transparent 68x68 canvas, clear silhouette, low top-down tavern-game view, dark clean pixel outline and muted earthy colors. Empty hands, no letters, furniture, scenery, or text. Distinct from Edda, Rurik, Toren, and Brida.",
         "size": {
           "width": 68,
           "height": 68
         },
         "template_id": "mannequin",
-        "directions": 4,
+        "directions": 8,
         "view": "low top-down",
-        "created_at": "2026-10-01T14:10:52.043553+00:00"
+        "created_at": "2026-10-02T13:51:36.587217+00:00"
       },
       "folder": "Idle",
       "frames": {
         "rotations": {
           "south": "Idle/rotations/south.png",
-          "west": "Idle/rotations/west.png",
+          "south-east": "Idle/rotations/south-east.png",
           "east": "Idle/rotations/east.png",
-          "north": "Idle/rotations/north.png"
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "faa9208e-0691-4d02-a540-20cc93353330",
+        "name": "Seated",
+        "prompt": "Young adult male medieval border courier, slim build, windblown sandy hair, alert face, deep teal hooded cloak over a faded blue tunic, narrow leather belt, small sealed-message satchel, patched boots. Full-body centered humanoid sprite on transparent 68x68 canvas, clear silhouette, low top-down tavern-game view, dark clean pixel outline and muted earthy colors. Empty hands, no letters, furniture, scenery, or text. Distinct from Edda, Rurik, Toren, and Brida.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T13:59:21.677092+00:00"
+      },
+      "folder": "Seated",
+      "frames": {
+        "rotations": {
+          "south": "Seated/rotations/south.png",
+          "south-east": "Seated/rotations/south-east.png",
+          "east": "Seated/rotations/east.png",
+          "north-east": "Seated/rotations/north-east.png",
+          "north": "Seated/rotations/north.png",
+          "north-west": "Seated/rotations/north-west.png",
+          "west": "Seated/rotations/west.png",
+          "south-west": "Seated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "081c01f9-28ee-4ba3-b63f-4c1f6caa0388",
+        "name": "Darts",
+        "prompt": "Young adult male medieval border courier, slim build, windblown sandy hair, alert face, deep teal hooded cloak over a faded blue tunic, narrow leather belt, small sealed-message satchel, patched boots. Full-body centered humanoid sprite on transparent 68x68 canvas, clear silhouette, low top-down tavern-game view, dark clean pixel outline and muted earthy colors. Empty hands, no letters, furniture, scenery, or text. Distinct from Edda, Rurik, Toren, and Brida.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T14:00:04.258012+00:00"
+      },
+      "folder": "Darts",
+      "frames": {
+        "rotations": {
+          "south": "Darts/rotations/south.png",
+          "south-east": "Darts/rotations/south-east.png",
+          "east": "Darts/rotations/east.png",
+          "north-east": "Darts/rotations/north-east.png",
+          "north": "Darts/rotations/north.png",
+          "north-west": "Darts/rotations/north-west.png",
+          "west": "Darts/rotations/west.png",
+          "south-west": "Darts/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "9979469e-25e6-416e-8888-0f33f668238e",
+        "name": "Bathroom",
+        "prompt": "Young adult male medieval border courier, slim build, windblown sandy hair, alert face, deep teal hooded cloak over a faded blue tunic, narrow leather belt, small sealed-message satchel, patched boots. Full-body centered humanoid sprite on transparent 68x68 canvas, clear silhouette, low top-down tavern-game view, dark clean pixel outline and muted earthy colors. Empty hands, no letters, furniture, scenery, or text. Distinct from Edda, Rurik, Toren, and Brida.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T14:00:04.617497+00:00"
+      },
+      "folder": "Bathroom",
+      "frames": {
+        "rotations": {
+          "south": "Bathroom/rotations/south.png",
+          "south-east": "Bathroom/rotations/south-east.png",
+          "east": "Bathroom/rotations/east.png",
+          "north-east": "Bathroom/rotations/north-east.png",
+          "north": "Bathroom/rotations/north.png",
+          "north-west": "Bathroom/rotations/north-west.png",
+          "west": "Bathroom/rotations/west.png",
+          "south-west": "Bathroom/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "522cabf3-93e2-410c-8ed1-7befc0f4d0ef",
+        "name": "Drinking",
+        "prompt": "Young adult male medieval border courier, slim build, windblown sandy hair, alert face, deep teal hooded cloak over a faded blue tunic, narrow leather belt, small sealed-message satchel, patched boots. Full-body centered humanoid sprite on transparent 68x68 canvas, clear silhouette, low top-down tavern-game view, dark clean pixel outline and muted earthy colors. Empty hands, no letters, furniture, scenery, or text. Distinct from Edda, Rurik, Toren, and Brida.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T14:00:33.378192+00:00"
+      },
+      "folder": "Drinking",
+      "frames": {
+        "rotations": {
+          "south": "Drinking/rotations/south.png",
+          "south-east": "Drinking/rotations/south-east.png",
+          "east": "Drinking/rotations/east.png",
+          "north-east": "Drinking/rotations/north-east.png",
+          "north": "Drinking/rotations/north.png",
+          "north-west": "Drinking/rotations/north-west.png",
+          "west": "Drinking/rotations/west.png",
+          "south-west": "Drinking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "58b5978c-b055-4f37-91a7-7a1e21ddd4fe",
+        "name": "TakeBeer",
+        "prompt": "Young adult male medieval border courier, slim build, windblown sandy hair, alert face, deep teal hooded cloak over a faded blue tunic, narrow leather belt, small sealed-message satchel, patched boots. Full-body centered humanoid sprite on transparent 68x68 canvas, clear silhouette, low top-down tavern-game view, dark clean pixel outline and muted earthy colors. Empty hands, no letters, furniture, scenery, or text. Distinct from Edda, Rurik, Toren, and Brida.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T14:01:30.629233+00:00"
+      },
+      "folder": "TakeBeer",
+      "frames": {
+        "rotations": {
+          "south": "TakeBeer/rotations/south.png",
+          "south-east": "TakeBeer/rotations/south-east.png",
+          "east": "TakeBeer/rotations/east.png",
+          "north-east": "TakeBeer/rotations/north-east.png",
+          "north": "TakeBeer/rotations/north.png",
+          "north-west": "TakeBeer/rotations/north-west.png",
+          "west": "TakeBeer/rotations/west.png",
+          "south-west": "TakeBeer/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "d6766c3c-4a1d-467c-bc4e-a855632f8c28",
+        "name": "Walking",
+        "prompt": "Young adult male medieval border courier, slim build, windblown sandy hair, alert face, deep teal hooded cloak over a faded blue tunic, narrow leather belt, small sealed-message satchel, patched boots. Full-body centered humanoid sprite on transparent 68x68 canvas, clear silhouette, low top-down tavern-game view, dark clean pixel outline and muted earthy colors. Empty hands, no letters, furniture, scenery, or text. Distinct from Edda, Rurik, Toren, and Brida.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T14:02:18.923408+00:00"
+      },
+      "folder": "Walking",
+      "frames": {
+        "rotations": {
+          "south": "Walking/rotations/south.png",
+          "south-east": "Walking/rotations/south-east.png",
+          "east": "Walking/rotations/east.png",
+          "north-east": "Walking/rotations/north-east.png",
+          "north": "Walking/rotations/north.png",
+          "north-west": "Walking/rotations/north-west.png",
+          "west": "Walking/rotations/west.png",
+          "south-west": "Walking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "dcab5a35-bac4-410c-856d-0e128ed9f02b",
+        "name": "Talking",
+        "prompt": "Young adult male medieval border courier, slim build, windblown sandy hair, alert face, deep teal hooded cloak over a faded blue tunic, narrow leather belt, small sealed-message satchel, patched boots. Full-body centered humanoid sprite on transparent 68x68 canvas, clear silhouette, low top-down tavern-game view, dark clean pixel outline and muted earthy colors. Empty hands, no letters, furniture, scenery, or text. Distinct from Edda, Rurik, Toren, and Brida.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-02T14:02:19.245014+00:00"
+      },
+      "folder": "Talking",
+      "frames": {
+        "rotations": {
+          "south": "Talking/rotations/south.png",
+          "south-east": "Talking/rotations/south-east.png",
+          "east": "Talking/rotations/east.png",
+          "north-east": "Talking/rotations/north-east.png",
+          "north": "Talking/rotations/north.png",
+          "north-west": "Talking/rotations/north-west.png",
+          "west": "Talking/rotations/west.png",
+          "south-west": "Talking/rotations/south-west.png"
         },
         "animations": {}
       }
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-10-01T15:23:33.445439"
+  "export_date": "2026-10-02T14:04:39.108728"
 }

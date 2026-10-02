@@ -19,12 +19,12 @@ const SPRITES: Readonly<Record<string, SpriteSheet>> = {
   edda: { size: 68, lift: -16, poses: ALL_POSES },
   rurik: { size: 68, lift: -16, poses: ALL_POSES },
   toren: { size: 68, lift: -16, poses: ALL_POSES },
+  cook: { size: 68, lift: -16, poses: ALL_POSES },
+  courier: { size: 68, lift: -16, poses: ALL_POSES },
+  visitor: { size: 68, lift: -16, poses: ALL_POSES },
   merchant: { size: 92, lift: -23, poses: IDLE_ONLY },
   traveler: { size: 92, lift: -23, poses: IDLE_ONLY },
   veteran: { size: 92, lift: -23, poses: IDLE_ONLY },
-  cook: { size: 92, lift: -23, poses: IDLE_ONLY },
-  courier: { size: 92, lift: -23, poses: IDLE_ONLY },
-  visitor: { size: 92, lift: -23, poses: IDLE_ONLY },
 };
 
 /** Every still to load: one texture per sprite, shipped pose and direction. */

@@ -36,25 +36,25 @@
     },
     {
       "id": "brannoc",
-      "name": "Brannoc",
+      "name": "Brida",
       "color": "#b56f5c",
-      "sprite": "veteran",
+      "sprite": "cook",
       "traits": {"patience": 0.9, "comfort": 0.5, "curiosity": 0.2},
       "arrives_at": 40
     },
     {
       "id": "wenna",
-      "name": "Wenna",
+      "name": "Calder",
       "color": "#7fae7a",
-      "sprite": "traveler",
+      "sprite": "courier",
       "traits": {"patience": 0.4, "comfort": 0.1, "curiosity": 0.7},
       "arrives_at": 110
     },
     {
       "id": "osric",
-      "name": "Osric",
+      "name": "Saye",
       "color": "#9d8fc4",
-      "sprite": "merchant",
+      "sprite": "visitor",
       "traits": {"patience": 0.2, "comfort": 0.8, "curiosity": 0.3},
       "arrives_at": 190
     }
