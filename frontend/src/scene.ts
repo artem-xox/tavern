@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { shippedPose, spriteOf, stills } from "./sprites";
 import type { ActivityView, Actor, Cell, Verb, World, WorldObject } from "./types";
 
 interface SceneCallbacks {
@@ -37,32 +38,18 @@ export class TavernScene extends Phaser.Scene {
   private editing: boolean = false;
   private ready: boolean = false;
 
-  constructor(private readonly callbacks: SceneCallbacks, private readonly characterByActorId: Readonly<Record<string, string>>) {
+  constructor(private readonly callbacks: SceneCallbacks) {
     super("tavern");
   }
 
-  /** Load four cardinal stills per pose for the current roster and generic visitor. */
+  /** Load four cardinal stills for every shipped pose of every character sprite. */
   preload(): void {
-    for (const character of new Set([...Object.values(this.characterByActorId), "visitor"])) {
-      const states: string[] = character === "visitor" ? ["Idle"] : ["Idle", "Seated", "Darts", "Bathroom", "Drinking", "TakeBeer", "Walking", "Talking"];
-      for (const state of states) {
-        for (const direction of ["north", "south", "east", "west"]) {
-          this.load.image(`${character}-${state}-${direction}`, `/characters/${character}/${state}/rotations/${direction}.png`);
-        }
-      }
-    }
+    for (const still of stills()) this.load.image(still.key, still.url);
   }
 
   /** Create rendering layers and map pointer events to server cell coordinates. */
   create(): void {
-    for (const character of new Set([...Object.values(this.characterByActorId), "visitor"])) {
-      const states: string[] = character === "visitor" ? ["Idle"] : ["Idle", "Seated", "Darts", "Bathroom", "Drinking", "TakeBeer", "Walking", "Talking"];
-      for (const state of states) {
-        for (const direction of ["north", "south", "east", "west"]) {
-          this.textures.get(`${character}-${state}-${direction}`).setFilter(Phaser.Textures.FilterMode.NEAREST);
-        }
-      }
-    }
+    for (const still of stills()) this.textures.get(still.key).setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.floor = this.add.graphics();
     this.hearthGlow = this.add.graphics();
     this.furniture = this.add.graphics();
@@ -401,8 +388,8 @@ export class TavernScene extends Phaser.Scene {
   private createVisitor(actor: Actor): ActorView {
     const shadow: Phaser.GameObjects.Ellipse = this.add.ellipse(0, 9, 25, 12, 0x191815, 0.4);
     const selection: Phaser.GameObjects.Arc = this.add.circle(0, 0, 16).setStrokeStyle(2, 0xffe0a3).setVisible(actor.id === this.selectedId);
-    const character: string = this.characterByActorId[actor.id] ?? "visitor";
-    const sprite: Phaser.GameObjects.Image = this.add.image(0, character === "visitor" ? -23 : -16, `${character}-Idle-south`).setDisplaySize(character === "visitor" ? 92 : 68, character === "visitor" ? 92 : 68);
+    const { name: character, sheet } = spriteOf(actor);
+    const sprite: Phaser.GameObjects.Image = this.add.image(0, sheet.lift, `${character}-Idle-south`).setDisplaySize(sheet.size, sheet.size);
     const name: Phaser.GameObjects.Text = this.add.text(0, -53, actor.name, { fontFamily: "system-ui", fontSize: "11px", color: "#fff4dc", stroke: "#322b24", strokeThickness: 3 }).setOrigin(0.5);
     const status: Phaser.GameObjects.Text = this.add.text(0, 22, actor.status, { fontFamily: "system-ui", fontSize: "9px", color: "#ead6b6", backgroundColor: "#302b25b0", padding: { x: 3, y: 1 } }).setOrigin(0.5);
     const mugBody: Phaser.GameObjects.Rectangle = this.add.rectangle(0, 0, 7, 10, 0xd6a252);
@@ -420,12 +407,12 @@ export class TavernScene extends Phaser.Scene {
     if (actor.status !== "walking") {
       view.direction = seat?.facing ?? (target && actor.status === "interacting" ? this.facingTarget(actor, target, view.direction) : view.direction);
     }
-    const character: string = this.characterByActorId[actor.id] ?? "visitor";
-    const pose: string = character === "visitor" ? "Idle" : this.actorPose(actor);
+    const { name: character, sheet } = spriteOf(actor);
+    const pose: string = shippedPose(sheet, this.actorPose(actor));
     const texture: string = `${character}-${pose}-${view.direction}`;
     if (view.sprite.texture.key !== texture) view.sprite.setTexture(texture);
-    view.sprite.setDisplaySize(character === "visitor" ? 92 : 68, character === "visitor" ? 92 : 68);
-    view.sprite.setY(character === "visitor" ? -23 : pose === "Seated" || pose === "Bathroom" ? -13 : -16);
+    view.sprite.setDisplaySize(sheet.size, sheet.size);
+    view.sprite.setY(sheet.lift + (pose === "Seated" || pose === "Bathroom" ? 3 : 0));
     view.cellX = actor.x;
     view.cellY = actor.y;
     const x: number = (actor.x + 0.5) * size;

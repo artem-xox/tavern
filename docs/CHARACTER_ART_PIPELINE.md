@@ -186,19 +186,22 @@ using another character creation call would make a new individual instead.
 
 The default visitor IDs remain `mara`, `ivo`, and `nell` so saved sessions and
 force-action commands stay compatible; new evenings display Edda, Rurik, and
-Toren respectively. `frontend/src/main.ts` maps those IDs to the new folders.
-`frontend/src/scene.ts` loads four cardinal PNGs for every pose at their native
-68 px display size with nearest-neighbor filtering. Walking status selects
+Toren respectively. Each guest's `sprite` in the scenario
+(`data/scenarios/first_evening.json`) names their folder, and
+`frontend/src/sprites.ts` lists every shipped folder with its display size and
+the poses it has in all four directions. `frontend/src/scene.ts` loads those
+PNGs with nearest-neighbor filtering, drawing this cast at its native 68 px
+size. A pose a sprite lacks is drawn as Idle. Walking status selects
 Walking. Active actions select their named pose; an occupied seat otherwise
 selects Seated. Idle covers watch, inspect, wait, and arrival/departure when
 not moving. The actor faces its seat or action target when stationary.
 The separate mug overlay is hidden during Drinking and TakeBeer, whose art
 already includes a tankard. The generic visitor fallback remains 92 px.
 
-The older traveler, veteran, and merchant files remain in the repository for
-the existing build contract tests, but the default roster no longer loads
-them. A saved evening created before this change may retain its former names
-until the player starts a new evening with Reset.
+The older 92 px traveler, veteran, and merchant stills dress the first
+evening's later guests (Wenna, Brannoc, and Osric). They ship Idle in four
+directions only (their single-direction Seated, Darts, and Bathroom stills are
+not used), so these guests stay in Idle, drawn at 92 px like the visitor.
 
 The existing [tavern pixel art plan](PIXEL_ART_REDESIGN.md) remains the room
 counterpart to this character workflow.

@@ -1,9 +1,10 @@
 # The Last Inn
 
 A small sandbox game about running a border inn alongside autonomous AI characters.
-The browser demo puts three autonomous visitors in a tavern: they come in, pick
+The browser demo opens an evening for six autonomous guests, described by a scenario
+(`data/scenarios/first_evening.json`) apart from the room: they come in over time, pick
 seats by their appeal, chat or quarrel, share known places, drink beer, watch the fire,
-use the toilet, play darts, and go home when content or wronged. Next: a believable
+use the toilet, play darts, and go home when content, wronged, or the inn closes. Next: a believable
 evening with four to six model-driven guests who queue, react, talk, and fight.
 
 Run locally: `make install` once, then `make run`. Open http://127.0.0.1:5173.

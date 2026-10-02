@@ -47,6 +47,8 @@ export interface Actor {
   id: string;
   name: string;
   color: string | number;
+  /** Character art under /characters; the scene falls back to the generic visitor. */
+  sprite: string;
   x: number;
   y: number;
   traits: Record<string, unknown>;
@@ -61,6 +63,18 @@ export interface Actor {
   knowledge: { objects: Record<string, Record<string, unknown>> };
   memory: unknown[];
   decision: (DecisionStage & { seat?: DecisionStage }) | null;
+}
+
+/** A scenario guest still on the way, with tonight's needs already drawn. */
+export interface ExpectedGuest {
+  id: string;
+  name: string;
+  color: string;
+  sprite: string;
+  traits: Record<string, number>;
+  needs: Partial<Actor["needs"]>;
+  /** Game seconds after opening. */
+  arrives_at: number;
 }
 
 export interface WorldEvent {
@@ -85,6 +99,10 @@ export interface World {
   };
   actors: Actor[];
   departed: Actor[];
+  /** Guests yet to arrive, in order of arrival. */
+  expected: ExpectedGuest[];
+  /** Game seconds after opening when the inn closes; null for an evening that never closes. */
+  closes_at: number | null;
   events: WorldEvent[];
 }
 
