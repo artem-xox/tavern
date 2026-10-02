@@ -62,11 +62,15 @@ def line_place(observation: Observation, item: Mapping[str, Any]) -> tuple[int, 
 
     Returns:
         How many people wait ahead of the visitor, and whether the visitor stands in that line;
-        for someone not in it, everyone waiting is ahead.
+        for someone not in it, everyone waiting is ahead. Like a busy place (see `in_use`), a
+        line seen 10 seconds ago or more has probably cleared; without a clock it is trusted.
     """
     waiting = [entry["actor_id"] for entry in item.get("queue", [])]
     me = observation["actor"]["id"]
-    return (waiting.index(me), True) if me in waiting else (len(waiting), False)
+    if me in waiting:
+        return waiting.index(me), True
+    now, seen = observation.get("time"), item.get("last_seen")
+    return (0 if now is not None and seen is not None and now - seen >= 10.0 else len(waiting)), False
 
 
 def _headcount(count: int) -> str:
@@ -213,7 +217,7 @@ def _place_note(observation: Observation, item: Mapping[str, Any]) -> str:
     note = f"{_place(item)} {_walk(_steps(observation, item))} away"
     if item["kind"] == "tap":
         note += f" ({item.get('stock')} servings when last seen)" if item.get("stock") else " (it had run dry)"
-    waiting = len(item.get("queue", []))
+    waiting = line_place(observation, item)[0]
     return note + (" (in use)" if busy else "") + (f" ({_headcount(waiting)} waiting in line)" if waiting else "")
 
 

@@ -128,3 +128,12 @@ def test_an_impatient_guest_gives_up_waiting_for_darts(patience: float, gives_up
             rested[actor_id] = apply_decision(world, actor, lambda: decision)
     left = [event["actor_id"] for event in world["events"] if event["type"] == "left_line"]
     assert left == (["bob"] if gives_up else [])
+
+
+@pytest.mark.parametrize("seen_ago, expected", [
+    pytest.param(2.0, ["use_toilet:toilet", "cut_in_line:toilet"], id="line-seen-moments-ago"),
+    pytest.param(30.0, ["use_toilet:toilet"], id="line-seen-long-ago-has-probably-cleared"),
+])
+def test_old_sightings_of_a_line_expire(seen_ago: float, expected: list[str]) -> None:
+    observation = view(wc(["bea", "cid"], last_seen=12.0 - seen_ago))
+    assert [action["id"] for action in build_candidates(observation)] == [*expected, "inspect", "wait"]

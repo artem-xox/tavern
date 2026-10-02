@@ -88,7 +88,7 @@ def _line_options(observation: Mapping[str, Any], item: Mapping[str, Any], actio
     if "queue_spots" not in item:
         return [] if in_use(observation, item) else [action]
     ahead, joined = line_place(observation, item)
-    if not joined and len(item.get("queue", [])) >= len(item["queue_spots"]):
+    if not joined and ahead >= len(item["queue_spots"]):
         return []
     return [action, *([_action("cut_in_line", item["id"])] if ahead else [])]
 
