@@ -40,7 +40,10 @@ function editCell(x: number, y: number): void {
   connection.send({ type: "block", x, y, blocked: !blocked });
 }
 
-const scene: TavernScene = new TavernScene({ select: selectVisitor, cell: editCell, hover: (message: string): void => dashboard.hover(message) });
+const scene: TavernScene = new TavernScene(
+  { select: selectVisitor, cell: editCell, hover: (message: string): void => dashboard.hover(message) },
+  { mara: "traveler", ivo: "veteran", nell: "merchant" },
+);
 const dashboard: Dashboard = new Dashboard(root, {
   command: (command): void => connection.send(command),
   select: selectVisitor,

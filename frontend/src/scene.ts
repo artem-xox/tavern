@@ -9,6 +9,7 @@ interface SceneCallbacks {
 
 interface ActorView {
   container: Phaser.GameObjects.Container;
+  sprite: Phaser.GameObjects.Image;
   name: Phaser.GameObjects.Text;
   status: Phaser.GameObjects.Text;
   selection: Phaser.GameObjects.Arc;
@@ -16,6 +17,9 @@ interface ActorView {
   speech: Phaser.GameObjects.Text;
   targetX: number;
   targetY: number;
+  cellX: number;
+  cellY: number;
+  direction: string;
 }
 
 /** Render server snapshots; interpolation changes display coordinates only. */
@@ -32,12 +36,36 @@ export class TavernScene extends Phaser.Scene {
   private editing: boolean = false;
   private ready: boolean = false;
 
-  constructor(private readonly callbacks: SceneCallbacks) {
+  constructor(private readonly callbacks: SceneCallbacks, private readonly characterByActorId: Readonly<Record<string, string>>) {
     super("tavern");
+  }
+
+  /** Load the PixelLab stills used by the current roster and a generic visitor. */
+  preload(): void {
+    for (const character of new Set([...Object.values(this.characterByActorId), "visitor"])) {
+      for (const direction of ["north", "south", "east", "west"]) {
+        this.load.image(`${character}-${direction}`, `/characters/${character}/Idle/rotations/${direction}.png`);
+      }
+      if (character !== "visitor") {
+        for (const [action, direction] of [["Seated", "south"], ["Darts", "south"], ["Bathroom", "north"]]) {
+          this.load.image(`${character}-${action}`, `/characters/${character}/${action}/${direction}.png`);
+        }
+      }
+    }
   }
 
   /** Create rendering layers and map pointer events to server cell coordinates. */
   create(): void {
+    for (const character of new Set([...Object.values(this.characterByActorId), "visitor"])) {
+      for (const direction of ["north", "south", "east", "west"]) {
+        this.textures.get(`${character}-${direction}`).setFilter(Phaser.Textures.FilterMode.NEAREST);
+      }
+      if (character !== "visitor") {
+        for (const action of ["Seated", "Darts", "Bathroom"]) {
+          this.textures.get(`${character}-${action}`).setFilter(Phaser.Textures.FilterMode.NEAREST);
+        }
+      }
+    }
     this.floor = this.add.graphics();
     this.hearthGlow = this.add.graphics();
     this.furniture = this.add.graphics();
@@ -373,23 +401,33 @@ export class TavernScene extends Phaser.Scene {
   }
 
   private createVisitor(actor: Actor): ActorView {
-    const color: number = Phaser.Display.Color.ValueToColor(actor.color).color;
     const shadow: Phaser.GameObjects.Ellipse = this.add.ellipse(0, 9, 25, 12, 0x191815, 0.4);
     const selection: Phaser.GameObjects.Arc = this.add.circle(0, 0, 16).setStrokeStyle(2, 0xffe0a3).setVisible(actor.id === this.selectedId);
-    const body: Phaser.GameObjects.Ellipse = this.add.ellipse(0, 3, 18, 19, color).setStrokeStyle(2, 0x3b362d);
-    const face: Phaser.GameObjects.Arc = this.add.circle(0, -6, 7, 0xebbd91);
-    const hair: Phaser.GameObjects.Ellipse = this.add.ellipse(0, -11, 14, 7, 0x49342d);
-    const name: Phaser.GameObjects.Text = this.add.text(0, -24, actor.name, { fontFamily: "system-ui", fontSize: "11px", color: "#fff4dc", stroke: "#322b24", strokeThickness: 3 }).setOrigin(0.5);
+    const character: string = this.characterByActorId[actor.id] ?? "visitor";
+    const sprite: Phaser.GameObjects.Image = this.add.image(0, -23, `${character}-south`).setDisplaySize(92, 92);
+    const name: Phaser.GameObjects.Text = this.add.text(0, -53, actor.name, { fontFamily: "system-ui", fontSize: "11px", color: "#fff4dc", stroke: "#322b24", strokeThickness: 3 }).setOrigin(0.5);
     const status: Phaser.GameObjects.Text = this.add.text(0, 22, actor.status, { fontFamily: "system-ui", fontSize: "9px", color: "#ead6b6", backgroundColor: "#302b25b0", padding: { x: 3, y: 1 } }).setOrigin(0.5);
     const mugBody: Phaser.GameObjects.Rectangle = this.add.rectangle(0, 0, 7, 10, 0xd6a252);
     const foam: Phaser.GameObjects.Ellipse = this.add.ellipse(0, -5, 8, 4, 0xffebc2);
     const mug: Phaser.GameObjects.Container = this.add.container(12, 3, [mugBody, foam]);
-    const speech: Phaser.GameObjects.Text = this.add.text(0, -44, "", { fontFamily: "Georgia", fontSize: "10px", color: "#48392b", backgroundColor: "#f4e6c6", padding: { x: 6, y: 4 } }).setOrigin(0.5).setVisible(false);
-    const container: Phaser.GameObjects.Container = this.add.container(0, 0, [shadow, selection, body, face, hair, name, status, mug, speech]);
-    return { container, name, status, selection, mug, speech, targetX: 0, targetY: 0 };
+    const speech: Phaser.GameObjects.Text = this.add.text(0, -70, "", { fontFamily: "Georgia", fontSize: "10px", color: "#48392b", backgroundColor: "#f4e6c6", padding: { x: 6, y: 4 } }).setOrigin(0.5).setVisible(false);
+    const container: Phaser.GameObjects.Container = this.add.container(0, 0, [shadow, selection, sprite, name, status, mug, speech]);
+    return { container, sprite, name, status, selection, mug, speech, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south" };
   }
 
   private updateVisitor(view: ActorView, actor: Actor, size: number, reset: boolean): void {
+    const seat: WorldObject | undefined = this.world?.map.objects.find((object: WorldObject): boolean => object.id === actor.seat_id);
+    view.direction = seat?.facing ?? (actor.x > view.cellX ? "east" : actor.x < view.cellX ? "west" : actor.y > view.cellY ? "south" : actor.y < view.cellY ? "north" : view.direction);
+    const character: string = this.characterByActorId[actor.id] ?? "visitor";
+    const pose: string = actor.status === "interacting" && actor.action?.verb === "play_darts" ? "Darts"
+      : actor.status === "interacting" && actor.action?.verb === "use_toilet" ? "Bathroom"
+        : actor.seat_id && actor.status !== "walking" ? "Seated" : view.direction;
+    const texture: string = `${character}-${character === "visitor" ? view.direction : pose}`;
+    if (view.sprite.texture.key !== texture) view.sprite.setTexture(texture);
+    view.sprite.setDisplaySize(pose === "Seated" && character !== "visitor" ? 80 : 92, pose === "Seated" && character !== "visitor" ? 80 : 92);
+    view.sprite.setY(pose === "Seated" && character !== "visitor" ? -16 : -23);
+    view.cellX = actor.x;
+    view.cellY = actor.y;
     const x: number = (actor.x + 0.5) * size;
     const y: number = (actor.y + 0.5) * size;
     if (reset || view.targetX === 0 || Math.hypot(x - view.container.x, y - view.container.y) > size * 3) view.container.setPosition(x, y);
