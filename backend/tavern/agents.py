@@ -2,6 +2,7 @@
 
 import math
 from collections.abc import Awaitable, Callable, Mapping, Sequence
+from dataclasses import dataclass
 from random import Random
 from typing import Any, TypedDict
 
@@ -15,6 +16,19 @@ class Action(TypedDict):
     id: str
     verb: str
     target_id: str | None
+
+
+# Scores each candidate 0–1 from the evaluator view, the candidates and the AI config;
+# raises JevError on a recoverable model failure, which falls back to the local policy.
+Evaluator = Callable[[Mapping[str, Any], Sequence[Action], Mapping[str, Any]], Awaitable[dict[str, float]]]
+
+
+@dataclass(frozen=True)
+class Evaluators:
+    """The model port of a decision: one evaluator per stage of choosing."""
+
+    actions: Evaluator
+    seats: Evaluator
 
 
 class Decision(TypedDict):
@@ -288,6 +302,7 @@ def _select(candidates: Sequence[Action], scores: Mapping[str, float], temperatu
 
 async def choose_action(
     observation: Mapping[str, Any], config: Mapping[str, Any], rng: Random,
+    evaluators: Evaluators | None = None,
 ) -> dict[str, Any]:
     """Evaluate and select a candidate without blocking the world simulation.
 
@@ -295,6 +310,8 @@ async def choose_action(
         observation: Private actor observation; no other NPC's state is used.
         config: Explicit API key, model, timeout and selection temperature.
         rng: Seeded random generator owned by the calling simulation.
+        evaluators: Model port asked when the config holds a key. New callers pass it;
+            None falls back to the Jev adapter (a known leak, see below).
 
     Returns:
         Action, normalized scores, actual decision source and visible fallback error.
@@ -305,13 +322,16 @@ async def choose_action(
     Raises:
         ValueError: Observation or configuration is malformed.
     """
+    # Known leak: without explicit evaluators the Jev functions imported into this module are
+    # looked up at call time, which is the seam the Stage 0 tests patch.
+    evaluators = evaluators or Evaluators(evaluate_actions, evaluate_seats)
     candidates = build_candidates(observation)
     temperature = _temperature(config)
-    decision = await _decide(observation, candidates, config, rng, temperature, _local_scores, evaluate_actions)
+    decision = await _decide(observation, candidates, config, rng, temperature, _local_scores, evaluators.actions)
     if decision["action"]["verb"] != "seating":
         return decision
     seat = await _decide(observation, build_seat_candidates(observation), config, rng, temperature,
-                         _local_seat_scores, evaluate_seats)
+                         _local_seat_scores, evaluators.seats)
     return {**decision, "action": seat["action"], "seat": {key: seat[key] for key in ("source", "scores", "error")}}
 
 
@@ -326,7 +346,7 @@ def _evaluator_view(observation: Mapping[str, Any], candidates: Sequence[Action]
 async def _decide(
     observation: Mapping[str, Any], candidates: Sequence[Action], config: Mapping[str, Any], rng: Random,
     temperature: float, local: Callable[[Mapping[str, Any], Sequence[Action]], dict[str, float]],
-    remote: Callable[[Mapping[str, Any], Sequence[Action], Mapping[str, Any]], Awaitable[dict[str, float]]],
+    remote: Evaluator,
 ) -> dict[str, Any]:
     scores, source, error = local(observation, candidates), "local", None
     if config.get("typesafe_api_key"):
