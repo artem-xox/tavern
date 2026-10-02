@@ -16,7 +16,8 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from tavern.agents import choose_action
 from tavern.database import initialize_database, load_database_world, save_database_world
 from tavern.persistence import load_world, save_world
-from tavern.world import create_world, object_cells, observe_actor, observe_people, start_action, step_world
+from tavern.room import object_cells
+from tavern.world import create_world, observe_actor, observe_people, start_action, step_world
 
 # Session IDs also name save directories, so only path-safe characters are allowed.
 SESSION_ID = re.compile(r"[A-Za-z0-9_-]{8,64}")
