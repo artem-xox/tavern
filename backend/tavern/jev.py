@@ -6,6 +6,8 @@ from typing import Any
 
 import httpx
 
+from tavern.activities import ACTIVITIES
+
 
 class JevError(RuntimeError):
     """A recoverable model or transport failure, safe to display in snapshots."""
@@ -43,56 +45,10 @@ def _visitor_view() -> str:
 
 
 def _activity(action: Mapping[str, Any]) -> tuple[str, str]:
-    target = action["target_id"]
-    activities = {
-        "take_beer": (f"walk to the tap {target!r} and pour a mug of ale to carry",
-                      "Thirsty guests and newcomers naturally fetch a drink. It is pointless while they already "
-                      "hold a mug, or when the tap has run dry."),
-        "drink": ("drink the mug of ale they are holding",
-                  "Sipping ale at the table is the heart of a tavern evening; it quenches thirst but fills the "
-                  "bladder."),
-        "rest": (f"rest on the chair {target!r}", "It eases tiredness."),
-        "seating": ("find a seat: choose a free chair at one of the tables and sit down",
-                    "A separate decision picks the chair, which becomes their own seat for the rest of the "
-                    "visit. Visitors who have just come in usually want to sit down and have a beer first. "
-                    "If they already have a seat of their own, this means moving to another table, which "
-                    "is worth it mainly to join company when they feel lonely."),
-        "sit": (f"sit in their own seat {target!r} for a while",
-                "Sitting in their own seat is a guest's natural resting state: it eases tiredness, it is where "
-                "they sip their ale, and it lets them chat with whoever shares the table. Getting up needs a "
-                "reason."),
-        "talk": (f"chat with {target!r}, who sits at their table",
-                 "It eases the wish for company of both and lets them share where the beer, WC and darts are. "
-                 "After a few beers an impatient pair may quarrel instead, leaving both aggrieved; someone who "
-                 "wronged them tonight is poor company. Right after a chat, with their wish for company "
-                 "satisfied, a quiet sip or a rest is more natural than yet another chat."),
-        "play_darts": (f"play a round of darts at {target!r}",
-                       "A lively pastime for a bored guest; it means leaving their seat for a while."),
-        "watch": (f"stand by {target!r} and watch it for a while",
-                  "Gazing into the flames of the fireplace or out of a window at the road is a quiet pleasure "
-                  "that eases boredom more gently than darts. Comfort-loving guests especially enjoy the warmth "
-                  "of the fire, curious ones the view outside. It means leaving their seat for a while."),
-        "use_toilet": (f"use the WC {target!r}", "Necessary once the bladder presses, pointless before."),
-        "inspect": ("explore the room to discover or re-check places",
-                    "Worthwhile only when something they need has not been found yet; otherwise it is aimless "
-                    "wandering."),
-        "wait": ("wait a moment and do nothing", "Idling where they stand is rarely the most natural thing."),
-        "leave": (f"leave the inn for the night through {target!r}, ending their visit for good",
-                  "Going home is the natural end of an evening, not a failure. It is the right move when they "
-                  "are content: they have stayed a good while (several minutes of `self.visit.seconds`), drunk "
-                  "their fill (two or three beers in `self.visit.beers`) and their needs are mostly low, or when "
-                  "their company has gone home and the evening has run its course; after a long evening and "
-                  "several beers, a guest left alone in the inn naturally heads home. It is also right when the "
-                  "evening has gone wrong: the beer has run out (the tap shows stock 0 when last seen) while they "
-                  "are still thirsty, someone took their seat, someone offended them or they had a quarrel (see "
-                  "`self.visit.grievances`), or their needs keep going unmet. Leaving is a poor choice when they "
-                  "have just arrived, still hold an undrunk mug, want a drink that is still available, or are "
-                  "enjoying good company. Impatient guests walk out sooner after a grievance; comfort-loving "
-                  "guests linger in a cosy seat."),
-    }
-    if action["verb"] not in activities:
+    activity = ACTIVITIES.get(action["verb"])
+    if activity is None:
         raise ValueError(f"Jev cannot describe the action verb {action['verb']!r}")
-    return activities[action["verb"]]
+    return activity.what.format(target=repr(action["target_id"])), activity.guidance
 
 
 def _guest(observation: Mapping[str, Any]) -> str:

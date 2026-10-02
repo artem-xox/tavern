@@ -5,6 +5,7 @@ import math
 from pathlib import Path
 from typing import Any, Mapping
 
+from tavern.activities import ACTIVITIES
 from tavern.navigation import find_path
 from tavern.world import create_world
 
@@ -164,8 +165,7 @@ def _validate_rules(world: Mapping[str, Any]) -> None:
         raise ValueError("Invalid saved simulation rates")
     if type(rules["vision_radius"]) is not int or not 0 <= rules["vision_radius"] <= 100:
         raise ValueError("Invalid saved vision radius")
-    if set(rules["durations"]) != {"take_beer", "drink", "rest", "sit", "talk", "play_darts", "use_toilet",
-                                   "inspect", "wait", "leave", "watch"}:
+    if set(rules["durations"]) != {verb for verb, activity in ACTIVITIES.items() if activity.duration is not None}:
         raise ValueError("Invalid saved action definitions")
     if set(rules["need_rates"]) != {"thirst", "fatigue", "bladder", "social", "boredom"}:
         raise ValueError("Invalid saved needs")

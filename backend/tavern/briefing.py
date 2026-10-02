@@ -3,6 +3,8 @@
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
+from tavern.activities import ACTIVITIES
+
 Observation = Mapping[str, Any]
 Action = Mapping[str, Any]
 
@@ -160,10 +162,8 @@ def _person(observation: Observation, visitor: Mapping[str, Any]) -> str:
         where = ("across the table from them" if _shares_table(observation, visitor)
                  else f"at the {_label(table)}" if table else "at a table")
         return f"{_label(visitor)} sits {where}{'' if visitor.get('available', True) else ', busy talking'}"
-    doing = {"take_beer": "fetching ale", "drink": "drinking", "talk": "talking", "play_darts": "playing darts",
-             "watch": "admiring the view", "use_toilet": "heading to the WC", "inspect": "looking around",
-             "wait": "waiting", "leave": "heading for the door", "rest": "resting", "sit": "heading to a seat"}
-    return f"{_label(visitor)} is {doing.get(visitor.get('doing'), 'standing about')}"
+    activity = ACTIVITIES.get(visitor.get("doing"))
+    return f"{_label(visitor)} is {activity.doing if activity and activity.doing else 'standing about'}"
 
 
 def _people(observation: Observation) -> str:
@@ -221,11 +221,9 @@ def _ago(seconds: float) -> str:
 
 
 def _memory(memory: Mapping[str, Any]) -> str:
-    done = {"take_beer": "poured a mug of ale", "drink": "drank a beer", "sit": "sat a while", "talk": "chatted",
-            "play_darts": "played darts", "watch": "admired the view", "use_toilet": "used the WC",
-            "inspect": "looked around", "wait": "waited", "rest": "rested", "leave": "left"}
     if memory["type"] == "action_completed":
-        return done.get(memory["message"].rsplit(" ", 1)[-1], memory["message"])
+        activity = ACTIVITIES.get(memory["message"].rsplit(" ", 1)[-1])
+        return activity.done if activity and activity.done else memory["message"]
     if memory["type"] == "action_failed":
         return f"was turned away ({memory['message']})"
     return memory["message"]

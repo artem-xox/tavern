@@ -4,9 +4,9 @@ from collections.abc import Mapping
 from copy import deepcopy
 from typing import Any
 
+from tavern.activities import ACTIVITIES
 from tavern.arrival import arrival_ranges, arriving, create_actor
-from tavern.conversation import complete_conversation
-from tavern.memory import grieve, record_event
+from tavern.memory import record_event
 from tavern.room import create_map, find_object, impassable_cells
 from tavern.routes import gives_way, occupied_cells, plan_route, replan, reserved_spots
 from tavern.sight import line_visible, refresh_knowledge, visible_cells
@@ -54,9 +54,8 @@ def _rules() -> dict[str, Any]:
     return {"move_seconds": 0.35, "blocked_timeout": 3.0, "vision_radius": 5,
             "need_rates": {"thirst": 0.18, "fatigue": 0.12, "bladder": 0.10,
                            "social": 0.18, "boredom": 0.25},
-            "durations": {"take_beer": 0.8, "drink": 3.0, "rest": 3.0, "sit": 14.0,
-                          "talk": 8.0, "play_darts": 10.0,
-                          "use_toilet": 2.0, "inspect": 0.8, "wait": 1.0, "leave": 1.0, "watch": 8.0},
+            "durations": {verb: activity.duration for verb, activity in ACTIVITIES.items()
+                          if activity.duration is not None},
             # Each beer the pair has drunk beyond the first adds this much quarrel chance,
             # scaled by impatience (2 − both patience traits), up to quarrel_max.
             "quarrel_per_beer": 0.1, "quarrel_max": 0.5}
@@ -76,11 +75,12 @@ def _action_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Ma
     verb = action.get("verb")
     if not isinstance(verb, str) or verb not in world["rules"]["durations"]:
         return "Unknown action verb"
-    if verb == "talk":
+    activity = ACTIVITIES[verb]
+    if activity.partner:
         return _talk_error(world, actor, action)
-    if verb == "drink" and actor["inventory"]["beer"] <= 0:
-        return "No beer in inventory"
-    if verb in ("take_beer", "rest", "sit", "use_toilet", "play_darts", "leave", "watch"):
+    if activity.requires_item and actor["inventory"][activity.requires_item] <= 0:
+        return f"No {activity.requires_item} in inventory"
+    if activity.target_kinds:
         return _target_error(world, actor, action)
     if action.get("target_id") is not None:
         return "This action does not take a target"
@@ -91,14 +91,13 @@ def _target_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Ma
     target = _target(world, action)
     if target is None:
         return "Target no longer exists"
-    kinds = {"take_beer": ("tap",), "rest": ("chair",), "sit": ("chair",), "use_toilet": ("toilet",),
-             "play_darts": ("darts",), "leave": ("door",), "watch": ("window", "fireplace")}[action["verb"]]
-    if target["kind"] not in kinds:
+    activity = ACTIVITIES[action["verb"]]
+    if target["kind"] not in activity.target_kinds:
         return "Target does not support this action"
     if target["reserved_by"] not in (None, actor["id"]):
         return "Target is reserved by another visitor"
-    if action["verb"] == "take_beer" and target["stock"] <= 0:
-        return "Beer tap is empty"
+    if activity.empty_target and target["stock"] <= 0:
+        return activity.empty_target
     return None
 
 
@@ -179,7 +178,7 @@ def _notice_target(world: Mapping[str, Any], actor: dict[str, Any], action: Mapp
 
 def _activate(world: Mapping[str, Any], actor: dict[str, Any], action: Mapping[str, Any],
               plan: tuple[list[int] | None, list[list[int]]]) -> None:
-    if plan[1] or action["verb"] in ("take_beer", "use_toilet", "play_darts"):
+    if plan[1] or ACTIVITIES[action["verb"]].leaves_seat:
         actor["seat_id"] = None
     _clear_action(world, actor)
     actor.update(action={key: action.get(key) for key in ("id", "verb", "target_id")},
@@ -196,7 +195,6 @@ def _activate(world: Mapping[str, Any], actor: dict[str, Any], action: Mapping[s
 def _fail(world: Mapping[str, Any], actor: dict[str, Any], reason: str) -> None:
     _clear_action(world, actor)
     _reject(world, actor, reason)
-
 
 
 def _yield_idle_occupant(world: Mapping[str, Any], actor: dict[str, Any], next_cell: tuple[int, int]) -> None:
@@ -228,7 +226,6 @@ def _move(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float) -> No
         _begin_interaction(world, actor)
 
 
-
 def _wait_for_route(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float) -> None:
     actor.update(status="waiting", _move_elapsed=0.0)
     actor["_blocked_for"] += elapsed
@@ -246,19 +243,9 @@ def _begin_interaction(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
         _fail(world, actor, reason)
     else:
         actor.update(status="interacting", _move_elapsed=0.0, _blocked_for=0.0)
-        if actor["action"]["verb"] == "sit":
-            _settle(world, actor, _target(world, actor["action"]))
-
-
-def _settle(world: Mapping[str, Any], actor: dict[str, Any], seat: Mapping[str, Any]) -> None:
-    # The chair a visitor sits down on becomes their own; taking someone else's own seat wrongs them.
-    if actor["seat_id"] != seat["id"]:
-        for owner in world["actors"]:
-            if owner["id"] != actor["id"] and owner["favorite_seat_id"] == seat["id"]:
-                grieve(owner, f"{actor['name']} took my seat ({seat['name']})")
-                record_event(world, owner, "seat_taken", f"{actor['name']} took {owner['name']}'s seat ({seat['name']})")
-    actor.update(seat_id=seat["id"], favorite_seat_id=seat["id"])
-
+        arrival = ACTIVITIES[actor["action"]["verb"]].on_arrival
+        if arrival:
+            arrival(world, actor, _target(world, actor["action"]))
 
 
 def _interaction_error(world: Mapping[str, Any], actor: Mapping[str, Any]) -> str | None:
@@ -275,30 +262,13 @@ def _interaction_error(world: Mapping[str, Any], actor: Mapping[str, Any]) -> st
 
 
 def _apply_effect(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
-    verb = actor["action"]["verb"]
-    if verb == "take_beer":
-        _target(world, actor["action"])["stock"] -= 1
-        actor["inventory"]["beer"] += 1
-    elif verb == "drink":
-        actor["inventory"]["beer"] -= 1
-        actor["visit"]["beers"] += 1
-        actor["needs"]["thirst"] = max(0, actor["needs"]["thirst"] - 60)
-        actor["needs"]["bladder"] = min(100, actor["needs"]["bladder"] + 25)
-    elif verb in ("rest", "sit", "use_toilet"):
-        need = "fatigue" if verb == "rest" else "bladder"
-        if verb == "sit":
-            need = "fatigue"
-        actor["needs"][need] = max(0, actor["needs"][need] - 65)
-    elif verb == "play_darts":
-        actor["needs"]["boredom"] = max(0, actor["needs"]["boredom"] - 65)
-    elif verb == "watch":
-        # Gazing at the flames or the road outside is a gentler pastime than darts.
-        actor["needs"]["boredom"] = max(0, actor["needs"]["boredom"] - 40)
-    elif verb == "talk":
-        complete_conversation(world, actor, _actor(world, actor["action"]["target_id"]))
-    elif verb == "leave":
-        # step_world moves the visitor out once every actor has finished this tick.
-        actor["visit"]["left_at"] = world["time"]
+    action = actor["action"]
+    activity = ACTIVITIES[action["verb"]]
+    target = _actor(world, action["target_id"]) if activity.partner else _target(world, action)
+    if activity.effect:
+        activity.effect(world, actor, target)
+    for need, change in activity.needs.items():
+        actor["needs"][need] = min(100, max(0, actor["needs"][need] + change))
 
 
 def _interact(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float) -> None:
