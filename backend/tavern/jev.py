@@ -2,13 +2,20 @@
 
 import math
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any
+from typing import Any, TypedDict
 
 import httpx
 
 
 class JevError(RuntimeError):
     """A recoverable model or transport failure, safe to display in snapshots."""
+
+
+class Usage(TypedDict):
+    """Token counts the provider reported for one request; Jev bills input tokens only."""
+
+    input_tokens: int
+    output_tokens: int
 
 
 def _candidate_ids(candidates: Sequence[Mapping[str, Any]]) -> list[str]:
@@ -205,7 +212,7 @@ async def evaluate_actions(
         ValueError: Candidates, their verbs or configuration are malformed.
         JevError: Transport, HTTP, JSON or typed-score validation fails.
     """
-    return await _evaluate(observation, candidates, config, client, _action_question)
+    return (await _evaluate(observation, candidates, config, client, _action_question))[0]
 
 
 async def evaluate_seats(
@@ -227,13 +234,71 @@ async def evaluate_seats(
         ValueError: Candidates are not `sit` actions or configuration is malformed.
         JevError: Transport, HTTP, JSON or typed-score validation fails.
     """
-    return await _evaluate(observation, candidates, config, client, _seat_question)
+    return (await _evaluate(observation, candidates, config, client, _seat_question))[0]
+
+
+async def evaluate_actions_metered(
+    observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
+    config: Mapping[str, Any], client: httpx.AsyncClient | None = None,
+) -> tuple[dict[str, float], Usage | None]:
+    """Score supplied actions, as `evaluate_actions`, and report the request's token usage.
+
+    Args:
+        observation: Private agent view, never an authoritative world snapshot.
+        candidates: Unique legal candidate actions to evaluate.
+        config: Explicit API key, model name and timeout in seconds.
+        client: Optional injected HTTP client for boundary verification.
+
+    Returns:
+        Normalized scores, and the provider-reported usage or None when it reported none.
+
+    Raises:
+        ValueError: Candidates, their verbs or configuration are malformed.
+        JevError: Transport, HTTP, JSON, typed-score or usage validation fails.
+    """
+    scores, payload = await _evaluate(observation, candidates, config, client, _action_question)
+    return scores, _read_usage(payload)
+
+
+async def evaluate_seats_metered(
+    observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
+    config: Mapping[str, Any], client: httpx.AsyncClient | None = None,
+) -> tuple[dict[str, float], Usage | None]:
+    """Score free chairs, as `evaluate_seats`, and report the request's token usage.
+
+    Args:
+        observation: Private agent view, never an authoritative world snapshot.
+        candidates: Unique `sit` actions, one per free table chair.
+        config: Explicit API key, model name and timeout in seconds.
+        client: Optional injected HTTP client for boundary verification.
+
+    Returns:
+        Normalized scores, and the provider-reported usage or None when it reported none.
+
+    Raises:
+        ValueError: Candidates are not `sit` actions or configuration is malformed.
+        JevError: Transport, HTTP, JSON, typed-score or usage validation fails.
+    """
+    scores, payload = await _evaluate(observation, candidates, config, client, _seat_question)
+    return scores, _read_usage(payload)
+
+
+def _read_usage(payload: Mapping[str, Any]) -> Usage | None:
+    # A response without usage is valid (the scores stand); reported counters must be sound.
+    if "usage" not in payload:
+        return None
+    usage = payload["usage"]
+    counts = [usage.get(name) for name in ("input_tokens", "output_tokens")] if isinstance(usage, Mapping) else []
+    if len(counts) != 2 or any(isinstance(count, bool) or not isinstance(count, int) or count < 0
+                               for count in counts):
+        raise JevError("Jev returned malformed usage")
+    return {"input_tokens": counts[0], "output_tokens": counts[1]}
 
 
 async def _evaluate(
     observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]], config: Mapping[str, Any],
     client: httpx.AsyncClient | None, question: Callable[[Mapping[str, Any]], dict[str, Any]],
-) -> dict[str, float]:
+) -> tuple[dict[str, float], Any]:
     ids = _candidate_ids(candidates)
     key, model, timeout = _configuration(config)
     body = _request_body(observation, candidates, model, question)
@@ -242,4 +307,4 @@ async def _evaluate(
             payload = await _post_scores(owned_client, body, key, timeout)
     else:
         payload = await _post_scores(client, body, key, timeout)
-    return _read_scores(payload, ids)
+    return _read_scores(payload, ids), payload
