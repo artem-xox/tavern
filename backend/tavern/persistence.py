@@ -73,29 +73,33 @@ def _validate_actor_runtime(world: Mapping[str, Any]) -> None:
 
 
 def _validate_lines(world: Mapping[str, Any]) -> None:
-    actors, waiting = {actor["id"]: actor for actor in world["actors"]}, set()
+    waiting: set[str] = set()
     for item in world["map"]["objects"]:
-        if "queue_spots" not in item:
-            continue
-        line = item.get("queue")
-        if not isinstance(line, list) or len(line) > len(item["queue_spots"]):
-            raise ValueError("Invalid saved line")
-        for entry in line:
-            if not isinstance(entry, dict) or set(entry) != {"actor_id", "since"}:
-                raise ValueError("Invalid saved place in line")
-            number(entry["since"], "Saved time in line", 0, world["time"])
-            actor = actors.get(entry["actor_id"])
-            if actor is None or actor["id"] in waiting or item["reserved_by"] == actor["id"]:
-                raise ValueError("Saved line holds an unknown, repeated or served guest")
-            if not actor["action"] or actor["action"].get("target_id") != item["id"]:
-                raise ValueError("Saved guest in line is not waiting for that place")
-            waiting.add(actor["id"])
+        if "queue_spots" in item:
+            _validate_line(world, item, waiting)
     for actor in world["actors"]:
         target = find_object(world["map"], (actor["action"] or {}).get("target_id"))
         lined = target is not None and "queue_spots" in target
         if (actor["status"] == "queued" or lined) and actor["id"] not in waiting and not (
                 lined and target["reserved_by"] == actor["id"]):
             raise ValueError("Saved guest waits for a place without standing in its line")
+
+
+def _validate_line(world: Mapping[str, Any], item: Mapping[str, Any], waiting: set[str]) -> None:
+    # Adds everyone in this line to `waiting`, so a guest standing in two lines is caught.
+    actors, line = {actor["id"]: actor for actor in world["actors"]}, item.get("queue")
+    if not isinstance(line, list) or len(line) > len(item["queue_spots"]):
+        raise ValueError("Invalid saved line")
+    for entry in line:
+        if not isinstance(entry, dict) or set(entry) != {"actor_id", "since"}:
+            raise ValueError("Invalid saved place in line")
+        number(entry["since"], "Saved time in line", 0, world["time"])
+        actor = actors.get(entry["actor_id"])
+        if actor is None or actor["id"] in waiting or item["reserved_by"] == actor["id"]:
+            raise ValueError("Saved line holds an unknown, repeated or served guest")
+        if not actor["action"] or actor["action"].get("target_id") != item["id"]:
+            raise ValueError("Saved guest in line is not waiting for that place")
+        waiting.add(actor["id"])
 
 
 def _validate_known_objects(objects: Mapping[str, Any], world: Mapping[str, Any]) -> None:

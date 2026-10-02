@@ -7,12 +7,19 @@ place is free and nobody stands on the way in, so a visitor walking out is never
 """
 
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, TypedDict
 
 from tavern.activities import ACTIVITIES
 from tavern.memory import grieve, record_event
 from tavern.room import find_object, line_approach
 from tavern.routes import plan_route, replan
+
+
+class LineEntry(TypedDict):
+    """One visitor's place in a line: who, and since when they wait (game seconds)."""
+
+    actor_id: str
+    since: float
 
 
 def check_lines(world: Mapping[str, Any]) -> None:
@@ -104,7 +111,8 @@ def join_line(world: Mapping[str, Any], item: dict[str, Any], actor: dict[str, A
         front: Whether they cut in ahead of everyone waiting, who are wronged by it.
     """
     passed = [entry["actor_id"] for entry in item["queue"]] if front else []
-    item["queue"].insert(0 if front else len(item["queue"]), {"actor_id": actor["id"], "since": world["time"]})
+    entry: LineEntry = {"actor_id": actor["id"], "since": world["time"]}
+    item["queue"].insert(0 if front else len(item["queue"]), entry)
     record_event(world, actor, "joined_line", f"{actor['name']} joined the line for {item['name']}")
     _cut(world, item, actor, passed)
 
