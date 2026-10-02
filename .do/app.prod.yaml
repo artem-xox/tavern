@@ -33,7 +33,6 @@ ingress:
         prefix: /ws
   - component:
       name: backend
-      preserve_path_prefix: true
     match:
       path:
         prefix: /health
@@ -65,6 +64,10 @@ services:
   - key: TYPESAFE_MODEL
     scope: RUN_TIME
     value: jev-latest
+  - key: TYPESAFE_API_KEY
+    scope: RUN_TIME
+    type: SECRET
+    value: ${TYPESAFE_API_KEY}
   - key: AI_TIMEOUT
     scope: RUN_TIME
     value: "8"
