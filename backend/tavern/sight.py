@@ -52,6 +52,17 @@ def visible_cells(world: Mapping[str, Any], actor: Mapping[str, Any], radius: in
             if abs(x - origin[0]) + abs(y - origin[1]) <= radius and line_visible(origin, (x, y), blocked)]
 
 
+def look_around(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
+    """Let a visitor stepping in through the door take in the whole hall.
+
+    Args:
+        world: Current world; walls still hide what lies behind them.
+        actor: Newcomer whose knowledge is updated in place.
+    """
+    radius = world["map"]["width"] + world["map"]["height"]
+    refresh_knowledge(world, actor, visible_cells(world, actor, radius))
+
+
 def refresh_knowledge(world: Mapping[str, Any], actor: dict[str, Any], visible: list[list[int]]) -> None:
     """Remember the cells seen and the current state of every object anchored in them.
 

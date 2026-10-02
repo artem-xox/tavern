@@ -9,14 +9,8 @@ from tavern.conversation import complete_conversation
 from tavern.memory import grieve, record_event
 from tavern.room import create_map, find_object, impassable_cells
 from tavern.routes import gives_way, occupied_cells, plan_route, replan, reserved_spots
-from tavern.sight import line_visible, refresh_knowledge, visible_cells
+from tavern.sight import line_visible, look_around, refresh_knowledge, visible_cells
 from tavern.validation import number, unique_ids
-
-
-def _look_around(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
-    # Stepping in through the door, a visitor takes in the whole hall; walls still hide what lies behind.
-    radius = world["map"]["width"] + world["map"]["height"]
-    refresh_knowledge(world, actor, visible_cells(world, actor, radius))
 
 
 def create_world(map_data: Mapping[str, Any], seed: int = 0) -> dict[str, Any]:
@@ -46,7 +40,7 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> dict[str, Any]:
     for actor in actors:
         observe_actor(world, actor["id"])
         if ranges is not None:
-            _look_around(world, actor)
+            look_around(world, actor)
     return world
 
 
