@@ -33,6 +33,7 @@ ingress:
         prefix: /ws
   - component:
       name: backend
+      preserve_path_prefix: true
     match:
       path:
         prefix: /health
@@ -61,6 +62,9 @@ services:
   - key: DATABASE_URL
     scope: RUN_TIME
     value: ${tavern-db.DATABASE_URL}
+  - key: TAVERN_DATABASE_ENABLED
+    scope: RUN_TIME
+    value: "true"
   - key: TYPESAFE_MODEL
     scope: RUN_TIME
     value: jev-latest
