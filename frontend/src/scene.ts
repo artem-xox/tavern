@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { Actor, Cell, World, WorldObject } from "./types";
+import type { ActivityView, Actor, Cell, Verb, World, WorldObject } from "./types";
 
 interface SceneCallbacks {
   select: (actorId: string) => void;
@@ -25,6 +25,7 @@ interface ActorView {
 /** Render server snapshots; interpolation changes display coordinates only. */
 export class TavernScene extends Phaser.Scene {
   private world: World | null = null;
+  private activities: Record<Verb, ActivityView> = {};
   private floor!: Phaser.GameObjects.Graphics;
   private hearthGlow!: Phaser.GameObjects.Graphics;
   private furniture!: Phaser.GameObjects.Graphics;
@@ -70,13 +71,14 @@ export class TavernScene extends Phaser.Scene {
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer): void => this.click(pointer));
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer): void => this.hover(pointer));
     this.ready = true;
-    if (this.world) this.setWorld(this.world);
+    if (this.world) this.setWorld(this.world, this.activities);
   }
 
   /** Apply a world snapshot, keeping authoritative actors separate from sprites. */
-  setWorld(world: World): void {
+  setWorld(world: World, activities: Record<Verb, ActivityView>): void {
     const reset: boolean = this.world !== null && world.tick < this.world.tick;
     this.world = world;
+    this.activities = activities;
     if (!this.ready) return;
     this.renderMap(world);
     this.syncVisitors(world, reset);
@@ -434,9 +436,8 @@ export class TavernScene extends Phaser.Scene {
     view.name.setText(actor.name);
     const incoming: Actor | undefined = this.world?.actors.find((visitor: Actor): boolean => visitor.action?.verb === "talk" && visitor.action.target_id === actor.id);
     const chatting: boolean = !!incoming || actor.action?.verb === "talk";
-    const labels: Record<string, string> = { sit: "seated", talk: "chatting", play_darts: "darts", take_beer: "getting ale", drink: "sipping ale", use_toilet: "WC",
-      watch: target?.kind === "fireplace" ? "by the fire" : "at the window", leave: "going home" };
-    view.status.setText(actor.status === "walking" ? `→ ${labels[actor.action?.verb ?? ""] ?? "exploring"}` : chatting ? "chatting" : actor.action ? labels[actor.action.verb] ?? actor.action.verb : actor.seat_id ? "seated" : "thinking");
+    const label = (verb: Verb): string | undefined => (verb === "watch" && target?.kind === "fireplace" ? "by the fire" : this.activities[verb]?.status ?? undefined);
+    view.status.setText(actor.status === "walking" ? `→ ${label(actor.action?.verb ?? "") ?? "exploring"}` : chatting ? "chatting" : actor.action ? label(actor.action.verb) ?? actor.action.verb : actor.seat_id ? "seated" : "thinking");
     view.mug.setVisible(actor.inventory.beer > 0 && pose !== "Drinking" && pose !== "TakeBeer");
     view.speech.setVisible(chatting);
     view.speech.setText(incoming ? "Quite a story!" : "News from the road…");
@@ -445,16 +446,8 @@ export class TavernScene extends Phaser.Scene {
 
   private actorPose(actor: Actor): string {
     if (actor.status === "walking") return "Walking";
-    if (actor.status === "interacting") {
-      switch (actor.action?.verb) {
-        case "play_darts": return "Darts";
-        case "use_toilet": return "Bathroom";
-        case "drink": return "Drinking";
-        case "take_beer": return "TakeBeer";
-        case "talk": return "Talking";
-        case "rest": case "sit": return "Seated";
-      }
-    }
+    const pose: string | null | undefined = actor.action ? this.activities[actor.action.verb]?.pose : null;
+    if (actor.status === "interacting" && pose) return pose;
     return actor.seat_id ? "Seated" : "Idle";
   }
 

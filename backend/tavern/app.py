@@ -13,6 +13,7 @@ from typing import Any, AsyncIterator, Mapping
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 
+from tavern.activities import ACTIVITIES, client_activities
 from tavern.agents import choose_action
 from tavern.database import initialize_database, load_database_world, save_database_world
 from tavern.persistence import load_world, save_world
@@ -59,13 +60,14 @@ class TavernRuntime:
         """Return a client envelope with credentials excluded.
 
         Returns:
-            Independent world copy and public evaluator configuration.
+            Independent world copy, public evaluator configuration, and how the client
+            names, shows, and targets each verb.
         """
         configured = bool(self.ai_config.get("typesafe_api_key"))
         return {"type": "snapshot", "state": deepcopy(self.world), "ai": {
             "mode": "jev" if configured else "local", "configured": configured,
             "model": self.ai_config["model"],
-        }}
+        }, "activities": client_activities(ACTIVITIES)}
 
     def _event(self, message: str) -> None:
         self.world["events"].append({"time": self.world["time"], "actor_id": None,

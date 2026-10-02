@@ -165,3 +165,17 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "they already have a seat of their own, this means moving to another table, which is "
                       "worth it mainly to join company when they feel lonely."),
 )})
+
+
+def client_activities(activities: Mapping[str, Activity]) -> dict[str, dict[str, Any]]:
+    """Describe the verbs the world runs, for the browser client.
+
+    Args:
+        activities: Activity table.
+    Returns:
+        Per world verb: command label, status text, pose, target kinds, and whether it
+        targets another visitor. Decision steps such as `seating` are left out.
+    """
+    return {verb: {"label": activity.label, "status": activity.status, "pose": activity.pose,
+                   "target_kinds": list(activity.target_kinds), "partner": activity.partner}
+            for verb, activity in activities.items() if activity.duration is not None}

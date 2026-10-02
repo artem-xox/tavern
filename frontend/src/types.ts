@@ -1,5 +1,6 @@
 export type Cell = [number, number];
-export type Verb = "take_beer" | "drink" | "rest" | "sit" | "talk" | "play_darts" | "watch" | "use_toilet" | "inspect" | "wait" | "leave";
+/** An action verb; the server's activity table lists the verbs it runs. */
+export type Verb = string;
 export type Mode = "local" | "jev";
 
 export interface WorldObject {
@@ -19,6 +20,15 @@ export interface WorldObject {
   appeal?: number;
   comforts?: string[];
   reach?: number;
+}
+
+/** How the client names, shows, and targets one verb, as described by the server. */
+export interface ActivityView {
+  label: string;
+  status: string | null;
+  pose: string | null;
+  target_kinds: WorldObject["kind"][];
+  partner: boolean;
 }
 
 export interface DecisionStage {
@@ -82,6 +92,7 @@ export interface Snapshot {
   type: "snapshot";
   state: World;
   ai: { mode: Mode; configured?: boolean; model?: string };
+  activities: Record<Verb, ActivityView>;
 }
 
 export type Command =
