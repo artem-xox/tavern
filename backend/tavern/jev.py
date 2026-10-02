@@ -2,13 +2,22 @@
 
 import math
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any
+from typing import Any, TypedDict
 
 import httpx
+
+from tavern.activities import ACTIVITIES
 
 
 class JevError(RuntimeError):
     """A recoverable model or transport failure, safe to display in snapshots."""
+
+
+class Usage(TypedDict):
+    """Token counts the provider reported for one request; Jev bills input tokens only."""
+
+    input_tokens: int
+    output_tokens: int
 
 
 def _candidate_ids(candidates: Sequence[Mapping[str, Any]]) -> list[str]:
@@ -43,56 +52,10 @@ def _visitor_view() -> str:
 
 
 def _activity(action: Mapping[str, Any]) -> tuple[str, str]:
-    target = action["target_id"]
-    activities = {
-        "take_beer": (f"walk to the tap {target!r} and pour a mug of ale to carry",
-                      "Thirsty guests and newcomers naturally fetch a drink. It is pointless while they already "
-                      "hold a mug, or when the tap has run dry."),
-        "drink": ("drink the mug of ale they are holding",
-                  "Sipping ale at the table is the heart of a tavern evening; it quenches thirst but fills the "
-                  "bladder."),
-        "rest": (f"rest on the chair {target!r}", "It eases tiredness."),
-        "seating": ("find a seat: choose a free chair at one of the tables and sit down",
-                    "A separate decision picks the chair, which becomes their own seat for the rest of the "
-                    "visit. Visitors who have just come in usually want to sit down and have a beer first. "
-                    "If they already have a seat of their own, this means moving to another table, which "
-                    "is worth it mainly to join company when they feel lonely."),
-        "sit": (f"sit in their own seat {target!r} for a while",
-                "Sitting in their own seat is a guest's natural resting state: it eases tiredness, it is where "
-                "they sip their ale, and it lets them chat with whoever shares the table. Getting up needs a "
-                "reason."),
-        "talk": (f"chat with {target!r}, who sits at their table",
-                 "It eases the wish for company of both and lets them share where the beer, WC and darts are. "
-                 "After a few beers an impatient pair may quarrel instead, leaving both aggrieved; someone who "
-                 "wronged them tonight is poor company. Right after a chat, with their wish for company "
-                 "satisfied, a quiet sip or a rest is more natural than yet another chat."),
-        "play_darts": (f"play a round of darts at {target!r}",
-                       "A lively pastime for a bored guest; it means leaving their seat for a while."),
-        "watch": (f"stand by {target!r} and watch it for a while",
-                  "Gazing into the flames of the fireplace or out of a window at the road is a quiet pleasure "
-                  "that eases boredom more gently than darts. Comfort-loving guests especially enjoy the warmth "
-                  "of the fire, curious ones the view outside. It means leaving their seat for a while."),
-        "use_toilet": (f"use the WC {target!r}", "Necessary once the bladder presses, pointless before."),
-        "inspect": ("explore the room to discover or re-check places",
-                    "Worthwhile only when something they need has not been found yet; otherwise it is aimless "
-                    "wandering."),
-        "wait": ("wait a moment and do nothing", "Idling where they stand is rarely the most natural thing."),
-        "leave": (f"leave the inn for the night through {target!r}, ending their visit for good",
-                  "Going home is the natural end of an evening, not a failure. It is the right move when they "
-                  "are content: they have stayed a good while (several minutes of `self.visit.seconds`), drunk "
-                  "their fill (two or three beers in `self.visit.beers`) and their needs are mostly low, or when "
-                  "their company has gone home and the evening has run its course; after a long evening and "
-                  "several beers, a guest left alone in the inn naturally heads home. It is also right when the "
-                  "evening has gone wrong: the beer has run out (the tap shows stock 0 when last seen) while they "
-                  "are still thirsty, someone took their seat, someone offended them or they had a quarrel (see "
-                  "`self.visit.grievances`), or their needs keep going unmet. Leaving is a poor choice when they "
-                  "have just arrived, still hold an undrunk mug, want a drink that is still available, or are "
-                  "enjoying good company. Impatient guests walk out sooner after a grievance; comfort-loving "
-                  "guests linger in a cosy seat."),
-    }
-    if action["verb"] not in activities:
+    activity = ACTIVITIES.get(action["verb"])
+    if activity is None:
         raise ValueError(f"Jev cannot describe the action verb {action['verb']!r}")
-    return activities[action["verb"]]
+    return activity.what.format(target=repr(action["target_id"])), activity.guidance
 
 
 def _guest(observation: Mapping[str, Any]) -> str:
@@ -205,7 +168,7 @@ async def evaluate_actions(
         ValueError: Candidates, their verbs or configuration are malformed.
         JevError: Transport, HTTP, JSON or typed-score validation fails.
     """
-    return await _evaluate(observation, candidates, config, client, _action_question)
+    return (await _evaluate(observation, candidates, config, client, _action_question))[0]
 
 
 async def evaluate_seats(
@@ -227,13 +190,71 @@ async def evaluate_seats(
         ValueError: Candidates are not `sit` actions or configuration is malformed.
         JevError: Transport, HTTP, JSON or typed-score validation fails.
     """
-    return await _evaluate(observation, candidates, config, client, _seat_question)
+    return (await _evaluate(observation, candidates, config, client, _seat_question))[0]
+
+
+async def evaluate_actions_metered(
+    observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
+    config: Mapping[str, Any], client: httpx.AsyncClient | None = None,
+) -> tuple[dict[str, float], Usage | None]:
+    """Score supplied actions, as `evaluate_actions`, and report the request's token usage.
+
+    Args:
+        observation: Private agent view, never an authoritative world snapshot.
+        candidates: Unique legal candidate actions to evaluate.
+        config: Explicit API key, model name and timeout in seconds.
+        client: Optional injected HTTP client for boundary verification.
+
+    Returns:
+        Normalized scores, and the provider-reported usage or None when it reported none.
+
+    Raises:
+        ValueError: Candidates, their verbs or configuration are malformed.
+        JevError: Transport, HTTP, JSON, typed-score or usage validation fails.
+    """
+    scores, payload = await _evaluate(observation, candidates, config, client, _action_question)
+    return scores, _read_usage(payload)
+
+
+async def evaluate_seats_metered(
+    observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
+    config: Mapping[str, Any], client: httpx.AsyncClient | None = None,
+) -> tuple[dict[str, float], Usage | None]:
+    """Score free chairs, as `evaluate_seats`, and report the request's token usage.
+
+    Args:
+        observation: Private agent view, never an authoritative world snapshot.
+        candidates: Unique `sit` actions, one per free table chair.
+        config: Explicit API key, model name and timeout in seconds.
+        client: Optional injected HTTP client for boundary verification.
+
+    Returns:
+        Normalized scores, and the provider-reported usage or None when it reported none.
+
+    Raises:
+        ValueError: Candidates are not `sit` actions or configuration is malformed.
+        JevError: Transport, HTTP, JSON, typed-score or usage validation fails.
+    """
+    scores, payload = await _evaluate(observation, candidates, config, client, _seat_question)
+    return scores, _read_usage(payload)
+
+
+def _read_usage(payload: Mapping[str, Any]) -> Usage | None:
+    # A response without usage is valid (the scores stand); reported counters must be sound.
+    if "usage" not in payload:
+        return None
+    usage = payload["usage"]
+    counts = [usage.get(name) for name in ("input_tokens", "output_tokens")] if isinstance(usage, Mapping) else []
+    if len(counts) != 2 or any(isinstance(count, bool) or not isinstance(count, int) or count < 0
+                               for count in counts):
+        raise JevError("Jev returned malformed usage")
+    return {"input_tokens": counts[0], "output_tokens": counts[1]}
 
 
 async def _evaluate(
     observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]], config: Mapping[str, Any],
     client: httpx.AsyncClient | None, question: Callable[[Mapping[str, Any]], dict[str, Any]],
-) -> dict[str, float]:
+) -> tuple[dict[str, float], Any]:
     ids = _candidate_ids(candidates)
     key, model, timeout = _configuration(config)
     body = _request_body(observation, candidates, model, question)
@@ -242,4 +263,4 @@ async def _evaluate(
             payload = await _post_scores(owned_client, body, key, timeout)
     else:
         payload = await _post_scores(client, body, key, timeout)
-    return _read_scores(payload, ids)
+    return _read_scores(payload, ids), payload

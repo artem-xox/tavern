@@ -78,28 +78,37 @@ Write tests first for all business logic, as in [AGENTS.md](../../AGENTS.md).
 
 ### M1 — Foundations
 
-- [ ] **E01 — Activity table.** First split `world.py` (778 lines) by concept as its
-  own step. Then move every verb's target kinds, duration, effects, interruptibility,
-  model descriptions, and pose into one typed table in the core, passed to the world;
-  world, candidates, briefing, Jev, and frontend read it. Done: all existing tests pass
-  unchanged; a new verb needs one entry and, if needed, one effect function.
-- [ ] **E02 — Model gateway.** One async port for Jev and Claude with recording,
-  replay, a test fake, and usage accounting. The core receives it as an argument, which
-  also removes the `agents.py` → `jev.py` import. Done: a recorded evening replays to an
-  identical event log; cost per call kind is reported.
-- [ ] **E03 — Headless evening runner.** `make evening` runs a scenario to closing in
-  lockstep (local, live, or replay) and writes the event log, metrics, chronicle, and
-  cost. Done: an offline evening finishes in seconds and reports stuck time per guest.
-- [ ] **E04 — Scenario.** Staggered arrivals, starting relationships, news, timed
-  world events (a traveler with fresh news), and closing time that sends guests home.
-  Done: a six-guest scenario arrives over time and the hall empties by closing.
+- [x] **E01 — Activity table.** `world.py` is split by concept (`room`, `routes`, `sight`,
+  `memory`, `conversation`, `arrival`, `validation`), and `activities.py` describes every
+  verb once: targets, timing, preconditions, need changes, effects, briefing phrases, Jev
+  wording, label, status, and pose. The world, briefing, Jev, saves, and the client (through
+  the snapshot) read it. A new verb also needs its candidate rule and local utility in
+  `agents.py` and its option sentence in `briefing.py`: those depend on the situation.
+  Interruptibility and stimuli join the table with E06–E07.
+- [x] **E02 — Model gateway.** `choose_action` receives evaluators as a port; `recording.py`
+  records, replays, and prices calls as JSON lines keyed by request; metered Jev calls
+  report token usage. A recorded evening replays to a byte-identical event log. The
+  `agents.py` → `jev.py` import remains as the default for the Stage 0 tests that
+  monkeypatch it; removing it means changing those tests.
+- [x] **E03 — Headless evening runner.** `make evening` plays the first-evening scenario
+  in lockstep (`decisions.py`, `lockstep.py`, `metrics.py`) with Jev when `.env` has a key,
+  otherwise the labeled local policy; `MODE=replay CALLS=…` replays a recording. It writes
+  the complete event log, recorded calls, and metrics with stuck time and cost. The
+  chronicle comes with E27. A live six-guest evening (seed 5, 455 game s) took 110 wall s
+  and cost $0.055 for 288 Jev decisions; most wall time is `observe_actor` copying state.
+- [x] **E04 — Scenario.** `data/scenarios/first_evening.json`: six guests arriving at
+  0–190 s, closing at 420 s, after which the only option is going home; saves are
+  `schema_version` 2 and older saves open a fresh evening. Starting relationships, news,
+  and timed events move to E12 and E19, where they are first used.
 
 ### M2 — Body and choice
 
 - [ ] **E05 — Queues.** Tap, WC, and darts get capacity and queue spots; guests join,
   advance, give up after patience, and leave the line on interrupt; `cut_in_line`
   gives thoughts to those behind. Done: five guests at one tap form a line without
-  overlaps or stuck reservations; an impatient guest gives up.
+  overlaps or stuck reservations; an impatient guest gives up. Also fixes a deadlock seen
+  in a live evening: one guest on the WC spot and another in the WC doorway waiting for it
+  block each other for minutes, since only idle guests step aside.
 - [ ] **E06 — Stimuli and hearing.** Activities and events emit stimuli; perception
   applies distance and wall damping; salience adds relevance (me, a friend, my name)
   and temperament. Done: parametrized cases show a fight heard from the WC and a quiet

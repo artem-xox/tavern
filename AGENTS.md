@@ -18,6 +18,7 @@ make run       # backend + browser client at http://127.0.0.1:5173
 make test      # all backend tests
 make check     # tests + frontend typecheck; CI runs this plus `make build`
 make build     # frontend production build
+make evening   # headless scenario evening (Jev with a .env key); SEED, MODE, OUT, LIMIT
 .venv/bin/python -m pytest tests/test_navigation.py -k path -x   # one behavior, fast
 ```
 
@@ -44,8 +45,10 @@ Test first for everything with a Python seam: core, adapters (with fakes), HTTP.
 
 Functional core, imperative shell. Dependencies point inward only.
 
-- **Core** — pure rules, no I/O: `world.py` (state and action execution),
-  `navigation.py`, `briefing.py`, `agents.py` (candidates and decisions).
+- **Core** — pure rules, no I/O: `world.py` (public API and action lifecycle),
+  `activities.py` (the verb table), `room.py`, `routes.py`, `sight.py`, `memory.py`,
+  `conversation.py`, `arrival.py`, `validation.py`, `navigation.py`, `briefing.py`,
+  `agents.py` (candidates and decisions).
 - **Adapters** — one per outside system: `jev.py` (LLM over HTTP), `persistence.py`
   (JSON files), `database.py` (PostgreSQL).
 - **Shell** — `app.py`: FastAPI/WebSocket transport and sessions. The only place that
@@ -75,10 +78,10 @@ Rules:
 - A new game system (agreements, inventory, money, cooking) is a new module named for
   the concept: pure, tested alone, wired in with one small edit. Do not grow files over
   ~400 lines (`world.py`, `app.py`, `scene.ts` today); split first, as a separate step.
-- Adding a verb touches `world.py` (durations, validation, `_apply_effect`), `agents.py`,
-  `briefing.py`, `jev.py`, `persistence.py`, `types.ts`, `dashboard.ts` and `scene.ts`.
-  Grep a similar verb (`play_darts`) to find every site and change all of them in one
-  task. Do not add a new per-verb copy where one source can be imported.
+- Adding a verb means one `Activity` in `activities.py` (targets, timing, preconditions,
+  effects, wording, pose), plus its candidate rule and local utility in `agents.py` and its
+  option sentence in `briefing.py`. The world, Jev, saves, and the client read the table.
+  Do not add a new per-verb copy where one source can be imported.
 - Duplicate once; abstract on the third use. No base classes, factories, registries or
   DI containers for a single implementation.
 
@@ -87,7 +90,7 @@ Rules:
 SOLID, applied only where it earns its keep:
 - **S** — one reason to change per module. If its docstring needs "and", split it.
 - **O** — extend by adding a module or table entry. If your change must add yet another
-  `if kind ==` / `elif verb ==` branch (see `world._apply_effect`), say so and propose a
+  `if kind ==` / `elif verb ==` branch (`activities.py` replaced them), say so and propose a
   table first.
 - **L** — a fake behaves like the real adapter, errors included (`JevError`).
 - **I** — a port exposes what the caller uses, not the provider's whole API.

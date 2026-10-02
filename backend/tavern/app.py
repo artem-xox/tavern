@@ -13,10 +13,15 @@ from typing import Any, AsyncIterator, Mapping
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 
-from tavern.agents import choose_action
+from tavern import agents
+from tavern.activities import ACTIVITIES, client_activities
 from tavern.database import initialize_database, load_database_world, save_database_world
+from tavern.decisions import apply_decision, decision_requests, free_to_decide, log_control
+from tavern.jev import evaluate_actions, evaluate_seats
 from tavern.persistence import load_world, save_world
-from tavern.world import create_world, object_cells, observe_actor, observe_people, start_action, step_world
+from tavern.room import object_cells
+from tavern.scenario import Scenario, open_evening, parse_scenario
+from tavern.world import create_world, start_action, step_world
 
 # Session IDs also name save directories, so only path-safe characters are allowed.
 SESSION_ID = re.compile(r"[A-Za-z0-9_-]{8,64}")
@@ -37,14 +42,33 @@ def _integer(value: Any, minimum: int, maximum: int) -> int:
     return value
 
 
+async def choose_action(observation: Mapping[str, Any], config: Mapping[str, Any], rng: Random) -> dict[str, Any]:
+    """Decide a visitor's next action with the Jev adapter wired in as the model.
+
+    Args:
+        observation: Private actor observation.
+        config: Explicit API key, model, timeout and selection temperature.
+        rng: The runtime's seeded random generator.
+
+    Returns:
+        The decision of `tavern.agents.choose_action`.
+
+    Raises:
+        ValueError: Observation or configuration is malformed.
+    """
+    return await agents.choose_action(observation, config, rng, agents.Evaluators(evaluate_actions, evaluate_seats))
+
+
 class TavernRuntime:
     """Own world state and one asynchronous decision request per visitor."""
 
     def __init__(self, map_data: Mapping[str, Any], save_path: Path,
                  ai_config: Mapping[str, Any], seed: int = 0,
-                 database_url: str | None = None, session_id: str = "local") -> None:
+                 database_url: str | None = None, session_id: str = "local",
+                 scenario: Scenario | None = None) -> None:
         self.map_data = deepcopy(dict(map_data))
-        self.world = create_world(self.map_data, seed)
+        self.scenario = scenario
+        self.world = self._open(seed)
         self.save_path = save_path
         self.database_url = database_url
         self.session_id = session_id
@@ -54,40 +78,34 @@ class TavernRuntime:
         self.revisions: dict[str, int] = {}
         self.next_decision: dict[str, float] = {}
 
+    def _open(self, seed: int) -> dict[str, Any]:
+        # A scenario says who comes tonight; without one, the room's own visitors are already in.
+        if self.scenario is None:
+            return create_world(self.map_data, seed)
+        return open_evening(self.map_data, self.scenario, seed)
+
     def snapshot(self) -> dict[str, Any]:
         """Return a client envelope with credentials excluded.
 
         Returns:
-            Independent world copy and public evaluator configuration.
+            Independent world copy, public evaluator configuration, and how the client
+            names, shows, and targets each verb.
         """
         configured = bool(self.ai_config.get("typesafe_api_key"))
         return {"type": "snapshot", "state": deepcopy(self.world), "ai": {
             "mode": "jev" if configured else "local", "configured": configured,
             "model": self.ai_config["model"],
-        }}
+        }, "activities": client_activities(ACTIVITIES)}
 
     def _event(self, message: str) -> None:
-        self.world["events"].append({"time": self.world["time"], "actor_id": None,
-                                      "type": "control", "message": message})
-        self.world["events"] = self.world["events"][-100:]
+        log_control(self.world, message)
 
     def _apply_decision(self, actor: dict[str, Any], task: asyncio.Task[Any], revision: int) -> None:
-        if revision != self.revisions.get(actor["id"], 0) or actor["status"] != "idle" or self._receiving_conversation(actor):
+        if revision != self.revisions.get(actor["id"], 0) or not free_to_decide(self.world, actor):
             with suppress(asyncio.CancelledError, Exception):
                 task.result()
             return
-        try:
-            decision = task.result()
-            actor["decision"] = {key: decision[key] for key in ("source", "scores", "error")}
-            if "seat" in decision:
-                actor["decision"]["seat"] = decision["seat"]
-            result = start_action(self.world, actor["id"], decision["action"])
-            if not result["accepted"]:
-                self._event(f"{actor['name']}: {result['reason']}")
-        except Exception as error:
-            actor["decision"] = {"source": "local", "scores": {}, "error": str(error)}
-            self._event(f"Decision failed for {actor['name']}")
-        self.next_decision[actor["id"]] = self.world["time"] + 1.0
+        self.next_decision[actor["id"]] = apply_decision(self.world, actor, task.result)
 
     def _collect_decisions(self) -> None:
         for actor_id, pending in list(self.pending.items()):
@@ -103,20 +121,9 @@ class TavernRuntime:
                     pending[0].result()
 
     def _request_decisions(self) -> None:
-        for actor in self.world["actors"]:
-            actor_id = actor["id"]
-            if actor["status"] != "idle" or actor_id in self.pending or self._receiving_conversation(actor):
-                continue
-            if self.world["time"] < self.next_decision.get(actor_id, 0):
-                continue
-            # Decisions also see who else is about and what they are visibly doing.
-            observation = {**observe_actor(self.world, actor_id), "people": observe_people(self.world, actor_id)}
+        for actor_id, observation in decision_requests(self.world, self.pending, self.next_decision):
             task = asyncio.create_task(choose_action(observation, self.ai_config, self.rng))
             self.pending[actor_id] = (task, self.revisions.get(actor_id, 0))
-
-    def _receiving_conversation(self, actor: Mapping[str, Any]) -> bool:
-        return any(item.get("action") and item["action"]["verb"] == "talk"
-                   and item["action"]["target_id"] == actor["id"] for item in self.world["actors"])
 
     def advance(self, dt: float) -> None:
         """Advance the world without waiting for AI requests.
@@ -224,16 +231,18 @@ class TavernRuntime:
         """Replace the world with the session's autosave, paused.
 
         Returns:
-            Whether an autosave existed; the world is unchanged when it did not.
+            Whether an autosave was restored. Without one the world is unchanged; a rejected
+            one (an older format or a damaged file) leaves it unchanged too and is reported in
+            the event log.
         Raises:
-            ValueError: The autosave is invalid.
             psycopg.Error: The database cannot be read.
         """
-        if self.database_url:
-            restored = load_database_world(self.database_url, self.session_id, "auto")
-        else:
-            path = self._autosave_path()
-            restored = load_world(path) if path.is_file() else None
+        try:
+            restored = self._read_autosave()
+        except ValueError as error:
+            # An unreadable autosave must not lock the device out of the inn: a new evening opens.
+            self._event(f"The saved evening could not be restored ({error}); a new evening begins")
+            return False
         if restored is None:
             return False
         self._invalidate_requests()
@@ -242,9 +251,15 @@ class TavernRuntime:
         self.world = restored
         return True
 
+    def _read_autosave(self) -> dict[str, Any] | None:
+        if self.database_url:
+            return load_database_world(self.database_url, self.session_id, "auto")
+        path = self._autosave_path()
+        return load_world(path) if path.is_file() else None
+
     def _reset(self, command: Mapping[str, Any]) -> None:
         # Restart opens a new, running evening: new arrival needs, visitors back at the door.
-        restored = create_world(self.map_data, self.rng.randrange(1 << 30))
+        restored = self._open(self.rng.randrange(1 << 30))
         self._invalidate_requests()
         self.world = restored
 
@@ -279,11 +294,12 @@ class TavernSessions:
     """Own one runtime per device session; only sessions with an open page advance."""
 
     def __init__(self, map_data: Mapping[str, Any], save_dir: Path, ai_config: Mapping[str, Any],
-                 seed: int = 0, database_url: str | None = None) -> None:
+                 seed: int = 0, database_url: str | None = None, scenario: Scenario | None = None) -> None:
         self.map_data = deepcopy(dict(map_data))
         self.save_dir = save_dir
         self.ai_config = dict(ai_config)
         self.database_url = database_url
+        self.scenario = scenario
         self.rng = Random(seed)
         self.runtimes: dict[str, TavernRuntime] = {}
         self.pages: dict[str, int] = {}
@@ -296,7 +312,7 @@ class TavernSessions:
         Returns:
             The session's runtime, shared by every page of that session.
         Raises:
-            ValueError: The ID is malformed or the session's autosave is invalid.
+            ValueError: The ID is malformed.
         """
         if not isinstance(session_id, str) or not SESSION_ID.fullmatch(session_id):
             raise ValueError("Invalid session")
@@ -306,8 +322,12 @@ class TavernSessions:
         return self.runtimes[session_id]
 
     def _start(self, session_id: str) -> TavernRuntime:
+        # A scenario's own seed replays the same evening in every session; otherwise each draws one.
+        seed = self.rng.randrange(1 << 30)
+        if self.scenario is not None and self.scenario.seed is not None:
+            seed = self.scenario.seed
         runtime = TavernRuntime(self.map_data, self.save_dir / session_id / "save.json", self.ai_config,
-                                self.rng.randrange(1 << 30), self.database_url, session_id)
+                                seed, self.database_url, session_id, self.scenario)
         if not runtime.restore():
             # A new evening waits at the door until someone presses Start.
             runtime.world["paused"] = True
@@ -395,7 +415,8 @@ async def _serve_socket(socket: WebSocket, sessions: TavernSessions) -> None:
 
 
 def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
-               run_loop: bool = True, database_url: str | None = None, seed: int = 0) -> FastAPI:
+               run_loop: bool = True, database_url: str | None = None, seed: int = 0,
+               scenario_path: Path | None = None) -> FastAPI:
     """Construct the local server with explicit paths and AI configuration.
 
     Args:
@@ -405,14 +426,19 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
         run_loop: Whether to start automatic ticking; false for focused API tests.
         database_url: Optional PostgreSQL URL for persistent session snapshots.
         seed: Seed of the sessions' arrivals and decision policies.
+        scenario_path: Optional JSON scenario; sessions then open its evenings instead of
+            starting with the room's own visitors.
     Returns:
         Application serving JSON state and a bidirectional WebSocket per device session.
         Sessions advance only while a page is open and always reopen paused.
+    Raises:
+        ValueError: The scenario file is malformed.
     """
     map_data = json.loads(map_path.read_text())
+    scenario = parse_scenario(json.loads(scenario_path.read_text())) if scenario_path else None
     if database_url:
         initialize_database(database_url)
-    sessions = TavernSessions(map_data, save_dir, ai_config, seed, database_url)
+    sessions = TavernSessions(map_data, save_dir, ai_config, seed, database_url, scenario)
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         ticker = asyncio.create_task(_run_world(sessions, 0.1)) if run_loop else None
@@ -447,7 +473,8 @@ def create_default_app() -> FastAPI:
     """Read launch configuration and create the local demo application.
 
     Returns:
-        Server initialized from the repository's map and environment variables.
+        Server initialized from the repository's map, first-evening scenario, and
+        environment variables.
     """
     working_root = Path.cwd()
     root = (working_root if (working_root / "data" / "tavern.json").is_file()
@@ -459,4 +486,5 @@ def create_default_app() -> FastAPI:
     database_url = (os.environ.get("DATABASE_URL")
                      if os.environ.get("TAVERN_DATABASE_ENABLED") == "true" else None)
     return create_app(root / "data" / "tavern.json", root / "saves", config,
-                      database_url=database_url, seed=Random().randrange(1 << 30))
+                      database_url=database_url, seed=Random().randrange(1 << 30),
+                      scenario_path=root / "data" / "scenarios" / "first_evening.json")

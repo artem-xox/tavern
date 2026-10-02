@@ -2,10 +2,11 @@
 
 import asyncio
 from random import Random
+from typing import Any
 
 import pytest
 
-from tavern.agents import build_candidates, choose_action
+from tavern.agents import Evaluator, Evaluators, build_candidates, choose_action
 from tavern.jev import JevError
 
 
@@ -131,3 +132,41 @@ def test_jev_error_produces_visible_local_fallback(monkeypatch):
 def test_malformed_actor_or_reservation_is_not_silently_ignored(view):
     with pytest.raises(ValueError):
         build_candidates(view)
+
+
+def preferring(verb: str) -> Evaluator:
+    """Build a fake evaluator that scores one verb highest."""
+    async def evaluate(view: Any, candidates: Any, settings: Any) -> dict[str, float]:
+        return {action["id"]: float(action["verb"] == verb) for action in candidates}
+    return evaluate
+
+
+async def timing_out(view: Any, candidates: Any, settings: Any) -> dict[str, float]:
+    """Fail like the Jev adapter does on a timeout."""
+    raise JevError("Jev request timed out")
+
+
+def tired_newcomer() -> dict[str, Any]:
+    """A tired visitor who knows a table with two free chairs."""
+    chairs = [resource("chair", f"chair-{side}", table_id="table", x=x) for side, x in (("west", 2), ("east", 4))]
+    return observation(chairs, needs={"thirst": 0, "fatigue": 90, "bladder": 0})
+
+
+@pytest.mark.parametrize("view, evaluators, expected", [
+    pytest.param(observation(), Evaluators(preferring("wait"), preferring("sit")),
+                 ("wait", "jev", None, None), id="action-evaluator-scores-the-next-activity"),
+    pytest.param(tired_newcomer(), Evaluators(preferring("seating"), preferring("sit")),
+                 ("sit", "jev", None, "jev"), id="seat-evaluator-scores-the-chairs"),
+    pytest.param(observation(), Evaluators(timing_out, preferring("sit")),
+                 ("inspect", "local", "Jev request timed out", None), id="failure-falls-back-to-local"),
+])
+def test_explicit_evaluators_score_the_decision(
+        view: dict[str, Any], evaluators: Evaluators, expected: tuple[Any, ...]) -> None:
+    result = asyncio.run(choose_action(view, config(typesafe_api_key="test"), Random(0), evaluators))
+    assert (result["action"]["verb"], result["source"], result["error"],
+            result.get("seat", {}).get("source")) == expected
+
+
+def test_without_a_key_explicit_evaluators_are_not_asked() -> None:
+    result = asyncio.run(choose_action(observation(), config(), Random(0), Evaluators(timing_out, timing_out)))
+    assert (result["source"], result["error"]) == ("local", None)

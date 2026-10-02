@@ -1,5 +1,6 @@
 export type Cell = [number, number];
-export type Verb = "take_beer" | "drink" | "rest" | "sit" | "talk" | "play_darts" | "watch" | "use_toilet" | "inspect" | "wait" | "leave";
+/** An action verb; the server's activity table lists the verbs it runs. */
+export type Verb = string;
 export type Mode = "local" | "jev";
 
 export interface WorldObject {
@@ -21,6 +22,15 @@ export interface WorldObject {
   reach?: number;
 }
 
+/** How the client names, shows, and targets one verb, as described by the server. */
+export interface ActivityView {
+  label: string;
+  status: string | null;
+  pose: string | null;
+  target_kinds: WorldObject["kind"][];
+  partner: boolean;
+}
+
 export interface DecisionStage {
   source: Mode;
   scores: unknown;
@@ -37,6 +47,8 @@ export interface Actor {
   id: string;
   name: string;
   color: string | number;
+  /** Character art under /characters; the scene falls back to the generic visitor. */
+  sprite: string;
   x: number;
   y: number;
   traits: Record<string, unknown>;
@@ -51,6 +63,18 @@ export interface Actor {
   knowledge: { objects: Record<string, Record<string, unknown>> };
   memory: unknown[];
   decision: (DecisionStage & { seat?: DecisionStage }) | null;
+}
+
+/** A scenario guest still on the way, with tonight's needs already drawn. */
+export interface ExpectedGuest {
+  id: string;
+  name: string;
+  color: string;
+  sprite: string;
+  traits: Record<string, number>;
+  needs: Partial<Actor["needs"]>;
+  /** Game seconds after opening. */
+  arrives_at: number;
 }
 
 export interface WorldEvent {
@@ -75,6 +99,10 @@ export interface World {
   };
   actors: Actor[];
   departed: Actor[];
+  /** Guests yet to arrive, in order of arrival. */
+  expected: ExpectedGuest[];
+  /** Game seconds after opening when the inn closes; null for an evening that never closes. */
+  closes_at: number | null;
   events: WorldEvent[];
 }
 
@@ -82,6 +110,7 @@ export interface Snapshot {
   type: "snapshot";
   state: World;
   ai: { mode: Mode; configured?: boolean; model?: string };
+  activities: Record<Verb, ActivityView>;
 }
 
 export type Command =

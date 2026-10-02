@@ -1,12 +1,14 @@
 """The Jev boundary validates typed answers without exposing credentials."""
 
 import asyncio
+from collections.abc import Callable
 import json
+from typing import Any
 
 import httpx
 import pytest
 
-from tavern.jev import JevError, evaluate_actions
+from tavern.jev import JevError, evaluate_actions, evaluate_actions_metered, evaluate_seats_metered
 
 
 def candidates():
@@ -122,3 +124,52 @@ def test_http_failure_is_explicit(status):
 def test_malformed_action_shapes_are_rejected_before_request(actions):
     with pytest.raises(ValueError):
         evaluate(httpx.Response(200, json={}), actions=actions)
+
+
+def metered(payload: Any, evaluator: Callable[..., Any] = evaluate_actions_metered,
+            actions: list[dict[str, Any]] | None = None) -> Any:
+    """Evaluate through a metered entry point against a canned provider payload."""
+    async def run() -> Any:
+        transport = httpx.MockTransport(lambda request: httpx.Response(200, json=payload))
+        async with httpx.AsyncClient(transport=transport) as client:
+            return await evaluator({"actor": {"id": "own"}, "objects": []}, actions or candidates(), config(), client)
+    return asyncio.run(run())
+
+
+def answered(usage: Any = None, action_id: str = "wait") -> dict[str, Any]:
+    """Build a valid provider payload, with usage counters when given."""
+    return {"answers": {action_id: {"type": "score", "score": 4}}, **({} if usage is None else {"usage": usage})}
+
+
+@pytest.mark.parametrize("usage, expected", [
+    pytest.param(None, None, id="usage-not-reported"),
+    pytest.param({"input_tokens": 0, "output_tokens": 0}, {"input_tokens": 0, "output_tokens": 0}, id="empty-counts"),
+    pytest.param({"input_tokens": 4361, "output_tokens": 77}, {"input_tokens": 4361, "output_tokens": 77},
+                 id="single-request"),
+    pytest.param({"input_tokens": 9, "output_tokens": 1, "cached_tokens": 4}, {"input_tokens": 9, "output_tokens": 1},
+                 id="other-counters-are-not-read"),
+])
+def test_metered_evaluation_reports_provider_usage(usage: Any, expected: Any) -> None:
+    assert metered(answered(usage)) == ({"wait": 1.0}, expected)
+
+
+def test_metered_seat_evaluation_reports_provider_usage() -> None:
+    chair = [{"id": "sit:chair", "verb": "sit", "target_id": "chair"}]
+    usage = {"input_tokens": 12, "output_tokens": 3}
+    assert metered(answered(usage, "sit:chair"), evaluate_seats_metered, chair) == ({"sit:chair": 1.0}, usage)
+
+
+@pytest.mark.parametrize("usage", [
+    pytest.param([], id="malformed-usage"),
+    pytest.param({"input_tokens": "12", "output_tokens": 1}, id="text-count"),
+    pytest.param({"input_tokens": -1, "output_tokens": 1}, id="negative-count"),
+    pytest.param({"input_tokens": True, "output_tokens": 1}, id="boolean-count"),
+    pytest.param({"output_tokens": 1}, id="missing-input-count"),
+])
+def test_malformed_usage_is_rejected(usage: Any) -> None:
+    with pytest.raises(JevError, match="usage"):
+        metered(answered(usage))
+
+
+def test_unmetered_evaluation_never_reads_usage() -> None:
+    assert evaluate(httpx.Response(200, json=answered([]))) == {"wait": 1.0}

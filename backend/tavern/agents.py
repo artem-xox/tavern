@@ -2,6 +2,7 @@
 
 import math
 from collections.abc import Awaitable, Callable, Mapping, Sequence
+from dataclasses import dataclass
 from random import Random
 from typing import Any, TypedDict
 
@@ -15,6 +16,19 @@ class Action(TypedDict):
     id: str
     verb: str
     target_id: str | None
+
+
+# Scores each candidate 0–1 from the evaluator view, the candidates and the AI config;
+# raises JevError on a recoverable model failure, which falls back to the local policy.
+Evaluator = Callable[[Mapping[str, Any], Sequence[Action], Mapping[str, Any]], Awaitable[dict[str, float]]]
+
+
+@dataclass(frozen=True)
+class Evaluators:
+    """The model port of a decision: one evaluator per stage of choosing."""
+
+    actions: Evaluator
+    seats: Evaluator
 
 
 class Decision(TypedDict):
@@ -111,13 +125,16 @@ def build_candidates(observation: Mapping[str, Any]) -> list[dict[str, Any]]:
         Stable, unique action dictionaries. Inspection and waiting are always offered.
         Table chairs appear as one `seating` wish until the visitor owns a seat; their
         own free seat appears as `sit`, with `seating` again only while company they could
-        join is in sight. Leaving needs a known, free door.
+        join is in sight. Leaving needs a known, free door. Once the inn has closed, going
+        home is the only option, or waiting a turn while every known door is busy.
 
     Raises:
-        ValueError: Observation, needs, inventory or object records are malformed.
+        ValueError: Observation, needs, inventory, closing flag or object records are malformed.
     """
     actor, objects = _actor(observation), _known_objects(observation)
     talks = _social_candidates(observation, actor, objects)  # also validates the visible visitors
+    if _closed(observation):
+        return _going_home(observation, objects)
     # A mug is carried to a seat and drunk there, unless there is no seat to be had.
     seatless = not actor.get("seat_id") and not _free_seats(observation, objects)
     actions = [_action("drink")] if actor["inventory"]["beer"] and (actor.get("seat_id") or seatless) else []
@@ -134,6 +151,20 @@ def build_candidates(observation: Mapping[str, Any]) -> list[dict[str, Any]]:
         actions.append(_action(verbs[item["kind"]], item["id"]))
     return [*actions, *_seat_wish(observation, objects), *_views(observation, objects),
             *talks, _action("inspect"), _action("wait")]
+
+
+def _closed(observation: Mapping[str, Any]) -> bool:
+    # Observations built outside the world may omit the flag; that reads as an open inn.
+    closed = observation.get("closed", False)
+    if not isinstance(closed, bool):
+        raise ValueError("Closing flag must be a boolean")
+    return closed
+
+
+def _going_home(observation: Mapping[str, Any], objects: Sequence[Mapping[str, Any]]) -> list[Action]:
+    doors = [_action("leave", item["id"]) for item in sorted(objects, key=lambda item: item["id"])
+             if item["kind"] == "door" and not in_use(observation, item)]
+    return doors or [_action("wait")]
 
 
 def _views(observation: Mapping[str, Any], objects: Sequence[Mapping[str, Any]]) -> list[Action]:
@@ -288,6 +319,7 @@ def _select(candidates: Sequence[Action], scores: Mapping[str, float], temperatu
 
 async def choose_action(
     observation: Mapping[str, Any], config: Mapping[str, Any], rng: Random,
+    evaluators: Evaluators | None = None,
 ) -> dict[str, Any]:
     """Evaluate and select a candidate without blocking the world simulation.
 
@@ -295,6 +327,8 @@ async def choose_action(
         observation: Private actor observation; no other NPC's state is used.
         config: Explicit API key, model, timeout and selection temperature.
         rng: Seeded random generator owned by the calling simulation.
+        evaluators: Model port asked when the config holds a key. New callers pass it;
+            None falls back to the Jev adapter (a known leak, see below).
 
     Returns:
         Action, normalized scores, actual decision source and visible fallback error.
@@ -305,13 +339,16 @@ async def choose_action(
     Raises:
         ValueError: Observation or configuration is malformed.
     """
+    # Known leak: without explicit evaluators the Jev functions imported into this module are
+    # looked up at call time, which is the seam the Stage 0 tests patch.
+    evaluators = evaluators or Evaluators(evaluate_actions, evaluate_seats)
     candidates = build_candidates(observation)
     temperature = _temperature(config)
-    decision = await _decide(observation, candidates, config, rng, temperature, _local_scores, evaluate_actions)
+    decision = await _decide(observation, candidates, config, rng, temperature, _local_scores, evaluators.actions)
     if decision["action"]["verb"] != "seating":
         return decision
     seat = await _decide(observation, build_seat_candidates(observation), config, rng, temperature,
-                         _local_seat_scores, evaluate_seats)
+                         _local_seat_scores, evaluators.seats)
     return {**decision, "action": seat["action"], "seat": {key: seat[key] for key in ("source", "scores", "error")}}
 
 
@@ -326,7 +363,7 @@ def _evaluator_view(observation: Mapping[str, Any], candidates: Sequence[Action]
 async def _decide(
     observation: Mapping[str, Any], candidates: Sequence[Action], config: Mapping[str, Any], rng: Random,
     temperature: float, local: Callable[[Mapping[str, Any], Sequence[Action]], dict[str, float]],
-    remote: Callable[[Mapping[str, Any], Sequence[Action], Mapping[str, Any]], Awaitable[dict[str, float]]],
+    remote: Evaluator,
 ) -> dict[str, Any]:
     scores, source, error = local(observation, candidates), "local", None
     if config.get("typesafe_api_key"):
@@ -341,8 +378,10 @@ async def _decide(
 
 def _drawable(candidates: Sequence[Action], scores: Mapping[str, float]) -> list[Action]:
     # Walking out is final, so chance alone must not decide it: it is drawn only when the
-    # evaluator finds leaving at least moderately worthwhile (level 2 of the 0–4 rubric).
+    # evaluator finds leaving at least moderately worthwhile (level 2 of the 0–4 rubric),
+    # or when going home is all that is left, as after closing time.
     eligible = [action for action in candidates if action["verb"] != "leave" or scores[action["id"]] >= 0.5]
+    eligible = eligible or list(candidates)
     # People weigh only the options nearly as good as their best; chance picks among those,
     # never a clearly worse one (0.15 is just over half a rubric level).
     best = max(scores[action["id"]] for action in eligible)

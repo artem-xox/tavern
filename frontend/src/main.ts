@@ -42,7 +42,6 @@ function editCell(x: number, y: number): void {
 
 const scene: TavernScene = new TavernScene(
   { select: selectVisitor, cell: editCell, hover: (message: string): void => dashboard.hover(message) },
-  { mara: "edda", ivo: "rurik", nell: "toren" },
 );
 const dashboard: Dashboard = new Dashboard(root, {
   command: (command): void => connection.send(command),
@@ -63,7 +62,7 @@ const game: Phaser.Game = new Phaser.Game({
 
 function applySnapshot(snapshot: Snapshot): void {
   world = snapshot.state;
-  scene.setWorld(world);
+  scene.setWorld(world, snapshot.activities);
   dashboard.apply(snapshot);
   // Departed visitors stay selectable, so their evening can still be inspected.
   if (!selectedId || ![...world.actors, ...world.departed].some((actor): boolean => actor.id === selectedId)) {

@@ -1,16 +1,10 @@
-import type { Actor, Command, Snapshot, Verb, World, WorldEvent, WorldObject } from "./types";
+import type { ActivityView, Actor, Command, Snapshot, Verb, World, WorldEvent, WorldObject } from "./types";
 
 interface Handlers {
   command: (command: Command) => void;
   select: (id: string) => void;
   edit: (enabled: boolean) => void;
 }
-
-const actionNames: Record<Verb, string> = {
-  take_beer: "Get a beer", drink: "Drink beer", rest: "Rest", sit: "Sit at a table",
-  talk: "Chat with a neighbor", play_darts: "Play darts", watch: "Watch the fire or the view",
-  use_toilet: "Use the toilet", inspect: "Explore the room", wait: "Wait a little", leave: "Go home",
-};
 
 function escape(value: unknown): string {
   return String(value).replace(/[&<>"']/g, (character: string): string => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]!);
@@ -30,6 +24,8 @@ function element<T extends HTMLElement>(root: HTMLElement, selector: string): T 
 /** Present diagnostics and send controls; world state always comes from snapshots. */
 export class Dashboard {
   private world: World | null = null;
+  private activities: Record<Verb, ActivityView> = {};
+  private verbSignature: string = "";
   private selectedId: string | null = null;
   private connected: boolean = false;
   private editing: boolean = false;
@@ -44,9 +40,12 @@ export class Dashboard {
   /** Update the inspector and simulation controls from an authoritative snapshot. */
   apply(snapshot: Snapshot): void {
     this.world = snapshot.state;
+    this.activities = snapshot.activities;
     const { state: world, ai } = snapshot;
+    this.renderVerbs();
     element(this.root, "#world-time").textContent = clock(world.time);
-    element(this.root, "#world-tick").textContent = `TICK ${world.tick}`;
+    element(this.root, "#world-tick").textContent = world.closes_at === null ? `TICK ${world.tick}`
+      : world.time >= world.closes_at ? "CLOSED · GUESTS GOING HOME" : `CLOSES AT ${clock(world.closes_at)}`;
     element(this.root, "#pause").textContent = world.paused ? "▶ Resume" : "Ⅱ Pause";
     element<HTMLSelectElement>(this.root, "#speed").value = String(world.speed);
     element(this.root, "#ai-mode").textContent = ai.mode === "jev" ? "Jev configured" : "Local · offline policy";
@@ -115,7 +114,7 @@ export class Dashboard {
           <section class="events-card"><div class="section-heading"><h3>From the room</h3><span class="muted">Recent world events</span></div><ol id="events" class="event-list"><li class="empty">The evening has yet to begin.</li></ol></section>
         </div>
         <aside class="sidebar"><section class="inspector-card"><div class="section-heading"><h3>Inside a visitor's mind</h3><span class="small-tag">INSPECTOR</span></div><div id="inspector"><p class="empty">Select a visitor in the room.</p></div>
-          <div class="force-action"><label for="force-verb">Give this visitor an action</label><div class="force-row"><select id="force-verb" data-control>${Object.entries(actionNames).map(([verb, name]: [string, string]): string => `<option value="${verb}">${name}</option>`).join("")}</select><button id="force" data-control>Go →</button></div><select id="force-target" data-control aria-label="Action target"></select><p class="helper">The server checks the route, availability, and resources.</p></div>
+          <div class="force-action"><label for="force-verb">Give this visitor an action</label><div class="force-row"><select id="force-verb" data-control></select><button id="force" data-control>Go →</button></div><select id="force-target" data-control aria-label="Action target"></select><p class="helper">The server checks the route, availability, and resources.</p></div>
         </section><div class="ai-card"><span id="ai-mode" class="ai-badge">Local · offline policy</span><p id="mode-caption">Waiting for the decision engine.</p></div></aside>
       </div><footer class="page-footer"><span>THE LAST INN <b>✦</b> AN AUTONOMOUS TAVERN</span><span>Observe → decide → walk → act</span></footer>`;
   }
@@ -137,6 +136,17 @@ export class Dashboard {
     element(this.root, "#force-verb").addEventListener("change", (): void => this.updateTargets());
   }
 
+  /** Offer every verb the server runs, keeping the current choice when the list is unchanged. */
+  private renderVerbs(): void {
+    const signature: string = JSON.stringify(Object.entries(this.activities).map(([verb, activity]: [string, ActivityView]): string[] => [verb, activity.label]));
+    if (signature === this.verbSignature) return;
+    this.verbSignature = signature;
+    const select: HTMLSelectElement = element(this.root, "#force-verb");
+    const chosen: string = select.value;
+    select.innerHTML = Object.entries(this.activities).map(([verb, activity]: [string, ActivityView]): string => `<option value="${escape(verb)}">${escape(activity.label)}</option>`).join("");
+    if (chosen in this.activities) select.value = chosen;
+  }
+
   private renderRoster(world: World): void {
     element(this.root, "#roster").innerHTML = [...world.actors, ...world.departed].map((actor: Actor): string => `<button class="visitor-chip ${actor.id === this.selectedId ? "selected" : ""} ${this.departed(actor) ? "departed" : ""}" data-actor="${escape(actor.id)}" aria-pressed="${actor.id === this.selectedId}"><span class="visitor-dot" style="background:${this.actorColor(actor)}"></span>${escape(actor.name)}<span class="visitor-status">${escape(this.activity(actor))}</span></button>`).join("");
     element(this.root, "#loading").hidden = true;
@@ -145,7 +155,7 @@ export class Dashboard {
   /** Offer Start before the first tick and Restart afterwards; frame the room when it is empty. */
   private renderEveningState(world: World): void {
     const waiting: boolean = world.paused && world.tick === 0;
-    const over: boolean = world.actors.length === 0 && world.departed.length > 0;
+    const over: boolean = world.actors.length === 0 && world.expected.length === 0 && world.departed.length > 0;
     this.root.querySelectorAll<HTMLButtonElement>("[data-evening]").forEach((button: HTMLButtonElement): void => {
       button.textContent = waiting ? "▶ Start the evening" : "↻ Restart the evening";
     });
@@ -185,7 +195,7 @@ export class Dashboard {
     const partner: Actor | undefined = this.world.actors.find((visitor: Actor): boolean => visitor.id === actor.action?.target_id);
     inspector.innerHTML = `<div class="visitor-heading"><div class="avatar" style="--visitor:${this.actorColor(actor)}">${escape(actor.name.slice(0, 1))}</div><div><h2>${escape(actor.name)}</h2><span class="status-pill">${escape(this.activity(actor))}</span></div><span class="cell-location">${actor.x}, ${actor.y}</span></div>
       <div class="needs">${this.needs(actor)}</div>
-      <div class="current-action"><span class="eyebrow">CURRENT ACTION</span><strong>${this.departed(actor) ? "Gone home" : actor.action ? actionNames[actor.action.verb] ?? escape(actor.action.verb) : actor.seat_id ? "Settled at the table" : "Considering the next move"}</strong><span>${actor.visit.left_at !== undefined ? `Left at ${clock(actor.visit.left_at)}` : target ? escape(target.name) : partner ? `With ${escape(partner.name)}` : ""}${actor.path.length ? ` · ${actor.path.length} steps remaining` : ""}</span></div>
+      <div class="current-action"><span class="eyebrow">CURRENT ACTION</span><strong>${this.departed(actor) ? "Gone home" : actor.action ? escape(this.activities[actor.action.verb]?.label ?? actor.action.verb) : actor.seat_id ? "Settled at the table" : "Considering the next move"}</strong><span>${actor.visit.left_at !== undefined ? `Left at ${clock(actor.visit.left_at)}` : target ? escape(target.name) : partner ? `With ${escape(partner.name)}` : ""}${actor.path.length ? ` · ${actor.path.length} steps remaining` : ""}</span></div>
       <div class="inventory-row"><span>Carrying</span><strong>${actor.inventory.beer} ${actor.inventory.beer === 1 ? "beer" : "beers"}</strong></div>
       ${this.visit(actor)}
       <div class="traits">${Object.entries(actor.traits).map(([key, value]: [string, unknown]): string => `<span>${escape(key.replaceAll("_", " "))}: ${escape(value)}</span>`).join("")}</div>
@@ -244,13 +254,12 @@ export class Dashboard {
   private updateTargets(): void {
     if (!this.world) return;
     const verb: Verb = element<HTMLSelectElement>(this.root, "#force-verb").value as Verb;
-    const kinds: Partial<Record<Verb, WorldObject["kind"][]>> = { take_beer: ["tap"], rest: ["chair"], sit: ["chair"], use_toilet: ["toilet"],
-      play_darts: ["darts"], watch: ["fireplace", "window"], leave: ["door"] };
-    const objects: WorldObject[] = this.world.map.objects.filter((object: WorldObject): boolean => kinds[verb]?.includes(object.kind) ?? false);
-    const targets: { id: string; name: string }[] = verb === "talk" ? this.world.actors.filter((actor: Actor): boolean => actor.id !== this.selectedId) : objects;
+    const activity: ActivityView | undefined = this.activities[verb];
+    const objects: WorldObject[] = this.world.map.objects.filter((object: WorldObject): boolean => activity?.target_kinds.includes(object.kind) ?? false);
+    const targets: { id: string; name: string }[] = activity?.partner ? this.world.actors.filter((actor: Actor): boolean => actor.id !== this.selectedId) : objects;
     const signature: string = JSON.stringify([verb, targets.map((object): string[] => [object.id, object.name])]);
     const select: HTMLSelectElement = element(this.root, "#force-target");
-    select.hidden = !kinds[verb] && verb !== "talk";
+    select.hidden = !activity?.target_kinds.length && !activity?.partner;
     if (signature === this.targetSignature) return;
     this.targetSignature = signature;
     select.innerHTML = targets.map((object): string => `<option value="${escape(object.id)}">${escape(object.name)}</option>`).join("");
