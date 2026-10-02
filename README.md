@@ -11,5 +11,6 @@ The backend reads an optional `.env` for Jev; Ctrl+C stops both services.
 - [Design](docs/DESIGN.md) — the game concept and prototype scope.
 - [Plan](docs/PLAN.md) — implementation stages and success criteria.
 - [Tavern pixel art redesign](docs/PIXEL_ART_REDESIGN.md) — asset and renderer replacement plan.
+- [PixelLab character pipeline](docs/CHARACTER_ART_PIPELINE.md) — 68 px character and pose experiments.
 - [Stage 0 demo](docs/stages/0_DEMO.md) — tasks, acceptance checks, and local launch instructions.
 - [Agent instructions](AGENTS.md) — shared development guidelines.

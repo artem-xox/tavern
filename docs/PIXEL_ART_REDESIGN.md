@@ -154,11 +154,10 @@ PixelLab's [Create tiles (Pro)](https://www.pixellab.ai/docs/tools/create-tiles-
 documentation lists the building kit at 20–25 generations and requires Tier 1.
 Its [standard tileset](https://www.pixellab.ai/docs/tools/create-tileset) is
 cheaper (usually 3–4 generations) but is designed for **terrain transitions**,
-not the room's wall/door construction. As of 2026-10-02, the connected account
-has 31 trial generations remaining;
-that is too tight to assume the building kit plus all unique props and retries.
-Check account access before starting a kit, and use the one-corner pilot to
-decide whether the kit merits a paid-tier budget. If the kit is unavailable,
-produce individual floor/wall/prop sprites with the one-image tools and hand-fix
-the wall joins; do not spend credits on a terrain tileset as a substitute for
-interior architecture. No generation is part of this planning pass.
+not the room's wall/door construction. On 2026-10-02, the connected account
+was upgraded to Tier 1 and `get_balance` reported 2,000 generations for the
+current cycle. The building kit is therefore available to test, although the
+one-corner style pilot should still precede its 20–25-generation run. Check
+the live balance and preserve room for props and retries. Do not spend credits
+on a terrain tileset as a substitute for interior architecture. No room art
+was generated in this planning pass.
