@@ -18,6 +18,7 @@ make run       # backend + browser client at http://127.0.0.1:5173
 make test      # all backend tests
 make check     # tests + frontend typecheck; CI runs this plus `make build`
 make build     # frontend production build
+make evening   # headless scenario evening (Jev with a .env key); SEED, MODE, OUT, LIMIT
 .venv/bin/python -m pytest tests/test_navigation.py -k path -x   # one behavior, fast
 ```
 
