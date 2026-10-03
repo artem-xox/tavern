@@ -6,10 +6,7 @@ from typing import Any
 from tavern.activities import ACTIVITIES
 from tavern.room import find_object
 from tavern.scenes import conversation_of, pressed, side_by_side, table_of
-
-
-def _actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any] | None:
-    return next((item for item in world["actors"] if item["id"] == actor_id), None)
+from tavern.state import find_actor
 
 
 def _target(world: Mapping[str, Any], action: Mapping[str, Any]) -> dict[str, Any] | None:
@@ -60,7 +57,7 @@ def _target_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Ma
 
 
 def _talk_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any]) -> str | None:
-    partner = _actor(world, action.get("target_id"))
+    partner = find_actor(world, action.get("target_id"))
     if partner is None or partner["id"] == actor["id"]:
         return "Choose another visitor to talk to"
     if conversation_of(world, actor["id"]) is not None:

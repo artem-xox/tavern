@@ -19,6 +19,8 @@ from tavern.briefing import brief
 from tavern.cards import PARAMS, TEXT_FIELDS
 from tavern.drunkenness import drunk_stage
 from tavern.questions import Ask, Question
+from tavern.memory import log_event
+from tavern.state import find_actor
 from tavern.thoughts import THOUGHTS, active_thoughts
 from tavern.world import observe_actor, observe_people
 
@@ -295,7 +297,7 @@ def deliver_intention(world: dict[str, Any], actor_id: str, view: Mapping[str, A
         answer, failure = outcome(), None
     except Exception as error:  # Any writer failure leaves the old intention, as a failed decision does.
         answer, failure = None, error
-    actor = next((item for item in world["actors"] if item["id"] == actor_id), None)
+    actor = find_actor(world, actor_id)
     if actor is None:
         return world["time"] + rules.min_gap
     try:
@@ -303,11 +305,11 @@ def deliver_intention(world: dict[str, Any], actor_id: str, view: Mapping[str, A
             raise failure
         written = check_intention(answer)
     except Exception as error:
-        _log(world, actor_id, "intention_failed", f"{actor['name']}'s intention could not be written ({error})")
+        log_event(world, actor_id, "intention_failed", f"{actor['name']}'s intention could not be written ({error})")
         return world["time"] + rules.interval
     actor["intention"] = Intention(thought=written["thought"], intention=written["intention"],
                                    written_at=view["time"], trigger=deepcopy(view["trigger"]))
-    _log(world, actor_id, "intention", f"{actor['name']} thinks: {written['thought']} Intends: "
+    log_event(world, actor_id, "intention", f"{actor['name']} thinks: {written['thought']} Intends: "
                                        f"{written['intention']} (after: {view['trigger']['text']})")
     return world["time"] + rules.min_gap
 
@@ -335,8 +337,3 @@ def check_saved_intention(actor: Mapping[str, Any]) -> None:
         if isinstance(value, bool) or not isinstance(value, (int, float)) or not 0 <= value < math.inf:
             raise ValueError(f"Invalid saved intention time {value!r}")
 
-
-def _log(world: dict[str, Any], actor_id: str, kind: str, message: str) -> None:
-    # The event log only: what a guest intends is no memory that could prompt another intention.
-    world["events"].append({"time": world["time"], "actor_id": actor_id, "type": kind, "message": message})
-    del world["events"][:-200]

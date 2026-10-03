@@ -4,13 +4,7 @@ import math
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-
-def _number(value: Any, label: str, maximum: float) -> float:
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise ValueError(f"{label} must be numeric")
-    if not math.isfinite(value) or not 0 <= value <= maximum:
-        raise ValueError(f"{label} must be finite and between 0 and {maximum}")
-    return float(value)
+from tavern.validation import number
 
 
 def own_actor(observation: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -30,14 +24,14 @@ def own_actor(observation: Mapping[str, Any]) -> Mapping[str, Any]:
     if not all(isinstance(value, Mapping) for value in (needs, inventory, traits)):
         raise ValueError("Actor needs, inventory and traits must be mappings")
     for name in ("thirst", "fatigue", "bladder"):
-        _number(needs.get(name), name, 100)
+        number(needs.get(name), name, 0, 100)
     for name in ("social", "boredom"):
-        _number(needs.get(name, 0), name, 100)
+        number(needs.get(name, 0), name, 0, 100)
     beer = inventory.get("beer")
     if isinstance(beer, bool) or not isinstance(beer, int) or beer < 0:
         raise ValueError("Own beer inventory must be a nonnegative integer")
     for name in ("patience", "comfort", "curiosity"):
-        _number(traits.get(name, 0.5), name, 1)
+        number(traits.get(name, 0.5), name, 0, 1)
     _validate_visit(actor)
     return actor
 
@@ -47,7 +41,7 @@ def _validate_visit(actor: Mapping[str, Any]) -> None:
     visit = actor.get("visit", {})
     if not isinstance(visit, Mapping):
         raise ValueError("Visit must be a mapping")
-    _number(visit.get("seconds", 0), "Visit seconds", math.inf)
+    number(visit.get("seconds", 0), "Visit seconds", 0, math.inf)
     beers, grievances = visit.get("beers", 0), visit.get("grievances", [])
     if isinstance(beers, bool) or not isinstance(beers, int) or beers < 0:
         raise ValueError("Beers drunk must be a nonnegative integer")
@@ -78,7 +72,7 @@ def known_objects(observation: Mapping[str, Any]) -> list[Mapping[str, Any]]:
         if item.get("kind") not in ("tap", "chair", "toilet", "table", "bar", "darts", "door", "window", "fireplace"):
             raise ValueError("Unknown observed object kind")
         if "appeal" in item:
-            _number(item["appeal"], "Seat appeal", 1)
+            number(item["appeal"], "Seat appeal", 0, 1)
         if not isinstance(item.get("interaction_spots", []), list):
             raise ValueError("Observed interaction spots must be a list")
         if item["id"] in known and known[item["id"]] != item:

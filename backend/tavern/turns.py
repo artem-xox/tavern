@@ -15,6 +15,7 @@ from tavern.cards import TEXT_FIELDS
 from tavern.conversation import ACTS, offered_acts
 from tavern.feelings import feelings
 from tavern.invitations import offered_kinds
+from tavern.memory import log_event
 from tavern.names import called, knows_name, looks
 from tavern.overhearing import overhear_turn
 from tavern.portrait import portrait
@@ -238,7 +239,7 @@ def deliver_turn(world: dict[str, Any], scene_id: str, turn: int, outcome: Calla
         scene["written"] = check_turn(view, answer)
     except Exception as error:
         scene["written"] = scripted_turn(view)
-        _log(world, None, "turn_failed",
+        log_event(world, None, "turn_failed",
              f"A line for {view['speaker']['name']} failed ({error}); a scripted one stands in")
 
 
@@ -269,15 +270,10 @@ def _speak(world: dict[str, Any], scene: Conversation, speaker_id: str, result: 
     scene.update(topic=result["topic"], writing=None, written=None,
                  next_turn_at=world["time"] + reading_time(result["line"], world["rules"]["conversation"]))
     listener = people[result["addressee"]]["name"] if result["addressee"] else "everyone"
-    _log(world, speaker_id, "turn", f"{people[speaker_id]['name']} to {listener} ({result['act']}): {result['line']}")
+    log_event(world, speaker_id, "turn", f"{people[speaker_id]['name']} to {listener} ({result['act']}): {result['line']}")
     # Heard before the act takes effect, while the scene still holds everyone who spoke in it.
     overhear_turn(world, scene, turn)
     effect = ACTS[result["act"]].effect
     if effect:
         effect(world, scene, people[speaker_id], people.get(result["addressee"]))
 
-
-def _log(world: dict[str, Any], actor_id: str | None, kind: str, message: str) -> None:
-    # Lines go to the event log only: a guest's own memory keeps what the scene came to.
-    world["events"].append({"time": world["time"], "actor_id": actor_id, "type": kind, "message": message})
-    del world["events"][:-200]

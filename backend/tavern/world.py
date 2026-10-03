@@ -22,6 +22,7 @@ from tavern.room import create_map, find_object, impassable_cells
 from tavern.routes import gives_way, occupied_cells, plan_route, replan, reserved_spots
 from tavern.scenes import check_conversations, conversation_of, leave_conversation, pressed, side_by_side
 from tavern.sight import line_visible, look_around, refresh_knowledge, visible_cells
+from tavern.state import find_actor
 from tavern.thoughts import forget_expired
 from tavern.turns import speak_turns
 from tavern.validation import number, unique_ids
@@ -95,10 +96,6 @@ def _rules() -> dict[str, Any]:
                              "pressing": 75.0}}
 
 
-def _actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any] | None:
-    return next((item for item in world["actors"] if item["id"] == actor_id), None)
-
-
 def _target(world: Mapping[str, Any], action: Mapping[str, Any]) -> dict[str, Any] | None:
     return find_object(world["map"], action.get("target_id"))
 
@@ -136,7 +133,7 @@ def start_action(world: dict[str, Any], actor_id: str, action: Mapping[str, Any]
     Raises:
         ValueError: Not raised for rejected commands; refusals are returned.
     """
-    actor = _actor(world, actor_id)
+    actor = find_actor(world, actor_id)
     if actor is None:
         return {"accepted": False, "reason": "Unknown visitor"}
     cutting = action.get("verb") == "cut_in_line"
@@ -160,7 +157,7 @@ def _talk_in_line(world: dict[str, Any], actor: dict[str, Any], action: Mapping[
     # Talking to a neighbour in line keeps the place in it, and the talk makes the wait bearable.
     stay_in_line(world, line_of(world, actor["id"])[0], actor, False)
     activity = ACTIVITIES[action["verb"]]
-    activity.on_arrival(world, actor, _actor(world, action["target_id"]))
+    activity.on_arrival(world, actor, find_actor(world, action["target_id"]))
     if activity.sound:
         # The sound concerns the partner, as if the talk were the action they started.
         sound_activity(world, {**actor, "action": action}, activity.sound, activity.doing)
@@ -287,7 +284,7 @@ def _begin_interaction(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
         actor.update(status="interacting", _move_elapsed=0.0, _blocked_for=0.0)
         activity = ACTIVITIES[actor["action"]["verb"]]
         if activity.on_arrival:
-            partner = _actor(world, actor["action"]["target_id"]) if activity.partner else None
+            partner = find_actor(world, actor["action"]["target_id"]) if activity.partner else None
             activity.on_arrival(world, actor, partner or _target(world, actor["action"]))
         if activity.sound:
             sound_activity(world, actor, activity.sound, activity.doing)
@@ -309,7 +306,7 @@ def _interaction_error(world: Mapping[str, Any], actor: Mapping[str, Any]) -> st
 def _apply_effect(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
     action = actor["action"]
     activity = ACTIVITIES[action["verb"]]
-    target = _actor(world, action["target_id"]) if activity.partner else _target(world, action)
+    target = find_actor(world, action["target_id"]) if activity.partner else _target(world, action)
     if activity.effect:
         activity.effect(world, actor, target)
     for need, change in activity.needs.items():
@@ -417,7 +414,7 @@ def observe_actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
     Raises:
         ValueError: Visitor ID does not exist.
     """
-    actor = _actor(world, actor_id)
+    actor = find_actor(world, actor_id)
     if actor is None:
         raise ValueError("Unknown visitor")
     visible = _look(world, actor)
@@ -439,7 +436,7 @@ def _in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[dict[s
                 (actor["x"], actor["y"]), (visitor["x"], visitor["y"]), walls):
             continue
         seat, action = _seat(world, visitor), visitor["action"] or {}
-        target = _target(world, action) or _actor(world, action.get("target_id"))
+        target = _target(world, action) or find_actor(world, action.get("target_id"))
         # A stranger is known by their looks until the viewer learns their name.
         people.append({**{key: visitor[key] for key in ("id", "x", "y", "seat_id")}, "name": called(actor, visitor)})
         scene = conversation_of(world, visitor["id"])
@@ -472,7 +469,7 @@ def observe_people(world: Mapping[str, Any], actor_id: str) -> list[dict[str, An
     Raises:
         ValueError: Visitor ID does not exist.
     """
-    actor = _actor(world, actor_id)
+    actor = find_actor(world, actor_id)
     if actor is None:
         raise ValueError("Unknown visitor")
     return _in_sight(world, actor)

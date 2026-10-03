@@ -11,6 +11,7 @@ from tavern.decisions import apply_decision, decision_requests, free_to_decide, 
 from tavern.intentions import INTENTION_RULES, Intender, IntentionRules, deliver_intention, intention_requests, \
     stale_intentions
 from tavern.scripted import write_scripted_turn
+from tavern.state import find_actor
 from tavern.turns import TurnWriter, claim_turns, deliver_turn
 from tavern.world import step_world
 
@@ -194,7 +195,7 @@ def _apply_due(world: dict[str, Any], run: _Run) -> None:
         if world["time"] + 1e-9 < due:
             continue
         del run.pending[actor_id]
-        actor = next((item for item in world["actors"] if item["id"] == actor_id), None)
+        actor = find_actor(world, actor_id)
         # As in the live runtime, an answer for a visitor who left or got busy meanwhile is dropped.
         if actor is not None and free_to_decide(world, actor):
             run.next_decision[actor_id] = apply_decision(world, actor, lambda: decision)

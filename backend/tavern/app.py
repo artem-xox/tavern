@@ -4,7 +4,6 @@ import asyncio
 from contextlib import asynccontextmanager, suppress
 from copy import deepcopy
 import json
-import math
 import os
 from pathlib import Path
 from random import Random
@@ -31,25 +30,11 @@ from tavern.room import object_cells
 from tavern.scenario import Scenario, open_evening, parse_scenario
 from tavern.scripted import write_scripted_turn
 from tavern.turns import TurnWriter, claim_turns, deliver_turn
+from tavern.validation import integer, number
 from tavern.world import create_world, start_action, step_world
 
 # Session IDs also name save directories, so only path-safe characters are allowed.
 SESSION_ID = re.compile(r"[A-Za-z0-9_-]{8,64}")
-
-
-def _number(value: Any, minimum: float, maximum: float) -> float:
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise ValueError("Expected a number")
-    if not math.isfinite(value) or not minimum <= value <= maximum:
-        raise ValueError(f"Value must be between {minimum} and {maximum}")
-    return float(value)
-
-
-def _integer(value: Any, minimum: int, maximum: int) -> int:
-    if isinstance(value, bool) or not isinstance(value, int):
-        raise ValueError("Expected an integer")
-    _number(value, minimum, maximum)
-    return value
 
 
 async def choose_action(observation: Mapping[str, Any], config: Mapping[str, Any], rng: Random) -> dict[str, Any]:
@@ -203,10 +188,10 @@ class TavernRuntime:
         self.world["paused"] = command["paused"]
 
     def _speed(self, command: Mapping[str, Any]) -> None:
-        self.world["speed"] = _number(command.get("value"), 0.25, 8)
+        self.world["speed"] = number(command.get("value"), "Speed", 0.25, 8)
 
     def _refill(self, command: Mapping[str, Any]) -> None:
-        amount = _integer(command.get("amount"), 1, 1000)
+        amount = integer(command.get("amount"), "Amount", 1, 1000)
         target = next((item for item in self.world["map"]["objects"]
                        if item["id"] == command.get("object_id") and item["kind"] == "tap"), None)
         if target is None:
@@ -214,8 +199,8 @@ class TavernRuntime:
         target["stock"] += amount
 
     def _block(self, command: Mapping[str, Any]) -> None:
-        x = _integer(command.get("x"), 0, self.world["map"]["width"] - 1)
-        y = _integer(command.get("y"), 0, self.world["map"]["height"] - 1)
+        x = integer(command.get("x"), "Cell x", 0, self.world["map"]["width"] - 1)
+        y = integer(command.get("y"), "Cell y", 0, self.world["map"]["height"] - 1)
         if not isinstance(command.get("blocked"), bool):
             raise ValueError("blocked must be a boolean")
         self._validate_block([x, y], command["blocked"])

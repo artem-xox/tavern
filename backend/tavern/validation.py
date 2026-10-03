@@ -25,6 +25,25 @@ def number(value: Any, label: str, minimum: float, maximum: float) -> float:
     return float(value)
 
 
+def integer(value: Any, label: str, minimum: int, maximum: int) -> int:
+    """Check an integer within inclusive bounds.
+
+    Args:
+        value: Untrusted value.
+        label: Name used in the error.
+        minimum: Lowest allowed value.
+        maximum: Highest allowed value.
+    Returns:
+        The value.
+    Raises:
+        ValueError: The value is not an integer in range.
+    """
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"{label} must be an integer")
+    number(value, label, minimum, maximum)
+    return value
+
+
 def coordinate(value: Any, limit: int) -> int:
     """Check one cell coordinate.
 

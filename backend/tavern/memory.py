@@ -24,3 +24,16 @@ def record_event(world: Mapping[str, Any], actor: dict[str, Any], kind: str, mes
     emote_event(world, actor, kind)
     del world["events"][:-200]
     del actor["memory"][:-25]
+
+
+def log_event(world: dict[str, Any], actor_id: str | None, kind: str, message: str) -> None:
+    """Log an event for the room only: no visitor remembers it, and nobody hears it.
+
+    Args:
+        world: World whose event log keeps the latest 200 events.
+        actor_id: Visitor the event concerns, or None.
+        kind: Event type.
+        message: Human-readable description.
+    """
+    world["events"].append({"time": world["time"], "actor_id": actor_id, "type": kind, "message": message})
+    del world["events"][:-200]
