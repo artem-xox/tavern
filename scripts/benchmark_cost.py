@@ -11,8 +11,8 @@ from typing import Any, Mapping
 from dotenv import dotenv_values
 import httpx
 
-from tavern.app import TavernRuntime
-import tavern.jev as jev
+from tavern.server.runtime import TavernRuntime
+import tavern.adapters.jev as jev
 
 
 async def measure(root: Path, actor_id: str, seconds: int,

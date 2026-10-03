@@ -1,6 +1,13 @@
 import Phaser from "phaser";
+import { drawBar, drawChair, drawDarts, drawDoor, drawFireplace, drawTable, drawTap, drawToilet, drawWindow, hearthFacing } from "./furniture";
 import { shippedPose, spriteOf, stills } from "./sprites";
-import type { ActivityView, Actor, Cell, Verb, World, WorldObject } from "./types";
+import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Mind, Turn, Verb, World, WorldObject } from "./types";
+
+/** Glyph and colour of each emote above a visitor's head. */
+const EMOTE_GLYPHS: Record<EmoteKind, [string, string]> = {
+  alert: ["!", "#c0392b"], confused: ["?", "#2e6f9e"], angry: ["✹", "#b03a2e"],
+  affection: ["♥", "#c2457a"], sleep: ["z", "#5b6c8f"], waiting: ["…", "#6b5a45"],
+};
 
 interface SceneCallbacks {
   select: (actorId: string) => void;
@@ -16,17 +23,21 @@ interface ActorView {
   selection: Phaser.GameObjects.Arc;
   mug: Phaser.GameObjects.Container;
   speech: Phaser.GameObjects.Text;
+  emote: Phaser.GameObjects.Text;
   targetX: number;
   targetY: number;
   cellX: number;
   cellY: number;
   direction: string;
+  /** How far drink sways the sprite, 0–1, as the server derives it. */
+  sway: number;
 }
 
 /** Render server snapshots; interpolation changes display coordinates only. */
 export class TavernScene extends Phaser.Scene {
   private world: World | null = null;
   private activities: Record<Verb, ActivityView> = {};
+  private minds: Record<string, Mind> = {};
   private floor!: Phaser.GameObjects.Graphics;
   private hearthGlow!: Phaser.GameObjects.Graphics;
   private furniture!: Phaser.GameObjects.Graphics;
@@ -58,14 +69,15 @@ export class TavernScene extends Phaser.Scene {
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer): void => this.click(pointer));
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer): void => this.hover(pointer));
     this.ready = true;
-    if (this.world) this.setWorld(this.world, this.activities);
+    if (this.world) this.setWorld(this.world, this.activities, this.minds);
   }
 
   /** Apply a world snapshot, keeping authoritative actors separate from sprites. */
-  setWorld(world: World, activities: Record<Verb, ActivityView>): void {
+  setWorld(world: World, activities: Record<Verb, ActivityView>, minds: Record<string, Mind>): void {
     const reset: boolean = this.world !== null && world.tick < this.world.tick;
     this.world = world;
     this.activities = activities;
+    this.minds = minds;
     if (!this.ready) return;
     this.renderMap(world);
     this.syncVisitors(world, reset);
@@ -92,6 +104,8 @@ export class TavernScene extends Phaser.Scene {
     for (const view of this.visitors.values()) {
       view.container.x += (view.targetX - view.container.x) * blend;
       view.container.y += (view.targetY - view.container.y) * blend;
+      // Drunk guests sway; each at their own pace, so a table of drinkers does not rock in step.
+      view.sprite.setAngle(view.sway * 8 * Math.sin(time / 420 + view.cellX * 1.7 + view.cellY));
     }
     this.drawHearthGlow(time);
   }
@@ -104,7 +118,7 @@ export class TavernScene extends Phaser.Scene {
     const flicker: number = 0.82 + 0.1 * Math.sin(time / 170) + 0.08 * Math.sin(time / 53);
     for (const hearth of this.world.map.objects.filter((object: WorldObject): boolean => object.kind === "fireplace")) {
       // Light spills into the room on the side the fireplace opens to.
-      const [dx, dy]: [number, number] = this.hearthFacing(hearth);
+      const [dx, dy]: [number, number] = hearthFacing(hearth, this.world.map.width);
       const x: number = (hearth.x + (hearth.width ?? 1) / 2 + dx * 0.9) * size;
       const y: number = (hearth.y + (hearth.height ?? 1) / 2 + dy * 0.9) * size;
       for (let ring: number = 5; ring > 0; ring -= 1) {
@@ -147,14 +161,6 @@ export class TavernScene extends Phaser.Scene {
         for (let dx: number = 0; dx < (object.width ?? 1); dx += 1) this.drawWall((object.x + dx) * size, (object.y + dy) * size, size);
       }
     }
-  }
-
-  /** Which way a fireplace opens: away from the outer wall it is built into. */
-  private hearthFacing(hearth: WorldObject): [number, number] {
-    const map = this.world!.map;
-    if (hearth.x === 0) return [1, 0];
-    if (hearth.x + (hearth.width ?? 1) === map.width) return [-1, 0];
-    return hearth.y === 0 ? [0, 1] : [0, -1];
   }
 
   /** Lay a rug under every table and its chairs, kept clear of the walls. */
@@ -206,65 +212,19 @@ export class TavernScene extends Phaser.Scene {
   private drawObject(object: WorldObject, size: number): void {
     const x: number = (object.x + 0.5) * size;
     const y: number = (object.y + 0.5) * size;
-    if (object.kind === "door") { this.drawDoor(object, size); return; }
-    if (object.kind === "window") { this.drawWindow(object, size); return; }
-    if (object.kind === "fireplace") { this.drawFireplace(object, size); return; }
+    if (object.kind === "door") { drawDoor(this.furniture, this.floor, object, size); return; }
+    if (object.kind === "window") { drawWindow(this.furniture, object, size); return; }
+    if (object.kind === "fireplace") { drawFireplace(this.furniture, object, size, this.world!.map.width); return; }
     this.furniture.fillStyle(0x1e1914, 0.32);
     this.furniture.fillEllipse(x + ((object.width ?? 1) - 1) * size / 2, y + 10, size * (object.width ?? 1) * 0.9, 12);
-    if (object.kind === "tap") this.drawTap(x, y);
-    if (object.kind === "toilet") this.drawToilet(x, y);
-    if (object.kind === "chair") this.drawChair(x, y, object.facing);
-    if (object.kind === "bar") this.drawBar(object, size);
-    if (object.kind === "table") { this.drawTable(object, size); this.appealLabel(object, size); }
-    if (object.kind === "darts") this.drawDarts(x, y);
+    if (object.kind === "tap") drawTap(this.furniture, x, y);
+    if (object.kind === "toilet") drawToilet(this.furniture, x, y);
+    if (object.kind === "chair") drawChair(this.furniture, x, y, object.facing);
+    if (object.kind === "bar") drawBar(this.furniture, object, size);
+    if (object.kind === "table") { drawTable(this.furniture, object, size); this.appealLabel(object, size); }
+    if (object.kind === "darts") drawDarts(this.furniture, x, y);
     if (object.reserved_by) this.furniture.lineStyle(2, 0xe6c88d, 0.75).strokeCircle(x, y, 15);
     if (["tap", "toilet", "darts"].includes(object.kind)) this.objectLabel(object, x, y);
-  }
-
-  private drawDoor(door: WorldObject, size: number): void {
-    const x: number = (door.x - 0.3) * size;
-    const y: number = door.y * size;
-    this.floor.fillStyle(0x41372a).fillRoundedRect((door.x - 1) * size, (door.y - 1.2) * size, 3 * size, size * 0.7, 3);
-    this.floor.lineStyle(1, 0xb29762, 0.6).strokeRoundedRect((door.x - 0.85) * size, (door.y - 1.1) * size, 2.7 * size, size * 0.5, 2);
-    this.furniture.fillStyle(0x634835).fillRoundedRect(x, y + 1, 1.6 * size, 26, 3);
-    for (let plank: number = 1; plank < 4; plank += 1) {
-      this.furniture.lineStyle(1, 0xc0a16d, 0.5).lineBetween(x + plank * 0.4 * size, y + 5, x + plank * 0.4 * size, y + 25);
-    }
-    this.furniture.fillStyle(0xe2c27a).fillCircle(x + 1.6 * size - 9, y + 15, 2);
-  }
-
-  private drawWindow(pane: WorldObject, size: number): void {
-    const x: number = pane.x * size;
-    const y: number = pane.y * size;
-    this.furniture.fillStyle(0x403e34).fillRoundedRect(x + 5, y + 3, 22, 26, 2);
-    this.furniture.fillStyle(0x88a39c).fillRect(x + 9, y + 6, 14, 19);
-    this.furniture.lineStyle(2, 0xd3b584).lineBetween(x + 16, y + 6, x + 16, y + 25);
-    this.furniture.lineBetween(x + 9, y + 15, x + 23, y + 15);
-    this.furniture.fillStyle(0xc7a272).fillRect(x + 6, y + 26, 23, 4);
-  }
-
-  private drawFireplace(hearth: WorldObject, size: number): void {
-    const x: number = hearth.x * size;
-    const y: number = hearth.y * size;
-    const width: number = (hearth.width ?? 1) * size;
-    const height: number = (hearth.height ?? 1) * size;
-    const [dx, dy]: [number, number] = this.hearthFacing(hearth);
-    // Stone surround in the wall, with a hearthstone lip on the room side.
-    this.furniture.fillStyle(0x6d645b).fillRoundedRect(x - 3, y - 3, width + 6, height + 6, 4);
-    this.furniture.lineStyle(1, 0x8d8378, 0.7).strokeRoundedRect(x, y, width, height, 3);
-    this.furniture.fillStyle(0x857b70).fillRect(x + (dx < 0 ? -6 : dx > 0 ? width : 0), y + (dy < 0 ? -6 : dy > 0 ? height : 0),
-      dx === 0 ? width : 6, dy === 0 ? height : 6);
-    // Firebox with logs and layered flames.
-    const cx: number = x + width / 2;
-    const cy: number = y + height / 2;
-    const span: number = Math.min(width, height) * 0.62;
-    const reach: number = Math.max(width, height) * 0.7;
-    this.furniture.fillStyle(0x1f1612).fillRoundedRect(cx - (dx === 0 ? reach : span) / 2, cy - (dy === 0 ? reach : span) / 2,
-      dx === 0 ? reach : span, dy === 0 ? reach : span, 6);
-    this.furniture.fillStyle(0x5a3b25).fillRoundedRect(cx - 9, cy - 3, 18, 6, 2);
-    this.furniture.fillStyle(0xe2763a).fillEllipse(cx - 3, cy - 1, 14, 20);
-    this.furniture.fillStyle(0xf09a3e).fillEllipse(cx + 4, cy - 2, 11, 16);
-    this.furniture.fillStyle(0xf8d06a).fillEllipse(cx, cy, 7, 11);
   }
 
   /** Show how appealing a table's seats are, and why. */
@@ -277,91 +237,6 @@ export class TavernScene extends Phaser.Scene {
         fontFamily: "system-ui, sans-serif", fontSize: "8px", color: "#f3e3c3", backgroundColor: "#2b221cc0", padding: { x: 4, y: 1 },
       }).setOrigin(0.5, 0.5);
     this.labels.add(label);
-  }
-
-  private drawTap(x: number, y: number): void {
-    this.furniture.fillStyle(0x3f3528).fillRoundedRect(x - 13, y - 14, 26, 29, 5);
-    this.furniture.fillStyle(0xb8803c).fillRoundedRect(x - 10, y - 12, 20, 24, 4);
-    this.furniture.lineStyle(3, 0x674b32).lineBetween(x - 9, y - 7, x + 9, y - 7);
-    this.furniture.lineBetween(x - 9, y + 7, x + 9, y + 7);
-    this.furniture.fillStyle(0xe8c873).fillRect(x - 3, y - 3, 6, 14);
-    this.furniture.fillRect(x - 2, y + 5, 9, 4);
-  }
-
-  private drawToilet(x: number, y: number): void {
-    this.furniture.fillStyle(0xa1aea0).fillRoundedRect(x - 10, y - 13, 20, 9, 3);
-    this.furniture.fillStyle(0xe3e6cd).fillEllipse(x, y + 3, 21, 25);
-    this.furniture.fillStyle(0x52685d).fillEllipse(x, y + 1, 12, 15);
-    this.furniture.lineStyle(2, 0xf2eed9).strokeEllipse(x, y + 1, 15, 18);
-  }
-
-  private drawChair(x: number, y: number, facing: WorldObject["facing"]): void {
-    this.furniture.fillStyle(0x4d3425).fillRoundedRect(x - 11, y - 12, 22, 25, 3);
-    this.furniture.fillStyle(0xa2774d).fillRoundedRect(x - 8, y - 3, 16, 13, 2);
-    this.furniture.fillStyle(0xc09867);
-    if (facing === "east") this.furniture.fillRoundedRect(x - 12, y - 10, 7, 20, 2);
-    else if (facing === "west") this.furniture.fillRoundedRect(x + 5, y - 10, 7, 20, 2);
-    else if (facing === "north") this.furniture.fillRoundedRect(x - 10, y + 5, 20, 7, 2);
-    else this.furniture.fillRoundedRect(x - 10, y - 12, 20, 7, 2);
-    this.furniture.fillStyle(0x905b3d).fillRoundedRect(x - 5, y - 4, 10, 11, 2);
-  }
-
-  private drawBar(object: WorldObject, size: number): void {
-    const x: number = object.x * size;
-    const y: number = object.y * size;
-    const width: number = (object.width ?? 1) * size;
-    this.furniture.fillStyle(0x3e2b20).fillRoundedRect(x - 2, y + 4, width + 4, size, 4);
-    this.furniture.fillStyle(0xb78650).fillRoundedRect(x - 3, y - 2, width + 6, size - 5, 4);
-    this.furniture.fillStyle(0x6f4930).fillRoundedRect(x + 2, y + 2, width - 4, size - 13, 2);
-    this.furniture.lineStyle(2, 0xe3bd7f).lineBetween(x + 2, y + 2, x + width - 2, y + 2);
-    this.furniture.lineStyle(3, 0xcfab67).lineBetween(x + 5, y + size + 3, x + width - 5, y + size + 3);
-    for (let i: number = 0; i < 3; i += 1) {
-      this.furniture.fillStyle([0x678167, 0xb87946, 0x71868a][i]!).fillRoundedRect(x + 12 + i * 12, y + 7, 6, 10, 2);
-      this.furniture.fillRect(x + 14 + i * 12, y + 3, 2, 6);
-    }
-    this.drawMug(x + width - 19, y + 10);
-  }
-
-  private drawTable(object: WorldObject, size: number): void {
-    const x: number = object.x * size;
-    const y: number = object.y * size;
-    const width: number = (object.width ?? 1) * size;
-    const height: number = (object.height ?? 1) * size;
-    this.furniture.fillStyle(0x33251d, 0.5).fillRoundedRect(x - 2, y + 5, width + 4, height, 8);
-    this.furniture.fillStyle(0x58392a).fillRoundedRect(x - 2, y - 2, width + 4, height + 4, 6);
-    this.furniture.fillStyle(0xb48959).fillRoundedRect(x + 1, y + 1, width - 2, height - 2, 5);
-    for (let row: number = 12; row < height; row += 14) {
-      this.furniture.lineStyle(1, 0x785037, 0.5).lineBetween(x + 4, y + row, x + width - 4, y + row);
-    }
-    this.furniture.lineStyle(1, 0xe6c187, 0.6).strokeRoundedRect(x + 3, y + 3, width - 6, height - 6, 3);
-    this.furniture.fillStyle(0xe8dbc0).fillRoundedRect(x + width - 19, y + height - 19, 11, 10, 1);
-    this.drawMug(x + 13, y + 13);
-    this.drawMug(x + width - 13, y + height - 12);
-    const cx: number = x + width / 2;
-    const cy: number = y + height / 2;
-    this.furniture.fillStyle(0xf8d281, 0.1).fillCircle(cx, cy, 18);
-    this.furniture.fillStyle(0x69553a).fillEllipse(cx, cy + 3, 14, 8);
-    this.furniture.fillStyle(0xf2dfae).fillRect(cx - 2, cy - 6, 4, 10);
-    this.furniture.fillStyle(0xffd884).fillEllipse(cx, cy - 8, 4, 7);
-  }
-
-  private drawMug(x: number, y: number): void {
-    this.furniture.lineStyle(2, 0xe6d5ad).strokeRoundedRect(x + 1, y - 2, 7, 7, 2);
-    this.furniture.fillStyle(0xcea15e).fillRoundedRect(x - 4, y - 5, 8, 12, 2);
-    this.furniture.fillStyle(0xf5e3b6).fillEllipse(x, y - 4, 9, 4);
-  }
-
-  private drawDarts(x: number, y: number): void {
-    this.furniture.fillStyle(0x3b2b22).fillRoundedRect(x - 15, y - 16, 30, 33, 4);
-    this.furniture.fillStyle(0xb69769).fillCircle(x, y, 13);
-    this.furniture.fillStyle(0x243a31).fillCircle(x, y, 11);
-    this.furniture.lineStyle(2, 0xbb6954).strokeCircle(x, y, 8);
-    for (let i: number = 0; i < 12; i += 1) {
-      const angle: number = i * Math.PI / 6;
-      this.furniture.lineStyle(1, 0xe4d3aa, 0.6).lineBetween(x + Math.cos(angle) * 3, y + Math.sin(angle) * 3, x + Math.cos(angle) * 11, y + Math.sin(angle) * 11);
-    }
-    this.furniture.fillStyle(0xce7358).fillCircle(x, y, 3);
-    this.furniture.lineStyle(2, 0xe5c178).lineBetween(x + 1, y - 3, x + 8, y - 10);
   }
 
   private objectLabel(object: WorldObject, x: number, y: number): void {
@@ -396,8 +271,9 @@ export class TavernScene extends Phaser.Scene {
     const foam: Phaser.GameObjects.Ellipse = this.add.ellipse(0, -5, 8, 4, 0xffebc2);
     const mug: Phaser.GameObjects.Container = this.add.container(12, 3, [mugBody, foam]);
     const speech: Phaser.GameObjects.Text = this.add.text(0, -70, "", { fontFamily: "Georgia", fontSize: "10px", color: "#48392b", backgroundColor: "#f4e6c6", padding: { x: 6, y: 4 } }).setOrigin(0.5).setVisible(false);
-    const container: Phaser.GameObjects.Container = this.add.container(0, 0, [shadow, selection, sprite, name, status, mug, speech]);
-    return { container, sprite, name, status, selection, mug, speech, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south" };
+    const emote: Phaser.GameObjects.Text = this.add.text(17, -44, "", { fontFamily: "system-ui", fontSize: "12px", fontStyle: "bold", backgroundColor: "#f4e6c6", padding: { x: 4, y: 1 } }).setOrigin(0.5).setVisible(false);
+    const container: Phaser.GameObjects.Container = this.add.container(0, 0, [shadow, selection, sprite, name, status, mug, speech, emote]);
+    return { container, sprite, name, status, selection, mug, speech, emote, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south", sway: 0 };
   }
 
   private updateVisitor(view: ActorView, actor: Actor, size: number, reset: boolean): void {
@@ -405,7 +281,8 @@ export class TavernScene extends Phaser.Scene {
     const target: WorldObject | undefined = this.world?.map.objects.find((object: WorldObject): boolean => object.id === actor.action?.target_id);
     view.direction = actor.x > view.cellX ? "east" : actor.x < view.cellX ? "west" : actor.y > view.cellY ? "south" : actor.y < view.cellY ? "north" : view.direction;
     if (actor.status !== "walking") {
-      view.direction = seat?.facing ?? (target && actor.status === "interacting" ? this.facingTarget(actor, target, view.direction) : view.direction);
+      // The server turns heads toward sounds and partners; otherwise the seat or the task decides.
+      view.direction = actor.facing ?? seat?.facing ?? (target && actor.status === "interacting" ? this.facingTarget(actor, target, view.direction) : view.direction);
     }
     const { name: character, sheet } = spriteOf(actor);
     const pose: string = shippedPose(sheet, this.actorPose(actor));
@@ -421,14 +298,25 @@ export class TavernScene extends Phaser.Scene {
     view.targetX = x;
     view.targetY = y;
     view.name.setText(actor.name);
-    const incoming: Actor | undefined = this.world?.actors.find((visitor: Actor): boolean => visitor.action?.verb === "talk" && visitor.action.target_id === actor.id);
-    const chatting: boolean = !!incoming || actor.action?.verb === "talk";
+    view.sway = this.minds[actor.id]?.sway ?? 0;
+    // The bubble shows the scene's latest line over its speaker until the next one is spoken.
+    const scene: Conversation | undefined = this.world?.conversations.find((item: Conversation): boolean => item.participants.includes(actor.id));
+    const line: Turn | undefined = scene?.turns[scene.turns.length - 1];
+    const chatting: boolean = scene !== undefined;
     const label = (verb: Verb): string | undefined => (verb === "watch" && target?.kind === "fireplace" ? "by the fire" : this.activities[verb]?.status ?? undefined);
     view.status.setText(actor.status === "walking" ? `→ ${label(actor.action?.verb ?? "") ?? "exploring"}` : chatting ? "chatting" : actor.action ? label(actor.action.verb) ?? actor.action.verb : actor.seat_id ? "seated" : "thinking");
     view.mug.setVisible(actor.inventory.beer > 0 && pose !== "Drinking" && pose !== "DrinkingSeated" && pose !== "TakeBeer");
-    view.speech.setVisible(chatting);
-    view.speech.setText(incoming ? "Quite a story!" : "News from the road…");
+    view.speech.setVisible(line?.speaker === actor.id);
+    view.speech.setText(line?.line ?? "");
+    this.showEmote(view, actor);
     view.container.setDepth(10 + y / 1000);
+  }
+
+  private showEmote(view: ActorView, actor: Actor): void {
+    view.emote.setVisible(actor.emote !== null);
+    if (actor.emote === null) return;
+    const [glyph, color] = EMOTE_GLYPHS[actor.emote.kind];
+    view.emote.setText(glyph).setColor(color);
   }
 
   private actorPose(actor: Actor): string {

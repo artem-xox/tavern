@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from tavern.world import create_world, observe_actor, start_action, step_world
+from tavern.hall.world import create_world, observe_actor, start_action, step_world
 
 
 def room() -> dict[str, Any]:

@@ -8,8 +8,8 @@ from typing import Any
 
 import pytest
 
-from tavern.jev import JevError
-from tavern.recording import (Record, cost_by_kind, format_record, parse_records, record_calls, replay_calls,
+from tavern.adapters.jev import JevError
+from tavern.evening.recording import (Record, cost_by_kind, format_record, parse_records, record_calls, replay_calls,
                               request_key)
 
 WAIT = [{"id": "wait", "verb": "wait", "target_id": None}]

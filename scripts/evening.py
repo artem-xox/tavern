@@ -6,18 +6,28 @@ import json
 from pathlib import Path
 from random import Random
 import time
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 from dotenv import dotenv_values
 
-from tavern import jev
-from tavern.agents import Evaluators
-from tavern.lockstep import Pace, evening_mode, run_evening
-from tavern.metrics import evening_metrics
-from tavern.recording import Record, format_record, parse_records, record_calls, replay_calls
-from tavern.scenario import open_evening, parse_scenario
+from tavern.adapters import jev
+from tavern.adapters.claude import HAIKU_4_5, ClaudeError, ask_claude
+from tavern.evening.lockstep import Pace, evening_mode, run_evening
+from tavern.evening.metrics import attention_counts, conversation_counts, evening_metrics, intention_counts, writer_stats
+from tavern.evening.recording import (Record, format_record, parse_records, record_calls, record_questions, replay_calls,
+                              replay_questions)
+from tavern.evening.scenario import open_evening, parse_scenario
+from tavern.mind.agents import Evaluators
+from tavern.mind.cards import parse_cards
+from tavern.mind.haiku_turns import claude_writer, writer_mode
+from tavern.mind.intentions import Intender, intention_writer
+from tavern.mind.questions import Question
+from tavern.mind.scripted import write_scripted_turn
+from tavern.social.turns import TurnWriter
 
 DECIDES = {"local": "the local policy (no model)", "live": "Jev, recorded", "replay": "Jev answers replayed"}
+CLAUDE_MODEL = "claude-haiku-4-5"
+TARIFFS = {"turn": HAIKU_4_5, "card": HAIKU_4_5, "intention": HAIKU_4_5}
 
 
 def arguments(root: Path) -> argparse.ArgumentParser:
@@ -32,10 +42,15 @@ def arguments(root: Path) -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--scenario", type=Path, default=root / "data" / "scenarios" / "first_evening.json",
                         help="who comes tonight, when, and when the inn closes")
+    parser.add_argument("--characters", type=Path, default=root / "data" / "characters",
+                        help="character cards the scenario casts its guests from")
     parser.add_argument("--mode", choices=("local", "live", "replay"),
                         help="default: live when TYPESAFE_API_KEY is in the env file, else local")
     parser.add_argument("--out", type=Path, default=root / "runs" / "evening-0")
     parser.add_argument("--calls", type=Path, help="recorded calls.jsonl to replay (replay mode)")
+    parser.add_argument("--writer", choices=("haiku", "scripted"),
+                        help="who writes conversation lines; default: Haiku when ANTHROPIC_API_KEY is in the env "
+                             "file (a replay: when the recording has turns), else scripted")
     parser.add_argument("--env-file", type=Path, default=root / ".env")
     parser.add_argument("--step", type=float, default=0.1, help="game seconds per tick")
     parser.add_argument("--latency", type=float, default=1.0, help="virtual model latency, game seconds")
@@ -62,31 +77,104 @@ def config(values: Mapping[str, Any], mode: str) -> dict[str, Any]:
             "timeout": float(values.get("AI_TIMEOUT", "8")), "temperature": float(values.get("AI_TEMPERATURE", "0.25"))}
 
 
-def evaluators(mode: str, recording: Path | None, calls: list[Record], log: Path) -> Evaluators:
-    """Wire the model port for a mode.
+def keeper(calls: list[Record], log: Path) -> Callable[[Record], None]:
+    """Start a recording: each call is kept in memory and appended to a JSON-lines file as it ends.
 
     Args:
-        mode: Evening mode.
-        recording: Calls to replay, in replay mode.
-        calls: Receives the evening's calls: recorded live, or loaded for replay.
-        log: JSON-lines file each live call is appended to as soon as it ends.
+        calls: Receives the evening's calls.
+        log: File to write; emptied first.
     Returns:
-        Evaluators for both decision stages.
+        The record keeper.
     """
-    if mode == "replay":
-        calls.extend(parse_records(recording.read_text()))
-        return Evaluators(replay_calls("actions", calls, jev.JevError), replay_calls("seats", calls, jev.JevError))
-    if mode == "local":
-        # Without a key the decisions never ask a model; Jev only fills the port.
-        return Evaluators(jev.evaluate_actions, jev.evaluate_seats)
     log.write_text("")
 
     def keep(record: Record) -> None:
         calls.append(record)
         with log.open("a") as lines:
             lines.write(format_record(record))
+    return keep
+
+
+def evaluators(mode: str, recording: Path | None, calls: list[Record], keep: Callable[[Record], None]) -> Evaluators:
+    """Wire the model port for a mode.
+
+    Args:
+        mode: Evening mode.
+        recording: Calls to replay, in replay mode.
+        calls: Receives the calls loaded for replay.
+        keep: Receives each live call as soon as it ends.
+    Returns:
+        Evaluators for every decision stage; the actions within a chosen family are
+        ordinary actions, so Jev scores them with the action question, recorded as `family`.
+    """
+    if mode == "replay":
+        calls.extend(parse_records(recording.read_text()))
+        return Evaluators(*(replay_calls(kind, calls, jev.JevError) for kind in ("actions", "seats", "family")))
+    if mode == "local":
+        # Without a key the decisions never ask a model; Jev only fills the port.
+        return Evaluators(jev.evaluate_actions, jev.evaluate_seats)
     return Evaluators(record_calls("actions", jev.evaluate_actions_metered, keep, time.monotonic, jev.JevError),
-                      record_calls("seats", jev.evaluate_seats_metered, keep, time.monotonic, jev.JevError))
+                      record_calls("seats", jev.evaluate_seats_metered, keep, time.monotonic, jev.JevError),
+                      record_calls("family", jev.evaluate_actions_metered, keep, time.monotonic, jev.JevError))
+
+
+def turn_writer(writer: str, mode: str, calls: list[Record], keep: Callable[[Record], None],
+                values: Mapping[str, Any]) -> TurnWriter:
+    """Wire the conversation line writer.
+
+    Args:
+        writer: `haiku` or `scripted` (see `haiku_turns.writer_mode`).
+        mode: Evening mode; a replay answers Haiku turns from `calls`.
+        calls: The evening's calls, loaded for a replay.
+        keep: Receives each live Haiku call as soon as it ends, recorded as `turn`.
+        values: Parsed env file with ANTHROPIC_API_KEY.
+    Returns:
+        The writer port.
+    """
+    if writer == "scripted":
+        return write_scripted_turn
+    if mode == "replay":
+        return claude_writer(replay_questions("turn", calls, ClaudeError))
+    # One SDK retry at most, so slow calls show in the latency measure rather than hide in retries.
+    config = {"anthropic_api_key": values["ANTHROPIC_API_KEY"], "model": CLAUDE_MODEL, "timeout": 30.0, "retries": 1}
+
+    async def ask(question: Question) -> Any:
+        return await ask_claude(question, config)
+    return claude_writer(record_questions("turn", ask, keep, time.monotonic, ClaudeError))
+
+
+def mind(mode: str, values: Mapping[str, Any], prefix: str, calls: list[Record],
+         log: Path) -> tuple[Intender | None, str]:
+    """Wire the mind port that writes guests' intentions, and say how it runs.
+
+    Args:
+        mode: Evening mode.
+        values: Parsed env file; live intentions need `ANTHROPIC_API_KEY`.
+        prefix: Shared system prefix of every intention question.
+        calls: The evening's calls (loaded already in replay mode); live calls are added.
+        log: JSON-lines file each live call is appended to.
+    Returns:
+        The intender, or None offline, and a label for the metrics.
+    """
+    if mode == "replay":
+        if not any(record["kind"] == "intention" for record in calls):
+            return None, "offline: the recording holds no intentions"
+        return intention_writer(prefix, replay_questions("intention", calls, ClaudeError)), "Claude answers replayed"
+    if mode == "local" or not values.get("ANTHROPIC_API_KEY"):
+        return None, f"offline: {'local mode' if mode == 'local' else 'no ANTHROPIC_API_KEY'}, so no intentions"
+    claude = {"anthropic_api_key": values["ANTHROPIC_API_KEY"], "model": "claude-haiku-4-5", "timeout": 30.0,
+              "retries": 1}
+
+    async def metered(question: Question) -> tuple[dict[str, Any], Mapping[str, int]]:
+        answer, usage = await ask_claude(question, claude)
+        return answer, dict(usage)
+
+    def keep(record: Record) -> None:
+        calls.append(record)
+        with log.open("a") as lines:
+            lines.write(format_record(record))
+    asked = record_questions("intention", metered, keep, time.monotonic, ClaudeError)
+    return intention_writer(prefix, asked), "Claude Haiku 4.5 (claude-haiku-4-5), recorded"
 
 
 def rounded(value: Any) -> Any:
@@ -122,27 +210,43 @@ def main(root: Path) -> None:
         parser.error("replay mode needs --calls (make evening MODE=replay CALLS=...)")
     args.out.mkdir(parents=True, exist_ok=True)
     calls: list[Record] = []
-    ports = evaluators(mode, args.calls, calls, args.out / "calls.jsonl")
+    keep = calls.append if mode == "replay" else keeper(calls, args.out / "calls.jsonl")
+    ports = evaluators(mode, args.calls, calls, keep)
+    keyed = (any(record["kind"] == "turn" for record in calls) if mode == "replay"
+             else bool(values.get("ANTHROPIC_API_KEY")))
+    try:
+        writer, writer_note = writer_mode(args.writer, keyed)
+    except ValueError as error:
+        parser.error(str(error))
+    lines = turn_writer(writer, mode, calls, keep, values)
     room = json.loads((root / "data" / "tavern.json").read_text())
     try:
-        world = open_evening(room, parse_scenario(json.loads(args.scenario.read_text())), args.seed)
+        cards = parse_cards([json.loads(path.read_text()) for path in sorted(args.characters.glob("*.json"))])
+        world = open_evening(room, parse_scenario(json.loads(args.scenario.read_text()), cards), args.seed)
     except (OSError, ValueError) as error:
         parser.error(f"cannot open the evening: {error}")
     settings = config(values, mode)
+    intender, minded = mind(mode, values, (root / "data" / "minds" / "intention_prefix.md").read_text(), calls,
+                            args.out / "calls.jsonl")
     started = time.monotonic()
-    evening = asyncio.run(run_evening(world, settings, Random(args.seed), ports, pace))
+    evening = asyncio.run(run_evening(world, settings, Random(args.seed), ports, pace, lines, intender=intender))
     wall = time.monotonic() - started
     # A replay matches its recording only with the same seed, pace and temperature, so they are shown.
     report = {"run": {"mode": mode, "decides": DECIDES[mode], "note": note, "seed": args.seed,
                       "model": settings["model"], "temperature": settings["temperature"], "step": pace.step,
                       "model_latency": pace.model_latency, "time_limit": pace.time_limit,
-                      "stuck_threshold": args.stuck_threshold, "input_usd_per_million": args.input_price},
-              **evening_metrics(evening, calls, args.input_price, args.stuck_threshold)}
+                      "stuck_threshold": args.stuck_threshold, "input_usd_per_million": args.input_price,
+                      "writer": writer, "writer_model": CLAUDE_MODEL if writer == "haiku" else None,
+                      "writer_note": writer_note, "intentions": minded},
+              **evening_metrics(evening, calls, args.input_price, args.stuck_threshold, TARIFFS),
+              "intentions": intention_counts(evening),
+              "attention": attention_counts(evening), "conversation": conversation_counts(evening),
+              "writer": writer_stats(evening, calls, "turn", HAIKU_4_5)}
     (args.out / "events.jsonl").write_text("".join(json.dumps(event, sort_keys=True) + "\n" for event in evening.events))
     (args.out / "metrics.json").write_text(json.dumps(rounded(report), indent=2) + "\n")
     print(json.dumps(rounded(report), indent=2))
-    print(f"{mode} evening, seed {args.seed}: {round(evening.end_time)} game s in {wall:.1f} wall s"
-          f"{f' ({note})' if note else ''}; wrote {args.out}")
+    print(f"{mode} evening, seed {args.seed}, {writer} lines: {round(evening.end_time)} game s in {wall:.1f} "
+          f"wall s{''.join(f' ({text})' for text in (note, writer_note) if text)}; wrote {args.out}")
 
 
 if __name__ == "__main__":

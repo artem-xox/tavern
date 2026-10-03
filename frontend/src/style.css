@@ -110,7 +110,10 @@ details[open] summary::before { transform: rotate(90deg); }
 .memories p { font-size: 10px; color: #a2af94; line-height: 1.6; padding: 5px 0; overflow-wrap: anywhere; }
 .decision-error { font-size: 10px; line-height: 1.6; color: #d2a288; overflow-wrap: anywhere; padding-top: 7px; }
 .stage-heading { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border); color: #d1d6bf; font-size: 10px; }
-.grievances { margin: 0 0 14px; padding: 9px 12px 9px 26px; border-left: 2px solid #b0624c; border-radius: 0 6px 6px 0; background: #3a2a24; color: #e3b9a6; font-size: 10px; line-height: 1.6; }
+.thoughts { margin: 0 0 10px; padding: 0; list-style: none; font-size: 10px; line-height: 1.6; }
+.thoughts li { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; padding: 4px 8px; border-left: 2px solid #8fae6b; background: #2a3324; color: #cfe0b8; }
+.thoughts li.bad { border-left-color: #b0624c; background: #3a2a24; color: #e3b9a6; }
+.thoughts small { opacity: 0.7; }
 .force-action { border-top: 1px solid var(--border); padding-top: 16px; margin-top: 3px; }
 .force-action label { color: #aeb99c; font-size: 10px; }
 .force-row { display: flex; gap: 7px; margin: 9px 0; }

@@ -7,10 +7,13 @@ from typing import Any, Callable
 
 import pytest
 
-from tavern.app import TavernRuntime, TavernSessions, create_app, create_default_app
-from tavern.persistence import load_world, save_world
-from tavern.scenario import Scenario, open_evening, parse_scenario
-from tavern.world import step_world
+from tavern.app import create_default_app
+from tavern.server.api import create_app
+from tavern.server.runtime import TavernRuntime
+from tavern.server.sessions import TavernSessions
+from tavern.adapters.persistence import load_world, save_world
+from tavern.evening.scenario import Scenario, open_evening, parse_scenario
+from tavern.hall.world import step_world
 
 SESSION = "device-first"
 

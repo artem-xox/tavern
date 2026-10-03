@@ -1,0 +1,24 @@
+{
+  "id": "saye",
+  "name": "Saye",
+  "sprite": "visitor",
+  "looks": "the young woman with a coat full of buttons",
+  "occupation": "wandering storyteller",
+  "background": "Saye walks from inn to inn telling old tales for a bed and a supper, and has not stayed anywhere longer than a week in years.",
+  "temperament": "Moody and easily offended when ignored, charming when listened to; craves an audience.",
+  "speech": "Theatrical, rich in old sayings, lowers her voice before the important part.",
+  "quirks": "Collects buttons from people she likes; quotes ballads at the wrong moment; sulks visibly.",
+  "secret": "Her best tales are not old at all: she invents them, and once got a man hanged with one.",
+  "goal": "Find a cosy seat and a crowd willing to listen, and collect a new story to tell elsewhere.",
+  "params": {
+    "patience": 0.2,
+    "temper": 0.6,
+    "sociability": 0.8,
+    "courage": 0.35,
+    "strength": 0.2,
+    "brawling": 0.1,
+    "tolerance": 0.35,
+    "comfort": 0.8,
+    "curiosity": 0.3
+  }
+}

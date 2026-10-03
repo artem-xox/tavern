@@ -6,8 +6,8 @@ from typing import Any
 
 import pytest
 
-from tavern.agents import Evaluator, Evaluators, build_candidates, choose_action
-from tavern.jev import JevError
+from tavern.mind.agents import Evaluator, Evaluators, build_candidates, choose_action
+from tavern.adapters.jev import JevError
 
 
 def observation(objects=None, beer=0, needs=None, traits=None):
@@ -105,23 +105,26 @@ def test_invalid_temperature_fails_loudly(temperature):
     with pytest.raises(ValueError):
         asyncio.run(choose_action(observation(), config(temperature=temperature), Random(0)))
 
+async def no_seat_judgement(observation: Any, candidates: Any, settings: Any) -> dict[str, float]:
+    raise AssertionError("This test expects no judgement of seats")
 
-def test_jev_success_uses_only_supplied_candidates(monkeypatch):
+
+def test_jev_success_uses_only_supplied_candidates():
     async def evaluate(view, candidates, settings):
         return {action["id"]: float(action["verb"] == "wait") for action in candidates}
 
-    monkeypatch.setattr("tavern.agents.evaluate_actions", evaluate)
-    result = asyncio.run(choose_action(observation(), config(typesafe_api_key="test"), Random(0)))
+    result = asyncio.run(choose_action(observation(), config(typesafe_api_key="test"), Random(0),
+                                       Evaluators(evaluate, no_seat_judgement)))
     assert result == {"action": {"id": "wait", "verb": "wait", "target_id": None},
                       "source": "jev", "scores": {"inspect": 0.0, "wait": 1.0}, "error": None}
 
 
-def test_jev_error_produces_visible_local_fallback(monkeypatch):
+def test_jev_error_produces_visible_local_fallback():
     async def evaluate(view, candidates, settings):
         raise JevError("Jev request timed out")
 
-    monkeypatch.setattr("tavern.agents.evaluate_actions", evaluate)
-    result = asyncio.run(choose_action(observation(), config(typesafe_api_key="test"), Random(0)))
+    result = asyncio.run(choose_action(observation(), config(typesafe_api_key="test"), Random(0),
+                                       Evaluators(evaluate, no_seat_judgement)))
     assert (result["source"], result["error"]) == ("local", "Jev request timed out")
 
 
@@ -170,3 +173,8 @@ def test_explicit_evaluators_score_the_decision(
 def test_without_a_key_explicit_evaluators_are_not_asked() -> None:
     result = asyncio.run(choose_action(observation(), config(), Random(0), Evaluators(timing_out, timing_out)))
     assert (result["source"], result["error"]) == ("local", None)
+
+
+def test_a_model_key_without_evaluators_fails_loudly():
+    with pytest.raises(ValueError, match="needs evaluators"):
+        asyncio.run(choose_action(observation(), config(typesafe_api_key="test"), Random(0)))
