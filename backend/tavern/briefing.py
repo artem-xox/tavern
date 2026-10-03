@@ -31,7 +31,7 @@ def brief(observation: Observation, candidates: Sequence[Action]) -> dict[str, A
     parts = (_closing(observation), _stay(observation), _whereabouts(observation), _trigger(observation),
              _own_seat(observation),
              _needs(observation), _temperament(observation), portrait(observation["actor"]),
-             feelings(observation), _people(observation),
+             feelings(observation), _intention(observation), _people(observation),
              _places(observation), _tables(observation), _recent(observation))
     return {"situation": " ".join(part for part in parts if part),
             "options": {action["id"]: _family(observation, action) if action["verb"] in FAMILIES
@@ -214,6 +214,17 @@ def _person(observation: Observation, visitor: Mapping[str, Any]) -> str:
         return f"{_label(visitor)} sits {where}{busy}"
     activity = ACTIVITIES.get(visitor.get("doing"))
     return f"{_label(visitor)} is {activity.doing if activity and activity.doing else 'standing about'}"
+
+
+def _intention(observation: Observation) -> str:
+    # The mind's latest intention (see `intentions.py`); Jev weighs the options against it.
+    intention = observation["actor"].get("intention")
+    if not intention:
+        return ""
+    now = observation.get("time")
+    when = "" if now is None else f"decided {_ago(now - intention['written_at'])}, "
+    return (f"Their own reading of things: \"{intention['thought']}\" Their intention: "
+            f"{intention['intention'].rstrip('.')} ({when}after: {intention['trigger']['text']}).")
 
 
 def _people(observation: Observation) -> str:
