@@ -14,6 +14,7 @@ from tavern.actions import action_error
 from tavern.memory import record_event
 from tavern.names import called
 from tavern.room import find_object
+from tavern.scenes import Conversation
 from tavern.thoughts import think
 from tavern.validation import number
 
@@ -118,7 +119,7 @@ def pending_for(scene: Mapping[str, Any], actor_id: str) -> Invitation | None:
     return invitation if invitation is not None and invitation["to"] == actor_id else None
 
 
-def invite(world: dict[str, Any], scene: dict[str, Any], speaker: dict[str, Any],
+def invite(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
            addressee: dict[str, Any] | None) -> None:
     """Leave the invitation of the turn just spoken pending in its scene (the `invite` act).
 
@@ -128,10 +129,12 @@ def invite(world: dict[str, Any], scene: dict[str, Any], speaker: dict[str, Any]
         speaker: Inviter.
         addressee: Invitee.
     """
+    if addressee is None:
+        raise ValueError("An invitation needs an addressee")
     scene["invitation"] = {"kind": scene["turns"][-1]["invitation"], "from": speaker["id"], "to": addressee["id"]}
 
 
-def accept(world: dict[str, Any], scene: dict[str, Any], speaker: dict[str, Any],
+def accept(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
            addressee: dict[str, Any] | None) -> None:
     """Accept the invitation pending for the speaker (the `accept` act); it is carried out this tick.
 
@@ -150,7 +153,7 @@ def accept(world: dict[str, Any], scene: dict[str, Any], speaker: dict[str, Any]
                  f"{KINDS[invitation['kind']]} from {_people(world)[invitation['from']]['name']}")
 
 
-def decline(world: dict[str, Any], scene: dict[str, Any], speaker: dict[str, Any],
+def decline(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
             addressee: dict[str, Any] | None) -> None:
     """Decline the invitation pending for the speaker (the `decline` act); nothing else follows.
 
@@ -201,13 +204,13 @@ def _step(world: dict[str, Any], errand: Errand, start: Start) -> bool:
                      f"{host['name']} and {guest['name']} could not {KINDS[errand['kind']]}")
         return False
     if errand["kind"] == "buy_drink":
-        errand.update(stage="fetching", held=host["inventory"]["beer"])
+        errand.update({"stage": "fetching", "held": host["inventory"]["beer"]})
     elif errand["kind"] == "leave_together":
         errand["stage"] = "following"
     return errand["kind"] in ("buy_drink", "leave_together")
 
 
-def _command(verb: str, target: str) -> dict[str, Any]:
+def _command(verb: str, target: str | None) -> dict[str, Any]:
     return {"id": f"{verb}:{target}", "verb": verb, "target_id": target}
 
 
@@ -226,7 +229,7 @@ def _first_steps(world: Mapping[str, Any], errand: Errand, host: Mapping[str, An
         [(guest["id"], _command(verb, target))] if errand["kind"] == "darts_together" else [])
 
 
-def _fetched(world: Mapping[str, Any], errand: Errand, host: dict[str, Any] | None,
+def _fetched(world: dict[str, Any], errand: Errand, host: dict[str, Any] | None,
              guest: dict[str, Any] | None) -> bool:
     if host is None or guest is None:
         return False

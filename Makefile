@@ -11,7 +11,7 @@ help:
 	@printf 'make run      Start the backend and browser client; Ctrl+C stops both\n'
 	@printf 'make install  Install Python and frontend dependencies\n'
 	@printf 'make test     Run backend tests\n'
-	@printf 'make check    Run backend tests and TypeScript checks\n'
+	@printf 'make check    Run backend tests, mypy and TypeScript checks\n'
 	@printf 'make build    Build the browser client\n'
 	@printf 'make benchmark Measure one NPC minute using real Jev requests\n'
 	@printf 'make evening  Play a headless evening; writes events.jsonl, metrics.json (+ calls.jsonl live) to OUT\n'
@@ -31,6 +31,7 @@ test:
 	.venv/bin/python -m pytest
 
 check: test
+	.venv/bin/mypy
 	npm --prefix frontend run check
 
 build:

@@ -24,7 +24,7 @@ class Action(TypedDict):
 
 # Scores each candidate 0–1 from the evaluator view, the candidates and the AI config;
 # raises JevError on a recoverable model failure, which falls back to the local policy.
-Evaluator = Callable[[Mapping[str, Any], Sequence[Action], Mapping[str, Any]], Awaitable[dict[str, float]]]
+Evaluator = Callable[[Mapping[str, Any], Sequence[Mapping[str, Any]], Mapping[str, Any]], Awaitable[dict[str, float]]]
 
 
 @dataclass(frozen=True)
@@ -164,7 +164,7 @@ def _seat_wish(observation: Mapping[str, Any], objects: Sequence[Mapping[str, An
     return [_action("sit", own["id"]), *([_action("seating")] if joinable else [])]
 
 
-def build_seat_candidates(observation: Mapping[str, Any]) -> list[dict[str, Any]]:
+def build_seat_candidates(observation: Mapping[str, Any]) -> list[Action]:
     """List the chairs a visitor who decided to sit down can choose between.
 
     Args:
@@ -362,7 +362,7 @@ def _stage(decision: Mapping[str, Any]) -> dict[str, Any]:
     return {key: decision[key] for key in ("source", "scores", "error")}
 
 
-def _evaluator_view(observation: Mapping[str, Any], candidates: Sequence[Action]) -> dict[str, Any]:
+def _evaluator_view(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     # The evaluator reads the situation in plain words plus the visitor's exact numbers;
     # raw cell lists, maps and earlier scores are noise to it.
     actor = observation["actor"]
@@ -371,7 +371,7 @@ def _evaluator_view(observation: Mapping[str, Any], candidates: Sequence[Action]
 
 
 async def _decide(
-    observation: Mapping[str, Any], candidates: Sequence[Action], local: Mapping[str, float], remote: Evaluator,
+    observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]], local: Mapping[str, float], remote: Evaluator,
     config: Mapping[str, Any], rng: Random, temperature: float, limit: int,
 ) -> dict[str, Any]:
     candidates = bounded(candidates, local, limit)

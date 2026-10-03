@@ -3,7 +3,10 @@
 from collections.abc import Mapping
 from random import Random
 from types import MappingProxyType
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # turns imports this module, so the types cross the cycle only for the checker.
+    from tavern.turns import TurnResult
 
 # Lines stay under 38 characters, so each reads in the minimum gap; {name} is the addressee and
 # {me} the speaker.
@@ -41,7 +44,7 @@ DISLIKED = -10.0  # An insult is only for someone the speaker thinks this little
 LONG_STAY = 300.0  # Game seconds after which a guest is ready to walk home with someone.
 
 
-def scripted_turn(view: Mapping[str, Any]) -> dict[str, Any]:
+def scripted_turn(view: Mapping[str, Any]) -> "TurnResult":
     """Write the next line of a scene by a seeded rule, without a model.
 
     The first line greets. An invitee answers a pending invitation first (see `_answer`). A
@@ -74,9 +77,11 @@ def scripted_turn(view: Mapping[str, Any]) -> dict[str, Any]:
         line = INVITE_LINES[kind]
     else:
         line = rng.choice(LINES[kind])
-    result = {"line": line.format(name=name, me=me["name"]), "act": act, "addressee": addressee["id"],
-              "topic": scene["topic"]}
-    return {**result, "invitation": kind} if act == "invite" else result
+    result: "TurnResult" = {"line": line.format(name=name, me=me["name"]), "act": act,
+                            "addressee": addressee["id"], "topic": scene["topic"]}
+    if act == "invite":
+        result["invitation"] = kind
+    return result
 
 
 def _addressee(scene: Mapping[str, Any], me: Mapping[str, Any], act: str) -> Mapping[str, Any]:
@@ -166,7 +171,7 @@ def _temper(me: Mapping[str, Any]) -> float:
     return min(1.0, 0.5 * max(0, me["visit"]["beers"] - 1) * (1 - patience))
 
 
-async def write_scripted_turn(view: Mapping[str, Any], config: Mapping[str, Any]) -> dict[str, Any]:
+async def write_scripted_turn(view: Mapping[str, Any], config: Mapping[str, Any]) -> "TurnResult":
     """Write a scripted line through the turn writer port (`turns.TurnWriter`), offline.
 
     Args:

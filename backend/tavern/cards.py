@@ -1,7 +1,7 @@
 """Character cards: a guest described in words, plus the 0–1 params the rules read."""
 
 from collections.abc import Mapping, Sequence
-from typing import Any, NotRequired, TypedDict
+from typing import Any, NotRequired, TypedDict, cast
 
 from tavern.validation import number, unique_ids
 
@@ -68,7 +68,7 @@ def parse_card_text(data: Any) -> CardText:
         ValueError: A field is missing, unknown, blank, too long or not text.
     """
     fields = _exact_fields(data, set(TEXT_FIELDS), "Card text")
-    return CardText(**{key: _text(fields[key], key) for key in TEXT_FIELDS})
+    return cast(CardText, {key: _text(fields[key], key) for key in TEXT_FIELDS})
 
 
 def parse_params(data: Any) -> dict[str, float]:

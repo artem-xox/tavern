@@ -8,7 +8,7 @@ from tavern.expression import emote_event
 from tavern.hearing import sound_event
 
 
-def record_event(world: Mapping[str, Any], actor: dict[str, Any], kind: str, message: str) -> None:
+def record_event(world: dict[str, Any], actor: dict[str, Any], kind: str, message: str) -> None:
     """Log an event for the room and remember it; it may be heard and show on the visitor's face.
 
     Args:

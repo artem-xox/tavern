@@ -2,7 +2,7 @@
 
 import math
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any, TypedDict
+from typing import Any, TypedDict, cast
 
 import httpx
 
@@ -32,7 +32,7 @@ def _candidate_ids(candidates: Sequence[Mapping[str, Any]]) -> list[str]:
         raise ValueError("Candidates must contain verb and target_id")
     if any(action["target_id"] is not None and (not isinstance(action["target_id"], str) or not action["target_id"]) for action in candidates):
         raise ValueError("Action target must be an object ID or null")
-    return ids
+    return cast(list[str], ids)
 
 
 def _visitor_view() -> str:
@@ -263,12 +263,12 @@ def _read_usage(payload: Mapping[str, Any]) -> Usage | None:
     if len(counts) != 2 or any(isinstance(count, bool) or not isinstance(count, int) or count < 0
                                for count in counts):
         raise JevError("Jev returned malformed usage")
-    return {"input_tokens": counts[0], "output_tokens": counts[1]}
+    return cast(Usage, {"input_tokens": counts[0], "output_tokens": counts[1]})
 
 
 async def _evaluate(
     observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]], config: Mapping[str, Any],
-    client: httpx.AsyncClient | None, question: Callable[[Mapping[str, Any]], dict[str, Any]],
+    client: httpx.AsyncClient | None, question: Callable[[Mapping[str, Any], Mapping[str, Any]], dict[str, Any]],
 ) -> tuple[dict[str, float], Any]:
     ids = _candidate_ids(candidates)
     key, model, timeout = _configuration(config)

@@ -168,7 +168,7 @@ def _quarrels(world: Mapping[str, Any], left: Mapping[str, Any], right: Mapping[
     return Random(f"{world['seed']}:{world['tick']}:{left['id']}:{right['id']}").random() < chance
 
 
-def _quarrel(world: Mapping[str, Any], actor: dict[str, Any], partner: dict[str, Any], topic: str) -> None:
+def _quarrel(world: dict[str, Any], actor: dict[str, Any], partner: dict[str, Any], topic: str) -> None:
     message = f"{actor['name']} and {partner['name']} quarreled about {topic}"
     for visitor, other in ((actor, partner), (partner, actor)):
         record_event(world, visitor, "quarrel", message)

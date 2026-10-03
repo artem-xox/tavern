@@ -468,7 +468,7 @@ async def _serve_socket(socket: WebSocket, sessions: TavernSessions) -> None:
             sender.cancel()
             with suppress(asyncio.CancelledError, WebSocketDisconnect, RuntimeError):
                 await sender
-        await sessions.release(session_id)
+        await sessions.release(str(session_id))  # `open` accepted it, so it is a valid ID.
 
 
 def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
@@ -559,7 +559,7 @@ def create_default_app() -> FastAPI:
                      if os.environ.get("TAVERN_DATABASE_ENABLED") == "true" else None)
     ask = _claude_port(os.environ.get("ANTHROPIC_API_KEY"))
     # With a Claude key Haiku writes conversation lines; without one the labeled scripted writer does.
-    lines = {} if ask is None else {"writer": claude_writer(ask), "writer_label": "haiku"}
+    lines: dict[str, Any] = {} if ask is None else {"writer": claude_writer(ask), "writer_label": "haiku"}
     return create_app(root / "data" / "tavern.json", root / "saves", config,
                       database_url=database_url, seed=Random().randrange(1 << 30),
                       scenario_path=root / "data" / "scenarios" / "first_evening.json",

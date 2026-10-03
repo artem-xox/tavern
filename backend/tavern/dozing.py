@@ -11,7 +11,7 @@ from tavern.drunkenness import drunk_stage
 from tavern.memory import record_event
 
 
-def nodding_off(world: Mapping[str, Any], elapsed: float) -> list[dict[str, Any]]:
+def nodding_off(world: dict[str, Any], elapsed: float) -> list[dict[str, Any]]:
     """Find the wasted visitors who nod off at their table this tick, and log it.
 
     Only someone sitting in their seat, not talking and doing nothing they would not break

@@ -93,8 +93,8 @@ def _validate_lines(world: Mapping[str, Any]) -> None:
     for actor in world["actors"]:
         target = find_object(world["map"], (actor["action"] or {}).get("target_id"))
         lined = target is not None and "queue_spots" in target
-        if (actor["status"] == "queued" or lined) and actor["id"] not in waiting and not (
-                lined and target["reserved_by"] == actor["id"]):
+        holds = target is not None and target["reserved_by"] == actor["id"]
+        if (actor["status"] == "queued" or lined) and actor["id"] not in waiting and not (lined and holds):
             raise ValueError("Saved guest waits for a place without standing in its line")
 
 
@@ -122,7 +122,7 @@ def _validate_known_objects(objects: Mapping[str, Any], world: Mapping[str, Any]
             raise ValueError("Invalid remembered object")
         if item.get("kind") not in {"tap", "toilet", "chair", "table", "bar", "darts", "door", "window", "fireplace"}:
             raise ValueError("Invalid remembered object kind")
-        seen = item.get("last_seen")
+        seen: Any = item.get("last_seen")
         if type(seen) not in (int, float) or not math.isfinite(seen) or not 0 <= seen <= world["time"]:
             raise ValueError("Invalid observation time")
         for spot in item["interaction_spots"]:
@@ -139,7 +139,7 @@ def _validate_cell(cell: Any, world_map: Mapping[str, Any]) -> None:
 
 def _validate_progress(actor: Mapping[str, Any], world_map: Mapping[str, Any]) -> None:
     for key in ("_remaining", "_move_elapsed", "_blocked_for"):
-        value = actor.get(key)
+        value: Any = actor.get(key)
         if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
             raise ValueError("Invalid saved action timer")
     path = actor.get("path")

@@ -93,7 +93,7 @@ def line_full(item: Mapping[str, Any]) -> str | None:
     return f"The line for {item['name']} is full" if len(item["queue"]) >= len(item["queue_spots"]) else None
 
 
-def _cut(world: Mapping[str, Any], item: Mapping[str, Any], actor: dict[str, Any], passed: list[str]) -> None:
+def _cut(world: dict[str, Any], item: Mapping[str, Any], actor: dict[str, Any], passed: list[str]) -> None:
     people = {other["id"]: other for other in world["actors"]}
     if passed:
         record_event(world, actor, "line_cut", f"{actor['name']} cut in line for {item['name']}")
@@ -105,7 +105,7 @@ def _cut(world: Mapping[str, Any], item: Mapping[str, Any], actor: dict[str, Any
               message, about=actor)
 
 
-def join_line(world: Mapping[str, Any], item: dict[str, Any], actor: dict[str, Any], front: bool) -> None:
+def join_line(world: dict[str, Any], item: dict[str, Any], actor: dict[str, Any], front: bool) -> None:
     """Put a visitor at the end of a line, or at its front when they cut in.
 
     Args:
@@ -121,7 +121,7 @@ def join_line(world: Mapping[str, Any], item: dict[str, Any], actor: dict[str, A
     _cut(world, item, actor, passed)
 
 
-def stay_in_line(world: Mapping[str, Any], item: dict[str, Any], actor: dict[str, Any], front: bool) -> None:
+def stay_in_line(world: dict[str, Any], item: dict[str, Any], actor: dict[str, Any], front: bool) -> None:
     """Keep a visitor in their line with renewed patience, moving them to the front if they cut in.
 
     Args:
@@ -131,6 +131,8 @@ def stay_in_line(world: Mapping[str, Any], item: dict[str, Any], actor: dict[str
         front: Whether they push past everyone ahead of them.
     """
     found = line_of(world, actor["id"])
+    if found is None:
+        raise ValueError(f"{actor['name']} does not stand in a line")
     entry = item["queue"].pop(found[1])
     entry["since"] = world["time"]
     passed = [ahead["actor_id"] for ahead in item["queue"][:found[1]]] if front else []
@@ -138,7 +140,7 @@ def stay_in_line(world: Mapping[str, Any], item: dict[str, Any], actor: dict[str
     _cut(world, item, actor, passed)
 
 
-def leave_line(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
+def leave_line(world: dict[str, Any], actor: dict[str, Any]) -> None:
     """Take a visitor out of the line they stand in, if any: they gave up or were called away.
 
     Args:

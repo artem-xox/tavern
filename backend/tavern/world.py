@@ -104,7 +104,7 @@ def _seat(world: Mapping[str, Any], actor: Mapping[str, Any]) -> dict[str, Any] 
     return _target(world, {"target_id": actor.get("seat_id")})
 
 
-def _clear_action(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
+def _clear_action(world: dict[str, Any], actor: dict[str, Any]) -> None:
     leave_line(world, actor)
     for target in world["map"]["objects"]:
         if target["reserved_by"] == actor["id"] and target["id"] != actor.get("seat_id"):
@@ -113,7 +113,7 @@ def _clear_action(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
                  _move_elapsed=0.0, _remaining=0.0, _blocked_for=0.0)
 
 
-def _reject(world: Mapping[str, Any], actor: dict[str, Any], reason: str) -> dict[str, Any]:
+def _reject(world: dict[str, Any], actor: dict[str, Any], reason: str) -> dict[str, Any]:
     record_event(world, actor, "action_failed", reason)
     _look(world, actor)
     return {"accepted": False, "reason": reason}
@@ -155,8 +155,10 @@ def start_action(world: dict[str, Any], actor_id: str, action: Mapping[str, Any]
 
 def _talk_in_line(world: dict[str, Any], actor: dict[str, Any], action: Mapping[str, Any]) -> dict[str, Any]:
     # Talking to a neighbour in line keeps the place in it, and the talk makes the wait bearable.
-    stay_in_line(world, line_of(world, actor["id"])[0], actor, False)
-    activity = ACTIVITIES[action["verb"]]
+    found, activity = line_of(world, actor["id"]), ACTIVITIES[action["verb"]]
+    if found is None or activity.on_arrival is None:
+        raise ValueError(f"{action['verb']} cannot be done from a line")
+    stay_in_line(world, found[0], actor, False)
     activity.on_arrival(world, actor, find_actor(world, action["target_id"]))
     if activity.sound:
         # The sound concerns the partner, as if the talk were the action they started.
@@ -171,7 +173,7 @@ def _part(world: dict[str, Any], actor: dict[str, Any], action: Mapping[str, Any
         _finish_parts(world)
 
 
-def _finish_parts(world: Mapping[str, Any]) -> None:
+def _finish_parts(world: dict[str, Any]) -> None:
     # A part in a conversation ends with the visitor's place in its scene.
     for actor in world["actors"]:
         action = actor["action"]
@@ -180,11 +182,13 @@ def _finish_parts(world: Mapping[str, Any]) -> None:
             _clear_action(world, actor)
 
 
-def _line_up(world: Mapping[str, Any], actor: dict[str, Any], action: Mapping[str, Any],
+def _line_up(world: dict[str, Any], actor: dict[str, Any], action: Mapping[str, Any],
              front: bool) -> dict[str, Any]:
     # Joining a line is body work: the visitor stands up and walks to its end, or to its front
     # when cutting in. Choosing the line they already stand in means waiting on.
     target = _target(world, action)
+    if target is None:
+        raise ValueError(f"Cannot line up for {action.get('target_id')!r}")
     found = line_of(world, actor["id"])
     if found is not None and found[0] is target:
         stay_in_line(world, target, actor, front)
@@ -203,7 +207,7 @@ def _line_up(world: Mapping[str, Any], actor: dict[str, Any], action: Mapping[st
     return {"accepted": True, "reason": None}
 
 
-def _notice_target(world: Mapping[str, Any], actor: dict[str, Any], action: Mapping[str, Any]) -> None:
+def _notice_target(world: dict[str, Any], actor: dict[str, Any], action: Mapping[str, Any]) -> None:
     # A visitor turned away from a known place learns why (it is busy or has run dry), so stale
     # memories do not send them back again and again.
     target = _target(world, action)
@@ -211,7 +215,7 @@ def _notice_target(world: Mapping[str, Any], actor: dict[str, Any], action: Mapp
         actor["knowledge"]["objects"][target["id"]] = {**deepcopy(target), "last_seen": world["time"]}
 
 
-def _activate(world: Mapping[str, Any], actor: dict[str, Any], action: Mapping[str, Any],
+def _activate(world: dict[str, Any], actor: dict[str, Any], action: Mapping[str, Any],
               plan: tuple[list[int] | None, list[list[int]]]) -> None:
     _part(world, actor, action)
     if plan[1] or ACTIVITIES[action["verb"]].leaves_seat:
@@ -228,12 +232,12 @@ def _activate(world: Mapping[str, Any], actor: dict[str, Any], action: Mapping[s
         _begin_interaction(world, actor)
 
 
-def _fail(world: Mapping[str, Any], actor: dict[str, Any], reason: str) -> None:
+def _fail(world: dict[str, Any], actor: dict[str, Any], reason: str) -> None:
     _clear_action(world, actor)
     _reject(world, actor, reason)
 
 
-def _yield_idle_occupant(world: Mapping[str, Any], actor: dict[str, Any], next_cell: tuple[int, int]) -> None:
+def _yield_idle_occupant(world: dict[str, Any], actor: dict[str, Any], next_cell: tuple[int, int]) -> None:
     occupant = next((item for item in world["actors"] if (item["x"], item["y"]) == next_cell), None)
     if occupant is None or occupant["status"] != "idle" or occupant.get("seat_id"):
         return
@@ -246,7 +250,7 @@ def _yield_idle_occupant(world: Mapping[str, Any], actor: dict[str, Any], next_c
         _activate(world, occupant, {"id": "yield", "verb": "wait", "target_id": None}, ([*free], [[*free]]))
 
 
-def _move(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float) -> None:
+def _move(world: dict[str, Any], actor: dict[str, Any], elapsed: float) -> None:
     actor["_move_elapsed"] += elapsed
     while actor["path"] and actor["_move_elapsed"] >= world["rules"]["move_seconds"]:
         next_cell = tuple(actor["path"][0])
@@ -262,7 +266,7 @@ def _move(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float) -> No
         _begin_interaction(world, actor)
 
 
-def _wait_for_route(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float) -> None:
+def _wait_for_route(world: dict[str, Any], actor: dict[str, Any], elapsed: float) -> None:
     actor.update(status="waiting", _move_elapsed=0.0)
     actor["_blocked_for"] += elapsed
     if gives_way(world, actor):
@@ -273,7 +277,7 @@ def _wait_for_route(world: Mapping[str, Any], actor: dict[str, Any], elapsed: fl
         _fail(world, actor, "Route remained blocked; try again after the obstruction changes")
 
 
-def _begin_interaction(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
+def _begin_interaction(world: dict[str, Any], actor: dict[str, Any]) -> None:
     if line_of(world, actor["id"]) is not None:
         actor.update(status="queued", _move_elapsed=0.0, _blocked_for=0.0)
         return
@@ -303,7 +307,7 @@ def _interaction_error(world: Mapping[str, Any], actor: Mapping[str, Any]) -> st
     return None
 
 
-def _apply_effect(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
+def _apply_effect(world: dict[str, Any], actor: dict[str, Any]) -> None:
     action = actor["action"]
     activity = ACTIVITIES[action["verb"]]
     target = find_actor(world, action["target_id"]) if activity.partner else _target(world, action)
@@ -313,7 +317,7 @@ def _apply_effect(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
         actor["needs"][need] = min(100, max(0, actor["needs"][need] + change))
 
 
-def _interact(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float) -> None:
+def _interact(world: dict[str, Any], actor: dict[str, Any], elapsed: float) -> None:
     reason = _interaction_error(world, actor)
     if reason:
         _fail(world, actor, reason)
@@ -328,7 +332,7 @@ def _interact(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float) -
         _look(world, actor)
 
 
-def _step_actor(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float) -> None:
+def _step_actor(world: dict[str, Any], actor: dict[str, Any], elapsed: float) -> None:
     for name, rate in world["rules"]["need_rates"].items():
         actor["needs"][name] = min(100, actor["needs"][name] + rate * elapsed)
     actor["visit"]["seconds"] += elapsed

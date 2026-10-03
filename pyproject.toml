@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8,<10"]
+dev = ["pytest>=8,<10", "mypy>=1.10,<2"]
 
 [tool.setuptools.packages.find]
 where = ["backend"]
@@ -24,3 +24,9 @@ where = ["backend"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["backend"]
+
+[tool.mypy]
+files = ["backend/tavern"]
+python_version = "3.11"
+warn_unused_ignores = true
+warn_redundant_casts = true

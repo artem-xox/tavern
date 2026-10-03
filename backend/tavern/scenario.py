@@ -4,7 +4,7 @@ from collections.abc import Mapping, Sequence
 from copy import deepcopy
 from dataclasses import dataclass
 from math import inf
-from typing import Any, NotRequired, TypedDict
+from typing import Any, NotRequired, TypedDict, cast
 
 from tavern.arrival import admit_arrivals, arrival_ranges, arriving
 from tavern.cards import Card, parse_card
@@ -121,8 +121,9 @@ def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None) -> Scenar
         raise ValueError("Scenario seed must be an integer")
     guests = _guests(fields["guests"], closes_at, cards)
     ties = parse_ties(fields.get("relationships", []), [item["id"] for item in guests])
-    return Scenario(guests=_with_ties(guests, ties), arrival=arrival_ranges(fields), closes_at=closes_at,
-                    seed=seed, ties=ties)
+    # `arrival` is a required field above, so its ranges are never None here.
+    arrival = cast(dict[str, tuple[float, float]], arrival_ranges(fields))
+    return Scenario(guests=_with_ties(guests, ties), arrival=arrival, closes_at=closes_at, seed=seed, ties=ties)
 
 
 def _guests(value: Any, closes_at: float, cards: Mapping[str, Card] | None) -> tuple[Guest, ...]:
@@ -183,5 +184,5 @@ def open_evening(room: Mapping[str, Any], scenario: Scenario, seed: int) -> dict
 def _expected(scenario: Scenario, seed: int) -> list[ExpectedGuest]:
     # Tonight's needs are drawn at opening, in listed order, so the evening replays from its seed.
     # Sorting is stable: guests due at the same moment keep their listed order at the door.
-    drawn = [ExpectedGuest(**deepcopy(item)) for item in arriving(scenario.guests, scenario.arrival, seed)]
+    drawn = [cast(ExpectedGuest, deepcopy(item)) for item in arriving(scenario.guests, scenario.arrival, seed)]
     return sorted(drawn, key=lambda item: item["arrives_at"])

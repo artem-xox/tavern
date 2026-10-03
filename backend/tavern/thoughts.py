@@ -143,7 +143,7 @@ def learn_name(actor: dict[str, Any], other: Mapping[str, Any], met: bool,
         return
     relation = _meet(actor, other, met)
     known = relation.get("knows_name", False)
-    relation.update(name=other["name"], knows_name=True)
+    relation.update({"name": other["name"], "knows_name": True})
     if known:
         return
     for friend in friends:
@@ -166,7 +166,7 @@ def soften(actor: dict[str, Any], about_id: str, now: float) -> bool:
                and item["opinion"] < 0 and item["opinion"] == THOUGHTS[item["kind"]].opinion]
     if not grudges:
         return False
-    grudges[-1].update(mood=grudges[-1]["mood"] / 2, opinion=grudges[-1]["opinion"] / 2)
+    grudges[-1].update({"mood": grudges[-1]["mood"] / 2, "opinion": grudges[-1]["opinion"] / 2})
     _refresh_grievances(actor, now)
     return True
 
@@ -290,7 +290,8 @@ def seed_relations(pairs: Sequence[Mapping[str, Any]], names: Mapping[str, str])
     relations: dict[str, dict[str, Relation]] = {}
     for pair in pairs:
         left, right, kind = pair.get("a"), pair.get("b"), pair.get("kind")
-        if left not in names or right not in names or left == right or kind not in _STARTING:
+        if not (isinstance(left, str) and isinstance(right, str) and isinstance(kind, str)) or (
+                left not in names or right not in names or left == right or kind not in _STARTING):
             raise ValueError(f"Invalid starting relationship {dict(pair)!r}")
         if right in relations.get(left, {}):
             raise ValueError(f"Starting relationship of {left!r} and {right!r} given twice")

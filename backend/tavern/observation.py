@@ -21,7 +21,7 @@ def own_actor(observation: Mapping[str, Any]) -> Mapping[str, Any]:
     if not isinstance(actor, Mapping) or not isinstance(actor.get("id"), str) or not actor["id"]:
         raise ValueError("Observation must contain the NPC's own actor")
     needs, inventory, traits = actor.get("needs"), actor.get("inventory"), actor.get("traits", {})
-    if not all(isinstance(value, Mapping) for value in (needs, inventory, traits)):
+    if not (isinstance(needs, Mapping) and isinstance(inventory, Mapping) and isinstance(traits, Mapping)):
         raise ValueError("Actor needs, inventory and traits must be mappings")
     for name in ("thirst", "fatigue", "bladder"):
         number(needs.get(name), name, 0, 100)
@@ -65,7 +65,7 @@ def known_objects(observation: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     objects = observation.get("objects")
     if not isinstance(objects, Sequence) or isinstance(objects, (str, bytes)):
         raise ValueError("Observation objects must be a sequence")
-    known = {}
+    known: dict[str, Mapping[str, Any]] = {}
     for item in objects:
         if not isinstance(item, Mapping) or not isinstance(item.get("id"), str) or not item["id"]:
             raise ValueError("Observed objects must have nonempty string IDs")

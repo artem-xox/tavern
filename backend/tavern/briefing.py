@@ -12,7 +12,7 @@ Observation = Mapping[str, Any]
 Action = Mapping[str, Any]
 
 
-def brief(observation: Observation, candidates: Sequence[Action]) -> dict[str, Any]:
+def brief(observation: Observation, candidates: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     """Describe a visitor's situation and each of their options in plain words.
 
     Args:
@@ -213,7 +213,8 @@ def _person(observation: Observation, visitor: Mapping[str, Any]) -> str:
         busy = (", busy talking" if visitor.get("conversation") else "" if visitor.get("available", True)
                 else ", in a hurry")
         return f"{_label(visitor)} sits {where}{busy}"
-    activity = ACTIVITIES.get(visitor.get("doing"))
+    doing = visitor.get("doing")
+    activity = ACTIVITIES.get(doing) if isinstance(doing, str) else None
     return f"{_label(visitor)} is {activity.doing if activity and activity.doing else 'standing about'}"
 
 

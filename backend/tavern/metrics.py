@@ -239,7 +239,7 @@ def writer_stats(evening: Evening, calls: Sequence[Record], kind: str, tariff: T
         ValueError: A price is negative or not finite.
     """
     mine = [record for record in calls if record["kind"] == kind]
-    cost = cost_by_kind(mine, 0.0, {kind: tariff}).get(kind, {})
+    cost: Mapping[str, Any] = cost_by_kind(mine, 0.0, {kind: tariff}).get(kind, {})
     read = cost.get("cache_read_input_tokens", 0)
     prompt = cost.get("input_tokens", 0) + read + cost.get("cache_creation_input_tokens", 0)
     turns, usd = sum(event["type"] == "turn" for event in evening.events), cost.get("usd", 0.0)

@@ -165,7 +165,7 @@ def start_conversation(world: dict[str, Any], actor: dict[str, Any], partner: Ma
     return scene
 
 
-def join_conversation(world: Mapping[str, Any], actor: dict[str, Any], member: Mapping[str, Any]) -> None:
+def join_conversation(world: dict[str, Any], actor: dict[str, Any], member: Mapping[str, Any]) -> None:
     """Add a visitor to the scene of someone already talking.
 
     Args:
@@ -174,6 +174,8 @@ def join_conversation(world: Mapping[str, Any], actor: dict[str, Any], member: M
         member: Visitor in the scene they join.
     """
     scene = conversation_of(world, member["id"])
+    if scene is None:
+        raise ValueError(f"{member['name']} is in no conversation to join")
     names = _names(world, scene["participants"])
     _recast(scene)
     scene["participants"].append(actor["id"])
@@ -273,7 +275,7 @@ def _lapse(scene: Conversation) -> None:
 
 def _recast(scene: Conversation) -> None:
     # A line written for the old company no longer fits the new one.
-    scene.update(writing=None, written=None)
+    scene.update({"writing": None, "written": None})
 
 
 def _names(world: Mapping[str, Any], actor_ids: list[str]) -> str:

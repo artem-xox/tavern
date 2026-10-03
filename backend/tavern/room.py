@@ -121,7 +121,7 @@ def _validate_footprint(item: Mapping[str, Any], world_map: Mapping[str, Any]) -
 
 def _validate_objects(world_map: dict[str, Any]) -> None:
     unique_ids(world_map["objects"], "object")
-    occupied = set()
+    occupied: set[tuple[int, int]] = set()
     for item in world_map["objects"]:
         _validate_footprint(item, world_map)
         cells = set(object_cells(item))

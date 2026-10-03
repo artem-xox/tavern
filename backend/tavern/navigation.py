@@ -61,7 +61,8 @@ def _search(start: tuple[int, int], goal: tuple[int, int], width: int, height: i
             blocked: set[tuple[int, int]]) -> list[tuple[int, int]]:
     order = count()
     pending = [(_distance(start, goal), next(order), start)]
-    costs, parents = {start: 0}, {}
+    costs: dict[tuple[int, int], int] = {start: 0}
+    parents: dict[tuple[int, int], tuple[int, int]] = {}
     while pending:
         _, _, current = heappop(pending)
         if current == goal:

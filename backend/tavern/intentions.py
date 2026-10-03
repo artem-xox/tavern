@@ -8,7 +8,7 @@ Runners ask asynchronously, like decisions: one request per guest at a time, at 
 seconds apart; a salient event after the request makes its answer stale (`stale_intentions`).
 """
 
-from collections.abc import Awaitable, Callable, Container, Mapping
+from collections.abc import Callable, Container, Coroutine, Mapping
 from copy import deepcopy
 from dataclasses import dataclass
 import math
@@ -80,7 +80,7 @@ SALIENT_THOUGHTS = ("quarrel", "seat_taken", "insult")
 _LONGEST = 400
 
 # Writes a guest's thought and intention from their view (see `intention_view`); raises on failure.
-Intender = Callable[[Mapping[str, Any]], Awaitable[Written]]
+Intender = Callable[[Mapping[str, Any]], Coroutine[Any, Any, Written]]
 
 
 def latest_trigger(world: Mapping[str, Any], actor: Mapping[str, Any], since: float) -> Trigger | None:

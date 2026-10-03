@@ -7,7 +7,7 @@ speaks it when due. An unclaimed turn is written by the scripted writer on the s
 one that has no answer `rules.conversation.turn_timeout` seconds after it was due too.
 """
 
-from collections.abc import Awaitable, Callable, Mapping
+from collections.abc import Callable, Coroutine, Mapping
 from copy import deepcopy
 from typing import Any, NotRequired, TypedDict
 
@@ -39,7 +39,7 @@ class TurnResult(TypedDict):
 # Writes the next line of a scene from the speaker's view (see `turn_view`) and the AI config.
 # `scripted.write_scripted_turn` is the offline writer; E16 adds Claude Haiku. Any failure it
 # raises falls back to a scripted line.
-TurnWriter = Callable[[Mapping[str, Any], Mapping[str, Any]], Awaitable[TurnResult]]
+TurnWriter = Callable[[Mapping[str, Any], Mapping[str, Any]], Coroutine[Any, Any, TurnResult]]
 
 _FIELDS = {"line", "act", "addressee", "topic"}
 
@@ -267,8 +267,8 @@ def _speak(world: dict[str, Any], scene: Conversation, speaker_id: str, result: 
     if "invitation" in result:
         turn["invitation"] = result["invitation"]
     scene["turns"].append(turn)
-    scene.update(topic=result["topic"], writing=None, written=None,
-                 next_turn_at=world["time"] + reading_time(result["line"], world["rules"]["conversation"]))
+    scene.update({"topic": result["topic"], "writing": None, "written": None,
+                  "next_turn_at": world["time"] + reading_time(result["line"], world["rules"]["conversation"])})
     listener = people[result["addressee"]]["name"] if result["addressee"] else "everyone"
     log_event(world, speaker_id, "turn", f"{people[speaker_id]['name']} to {listener} ({result['act']}): {result['line']}")
     # Heard before the act takes effect, while the scene still holds everyone who spoke in it.

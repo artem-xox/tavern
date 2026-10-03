@@ -1,7 +1,7 @@
 """Starting relationships: the ties two guests bring into the evening, before anything happens."""
 
 from collections.abc import Mapping, Sequence
-from typing import Any, TypedDict
+from typing import Any, TypedDict, cast
 
 KINDS = ("old friends", "rivals")
 
@@ -85,4 +85,4 @@ def parse_own_ties(value: Any) -> list[OwnTie]:
         raise ValueError("A guest's ties are a list of {with, name, kind, note} texts")
     if any(item["kind"] not in KINDS for item in value):
         raise ValueError("A guest's tie has an unknown kind")
-    return [OwnTie(**item) for item in value]
+    return [cast(OwnTie, dict(item)) for item in value]

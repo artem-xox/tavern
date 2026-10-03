@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from tavern.names import called
+from tavern.scenes import Conversation
 from tavern.thoughts import familiarity_of, learn_name, opinion_of, soften, think
 
 # A listener who thinks this well of a boaster enjoys the tale whatever their patience.
@@ -29,7 +30,7 @@ def _feel(world: Mapping[str, Any], listener: dict[str, Any], kind: str, speaker
           f"{speaker['name']} {words} {listener['name']}", about=speaker)
 
 
-def compliment(world: dict[str, Any], scene: dict[str, Any], speaker: dict[str, Any],
+def compliment(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
                addressee: dict[str, Any] | None) -> None:
     """Warm the addressee (everyone else, if nobody in particular) to the speaker.
 
@@ -43,7 +44,7 @@ def compliment(world: dict[str, Any], scene: dict[str, Any], speaker: dict[str, 
         _feel(world, listener, "compliment", speaker, "complimented")
 
 
-def boast(world: dict[str, Any], scene: dict[str, Any], speaker: dict[str, Any],
+def boast(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
           addressee: dict[str, Any] | None) -> None:
     """Let everyone else in the scene take a boast: mildly impressed or mildly put off.
 
@@ -72,7 +73,7 @@ def _answered(world: Mapping[str, Any], scene: Mapping[str, Any], speaker: Mappi
     return next((item for item in _others(world, scene, speaker) if earlier and item["id"] == earlier[-1]), None)
 
 
-def agree(world: dict[str, Any], scene: dict[str, Any], speaker: dict[str, Any],
+def agree(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
           addressee: dict[str, Any] | None) -> None:
     """Let the one agreed with think a little better of the speaker.
 
@@ -87,7 +88,7 @@ def agree(world: dict[str, Any], scene: dict[str, Any], speaker: dict[str, Any],
         _feel(world, listener, "agreed", speaker, "agreed with")
 
 
-def disagree(world: dict[str, Any], scene: dict[str, Any], speaker: dict[str, Any],
+def disagree(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
              addressee: dict[str, Any] | None) -> None:
     """Let the one disagreed with think a little worse of the speaker.
 
@@ -102,7 +103,7 @@ def disagree(world: dict[str, Any], scene: dict[str, Any], speaker: dict[str, An
         _feel(world, listener, "disagreed", speaker, "disagreed with")
 
 
-def apologize(world: dict[str, Any], scene: dict[str, Any], speaker: dict[str, Any],
+def apologize(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
               addressee: dict[str, Any] | None) -> None:
     """Halve the latest grudge the addressee (everyone else, if nobody in particular) holds against the speaker.
 
@@ -116,7 +117,7 @@ def apologize(world: dict[str, Any], scene: dict[str, Any], speaker: dict[str, A
         soften(listener, speaker["id"], world["time"])
 
 
-def introduce(world: dict[str, Any], scene: dict[str, Any], speaker: dict[str, Any],
+def introduce(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
               addressee: dict[str, Any] | None) -> None:
     """Teach everyone else in the scene the speaker's name; strangers become acquaintances.
 

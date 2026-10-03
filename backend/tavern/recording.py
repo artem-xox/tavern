@@ -8,12 +8,12 @@ import json
 import math
 from typing import Any, TypedDict, cast
 
-from tavern.agents import Action, Evaluator
+from tavern.agents import Evaluator
 from tavern.questions import Ask, Question
 
 # A metered evaluator answers like an Evaluator and also returns the token usage its provider
 # reported for the call, or None when it reported none (see `jev.evaluate_actions_metered`).
-Metered = Callable[[Mapping[str, Any], Sequence[Action], Mapping[str, Any]],
+Metered = Callable[[Mapping[str, Any], Sequence[Mapping[str, Any]], Mapping[str, Any]],
                    Awaitable[tuple[dict[str, float], Mapping[str, int] | None]]]
 
 
@@ -91,7 +91,7 @@ def request_key(kind: str, request: Mapping[str, Any]) -> str:
     return hashlib.sha256(text.encode()).hexdigest()
 
 
-def _request(observation: Mapping[str, Any], candidates: Sequence[Action]) -> dict[str, Any]:
+def _request(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     # Stored as plain JSON data, so a record compares equal to itself read back from its file.
     return json.loads(json.dumps({"observation": observation, "candidates": list(candidates)}, allow_nan=False))
 
@@ -117,7 +117,7 @@ def record_calls(kind: str, evaluate: Metered, keep: Callable[[Record], None], c
     Returns:
         An evaluator that answers as `evaluate` does.
     """
-    async def recorded(observation: Mapping[str, Any], candidates: Sequence[Action],
+    async def recorded(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
                        config: Mapping[str, Any]) -> dict[str, float]:
         request, started = _request(observation, candidates), clock()
         try:
@@ -149,7 +149,7 @@ def replay_calls(kind: str, records: Sequence[Record], recoverable: type[Excepti
         if record["kind"] == kind:
             answers.setdefault(record["key"], deque()).append(record)
 
-    async def replayed(observation: Mapping[str, Any], candidates: Sequence[Action],
+    async def replayed(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
                        config: Mapping[str, Any]) -> dict[str, float]:
         key = request_key(kind, _request(observation, candidates))
         if not answers.get(key):
@@ -161,7 +161,7 @@ def replay_calls(kind: str, records: Sequence[Record], recoverable: type[Excepti
     return replayed
 
 
-def _scores(response: Any, candidates: Sequence[Action]) -> dict[str, float]:
+def _scores(response: Any, candidates: Sequence[Mapping[str, Any]]) -> dict[str, float]:
     if not isinstance(response, Mapping) or set(response) != {action["id"] for action in candidates} or any(
             isinstance(score, bool) or not isinstance(score, (int, float)) or not 0 <= score <= 1
             for score in response.values()):
