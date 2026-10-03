@@ -9,7 +9,9 @@ from typing import Any
 from fastapi.testclient import TestClient
 import pytest
 
-from tavern.app import TavernRuntime, create_app, create_default_app
+from tavern.app import create_default_app
+from tavern.server.api import create_app
+from tavern.server.runtime import TavernRuntime
 
 
 def room() -> dict[str, Any]:
@@ -108,7 +110,7 @@ def test_save_load_restores_ongoing_action_and_resources(tmp_path: Path) -> None
     engine.command({"type": "load"})
     assert engine.world["actors"] == saved["actors"]
     assert engine.world["map"] == saved["map"]
-    from tavern.world import step_world
+    from tavern.hall.world import step_world
     for _ in range(150):
         step_world(engine.world, 0.1)
     assert engine.world["actors"][0]["inventory"]["beer"] == 1
@@ -167,15 +169,14 @@ def test_websocket_command_errors_do_not_disconnect(tmp_path: Path) -> None:
         assert socket.receive_json()["state"]["paused"] is True
 
 
-def test_slow_ai_does_not_freeze_world_or_override_forced_action(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_slow_ai_does_not_freeze_world_or_override_forced_action(tmp_path: Path) -> None:
     async def scenario() -> None:
         gate = asyncio.Event()
         async def delayed_choice(observation: Any, config: Any, rng: Any) -> dict[str, Any]:
             await gate.wait()
             return {"action": {"id": "take_beer:tap", "verb": "take_beer", "target_id": "tap"},
                     "source": "jev", "scores": {"take_beer:tap": 4}, "error": None}
-        monkeypatch.setattr("tavern.app.choose_action", delayed_choice)
-        engine = runtime(tmp_path)
+        engine = TavernRuntime(room(), tmp_path / "save.json", {"typesafe_api_key": None}, choose=delayed_choice)
         engine.advance(0.1)
         await asyncio.sleep(0)
         engine.command({"type": "force_action", "actor_id": "ada", "action": {

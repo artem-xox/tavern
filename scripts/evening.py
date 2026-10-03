@@ -10,20 +10,20 @@ from typing import Any, Callable, Mapping
 
 from dotenv import dotenv_values
 
-from tavern import jev
-from tavern.agents import Evaluators
-from tavern.cards import parse_cards
-from tavern.claude import HAIKU_4_5, ClaudeError, ask_claude
-from tavern.haiku_turns import claude_writer, writer_mode
-from tavern.intentions import Intender, intention_writer
-from tavern.lockstep import Pace, evening_mode, run_evening
-from tavern.metrics import attention_counts, conversation_counts, evening_metrics, intention_counts, writer_stats
-from tavern.questions import Question
-from tavern.recording import (Record, format_record, parse_records, record_calls, record_questions, replay_calls,
+from tavern.adapters import jev
+from tavern.adapters.claude import HAIKU_4_5, ClaudeError, ask_claude
+from tavern.evening.lockstep import Pace, evening_mode, run_evening
+from tavern.evening.metrics import attention_counts, conversation_counts, evening_metrics, intention_counts, writer_stats
+from tavern.evening.recording import (Record, format_record, parse_records, record_calls, record_questions, replay_calls,
                               replay_questions)
-from tavern.scenario import open_evening, parse_scenario
-from tavern.scripted import write_scripted_turn
-from tavern.turns import TurnWriter
+from tavern.evening.scenario import open_evening, parse_scenario
+from tavern.mind.agents import Evaluators
+from tavern.mind.cards import parse_cards
+from tavern.mind.haiku_turns import claude_writer, writer_mode
+from tavern.mind.intentions import Intender, intention_writer
+from tavern.mind.questions import Question
+from tavern.mind.scripted import write_scripted_turn
+from tavern.social.turns import TurnWriter
 
 DECIDES = {"local": "the local policy (no model)", "live": "Jev, recorded", "replay": "Jev answers replayed"}
 CLAUDE_MODEL = "claude-haiku-4-5"

@@ -74,22 +74,22 @@ E16 measures this; E28 sets the budget.
 
 ## Status
 
-M1–M3 are done (2026-10-02). Next, in order:
+M1–M3 and the refactor R0–R8 are done (2026-10-03). Next, in order:
 
-1. **R0–R7, the refactor before M4.** It pays off [tech debt](../PLAN.md#tech-debt)
-   D01–D08. Approved 2026-10-03, including the test edits R6 and R7 name, `mypy` in R2,
-   and the R8 decision.
-2. **D13, model health markers.** Jev and Claude show reachability, credit and keys in
+1. **D13, model health markers.** Jev and Claude show reachability, credit and keys in
    `/health`, the client header and `make evening`. Without them, an empty account
    silently turns live evenings into scripted ones. The spec is in the
    [tech-debt table](../PLAN.md#tech-debt).
-3. **U1, no text labels on furniture.** A small frontend task that can run in
+2. **U1, no text labels on furniture.** A small frontend task that can run in
    parallel with anything else.
-4. **E18b, conversation memory.** Guests forget earlier conversations: they greet each
+3. **E18b, conversation memory.** Guests forget earlier conversations: they greet each
    other again and repeat topics.
-5. **M4, news and conflict (E19–E22).** E19 replaces the news Haiku invents today.
+4. **M4, news and conflict (E19–E22).** E19 replaces the news Haiku invents today.
 
-The door at closing (D02) is parked in the tech-debt table and is not a task.
+The door at closing (D02) is parked in the tech-debt table and is not a task. The code now
+lives in packages (`backend/tavern/hall`, `body`, `social`, `mind`, `evening`, `adapters`,
+`server`); the task texts below name modules by their old flat file names, so find one with
+`git ls-files | grep <name>.py`.
 
 ## Working on a task
 
@@ -352,7 +352,7 @@ it out in the next scene. Open issues and where each went: guests forget earlier
 conversations, so they repeat greetings and topics (E18b); Haiku invents news (E19); the
 door still serves one leaver at a time (tech debt D02).
 
-### Before M4 — Refactor (approved 2026-10-03)
+### Before M4 — Refactor (done 2026-10-03)
 
 This milestone pays off tech debt D01–D08 before M4 adds facts, fights and bystanders.
 Every step preserves behavior, gets its own commit, and passes the same checks:
@@ -371,25 +371,25 @@ test. R6 and R7 edit tests; the user approved exactly the edits listed there, an
 others. `runs/` is gitignored, so
 the baselines exist only on this machine.
 
-- [ ] **R0 — Baselines.** On `main`, before any change, record
+- [x] **R0 — Baselines.** On `main`, before any change, record
   `runs/golden-offline` with the offline command above, and confirm that the `runs/m3-full`
   replay is identical. No commit.
-- [ ] **R1 — Shared helpers (D06).** Replace `app._number`, `app._integer` and
+- [x] **R1 — Shared helpers (D06).** Replace `app._number`, `app._integer` and
   `observation._number` with `validation.number` and a new `validation.integer`. Where a
   test pins an error message, keep the message. Add `state.py` with `find_actor(world,
   actor_id)` and use it for the four lookups. Add `memory.log_event(world, actor_id,
   kind, message)` (event log only, no personal memory) in place of `turns._log`,
   `intentions._log` and whatever `decisions.log_control` duplicates. Leave the seeded
   roll alone until E21.
-- [ ] **R2 — Types (D05).** In `state.py`, add `TypedDict`s `World`, `Actor`, `Visit`,
+- [x] **R2 — Types (D05).** In `state.py`, add `TypedDict`s `World`, `Actor`, `Visit`,
   `Knowledge`, `Rules` (with nested `AttentionRules`, `ConversationRules`, …) and
   `Status = Literal["idle", "walking", "interacting", "waiting", "queued"]`. Annotate the
   core signatures with them in place of `dict[str, Any]`. Nothing changes at runtime, and
   saves stay JSON dicts. Add `mypy` to the `dev` extras and run `mypy backend/tavern` in
   `make check` (approved). Start non-strict and fix what it reports in the same step.
-- [ ] **R3 — Rules module (D08).** Move `world._rules()` to `rules.py` as
+- [x] **R3 — Rules module (D08).** Move `world._rules()` to `rules.py` as
   `default_rules() -> Rules`, with its why-comments verbatim. Saves stay byte-identical.
-- [ ] **R4 — Split the oversized modules (D01, D07).** Every public name a test imports
+- [x] **R4 — Split the oversized modules (D01, D07).** Every public name a test imports
   stays in its current module; only private code moves. One commit per file:
   - `world.py` (478 → about 200): the action state machine (`_activate`, `_line_up`,
     `_talk_in_line`, `_part`, `_finish_parts`, `_move`, `_wait_for_route`,
@@ -414,7 +414,7 @@ the baselines exist only on this machine.
     `local_policy.py`.
   - `app.py` (594 → about 350, together with R5): the debug commands (pause, speed,
     refill, block, force action) move to `controls.py` as pure functions over the world.
-- [ ] **R5 — One request loop for both runners (D04).** Add `mind_loop.py` with a
+- [x] **R5 — One request loop for both runners (D04).** Add `mind_loop.py` with a
   `MindLoop` class that owns the three kinds of model request in flight (decisions per
   guest, lines per claimed turn, intentions per guest) and, once per tick, runs: drop
   stale, apply due, ask, deliver lines, claim lines, intentions. Today both runners use
@@ -426,7 +426,7 @@ the baselines exist only on this machine.
   signatures and delegate to `MindLoop`. Lockstep keeps its measurements (choices,
   spells, gazes) outside the loop. Make one of the two current intention-failure policies
   the shared one; the replay must stay identical.
-- [ ] **R6 — Close the seams (D03). Test edits approved.**
+- [x] **R6 — Close the seams (D03). Test edits approved.**
   `agents.choose_action` takes `evaluators` as a required argument and no longer imports
   `jev.py`; the shell wires `Evaluators(evaluate_actions, evaluate_seats)`. Test edits,
   with the reason "pass the port instead of patching the module":
@@ -436,7 +436,7 @@ the baselines exist only on this machine.
   - `test_database.py`, 2 tests: `TavernSessions` takes a `Store` port (`initialize`,
     `load`, `save`) with two adapters, files and PostgreSQL, instead of patched module
     functions.
-- [ ] **R7 — Packages by concept. Approved: it rewrites the import lines in about 60 test
+- [x] **R7 — Packages by concept. Approved: it rewrites the import lines in about 60 test
   files and adds subpackages.** Move the modules
   with `git mv` and rewrite the imports with a script, in one mechanical commit. Every
   `__init__.py` stays empty (no re-exports):
@@ -483,6 +483,41 @@ the baselines exist only on this machine.
   - *Check:* run `make check` and `make build`, then `make run`. Confirm in the browser
     that no caption is drawn over the furniture or under the guests, and that hovering a
     table or the tap still shows its details. Attach a screenshot.
+
+Refactor result (2026-10-03, branch `claude/stage1-refactor`, 12 commits): `make check` is green
+at 1,500 tests (1,413 before; +87 for the new modules), and mypy reports no issues in 70
+modules. After every commit the offline golden evening (seed 5) and the replay of `runs/m3-full`
+(Jev + Haiku) were byte-identical, and the replay's metrics matched except for the mode labels.
+What changed, step by step:
+
+- R1 `validation.integer`, `state.find_actor` and `memory.log_event` replace the copies. `decisions.log_control`
+  stays: it trims to 100 events and rebinds the list, unlike the others.
+- R2 mypy joined `make check` and found 93 errors the code already had, in three groups: world
+  parameters typed `Mapping` although the functions mutate them (now `World`), `TypedDict.update(**kw)`
+  (now a dict literal) and places that indexed a possibly missing target, scene, line, seat or action
+  (now a `ValueError`). `state.py` holds `World`, `Actor`, `Visit`, `Knowledge`, `Decision`, `Rules` and
+  `HallMap`; `create_actor` and `create_world` build them through the TypedDict constructors, so key
+  order and saves are unchanged. 80 `dict[str, Any]` remain, for map objects, events and memories.
+- R3 `rules.default_rules()`.
+- R4 `world.py` 478 → 199 (`lifecycle.py` 375 holds the action state machine), `briefing.py` 450 → 226
+  (`options.py`, `hall_view.py`), `persistence.py` 427 → 171 (each check moved to its concept as
+  `check_saved_*`; the geometry check stays, because it builds a world), `agents.py` 386 → 275
+  (`local_policy.py`), `app.py` 594 → 73 with R7. Option sentences now go in `options.py` and local
+  utilities in `local_policy.py`; AGENTS.md says so.
+- R5 `mind_loop.MindLoop` plays the tick both runners shared; `TaskCourier` serves the live server and
+  `lockstep.LockstepCourier` the headless run. The runners disagreed on replay misses (a missing line
+  became a scripted fallback, a missing intention stopped the run); now a replay miss stops the evening
+  everywhere.
+- R6 `agents.py` no longer imports `jev.py`: its error is `agents.EvaluatorError` (`JevError` extends it),
+  and a model key without evaluators fails loudly. Sessions keep worlds in a `Store` (`FileStore`,
+  `DatabaseStore`). The tests edited, as approved: `test_agents.py` ×2, `test_seating.py` ×5,
+  `test_app.py` ×1, `test_evening.py` ×1, `test_database.py` ×2 (two renamed). No test patches a
+  module any more.
+- R7 packages by concept, with `tests/test_layers.py` checking that no domain package imports an
+  adapter, the server, `fastapi`, `httpx`, `psycopg`, `anthropic` or `os`. Differences from the proposal:
+  the package of the world is `hall/` (not `world/`, which would read `tavern.world.world`); the shared
+  helpers of the briefing are `hall_view.py`; `app.py` stays at the top as the launch wiring, so
+  `.do/app.prod.yaml` needed no change; `controls.py` and `cards_api.py` sit in `server/`.
 
 - [ ] **E18b — Conversation memory.** Guests remember the lines they spoke and heard
   tonight, and the turn writer and the intention writer see them. In-evening only; memory

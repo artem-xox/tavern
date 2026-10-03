@@ -2,7 +2,7 @@
 
 import pytest
 
-from tavern.navigation import find_path, select_interaction_spot
+from tavern.hall.navigation import find_path, select_interaction_spot
 
 
 @pytest.mark.parametrize(

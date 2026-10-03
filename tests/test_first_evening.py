@@ -8,9 +8,9 @@ from typing import Any, Mapping
 
 import pytest
 
-from tavern.agents import choose_action
-from tavern.scenario import Scenario, open_evening, parse_scenario
-from tavern.world import observe_actor, observe_people, start_action, step_world
+from tavern.mind.agents import choose_action
+from tavern.evening.scenario import Scenario, open_evening, parse_scenario
+from tavern.hall.world import observe_actor, observe_people, start_action, step_world
 
 ROOT = Path(__file__).parents[1]
 

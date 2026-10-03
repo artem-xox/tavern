@@ -6,14 +6,14 @@ from typing import Any
 
 import pytest
 
-from tavern.arrival import create_actor
-from tavern.briefing import brief
-from tavern.cards import parse_card
-from tavern.names import called
-from tavern.persistence import load_world, save_world
-from tavern.turns import turn_view
-from tavern.world import observe_actor, observe_people
-from tavern.world import start_action
+from tavern.hall.arrival import create_actor
+from tavern.mind.briefing import brief
+from tavern.mind.cards import parse_card
+from tavern.social.names import called
+from tavern.adapters.persistence import load_world, save_world
+from tavern.social.turns import turn_view
+from tavern.hall.world import observe_actor, observe_people
+from tavern.hall.world import start_action
 from social_hall import LOOKS, actor, advance, card, command, say, scene_of, seated_talk
 
 

@@ -7,8 +7,8 @@ from typing import Any
 
 import pytest
 
-from tavern.persistence import load_world, save_world
-from tavern.world import create_world, start_action, step_world
+from tavern.adapters.persistence import load_world, save_world
+from tavern.hall.world import create_world, start_action, step_world
 
 HALL = json.loads((Path(__file__).parents[1] / "data" / "tavern.json").read_text())
 

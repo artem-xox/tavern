@@ -7,8 +7,8 @@ from typing import Any
 import httpx
 import pytest
 
-from tavern.briefing import brief
-from tavern.jev import evaluate_actions
+from tavern.mind.briefing import brief
+from tavern.adapters.jev import evaluate_actions
 
 
 def observation(intention: dict[str, Any] | None, time: float | None = 100.0) -> dict[str, Any]:

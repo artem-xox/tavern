@@ -8,9 +8,10 @@ from typing import Any, Callable, Mapping
 
 import pytest
 
-from tavern.app import TavernRuntime, create_app
-from tavern.persistence import load_world, save_world
-from tavern.world import create_world, observe_actor, observe_people, start_action, step_world
+from tavern.server.api import create_app
+from tavern.server.runtime import TavernRuntime
+from tavern.adapters.persistence import load_world, save_world
+from tavern.hall.world import create_world, observe_actor, observe_people, start_action, step_world
 
 
 def table(table_id: str, x: int, y: int) -> list[dict[str, Any]]:
@@ -434,7 +435,7 @@ def test_late_decision_for_a_departed_visitor_is_dropped(tmp_path: Path) -> None
     asyncio.run(run())
 
 
-def test_seat_choice_is_kept_with_the_decision(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_seat_choice_is_kept_with_the_decision(tmp_path: Path) -> None:
     seat = {"source": "local", "scores": {"sit:warm-west": 0.8}, "error": None}
 
     async def choose(observation: Any, config: Any, rng: Any) -> dict[str, Any]:
@@ -442,13 +443,12 @@ def test_seat_choice_is_kept_with_the_decision(tmp_path: Path, monkeypatch: pyte
                 "scores": {"seating": 0.9}, "error": None, "seat": seat}
 
     async def run() -> None:
-        runtime = TavernRuntime(inn(), tmp_path / "save.json", {"temperature": 0})
+        runtime = TavernRuntime(inn(), tmp_path / "save.json", {"temperature": 0}, choose=choose)
         runtime.advance(0.1)
         await asyncio.sleep(0)
         runtime.advance(0.1)
         assert visitor(runtime.world, "ada")["decision"]["seat"] == seat
         await runtime.close()
-    monkeypatch.setattr("tavern.app.choose_action", choose)
     asyncio.run(run())
 
 

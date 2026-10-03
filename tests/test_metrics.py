@@ -5,9 +5,9 @@ from typing import Any
 
 import pytest
 
-from tavern.lockstep import Choice, Evening, Spell
-from tavern.metrics import completed_activities, evening_metrics, stuck_time
-from tavern.recording import Record, request_key
+from tavern.evening.lockstep import Choice, Evening, Spell
+from tavern.evening.metrics import completed_activities, evening_metrics, stuck_time
+from tavern.evening.recording import Record, request_key
 
 
 def event(kind: str, message: str, time: float = 1.0, actor_id: str | None = "ada") -> dict[str, Any]:

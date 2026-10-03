@@ -4,9 +4,9 @@ from typing import Any, Callable
 
 import pytest
 
-from tavern.agents import build_candidates
-from tavern.briefing import brief
-from tavern.world import create_world, observe_actor, observe_people, start_action, step_world
+from tavern.mind.agents import build_candidates
+from tavern.mind.briefing import brief
+from tavern.hall.world import create_world, observe_actor, observe_people, start_action, step_world
 
 
 def table(table_id: str, name: str, x: int, y: int) -> list[dict[str, Any]]:

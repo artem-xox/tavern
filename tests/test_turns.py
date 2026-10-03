@@ -8,13 +8,13 @@ from typing import Any
 
 import pytest
 
-from tavern.agents import Evaluators
-from tavern.app import TavernRuntime
-from tavern.lockstep import Pace, run_evening
-from tavern.scenes import conversation_of
-from tavern.scripted import scripted_turn
-from tavern.turns import check_turn, claim_turns, deliver_turn, reading_time, turn_view
-from tavern.world import create_world, start_action, step_world
+from tavern.mind.agents import Evaluators
+from tavern.server.runtime import TavernRuntime
+from tavern.evening.lockstep import Pace, run_evening
+from tavern.social.scenes import conversation_of
+from tavern.mind.scripted import scripted_turn
+from tavern.social.turns import check_turn, claim_turns, deliver_turn, reading_time, turn_view
+from tavern.hall.world import create_world, start_action, step_world
 
 RULES = {"min_gap": 2.5, "chars_per_second": 15.0}
 

@@ -8,8 +8,8 @@ from typing import Any
 import httpx2
 import pytest
 
-from tavern.claude import ClaudeError, ask_claude
-from tavern.questions import Question
+from tavern.adapters.claude import ClaudeError, ask_claude
+from tavern.mind.questions import Question
 
 SCHEMA = {"type": "object", "properties": {"mood": {"type": "string"}}, "required": ["mood"],
           "additionalProperties": False}

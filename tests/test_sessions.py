@@ -9,7 +9,8 @@ from fastapi.testclient import TestClient
 from fastapi import WebSocketDisconnect
 import pytest
 
-from tavern.app import TavernSessions, create_app
+from tavern.server.api import create_app
+from tavern.server.sessions import TavernSessions
 
 FIRST = "device-first"
 SECOND = "device-second"

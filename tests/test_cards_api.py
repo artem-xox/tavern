@@ -7,10 +7,11 @@ from typing import Any
 from fastapi.testclient import TestClient
 import pytest
 
-from tavern.app import create_app, create_default_app
-from tavern.cards import PARAMS
-from tavern.claude import ClaudeError
-from tavern.questions import Question
+from tavern.app import create_default_app
+from tavern.server.api import create_app
+from tavern.mind.cards import PARAMS
+from tavern.adapters.claude import ClaudeError
+from tavern.mind.questions import Question
 
 
 def text(**fields: Any) -> dict[str, Any]:

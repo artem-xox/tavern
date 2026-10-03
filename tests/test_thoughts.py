@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 
-from tavern.thoughts import (THOUGHTS, active_thoughts, familiarity_of, forget_expired, friends_of, mood,
+from tavern.social.thoughts import (THOUGHTS, active_thoughts, familiarity_of, forget_expired, friends_of, mood,
                              opinion_of, seed_relations, think)
 
 

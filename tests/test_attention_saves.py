@@ -6,10 +6,10 @@ from typing import Any
 
 import pytest
 
-from tavern.expression import look_at
-from tavern.memory import record_event
-from tavern.persistence import parse_world
-from tavern.world import create_world
+from tavern.body.expression import look_at
+from tavern.hall.memory import record_event
+from tavern.adapters.persistence import parse_world
+from tavern.hall.world import create_world
 
 
 def noisy_world() -> dict[str, Any]:

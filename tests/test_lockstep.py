@@ -8,11 +8,11 @@ from typing import Any
 
 import pytest
 
-from tavern.agents import Evaluator, Evaluators
-from tavern.jev import JevError
-from tavern.lockstep import Evening, Pace, evening_mode, evening_over, run_evening
-from tavern.recording import Record, format_record, parse_records, record_calls, replay_calls
-from tavern.world import create_world, start_action, step_world
+from tavern.mind.agents import Evaluator, Evaluators
+from tavern.adapters.jev import JevError
+from tavern.evening.lockstep import Evening, Pace, evening_mode, evening_over, run_evening
+from tavern.evening.recording import Record, format_record, parse_records, record_calls, replay_calls
+from tavern.hall.world import create_world, start_action, step_world
 
 KEYED = {"typesafe_api_key": "fake", "model": "jev-latest", "timeout": 1.0, "temperature": 0.0}
 

@@ -2,10 +2,10 @@
 
 from typing import Any
 
-from tavern.cards import PARAMS
-from tavern.scenes import conversation_of
-from tavern.turns import claim_turns, deliver_turn
-from tavern.world import create_world, start_action, step_world
+from tavern.mind.cards import PARAMS
+from tavern.social.scenes import conversation_of
+from tavern.social.turns import claim_turns, deliver_turn
+from tavern.hall.world import create_world, start_action, step_world
 
 LOOKS = {"ada": "the tall woman in a red shawl", "bea": "the stout woman with a pipe",
          "cid": "the grey-bearded man in a green cloak", "dan": "the lanky lad with a lute"}

@@ -6,10 +6,10 @@ from typing import Any
 
 import pytest
 
-from tavern.conversation import ACTS
-from tavern.scripted import scripted_turn
-from tavern.thoughts import THOUGHTS, familiarity_of, opinion_of, think, thought_mood
-from tavern.turns import check_turn, turn_view
+from tavern.social.conversation import ACTS
+from tavern.mind.scripted import scripted_turn
+from tavern.social.thoughts import THOUGHTS, familiarity_of, opinion_of, think, thought_mood
+from tavern.social.turns import check_turn, turn_view
 from social_hall import actor, advance, know, say, scene_of, seated_talk
 
 NEW_ACTS = ("remark", "introduce", "compliment", "boast", "insult", "apologize", "agree", "disagree", "invite",

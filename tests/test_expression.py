@@ -5,9 +5,9 @@ from typing import Any
 
 import pytest
 
-from tavern.expression import facing_toward, look_at
-from tavern.memory import record_event
-from tavern.world import create_world, start_action, step_world
+from tavern.body.expression import facing_toward, look_at
+from tavern.hall.memory import record_event
+from tavern.hall.world import create_world, start_action, step_world
 
 
 def table_room() -> dict[str, Any]:

@@ -5,8 +5,8 @@ from typing import Any
 
 import pytest
 
-from tavern.decisions import apply_decision, decision_requests
-from tavern.world import create_world, start_action, step_world
+from tavern.evening.decisions import apply_decision, decision_requests
+from tavern.hall.world import create_world, start_action, step_world
 
 
 def room() -> dict[str, Any]:

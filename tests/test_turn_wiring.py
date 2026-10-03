@@ -6,7 +6,9 @@ from typing import Any, Mapping
 
 import pytest
 
-from tavern.app import TavernRuntime, create_app, create_default_app
+from tavern.app import create_default_app
+from tavern.server.api import create_app
+from tavern.server.runtime import TavernRuntime
 
 
 def room() -> dict[str, Any]:

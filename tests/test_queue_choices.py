@@ -8,10 +8,10 @@ from typing import Any
 
 import pytest
 
-from tavern.agents import build_candidates, choose_action
-from tavern.briefing import brief
-from tavern.decisions import apply_decision, decision_requests
-from tavern.world import create_world, start_action, step_world
+from tavern.mind.agents import build_candidates, choose_action
+from tavern.mind.briefing import brief
+from tavern.evening.decisions import apply_decision, decision_requests
+from tavern.hall.world import create_world, start_action, step_world
 
 LOCAL = {"typesafe_api_key": None, "model": "jev-latest", "timeout": 1.0, "temperature": 0.0}
 

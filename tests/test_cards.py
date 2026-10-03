@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from tavern.cards import PARAMS, parse_card, parse_card_text, parse_cards
+from tavern.mind.cards import PARAMS, parse_card, parse_card_text, parse_cards
 
 ROOT = Path(__file__).parents[1]
 

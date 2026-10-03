@@ -6,9 +6,9 @@ from typing import Any
 
 import pytest
 
-from tavern.arrival import create_actor
-from tavern.room import create_map
-from tavern.thoughts import familiarity_of, opinion_of
+from tavern.hall.arrival import create_actor
+from tavern.hall.room import create_map
+from tavern.social.thoughts import familiarity_of, opinion_of
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -43,8 +43,8 @@ def test_unknown_tie_kind_fails_loudly() -> None:
 
 
 def test_first_evening_opens_with_its_old_friends_and_rivals() -> None:
-    from tavern.cards import parse_cards
-    from tavern.scenario import open_evening, parse_scenario
+    from tavern.mind.cards import parse_cards
+    from tavern.evening.scenario import open_evening, parse_scenario
     cards = parse_cards([json.loads(path.read_text()) for path in sorted((ROOT / "data" / "characters").glob("*.json"))])
     scenario = parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()), cards)
     world = open_evening(json.loads((ROOT / "data" / "tavern.json").read_text()), scenario, seed=1)

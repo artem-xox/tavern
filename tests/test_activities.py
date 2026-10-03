@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 
-from tavern.app import TavernRuntime
+from tavern.server.runtime import TavernRuntime
 
 
 def room() -> dict[str, Any]:

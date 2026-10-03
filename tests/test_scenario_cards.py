@@ -6,8 +6,8 @@ from typing import Any
 
 import pytest
 
-from tavern.cards import PARAMS, Card, parse_cards
-from tavern.scenario import open_evening, parse_scenario
+from tavern.mind.cards import PARAMS, Card, parse_cards
+from tavern.evening.scenario import open_evening, parse_scenario
 
 ROOT = Path(__file__).parents[1]
 

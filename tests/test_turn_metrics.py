@@ -4,10 +4,10 @@ from typing import Any
 
 import pytest
 
-from tavern.claude import HAIKU_4_5
-from tavern.lockstep import Evening
-from tavern.metrics import evening_metrics, writer_stats
-from tavern.recording import Record, Tariff, request_key
+from tavern.adapters.claude import HAIKU_4_5
+from tavern.evening.lockstep import Evening
+from tavern.evening.metrics import evening_metrics, writer_stats
+from tavern.evening.recording import Record, Tariff, request_key
 
 USAGE = {"input_tokens": 500, "output_tokens": 40, "cache_read_input_tokens": 4500, "cache_creation_input_tokens": 0}
 WRITE = {"input_tokens": 500, "output_tokens": 40, "cache_read_input_tokens": 0, "cache_creation_input_tokens": 5000}

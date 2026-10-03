@@ -45,42 +45,51 @@ Test first for everything with a Python seam: core, adapters (with fakes), HTTP.
 
 Functional core, imperative shell. Dependencies point inward only.
 
-- **Core** — pure rules, no I/O: `world.py` (public API and action lifecycle),
-  `activities.py` (the verb table), `room.py`, `routes.py`, `sight.py`, `memory.py`,
-  `conversation.py`, `arrival.py`, `validation.py`, `navigation.py`, `briefing.py`,
-  `agents.py` (candidates and decisions).
-- **Adapters** — one per outside system: `jev.py` (LLM over HTTP), `persistence.py`
-  (JSON files), `database.py` (PostgreSQL).
-- **Shell** — `app.py`: FastAPI/WebSocket transport and sessions. The only place that
-  reads the environment and wires concrete adapters (`create_default_app`).
+- **Core** — pure rules, no I/O, in `backend/tavern/` packages named for a concept:
+  - `hall/` the world and its state (`world.py` public API, `lifecycle.py` action state
+    machine, `state.py` types, `rules.py`, `room`, `routes`, `sight`, `arrival`, `closing`,
+    `memory` event log, `validation`).
+  - `body/` what executes an action: `activities.py` (the verb table), `actions`, `queues`,
+    `hearing`, `attention`, `expression`, `drunkenness`, `dozing`.
+  - `social/` guests among guests: `thoughts`, `ties`, `names`, `scenes`, `conversation`,
+    `social_acts`, `invitations`, `overhearing`, `turns`.
+  - `mind/` what a guest observes and decides: `briefing`, `options`, `hall_view`,
+    `agents` (candidates and decisions), `local_policy`, `intentions`, `cards`,
+    `haiku_turns`, the model ports (`questions`).
+  - `evening/` an evening as a whole: `scenario`, `decisions`, `mind_loop` (the requests in
+    flight, with a `Courier` port), `lockstep` (headless runs), `metrics`, `recording`.
+- **Adapters** — `adapters/`, one per outside system: `jev.py` (LLM over HTTP), `claude.py`,
+  `persistence.py` (JSON files, `FileStore`), `database.py` (PostgreSQL, `DatabaseStore`).
+- **Shell** — `server/` (FastAPI/WebSocket `api.py`, sessions, the live `runtime.py`,
+  operator `controls.py`) and `app.py`, the only place that reads the environment and
+  wires concrete adapters (`create_default_app`).
 - **Client** — `frontend/src/`: renders snapshots and sends commands.
 
 Rules:
 - Core imports only the stdlib and other core modules. Never `fastapi`, `httpx`,
-  `psycopg`, `os`, an adapter, or the shell.
+  `psycopg`, `os`, an adapter, or the shell. `tests/test_layers.py` enforces it.
 - Time, randomness, network, files and environment arrive as arguments (`dt`,
   `rng: Random`, `config`, `path`). No module-level `random`, `time.time()` or
   `os.environ` in core.
 - A port is the smallest signature the core needs: a `Callable` alias or `Protocol` of
   1–3 functions, defined beside its consumer. Adapters conform; tests pass a fake.
 - Outside data is untrusted. LLM answers, WebSocket commands and saved files are parsed
-  into the documented shape at the boundary (`jev.py`, `persistence.parse_world`) and
+  into the documented shape at the boundary (`adapters/jev.py`, `persistence.parse_world`) and
   rejected loudly. Model output never changes the world; only validated actions do.
 - Game rules live in the backend; the client never decides outcomes. A snapshot change
-  means `TavernRuntime.snapshot()` and `frontend/src/types.ts` change together.
+  means `server/runtime.py` `TavernRuntime.snapshot()` and `frontend/src/types.ts` change together.
 - Content is data (`data/tavern.json`). Rules key off an object's `kind`, never a
   hardcoded character or object id.
-- Known leak, do not copy: `agents.py` imports `jev.py` and its tests `monkeypatch` it.
-  If your task touches that seam, pass the evaluator in as an argument instead.
 
 ## Extending
 
 - A new game system (agreements, inventory, money, cooking) is a new module named for
   the concept: pure, tested alone, wired in with one small edit. Do not grow files over
-  ~400 lines (`world.py`, `app.py`, `scene.ts` today); split first, as a separate step.
+  ~400 lines (`scene.ts` today); split first, as a separate step.
 - Adding a verb means one `Activity` in `activities.py` (targets, timing, preconditions,
-  effects, wording, pose, family), plus its candidate rule and local utility in `agents.py` and
-  its option sentence in `briefing.py`. The world, Jev, saves, and the client read the table.
+  effects, wording, pose, family), plus its candidate rule in `agents.py`, its local utility
+  in `local_policy.py` and its option sentence in `options.py`. The world, Jev, saves, and
+  the client read the table.
   Put it in an existing `FAMILIES` entry when it answers the same wish; a new family widens
   every first-stage request.
   Do not add a new per-verb copy where one source can be imported.
