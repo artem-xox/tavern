@@ -62,7 +62,7 @@ const game: Phaser.Game = new Phaser.Game({
 
 function applySnapshot(snapshot: Snapshot): void {
   world = snapshot.state;
-  scene.setWorld(world, snapshot.activities);
+  scene.setWorld(world, snapshot.activities, snapshot.minds);
   dashboard.apply(snapshot);
   // Departed visitors stay selectable, so their evening can still be inspected.
   if (!selectedId || ![...world.actors, ...world.departed].some((actor): boolean => actor.id === selectedId)) {

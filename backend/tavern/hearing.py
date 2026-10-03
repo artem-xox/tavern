@@ -177,7 +177,7 @@ def salience(world: Mapping[str, Any], stimulus: Stimulus, listener: Mapping[str
         stimulus: The sound.
         listener: Visitor who may hear it.
         friends: Visitors the listener cares about: a sound they make or that concerns them is
-            relevant. Relationships arrive with E12; until then callers pass none.
+            relevant. Attention passes those the listener counts as friends (`thoughts.friends_of`).
 
     Returns:
         Heard loudness × relevance × temperament. Relevance is 1.5 when the sound concerns

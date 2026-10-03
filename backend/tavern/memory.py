@@ -1,4 +1,4 @@
-"""The shared event log, each visitor's personal memories, and their grievances."""
+"""The shared event log and each visitor's personal memories."""
 
 from collections.abc import Mapping
 from copy import deepcopy
@@ -24,14 +24,3 @@ def record_event(world: Mapping[str, Any], actor: dict[str, Any], kind: str, mes
     emote_event(world, actor, kind)
     del world["events"][:-200]
     del actor["memory"][:-25]
-
-
-def grieve(actor: dict[str, Any], grievance: str) -> None:
-    """Remember a wrong done to a visitor tonight, keeping the latest five.
-
-    Args:
-        actor: Wronged visitor.
-        grievance: What happened, in their words.
-    """
-    actor["visit"]["grievances"].append(grievance)
-    del actor["visit"]["grievances"][:-5]

@@ -17,6 +17,7 @@ from tavern import agents
 from tavern.activities import ACTIVITIES, client_activities
 from tavern.database import initialize_database, load_database_world, save_database_world
 from tavern.decisions import apply_decision, decision_requests, free_to_decide, log_control, stale_requests
+from tavern.feelings import minds
 from tavern.jev import evaluate_actions, evaluate_seats
 from tavern.persistence import load_world, save_world
 from tavern.room import object_cells
@@ -90,14 +91,14 @@ class TavernRuntime:
         """Return a client envelope with credentials excluded.
 
         Returns:
-            Independent world copy, public evaluator configuration, and how the client
-            names, shows, and targets each verb.
+            Independent world copy, public evaluator configuration, how the client
+            names, shows, and targets each verb, and each visitor's inner state (`feelings.minds`).
         """
         configured = bool(self.ai_config.get("typesafe_api_key"))
         return {"type": "snapshot", "state": deepcopy(self.world), "ai": {
             "mode": "jev" if configured else "local", "configured": configured,
             "model": self.ai_config["model"],
-        }, "activities": client_activities(ACTIVITIES)}
+        }, "activities": client_activities(ACTIVITIES), "minds": minds(self.world)}
 
     def _event(self, message: str) -> None:
         log_control(self.world, message)

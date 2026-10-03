@@ -67,7 +67,13 @@ export interface Actor {
   action: Action | null;
   seat_id: string | null;
   favorite_seat_id: string | null;
+  /** `grievances` is derived on the server: the texts of the latest active thoughts that lower the mood. */
   visit: { seconds: number; beers: number; grievances: string[]; left_at?: number };
+  thoughts: Thought[];
+  /** Base opinion and familiarity per other visitor, before tonight's thoughts. */
+  relations: Record<string, { name: string; opinion: number; familiarity: Familiarity }>;
+  /** 0 (sober) to 1 (as drunk as can be); beers raise it and it wears off slowly. */
+  drunkenness: number;
   path: Cell[];
   knowledge: { objects: Record<string, Record<string, unknown>> };
   memory: unknown[];
@@ -82,6 +88,31 @@ export interface Actor {
 }
 
 export type Facing = "north" | "south" | "east" | "west";
+export type Familiarity = "stranger" | "acquaintance" | "friend";
+
+/** A timed thought: its mood change, its opinion change toward `about`, and what caused it. */
+export interface Thought {
+  kind: string;
+  about: string | null;
+  text: string;
+  mood: number;
+  opinion: number;
+  expires_at: number;
+  source_event: string;
+}
+
+/** A visitor's inner state as the server derives it for the inspector. */
+export interface Mind {
+  mood: number;
+  /** Active thoughts, oldest first. */
+  thoughts: Thought[];
+  /** Base opinion plus active thoughts, −100…100, per person they have a relation with. */
+  opinions: { id: string; name: string; opinion: number; familiarity: Familiarity }[];
+  drunkenness: number;
+  stage: "sober" | "tipsy" | "drunk" | "wasted";
+  /** How far the scene sways the sprite, 0–1. */
+  sway: number;
+}
 export type EmoteKind = "alert" | "confused" | "angry" | "affection" | "sleep" | "waiting";
 
 /** A scenario guest still on the way, with tonight's needs already drawn. */
@@ -149,6 +180,8 @@ export interface Snapshot {
   state: World;
   ai: { mode: Mode; configured?: boolean; model?: string };
   activities: Record<Verb, ActivityView>;
+  /** Inner state per visitor ID, the departed included. */
+  minds: Record<string, Mind>;
 }
 
 export type Command =

@@ -5,7 +5,8 @@ from copy import deepcopy
 from random import Random
 from typing import Any
 
-from tavern.memory import grieve, record_event
+from tavern.memory import record_event
+from tavern.thoughts import think
 
 
 def conversation_of(world: Mapping[str, Any], actor_id: str) -> dict[str, Any] | None:
@@ -39,9 +40,11 @@ def complete_conversation(world: Mapping[str, Any], actor: dict[str, Any], partn
         return
     _share_places(actor, partner)
     _share_places(partner, actor)
-    for visitor in (actor, partner):
+    message = f"{actor['name']} and {partner['name']} chatted about {topic}"
+    for visitor, other in ((actor, partner), (partner, actor)):
         visitor["needs"]["social"] = max(0, visitor["needs"]["social"] - 60)
-        record_event(world, visitor, "conversation", f"{actor['name']} and {partner['name']} chatted about {topic}")
+        record_event(world, visitor, "conversation", message)
+        think(visitor, "chat", world["time"], f"Chatted with {other['name']} about {topic}", message, about=other)
 
 
 def _quarrels(world: Mapping[str, Any], left: Mapping[str, Any], right: Mapping[str, Any]) -> bool:
@@ -55,9 +58,10 @@ def _quarrels(world: Mapping[str, Any], left: Mapping[str, Any], right: Mapping[
 
 
 def _quarrel(world: Mapping[str, Any], actor: dict[str, Any], partner: dict[str, Any], topic: str) -> None:
+    message = f"{actor['name']} and {partner['name']} quarreled about {topic}"
     for visitor, other in ((actor, partner), (partner, actor)):
-        grieve(visitor, f"Quarreled with {other['name']} about {topic}")
-        record_event(world, visitor, "quarrel", f"{actor['name']} and {partner['name']} quarreled about {topic}")
+        record_event(world, visitor, "quarrel", message)
+        think(visitor, "quarrel", world["time"], f"Quarreled with {other['name']} about {topic}", message, about=other)
 
 
 def _share_places(speaker: Mapping[str, Any], listener: dict[str, Any]) -> None:

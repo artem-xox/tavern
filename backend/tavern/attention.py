@@ -8,6 +8,7 @@ from tavern.expression import look_at, show_emote
 from tavern.hearing import Stimulus, salience
 from tavern.memory import record_event
 from tavern.room import object_cells
+from tavern.thoughts import friends_of
 
 
 def attend(world: dict[str, Any]) -> list[dict[str, Any]]:
@@ -29,8 +30,8 @@ def attend(world: dict[str, Any]) -> list[dict[str, Any]]:
     stimuli, world["stimuli"] = world["stimuli"], []
     rules, stops = world["rules"]["attention"], []
     for actor in world["actors"]:
-        # Relationships arrive with E12; until then nobody's friends make a sound more relevant.
-        heard = [(salience(world, stimulus, actor, ()), stimulus) for stimulus in stimuli]
+        friends = friends_of(actor)
+        heard = [(salience(world, stimulus, actor, friends), stimulus) for stimulus in stimuli]
         level, stimulus = max(heard, key=lambda item: item[0], default=(0.0, None))
         if stimulus is None or level < rules["glance"]:
             continue

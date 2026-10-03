@@ -11,6 +11,7 @@ from tavern.families import family_scores, group_families
 from tavern.jev import JevError, evaluate_actions, evaluate_seats
 from tavern.observation import known_objects, own_actor
 from tavern.selection import bounded, drawable, read_temperature, select
+from tavern.thoughts import THOUGHTS, thought_mood
 
 
 class Action(TypedDict):
@@ -257,9 +258,20 @@ def _leave_utility(observation: Mapping[str, Any]) -> float:
     content = min(1.0, seconds / 240) * min(1.0, visit.get("beers", 0) / 3) * calm
     taps = [item for item in observation["objects"] if item["kind"] == "tap"]
     run_dry = bool(taps) and not any(item.get("stock") for item in taps) and not actor["inventory"]["beer"]
-    upset = min(1.0, 0.35 * len(visit.get("grievances", [])) * (1.5 - patience)
+    upset = min(1.0, 0.35 * _wrongs(observation) * (1.5 - patience)
                 + (needs["thirst"] / 100 if run_dry else 0.0))
     return 0.05 + 0.75 * max(content, upset * min(1.0, seconds / 60))
+
+
+def _wrongs(observation: Mapping[str, Any]) -> float:
+    # How wronged a visitor feels, in taken seats: their active thoughts' mood, where pleasant
+    # company offsets a slight. Observations built outside the world may carry no thoughts;
+    # then each listed grievance counts as one wrong. Without a clock every thought counts.
+    actor = observation["actor"]
+    if "thoughts" not in actor:
+        return float(len(actor.get("visit", {}).get("grievances", [])))
+    feeling = thought_mood(actor, observation.get("time", -math.inf))
+    return max(0.0, -feeling) / -THOUGHTS["seat_taken"].mood
 
 
 def _local_seat_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]]) -> dict[str, float]:
