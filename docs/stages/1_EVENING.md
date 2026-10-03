@@ -206,12 +206,45 @@ changes the behavior `test_closing.py` specifies, so it needs a decision.
   line's reading time; the result is validated and shown as a bubble; failures fall
   back to scripted lines by act. Done: invalid schema and unknown facts are rejected;
   cache reads appear in usage; cost per turn is measured.
-- [ ] **E17 — Speech-act effects.** One table maps acts to thoughts, opinions,
+- [x] **E17 — Speech-act effects.** One table maps acts to thoughts, opinions,
   familiarity, names, knowledge, and invitations (join the table, darts together, buy a
   drink, leave together). Done: the same line with no act changes nothing.
-- [ ] **E18 — Overhearing and names.** Nearby guests receive the act and gist by
+  `conversation.ACTS` adds `remark` (no effect), `introduce`, `compliment`, `boast`
+  (admired by the patient or fond, tiresome to the impatient), `insult` (mood −6, opinion
+  −20, offence to the target's friends in the scene, the existing quarrel dice; no hostile
+  machinery yet), `apologize` (halves the latest unsoftened grudge), `agree`/`disagree`
+  (±3), `invite`, `accept`, `decline`; effects live in `social_acts.py` and
+  `invitations.py`. `offered_acts` gives the writer only the acts the situation allows:
+  `insult` toward someone at −10 or less, `apologize` to someone holding a grudge,
+  `introduce` while someone knows the speaker only by looks, `invite` while a kind is
+  possible and none is pending, `accept`/`decline` to the invitee; `check_turn` rejects
+  others. A turn result may carry `invitation` (only on an `invite` to someone, of an
+  offered kind). The pending invitation lives in the scene (`invitation`, lapses when
+  either leaves); an accepted one becomes an errand in `world.invitations` that
+  `honor_invitations` starts through `start_action` each tick: the invitee sits at a
+  free chair of the inviter's table, both go to the darts (one queues), the inviter
+  pours an ale that goes to the invitee once poured (free, no hand-over walk yet), or
+  the inviter leaves and the invitee follows once the door is free. The scripted writer
+  answers invitations by need, introduces itself, invites once in a while, and spreads
+  friendly lines over joke, compliment, agree and boast; the briefing and the local leave
+  utility read invitations. Saves are `schema_version` 5. Seed 5 offline: 14 scenes, 40
+  turns (6 introductions, 1 ale bought), 9 s stuck (E15: 32 turns, 6 s). Live seed 5
+  (Jev, scripted lines): 24 scenes, 56 turns, 6 introductions, 2 quarrels, no
+  invitations (scenes ended after two or three lines), 31 s stuck, $0.044.
+- [x] **E18 — Overhearing and names.** Nearby guests receive the act and gist by
   distance; strangers are described by appearance until introduced. Done: an insult
   to a friend overheard at the next table creates a thought for the listener.
+  `overhearing.py`: every spoken line is a sound from the whole company (talk 0.25 over
+  10 cells, laughter 0.25 over 14, insult 0.4 over 14); a guest outside the scene with
+  salience 0.08 notices the act, 0.15 makes out the words. An overheard introduction
+  teaches the name; an overheard insult is remembered, and resented (`friend_insulted`,
+  −12 toward the insulter) by anyone who counts the target a friend or thinks 20 or more
+  of them. Cards get an optional short `looks` (all eight presets have one); a relation
+  keeps `knows_name`, set by an introduction, by starting ties, by an overheard
+  introduction, or passed on by an old friend present. Until then the briefing, Jev's
+  view, the writer's participants (`known: false`) and new thought texts use the looks;
+  a guest without looks is always named. The event log and personal memories still name
+  everyone.
 
 ### M4 — News and conflict
 
