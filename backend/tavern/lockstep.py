@@ -1,6 +1,6 @@
 """Headless evenings in lockstep: fixed game-time steps and a fixed virtual model latency."""
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 import math
 from random import Random
@@ -8,6 +8,10 @@ from typing import Any, TypedDict
 
 from tavern.agents import Evaluators, choose_action
 from tavern.decisions import apply_decision, decision_requests, free_to_decide, stale_requests
+from tavern.intentions import INTENTION_RULES, Intender, IntentionRules, deliver_intention, intention_requests, \
+    stale_intentions
+from tavern.scripted import write_scripted_turn
+from tavern.turns import TurnWriter, claim_turns, deliver_turn
 from tavern.world import step_world
 
 
@@ -80,6 +84,12 @@ class _Run:
     stalled_since: dict[str, float] = field(default_factory=dict)
     guests: list[str] = field(default_factory=list)
     gazes: set[tuple[str, int]] = field(default_factory=set)
+    # Per claimed turn (scene ID, turn index): when the written line is due back, and a callable
+    # that returns it or raises the writer's error, as `turns.deliver_turn` expects.
+    lines: dict[tuple[str, int], tuple[float, Any]] = field(default_factory=dict)
+    # Per guest: when their intention was asked, when it is due back, the view, and the outcome.
+    minds: dict[str, tuple[float, float, Mapping[str, Any], Callable[[], Any]]] = field(default_factory=dict)
+    next_intention: dict[str, float] = field(default_factory=dict)
 
 
 def evening_over(world: Mapping[str, Any], time_limit: float) -> bool:
@@ -120,13 +130,18 @@ def evening_mode(requested: str | None, keyed: bool) -> tuple[str, str | None]:
 
 
 async def run_evening(world: dict[str, Any], config: Mapping[str, Any], rng: Random, evaluators: Evaluators,
-                      pace: Pace) -> Evening:
+                      pace: Pace, writer: TurnWriter = write_scripted_turn, intender: Intender | None = None,
+                      intention_rules: IntentionRules = INTENTION_RULES) -> Evening:
     """Play an evening to its end in lockstep.
 
     Each tick advances the world by one step, applies the answers that are due, then asks
     every visitor free to decide, by the live runtime's rules (`tavern.decisions`). An answer
     is computed at once and applied one model latency later, unless the visitor left or got
-    busy meanwhile. Nothing depends on wall-clock time. Failures the live runtime would show
+    busy meanwhile. Conversation turns go the same way: each tick claims the scenes' next
+    turns (`tavern.turns`), asks the writer at once, and hands each line back one model latency
+    later; the world drops a line whose scene changed meanwhile. Intentions too (`tavern.intentions`):
+    asked at once, kept one model latency later, and dropped when a salient event overtakes them
+    or the guest left. Nothing depends on wall-clock time. Failures the live runtime would show
     as "Decision failed" (a malformed request, a replay miss) stop the evening instead.
 
     Args:
@@ -135,6 +150,9 @@ async def run_evening(world: dict[str, Any], config: Mapping[str, Any], rng: Ran
         rng: Seeded generator of the decisions' random draws.
         evaluators: Model port.
         pace: Step, virtual model latency and time limit.
+        writer: Turn writer port; the scripted writer by default.
+        intender: Mind port writing guests' intentions; None (offline) writes none.
+        intention_rules: When guests take stock.
 
     Returns:
         The evening's complete log, choices, stalled spells, guests and end time. A guest is
@@ -154,6 +172,10 @@ async def run_evening(world: dict[str, Any], config: Mapping[str, Any], rng: Ran
         _drop_stale(world, run)
         _apply_due(world, run)
         await _ask(world, run, config, rng, evaluators, pace.model_latency)
+        _deliver_due(world, run)
+        await _write(world, run, config, writer, pace.model_latency)
+        if intender is not None:
+            await _intend(world, run, intender, intention_rules, pace.model_latency)
         _collect(world, run)
         _track(world, run)
     _close(run, list(run.stalled_since), world["time"])
@@ -187,6 +209,55 @@ async def _ask(world: dict[str, Any], run: _Run, config: Mapping[str, Any], rng:
         stages = [("actions", decision), *second]
         run.choices.extend({"time": world["time"], "actor_id": actor_id, "kind": kind,
                             "source": stage["source"], "error": stage["error"]} for kind, stage in stages)
+
+
+def _deliver_due(world: dict[str, Any], run: _Run) -> None:
+    for key, (due, line) in list(run.lines.items()):
+        if world["time"] + 1e-9 >= due:
+            del run.lines[key]
+            deliver_turn(world, *key, line)
+
+
+async def _write(world: dict[str, Any], run: _Run, config: Mapping[str, Any], writer: TurnWriter,
+                 latency: float) -> None:
+    for scene_id, turn, view in claim_turns(world):
+        try:
+            line = await writer(view, config)
+        except Exception as error:  # Like the live runtime: deliver_turn logs it and scripts the line.
+            run.lines[(scene_id, turn)] = (world["time"] + latency, _raising(error))
+        else:
+            run.lines[(scene_id, turn)] = (world["time"] + latency, lambda line=line: line)
+
+
+def _raising(error: Exception) -> Callable[[], Any]:
+    def outcome() -> Any:
+        raise error
+    return outcome
+
+
+async def _intend(world: dict[str, Any], run: _Run, intender: Intender, rules: IntentionRules,
+                  latency: float) -> None:
+    # As decisions: overtaken requests are dropped, due answers kept, then new requests asked at once.
+    for actor_id in stale_intentions(world, {actor_id: asked for actor_id, (asked, *_) in run.minds.items()}):
+        del run.minds[actor_id]
+    for actor_id, (_, due, view, outcome) in list(run.minds.items()):
+        if world["time"] + 1e-9 >= due:
+            del run.minds[actor_id]
+            run.next_intention[actor_id] = deliver_intention(world, actor_id, view, outcome, rules)
+    for actor_id, view in intention_requests(world, run.minds, run.next_intention, rules):
+        run.minds[actor_id] = (world["time"], world["time"] + latency, view, await _outcome(intender, view))
+
+
+async def _outcome(intender: Intender, view: Mapping[str, Any]) -> Callable[[], Any]:
+    try:
+        written = await intender(view)
+    except LookupError:
+        raise  # A replay miss stops the evening, as for decisions.
+    except Exception as error:  # Kept to raise on delivery, where the world logs the failure.
+        def failed() -> Any:
+            raise error
+        return failed
+    return lambda: written
 
 
 def _collect(world: Mapping[str, Any], run: _Run) -> None:

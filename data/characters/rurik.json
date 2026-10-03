@@ -1,0 +1,24 @@
+{
+  "id": "rurik",
+  "name": "Rurik",
+  "sprite": "rurik",
+  "looks": "the broad guard with a polished belt buckle",
+  "occupation": "gate guard at the border post",
+  "background": "Rurik has stood the night watch at the toll gate for eleven years. He knows every carter by name and most smugglers by their boots.",
+  "temperament": "Slow to anger and steady as a wall; he likes order and long, unhurried evenings.",
+  "speech": "Few words, low voice, dry jokes delivered without a smile; says 'aye' instead of yes.",
+  "quirks": "Always sits facing the door; polishes his belt buckle with his thumb; falls asleep sitting upright.",
+  "secret": "He takes a coin now and then to look the other way, and the captain is starting to suspect.",
+  "goal": "Drink in peace after a double watch, and keep an eye on any stranger who asks about the gate.",
+  "params": {
+    "patience": 0.8,
+    "temper": 0.3,
+    "sociability": 0.45,
+    "courage": 0.75,
+    "strength": 0.8,
+    "brawling": 0.7,
+    "tolerance": 0.75,
+    "comfort": 0.9,
+    "curiosity": 0.6
+  }
+}

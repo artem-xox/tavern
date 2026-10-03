@@ -139,35 +139,156 @@ changes the behavior `test_closing.py` specifies, so it needs a decision.
 
 ### M3 — Characters and conversation
 
-- [ ] **E10 — Character cards.** Schema, validation, and eight presets with distinct
+- [x] **E10 — Character cards.** Schema, validation, and eight presets with distinct
   temperaments and goals, plus two starting relationships. Done: invalid cards fail
-  loudly; the briefing includes the goal and temperament.
-- [ ] **E11 — Card compiler.** Haiku extracts params from a free-text card through
+  loudly; the briefing includes the goal and temperament. `cards.py` validates a card
+  (`id`, `name`, `sprite`, eight text fields, nine params in `params`); presets are in
+  `data/characters/`. A scenario guest names its card (`"card": "edda"`), keeps its
+  name, sprite and color, and takes the card's params as `traits`, so the trait names
+  the local policy reads still work. Starting `relationships` (`old friends`, `rivals`,
+  with a note) live in the scenario (`ties.py`, `Scenario.ties` for E12) and each guest
+  holds its side; the briefing adds occupation, temperament, goal and ties
+  (`portrait.py`). Saves are `schema_version` 4. Without the card library,
+  `parse_scenario` reads only the schedule, because `test_first_evening.py` parses the
+  repository scenario on its own.
+- [x] **E11 — Card compiler.** Haiku extracts params from a free-text card through
   structured output; values are range-checked and shown for confirmation. Done:
   malformed or out-of-range answers are rejected; the offline mode is labeled.
-- [ ] **E12 — Thoughts, mood, opinions.** Events create timed thoughts with mood and
+  `claude.py` is the Claude adapter later tasks reuse: a `Question` (one to four cached
+  system blocks, per-call content, schema) goes in through the `Ask` port
+  (`questions.py`), and a JSON object comes out, with usage including cache reads and
+  writes; failures raise `ClaudeError`. `recording.py` records, replays and prices
+  Claude kinds with a `Tariff`. `POST /api/cards/compile` returns the proposed params
+  (`compiled: false` and a note offline) using the server's key. Live: three cards
+  compiled in 1.8–2.8 s for $0.0015 each; a 4,306-token prefix was written once and
+  read from the cache on the next call.
+- [x] **E12 — Thoughts, mood, opinions.** Events create timed thoughts with mood and
   opinion effects; opinions and familiarity are kept per pair. Replaces grievances.
   Done: stacking, expiry, and opinion changes are tested; the inspector lists thoughts.
-- [ ] **E13 — Drunkenness.** Beers raise drunkenness by tolerance; it decays slowly;
+  `thoughts.py`: a taken seat, a cut in line, a quarrel and a chat each leave a thought;
+  repeats of one kind about one person stack up to three, and a fourth replaces the oldest.
+  Mood (thoughts plus needs above 50) and opinion (base plus thoughts, −100…100) are
+  derived; talking makes strangers acquaintances. `visit.grievances` stays as a derived
+  view (latest five bad thoughts), so older readers and tests keep working. The briefing
+  says "They are in a sour mood. They dislike Bea, who took their seat."; the local leave
+  utility weighs the thoughts' mood; friends make sounds more salient; `seed_relations`
+  turns `{a, b, kind}` starting relationships into base opinions, not yet wired to data.
+- [x] **E13 — Drunkenness.** Beers raise drunkenness by tolerance; it decays slowly;
   stages change inhibitions, speech instructions, gait, and fight accuracy. A wasted
   guest may doze at the table. Done: parametrized stage and decay tests.
-- [ ] **E14 — Intentions.** Haiku writes a one-sentence intention on arrival, after
+  `drunkenness.py`: 0.2 × (1.5 − tolerance) per beer (tolerance 0.5 until cards add it),
+  −0.0005 per second; sober, tipsy (0.2), drunk (0.45), wasted (0.75). The briefing gets a
+  speech sentence, the scene sways sprites, and `inhibition_modifier` and `fight_accuracy`
+  wait for E20–E21. `dozing.py`: a wasted guest in their seat may nod off into an
+  interruptible 30 s `doze` with the sleep emote. Quarrels still roll on beer counts,
+  which the existing quarrel tests set. In a live evening (seed 5) guests drink two beers
+  at most, so they get tipsy but nobody dozes.
+- [x] **E14 — Intentions.** Haiku writes a one-sentence intention on arrival, after
   salient events, and every few minutes; the briefing shows it to Jev. Done: in a
   recorded evening an insult changes the target's intention and later choices.
-- [ ] **E15 — Conversation scenes.** `talk` starts a scene for seated tablemates or
+  `intentions.py`: a guest's `intention` is `{thought, intention, written_at, trigger}`
+  (`trigger` is `{kind, text, time}`). A guest takes stock on arrival, after an interrupt
+  or alert, a `quarrel`, `seat_taken` or (once E17 adds it) `insult` thought, a scene
+  ending or leaving one, closing time, and every 180 s (`INTENTION_RULES`; at least 3 s
+  between asks, 180 s after a failure). Both runners ask asynchronously like decisions
+  (lockstep: one virtual latency) and drop an answer a salient event overtook or whose
+  guest left; a recorded evening replays byte-identically. The question is a ~5,100-token
+  shared prefix (`data/minds/intention_prefix.md`), the guest's card as a second cached
+  block, then the moment (trigger, previous intention, briefing paragraph, thoughts,
+  drink). The briefing adds "Their intention: … (decided 40 s ago, after: …)" and Jev's
+  guidance says to weigh options against it without ignoring urgent needs; the inspector
+  shows thought and intention. Offline (no `ANTHROPIC_API_KEY`) nobody has one, and the
+  snapshot (`ai.intentions`) and metrics say so. Saves are `schema_version` 5. The done
+  test uses a quarrel (insults wait for E17), a fake writer and a fake Jev. Live: seeds 5
+  and 1 wrote 63 and 45 intentions for $0.111 and $0.071 (about $0.0016 each, 0 failures;
+  Jev $0.050 each); the prefix was written to the cache once and read on every later call.
+  Seed 0 had one quarrel: Toren went from "sit back down with Edda" to "move to the Garden
+  table away from her". A 900 s evening (seed 7, 110 intentions, $0.18) had four: Edda,
+  after quarrelling with Calder, meant to make peace with Brida and go home, talked to
+  Brida, then left at 659 s; Calder meant to settle it at darts and played darts.
+- [x] **E15 — Conversation scenes.** `talk` starts a scene for seated tablemates or
   guests standing side by side (queue, fire); others join or leave; it ends by act,
   satisfied need, or interrupt. Done: a three-way conversation survives one member
-  leaving for the WC.
-- [ ] **E16 — Turns through Haiku.** The next speaker gets a turn after the previous
+  leaving for the WC. `scenes.py` keeps `world.conversations` (saves are `schema_version`
+  4); `join_conversation` is a new `company` verb; starting any other action, a loud sound,
+  closing time or a goodbye takes a member out, and members get no decisions. `turns.py`
+  owns timing (`max(2.5, len/15)` s per line) and the `TurnWriter` port: runners claim the
+  next turn when a line is spoken, ask the writer asynchronously (lockstep: one virtual
+  latency) and hand the line back; stale lines are dropped, and failures or a claim
+  unanswered 10 s past due fall back to `scripted.py`, the seeded offline writer. Acts
+  (`conversation.ACTS`) carry relief, place sharing and quarrels (`_quarrels` unchanged).
+  A partner pressed by a need declines, and is seen as in a hurry. Seed 5 offline: 14
+  scenes, 32 turns, 6 s stuck (M2 code: 9 s). Live seeds 5 and 1: 9 and 8 scenes, 24 and
+  20 turns, no joins, 6 departures each; 46 s and 33 s stuck, all of it guests refused the
+  busy door after closing (every guest was still in; an M2 rerun of seed 5 also kept
+  everyone and had 24 s), so the open door issue of M2 now dominates stuck time.
+- [x] **E16 — Turns through Haiku.** The next speaker gets a turn after the previous
   line's reading time; the result is validated and shown as a bubble; failures fall
   back to scripted lines by act. Done: invalid schema and unknown facts are rejected;
   cache reads appear in usage; cost per turn is measured.
-- [ ] **E17 — Speech-act effects.** One table maps acts to thoughts, opinions,
+  `haiku_turns.py` asks one `Question` per turn: the shared prefix of `turn_prompt.py`
+  (world notes, one rule per `conversation.ACTS` entry, answer fields, style, 19 good/bad
+  examples; 4,857 tokens), then the speaker's card and portrait as a second cached block,
+  then the scene, company (opinion, familiarity, thoughts), feelings, drink, needs, known
+  places, goal and nudges (a pressing need, enough company, untold places, by the scripted
+  thresholds; without them Haiku never left or shared places). The schema's `act` enum
+  comes from the table; `parse_turn` rejects bad shape, unknown acts, absent addressees,
+  lines over 160 characters or with stage directions, and `share_place` without known
+  places (facts wait for E19). Runners use Haiku when `ANTHROPIC_API_KEY` is set
+  (`--writer` overrides headless); turns are recorded as kind `turn` and a replay is
+  byte-identical (seed 5); the snapshot's `ai.writer` shows as a badge, and `metrics.json`
+  has `run.writer` and `writer` (calls, latency, cache hit rate, cost per turn). Live seeds
+  5 and 1 (Jev + Haiku): 52 and 46 turns, 78 and 66 calls (a third are claims dropped when
+  the scene ends first), no fallbacks, ~5,490 cached + ~355 fresh input and ~54 output
+  tokens per call, 94% cache hits, latency p50 1.4 s / p95 2.0 s, $0.0017 per turn, $0.09
+  and $0.08 per evening (Jev $0.04), so no pacing was needed.
+- [x] **E17 — Speech-act effects.** One table maps acts to thoughts, opinions,
   familiarity, names, knowledge, and invitations (join the table, darts together, buy a
   drink, leave together). Done: the same line with no act changes nothing.
-- [ ] **E18 — Overhearing and names.** Nearby guests receive the act and gist by
+  `conversation.ACTS` adds `remark` (no effect), `introduce`, `compliment`, `boast`
+  (admired by the patient or fond, tiresome to the impatient), `insult` (mood −6, opinion
+  −20, offence to the target's friends in the scene, the existing quarrel dice; no hostile
+  machinery yet), `apologize` (halves the latest unsoftened grudge), `agree`/`disagree`
+  (±3), `invite`, `accept`, `decline`; effects live in `social_acts.py` and
+  `invitations.py`. `offered_acts` gives the writer only the acts the situation allows:
+  `insult` toward someone at −10 or less, `apologize` to someone holding a grudge,
+  `introduce` while someone knows the speaker only by looks, `invite` while a kind is
+  possible and none is pending, `accept`/`decline` to the invitee; `check_turn` rejects
+  others. A turn result may carry `invitation` (only on an `invite` to someone, of an
+  offered kind). The pending invitation lives in the scene (`invitation`, lapses when
+  either leaves); an accepted one becomes an errand in `world.invitations` that
+  `honor_invitations` starts through `start_action` each tick: the invitee sits at a
+  free chair of the inviter's table, both go to the darts (one queues), the inviter
+  pours an ale that goes to the invitee once poured (free, no hand-over walk yet), or
+  the inviter leaves and the invitee follows once the door is free. The scripted writer
+  answers invitations by need, introduces itself, invites once in a while, and spreads
+  friendly lines over joke, compliment, agree and boast; the briefing and the local leave
+  utility read invitations. Saves are `schema_version` 5. Seed 5 offline: 14 scenes, 40
+  turns (6 introductions, 1 ale bought), 9 s stuck (E15: 32 turns, 6 s). Live seed 5
+  (Jev, scripted lines): 24 scenes, 56 turns, 6 introductions, 2 quarrels, no
+  invitations (scenes ended after two or three lines), 31 s stuck, $0.044.
+- [x] **E18 — Overhearing and names.** Nearby guests receive the act and gist by
   distance; strangers are described by appearance until introduced. Done: an insult
   to a friend overheard at the next table creates a thought for the listener.
+  `overhearing.py`: every spoken line is a sound from the whole company (talk 0.25 over
+  10 cells, laughter 0.25 over 14, insult 0.4 over 14); a guest outside the scene with
+  salience 0.08 notices the act, 0.15 makes out the words. An overheard introduction
+  teaches the name; an overheard insult is remembered, and resented (`friend_insulted`,
+  −12 toward the insulter) by anyone who counts the target a friend or thinks 20 or more
+  of them. Cards get an optional short `looks` (all eight presets have one); a relation
+  keeps `knows_name`, set by an introduction, by starting ties, by an overheard
+  introduction, or passed on by an old friend present. Until then the briefing, Jev's
+  view, the writer's participants (`known: false`) and new thought texts use the looks;
+  a guest without looks is always named. The event log and personal memories still name
+  everyone.
+
+M3 result: a live evening (seed 5, 488 game s) with Jev choices, Haiku lines, and Haiku
+intentions: six guests, 13 scenes, 32 lines with no scripted fallbacks, 50 intentions, two
+quarrels, all guests home by closing, no errors; $0.205 in total (Jev $0.05, lines $0.06,
+intentions $0.09), 92% cache hits, and a byte-identical replay. Seen in the log: old
+friends Brida and Edda quarrel over the hearth seat, both resolve to make peace, and argue
+it out in the next scene. Open: guests forget earlier conversations (repeated greetings
+and topics), Haiku invents news until E19, and the door still serves one leaver at a time.
 
 ### M4 — News and conflict
 

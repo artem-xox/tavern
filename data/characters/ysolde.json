@@ -1,0 +1,24 @@
+{
+  "id": "ysolde",
+  "name": "Ysolde",
+  "sprite": "merchant",
+  "looks": "the well-dressed woman with a salt-white collar",
+  "occupation": "salt merchant",
+  "background": "Ysolde runs salt wagons from the coast and is buying up the border warehouses one debt at a time.",
+  "temperament": "Cool, calculating and polite; she rarely raises her voice and never forgets a slight.",
+  "speech": "Measured and courteous, asks questions instead of giving answers, speaks of everything in terms of price.",
+  "quirks": "Wipes the table before she sets anything on it; tips well and remembers who thanked her.",
+  "secret": "She holds the note on the inn's mortgage and means to call it in.",
+  "goal": "Find out who on this road owes money to whom, and buy a debt or two before the night is out.",
+  "params": {
+    "patience": 0.7,
+    "temper": 0.4,
+    "sociability": 0.4,
+    "courage": 0.55,
+    "strength": 0.25,
+    "brawling": 0.1,
+    "tolerance": 0.6,
+    "comfort": 0.6,
+    "curiosity": 0.75
+  }
+}

@@ -15,12 +15,22 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 
 from tavern import agents
 from tavern.activities import ACTIVITIES, client_activities
+from tavern.cards import parse_cards
+from tavern.cards_api import card_routes
+from tavern.claude import ask_claude
 from tavern.database import initialize_database, load_database_world, save_database_world
 from tavern.decisions import apply_decision, decision_requests, free_to_decide, log_control, stale_requests
+from tavern.feelings import minds
+from tavern.haiku_turns import claude_writer
+from tavern.intentions import INTENTION_RULES, Intender, IntentionRules, deliver_intention, intention_requests, \
+    intention_writer, stale_intentions
 from tavern.jev import evaluate_actions, evaluate_seats
 from tavern.persistence import load_world, save_world
+from tavern.questions import Ask, Question
 from tavern.room import object_cells
 from tavern.scenario import Scenario, open_evening, parse_scenario
+from tavern.scripted import write_scripted_turn
+from tavern.turns import TurnWriter, claim_turns, deliver_turn
 from tavern.world import create_world, start_action, step_world
 
 # Session IDs also name save directories, so only path-safe characters are allowed.
@@ -60,12 +70,14 @@ async def choose_action(observation: Mapping[str, Any], config: Mapping[str, Any
 
 
 class TavernRuntime:
-    """Own world state and one asynchronous decision request per visitor."""
+    """Own world state, one asynchronous decision request per visitor and one line per scene."""
 
     def __init__(self, map_data: Mapping[str, Any], save_path: Path,
                  ai_config: Mapping[str, Any], seed: int = 0,
                  database_url: str | None = None, session_id: str = "local",
-                 scenario: Scenario | None = None) -> None:
+                 scenario: Scenario | None = None, writer: TurnWriter = write_scripted_turn,
+                 writer_label: str = "scripted",
+                 intender: Intender | None = None, intention_rules: IntentionRules = INTENTION_RULES) -> None:
         self.map_data = deepcopy(dict(map_data))
         self.scenario = scenario
         self.world = self._open(seed)
@@ -79,6 +91,16 @@ class TavernRuntime:
         self.next_decision: dict[str, float] = {}
         # Game time each pending request was made, to drop those an interrupt overtakes.
         self.asked_at: dict[str, float] = {}
+        self.writer = writer
+        # Which writer speaks the lines (`haiku` or `scripted`), for the client's label.
+        self.writer_label = writer_label
+        # Lines being written, per claimed turn (scene ID, turn index).
+        self.writing: dict[tuple[str, int], asyncio.Task[Any]] = {}
+        # The mind port (None offline: no intentions), and per guest the intention being written:
+        # its task, when it was asked, and the view it answers.
+        self.intender, self.intention_rules = intender, intention_rules
+        self.intending: dict[str, tuple[asyncio.Task[Any], float, dict[str, Any]]] = {}
+        self.next_intention: dict[str, float] = {}
 
     def _open(self, seed: int) -> dict[str, Any]:
         # A scenario says who comes tonight; without one, the room's own visitors are already in.
@@ -90,14 +112,15 @@ class TavernRuntime:
         """Return a client envelope with credentials excluded.
 
         Returns:
-            Independent world copy, public evaluator configuration, and how the client
-            names, shows, and targets each verb.
+            Independent world copy, public evaluator configuration, how the client
+            names, shows, and targets each verb, and each visitor's inner state (`feelings.minds`).
+            `ai.writer` names who writes conversation lines.
         """
         configured = bool(self.ai_config.get("typesafe_api_key"))
         return {"type": "snapshot", "state": deepcopy(self.world), "ai": {
             "mode": "jev" if configured else "local", "configured": configured,
-            "model": self.ai_config["model"],
-        }, "activities": client_activities(ACTIVITIES)}
+            "model": self.ai_config["model"], "writer": self.writer_label, "intentions": self.intender is not None,
+        }, "activities": client_activities(ACTIVITIES), "minds": minds(self.world)}
 
     def _event(self, message: str) -> None:
         log_control(self.world, message)
@@ -129,6 +152,29 @@ class TavernRuntime:
             self.pending[actor_id] = (task, self.revisions.get(actor_id, 0))
             self.asked_at[actor_id] = self.world["time"]
 
+    def _collect_lines(self) -> None:
+        for key, task in list(self.writing.items()):
+            if task.done():
+                del self.writing[key]
+                deliver_turn(self.world, *key, task.result)
+
+    def _request_lines(self) -> None:
+        for scene_id, turn, view in claim_turns(self.world):
+            self.writing[(scene_id, turn)] = asyncio.create_task(self.writer(view, self.ai_config))
+
+    def _mind(self, intender: Intender) -> None:
+        # As in the lockstep runner: drop overtaken requests, keep finished ones, ask anew.
+        for actor_id in stale_intentions(self.world, {key: asked for key, (_, asked, _) in self.intending.items()}):
+            self.intending.pop(actor_id)[0].cancel()
+        for actor_id, (task, _, view) in list(self.intending.items()):
+            if task.done():
+                del self.intending[actor_id]
+                self.next_intention[actor_id] = deliver_intention(self.world, actor_id, view, task.result,
+                                                                  self.intention_rules)
+        for actor_id, view in intention_requests(self.world, self.intending, self.next_intention,
+                                                 self.intention_rules):
+            self.intending[actor_id] = (asyncio.create_task(intender(view)), self.world["time"], view)
+
     def _drop_stale_requests(self) -> None:
         # As in the lockstep runner, an interrupted visitor's pending thought is dropped and they ask anew.
         for actor_id in stale_requests(self.world, self.asked_at):
@@ -146,6 +192,10 @@ class TavernRuntime:
             self._drop_stale_requests()
             self._collect_decisions()
             self._request_decisions()
+            self._collect_lines()
+            self._request_lines()
+            if self.intender is not None:
+                self._mind(self.intender)
 
     def _pause(self, command: Mapping[str, Any]) -> None:
         if not isinstance(command.get("paused"), bool):
@@ -202,9 +252,13 @@ class TavernRuntime:
         self.revisions[actor_id] = self.revisions.get(actor_id, 0) + 1
 
     def _invalidate_requests(self) -> None:
-        for task, _revision in self.pending.values():
+        for task in [*(task for task, _revision in self.pending.values()), *self.writing.values(),
+                     *(task for task, _, _ in self.intending.values())]:
             task.cancel()
         self.pending.clear()
+        self.writing.clear()
+        self.intending.clear()
+        self.next_intention.clear()
         self.asked_at.clear()
         self.revisions.clear()
         self.next_decision.clear()
@@ -296,7 +350,8 @@ class TavernRuntime:
 
     async def close(self) -> None:
         """Cancel and drain model requests when the server stops."""
-        tasks = [task for task, _revision in self.pending.values()]
+        tasks = [*(task for task, _revision in self.pending.values()), *self.writing.values(),
+                 *(task for task, _, _ in self.intending.values())]
         self._invalidate_requests()
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
@@ -306,9 +361,13 @@ class TavernSessions:
     """Own one runtime per device session; only sessions with an open page advance."""
 
     def __init__(self, map_data: Mapping[str, Any], save_dir: Path, ai_config: Mapping[str, Any],
-                 seed: int = 0, database_url: str | None = None, scenario: Scenario | None = None) -> None:
+                 seed: int = 0, database_url: str | None = None, scenario: Scenario | None = None,
+                 writer: TurnWriter = write_scripted_turn, writer_label: str = "scripted",
+                 intender: Intender | None = None) -> None:
         self.map_data = deepcopy(dict(map_data))
+        self.writer, self.writer_label = writer, writer_label
         self.save_dir = save_dir
+        self.intender = intender
         self.ai_config = dict(ai_config)
         self.database_url = database_url
         self.scenario = scenario
@@ -339,7 +398,8 @@ class TavernSessions:
         if self.scenario is not None and self.scenario.seed is not None:
             seed = self.scenario.seed
         runtime = TavernRuntime(self.map_data, self.save_dir / session_id / "save.json", self.ai_config,
-                                seed, self.database_url, session_id, self.scenario)
+                                seed, self.database_url, session_id, self.scenario, self.writer, self.writer_label,
+                                intender=self.intender)
         if not runtime.restore():
             # A new evening waits at the door until someone presses Start.
             runtime.world["paused"] = True
@@ -428,7 +488,9 @@ async def _serve_socket(socket: WebSocket, sessions: TavernSessions) -> None:
 
 def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
                run_loop: bool = True, database_url: str | None = None, seed: int = 0,
-               scenario_path: Path | None = None) -> FastAPI:
+               scenario_path: Path | None = None, characters_dir: Path | None = None,
+               ask: Ask | None = None, writer: TurnWriter = write_scripted_turn,
+               writer_label: str = "scripted", intender: Intender | None = None) -> FastAPI:
     """Construct the local server with explicit paths and AI configuration.
 
     Args:
@@ -440,17 +502,28 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
         seed: Seed of the sessions' arrivals and decision policies.
         scenario_path: Optional JSON scenario; sessions then open its evenings instead of
             starting with the room's own visitors.
+        characters_dir: Optional folder of character cards (one JSON file each) the scenario
+            casts its guests from.
+        ask: Optional Claude port bound to the server's key, for the card compiler; without
+            it the compiler runs its labeled offline mode.
+        writer: Turn writer of every session's conversation lines; scripted by default.
+        writer_label: Name of that writer shown to the client (`haiku` or `scripted`).
+        intender: Optional mind port writing guests' intentions; without it guests have none
+            and the snapshot says so.
     Returns:
         Application serving JSON state and a bidirectional WebSocket per device session.
         Sessions advance only while a page is open and always reopen paused.
     Raises:
-        ValueError: The scenario file is malformed.
+        ValueError: The scenario file or a character card is malformed.
     """
     map_data = json.loads(map_path.read_text())
-    scenario = parse_scenario(json.loads(scenario_path.read_text())) if scenario_path else None
+    cards = (parse_cards([json.loads(path.read_text()) for path in sorted(characters_dir.glob("*.json"))])
+             if characters_dir else None)
+    scenario = parse_scenario(json.loads(scenario_path.read_text()), cards) if scenario_path else None
     if database_url:
         initialize_database(database_url)
-    sessions = TavernSessions(map_data, save_dir, ai_config, seed, database_url, scenario)
+    sessions = TavernSessions(map_data, save_dir, ai_config, seed, database_url, scenario, writer, writer_label,
+                              intender)
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         ticker = asyncio.create_task(_run_world(sessions, 0.1)) if run_loop else None
@@ -463,6 +536,7 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
     app = FastAPI(title="The Last Inn", lifespan=lifespan)
     app.state.sessions = sessions
     _register_routes(app, sessions)
+    app.include_router(card_routes(ask))
     return app
 
 
@@ -486,7 +560,7 @@ def create_default_app() -> FastAPI:
 
     Returns:
         Server initialized from the repository's map, first-evening scenario, and
-        environment variables.
+        environment variables; `ANTHROPIC_API_KEY` enables the card compiler and Haiku lines.
     """
     working_root = Path.cwd()
     root = (working_root if (working_root / "data" / "tavern.json").is_file()
@@ -495,8 +569,26 @@ def create_default_app() -> FastAPI:
               "model": os.environ.get("TYPESAFE_MODEL", "jev-latest"),
               "timeout": float(os.environ.get("AI_TIMEOUT", "8")),
               "temperature": float(os.environ.get("AI_TEMPERATURE", "0.25"))}
+    ask = _claude_port(os.environ.get("ANTHROPIC_API_KEY"))
     database_url = (os.environ.get("DATABASE_URL")
                      if os.environ.get("TAVERN_DATABASE_ENABLED") == "true" else None)
+    ask = _claude_port(os.environ.get("ANTHROPIC_API_KEY"))
+    # With a Claude key Haiku writes conversation lines; without one the labeled scripted writer does.
+    lines = {} if ask is None else {"writer": claude_writer(ask), "writer_label": "haiku"}
     return create_app(root / "data" / "tavern.json", root / "saves", config,
                       database_url=database_url, seed=Random().randrange(1 << 30),
-                      scenario_path=root / "data" / "scenarios" / "first_evening.json")
+                      scenario_path=root / "data" / "scenarios" / "first_evening.json",
+                      characters_dir=root / "data" / "characters",
+                      ask=ask, intender=None if ask is None else intention_writer(
+                          (root / "data" / "minds" / "intention_prefix.md").read_text(), ask), **lines)
+
+
+def _claude_port(key: str | None) -> Ask | None:
+    # The key stays on the server; without one the card compiler runs offline.
+    if not key:
+        return None
+    config = {"anthropic_api_key": key, "model": "claude-haiku-4-5", "timeout": 30.0, "retries": 1}
+
+    async def ask(question: Question) -> dict[str, Any]:
+        return (await ask_claude(question, config))[0]
+    return ask

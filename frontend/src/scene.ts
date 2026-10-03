@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { drawBar, drawChair, drawDarts, drawDoor, drawFireplace, drawTable, drawTap, drawToilet, drawWindow, hearthFacing } from "./furniture";
 import { shippedPose, spriteOf, stills } from "./sprites";
-import type { ActivityView, Actor, Cell, EmoteKind, Verb, World, WorldObject } from "./types";
+import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Mind, Turn, Verb, World, WorldObject } from "./types";
 
 /** Glyph and colour of each emote above a visitor's head. */
 const EMOTE_GLYPHS: Record<EmoteKind, [string, string]> = {
@@ -29,12 +29,15 @@ interface ActorView {
   cellX: number;
   cellY: number;
   direction: string;
+  /** How far drink sways the sprite, 0–1, as the server derives it. */
+  sway: number;
 }
 
 /** Render server snapshots; interpolation changes display coordinates only. */
 export class TavernScene extends Phaser.Scene {
   private world: World | null = null;
   private activities: Record<Verb, ActivityView> = {};
+  private minds: Record<string, Mind> = {};
   private floor!: Phaser.GameObjects.Graphics;
   private hearthGlow!: Phaser.GameObjects.Graphics;
   private furniture!: Phaser.GameObjects.Graphics;
@@ -66,14 +69,15 @@ export class TavernScene extends Phaser.Scene {
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer): void => this.click(pointer));
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer): void => this.hover(pointer));
     this.ready = true;
-    if (this.world) this.setWorld(this.world, this.activities);
+    if (this.world) this.setWorld(this.world, this.activities, this.minds);
   }
 
   /** Apply a world snapshot, keeping authoritative actors separate from sprites. */
-  setWorld(world: World, activities: Record<Verb, ActivityView>): void {
+  setWorld(world: World, activities: Record<Verb, ActivityView>, minds: Record<string, Mind>): void {
     const reset: boolean = this.world !== null && world.tick < this.world.tick;
     this.world = world;
     this.activities = activities;
+    this.minds = minds;
     if (!this.ready) return;
     this.renderMap(world);
     this.syncVisitors(world, reset);
@@ -100,6 +104,8 @@ export class TavernScene extends Phaser.Scene {
     for (const view of this.visitors.values()) {
       view.container.x += (view.targetX - view.container.x) * blend;
       view.container.y += (view.targetY - view.container.y) * blend;
+      // Drunk guests sway; each at their own pace, so a table of drinkers does not rock in step.
+      view.sprite.setAngle(view.sway * 8 * Math.sin(time / 420 + view.cellX * 1.7 + view.cellY));
     }
     this.drawHearthGlow(time);
   }
@@ -267,7 +273,7 @@ export class TavernScene extends Phaser.Scene {
     const speech: Phaser.GameObjects.Text = this.add.text(0, -70, "", { fontFamily: "Georgia", fontSize: "10px", color: "#48392b", backgroundColor: "#f4e6c6", padding: { x: 6, y: 4 } }).setOrigin(0.5).setVisible(false);
     const emote: Phaser.GameObjects.Text = this.add.text(17, -44, "", { fontFamily: "system-ui", fontSize: "12px", fontStyle: "bold", backgroundColor: "#f4e6c6", padding: { x: 4, y: 1 } }).setOrigin(0.5).setVisible(false);
     const container: Phaser.GameObjects.Container = this.add.container(0, 0, [shadow, selection, sprite, name, status, mug, speech, emote]);
-    return { container, sprite, name, status, selection, mug, speech, emote, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south" };
+    return { container, sprite, name, status, selection, mug, speech, emote, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south", sway: 0 };
   }
 
   private updateVisitor(view: ActorView, actor: Actor, size: number, reset: boolean): void {
@@ -292,13 +298,16 @@ export class TavernScene extends Phaser.Scene {
     view.targetX = x;
     view.targetY = y;
     view.name.setText(actor.name);
-    const incoming: Actor | undefined = this.world?.actors.find((visitor: Actor): boolean => visitor.action?.verb === "talk" && visitor.action.target_id === actor.id);
-    const chatting: boolean = !!incoming || actor.action?.verb === "talk";
+    view.sway = this.minds[actor.id]?.sway ?? 0;
+    // The bubble shows the scene's latest line over its speaker until the next one is spoken.
+    const scene: Conversation | undefined = this.world?.conversations.find((item: Conversation): boolean => item.participants.includes(actor.id));
+    const line: Turn | undefined = scene?.turns[scene.turns.length - 1];
+    const chatting: boolean = scene !== undefined;
     const label = (verb: Verb): string | undefined => (verb === "watch" && target?.kind === "fireplace" ? "by the fire" : this.activities[verb]?.status ?? undefined);
     view.status.setText(actor.status === "walking" ? `→ ${label(actor.action?.verb ?? "") ?? "exploring"}` : chatting ? "chatting" : actor.action ? label(actor.action.verb) ?? actor.action.verb : actor.seat_id ? "seated" : "thinking");
     view.mug.setVisible(actor.inventory.beer > 0 && pose !== "Drinking" && pose !== "TakeBeer");
-    view.speech.setVisible(chatting);
-    view.speech.setText(incoming ? "Quite a story!" : "News from the road…");
+    view.speech.setVisible(line?.speaker === actor.id);
+    view.speech.setText(line?.line ?? "");
     this.showEmote(view, actor);
     view.container.setDepth(10 + y / 1000);
   }

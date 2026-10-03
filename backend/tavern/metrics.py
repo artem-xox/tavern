@@ -2,11 +2,12 @@
 
 from collections import Counter
 from collections.abc import Mapping, Sequence
+import math
 import re
 from typing import Any, TypedDict
 
 from tavern.lockstep import Evening, Spell
-from tavern.recording import KindCost, Record, cost_by_kind
+from tavern.recording import KindCost, Record, Tariff, cost_by_kind
 
 
 class StuckTime(TypedDict):
@@ -41,6 +42,55 @@ def attention_counts(evening: Evening) -> AttentionCounts:
     if interrupts + alerts > evening.gazes:
         raise ValueError(f"{interrupts + alerts} interrupts and alerts but only {evening.gazes} turned heads")
     return {"interrupts": interrupts, "alerts": alerts, "glances": evening.gazes - interrupts - alerts}
+
+
+class ConversationCounts(TypedDict):
+    """How conversation scenes went: scenes started, lines spoken, guests who joined and who left."""
+
+    scenes: int
+    turns: int
+    joins: int
+    leaves: int
+
+
+def conversation_counts(evening: Evening) -> ConversationCounts:
+    """Count the evening's conversation scenes, turns, joins and leaves.
+
+    Args:
+        evening: What the lockstep runner logged.
+
+    Returns:
+        Logged `conversation_started`, `turn`, `joined_conversation` and `left_conversation` events.
+
+    Raises:
+        KeyError: An event has no type.
+    """
+    kinds = Counter(event["type"] for event in evening.events)
+    return {"scenes": kinds["conversation_started"], "turns": kinds["turn"],
+            "joins": kinds["joined_conversation"], "leaves": kinds["left_conversation"]}
+
+
+class IntentionCounts(TypedDict):
+    """How guests' intentions went: written and kept, or failed (the old one stayed)."""
+
+    written: int
+    failed: int
+
+
+def intention_counts(evening: Evening) -> IntentionCounts:
+    """Count the evening's written and failed intentions.
+
+    Args:
+        evening: What the lockstep runner logged.
+
+    Returns:
+        Logged `intention` and `intention_failed` events.
+
+    Raises:
+        KeyError: An event has no type.
+    """
+    kinds = Counter(event["type"] for event in evening.events)
+    return {"written": kinds["intention"], "failed": kinds["intention_failed"]}
 
 
 class Metrics(TypedDict):
@@ -121,14 +171,16 @@ def stuck_time(spells: Sequence[Spell], guests: Sequence[str], threshold: float)
 
 
 def evening_metrics(evening: Evening, calls: Sequence[Record], input_usd_per_million: float,
-                    stuck_threshold: float) -> Metrics:
+                    stuck_threshold: float, tariffs: Mapping[str, Tariff] | None = None) -> Metrics:
     """Measure a finished headless evening.
 
     Args:
         evening: What the lockstep runner logged.
         calls: The evening's model calls: recorded live, or replayed.
-        input_usd_per_million: USD tariff per million input tokens.
+        input_usd_per_million: USD tariff per million input tokens of kinds without a tariff (Jev's).
         stuck_threshold: Seconds a stall may last before it counts as stuck.
+        tariffs: Full tariffs of call kinds priced otherwise than Jev, such as Claude's `turn` and
+            `intention`.
 
     Returns:
         Game time, guests and departures; completed activities per verb; conversations and
@@ -146,5 +198,60 @@ def evening_metrics(evening: Evening, calls: Sequence[Record], input_usd_per_mil
             "conversations": _occurrences(events, "conversation"), "quarrels": _occurrences(events, "quarrel"),
             "decisions": dict(sorted(Counter(item["source"] for item in evening.choices).items())),
             "errors": sum(item["error"] is not None for item in evening.choices),
-            "cost": cost_by_kind(calls, input_usd_per_million),
+            "cost": cost_by_kind(calls, input_usd_per_million, tariffs),
             "stuck": stuck_time(evening.spells, evening.guests, stuck_threshold)}
+
+
+class WriterStats(TypedDict):
+    """How the turn writer did over an evening.
+
+    `turns` lines were spoken, `fallbacks` of them scripted after a failed or rejected line;
+    `calls` model calls of the writer's kind, `failures` of them failed. Latency is wall-clock
+    seconds per call (nearest rank), `cache_hit_rate` the share of prompt tokens read from the
+    cache, and cost is in USD; None where there is nothing to measure.
+    """
+
+    turns: int
+    fallbacks: int
+    calls: int
+    failures: int
+    latency_p50: float | None
+    latency_p95: float | None
+    cache_hit_rate: float | None
+    usd: float
+    usd_per_turn: float | None
+
+
+def writer_stats(evening: Evening, calls: Sequence[Record], kind: str, tariff: Tariff) -> WriterStats:
+    """Measure the model turn writer over a finished evening.
+
+    Args:
+        evening: What the lockstep runner logged; `turn` and `turn_failed` events count.
+        calls: The evening's model calls; only those of `kind` are measured.
+        kind: Call kind of the writer, e.g. `turn`.
+        tariff: Its prices.
+
+    Returns:
+        Unrounded measures. The cache hit rate counts calls with reported usage: cache reads
+        over all prompt tokens (uncached input, cache reads and cache writes).
+
+    Raises:
+        ValueError: A price is negative or not finite.
+    """
+    mine = [record for record in calls if record["kind"] == kind]
+    cost = cost_by_kind(mine, 0.0, {kind: tariff}).get(kind, {})
+    read = cost.get("cache_read_input_tokens", 0)
+    prompt = cost.get("input_tokens", 0) + read + cost.get("cache_creation_input_tokens", 0)
+    turns, usd = sum(event["type"] == "turn" for event in evening.events), cost.get("usd", 0.0)
+    latencies = [record["latency"] for record in mine]
+    return {"turns": turns, "fallbacks": sum(event["type"] == "turn_failed" for event in evening.events),
+            "calls": len(mine), "failures": sum(record["error"] is not None for record in mine),
+            "latency_p50": _nearest_rank(latencies, 0.5), "latency_p95": _nearest_rank(latencies, 0.95),
+            "cache_hit_rate": read / prompt if prompt else None, "usd": usd,
+            "usd_per_turn": usd / turns if turns else None}
+
+
+def _nearest_rank(values: Sequence[float], share: float) -> float | None:
+    # The smallest value with at least `share` of the values at or below it; None for none.
+    ordered = sorted(values)
+    return ordered[max(0, math.ceil(share * len(ordered)) - 1)] if ordered else None

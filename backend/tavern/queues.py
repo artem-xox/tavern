@@ -10,7 +10,9 @@ from collections.abc import Mapping
 from typing import Any, TypedDict
 
 from tavern.activities import ACTIVITIES
-from tavern.memory import grieve, record_event
+from tavern.memory import record_event
+from tavern.names import called
+from tavern.thoughts import think
 from tavern.room import find_object, line_approach
 from tavern.routes import plan_route, replan
 
@@ -97,8 +99,10 @@ def _cut(world: Mapping[str, Any], item: Mapping[str, Any], actor: dict[str, Any
         record_event(world, actor, "line_cut", f"{actor['name']} cut in line for {item['name']}")
     for actor_id in passed:
         victim = people[actor_id]
-        grieve(victim, f"{actor['name']} cut in line ahead of me at {item['name']}")
-        record_event(world, victim, "line_cut", f"{actor['name']} cut in line ahead of {victim['name']} at {item['name']}")
+        message = f"{actor['name']} cut in line ahead of {victim['name']} at {item['name']}"
+        record_event(world, victim, "line_cut", message)
+        think(victim, "line_cut", world["time"], f"{called(victim, actor)} cut in line ahead of me at {item['name']}",
+              message, about=actor)
 
 
 def join_line(world: Mapping[str, Any], item: dict[str, Any], actor: dict[str, Any], front: bool) -> None:

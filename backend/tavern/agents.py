@@ -11,6 +11,7 @@ from tavern.families import family_scores, group_families
 from tavern.jev import JevError, evaluate_actions, evaluate_seats
 from tavern.observation import known_objects, own_actor
 from tavern.selection import bounded, drawable, read_temperature, select
+from tavern.thoughts import THOUGHTS, thought_mood
 
 
 class Action(TypedDict):
@@ -181,18 +182,25 @@ def build_seat_candidates(observation: Mapping[str, Any]) -> list[dict[str, Any]
 
 def _social_candidates(observation: Mapping[str, Any], actor: Mapping[str, Any],
                        objects: Sequence[Mapping[str, Any]]) -> list[Action]:
-    visitors = observation.get("visitors", [])
-    if not isinstance(visitors, list):
+    # Seated tablemates, or anyone standing beside them (`people`, when observed): talk to whoever
+    # is free, or join a conversation already going, once per scene through its first member seen.
+    visitors, people = observation.get("visitors", []), observation.get("people", [])
+    if not isinstance(visitors, list) or not isinstance(people, list):
         raise ValueError("Visible visitors must be a list")
     seat = next((item for item in objects if item["id"] == actor.get("seat_id")), None)
-    neighbors = {}
-    for visitor in visitors:
+    table = seat.get("table_id") if seat else None
+    options: dict[str, Action] = {}
+    for visitor in [*visitors, *people]:
         if not isinstance(visitor, Mapping) or not isinstance(visitor.get("id"), str) or not visitor["id"]:
             raise ValueError("Visible visitors must have nonempty IDs")
-        if seat and seat.get("table_id") and visitor.get("table_id") == seat["table_id"] and visitor.get("available"):
-            if visitor["id"] != actor["id"]:
-                neighbors[visitor["id"]] = _action("talk", visitor["id"])
-    return list(neighbors.values())
+        near = (table and visitor.get("seat_id") and visitor.get("table_id") == table) or visitor.get("beside")
+        if not near or visitor["id"] == actor["id"]:
+            continue
+        if visitor.get("available"):
+            options.setdefault(visitor["id"], _action("talk", visitor["id"]))
+        elif visitor.get("conversation"):
+            options.setdefault(visitor["conversation"], _action("join_conversation", visitor["id"]))
+    return list(options.values())
 
 
 def _local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]]) -> dict[str, float]:
@@ -213,6 +221,8 @@ def _local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[s
         "sit": seated_rest,
         "seating": 0.15 + 0.6 * actor["needs"].get("social", 0) / 100 if moving else seated_rest,
         "talk": 0.4 + 0.6 * actor["needs"].get("social", 0) / 100,
+        # Joining company already talking is a little less natural than starting a chat.
+        "join_conversation": 0.35 + 0.6 * actor["needs"].get("social", 0) / 100,
         "play_darts": 0.15 + 0.65 * actor["needs"].get("boredom", 0) / 100,
         # A gentler pastime than darts that comfort-loving visitors favour, once nothing presses.
         "watch": ((0.05 + 0.45 * actor["needs"].get("boredom", 0) / 100 + 0.3 * traits.get("comfort", 0.5))
@@ -249,17 +259,33 @@ def _score_lines(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
 
 
 def _leave_utility(observation: Mapping[str, Any]) -> float:
-    # Visitors go home content after a long evening with a few beers, or early when it goes wrong.
+    # Visitors go home content after a long evening with a few beers, or early when it goes wrong,
+    # and at once when they agreed to walk home with someone (observations built outside the
+    # world carry no invitations).
     actor = observation["actor"]
+    if any(item["kind"] == "leave_together" and item["stage"] != "pending"
+           for item in observation.get("invitations", [])):
+        return 0.95
     needs, visit = actor["needs"], actor.get("visit", {})
     seconds, patience = visit.get("seconds", 0), actor.get("traits", {}).get("patience", 0.5)
     calm = 1 - sum(needs.get(name, 0) for name in ("thirst", "fatigue", "bladder", "social", "boredom")) / 500
     content = min(1.0, seconds / 240) * min(1.0, visit.get("beers", 0) / 3) * calm
     taps = [item for item in observation["objects"] if item["kind"] == "tap"]
     run_dry = bool(taps) and not any(item.get("stock") for item in taps) and not actor["inventory"]["beer"]
-    upset = min(1.0, 0.35 * len(visit.get("grievances", [])) * (1.5 - patience)
+    upset = min(1.0, 0.35 * _wrongs(observation) * (1.5 - patience)
                 + (needs["thirst"] / 100 if run_dry else 0.0))
     return 0.05 + 0.75 * max(content, upset * min(1.0, seconds / 60))
+
+
+def _wrongs(observation: Mapping[str, Any]) -> float:
+    # How wronged a visitor feels, in taken seats: their active thoughts' mood, where pleasant
+    # company offsets a slight. Observations built outside the world may carry no thoughts;
+    # then each listed grievance counts as one wrong. Without a clock every thought counts.
+    actor = observation["actor"]
+    if "thoughts" not in actor:
+        return float(len(actor.get("visit", {}).get("grievances", [])))
+    feeling = thought_mood(actor, observation.get("time", -math.inf))
+    return max(0.0, -feeling) / -THOUGHTS["seat_taken"].mood
 
 
 def _local_seat_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]]) -> dict[str, float]:

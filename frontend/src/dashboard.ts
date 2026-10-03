@@ -1,4 +1,4 @@
-import type { ActivityView, Actor, Command, Snapshot, Verb, World, WorldEvent, WorldObject } from "./types";
+import type { ActivityView, Actor, Command, Conversation, Intention, Mind, Snapshot, Thought, Verb, World, WorldEvent, WorldObject } from "./types";
 
 interface Handlers {
   command: (command: Command) => void;
@@ -25,6 +25,8 @@ function element<T extends HTMLElement>(root: HTMLElement, selector: string): T 
 export class Dashboard {
   private world: World | null = null;
   private activities: Record<Verb, ActivityView> = {};
+  private minds: Record<string, Mind> = {};
+  private intentions = false;
   private verbSignature: string = "";
   private selectedId: string | null = null;
   private connected: boolean = false;
@@ -41,6 +43,8 @@ export class Dashboard {
   apply(snapshot: Snapshot): void {
     this.world = snapshot.state;
     this.activities = snapshot.activities;
+    this.minds = snapshot.minds;
+    this.intentions = snapshot.ai.intentions;
     const { state: world, ai } = snapshot;
     this.renderVerbs();
     element(this.root, "#world-time").textContent = clock(world.time);
@@ -50,7 +54,10 @@ export class Dashboard {
     element<HTMLSelectElement>(this.root, "#speed").value = String(world.speed);
     element(this.root, "#ai-mode").textContent = ai.mode === "jev" ? "Jev configured" : "Local · offline policy";
     element(this.root, "#ai-mode").dataset.mode = ai.mode;
+    element(this.root, "#ai-writer").textContent = ai.writer === "haiku" ? "Haiku lines" : "Scripted lines";
+    element(this.root, "#ai-writer").dataset.mode = ai.writer === "haiku" ? "jev" : "local";
     element(this.root, "#mode-caption").textContent = ai.mode === "jev" ? `Jev evaluation configured${ai.model ? ` · ${ai.model}` : ""}. Each visitor's decision shows the actual source and any fallback.` : "Offline demo. Decisions use needs and traits; add a TypeSafe key to enable Jev.";
+    element(this.root, "#mode-caption").textContent += ai.intentions ? " Claude Haiku writes each guest's intention." : " Intentions offline: no Claude key, so guests have none.";
     this.renderEveningState(world);
     this.renderRoster(world);
     this.renderInspector();
@@ -115,7 +122,7 @@ export class Dashboard {
         </div>
         <aside class="sidebar"><section class="inspector-card"><div class="section-heading"><h3>Inside a visitor's mind</h3><span class="small-tag">INSPECTOR</span></div><div id="inspector"><p class="empty">Select a visitor in the room.</p></div>
           <div class="force-action"><label for="force-verb">Give this visitor an action</label><div class="force-row"><select id="force-verb" data-control></select><button id="force" data-control>Go →</button></div><select id="force-target" data-control aria-label="Action target"></select><p class="helper">The server checks the route, availability, and resources.</p></div>
-        </section><div class="ai-card"><span id="ai-mode" class="ai-badge">Local · offline policy</span><p id="mode-caption">Waiting for the decision engine.</p></div></aside>
+        </section><div class="ai-card"><span id="ai-mode" class="ai-badge">Local · offline policy</span> <span id="ai-writer" class="ai-badge">Scripted lines</span><p id="mode-caption">Waiting for the decision engine.</p></div></aside>
       </div><footer class="page-footer"><span>THE LAST INN <b>✦</b> AN AUTONOMOUS TAVERN</span><span>Observe → decide → walk → act</span></footer>`;
   }
 
@@ -198,6 +205,8 @@ export class Dashboard {
       <div class="current-action"><span class="eyebrow">CURRENT ACTION</span><strong>${this.departed(actor) ? "Gone home" : actor.action ? escape(this.activities[actor.action.verb]?.label ?? actor.action.verb) : actor.seat_id ? "Settled at the table" : "Considering the next move"}</strong><span>${actor.visit.left_at !== undefined ? `Left at ${clock(actor.visit.left_at)}` : target ? escape(target.name) : partner ? `With ${escape(partner.name)}` : ""}${actor.path.length ? ` · ${actor.path.length} steps remaining` : ""}</span></div>
       <div class="inventory-row"><span>Carrying</span><strong>${actor.inventory.beer} ${actor.inventory.beer === 1 ? "beer" : "beers"}</strong></div>
       ${this.visit(actor)}
+      ${this.intention(actor)}
+      ${this.mind(actor)}
       <div class="traits">${Object.entries(actor.traits).map(([key, value]: [string, unknown]): string => `<span>${escape(key.replaceAll("_", " "))}: ${escape(value)}</span>`).join("")}</div>
       <details id="decision-detail" open><summary>Why this decision? <span class="source-tag">${actor.decision?.source === "jev" ? "JEV" : "LOCAL"}</span></summary><div class="detail-body">${this.scoreList(actor.decision?.scores)}${actor.decision?.error ? `<p class="decision-error">Fallback: ${escape(actor.decision.error)}</p>` : ""}${this.seatChoice(actor)}</div></details>
       <details id="knowledge-detail" open><summary>What they know <span class="count">${Object.keys(actor.knowledge.objects).length}</span></summary><div class="detail-body">${this.knowledge(actor)}</div></details>
@@ -210,13 +219,33 @@ export class Dashboard {
     return Object.entries(actor.needs).map(([key, value]: [string, number]): string => `<div class="need"><div><span>${names[key]}</span><strong>${Math.round(value)}<small>/100</small></strong></div><meter min="0" max="100" value="${value}" aria-label="${names[key]} urgency" style="--level:${Math.min(100, Math.max(0, value))}%;--need-color:${value > 75 ? "#d7876e" : "#d9b676"}">${Math.round(value)}</meter></div>`).join("");
   }
 
-  /** Summarize tonight's visit: time here, beers, own seat and grievances. */
+  /** Summarize tonight's visit: time here, beers and own seat. */
   private visit(actor: Actor): string {
     const seat: WorldObject | undefined = this.world?.map.objects.find((object: WorldObject): boolean => object.id === actor.favorite_seat_id);
-    const grievances: string = actor.visit.grievances.map((grievance: string): string => `<li>${escape(grievance)}</li>`).join("");
     return `<div class="visit"><div class="inventory-row"><span>Tonight</span><strong>${clock(actor.visit.seconds)} here · ${actor.visit.beers} ${actor.visit.beers === 1 ? "beer" : "beers"}</strong></div>
-      <div class="inventory-row"><span>Own seat</span><strong>${seat ? escape(seat.name) : "not chosen yet"}</strong></div>
-      ${grievances ? `<ul class="grievances" aria-label="Grievances">${grievances}</ul>` : ""}</div>`;
+      <div class="inventory-row"><span>Own seat</span><strong>${seat ? escape(seat.name) : "not chosen yet"}</strong></div></div>`;
+  }
+
+  /** Show the guest's current thought and intention, when and why the mind wrote them. */
+  private intention(actor: Actor): string {
+    const intention: Intention | null = actor.intention;
+    const body: string = intention
+      ? `<p class="helper">“${escape(intention.thought)}”</p><p class="stage-heading">Intends</p><p>${escape(intention.intention)}</p><p class="helper">Decided ${Math.max(0, Math.round((this.world?.time ?? 0) - intention.written_at))} s ago, after: ${escape(intention.trigger.text)}</p>`
+      : `<p class="helper">${this.intentions ? "No intention written yet." : "Offline: no Claude key, so guests write no intentions."}</p>`;
+    return `<details id="intention-detail" open><summary>Thought and intention</summary><div class="detail-body">${body}</div></details>`;
+  }
+
+  /** List the mood the server derives, the active thoughts behind it, and opinions of others. */
+  private mind(actor: Actor): string {
+    const mind: Mind | undefined = this.minds[actor.id];
+    if (!mind) return "";
+    const signed = (value: number): string => `${value > 0 ? "+" : ""}${Math.round(value)}`;
+    const thoughts: string = mind.thoughts.map((thought: Thought): string => `<li class="${thought.mood < 0 ? "bad" : "good"}"><span>${escape(thought.text)}</span><strong>${signed(thought.mood)}</strong><small>${Math.max(0, Math.ceil(thought.expires_at - (this.world?.time ?? 0)))} s left</small></li>`).join("");
+    const opinions: string = mind.opinions.map((opinion): string => `<div class="known-object"><span>${escape(opinion.name)} · ${escape(opinion.familiarity)}</span><span>${signed(opinion.opinion)}</span></div>`).join("");
+    return `<details id="mind-detail" open><summary>Mood and thoughts <span class="count">${signed(mind.mood)}</span></summary><div class="detail-body">
+      <div class="inventory-row"><span>Drink</span><strong>${escape(mind.stage)} · ${Math.round(mind.drunkenness * 100)}%</strong></div>
+      ${thoughts ? `<ul class="thoughts" aria-label="Thoughts">${thoughts}</ul>` : '<p class="helper">No thoughts weigh on them.</p>'}
+      ${opinions ? `<p class="stage-heading">Opinions</p>${opinions}` : ""}</div></details>`;
   }
 
   /** Show the second decision stage: which chair a visitor who decided to sit picked, or which action of a chosen family. */
@@ -269,10 +298,10 @@ export class Dashboard {
 
   private activity(actor: Actor): string {
     if (this.departed(actor)) return "gone home";
-    if (this.world?.actors.some((visitor: Actor): boolean => visitor.action?.verb === "talk" && visitor.action.target_id === actor.id)) return "chatting";
+    const talking: boolean = this.world?.conversations.some((scene: Conversation): boolean => scene.participants.includes(actor.id)) ?? false;
+    if (talking && actor.status !== "queued") return "chatting";
     if (actor.status === "walking" || actor.status === "waiting") return actor.status;
-    if (actor.status === "queued") return "in line";
-    if (actor.action?.verb === "talk") return "chatting";
+    if (actor.status === "queued") return talking ? "chatting in line" : "in line";
     if (actor.action?.verb === "play_darts") return "playing darts";
     if (actor.action?.verb === "watch") return "admiring the view";
     if (actor.seat_id) return actor.action?.verb === "drink" ? "sipping ale" : "seated";

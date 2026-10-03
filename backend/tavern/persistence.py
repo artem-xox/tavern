@@ -6,11 +6,17 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from tavern.activities import ACTIVITIES
+from tavern.cards import parse_card
+from tavern.drunkenness import check_drunkenness
 from tavern.expression import EMOTES
 from tavern.hearing import Sound
+from tavern.intentions import check_saved_intention
+from tavern.invitations import KINDS, check_invitations
 from tavern.navigation import find_path
 from tavern.room import find_object
 from tavern.scenario import Guest, parse_guest
+from tavern.thoughts import check_mind
+from tavern.ties import parse_own_ties
 from tavern.validation import number
 from tavern.world import create_world
 
@@ -69,7 +75,11 @@ def _validate_actor_runtime(world: Mapping[str, Any]) -> None:
         _validate_progress(actor, world["map"])
         _validate_seat(actor, world)
         _validate_visit(actor.get("visit"))
+        check_mind(actor)
+        check_drunkenness(actor, world["rules"])
         _validate_expression(actor, world)
+        _validate_character(actor)
+        check_saved_intention(actor)
     for item in world["map"]["objects"]:
         if item.get("reserved_by") is not None and item["reserved_by"] not in actor_ids:
             raise ValueError("Saved reservation belongs to an unknown actor")
@@ -177,6 +187,9 @@ def _validate_departed(world: Mapping[str, Any]) -> None:
         raise ValueError("Saved visitors need unique IDs")
     for item in departed:
         _validate_visit(item.get("visit"))
+        check_mind(item)
+        check_drunkenness(item, world["rules"])
+        check_saved_intention(item)
         if "left_at" not in item["visit"]:
             raise ValueError("Departed visitor has no departure time")
 
@@ -245,6 +258,18 @@ def _validate_rules(world: Mapping[str, Any]) -> None:
         raise ValueError("Invalid saved emote lifetimes")
     for value in [*lifetimes.values(), rules.get("long_wait")]:
         number(value, "Saved emote time", 0, math.inf)
+    _validate_conversation_rules(rules.get("conversation"))
+
+
+def _validate_conversation_rules(conversation: Any) -> None:
+    keys = {"opening", "min_gap", "chars_per_second", "turn_timeout", "relief", "satisfied", "max_participants",
+            "reach", "pressing"}
+    if not isinstance(conversation, dict) or set(conversation) != keys:
+        raise ValueError("Invalid saved conversation rules")
+    for key in keys:
+        number(conversation[key], f"Saved conversation rule {key}", 0, math.inf)
+    if conversation["chars_per_second"] <= 0 or conversation["max_participants"] < 2:
+        raise ValueError("Saved conversations could never be read or held")
 
 
 def _validate_expression(actor: Mapping[str, Any], world: Mapping[str, Any]) -> None:
@@ -264,6 +289,13 @@ def _validate_expression(actor: Mapping[str, Any], world: Mapping[str, Any]) -> 
         number(emote["until"], "Saved emote end", 0, math.inf)
     if interrupted_at is not None:
         number(interrupted_at, "Saved interruption time", 0, world["time"])
+
+
+def _validate_character(actor: Mapping[str, Any]) -> None:
+    # A visitor not cast from a card (the room's own, or an inline scenario guest) has none.
+    if actor["card"] is not None:
+        parse_card(actor["card"])
+    parse_own_ties(actor["ties"])
 
 
 def _validate_attention_rules(attention: Any) -> None:
@@ -301,6 +333,52 @@ def _validate_stimulus(item: Any, world: Mapping[str, Any]) -> None:
         raise ValueError("Invalid saved stimulus cause")
 
 
+def _validate_conversations(world: Mapping[str, Any]) -> None:
+    scenes, issued = world.get("conversations"), world.get("next_conversation_id")
+    if type(issued) is not int or issued < 0 or not isinstance(scenes, list):
+        raise ValueError("Invalid saved conversations")
+    keys = {"id", "participants", "table_id", "topic", "turns", "started_at", "next_turn_at", "writing", "written",
+            "invitation"}
+    taken: list[Any] = []
+    for scene in scenes:
+        if not isinstance(scene, dict) or set(scene) != keys or not isinstance(scene["id"], str):
+            raise ValueError("Invalid saved conversation")
+        _validate_scene(scene, world)
+        taken.extend(scene["participants"])
+    if len(set(taken)) != len(taken) or len({scene["id"] for scene in scenes}) != len(scenes):
+        raise ValueError("Saved guests may take part in one conversation at a time")
+
+
+def _validate_scene(scene: Mapping[str, Any], world: Mapping[str, Any]) -> None:
+    people, tables = {actor["id"] for actor in world["actors"]}, {
+        item["id"] for item in world["map"]["objects"] if item["kind"] == "table"}
+    members = scene["participants"]
+    if not isinstance(members, list) or len(members) < 2 or len(set(members)) != len(members) or not set(
+            members) <= people:
+        raise ValueError("Saved conversation needs two or more distinct guests")
+    if scene["table_id"] is not None and scene["table_id"] not in tables:
+        raise ValueError("Saved conversation is held at an unknown table")
+    if not isinstance(scene["topic"], str) or not isinstance(scene["turns"], list):
+        raise ValueError("Invalid saved conversation topic or turns")
+    number(scene["started_at"], "Saved conversation start", 0, world["time"])
+    number(scene["next_turn_at"], "Saved next turn", 0, math.inf)
+    for turn in scene["turns"]:
+        # An invite also names its invitation kind.
+        if not isinstance(turn, dict) or set(turn) - {"invitation"} != {"speaker", "addressee", "line", "act", "time"} \
+                or ("invitation" in turn and turn["invitation"] not in KINDS) or not all(
+                isinstance(turn[key], str) for key in ("speaker", "line", "act")):
+            raise ValueError("Invalid saved turn")
+        number(turn["time"], "Saved turn time", 0, world["time"])
+    claim = scene["writing"]
+    if claim is not None and (not isinstance(claim, dict) or set(claim) != {"turn", "speaker", "since"}
+                              or type(claim["turn"]) is not int or not isinstance(claim["speaker"], str)):
+        raise ValueError("Invalid saved turn being written")
+    written = scene["written"]
+    if written is not None and (not isinstance(written, dict) or set(written) - {"invitation"} != {
+            "line", "act", "addressee", "topic"} or ("invitation" in written and written["invitation"] not in KINDS)):
+        raise ValueError("Invalid saved written turn")
+
+
 def parse_world(encoded: str) -> dict[str, Any]:
     """Validate a serialized world before it replaces the running state.
 
@@ -313,7 +391,7 @@ def parse_world(encoded: str) -> dict[str, Any]:
     """
     try:
         world = json.loads(encoded)
-        if not isinstance(world, dict) or world.get("schema_version") != 3:
+        if not isinstance(world, dict) or world.get("schema_version") != 5:
             raise ValueError("Unsupported snapshot version")
         json.dumps(world, allow_nan=False)
         _validate_clock(world)
@@ -324,6 +402,8 @@ def parse_world(encoded: str) -> dict[str, Any]:
         _validate_departed(world)
         _validate_expected(world)
         _validate_stimuli(world)
+        _validate_conversations(world)
+        check_invitations(world)
         if not isinstance(world.get("events"), list):
             raise ValueError("Invalid saved event log")
         return world
