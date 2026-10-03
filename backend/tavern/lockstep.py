@@ -1,6 +1,6 @@
 """Headless evenings in lockstep: fixed game-time steps and a fixed virtual model latency."""
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 import math
 from random import Random
@@ -82,7 +82,8 @@ class _Run:
     stalled_since: dict[str, float] = field(default_factory=dict)
     guests: list[str] = field(default_factory=list)
     gazes: set[tuple[str, int]] = field(default_factory=set)
-    # Per claimed turn (scene ID, turn index): when the written line is due back, and the line.
+    # Per claimed turn (scene ID, turn index): when the written line is due back, and a callable
+    # that returns it or raises the writer's error, as `turns.deliver_turn` expects.
     lines: dict[tuple[str, int], tuple[float, Any]] = field(default_factory=dict)
 
 
@@ -202,13 +203,24 @@ def _deliver_due(world: dict[str, Any], run: _Run) -> None:
     for key, (due, line) in list(run.lines.items()):
         if world["time"] + 1e-9 >= due:
             del run.lines[key]
-            deliver_turn(world, *key, lambda line=line: line)
+            deliver_turn(world, *key, line)
 
 
 async def _write(world: dict[str, Any], run: _Run, config: Mapping[str, Any], writer: TurnWriter,
                  latency: float) -> None:
     for scene_id, turn, view in claim_turns(world):
-        run.lines[(scene_id, turn)] = (world["time"] + latency, await writer(view, config))
+        try:
+            line = await writer(view, config)
+        except Exception as error:  # Like the live runtime: deliver_turn logs it and scripts the line.
+            run.lines[(scene_id, turn)] = (world["time"] + latency, _raising(error))
+        else:
+            run.lines[(scene_id, turn)] = (world["time"] + latency, lambda line=line: line)
+
+
+def _raising(error: Exception) -> Callable[[], Any]:
+    def outcome() -> Any:
+        raise error
+    return outcome
 
 
 def _collect(world: Mapping[str, Any], run: _Run) -> None:

@@ -328,3 +328,22 @@ def test_live_runtime_asks_the_writer_without_blocking(tmp_path: Path) -> None:
         return lines
     lines = asyncio.run(run())
     assert len(lines) == 1 and lines[0].startswith("~")
+
+
+def failing_writer(error: Exception) -> Callable[..., Any]:
+    """A turn writer whose every answer fails with the given error."""
+    async def write(seen: Mapping[str, Any], config: Mapping[str, Any]) -> dict[str, Any]:
+        raise error
+    return write
+
+
+@pytest.mark.parametrize("error", [
+    pytest.param(ValueError("not someone else in the conversation"), id="rejected-answer"),
+    pytest.param(RuntimeError("model unavailable"), id="writer-failure"),
+])
+def test_lockstep_falls_back_to_scripted_lines_when_the_writer_fails(error: Exception) -> None:
+    world = talking(social=100.0)
+    result = asyncio.run(run_evening(world, {"temperature": 0.0}, Random(4), Evaluators(waiting, waiting),
+                                     Pace(step=0.1, model_latency=1.0, time_limit=12.0), failing_writer(error)))
+    kinds = [event["type"] for event in result.events]
+    assert ("turn_failed" in kinds, "turn" in kinds) == (True, True)
