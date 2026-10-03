@@ -106,20 +106,28 @@ def update_expression(world: Mapping[str, Any]) -> None:
 
 
 def _facing(world: Mapping[str, Any], actor: Mapping[str, Any]) -> str | None:
-    # A sound turns heads before a partner does; walkers face their steps and the rest keep
+    # A sound turns heads before a conversation does; walkers face their steps and the rest keep
     # their seat's or their task's facing, which the client knows (None).
     if actor["status"] == "walking":
         return None
     origin = (actor["x"], actor["y"])
     if actor["gaze"]:
         return facing_toward(origin, actor["gaze"]["cell"])
-    partner = _partner(world, actor)
+    partner = _focus(world, actor)
     return facing_toward(origin, (partner["x"], partner["y"])) if partner else None
 
 
-def _partner(world: Mapping[str, Any], actor: Mapping[str, Any]) -> Mapping[str, Any] | None:
-    action = actor["action"]
-    if action and action["verb"] == "talk":
-        return next((item for item in world["actors"] if item["id"] == action["target_id"]), None)
-    return next((item for item in world["actors"] if item["action"] and item["action"]["verb"] == "talk"
-                 and item["action"]["target_id"] == actor["id"]), None)
+def _focus(world: Mapping[str, Any], actor: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    # In a scene (see `tavern.scenes`) everyone looks at the last speaker, who looks at whom
+    # they addressed (or the next in the circle); before the first line, the two who started
+    # it look at each other and anyone else at the starter.
+    scene = next((item for item in world["conversations"] if actor["id"] in item["participants"]), None)
+    if scene is None:
+        return None
+    people = {item["id"]: item for item in world["actors"]}
+    members = scene["participants"]
+    last = scene["turns"][-1] if scene["turns"] else {"speaker": members[0], "addressee": members[1]}
+    if last["speaker"] != actor["id"]:
+        return people.get(last["speaker"])
+    after = members[(members.index(actor["id"]) + 1) % len(members)]
+    return people.get(last["addressee"] if last["addressee"] in members else after)

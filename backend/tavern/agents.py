@@ -181,18 +181,25 @@ def build_seat_candidates(observation: Mapping[str, Any]) -> list[dict[str, Any]
 
 def _social_candidates(observation: Mapping[str, Any], actor: Mapping[str, Any],
                        objects: Sequence[Mapping[str, Any]]) -> list[Action]:
-    visitors = observation.get("visitors", [])
-    if not isinstance(visitors, list):
+    # Seated tablemates, or anyone standing beside them (`people`, when observed): talk to whoever
+    # is free, or join a conversation already going, once per scene through its first member seen.
+    visitors, people = observation.get("visitors", []), observation.get("people", [])
+    if not isinstance(visitors, list) or not isinstance(people, list):
         raise ValueError("Visible visitors must be a list")
     seat = next((item for item in objects if item["id"] == actor.get("seat_id")), None)
-    neighbors = {}
-    for visitor in visitors:
+    table = seat.get("table_id") if seat else None
+    options: dict[str, Action] = {}
+    for visitor in [*visitors, *people]:
         if not isinstance(visitor, Mapping) or not isinstance(visitor.get("id"), str) or not visitor["id"]:
             raise ValueError("Visible visitors must have nonempty IDs")
-        if seat and seat.get("table_id") and visitor.get("table_id") == seat["table_id"] and visitor.get("available"):
-            if visitor["id"] != actor["id"]:
-                neighbors[visitor["id"]] = _action("talk", visitor["id"])
-    return list(neighbors.values())
+        near = (table and visitor.get("seat_id") and visitor.get("table_id") == table) or visitor.get("beside")
+        if not near or visitor["id"] == actor["id"]:
+            continue
+        if visitor.get("available"):
+            options.setdefault(visitor["id"], _action("talk", visitor["id"]))
+        elif visitor.get("conversation"):
+            options.setdefault(visitor["conversation"], _action("join_conversation", visitor["id"]))
+    return list(options.values())
 
 
 def _local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]]) -> dict[str, float]:
@@ -213,6 +220,8 @@ def _local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[s
         "sit": seated_rest,
         "seating": 0.15 + 0.6 * actor["needs"].get("social", 0) / 100 if moving else seated_rest,
         "talk": 0.4 + 0.6 * actor["needs"].get("social", 0) / 100,
+        # Joining company already talking is a little less natural than starting a chat.
+        "join_conversation": 0.35 + 0.6 * actor["needs"].get("social", 0) / 100,
         "play_darts": 0.15 + 0.65 * actor["needs"].get("boredom", 0) / 100,
         # A gentler pastime than darts that comfort-loving visitors favour, once nothing presses.
         "watch": ((0.05 + 0.45 * actor["needs"].get("boredom", 0) / 100 + 0.3 * traits.get("comfort", 0.5))

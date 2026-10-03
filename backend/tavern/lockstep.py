@@ -8,6 +8,8 @@ from typing import Any, TypedDict
 
 from tavern.agents import Evaluators, choose_action
 from tavern.decisions import apply_decision, decision_requests, free_to_decide, stale_requests
+from tavern.scripted import write_scripted_turn
+from tavern.turns import TurnWriter, claim_turns, deliver_turn
 from tavern.world import step_world
 
 
@@ -80,6 +82,8 @@ class _Run:
     stalled_since: dict[str, float] = field(default_factory=dict)
     guests: list[str] = field(default_factory=list)
     gazes: set[tuple[str, int]] = field(default_factory=set)
+    # Per claimed turn (scene ID, turn index): when the written line is due back, and the line.
+    lines: dict[tuple[str, int], tuple[float, Any]] = field(default_factory=dict)
 
 
 def evening_over(world: Mapping[str, Any], time_limit: float) -> bool:
@@ -120,13 +124,15 @@ def evening_mode(requested: str | None, keyed: bool) -> tuple[str, str | None]:
 
 
 async def run_evening(world: dict[str, Any], config: Mapping[str, Any], rng: Random, evaluators: Evaluators,
-                      pace: Pace) -> Evening:
+                      pace: Pace, writer: TurnWriter = write_scripted_turn) -> Evening:
     """Play an evening to its end in lockstep.
 
     Each tick advances the world by one step, applies the answers that are due, then asks
     every visitor free to decide, by the live runtime's rules (`tavern.decisions`). An answer
     is computed at once and applied one model latency later, unless the visitor left or got
-    busy meanwhile. Nothing depends on wall-clock time. Failures the live runtime would show
+    busy meanwhile. Conversation turns go the same way: each tick claims the scenes' next
+    turns (`tavern.turns`), asks the writer at once, and hands each line back one model latency
+    later; the world drops a line whose scene changed meanwhile. Nothing depends on wall-clock time. Failures the live runtime would show
     as "Decision failed" (a malformed request, a replay miss) stop the evening instead.
 
     Args:
@@ -135,6 +141,7 @@ async def run_evening(world: dict[str, Any], config: Mapping[str, Any], rng: Ran
         rng: Seeded generator of the decisions' random draws.
         evaluators: Model port.
         pace: Step, virtual model latency and time limit.
+        writer: Turn writer port; the scripted writer by default.
 
     Returns:
         The evening's complete log, choices, stalled spells, guests and end time. A guest is
@@ -154,6 +161,8 @@ async def run_evening(world: dict[str, Any], config: Mapping[str, Any], rng: Ran
         _drop_stale(world, run)
         _apply_due(world, run)
         await _ask(world, run, config, rng, evaluators, pace.model_latency)
+        _deliver_due(world, run)
+        await _write(world, run, config, writer, pace.model_latency)
         _collect(world, run)
         _track(world, run)
     _close(run, list(run.stalled_since), world["time"])
@@ -187,6 +196,19 @@ async def _ask(world: dict[str, Any], run: _Run, config: Mapping[str, Any], rng:
         stages = [("actions", decision), *second]
         run.choices.extend({"time": world["time"], "actor_id": actor_id, "kind": kind,
                             "source": stage["source"], "error": stage["error"]} for kind, stage in stages)
+
+
+def _deliver_due(world: dict[str, Any], run: _Run) -> None:
+    for key, (due, line) in list(run.lines.items()):
+        if world["time"] + 1e-9 >= due:
+            del run.lines[key]
+            deliver_turn(world, *key, lambda line=line: line)
+
+
+async def _write(world: dict[str, Any], run: _Run, config: Mapping[str, Any], writer: TurnWriter,
+                 latency: float) -> None:
+    for scene_id, turn, view in claim_turns(world):
+        run.lines[(scene_id, turn)] = (world["time"] + latency, await writer(view, config))
 
 
 def _collect(world: Mapping[str, Any], run: _Run) -> None:

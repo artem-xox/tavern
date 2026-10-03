@@ -245,6 +245,18 @@ def _validate_rules(world: Mapping[str, Any]) -> None:
         raise ValueError("Invalid saved emote lifetimes")
     for value in [*lifetimes.values(), rules.get("long_wait")]:
         number(value, "Saved emote time", 0, math.inf)
+    _validate_conversation_rules(rules.get("conversation"))
+
+
+def _validate_conversation_rules(conversation: Any) -> None:
+    keys = {"opening", "min_gap", "chars_per_second", "turn_timeout", "relief", "satisfied", "max_participants",
+            "reach", "pressing"}
+    if not isinstance(conversation, dict) or set(conversation) != keys:
+        raise ValueError("Invalid saved conversation rules")
+    for key in keys:
+        number(conversation[key], f"Saved conversation rule {key}", 0, math.inf)
+    if conversation["chars_per_second"] <= 0 or conversation["max_participants"] < 2:
+        raise ValueError("Saved conversations could never be read or held")
 
 
 def _validate_expression(actor: Mapping[str, Any], world: Mapping[str, Any]) -> None:
@@ -301,6 +313,48 @@ def _validate_stimulus(item: Any, world: Mapping[str, Any]) -> None:
         raise ValueError("Invalid saved stimulus cause")
 
 
+def _validate_conversations(world: Mapping[str, Any]) -> None:
+    scenes, issued = world.get("conversations"), world.get("next_conversation_id")
+    if type(issued) is not int or issued < 0 or not isinstance(scenes, list):
+        raise ValueError("Invalid saved conversations")
+    keys = {"id", "participants", "table_id", "topic", "turns", "started_at", "next_turn_at", "writing", "written"}
+    taken: list[Any] = []
+    for scene in scenes:
+        if not isinstance(scene, dict) or set(scene) != keys or not isinstance(scene["id"], str):
+            raise ValueError("Invalid saved conversation")
+        _validate_scene(scene, world)
+        taken.extend(scene["participants"])
+    if len(set(taken)) != len(taken) or len({scene["id"] for scene in scenes}) != len(scenes):
+        raise ValueError("Saved guests may take part in one conversation at a time")
+
+
+def _validate_scene(scene: Mapping[str, Any], world: Mapping[str, Any]) -> None:
+    people, tables = {actor["id"] for actor in world["actors"]}, {
+        item["id"] for item in world["map"]["objects"] if item["kind"] == "table"}
+    members = scene["participants"]
+    if not isinstance(members, list) or len(members) < 2 or len(set(members)) != len(members) or not set(
+            members) <= people:
+        raise ValueError("Saved conversation needs two or more distinct guests")
+    if scene["table_id"] is not None and scene["table_id"] not in tables:
+        raise ValueError("Saved conversation is held at an unknown table")
+    if not isinstance(scene["topic"], str) or not isinstance(scene["turns"], list):
+        raise ValueError("Invalid saved conversation topic or turns")
+    number(scene["started_at"], "Saved conversation start", 0, world["time"])
+    number(scene["next_turn_at"], "Saved next turn", 0, math.inf)
+    for turn in scene["turns"]:
+        if not isinstance(turn, dict) or set(turn) != {"speaker", "addressee", "line", "act", "time"} or not all(
+                isinstance(turn[key], str) for key in ("speaker", "line", "act")):
+            raise ValueError("Invalid saved turn")
+        number(turn["time"], "Saved turn time", 0, world["time"])
+    claim = scene["writing"]
+    if claim is not None and (not isinstance(claim, dict) or set(claim) != {"turn", "speaker", "since"}
+                              or type(claim["turn"]) is not int or not isinstance(claim["speaker"], str)):
+        raise ValueError("Invalid saved turn being written")
+    written = scene["written"]
+    if written is not None and (not isinstance(written, dict) or set(written) != {"line", "act", "addressee", "topic"}):
+        raise ValueError("Invalid saved written turn")
+
+
 def parse_world(encoded: str) -> dict[str, Any]:
     """Validate a serialized world before it replaces the running state.
 
@@ -313,7 +367,7 @@ def parse_world(encoded: str) -> dict[str, Any]:
     """
     try:
         world = json.loads(encoded)
-        if not isinstance(world, dict) or world.get("schema_version") != 3:
+        if not isinstance(world, dict) or world.get("schema_version") != 4:
             raise ValueError("Unsupported snapshot version")
         json.dumps(world, allow_nan=False)
         _validate_clock(world)
@@ -324,6 +378,7 @@ def parse_world(encoded: str) -> dict[str, Any]:
         _validate_departed(world)
         _validate_expected(world)
         _validate_stimuli(world)
+        _validate_conversations(world)
         if not isinstance(world.get("events"), list):
             raise ValueError("Invalid saved event log")
         return world

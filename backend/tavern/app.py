@@ -21,6 +21,8 @@ from tavern.jev import evaluate_actions, evaluate_seats
 from tavern.persistence import load_world, save_world
 from tavern.room import object_cells
 from tavern.scenario import Scenario, open_evening, parse_scenario
+from tavern.scripted import write_scripted_turn
+from tavern.turns import TurnWriter, claim_turns, deliver_turn
 from tavern.world import create_world, start_action, step_world
 
 # Session IDs also name save directories, so only path-safe characters are allowed.
@@ -60,12 +62,12 @@ async def choose_action(observation: Mapping[str, Any], config: Mapping[str, Any
 
 
 class TavernRuntime:
-    """Own world state and one asynchronous decision request per visitor."""
+    """Own world state, one asynchronous decision request per visitor and one line per scene."""
 
     def __init__(self, map_data: Mapping[str, Any], save_path: Path,
                  ai_config: Mapping[str, Any], seed: int = 0,
                  database_url: str | None = None, session_id: str = "local",
-                 scenario: Scenario | None = None) -> None:
+                 scenario: Scenario | None = None, writer: TurnWriter = write_scripted_turn) -> None:
         self.map_data = deepcopy(dict(map_data))
         self.scenario = scenario
         self.world = self._open(seed)
@@ -79,6 +81,9 @@ class TavernRuntime:
         self.next_decision: dict[str, float] = {}
         # Game time each pending request was made, to drop those an interrupt overtakes.
         self.asked_at: dict[str, float] = {}
+        self.writer = writer
+        # Lines being written, per claimed turn (scene ID, turn index).
+        self.writing: dict[tuple[str, int], asyncio.Task[Any]] = {}
 
     def _open(self, seed: int) -> dict[str, Any]:
         # A scenario says who comes tonight; without one, the room's own visitors are already in.
@@ -129,6 +134,16 @@ class TavernRuntime:
             self.pending[actor_id] = (task, self.revisions.get(actor_id, 0))
             self.asked_at[actor_id] = self.world["time"]
 
+    def _collect_lines(self) -> None:
+        for key, task in list(self.writing.items()):
+            if task.done():
+                del self.writing[key]
+                deliver_turn(self.world, *key, task.result)
+
+    def _request_lines(self) -> None:
+        for scene_id, turn, view in claim_turns(self.world):
+            self.writing[(scene_id, turn)] = asyncio.create_task(self.writer(view, self.ai_config))
+
     def _drop_stale_requests(self) -> None:
         # As in the lockstep runner, an interrupted visitor's pending thought is dropped and they ask anew.
         for actor_id in stale_requests(self.world, self.asked_at):
@@ -146,6 +161,8 @@ class TavernRuntime:
             self._drop_stale_requests()
             self._collect_decisions()
             self._request_decisions()
+            self._collect_lines()
+            self._request_lines()
 
     def _pause(self, command: Mapping[str, Any]) -> None:
         if not isinstance(command.get("paused"), bool):
@@ -202,9 +219,10 @@ class TavernRuntime:
         self.revisions[actor_id] = self.revisions.get(actor_id, 0) + 1
 
     def _invalidate_requests(self) -> None:
-        for task, _revision in self.pending.values():
+        for task in [*(task for task, _revision in self.pending.values()), *self.writing.values()]:
             task.cancel()
         self.pending.clear()
+        self.writing.clear()
         self.asked_at.clear()
         self.revisions.clear()
         self.next_decision.clear()
@@ -296,7 +314,7 @@ class TavernRuntime:
 
     async def close(self) -> None:
         """Cancel and drain model requests when the server stops."""
-        tasks = [task for task, _revision in self.pending.values()]
+        tasks = [*(task for task, _revision in self.pending.values()), *self.writing.values()]
         self._invalidate_requests()
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
