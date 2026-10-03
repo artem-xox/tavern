@@ -12,6 +12,7 @@ from dotenv import dotenv_values
 
 from tavern import jev
 from tavern.agents import Evaluators
+from tavern.cards import parse_cards
 from tavern.lockstep import Pace, evening_mode, run_evening
 from tavern.metrics import attention_counts, evening_metrics
 from tavern.recording import Record, format_record, parse_records, record_calls, replay_calls
@@ -32,6 +33,8 @@ def arguments(root: Path) -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--scenario", type=Path, default=root / "data" / "scenarios" / "first_evening.json",
                         help="who comes tonight, when, and when the inn closes")
+    parser.add_argument("--characters", type=Path, default=root / "data" / "characters",
+                        help="character cards the scenario casts its guests from")
     parser.add_argument("--mode", choices=("local", "live", "replay"),
                         help="default: live when TYPESAFE_API_KEY is in the env file, else local")
     parser.add_argument("--out", type=Path, default=root / "runs" / "evening-0")
@@ -127,7 +130,8 @@ def main(root: Path) -> None:
     ports = evaluators(mode, args.calls, calls, args.out / "calls.jsonl")
     room = json.loads((root / "data" / "tavern.json").read_text())
     try:
-        world = open_evening(room, parse_scenario(json.loads(args.scenario.read_text())), args.seed)
+        cards = parse_cards([json.loads(path.read_text()) for path in sorted(args.characters.glob("*.json"))])
+        world = open_evening(room, parse_scenario(json.loads(args.scenario.read_text()), cards), args.seed)
     except (OSError, ValueError) as error:
         parser.error(f"cannot open the evening: {error}")
     settings = config(values, mode)

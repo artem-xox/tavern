@@ -15,6 +15,7 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 
 from tavern import agents
 from tavern.activities import ACTIVITIES, client_activities
+from tavern.cards import parse_cards
 from tavern.database import initialize_database, load_database_world, save_database_world
 from tavern.decisions import apply_decision, decision_requests, free_to_decide, log_control, stale_requests
 from tavern.jev import evaluate_actions, evaluate_seats
@@ -428,7 +429,7 @@ async def _serve_socket(socket: WebSocket, sessions: TavernSessions) -> None:
 
 def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
                run_loop: bool = True, database_url: str | None = None, seed: int = 0,
-               scenario_path: Path | None = None) -> FastAPI:
+               scenario_path: Path | None = None, characters_dir: Path | None = None) -> FastAPI:
     """Construct the local server with explicit paths and AI configuration.
 
     Args:
@@ -440,14 +441,18 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
         seed: Seed of the sessions' arrivals and decision policies.
         scenario_path: Optional JSON scenario; sessions then open its evenings instead of
             starting with the room's own visitors.
+        characters_dir: Optional folder of character cards (one JSON file each) the scenario
+            casts its guests from.
     Returns:
         Application serving JSON state and a bidirectional WebSocket per device session.
         Sessions advance only while a page is open and always reopen paused.
     Raises:
-        ValueError: The scenario file is malformed.
+        ValueError: The scenario file or a character card is malformed.
     """
     map_data = json.loads(map_path.read_text())
-    scenario = parse_scenario(json.loads(scenario_path.read_text())) if scenario_path else None
+    cards = (parse_cards([json.loads(path.read_text()) for path in sorted(characters_dir.glob("*.json"))])
+             if characters_dir else None)
+    scenario = parse_scenario(json.loads(scenario_path.read_text()), cards) if scenario_path else None
     if database_url:
         initialize_database(database_url)
     sessions = TavernSessions(map_data, save_dir, ai_config, seed, database_url, scenario)
@@ -499,4 +504,5 @@ def create_default_app() -> FastAPI:
                      if os.environ.get("TAVERN_DATABASE_ENABLED") == "true" else None)
     return create_app(root / "data" / "tavern.json", root / "saves", config,
                       database_url=database_url, seed=Random().randrange(1 << 30),
-                      scenario_path=root / "data" / "scenarios" / "first_evening.json")
+                      scenario_path=root / "data" / "scenarios" / "first_evening.json",
+                      characters_dir=root / "data" / "characters")

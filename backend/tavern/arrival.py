@@ -15,7 +15,8 @@ def create_actor(data: Mapping[str, Any], world_map: Mapping[str, Any]) -> dict[
     """Build a fresh visitor record with an empty evening ahead.
 
     Args:
-        data: Actor definition with ID, cell, and optional name, color, sprite, needs, traits, beer.
+        data: Actor definition with ID, cell, and optional name, color, sprite, needs, traits, beer,
+            and the character card and ties of a scenario guest (validated by `scenario.parse_guest`).
             A visitor without a sprite of their own looks like the generic `visitor`.
         world_map: Validated map the visitor stands in.
     Returns:
@@ -35,7 +36,8 @@ def create_actor(data: Mapping[str, Any], world_map: Mapping[str, Any]) -> dict[
     if not isinstance(sprite, str) or not sprite:
         raise ValueError("Actor sprite must be a nonempty string")
     return dict(id=data["id"], name=data.get("name", data["id"]), color=data.get("color", "#d8ad68"),
-                sprite=sprite, x=x, y=y, traits=traits, needs=needs, inventory={"beer": beer}, status="idle",
+                sprite=sprite, x=x, y=y, traits=traits, card=data.get("card"), ties=list(data.get("ties", [])),
+                needs=needs, inventory={"beer": beer}, status="idle",
                 action=None, path=[], seat_id=None, favorite_seat_id=None,
                 visit={"seconds": 0.0, "beers": 0, "grievances": []},
                 knowledge={"objects": {}, "cells": []}, memory=[],

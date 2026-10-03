@@ -61,6 +61,10 @@ export interface Actor {
   x: number;
   y: number;
   traits: Record<string, unknown>;
+  /** The character card a scenario guest was cast from; null for a visitor without one. */
+  card: CharacterCard | null;
+  /** Starting relationships, from this guest's side. */
+  ties: Tie[];
   needs: { thirst: number; fatigue: number; bladder: number; social: number; boredom: number };
   inventory: { beer: number };
   status: "idle" | "walking" | "interacting" | "waiting" | "queued";
@@ -81,6 +85,29 @@ export interface Actor {
   interrupted_at: number | null;
 }
 
+/** Who a guest is in words, plus the 0–1 params the rules read. */
+export interface CharacterCard {
+  id: string;
+  name: string;
+  sprite: string;
+  occupation: string;
+  background: string;
+  temperament: string;
+  speech: string;
+  quirks: string;
+  secret: string;
+  goal: string;
+  params: Record<string, number>;
+}
+
+/** A starting relationship as one guest holds it. */
+export interface Tie {
+  with: string;
+  name: string;
+  kind: "old friends" | "rivals";
+  note: string;
+}
+
 export type Facing = "north" | "south" | "east" | "west";
 export type EmoteKind = "alert" | "confused" | "angry" | "affection" | "sleep" | "waiting";
 
@@ -91,6 +118,8 @@ export interface ExpectedGuest {
   color: string;
   sprite: string;
   traits: Record<string, number>;
+  card?: CharacterCard;
+  ties?: Tie[];
   needs: Partial<Actor["needs"]>;
   /** Game seconds after opening. */
   arrives_at: number;

@@ -1,0 +1,23 @@
+{
+  "id": "brida",
+  "name": "Brida",
+  "sprite": "cook",
+  "occupation": "cook at the manor kitchen",
+  "background": "Brida has fed the manor household for twenty years and comes to the inn on her one free evening a week to be served for once.",
+  "temperament": "Unflappable and patient, mothering in a gruff way; she is slow to warm to strangers.",
+  "speech": "Plain country speech, blunt opinions on food, laughs from the belly.",
+  "quirks": "Judges the inn's bread aloud; carries her own salt; hums while she waits.",
+  "secret": "She has been quietly feeding a runaway kitchen boy hiding in the manor stables.",
+  "goal": "Sit somewhere warm, have someone else pour the ale, and hear the gossip from the manor's side of the valley.",
+  "params": {
+    "patience": 0.9,
+    "temper": 0.25,
+    "sociability": 0.55,
+    "courage": 0.5,
+    "strength": 0.6,
+    "brawling": 0.3,
+    "tolerance": 0.8,
+    "comfort": 0.5,
+    "curiosity": 0.2
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "toren",
+  "name": "Toren",
+  "sprite": "toren",
+  "occupation": "travelling trader in cloth and dyes",
+  "background": "Toren crosses the border twice a season with a mule train of wool and madder dye, buying cheap on one side and selling dear on the other.",
+  "temperament": "Restless and endlessly curious; friendly to everyone because everyone might be a customer.",
+  "speech": "Quick, cheerful patter, prices in three currencies, flatters before he asks.",
+  "quirks": "Fingers the cloth of everyone's sleeve; never sits in the same seat twice; keeps a ledger in his boot.",
+  "secret": "Half his bales are carried past the toll gate at night without paying.",
+  "goal": "Learn which roads are watched this month and talk someone into a deal before the inn closes.",
+  "params": {
+    "patience": 0.5,
+    "temper": 0.35,
+    "sociability": 0.85,
+    "courage": 0.4,
+    "strength": 0.4,
+    "brawling": 0.2,
+    "tolerance": 0.55,
+    "comfort": 0.3,
+    "curiosity": 0.9
+  }
+}

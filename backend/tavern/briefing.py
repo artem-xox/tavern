@@ -4,6 +4,7 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 from tavern.activities import ACTIVITIES, FAMILIES
+from tavern.portrait import portrait
 
 Observation = Mapping[str, Any]
 Action = Mapping[str, Any]
@@ -28,7 +29,8 @@ def brief(observation: Observation, candidates: Sequence[Action]) -> dict[str, A
     """
     parts = (_closing(observation), _stay(observation), _whereabouts(observation), _trigger(observation),
              _own_seat(observation),
-             _needs(observation), _temperament(observation), _grievances(observation), _people(observation),
+             _needs(observation), _temperament(observation), portrait(observation["actor"]),
+             _grievances(observation), _people(observation),
              _places(observation), _tables(observation), _recent(observation))
     return {"situation": " ".join(part for part in parts if part),
             "options": {action["id"]: _family(observation, action) if action["verb"] in FAMILIES
