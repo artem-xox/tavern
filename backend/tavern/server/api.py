@@ -1,7 +1,7 @@
 """FastAPI transport: the app, its routes and the WebSocket of a device session."""
 
 import asyncio
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from contextlib import asynccontextmanager, suppress
 import json
 from pathlib import Path
@@ -13,10 +13,11 @@ from tavern.adapters.database import DatabaseStore, initialize_database
 from tavern.evening.scenario import parse_scenario
 from tavern.mind.cards import parse_cards
 from tavern.mind.intentions import Intender
+from tavern.mind.model_health import HealthBoard
 from tavern.mind.questions import Ask
 from tavern.mind.scripted import write_scripted_turn
 from tavern.server.cards_api import card_routes
-from tavern.server.runtime import Store, TavernRuntime
+from tavern.server.runtime import Chooser, Store, TavernRuntime
 from tavern.server.sessions import TavernSessions
 from tavern.social.turns import TurnWriter
 
@@ -69,7 +70,9 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
                scenario_path: Path | None = None, characters_dir: Path | None = None,
                ask: Ask | None = None, writer: TurnWriter = write_scripted_turn,
                writer_label: str = "scripted", intender: Intender | None = None,
-               store_for: Callable[[str], Store] | None = None) -> FastAPI:
+               store_for: Callable[[str], Store] | None = None, choose: Chooser | None = None,
+               health: HealthBoard | None = None,
+               probes: Mapping[str, Callable[[], Awaitable[object]]] | None = None) -> FastAPI:
     """Construct the local server with explicit paths and AI configuration.
 
     Args:
@@ -92,6 +95,11 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
             and the snapshot says so.
         store_for: Optional maker of a session's store from its ID, in place of the database or
             the JSON files.
+        choose: Optional decision maker of every session, in place of the Jev one.
+        health: Optional board of how Jev and Claude are doing; `/health` and the snapshot report it.
+        probes: Per service (`jev`, `claude`) the cheap call that proves its key, credit and
+            connection; each is made once in the background when the server starts, and recorded
+            on the board.
     Returns:
         Application serving JSON state and a bidirectional WebSocket per device session.
         Sessions advance only while a page is open and always reopen paused.
@@ -106,27 +114,31 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
         initialize_database(database_url)
         store_for = lambda session_id: DatabaseStore(database_url, session_id)
     sessions = TavernSessions(map_data, save_dir, ai_config, seed, database_url, scenario, writer, writer_label,
-                              intender, store_for)
+                              intender, store_for, choose, health)
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         ticker = asyncio.create_task(_run_world(sessions, 0.1)) if run_loop else None
+        # Probes run in the background: the deploy's health check must not wait for a slow model.
+        probing = [asyncio.create_task(health.probe(name, call)) for name, call in (probes or {}).items()
+                   ] if health is not None else []
         yield
-        if ticker is not None:
-            ticker.cancel()
+        for task in [*probing, *([ticker] if ticker is not None else [])]:
+            task.cancel()
             with suppress(asyncio.CancelledError):
-                await ticker
+                await task
         await sessions.close()
     app = FastAPI(title="The Last Inn", lifespan=lifespan)
     app.state.sessions = sessions
-    _register_routes(app, sessions)
+    _register_routes(app, sessions, health)
     app.include_router(card_routes(ask))
     return app
 
 
-def _register_routes(app: FastAPI, sessions: TavernSessions) -> None:
+def _register_routes(app: FastAPI, sessions: TavernSessions, board: HealthBoard | None) -> None:
     @app.get("/health")
-    async def health() -> dict[str, str]:
-        return {"status": "ok"}
+    async def health() -> dict[str, Any]:
+        # Always 200 while the server runs, so the deploy check passes; the models are reported beside it.
+        return {"status": "ok"} if board is None else {"status": "ok", "models": board.snapshot()}
     @app.get("/api/state")
     async def state(session: str) -> dict[str, Any]:
         runtime = sessions.runtimes.get(session)

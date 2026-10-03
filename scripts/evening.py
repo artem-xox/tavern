@@ -12,6 +12,7 @@ from dotenv import dotenv_values
 
 from tavern.adapters import jev
 from tavern.adapters.claude import HAIKU_4_5, ClaudeError, ask_claude
+from tavern.adapters.probes import probes
 from tavern.evening.lockstep import Pace, evening_mode, run_evening
 from tavern.evening.metrics import attention_counts, conversation_counts, evening_metrics, intention_counts, writer_stats
 from tavern.evening.recording import (Record, format_record, parse_records, record_calls, record_questions, replay_calls,
@@ -21,6 +22,7 @@ from tavern.mind.agents import Evaluators
 from tavern.mind.cards import parse_cards
 from tavern.mind.haiku_turns import claude_writer, writer_mode
 from tavern.mind.intentions import Intender, intention_writer
+from tavern.mind.model_health import HealthBoard, banner, blocking
 from tavern.mind.questions import Question
 from tavern.mind.scripted import write_scripted_turn
 from tavern.social.turns import TurnWriter
@@ -192,6 +194,39 @@ def rounded(value: Any) -> Any:
     return value
 
 
+def announce_health(parser: argparse.ArgumentParser, mode: str, writer: str, settings: Mapping[str, Any],
+                    values: Mapping[str, Any]) -> None:
+    """Probe the services this run will ask, print how they are doing, and stop a run none could serve.
+
+    Args:
+        parser: Reports the stop as a usage error.
+        mode: Evening mode; a replay asks nobody.
+        writer: Who writes the lines (`haiku` asks Claude).
+        settings: The AI config of the run.
+        values: Parsed env file.
+    """
+    claude_key = values.get("ANTHROPIC_API_KEY")
+    used = [name for name, wanted in (("jev", mode == "live"),
+                                      ("claude", bool(claude_key) and (writer == "haiku" or mode == "live")))
+            if wanted]
+    if mode == "replay":
+        return
+    board = HealthBoard({"jev": bool(settings["typesafe_api_key"]), "claude": bool(claude_key)})
+    calls = probes(settings, claude_key)
+
+    async def ask_all() -> None:
+        for name in used:
+            await board.probe(name, calls[name])
+    asyncio.run(ask_all())
+    health = board.snapshot()
+    print(banner(health, used))
+    stopped = blocking(health, used)
+    if stopped:
+        parser.error("; ".join(f"{name.upper()} cannot be used ({health[name]['status']}"
+                               f"{': ' + health[name]['reason'] if health[name]['reason'] else ''})"
+                               for name in stopped))
+
+
 def main(root: Path) -> None:
     """Read options and the env file, play the evening, and write its outputs.
 
@@ -228,6 +263,7 @@ def main(root: Path) -> None:
     settings = config(values, mode)
     intender, minded = mind(mode, values, (root / "data" / "minds" / "intention_prefix.md").read_text(), calls,
                             args.out / "calls.jsonl")
+    announce_health(parser, mode, writer, settings, values)
     started = time.monotonic()
     evening = asyncio.run(run_evening(world, settings, Random(args.seed), ports, pace, lines, intender=intender))
     wall = time.monotonic() - started

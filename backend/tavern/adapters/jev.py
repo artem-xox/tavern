@@ -147,7 +147,7 @@ async def _post_scores(
     except httpx.TimeoutException as error:
         raise JevError("Jev request timed out") from error
     except httpx.HTTPStatusError as error:
-        raise JevError(f"Jev HTTP {error.response.status_code}") from error
+        raise JevError(f"Jev HTTP {error.response.status_code}", error.response.status_code) from error
     except httpx.RequestError as error:
         raise JevError("Jev connection failed") from error
     except ValueError as error:

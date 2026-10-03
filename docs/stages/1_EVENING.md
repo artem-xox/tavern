@@ -74,17 +74,13 @@ E16 measures this; E28 sets the budget.
 
 ## Status
 
-M1–M3 and the refactor R0–R8 are done (2026-10-03). Next, in order:
+M1–M3, the refactor R0–R8 and the model health markers (D13) are done (2026-10-03). Next, in order:
 
-1. **D13, model health markers.** Jev and Claude show reachability, credit and keys in
-   `/health`, the client header and `make evening`. Without them, an empty account
-   silently turns live evenings into scripted ones. The spec is in the
-   [tech-debt table](../PLAN.md#tech-debt).
-2. **U1, no text labels on furniture.** A small frontend task that can run in
+1. **U1, no text labels on furniture.** A small frontend task that can run in
    parallel with anything else.
-3. **E18b, conversation memory.** Guests forget earlier conversations: they greet each
+2. **E18b, conversation memory.** Guests forget earlier conversations: they greet each
    other again and repeat topics.
-4. **M4, news and conflict (E19–E22).** E19 replaces the news Haiku invents today.
+3. **M4, news and conflict (E19–E22).** E19 replaces the news Haiku invents today.
 
 The door at closing (D02) is parked in the tech-debt table and is not a task. The code now
 lives in packages (`backend/tavern/hall`, `body`, `social`, `mind`, `evening`, `adapters`,
@@ -518,6 +514,20 @@ What changed, step by step:
   the package of the world is `hall/` (not `world/`, which would read `tavern.world.world`); the shared
   helpers of the briefing are `hall_view.py`; `app.py` stays at the top as the launch wiring, so
   `.do/app.prod.yaml` needed no change; `controls.py` and `cards_api.py` sit in `server/`.
+
+D13 result (2026-10-03): `mind/model_health.py` (pure) classifies a failed call by its HTTP status or words
+(`auth` 401/403, `no_credit` 402, `unreachable` for a timeout, a lost connection or a 5xx, otherwise `degraded`)
+and keeps a window of the latest 10 calls per service in a `HealthBoard`; a service without a key is `no_key`.
+Adapter errors now carry `status`, and Claude's "credit balance is too low" (a 400) reads as 402. The shell
+notes every Jev and Claude call on the board (`app.py`) and probes each service once at startup, in the
+background (`adapters/probes.py`: Jev scores one action, Claude answers a one-field object, a real request
+costing a fraction of a cent, because only one proves the account has credit). `/health` stays 200 and adds
+`models`; the snapshot carries `ai.health`; the client header shows a coloured badge per service (green ok,
+amber checking or degraded, red auth, no credit or unreachable, grey no key; the reason is the tooltip);
+`make evening` probes, prints `JEV: OK  CLAUDE: OK` (OFF for a service the run does not ask) and stops a
+live run whose service has no key, a refused key or no credit. Tried against the real services: both `ok`,
+and with bogus keys both `auth`. Not done: a later top-up is noticed only by the next successful call,
+there is no periodic re-probe.
 
 - [ ] **E18b — Conversation memory.** Guests remember the lines they spoke and heard
   tonight, and the turn writer and the intention writer see them. In-evening only; memory

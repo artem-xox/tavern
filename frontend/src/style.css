@@ -23,6 +23,11 @@ h3 { font-size: 14px; font-weight: 600; }
 .eyebrow { color: #aaa98b; font-size: 9px; font-weight: 600; letter-spacing: 1.8px; margin-bottom: 8px; }
 .header-status { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
 .stage-tag { font-size: 9px; color: #b6bea6; letter-spacing: 1.8px; }
+.health-row { display: flex; gap: 6px; }
+.health-badge { font-size: 9px; letter-spacing: 1px; padding: 2px 7px; border-radius: 9px; border: 1px solid currentColor; color: #bf9d69; }
+.health-badge[data-health="ok"] { color: #a5bc94; }
+.health-badge[data-health="no_key"] { color: #8d8a82; }
+.health-badge[data-health="auth"], .health-badge[data-health="no_credit"], .health-badge[data-health="unreachable"] { color: #d98a7a; }
 .connection { color: #bf9d69; font-size: 11px; }
 .connection::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #bf9d69; margin-right: 7px; }
 .connection[data-connected="true"] { color: #a5bc94; }

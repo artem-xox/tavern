@@ -1,4 +1,4 @@
-import type { ActivityView, Actor, Command, Conversation, Intention, Mind, Snapshot, Thought, Verb, World, WorldEvent, WorldObject } from "./types";
+import type { ActivityView, Actor, Command, Conversation, Intention, Mind, ServiceHealth, Snapshot, Thought, Verb, World, WorldEvent, WorldObject } from "./types";
 
 interface Handlers {
   command: (command: Command) => void;
@@ -58,12 +58,26 @@ export class Dashboard {
     element(this.root, "#ai-writer").dataset.mode = ai.writer === "haiku" ? "jev" : "local";
     element(this.root, "#mode-caption").textContent = ai.mode === "jev" ? `Jev evaluation configured${ai.model ? ` · ${ai.model}` : ""}. Each visitor's decision shows the actual source and any fallback.` : "Offline demo. Decisions use needs and traits; add a TypeSafe key to enable Jev.";
     element(this.root, "#mode-caption").textContent += ai.intentions ? " Claude Haiku writes each guest's intention." : " Intentions offline: no Claude key, so guests have none.";
+    this.renderHealth(ai.health);
     this.renderEveningState(world);
     this.renderRoster(world);
     this.renderInspector();
     this.renderEvents(world.events);
     this.updateTargets();
     this.updateControlAvailability();
+  }
+
+  /** Show how Jev and Claude are doing: green when usable, amber while unsure or shaky, red when not, grey without a key. */
+  private renderHealth(health: Snapshot["ai"]["health"]): void {
+    for (const service of ["jev", "claude"] as const) {
+      const badge: HTMLElement = element(this.root, `#health-${service}`);
+      const report: ServiceHealth | undefined = health?.[service];
+      badge.hidden = report === undefined;
+      if (!report) continue;
+      badge.dataset.health = report.status;
+      badge.textContent = `${service.toUpperCase()} ${report.status.replace("_", " ").toUpperCase()}`;
+      badge.title = report.reason || `${service} is ${report.status.replace("_", " ")}`;
+    }
   }
 
   /** Show connection state and prevent commands while the server is unavailable. */
@@ -102,7 +116,7 @@ export class Dashboard {
     return `
       <header class="masthead">
         <div class="brand"><span class="brand-mark" aria-hidden="true">✦</span><div><p class="eyebrow">A PLACE BETWEEN WORLDS</p><h1>The Last Inn</h1></div></div>
-        <div class="header-status"><span class="stage-tag">STAGE 0 / TAVERN DEMO</span><span id="connection" class="connection" data-connected="false">Connecting…</span></div>
+        <div class="header-status"><span class="stage-tag">STAGE 0 / TAVERN DEMO</span><span id="connection" class="connection" data-connected="false">Connecting…</span><span class="health-row"><span id="health-jev" class="health-badge" data-health="checking">JEV</span><span id="health-claude" class="health-badge" data-health="checking">CLAUDE</span></span></div>
       </header>
       <div id="notice" class="notice" role="alert" hidden></div>
       <div class="workspace">
