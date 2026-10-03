@@ -21,6 +21,7 @@ from tavern.claude import ask_claude
 from tavern.database import initialize_database, load_database_world, save_database_world
 from tavern.decisions import apply_decision, decision_requests, free_to_decide, log_control, stale_requests
 from tavern.feelings import minds
+from tavern.haiku_turns import claude_writer
 from tavern.jev import evaluate_actions, evaluate_seats
 from tavern.persistence import load_world, save_world
 from tavern.questions import Ask, Question
@@ -72,7 +73,8 @@ class TavernRuntime:
     def __init__(self, map_data: Mapping[str, Any], save_path: Path,
                  ai_config: Mapping[str, Any], seed: int = 0,
                  database_url: str | None = None, session_id: str = "local",
-                 scenario: Scenario | None = None, writer: TurnWriter = write_scripted_turn) -> None:
+                 scenario: Scenario | None = None, writer: TurnWriter = write_scripted_turn,
+                 writer_label: str = "scripted") -> None:
         self.map_data = deepcopy(dict(map_data))
         self.scenario = scenario
         self.world = self._open(seed)
@@ -87,6 +89,8 @@ class TavernRuntime:
         # Game time each pending request was made, to drop those an interrupt overtakes.
         self.asked_at: dict[str, float] = {}
         self.writer = writer
+        # Which writer speaks the lines (`haiku` or `scripted`), for the client's label.
+        self.writer_label = writer_label
         # Lines being written, per claimed turn (scene ID, turn index).
         self.writing: dict[tuple[str, int], asyncio.Task[Any]] = {}
 
@@ -102,11 +106,12 @@ class TavernRuntime:
         Returns:
             Independent world copy, public evaluator configuration, how the client
             names, shows, and targets each verb, and each visitor's inner state (`feelings.minds`).
+            `ai.writer` names who writes conversation lines.
         """
         configured = bool(self.ai_config.get("typesafe_api_key"))
         return {"type": "snapshot", "state": deepcopy(self.world), "ai": {
             "mode": "jev" if configured else "local", "configured": configured,
-            "model": self.ai_config["model"],
+            "model": self.ai_config["model"], "writer": self.writer_label,
         }, "activities": client_activities(ACTIVITIES), "minds": minds(self.world)}
 
     def _event(self, message: str) -> None:
@@ -329,8 +334,10 @@ class TavernSessions:
     """Own one runtime per device session; only sessions with an open page advance."""
 
     def __init__(self, map_data: Mapping[str, Any], save_dir: Path, ai_config: Mapping[str, Any],
-                 seed: int = 0, database_url: str | None = None, scenario: Scenario | None = None) -> None:
+                 seed: int = 0, database_url: str | None = None, scenario: Scenario | None = None,
+                 writer: TurnWriter = write_scripted_turn, writer_label: str = "scripted") -> None:
         self.map_data = deepcopy(dict(map_data))
+        self.writer, self.writer_label = writer, writer_label
         self.save_dir = save_dir
         self.ai_config = dict(ai_config)
         self.database_url = database_url
@@ -362,7 +369,7 @@ class TavernSessions:
         if self.scenario is not None and self.scenario.seed is not None:
             seed = self.scenario.seed
         runtime = TavernRuntime(self.map_data, self.save_dir / session_id / "save.json", self.ai_config,
-                                seed, self.database_url, session_id, self.scenario)
+                                seed, self.database_url, session_id, self.scenario, self.writer, self.writer_label)
         if not runtime.restore():
             # A new evening waits at the door until someone presses Start.
             runtime.world["paused"] = True
@@ -452,7 +459,8 @@ async def _serve_socket(socket: WebSocket, sessions: TavernSessions) -> None:
 def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
                run_loop: bool = True, database_url: str | None = None, seed: int = 0,
                scenario_path: Path | None = None, characters_dir: Path | None = None,
-               ask: Ask | None = None) -> FastAPI:
+               ask: Ask | None = None, writer: TurnWriter = write_scripted_turn,
+               writer_label: str = "scripted") -> FastAPI:
     """Construct the local server with explicit paths and AI configuration.
 
     Args:
@@ -468,6 +476,8 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
             casts its guests from.
         ask: Optional Claude port bound to the server's key, for the card compiler; without
             it the compiler runs its labeled offline mode.
+        writer: Turn writer of every session's conversation lines; scripted by default.
+        writer_label: Name of that writer shown to the client (`haiku` or `scripted`).
     Returns:
         Application serving JSON state and a bidirectional WebSocket per device session.
         Sessions advance only while a page is open and always reopen paused.
@@ -480,7 +490,7 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
     scenario = parse_scenario(json.loads(scenario_path.read_text()), cards) if scenario_path else None
     if database_url:
         initialize_database(database_url)
-    sessions = TavernSessions(map_data, save_dir, ai_config, seed, database_url, scenario)
+    sessions = TavernSessions(map_data, save_dir, ai_config, seed, database_url, scenario, writer, writer_label)
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         ticker = asyncio.create_task(_run_world(sessions, 0.1)) if run_loop else None
@@ -517,7 +527,7 @@ def create_default_app() -> FastAPI:
 
     Returns:
         Server initialized from the repository's map, first-evening scenario, and
-        environment variables.
+        environment variables; `ANTHROPIC_API_KEY` enables the card compiler and Haiku lines.
     """
     working_root = Path.cwd()
     root = (working_root if (working_root / "data" / "tavern.json").is_file()
@@ -528,11 +538,14 @@ def create_default_app() -> FastAPI:
               "temperature": float(os.environ.get("AI_TEMPERATURE", "0.25"))}
     database_url = (os.environ.get("DATABASE_URL")
                      if os.environ.get("TAVERN_DATABASE_ENABLED") == "true" else None)
+    ask = _claude_port(os.environ.get("ANTHROPIC_API_KEY"))
+    # With a Claude key Haiku writes conversation lines; without one the labeled scripted writer does.
+    lines = {} if ask is None else {"writer": claude_writer(ask), "writer_label": "haiku"}
     return create_app(root / "data" / "tavern.json", root / "saves", config,
                       database_url=database_url, seed=Random().randrange(1 << 30),
                       scenario_path=root / "data" / "scenarios" / "first_evening.json",
                       characters_dir=root / "data" / "characters",
-                      ask=_claude_port(os.environ.get("ANTHROPIC_API_KEY")))
+                      ask=ask, **lines)
 
 
 def _claude_port(key: str | None) -> Ask | None:

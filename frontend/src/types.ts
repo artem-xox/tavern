@@ -2,6 +2,8 @@ export type Cell = [number, number];
 /** An action verb; the server's activity table lists the verbs it runs. */
 export type Verb = string;
 export type Mode = "local" | "jev";
+/** Who writes conversation lines: Claude Haiku, or the offline scripted writer. */
+export type Writer = "haiku" | "scripted";
 
 export interface WorldObject {
   id: string;
@@ -233,7 +235,7 @@ export interface World {
 export interface Snapshot {
   type: "snapshot";
   state: World;
-  ai: { mode: Mode; configured?: boolean; model?: string };
+  ai: { mode: Mode; configured?: boolean; model?: string; writer: Writer };
   activities: Record<Verb, ActivityView>;
   /** Inner state per visitor ID, the departed included. */
   minds: Record<string, Mind>;

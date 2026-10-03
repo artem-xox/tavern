@@ -52,6 +52,8 @@ export class Dashboard {
     element<HTMLSelectElement>(this.root, "#speed").value = String(world.speed);
     element(this.root, "#ai-mode").textContent = ai.mode === "jev" ? "Jev configured" : "Local · offline policy";
     element(this.root, "#ai-mode").dataset.mode = ai.mode;
+    element(this.root, "#ai-writer").textContent = ai.writer === "haiku" ? "Haiku lines" : "Scripted lines";
+    element(this.root, "#ai-writer").dataset.mode = ai.writer === "haiku" ? "jev" : "local";
     element(this.root, "#mode-caption").textContent = ai.mode === "jev" ? `Jev evaluation configured${ai.model ? ` · ${ai.model}` : ""}. Each visitor's decision shows the actual source and any fallback.` : "Offline demo. Decisions use needs and traits; add a TypeSafe key to enable Jev.";
     this.renderEveningState(world);
     this.renderRoster(world);
@@ -117,7 +119,7 @@ export class Dashboard {
         </div>
         <aside class="sidebar"><section class="inspector-card"><div class="section-heading"><h3>Inside a visitor's mind</h3><span class="small-tag">INSPECTOR</span></div><div id="inspector"><p class="empty">Select a visitor in the room.</p></div>
           <div class="force-action"><label for="force-verb">Give this visitor an action</label><div class="force-row"><select id="force-verb" data-control></select><button id="force" data-control>Go →</button></div><select id="force-target" data-control aria-label="Action target"></select><p class="helper">The server checks the route, availability, and resources.</p></div>
-        </section><div class="ai-card"><span id="ai-mode" class="ai-badge">Local · offline policy</span><p id="mode-caption">Waiting for the decision engine.</p></div></aside>
+        </section><div class="ai-card"><span id="ai-mode" class="ai-badge">Local · offline policy</span> <span id="ai-writer" class="ai-badge">Scripted lines</span><p id="mode-caption">Waiting for the decision engine.</p></div></aside>
       </div><footer class="page-footer"><span>THE LAST INN <b>✦</b> AN AUTONOMOUS TAVERN</span><span>Observe → decide → walk → act</span></footer>`;
   }
 
