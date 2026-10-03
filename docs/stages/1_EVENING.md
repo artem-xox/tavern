@@ -282,6 +282,14 @@ changes the behavior `test_closing.py` specifies, so it needs a decision.
   a guest without looks is always named. The event log and personal memories still name
   everyone.
 
+M3 result: a live evening (seed 5, 488 game s) with Jev choices, Haiku lines, and Haiku
+intentions: six guests, 13 scenes, 32 lines with no scripted fallbacks, 50 intentions, two
+quarrels, all guests home by closing, no errors; $0.205 in total (Jev $0.05, lines $0.06,
+intentions $0.09), 92% cache hits, and a byte-identical replay. Seen in the log: old
+friends Brida and Edda quarrel over the hearth seat, both resolve to make peace, and argue
+it out in the next scene. Open: guests forget earlier conversations (repeated greetings
+and topics), Haiku invents news until E19, and the door still serves one leaver at a time.
+
 ### M4 — News and conflict
 
 - [ ] **E19 — Facts and retelling.** Guests start with news by occupation; sharing
