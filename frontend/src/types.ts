@@ -89,6 +89,16 @@ export interface Actor {
   emote: { kind: EmoteKind; until: number } | null;
   /** Game time of the last interrupt that asked for a fresh decision. */
   interrupted_at: number | null;
+  /** What the mind last made of the evening; null before the first one, and always offline. */
+  intention: Intention | null;
+}
+
+/** A guest's thought and intention, the game time whose situation they answer, and what prompted them. */
+export interface Intention {
+  thought: string;
+  intention: string;
+  written_at: number;
+  trigger: { kind: string; text: string; time: number };
 }
 
 /** Who a guest is in words, plus the 0–1 params the rules read. */
@@ -233,7 +243,8 @@ export interface World {
 export interface Snapshot {
   type: "snapshot";
   state: World;
-  ai: { mode: Mode; configured?: boolean; model?: string };
+  /** `intentions`: whether a mind (Claude Haiku) writes guests' intentions; false offline. */
+  ai: { mode: Mode; configured?: boolean; model?: string; intentions: boolean };
   activities: Record<Verb, ActivityView>;
   /** Inner state per visitor ID, the departed included. */
   minds: Record<string, Mind>;
