@@ -6,7 +6,7 @@ import re
 from typing import Any, TypedDict
 
 from tavern.lockstep import Evening, Spell
-from tavern.recording import KindCost, Record, cost_by_kind
+from tavern.recording import KindCost, Record, Tariff, cost_by_kind
 
 
 class StuckTime(TypedDict):
@@ -67,6 +67,29 @@ def conversation_counts(evening: Evening) -> ConversationCounts:
     kinds = Counter(event["type"] for event in evening.events)
     return {"scenes": kinds["conversation_started"], "turns": kinds["turn"],
             "joins": kinds["joined_conversation"], "leaves": kinds["left_conversation"]}
+
+
+class IntentionCounts(TypedDict):
+    """How guests' intentions went: written and kept, or failed (the old one stayed)."""
+
+    written: int
+    failed: int
+
+
+def intention_counts(evening: Evening) -> IntentionCounts:
+    """Count the evening's written and failed intentions.
+
+    Args:
+        evening: What the lockstep runner logged.
+
+    Returns:
+        Logged `intention` and `intention_failed` events.
+
+    Raises:
+        KeyError: An event has no type.
+    """
+    kinds = Counter(event["type"] for event in evening.events)
+    return {"written": kinds["intention"], "failed": kinds["intention_failed"]}
 
 
 class Metrics(TypedDict):
@@ -147,7 +170,7 @@ def stuck_time(spells: Sequence[Spell], guests: Sequence[str], threshold: float)
 
 
 def evening_metrics(evening: Evening, calls: Sequence[Record], input_usd_per_million: float,
-                    stuck_threshold: float) -> Metrics:
+                    stuck_threshold: float, tariffs: Mapping[str, Tariff] | None = None) -> Metrics:
     """Measure a finished headless evening.
 
     Args:
@@ -155,6 +178,7 @@ def evening_metrics(evening: Evening, calls: Sequence[Record], input_usd_per_mil
         calls: The evening's model calls: recorded live, or replayed.
         input_usd_per_million: USD tariff per million input tokens.
         stuck_threshold: Seconds a stall may last before it counts as stuck.
+        tariffs: Full tariffs of call kinds priced otherwise than Jev, such as Claude's intentions.
 
     Returns:
         Game time, guests and departures; completed activities per verb; conversations and
@@ -172,5 +196,5 @@ def evening_metrics(evening: Evening, calls: Sequence[Record], input_usd_per_mil
             "conversations": _occurrences(events, "conversation"), "quarrels": _occurrences(events, "quarrel"),
             "decisions": dict(sorted(Counter(item["source"] for item in evening.choices).items())),
             "errors": sum(item["error"] is not None for item in evening.choices),
-            "cost": cost_by_kind(calls, input_usd_per_million),
+            "cost": cost_by_kind(calls, input_usd_per_million, tariffs),
             "stuck": stuck_time(evening.spells, evening.guests, stuck_threshold)}
