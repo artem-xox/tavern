@@ -19,7 +19,6 @@ interface ActorView {
   container: Phaser.GameObjects.Container;
   sprite: Phaser.GameObjects.Image;
   name: Phaser.GameObjects.Text;
-  status: Phaser.GameObjects.Text;
   selection: Phaser.GameObjects.Arc;
   mug: Phaser.GameObjects.Container;
   speech: Phaser.GameObjects.Text;
@@ -42,7 +41,6 @@ export class TavernScene extends Phaser.Scene {
   private hearthGlow!: Phaser.GameObjects.Graphics;
   private furniture!: Phaser.GameObjects.Graphics;
   private route!: Phaser.GameObjects.Graphics;
-  private labels!: Phaser.GameObjects.Group;
   private readonly visitors: Map<string, ActorView> = new Map();
   private mapSignature: string = "";
   private selectedId: string | null = null;
@@ -64,7 +62,6 @@ export class TavernScene extends Phaser.Scene {
     this.floor = this.add.graphics();
     this.hearthGlow = this.add.graphics();
     this.furniture = this.add.graphics();
-    this.labels = this.add.group();
     this.route = this.add.graphics();
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer): void => this.click(pointer));
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer): void => this.hover(pointer));
@@ -132,7 +129,6 @@ export class TavernScene extends Phaser.Scene {
     if (signature === this.mapSignature) return;
     this.mapSignature = signature;
     this.scale.resize(world.map.width * world.map.tile_size, world.map.height * world.map.tile_size);
-    this.labels.clear(true, true);
     this.drawFloor(world);
     this.furniture.clear();
     for (const object of world.map.objects) this.drawObject(object, world.map.tile_size);
@@ -221,31 +217,9 @@ export class TavernScene extends Phaser.Scene {
     if (object.kind === "toilet") drawToilet(this.furniture, x, y);
     if (object.kind === "chair") drawChair(this.furniture, x, y, object.facing);
     if (object.kind === "bar") drawBar(this.furniture, object, size);
-    if (object.kind === "table") { drawTable(this.furniture, object, size); this.appealLabel(object, size); }
+    if (object.kind === "table") { drawTable(this.furniture, object, size); }
     if (object.kind === "darts") drawDarts(this.furniture, x, y);
     if (object.reserved_by) this.furniture.lineStyle(2, 0xe6c88d, 0.75).strokeCircle(x, y, 15);
-    if (["tap", "toilet", "darts"].includes(object.kind)) this.objectLabel(object, x, y);
-  }
-
-  /** Show how appealing a table's seats are, and why. */
-  private appealLabel(table: WorldObject, size: number): void {
-    if (table.appeal === undefined) return;
-    const reasons: Record<string, string> = { fireplace: "fire", window: "window" };
-    const why: string = (table.comforts ?? []).map((comfort: string): string => reasons[comfort] ?? comfort).join(" · ");
-    const label: Phaser.GameObjects.Text = this.add.text((table.x + (table.width ?? 1) / 2) * size, (table.y + (table.height ?? 1) + 0.42) * size,
-      `appeal ${table.appeal.toFixed(1)}${why ? ` · ${why}` : ""}`, {
-        fontFamily: "system-ui, sans-serif", fontSize: "8px", color: "#f3e3c3", backgroundColor: "#2b221cc0", padding: { x: 4, y: 1 },
-      }).setOrigin(0.5, 0.5);
-    this.labels.add(label);
-  }
-
-  private objectLabel(object: WorldObject, x: number, y: number): void {
-    const title: string = object.kind === "tap" ? `${object.name} · ${object.stock ?? 0}` : object.name;
-    const label: Phaser.GameObjects.Text = this.add.text(x, y - 22, title, {
-      fontFamily: "system-ui, sans-serif", fontSize: "10px", color: "#f6dfb9",
-      backgroundColor: "#352b24", padding: { x: 5, y: 3 },
-    }).setOrigin(0.5, 1);
-    this.labels.add(label);
   }
 
   private syncVisitors(world: World, reset: boolean): void {
@@ -266,14 +240,13 @@ export class TavernScene extends Phaser.Scene {
     const { name: character, sheet } = spriteOf(actor);
     const sprite: Phaser.GameObjects.Image = this.add.image(0, sheet.lift, `${character}-Idle-south`).setDisplaySize(sheet.size, sheet.size);
     const name: Phaser.GameObjects.Text = this.add.text(0, -53, actor.name, { fontFamily: "system-ui", fontSize: "11px", color: "#fff4dc", stroke: "#322b24", strokeThickness: 3 }).setOrigin(0.5);
-    const status: Phaser.GameObjects.Text = this.add.text(0, 22, actor.status, { fontFamily: "system-ui", fontSize: "9px", color: "#ead6b6", backgroundColor: "#302b25b0", padding: { x: 3, y: 1 } }).setOrigin(0.5);
     const mugBody: Phaser.GameObjects.Rectangle = this.add.rectangle(0, 0, 7, 10, 0xd6a252);
     const foam: Phaser.GameObjects.Ellipse = this.add.ellipse(0, -5, 8, 4, 0xffebc2);
     const mug: Phaser.GameObjects.Container = this.add.container(12, 3, [mugBody, foam]);
     const speech: Phaser.GameObjects.Text = this.add.text(0, -70, "", { fontFamily: "Georgia", fontSize: "10px", color: "#48392b", backgroundColor: "#f4e6c6", padding: { x: 6, y: 4 } }).setOrigin(0.5).setVisible(false);
     const emote: Phaser.GameObjects.Text = this.add.text(17, -44, "", { fontFamily: "system-ui", fontSize: "12px", fontStyle: "bold", backgroundColor: "#f4e6c6", padding: { x: 4, y: 1 } }).setOrigin(0.5).setVisible(false);
-    const container: Phaser.GameObjects.Container = this.add.container(0, 0, [shadow, selection, sprite, name, status, mug, speech, emote]);
-    return { container, sprite, name, status, selection, mug, speech, emote, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south", sway: 0 };
+    const container: Phaser.GameObjects.Container = this.add.container(0, 0, [shadow, selection, sprite, name, mug, speech, emote]);
+    return { container, sprite, name, selection, mug, speech, emote, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south", sway: 0 };
   }
 
   private updateVisitor(view: ActorView, actor: Actor, size: number, reset: boolean): void {
@@ -303,8 +276,6 @@ export class TavernScene extends Phaser.Scene {
     const scene: Conversation | undefined = this.world?.conversations.find((item: Conversation): boolean => item.participants.includes(actor.id));
     const line: Turn | undefined = scene?.turns[scene.turns.length - 1];
     const chatting: boolean = scene !== undefined;
-    const label = (verb: Verb): string | undefined => (verb === "watch" && target?.kind === "fireplace" ? "by the fire" : this.activities[verb]?.status ?? undefined);
-    view.status.setText(actor.status === "walking" ? `→ ${label(actor.action?.verb ?? "") ?? "exploring"}` : chatting ? "chatting" : actor.action ? label(actor.action.verb) ?? actor.action.verb : actor.seat_id ? "seated" : "thinking");
     view.mug.setVisible(actor.inventory.beer > 0 && pose !== "Drinking" && pose !== "DrinkingSeated" && pose !== "TakeBeer");
     view.speech.setVisible(line?.speaker === actor.id);
     view.speech.setText(line?.line ?? "");
@@ -391,7 +362,8 @@ export class TavernScene extends Phaser.Scene {
     const y: number = Math.floor(pointer.y / this.world.map.tile_size);
     const object: WorldObject | undefined = this.world.map.objects.find((item: WorldObject): boolean => x >= item.x && x < item.x + (item.width ?? 1) && y >= item.y && y < item.y + (item.height ?? 1));
     const owner: Actor | undefined = this.world.actors.find((actor: Actor): boolean => !!object && actor.favorite_seat_id === object.id);
-    const details: string = object?.appeal !== undefined ? ` · appeal ${object.appeal.toFixed(2)}${object.comforts?.length ? ` (${object.comforts.join(", ")})` : ""}` : "";
+    const stock: string = object?.kind === "tap" ? ` · ${object.stock ?? 0} left` : "";
+    const details: string = stock + (object?.appeal !== undefined ? ` · appeal ${object.appeal.toFixed(2)}${object.comforts?.length ? ` (${object.comforts.join(", ")})` : ""}` : "");
     this.callbacks.hover(object ? `${object.name} · ${object.reserved_by ? "reserved" : "available"}${owner ? ` · ${owner.name}'s seat` : ""}${details} · cell ${x}, ${y}` : `${this.editing ? "Click to toggle obstacle" : "Click a visitor to inspect"} · cell ${x}, ${y}`);
   }
 }

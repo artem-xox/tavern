@@ -74,13 +74,11 @@ E16 measures this; E28 sets the budget.
 
 ## Status
 
-M1–M3, the refactor R0–R8 and the model health markers (D13) are done (2026-10-03). Next, in order:
+M1–M3, the refactor R0–R8 the model health markers (D13) and U1 (no labels in the hall) are done (2026-10-03). Next, in order:
 
-1. **U1, no text labels on furniture.** A small frontend task that can run in
-   parallel with anything else.
-2. **E18b, conversation memory.** Guests forget earlier conversations: they greet each
+1. **E18b, conversation memory.** Guests forget earlier conversations: they greet each
    other again and repeat topics.
-3. **M4, news and conflict (E19–E22).** E19 replaces the news Haiku invents today.
+2. **M4, news and conflict (E19–E22).** E19 replaces the news Haiku invents today.
 
 The door at closing (D02) is parked in the tech-debt table and is not a task. The code now
 lives in packages (`backend/tavern/hall`, `body`, `social`, `mind`, `evening`, `adapters`,
@@ -462,7 +460,7 @@ the baselines exist only on this machine.
   data (`Fact`, `Fight`). Revisit in Stage 4, when the save format changes for several
   evenings anyway.
 
-- [ ] **U1 — No text labels on furniture.** The hall shows only pixel art: no captions
+- [x] **U1 — No text labels on furniture.** The hall shows only pixel art: no captions
   on objects. This task is frontend only, with no backend or snapshot change.
   - *Remove from `frontend/src/scene.ts`:* the plate under every table
     (`appealLabel`: "appeal 0.8 · fire · window") and the name plates above the tap, the
@@ -479,6 +477,10 @@ the baselines exist only on this machine.
   - *Check:* run `make check` and `make build`, then `make run`. Confirm in the browser
     that no caption is drawn over the furniture or under the guests, and that hovering a
     table or the tap still shows its details. Attach a screenshot.
+  - *Result (2026-10-03):* `scene.ts` loses `appealLabel`, `objectLabel`, the `labels` group and the guests'
+    status tag (-34 lines); the hover line gains the tap's stock ("House ale · available · 21 left · cell
+    6, 1"). `make check` and `make build` pass; in the browser the furniture and guests carry no captions
+    and only names, bubbles and emotes remain.
 
 Refactor result (2026-10-03, branch `claude/stage1-refactor`, 12 commits): `make check` is green
 at 1,500 tests (1,413 before; +87 for the new modules), and mypy reports no issues in 70
