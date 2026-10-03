@@ -8,6 +8,7 @@ from tavern.memory import record_event
 from tavern.room import impassable_cells
 from tavern.routes import reserved_spots
 from tavern.sight import look_around
+from tavern.thoughts import seed_relations
 from tavern.validation import number, position
 
 
@@ -39,7 +40,8 @@ def create_actor(data: Mapping[str, Any], world_map: Mapping[str, Any]) -> dict[
                 sprite=sprite, x=x, y=y, traits=traits, card=data.get("card"), ties=list(data.get("ties", [])),
                 needs=needs, inventory={"beer": beer}, status="idle",
                 action=None, path=[], seat_id=None, favorite_seat_id=None,
-                visit={"seconds": 0.0, "beers": 0, "grievances": []}, thoughts=[], relations={},
+                visit={"seconds": 0.0, "beers": 0, "grievances": []}, thoughts=[],
+                relations=_relations(data["id"], data.get("name", data["id"]), data.get("ties", [])),
                 drunkenness=0.0,
                 knowledge={"objects": {}, "cells": []}, memory=[],
                 decision={"source": "local", "scores": {}, "error": None},
@@ -121,3 +123,10 @@ def _free_entry(world: Mapping[str, Any], guest_id: str) -> tuple[int, int] | No
     spots = [(x, y) for item in world["map"]["objects"] if item["kind"] == "door"
              for x, y in item["interaction_spots"]]
     return next((spot for spot in spots if spot not in taken), None)
+
+
+def _relations(guest_id: str, name: str, ties: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    # Old ties set a guest's opinions before they meet anyone tonight (see thoughts.seed_relations).
+    pairs = [{"a": guest_id, "b": tie["with"], "kind": tie["kind"]} for tie in ties]
+    names = {guest_id: name, **{tie["with"]: tie["name"] for tie in ties}}
+    return seed_relations(pairs, names).get(guest_id, {})
