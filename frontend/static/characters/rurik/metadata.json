@@ -1,11 +1,11 @@
 {
-  "group_id": "d0e1751d-6fc5-409c-ae81-9680ed03834b",
+  "group_id": "58958b80-af4b-46ac-a0b6-28e5bb25a722",
   "states": [
     {
       "character": {
-        "id": "206359ae-58b9-4175-988e-4325b536abeb",
+        "id": "72d81d2b-8274-46e4-b30d-607db83e6c2e",
         "name": "Idle",
-        "prompt": "Full-body pixel art game sprite of Rurik, a stocky middle-aged male border guard visiting a medieval inn. Close-cropped dark hair, short black beard, faded ochre padded gambeson, deep teal cloak folded back, dark belt, scuffed boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, warm muted palette, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, scenery, weapons or floor.",
+        "prompt": "Full-body pixel art game sprite of Rurik, an adult male border guard visiting a medieval inn. Lean athletic build with a narrow torso, long legs, short dark brown hair, and a neat trimmed beard. An alert but reserved expression. He wears a deep teal hooded half-cloak over an ochre leather brigandine and muted forest-green tunic, dark belt, and scuffed brown boots. Empty hands, standing upright and centered with clear margins. Match the established Toren-style medieval tavern cast: compact readable humanoid proportions, crisp dark umber outline, restrained warm earthy palette, simple pixel shading, and a clean silhouette. Low top-down three-quarter tavern game view on a transparent background. Distinct from Toren through his dark hair, teal cloak, and guard colors. Avoid a broad or round body, oversized head, weapons, furniture, text, scenery, or floor. Keep face, clothing, and proportions consistent for seated, darts, bathroom, drinking, taking beer, walking, and talking poses.",
         "size": {
           "width": 68,
           "height": 68
@@ -13,14 +13,14 @@
         "template_id": "mannequin",
         "directions": 8,
         "view": "low top-down",
-        "created_at": "2026-10-02T08:50:28.915798+00:00"
+        "created_at": "2026-10-03T20:44:21.461432+00:00"
       },
       "folder": "Idle",
       "frames": {
         "rotations": {
-          "north": "Idle/rotations/north.png",
           "south": "Idle/rotations/south.png",
           "east": "Idle/rotations/east.png",
+          "north": "Idle/rotations/north.png",
           "west": "Idle/rotations/west.png"
         },
         "animations": {}
@@ -28,9 +28,9 @@
     },
     {
       "character": {
-        "id": "0d4e08a3-c4ba-43e5-bfc5-e1d92a5cf3dd",
+        "id": "07db65b7-7059-4788-94e0-8cb5db9d169f",
         "name": "Seated",
-        "prompt": "Full-body pixel art game sprite of Rurik, a stocky middle-aged male border guard visiting a medieval inn. Close-cropped dark hair, short black beard, faded ochre padded gambeson, deep teal cloak folded back, dark belt, scuffed boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, warm muted palette, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, scenery, weapons or floor.",
+        "prompt": "Full-body pixel art game sprite of Rurik, an adult male border guard visiting a medieval inn. Lean athletic build with a narrow torso, long legs, short dark brown hair, and a neat trimmed beard. An alert but reserved expression. He wears a deep teal hooded half-cloak over an ochre leather brigandine and muted forest-green tunic, dark belt, and scuffed brown boots. Empty hands, standing upright and centered with clear margins. Match the established Toren-style medieval tavern cast: compact readable humanoid proportions, crisp dark umber outline, restrained warm earthy palette, simple pixel shading, and a clean silhouette. Low top-down three-quarter tavern game view on a transparent background. Distinct from Toren through his dark hair, teal cloak, and guard colors. Avoid a broad or round body, oversized head, weapons, furniture, text, scenery, or floor. Keep face, clothing, and proportions consistent for seated, darts, bathroom, drinking, taking beer, walking, and talking poses.",
         "size": {
           "width": 68,
           "height": 68
@@ -38,14 +38,14 @@
         "template_id": "mannequin",
         "directions": 8,
         "view": "low top-down",
-        "created_at": "2026-10-02T08:54:01.588721+00:00"
+        "created_at": "2026-10-03T20:53:32.265467+00:00"
       },
       "folder": "Seated",
       "frames": {
         "rotations": {
-          "north": "Seated/rotations/north.png",
           "south": "Seated/rotations/south.png",
           "east": "Seated/rotations/east.png",
+          "north": "Seated/rotations/north.png",
           "west": "Seated/rotations/west.png"
         },
         "animations": {}
@@ -53,9 +53,9 @@
     },
     {
       "character": {
-        "id": "e1b97886-2ac2-4cf4-b759-cc2df6f9d143",
+        "id": "5d01b034-a05a-4c4c-9a31-326f96fe5c6b",
         "name": "Darts",
-        "prompt": "Full-body pixel art game sprite of Rurik, a stocky middle-aged male border guard visiting a medieval inn. Close-cropped dark hair, short black beard, faded ochre padded gambeson, deep teal cloak folded back, dark belt, scuffed boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, warm muted palette, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, scenery, weapons or floor.",
+        "prompt": "Full-body pixel art game sprite of Rurik, an adult male border guard visiting a medieval inn. Lean athletic build with a narrow torso, long legs, short dark brown hair, and a neat trimmed beard. An alert but reserved expression. He wears a deep teal hooded half-cloak over an ochre leather brigandine and muted forest-green tunic, dark belt, and scuffed brown boots. Empty hands, standing upright and centered with clear margins. Match the established Toren-style medieval tavern cast: compact readable humanoid proportions, crisp dark umber outline, restrained warm earthy palette, simple pixel shading, and a clean silhouette. Low top-down three-quarter tavern game view on a transparent background. Distinct from Toren through his dark hair, teal cloak, and guard colors. Avoid a broad or round body, oversized head, weapons, furniture, text, scenery, or floor. Keep face, clothing, and proportions consistent for seated, darts, bathroom, drinking, taking beer, walking, and talking poses.",
         "size": {
           "width": 68,
           "height": 68
@@ -63,14 +63,14 @@
         "template_id": "mannequin",
         "directions": 8,
         "view": "low top-down",
-        "created_at": "2026-10-02T08:54:16.144465+00:00"
+        "created_at": "2026-10-03T20:53:42.412595+00:00"
       },
       "folder": "Darts",
       "frames": {
         "rotations": {
-          "north": "Darts/rotations/north.png",
           "south": "Darts/rotations/south.png",
           "east": "Darts/rotations/east.png",
+          "north": "Darts/rotations/north.png",
           "west": "Darts/rotations/west.png"
         },
         "animations": {}
@@ -78,9 +78,9 @@
     },
     {
       "character": {
-        "id": "d8f5a9e3-40bc-4549-8dea-b494cad7e7e7",
+        "id": "344ab737-ca30-4fc5-90d4-3f9a61745be5",
         "name": "Bathroom",
-        "prompt": "Full-body pixel art game sprite of Rurik, a stocky middle-aged male border guard visiting a medieval inn. Close-cropped dark hair, short black beard, faded ochre padded gambeson, deep teal cloak folded back, dark belt, scuffed boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, warm muted palette, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, scenery, weapons or floor.",
+        "prompt": "Full-body pixel art game sprite of Rurik, an adult male border guard visiting a medieval inn. Lean athletic build with a narrow torso, long legs, short dark brown hair, and a neat trimmed beard. An alert but reserved expression. He wears a deep teal hooded half-cloak over an ochre leather brigandine and muted forest-green tunic, dark belt, and scuffed brown boots. Empty hands, standing upright and centered with clear margins. Match the established Toren-style medieval tavern cast: compact readable humanoid proportions, crisp dark umber outline, restrained warm earthy palette, simple pixel shading, and a clean silhouette. Low top-down three-quarter tavern game view on a transparent background. Distinct from Toren through his dark hair, teal cloak, and guard colors. Avoid a broad or round body, oversized head, weapons, furniture, text, scenery, or floor. Keep face, clothing, and proportions consistent for seated, darts, bathroom, drinking, taking beer, walking, and talking poses.",
         "size": {
           "width": 68,
           "height": 68
@@ -88,14 +88,14 @@
         "template_id": "mannequin",
         "directions": 8,
         "view": "low top-down",
-        "created_at": "2026-10-02T08:56:47.243174+00:00"
+        "created_at": "2026-10-03T20:53:42.881970+00:00"
       },
       "folder": "Bathroom",
       "frames": {
         "rotations": {
-          "north": "Bathroom/rotations/north.png",
           "south": "Bathroom/rotations/south.png",
           "east": "Bathroom/rotations/east.png",
+          "north": "Bathroom/rotations/north.png",
           "west": "Bathroom/rotations/west.png"
         },
         "animations": {}
@@ -103,9 +103,9 @@
     },
     {
       "character": {
-        "id": "119b8d75-98a5-43ca-a8f1-768deeec926c",
+        "id": "dc7044ae-d910-402a-9c88-25163031511c",
         "name": "Drinking",
-        "prompt": "Full-body pixel art game sprite of Rurik, a stocky middle-aged male border guard visiting a medieval inn. Close-cropped dark hair, short black beard, faded ochre padded gambeson, deep teal cloak folded back, dark belt, scuffed boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, warm muted palette, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, scenery, weapons or floor.",
+        "prompt": "Full-body pixel art game sprite of Rurik, an adult male border guard visiting a medieval inn. Lean athletic build with a narrow torso, long legs, short dark brown hair, and a neat trimmed beard. An alert but reserved expression. He wears a deep teal hooded half-cloak over an ochre leather brigandine and muted forest-green tunic, dark belt, and scuffed brown boots. Empty hands, standing upright and centered with clear margins. Match the established Toren-style medieval tavern cast: compact readable humanoid proportions, crisp dark umber outline, restrained warm earthy palette, simple pixel shading, and a clean silhouette. Low top-down three-quarter tavern game view on a transparent background. Distinct from Toren through his dark hair, teal cloak, and guard colors. Avoid a broad or round body, oversized head, weapons, furniture, text, scenery, or floor. Keep face, clothing, and proportions consistent for seated, darts, bathroom, drinking, taking beer, walking, and talking poses.",
         "size": {
           "width": 68,
           "height": 68
@@ -113,14 +113,14 @@
         "template_id": "mannequin",
         "directions": 8,
         "view": "low top-down",
-        "created_at": "2026-10-02T08:56:47.420271+00:00"
+        "created_at": "2026-10-03T20:53:44.228965+00:00"
       },
       "folder": "Drinking",
       "frames": {
         "rotations": {
-          "north": "Drinking/rotations/north.png",
           "south": "Drinking/rotations/south.png",
           "east": "Drinking/rotations/east.png",
+          "north": "Drinking/rotations/north.png",
           "west": "Drinking/rotations/west.png"
         },
         "animations": {}
@@ -128,9 +128,9 @@
     },
     {
       "character": {
-        "id": "4716426a-7249-4cba-88b8-1934a37628a3",
+        "id": "7dcf0724-4c4f-48fd-aa29-4e909f62be87",
         "name": "TakeBeer",
-        "prompt": "Full-body pixel art game sprite of Rurik, a stocky middle-aged male border guard visiting a medieval inn. Close-cropped dark hair, short black beard, faded ochre padded gambeson, deep teal cloak folded back, dark belt, scuffed boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, warm muted palette, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, scenery, weapons or floor.",
+        "prompt": "Full-body pixel art game sprite of Rurik, an adult male border guard visiting a medieval inn. Lean athletic build with a narrow torso, long legs, short dark brown hair, and a neat trimmed beard. An alert but reserved expression. He wears a deep teal hooded half-cloak over an ochre leather brigandine and muted forest-green tunic, dark belt, and scuffed brown boots. Empty hands, standing upright and centered with clear margins. Match the established Toren-style medieval tavern cast: compact readable humanoid proportions, crisp dark umber outline, restrained warm earthy palette, simple pixel shading, and a clean silhouette. Low top-down three-quarter tavern game view on a transparent background. Distinct from Toren through his dark hair, teal cloak, and guard colors. Avoid a broad or round body, oversized head, weapons, furniture, text, scenery, or floor. Keep face, clothing, and proportions consistent for seated, darts, bathroom, drinking, taking beer, walking, and talking poses.",
         "size": {
           "width": 68,
           "height": 68
@@ -138,14 +138,14 @@
         "template_id": "mannequin",
         "directions": 8,
         "view": "low top-down",
-        "created_at": "2026-10-02T08:56:47.827121+00:00"
+        "created_at": "2026-10-03T20:53:44.726582+00:00"
       },
       "folder": "TakeBeer",
       "frames": {
         "rotations": {
-          "north": "TakeBeer/rotations/north.png",
           "south": "TakeBeer/rotations/south.png",
           "east": "TakeBeer/rotations/east.png",
+          "north": "TakeBeer/rotations/north.png",
           "west": "TakeBeer/rotations/west.png"
         },
         "animations": {}
@@ -153,9 +153,9 @@
     },
     {
       "character": {
-        "id": "f16d07e9-57d3-464c-a55a-1b7464c2e185",
+        "id": "e70328c5-6101-4baf-91dd-c59437856941",
         "name": "Walking",
-        "prompt": "Full-body pixel art game sprite of Rurik, a stocky middle-aged male border guard visiting a medieval inn. Close-cropped dark hair, short black beard, faded ochre padded gambeson, deep teal cloak folded back, dark belt, scuffed boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, warm muted palette, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, scenery, weapons or floor.",
+        "prompt": "Full-body pixel art game sprite of Rurik, an adult male border guard visiting a medieval inn. Lean athletic build with a narrow torso, long legs, short dark brown hair, and a neat trimmed beard. An alert but reserved expression. He wears a deep teal hooded half-cloak over an ochre leather brigandine and muted forest-green tunic, dark belt, and scuffed brown boots. Empty hands, standing upright and centered with clear margins. Match the established Toren-style medieval tavern cast: compact readable humanoid proportions, crisp dark umber outline, restrained warm earthy palette, simple pixel shading, and a clean silhouette. Low top-down three-quarter tavern game view on a transparent background. Distinct from Toren through his dark hair, teal cloak, and guard colors. Avoid a broad or round body, oversized head, weapons, furniture, text, scenery, or floor. Keep face, clothing, and proportions consistent for seated, darts, bathroom, drinking, taking beer, walking, and talking poses.",
         "size": {
           "width": 68,
           "height": 68
@@ -163,14 +163,14 @@
         "template_id": "mannequin",
         "directions": 8,
         "view": "low top-down",
-        "created_at": "2026-10-02T08:57:48.548741+00:00"
+        "created_at": "2026-10-03T20:53:44.937181+00:00"
       },
       "folder": "Walking",
       "frames": {
         "rotations": {
-          "north": "Walking/rotations/north.png",
           "south": "Walking/rotations/south.png",
           "east": "Walking/rotations/east.png",
+          "north": "Walking/rotations/north.png",
           "west": "Walking/rotations/west.png"
         },
         "animations": {}
@@ -178,9 +178,9 @@
     },
     {
       "character": {
-        "id": "926b9960-a169-4050-84af-dd99a8ed9fb1",
+        "id": "27cf2480-4f04-4e2f-8de8-9344743b4914",
         "name": "Talking",
-        "prompt": "Full-body pixel art game sprite of Rurik, a stocky middle-aged male border guard visiting a medieval inn. Close-cropped dark hair, short black beard, faded ochre padded gambeson, deep teal cloak folded back, dark belt, scuffed boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, warm muted palette, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, scenery, weapons or floor.",
+        "prompt": "Full-body pixel art game sprite of Rurik, an adult male border guard visiting a medieval inn. Lean athletic build with a narrow torso, long legs, short dark brown hair, and a neat trimmed beard. An alert but reserved expression. He wears a deep teal hooded half-cloak over an ochre leather brigandine and muted forest-green tunic, dark belt, and scuffed brown boots. Empty hands, standing upright and centered with clear margins. Match the established Toren-style medieval tavern cast: compact readable humanoid proportions, crisp dark umber outline, restrained warm earthy palette, simple pixel shading, and a clean silhouette. Low top-down three-quarter tavern game view on a transparent background. Distinct from Toren through his dark hair, teal cloak, and guard colors. Avoid a broad or round body, oversized head, weapons, furniture, text, scenery, or floor. Keep face, clothing, and proportions consistent for seated, darts, bathroom, drinking, taking beer, walking, and talking poses.",
         "size": {
           "width": 68,
           "height": 68
@@ -188,14 +188,14 @@
         "template_id": "mannequin",
         "directions": 8,
         "view": "low top-down",
-        "created_at": "2026-10-02T08:58:16.011904+00:00"
+        "created_at": "2026-10-03T20:53:45.259247+00:00"
       },
       "folder": "Talking",
       "frames": {
         "rotations": {
-          "north": "Talking/rotations/north.png",
           "south": "Talking/rotations/south.png",
           "east": "Talking/rotations/east.png",
+          "north": "Talking/rotations/north.png",
           "west": "Talking/rotations/west.png"
         },
         "animations": {}
@@ -203,24 +203,32 @@
     },
     {
       "character": {
-        "id": "861081d8-0b5d-4bb4-8395-01b5ff315d7d",
+        "id": "1f31ede0-033b-4242-a6ea-93a309e3117c",
         "name": "DrinkingSeated",
-        "prompt": "Stay seated and drink from a tankard held to the mouth. Preserve the existing seated posture, identity, clothing, and medieval pixel-art style.",
-        "size": {"width": 68, "height": 68},
+        "prompt": "Full-body pixel art game sprite of Rurik, an adult male border guard visiting a medieval inn. Lean athletic build with a narrow torso, long legs, short dark brown hair, and a neat trimmed beard. An alert but reserved expression. He wears a deep teal hooded half-cloak over an ochre leather brigandine and muted forest-green tunic, dark belt, and scuffed brown boots. Empty hands, standing upright and centered with clear margins. Match the established Toren-style medieval tavern cast: compact readable humanoid proportions, crisp dark umber outline, restrained warm earthy palette, simple pixel shading, and a clean silhouette. Low top-down three-quarter tavern game view on a transparent background. Distinct from Toren through his dark hair, teal cloak, and guard colors. Avoid a broad or round body, oversized head, weapons, furniture, text, scenery, or floor. Keep face, clothing, and proportions consistent for seated, darts, bathroom, drinking, taking beer, walking, and talking poses.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
         "directions": 8,
-        "view": "low top-down"
+        "view": "low top-down",
+        "created_at": "2026-10-03T20:56:21.510962+00:00"
       },
       "folder": "DrinkingSeated",
-      "frames": {"rotations": {
-        "north": "DrinkingSeated/rotations/north.png",
-        "south": "DrinkingSeated/rotations/south.png",
-        "east": "DrinkingSeated/rotations/east.png",
-        "west": "DrinkingSeated/rotations/west.png"
-      }, "animations": {}}
+      "frames": {
+        "rotations": {
+          "south": "DrinkingSeated/rotations/south.png",
+          "east": "DrinkingSeated/rotations/east.png",
+          "north": "DrinkingSeated/rotations/north.png",
+          "west": "DrinkingSeated/rotations/west.png"
+        },
+        "animations": {}
+      }
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-10-02T09:27:17.451534",
+  "export_date": "2026-10-03T20:59:09.019547",
   "exported_directions": [
     "north",
     "south",

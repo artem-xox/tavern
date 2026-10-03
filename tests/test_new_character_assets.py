@@ -38,3 +38,11 @@ def test_character_group_is_ready_for_tavern(character: str, actor_id: str, disp
     scenario = json.loads(SCENARIO.read_text())
     guest = next(guest for guest in scenario["guests"] if guest["id"] == actor_id)
     assert (guest["name"], guest["sprite"]) == (display_name, character)
+
+
+def test_rurik_uses_replacement_pixel_lab_group() -> None:
+    """Keep the compact original guard group out of the shipped roster."""
+    metadata = json.loads(
+        (ROOT / "frontend" / "static" / "characters" / "rurik" / "metadata.json").read_text()
+    )
+    assert metadata["group_id"] != "d0e1751d-6fc5-409c-ae81-9680ed03834b"
