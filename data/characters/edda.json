@@ -1,0 +1,24 @@
+{
+  "id": "edda",
+  "name": "Edda",
+  "sprite": "edda",
+  "looks": "the grey-haired woman smelling of sage",
+  "occupation": "healer and herb-woman",
+  "background": "Edda tends the sick in three villages along the border road and walks between them in all weathers. She buried her husband after the last war and has not trusted a soldier since.",
+  "temperament": "Warm with the hurt and the young, sharp-tongued with fools; she loses patience quickly when people waste her time.",
+  "speech": "Brisk and practical, full of remedies nobody asked for; softens her voice only for the ill.",
+  "quirks": "Sniffs every mug before she drinks; keeps dried sage in her sleeve; rubs her knuckles when the weather turns.",
+  "secret": "She once let a wounded deserter die rather than report him, and has never told anyone.",
+  "goal": "Rest her feet by the fire and find out whether the fever in the river villages has reached this side of the border.",
+  "params": {
+    "patience": 0.3,
+    "temper": 0.55,
+    "sociability": 0.5,
+    "courage": 0.6,
+    "strength": 0.3,
+    "brawling": 0.1,
+    "tolerance": 0.4,
+    "comfort": 0.7,
+    "curiosity": 0.5
+  }
+}

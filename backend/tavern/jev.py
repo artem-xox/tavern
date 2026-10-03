@@ -6,7 +6,7 @@ from typing import Any, TypedDict
 
 import httpx
 
-from tavern.activities import ACTIVITIES
+from tavern.activities import ACTIVITIES, FAMILIES
 
 
 class JevError(RuntimeError):
@@ -39,23 +39,38 @@ def _visitor_view() -> str:
     return (
         "`state.observation.situation` describes one guest of a small border tavern in plain words, from their "
         "own point of view: how long they have been here, where they are, what they hold, their needs and "
-        "temperament, who is in sight and what those people are doing, the places and tables they know, and "
-        "what happened to them recently. `state.observation.options` describes each thing they could do next "
+        "temperament, their mood and what they think of the people they know, who is in sight and what those "
+        "people are doing, the places and tables they know, and what happened to them recently. "
+        "`state.observation.options` describes each thing they could do next "
         "(`state.actions` lists the same options as data). `state.observation.self` holds the exact numbers: "
         "needs run from 0 (satisfied) to 100 (urgent), traits from 0 to 1, and `self.visit` counts the seconds "
-        "spent in the inn, the beers drunk and the grievances held tonight. Judge like someone who knows how "
+        "spent in the inn, the beers drunk and the wrongs that still rankle tonight. Judge like someone who knows how "
         "real tavern guests behave: they settle at a table with their drink, sip it there and chat with whoever "
         "sits with them, and they get up only for a reason - a refill, the WC, a game, a look at the fire - "
         "before going home once the evening has given them what they came for, or has gone sour. Restless "
-        "wandering without a reason is unnatural, and so is ignoring a pressing need."
+        "wandering without a reason is unnatural, and so is ignoring a pressing need. When the situation states "
+        "their intention, weigh each option against their intention: what serves it is natural, what goes against "
+        "it needs a reason, but an urgent need or something that just happened still comes first."
     )
 
 
 def _activity(action: Mapping[str, Any]) -> tuple[str, str]:
+    if action["verb"] in FAMILIES:
+        return _family(action)
     activity = ACTIVITIES.get(action["verb"])
     if activity is None:
         raise ValueError(f"Jev cannot describe the action verb {action['verb']!r}")
     return activity.what.format(target=repr(action["target_id"])), activity.guidance
+
+
+def _family(option: Mapping[str, Any]) -> tuple[str, str]:
+    # A family is judged as the wish its members share, with each member verb's guidance once.
+    members = option.get("members")
+    if not isinstance(members, list) or not members or any(
+            not isinstance(item, Mapping) or item.get("verb") not in ACTIVITIES for item in members):
+        raise ValueError(f"Family option {option['id']!r} must list its member actions")
+    guidance = dict.fromkeys(ACTIVITIES[item["verb"]].guidance for item in members)
+    return FAMILIES[option["verb"]], " ".join([*guidance, "A second decision then picks which of these they do."])
 
 
 def _guest(observation: Mapping[str, Any]) -> str:

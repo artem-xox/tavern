@@ -2,6 +2,8 @@ export type Cell = [number, number];
 /** An action verb; the server's activity table lists the verbs it runs. */
 export type Verb = string;
 export type Mode = "local" | "jev";
+/** Who writes conversation lines: Claude Haiku, or the offline scripted writer. */
+export type Writer = "haiku" | "scripted";
 
 export interface WorldObject {
   id: string;
@@ -17,6 +19,10 @@ export interface WorldObject {
   interaction_spots: Cell[];
   stock: number | null;
   reserved_by: string | null;
+  /** Cells a line stands on, front first, for places used one visitor at a time. */
+  queue_spots?: Cell[];
+  /** Who waits in that line, front first, and since when (game seconds). */
+  queue?: { actor_id: string; since: number }[];
   appeal?: number;
   comforts?: string[];
   reach?: number;
@@ -37,6 +43,11 @@ export interface DecisionStage {
   error: string | null;
 }
 
+/** The second stage after choosing a family of several actions, such as a pastime. */
+export interface FamilyStage extends DecisionStage {
+  name: string;
+}
+
 export interface Action {
   id: string;
   verb: Verb;
@@ -52,18 +63,101 @@ export interface Actor {
   x: number;
   y: number;
   traits: Record<string, unknown>;
+  /** The character card a scenario guest was cast from; null for a visitor without one. */
+  card: CharacterCard | null;
+  /** Starting relationships, from this guest's side. */
+  ties: Tie[];
   needs: { thirst: number; fatigue: number; bladder: number; social: number; boredom: number };
   inventory: { beer: number };
-  status: "idle" | "walking" | "interacting" | "waiting";
+  status: "idle" | "walking" | "interacting" | "waiting" | "queued";
   action: Action | null;
   seat_id: string | null;
   favorite_seat_id: string | null;
+  /** `grievances` is derived on the server: the texts of the latest active thoughts that lower the mood. */
   visit: { seconds: number; beers: number; grievances: string[]; left_at?: number };
+  thoughts: Thought[];
+  /**
+   * Base opinion and familiarity per other visitor, before tonight's thoughts. `name` is what this
+   * visitor calls them: their looks until `knows_name`.
+   */
+  relations: Record<string, { name: string; opinion: number; familiarity: Familiarity; knows_name?: boolean }>;
+  /** 0 (sober) to 1 (as drunk as can be); beers raise it and it wears off slowly. */
+  drunkenness: number;
   path: Cell[];
   knowledge: { objects: Record<string, Record<string, unknown>> };
   memory: unknown[];
-  decision: (DecisionStage & { seat?: DecisionStage }) | null;
+  decision: (DecisionStage & { seat?: DecisionStage; family?: FamilyStage }) | null;
+  /** Where the server turns the visitor; null keeps the seat's, the task's, or the walking direction. */
+  facing: Facing | null;
+  /** A cell the visitor looks at until a game time, drawn by a stimulus. */
+  gaze: { cell: Cell; until: number; stimulus_id: number } | null;
+  emote: { kind: EmoteKind; until: number } | null;
+  /** Game time of the last interrupt that asked for a fresh decision. */
+  interrupted_at: number | null;
+  /** What the mind last made of the evening; null before the first one, and always offline. */
+  intention: Intention | null;
 }
+
+/** A guest's thought and intention, the game time whose situation they answer, and what prompted them. */
+export interface Intention {
+  thought: string;
+  intention: string;
+  written_at: number;
+  trigger: { kind: string; text: string; time: number };
+}
+
+/** Who a guest is in words, plus the 0–1 params the rules read. */
+export interface CharacterCard {
+  id: string;
+  name: string;
+  sprite: string;
+  occupation: string;
+  background: string;
+  temperament: string;
+  speech: string;
+  quirks: string;
+  secret: string;
+  goal: string;
+  params: Record<string, number>;
+  /** How strangers see the guest until they learn the name. */
+  looks?: string;
+}
+
+/** A starting relationship as one guest holds it. */
+export interface Tie {
+  with: string;
+  name: string;
+  kind: "old friends" | "rivals";
+  note: string;
+}
+
+export type Facing = "north" | "south" | "east" | "west";
+export type Familiarity = "stranger" | "acquaintance" | "friend";
+
+/** A timed thought: its mood change, its opinion change toward `about`, and what caused it. */
+export interface Thought {
+  kind: string;
+  about: string | null;
+  text: string;
+  mood: number;
+  opinion: number;
+  expires_at: number;
+  source_event: string;
+}
+
+/** A visitor's inner state as the server derives it for the inspector. */
+export interface Mind {
+  mood: number;
+  /** Active thoughts, oldest first. */
+  thoughts: Thought[];
+  /** Base opinion plus active thoughts, −100…100, per person they have a relation with. */
+  opinions: { id: string; name: string; opinion: number; familiarity: Familiarity }[];
+  drunkenness: number;
+  stage: "sober" | "tipsy" | "drunk" | "wasted";
+  /** How far the scene sways the sprite, 0–1. */
+  sway: number;
+}
+export type EmoteKind = "alert" | "confused" | "angry" | "affection" | "sleep" | "waiting";
 
 /** A scenario guest still on the way, with tonight's needs already drawn. */
 export interface ExpectedGuest {
@@ -72,6 +166,8 @@ export interface ExpectedGuest {
   color: string;
   sprite: string;
   traits: Record<string, number>;
+  card?: CharacterCard;
+  ties?: Tie[];
   needs: Partial<Actor["needs"]>;
   /** Game seconds after opening. */
   arrives_at: number;
@@ -82,6 +178,66 @@ export interface WorldEvent {
   actor_id: string | null;
   type: string;
   message: string;
+}
+
+/** A sound in the hall waiting for the listeners' attention at the end of the tick. */
+export interface Stimulus {
+  id: number;
+  kind: string;
+  noun: string;
+  /** Visitors who made it; empty for a call from a place. */
+  sources: string[];
+  cell: Cell;
+  loudness: number;
+  reach: number;
+  time: number;
+  /** Visitors it concerns without having made it. */
+  about: string[];
+  cause: string;
+  event: string | null;
+}
+
+/** One spoken line of a conversation scene; `addressee` null speaks to everyone. */
+export interface Turn {
+  speaker: string;
+  addressee: string | null;
+  line: string;
+  act: string;
+  time: number;
+  /** The invitation kind an `invite` offers. */
+  invitation?: InvitationKind;
+}
+
+export type InvitationKind = "join_table" | "darts_together" | "buy_drink" | "leave_together";
+
+/** An invitation waiting in a scene for the invitee's answer. */
+export interface Invitation {
+  kind: InvitationKind;
+  from: string;
+  to: string;
+}
+
+/** An accepted invitation the world is carrying out. */
+export interface Errand extends Invitation {
+  stage: "accepted" | "fetching" | "following";
+  /** Ale the inviter held before fetching one for the invitee. */
+  held: number;
+}
+
+/** A conversation scene: who talks, at which table (null when standing), and what was said. */
+export interface Conversation {
+  id: string;
+  participants: string[];
+  table_id: string | null;
+  topic: string;
+  turns: Turn[];
+  started_at: number;
+  /** Game time the next line is due. */
+  next_turn_at: number;
+  /** The turn a model is writing, if any, and its answer waiting to be spoken. */
+  writing: { turn: number; speaker: string; since: number } | null;
+  written: { line: string; act: string; addressee: string | null; topic: string; invitation?: InvitationKind } | null;
+  invitation: Invitation | null;
 }
 
 export interface World {
@@ -104,13 +260,22 @@ export interface World {
   /** Game seconds after opening when the inn closes; null for an evening that never closes. */
   closes_at: number | null;
   events: WorldEvent[];
+  stimuli: Stimulus[];
+  next_stimulus_id: number;
+  conversations: Conversation[];
+  next_conversation_id: number;
+  /** Accepted invitations under way. */
+  invitations: Errand[];
 }
 
 export interface Snapshot {
   type: "snapshot";
   state: World;
-  ai: { mode: Mode; configured?: boolean; model?: string };
+  /** `intentions`: whether a mind (Claude Haiku) writes guests' intentions; false offline. */
+  ai: { mode: Mode; configured?: boolean; model?: string; writer: Writer; intentions: boolean };
   activities: Record<Verb, ActivityView>;
+  /** Inner state per visitor ID, the departed included. */
+  minds: Record<string, Mind>;
 }
 
 export type Command =

@@ -72,6 +72,67 @@ card behind a second breakpoint. Estimate: about $0.0025 per turn and 300–500 
 a 20-minute evening with five guests, so roughly $1 per evening; Jev adds about $0.10.
 E16 measures this; E28 sets the budget.
 
+## Status
+
+M1–M3 are done (2026-10-02). Next, in order:
+
+1. **R0–R7, the refactor before M4.** It pays off [tech debt](../PLAN.md#tech-debt)
+   D01–D08. Approved 2026-10-03, including the test edits R6 and R7 name, `mypy` in R2,
+   and the R8 decision.
+2. **D13, model health markers.** Jev and Claude show reachability, credit and keys in
+   `/health`, the client header and `make evening`. Without them, an empty account
+   silently turns live evenings into scripted ones. The spec is in the
+   [tech-debt table](../PLAN.md#tech-debt).
+3. **U1, no text labels on furniture.** A small frontend task that can run in
+   parallel with anything else.
+4. **E18b, conversation memory.** Guests forget earlier conversations: they greet each
+   other again and repeat topics.
+5. **M4, news and conflict (E19–E22).** E19 replaces the news Haiku invents today.
+
+The door at closing (D02) is parked in the tech-debt table and is not a task.
+
+## Working on a task
+
+The steps every task follows. [AGENTS.md](../../AGENTS.md) has the rules behind them.
+
+1. **Read first.** Read the task below, the test file of every module you will touch
+   (the tests are the spec), and the modules the task names. Grep for the concept before
+   adding a helper.
+2. **Freeze the shape.** Write the exact new fields (save, snapshot, model view, model
+   answer) into the task text in this file before writing code. The shapes below are
+   proposals; adjust them here first if the code disagrees.
+3. **Branch.** Work on `claude/stage1-<task>` (for example `claude/stage1-e19`), off
+   `main`.
+4. **Red, green, refactor.** Write one behavior at a time. Show the failing run before
+   the fix. Refactors and behavior changes go in separate commits.
+5. **Saves.** A new field that must survive a reload bumps `schema_version` in
+   `world.create_world` and `persistence.parse_world`, and needs a check function in the
+   concept module, like `thoughts.check_mind`. Bumps that reject old saves are approved
+   for all of Stage 1. `test_database.py` pins the version, so name it in the commit as
+   an approved behavior change.
+6. **Snapshot.** If the snapshot or `minds` changes, change `frontend/src/types.ts` in
+   the same commit and run `make build`.
+7. **Model prompts.** The shared prefix (`turn_prompt.shared_prefix`,
+   `data/minds/intention_prefix.md`) must stay byte-identical across calls and above 4,096
+   tokens. Per-guest text goes in the second cached block (the card); per-moment text goes
+   in `content`. The answer schema stays fixed: say what may vary in words and enforce it
+   in the `check_*` or `parse_*` function at the boundary, as `offered_acts` does.
+   Changing the prefix invalidates the cache once, which is fine.
+8. **Check.** Run `make check` (and `make build` if `frontend/` changed), then an offline
+   evening:
+   `.venv/bin/python scripts/evening.py --seed 5 --mode local --writer scripted --out runs/<task>-offline`.
+   Pass `--writer scripted` explicitly, because `MODE=local` still calls Haiku (D10).
+   Then run a live evening (`make evening SEED=5 OUT=runs/<task>-live`, Jev + Haiku from
+   `.env`) and replay it (`MODE=replay CALLS=runs/<task>-live/calls.jsonl`). `cmp` the two
+   `events.jsonl` files: they must be byte-identical.
+9. **Record.** Append a results paragraph to the task, in the style of E14–E18: what was
+   built (modules, fields, rules), the offline and live numbers (scenes, turns, stuck
+   seconds, cost per evening and per call, cache hits), and one moment from the log that
+   shows the feature. Tick the box. Add any problem you leave behind to the tech-debt
+   table in [PLAN.md](../PLAN.md#tech-debt).
+10. **Done** means `make check` passes and its output is pasted, plus `make build` if the
+    frontend changed.
+
 ## Tasks
 
 Write tests first for all business logic, as in [AGENTS.md](../../AGENTS.md).
@@ -103,77 +164,469 @@ Write tests first for all business logic, as in [AGENTS.md](../../AGENTS.md).
 
 ### M2 — Body and choice
 
-- [ ] **E05 — Queues.** Tap, WC, and darts get capacity and queue spots; guests join,
+- [x] **E05 — Queues.** Tap, WC, and darts get capacity and queue spots; guests join,
   advance, give up after patience, and leave the line on interrupt; `cut_in_line`
   gives thoughts to those behind. Done: five guests at one tap form a line without
   overlaps or stuck reservations; an impatient guest gives up. Also fixes a deadlock seen
   in a live evening: one guest on the WC spot and another in the WC doorway waiting for it
-  block each other for minutes, since only idle guests step aside.
-- [ ] **E06 — Stimuli and hearing.** Activities and events emit stimuli; perception
-  applies distance and wall damping; salience adds relevance (me, a friend, my name)
-  and temperament. Done: parametrized cases show a fight heard from the WC and a quiet
-  remark not heard across the hall.
-- [ ] **E07 — Attention and interrupts.** Below the threshold a guest glances; above
-  it, an interruptible activity pauses, the guest turns to the source, and a choice is
-  requested with the trigger in the briefing. Done: a drinking guest turns within
-  0.5 s of a shout; a guest in the WC finishes first.
-- [ ] **E08 — Gaze and emotes.** Facing follows the current speaker, arrivals at the
-  door, and stimulus sources; emotes mark alerts, confusion, anger, affection, sleep,
-  and long waits. Done: tests on facing choice and emote lifetimes.
-- [ ] **E09 — Bounded choices.** Jev chooses an activity family first and a target
-  second, generalizing seating, so requests stay small as guests and verbs grow.
-  Done: candidates per request stay under a fixed limit with six guests; tokens per
-  decision are measured against Stage 0.
+  block each other for minutes, since only idle guests step aside. `queues.py` keeps each
+  place's line (`queue_spots` in `data/tavern.json`, `queue` in the world; capacity stays
+  one per place, its single reservation); the front goes in only once nobody stands on the
+  way in, so the WC deadlock is gone. Saves are `schema_version` 3; grievances stand in
+  for thoughts until E12.
+- [x] **E06 — Stimuli and hearing.** `hearing.py`: activities and events make sounds
+  (quarrel 1.0, closing call 1.0, door and darts 0.25, chat 0.25, refusal 0.2, each with a
+  reach). Heard loudness is `loudness × (1 − distance / reach) × 0.5^walls`; salience adds
+  relevance (about me, my name; friends once E12 exists) and curiosity. Quiet sounds can
+  never interrupt.
+- [x] **E07 — Attention and interrupts.** `attention.py`: each tick a guest reacts to the
+  most salient new sound: a glance from 0.15, an interrupt from 0.5. Interruptible
+  activities (sit, rest, drink, watch, darts, wait, inspect) end and the guest turns to the
+  source; the WC, pouring, talking, and leaving carry on. Pending decisions asked before the
+  interrupt are dropped in both runners, and the briefing leads with what happened.
+- [x] **E08 — Gaze and emotes.** `expression.py`: facing follows a gaze, then the
+  conversation partner; emotes for alert, confusion, anger, and long waits (affection and
+  sleep wait for E12 and E13). The scene turns sprites and draws a glyph above the head.
+- [x] **E09 — Bounded choices.** `families.py`, `selection.py`: Jev first chooses among
+  activity families, then among the actions within the chosen one; every request holds at
+  most 8 options (11 before). Over 7 live seeds tokens per decision fell 6% (4,592 → 4,312)
+  and cost per evening $0.043 → $0.040, but conversations fell 67 → 48 and darts 74 → 35.
+  Two stages pay off clearly once a guest has more than about 11–15 options.
+
+M2 result: a live six-guest evening (seed 5) had 12 s of stuck time in total (297 s before
+the queues), no blocked routes, 7 interrupts, 34 glances, and cost $0.033. Open: the door
+is still reserved by one leaver at a time, so guests wait a turn at closing; sharing it
+changes the behavior `test_closing.py` specifies, so it needs a decision.
 
 ### M3 — Characters and conversation
 
-- [ ] **E10 — Character cards.** Schema, validation, and eight presets with distinct
+- [x] **E10 — Character cards.** Schema, validation, and eight presets with distinct
   temperaments and goals, plus two starting relationships. Done: invalid cards fail
-  loudly; the briefing includes the goal and temperament.
-- [ ] **E11 — Card compiler.** Haiku extracts params from a free-text card through
+  loudly; the briefing includes the goal and temperament. `cards.py` validates a card
+  (`id`, `name`, `sprite`, eight text fields, nine params in `params`); presets are in
+  `data/characters/`. A scenario guest names its card (`"card": "edda"`), keeps its
+  name, sprite and color, and takes the card's params as `traits`, so the trait names
+  the local policy reads still work. Starting `relationships` (`old friends`, `rivals`,
+  with a note) live in the scenario (`ties.py`, `Scenario.ties` for E12) and each guest
+  holds its side; the briefing adds occupation, temperament, goal and ties
+  (`portrait.py`). Saves are `schema_version` 4. Without the card library,
+  `parse_scenario` reads only the schedule, because `test_first_evening.py` parses the
+  repository scenario on its own.
+- [x] **E11 — Card compiler.** Haiku extracts params from a free-text card through
   structured output; values are range-checked and shown for confirmation. Done:
   malformed or out-of-range answers are rejected; the offline mode is labeled.
-- [ ] **E12 — Thoughts, mood, opinions.** Events create timed thoughts with mood and
+  `claude.py` is the Claude adapter later tasks reuse: a `Question` (one to four cached
+  system blocks, per-call content, schema) goes in through the `Ask` port
+  (`questions.py`), and a JSON object comes out, with usage including cache reads and
+  writes; failures raise `ClaudeError`. `recording.py` records, replays and prices
+  Claude kinds with a `Tariff`. `POST /api/cards/compile` returns the proposed params
+  (`compiled: false` and a note offline) using the server's key. Live: three cards
+  compiled in 1.8–2.8 s for $0.0015 each; a 4,306-token prefix was written once and
+  read from the cache on the next call.
+- [x] **E12 — Thoughts, mood, opinions.** Events create timed thoughts with mood and
   opinion effects; opinions and familiarity are kept per pair. Replaces grievances.
   Done: stacking, expiry, and opinion changes are tested; the inspector lists thoughts.
-- [ ] **E13 — Drunkenness.** Beers raise drunkenness by tolerance; it decays slowly;
+  `thoughts.py`: a taken seat, a cut in line, a quarrel and a chat each leave a thought;
+  repeats of one kind about one person stack up to three, and a fourth replaces the oldest.
+  Mood (thoughts plus needs above 50) and opinion (base plus thoughts, −100…100) are
+  derived; talking makes strangers acquaintances. `visit.grievances` stays as a derived
+  view (latest five bad thoughts), so older readers and tests keep working. The briefing
+  says "They are in a sour mood. They dislike Bea, who took their seat."; the local leave
+  utility weighs the thoughts' mood; friends make sounds more salient; `seed_relations`
+  turns `{a, b, kind}` starting relationships into base opinions, not yet wired to data.
+- [x] **E13 — Drunkenness.** Beers raise drunkenness by tolerance; it decays slowly;
   stages change inhibitions, speech instructions, gait, and fight accuracy. A wasted
   guest may doze at the table. Done: parametrized stage and decay tests.
-- [ ] **E14 — Intentions.** Haiku writes a one-sentence intention on arrival, after
+  `drunkenness.py`: 0.2 × (1.5 − tolerance) per beer (tolerance 0.5 until cards add it),
+  −0.0005 per second; sober, tipsy (0.2), drunk (0.45), wasted (0.75). The briefing gets a
+  speech sentence, the scene sways sprites, and `inhibition_modifier` and `fight_accuracy`
+  wait for E20–E21. `dozing.py`: a wasted guest in their seat may nod off into an
+  interruptible 30 s `doze` with the sleep emote. Quarrels still roll on beer counts,
+  which the existing quarrel tests set. In a live evening (seed 5) guests drink two beers
+  at most, so they get tipsy but nobody dozes.
+- [x] **E14 — Intentions.** Haiku writes a one-sentence intention on arrival, after
   salient events, and every few minutes; the briefing shows it to Jev. Done: in a
   recorded evening an insult changes the target's intention and later choices.
-- [ ] **E15 — Conversation scenes.** `talk` starts a scene for seated tablemates or
+  `intentions.py`: a guest's `intention` is `{thought, intention, written_at, trigger}`
+  (`trigger` is `{kind, text, time}`). A guest takes stock on arrival, after an interrupt
+  or alert, a `quarrel`, `seat_taken` or (once E17 adds it) `insult` thought, a scene
+  ending or leaving one, closing time, and every 180 s (`INTENTION_RULES`; at least 3 s
+  between asks, 180 s after a failure). Both runners ask asynchronously like decisions
+  (lockstep: one virtual latency) and drop an answer a salient event overtook or whose
+  guest left; a recorded evening replays byte-identically. The question is a ~5,100-token
+  shared prefix (`data/minds/intention_prefix.md`), the guest's card as a second cached
+  block, then the moment (trigger, previous intention, briefing paragraph, thoughts,
+  drink). The briefing adds "Their intention: … (decided 40 s ago, after: …)" and Jev's
+  guidance says to weigh options against it without ignoring urgent needs; the inspector
+  shows thought and intention. Offline (no `ANTHROPIC_API_KEY`) nobody has one, and the
+  snapshot (`ai.intentions`) and metrics say so. Saves are `schema_version` 5. The done
+  test uses a quarrel (insults wait for E17), a fake writer and a fake Jev. Live: seeds 5
+  and 1 wrote 63 and 45 intentions for $0.111 and $0.071 (about $0.0016 each, 0 failures;
+  Jev $0.050 each); the prefix was written to the cache once and read on every later call.
+  Seed 0 had one quarrel: Toren went from "sit back down with Edda" to "move to the Garden
+  table away from her". A 900 s evening (seed 7, 110 intentions, $0.18) had four: Edda,
+  after quarrelling with Calder, meant to make peace with Brida and go home, talked to
+  Brida, then left at 659 s; Calder meant to settle it at darts and played darts.
+- [x] **E15 — Conversation scenes.** `talk` starts a scene for seated tablemates or
   guests standing side by side (queue, fire); others join or leave; it ends by act,
   satisfied need, or interrupt. Done: a three-way conversation survives one member
-  leaving for the WC.
-- [ ] **E16 — Turns through Haiku.** The next speaker gets a turn after the previous
+  leaving for the WC. `scenes.py` keeps `world.conversations` (saves are `schema_version`
+  4); `join_conversation` is a new `company` verb; starting any other action, a loud sound,
+  closing time or a goodbye takes a member out, and members get no decisions. `turns.py`
+  owns timing (`max(2.5, len/15)` s per line) and the `TurnWriter` port: runners claim the
+  next turn when a line is spoken, ask the writer asynchronously (lockstep: one virtual
+  latency) and hand the line back; stale lines are dropped, and failures or a claim
+  unanswered 10 s past due fall back to `scripted.py`, the seeded offline writer. Acts
+  (`conversation.ACTS`) carry relief, place sharing and quarrels (`_quarrels` unchanged).
+  A partner pressed by a need declines, and is seen as in a hurry. Seed 5 offline: 14
+  scenes, 32 turns, 6 s stuck (M2 code: 9 s). Live seeds 5 and 1: 9 and 8 scenes, 24 and
+  20 turns, no joins, 6 departures each; 46 s and 33 s stuck, all of it guests refused the
+  busy door after closing (every guest was still in; an M2 rerun of seed 5 also kept
+  everyone and had 24 s), so the open door issue of M2 now dominates stuck time.
+- [x] **E16 — Turns through Haiku.** The next speaker gets a turn after the previous
   line's reading time; the result is validated and shown as a bubble; failures fall
   back to scripted lines by act. Done: invalid schema and unknown facts are rejected;
   cache reads appear in usage; cost per turn is measured.
-- [ ] **E17 — Speech-act effects.** One table maps acts to thoughts, opinions,
+  `haiku_turns.py` asks one `Question` per turn: the shared prefix of `turn_prompt.py`
+  (world notes, one rule per `conversation.ACTS` entry, answer fields, style, 19 good/bad
+  examples; 4,857 tokens), then the speaker's card and portrait as a second cached block,
+  then the scene, company (opinion, familiarity, thoughts), feelings, drink, needs, known
+  places, goal and nudges (a pressing need, enough company, untold places, by the scripted
+  thresholds; without them Haiku never left or shared places). The schema's `act` enum
+  comes from the table; `parse_turn` rejects bad shape, unknown acts, absent addressees,
+  lines over 160 characters or with stage directions, and `share_place` without known
+  places (facts wait for E19). Runners use Haiku when `ANTHROPIC_API_KEY` is set
+  (`--writer` overrides headless); turns are recorded as kind `turn` and a replay is
+  byte-identical (seed 5); the snapshot's `ai.writer` shows as a badge, and `metrics.json`
+  has `run.writer` and `writer` (calls, latency, cache hit rate, cost per turn). Live seeds
+  5 and 1 (Jev + Haiku): 52 and 46 turns, 78 and 66 calls (a third are claims dropped when
+  the scene ends first), no fallbacks, ~5,490 cached + ~355 fresh input and ~54 output
+  tokens per call, 94% cache hits, latency p50 1.4 s / p95 2.0 s, $0.0017 per turn, $0.09
+  and $0.08 per evening (Jev $0.04), so no pacing was needed.
+- [x] **E17 — Speech-act effects.** One table maps acts to thoughts, opinions,
   familiarity, names, knowledge, and invitations (join the table, darts together, buy a
   drink, leave together). Done: the same line with no act changes nothing.
-- [ ] **E18 — Overhearing and names.** Nearby guests receive the act and gist by
+  `conversation.ACTS` adds `remark` (no effect), `introduce`, `compliment`, `boast`
+  (admired by the patient or fond, tiresome to the impatient), `insult` (mood −6, opinion
+  −20, offence to the target's friends in the scene, the existing quarrel dice; no hostile
+  machinery yet), `apologize` (halves the latest unsoftened grudge), `agree`/`disagree`
+  (±3), `invite`, `accept`, `decline`; effects live in `social_acts.py` and
+  `invitations.py`. `offered_acts` gives the writer only the acts the situation allows:
+  `insult` toward someone at −10 or less, `apologize` to someone holding a grudge,
+  `introduce` while someone knows the speaker only by looks, `invite` while a kind is
+  possible and none is pending, `accept`/`decline` to the invitee; `check_turn` rejects
+  others. A turn result may carry `invitation` (only on an `invite` to someone, of an
+  offered kind). The pending invitation lives in the scene (`invitation`, lapses when
+  either leaves); an accepted one becomes an errand in `world.invitations` that
+  `honor_invitations` starts through `start_action` each tick: the invitee sits at a
+  free chair of the inviter's table, both go to the darts (one queues), the inviter
+  pours an ale that goes to the invitee once poured (free, no hand-over walk yet), or
+  the inviter leaves and the invitee follows once the door is free. The scripted writer
+  answers invitations by need, introduces itself, invites once in a while, and spreads
+  friendly lines over joke, compliment, agree and boast; the briefing and the local leave
+  utility read invitations. Saves are `schema_version` 5. Seed 5 offline: 14 scenes, 40
+  turns (6 introductions, 1 ale bought), 9 s stuck (E15: 32 turns, 6 s). Live seed 5
+  (Jev, scripted lines): 24 scenes, 56 turns, 6 introductions, 2 quarrels, no
+  invitations (scenes ended after two or three lines), 31 s stuck, $0.044.
+- [x] **E18 — Overhearing and names.** Nearby guests receive the act and gist by
   distance; strangers are described by appearance until introduced. Done: an insult
   to a friend overheard at the next table creates a thought for the listener.
+  `overhearing.py`: every spoken line is a sound from the whole company (talk 0.25 over
+  10 cells, laughter 0.25 over 14, insult 0.4 over 14); a guest outside the scene with
+  salience 0.08 notices the act, 0.15 makes out the words. An overheard introduction
+  teaches the name; an overheard insult is remembered, and resented (`friend_insulted`,
+  −12 toward the insulter) by anyone who counts the target a friend or thinks 20 or more
+  of them. Cards get an optional short `looks` (all eight presets have one); a relation
+  keeps `knows_name`, set by an introduction, by starting ties, by an overheard
+  introduction, or passed on by an old friend present. Until then the briefing, Jev's
+  view, the writer's participants (`known: false`) and new thought texts use the looks;
+  a guest without looks is always named. The event log and personal memories still name
+  everyone.
+
+M3 result: a live evening (seed 5, 488 game s) with Jev choices, Haiku lines, and Haiku
+intentions: six guests, 13 scenes, 32 lines with no scripted fallbacks, 50 intentions, two
+quarrels, all guests home by closing, no errors; $0.205 in total (Jev $0.05, lines $0.06,
+intentions $0.09), 92% cache hits, and a byte-identical replay. Seen in the log: old
+friends Brida and Edda quarrel over the hearth seat, both resolve to make peace, and argue
+it out in the next scene. Open issues and where each went: guests forget earlier
+conversations, so they repeat greetings and topics (E18b); Haiku invents news (E19); the
+door still serves one leaver at a time (tech debt D02).
+
+### Before M4 — Refactor (approved 2026-10-03)
+
+This milestone pays off tech debt D01–D08 before M4 adds facts, fights and bystanders.
+Every step preserves behavior, gets its own commit, and passes the same checks:
+
+- `make check` is green.
+- The offline golden evening is byte-identical:
+  `.venv/bin/python scripts/evening.py --seed 5 --mode local --writer scripted --out runs/golden-now`,
+  then `cmp runs/golden-offline/events.jsonl runs/golden-now/events.jsonl`.
+- The live golden evening replays byte-identically:
+  `make evening SEED=5 MODE=replay CALLS=runs/m3-full/calls.jsonl OUT=runs/replay-now`,
+  then `cmp runs/m3-full/events.jsonl runs/replay-now/events.jsonl`. Verified on `main`
+  on 2026-10-03.
+
+R0–R5 need no test edits. A test that fails during them is a refactor bug, not a bad
+test. R6 and R7 edit tests; the user approved exactly the edits listed there, and no
+others. `runs/` is gitignored, so
+the baselines exist only on this machine.
+
+- [ ] **R0 — Baselines.** On `main`, before any change, record
+  `runs/golden-offline` with the offline command above, and confirm that the `runs/m3-full`
+  replay is identical. No commit.
+- [ ] **R1 — Shared helpers (D06).** Replace `app._number`, `app._integer` and
+  `observation._number` with `validation.number` and a new `validation.integer`. Where a
+  test pins an error message, keep the message. Add `state.py` with `find_actor(world,
+  actor_id)` and use it for the four lookups. Add `memory.log_event(world, actor_id,
+  kind, message)` (event log only, no personal memory) in place of `turns._log`,
+  `intentions._log` and whatever `decisions.log_control` duplicates. Leave the seeded
+  roll alone until E21.
+- [ ] **R2 — Types (D05).** In `state.py`, add `TypedDict`s `World`, `Actor`, `Visit`,
+  `Knowledge`, `Rules` (with nested `AttentionRules`, `ConversationRules`, …) and
+  `Status = Literal["idle", "walking", "interacting", "waiting", "queued"]`. Annotate the
+  core signatures with them in place of `dict[str, Any]`. Nothing changes at runtime, and
+  saves stay JSON dicts. Add `mypy` to the `dev` extras and run `mypy backend/tavern` in
+  `make check` (approved). Start non-strict and fix what it reports in the same step.
+- [ ] **R3 — Rules module (D08).** Move `world._rules()` to `rules.py` as
+  `default_rules() -> Rules`, with its why-comments verbatim. Saves stay byte-identical.
+- [ ] **R4 — Split the oversized modules (D01, D07).** Every public name a test imports
+  stays in its current module; only private code moves. One commit per file:
+  - `world.py` (478 → about 200): the action state machine (`_activate`, `_line_up`,
+    `_talk_in_line`, `_part`, `_finish_parts`, `_move`, `_wait_for_route`,
+    `_begin_interaction`, `_interact`, `_apply_effect`, `_fail`, `_yield_idle_occupant`,
+    `_clear_action`, `_reject`, `_notice_target`) moves to `lifecycle.py`.
+    `start_action`, `step_world`, `create_world`, `observe_actor` and `observe_people`
+    stay. `_in_sight` moves to `sight.py` as `people_in_sight`.
+  - `briefing.py` (450 → about 220): the option sentences (`_option`, `_waiting`, `_cut`
+    and the per-verb builders) and `in_use` and `line_place` move to `options.py`. The
+    builder table becomes a module-level `_OPTIONS` dict, so it is not rebuilt on every
+    call. `brief` stays. Update "Adding a verb" in AGENTS.md: the option sentence now goes
+    in `options.py`.
+  - `persistence.py` (427 → about 150): each check moves to the module that owns the
+    concept, following `thoughts.check_mind`. That is `queues.check_saved_lines`,
+    `scenes.check_saved_scenes`, `hearing.check_saved_stimuli`,
+    `expression.check_saved_expression`, `arrival.check_saved_visit`,
+    `room.check_saved_geometry` and `rules.check_rules`. `parse_world` calls them in the
+    current order. Keep error messages verbatim.
+  - `agents.py` (386 → about 230): the local policy (`_local_scores`, `_leave_utility`,
+    `_wrongs`, `_local_seat_scores`, `_score_lines`, `_score_seats`) moves to
+    `local_policy.py`. Update "Adding a verb" in AGENTS.md: the local utility now goes in
+    `local_policy.py`.
+  - `app.py` (594 → about 350, together with R5): the debug commands (pause, speed,
+    refill, block, force action) move to `controls.py` as pure functions over the world.
+- [ ] **R5 — One request loop for both runners (D04).** Add `mind_loop.py` with a
+  `MindLoop` class that owns the three kinds of model request in flight (decisions per
+  guest, lines per claimed turn, intentions per guest) and, once per tick, runs: drop
+  stale, apply due, ask, deliver lines, claim lines, intentions. Today both runners use
+  this order; keep it. When an answer arrives comes from a `Courier` port (`Protocol`:
+  `send(awaitable) -> ticket`, `ready(ticket, now) -> bool`,
+  `outcome(ticket) -> Callable[[], T]`), which has two implementations:
+  `TaskCourier` (asyncio tasks, live) and `LockstepCourier(latency)` (awaits at once and
+  is due one virtual latency later). `TavernRuntime` and `run_evening` keep their
+  signatures and delegate to `MindLoop`. Lockstep keeps its measurements (choices,
+  spells, gazes) outside the loop. Make one of the two current intention-failure policies
+  the shared one; the replay must stay identical.
+- [ ] **R6 — Close the seams (D03). Test edits approved.**
+  `agents.choose_action` takes `evaluators` as a required argument and no longer imports
+  `jev.py`; the shell wires `Evaluators(evaluate_actions, evaluate_seats)`. Test edits,
+  with the reason "pass the port instead of patching the module":
+  - `test_agents.py`, 2 tests, and `test_seating.py`, 5 tests: pass fake `Evaluators`.
+  - `test_app.py`, 1 test, and `test_evening.py`, 1 test: pass a `decide` port to
+    `TavernRuntime` or `create_app` instead of patching `tavern.app.choose_action`.
+  - `test_database.py`, 2 tests: `TavernSessions` takes a `Store` port (`initialize`,
+    `load`, `save`) with two adapters, files and PostgreSQL, instead of patched module
+    functions.
+- [ ] **R7 — Packages by concept. Approved: it rewrites the import lines in about 60 test
+  files and adds subpackages.** Move the modules
+  with `git mv` and rewrite the imports with a script, in one mechanical commit. Every
+  `__init__.py` stays empty (no re-exports):
+
+  ```
+  backend/tavern/
+    world/     world lifecycle state rules room routes navigation sight arrival closing validation memory
+    body/      activities actions queues hearing attention expression drunkenness dozing
+    social/    thoughts ties names scenes conversation social_acts invitations overhearing turns
+    mind/      observation briefing options agents local_policy families selection feelings portrait
+               intentions cards card_compiler questions scripted haiku_turns turn_prompt
+    evening/   scenario decisions mind_loop lockstep metrics recording
+    adapters/  jev claude persistence database
+    server/    app controls cards_api
+  ```
+
+  Add `tests/test_layers.py`, which walks the AST of every module and fails when a
+  domain package (`world`, `body`, `social`, `mind`, `evening`) imports `adapters`,
+  `server`, `fastapi`, `httpx`, `psycopg`, `anthropic` or `os`. This turns the layer rule
+  in AGENTS.md into a check. Update AGENTS.md's Architecture section in the same commit.
+- [x] **R8 — Decision: world and actors as objects.** Decided 2026-10-03: not in Stage 1.
+  The world dict is also the save format, the snapshot and the spec of 367 test
+  accesses. A dataclass world would need a serializer for about 40 fields plus a
+  rewrite of the tests, and would gain little over R2's `TypedDict`s. Classes earn their
+  keep where something has behavior and lifetime: `MindLoop` and its couriers,
+  `TavernRuntime`, `TavernSessions`, `Store`, and the frozen dataclasses for new domain
+  data (`Fact`, `Fight`). Revisit in Stage 4, when the save format changes for several
+  evenings anyway.
+
+- [ ] **U1 — No text labels on furniture.** The hall shows only pixel art: no captions
+  on objects. This task is frontend only, with no backend or snapshot change.
+  - *Remove from `frontend/src/scene.ts`:* the plate under every table
+    (`appealLabel`: "appeal 0.8 · fire · window") and the name plates above the tap, the
+    WC and the darts board (`objectLabel`: "Tap · 12", "WC", "Darts"). Then remove
+    whatever only those two used: the `labels` group, its `clear` in the redraw, and the
+    two methods.
+  - *Also remove:* the status tag under every guest ("walking", "interacting":
+    `status` in `ActorView`, `createVisitor` and `updateVisitor`). The roster chips in
+    the sidebar still show each guest's activity.
+  - *Keep:* the hover line at the bottom (`hover`). It still names the object, its
+    appeal and comforts, and whether it is reserved. Add the tap's stock to it, since the
+    tap's plate was the only place that showed it. Also keep guests' names, speech
+    bubbles and emotes.
+  - *Check:* run `make check` and `make build`, then `make run`. Confirm in the browser
+    that no caption is drawn over the furniture or under the guests, and that hovering a
+    table or the tap still shows its details. Attach a screenshot.
+
+- [ ] **E18b — Conversation memory.** Guests remember the lines they spoke and heard
+  tonight, and the turn writer and the intention writer see them. In-evening only; memory
+  between evenings stays in Stage 4.
+  - *Shape (freeze before coding):* `actor["heard"]` is a list of
+    `{time, scene_id, speaker_id, speaker, line, act}`, where `speaker` is what the
+    listener called the speaker at that moment (`names.called`). The newest 40 lines are
+    kept (`rules.conversation.recall_lines`). Saves become `schema_version` 6, with
+    `memory.check_heard`.
+  - *Rule:* `turns._speak` appends each line to every member of the scene at that moment,
+    the speaker included. A guest who joins later lacks the earlier lines. Overheard lines
+    (E18) are out of scope for this task.
+  - *Writer view:* `turn_view` adds `speaker.earlier`: lines from other scenes (the
+    current scene is already in `conversation.turns`), newest last, grouped by scene as
+    `{scene_id, with: [names], lines: [{speaker, line}]}`. The total is capped at 24
+    lines. `haiku_turns.turn_content` renders it under "Earlier tonight". `intention_view`
+    adds the latest 8 lines the same way.
+  - *Prompt:* one rule in `turn_prompt.py`'s prefix: "Earlier tonight is what you already
+    said and heard. Do not greet or introduce yourself again to someone you have talked
+    with; pick up the thread or bring something new instead of repeating a subject." Add
+    one good and one bad example. The prefix must stay above 4,096 tokens (it is 4,857
+    today).
+  - *Tests (`tests/test_heard.py`):* a spoken line reaches every member and no outsider;
+    a late joiner lacks earlier lines; the cap keeps the newest; the view groups by scene,
+    excludes the current scene and respects the cap; the question content holds the lines;
+    a save round-trips and a malformed `heard` fails loudly. Use fakes for the writer.
+  - *Done:* in a live evening (seed 5), no pair greets each other as strangers in a
+    second scene, and the cost per turn grows by at most $0.0005 (it is $0.0017 today).
+    Record the before and after numbers here.
 
 ### M4 — News and conflict
+
+Shared rules for M4. New concepts get their own pure modules (`facts.py`, `hostility.py`,
+`fights.py`, `bystanders.py`), each with its own test file. Each one is wired into
+`step_world`, `conversation.ACTS` or `activities.py` with one small edit. The proposed
+fields below get frozen in the task text before coding (step 2 of "Working on a task").
+Each task bumps `schema_version` once. Seeded chance uses the
+`Random(f"{seed}:{tick}:…")` pattern; E21 makes its third use, so E21 first extracts it
+into `chance.roll(world, *keys)` as a separate refactor commit.
 
 - [ ] **E19 — Facts and retelling.** Guests start with news by occupation; sharing
   stores the speaker's words as the listener's version, and retelling paraphrases it.
   Done: a fact reaches a third guest in a recorded evening, with drifted wording and
   its path visible in the inspector.
+  - *Content:* the scenario gets `news`: `[{id, topic, text, known_by: [guest ids]}]`.
+    Write four to six items about tolls, robberies, the margrave and the border, each
+    held by the guests whose occupation would know it: Rurik (gate guard), Calder (post
+    rider), Toren (cloth trader), Brida (manor cook), Edda (healer), Saye (storyteller).
+    `parse_scenario` checks for unique IDs, `known_by` within the guest list, and text of
+    200 characters or fewer. `world["news"]` keeps the originals for the inspector and
+    the chronicle. Only the first holders' copies are ever built from the original text.
+  - *A guest's copy:* `actor["knowledge"]["facts"][fact_id] =
+    {topic, told_as, heard_from, heard_at, confidence, hops, overheard}`. For the first
+    holders, `told_as` is the original text, `heard_from` is null, `confidence` is 1 and
+    `hops` is 0. `facts.check_facts` validates saved copies.
+  - *The act:* add `share_news` to `conversation.ACTS`. It is offered while the speaker
+    holds at least one fact. The turn schema gets an always-present `fact_id`
+    (string or null), so the schema stays fixed. `check_turn` rejects `share_news`
+    without a `fact_id` the speaker holds, and a `fact_id` on any other act.
+  - *The effect (`facts.tell`):* every other member who lacks the fact gets a copy:
+    `told_as` is the spoken line, `heard_from` is the speaker, `hops` is the speaker's
+    hops + 1, and `confidence` is the speaker's confidence × trust by familiarity
+    (`rules.news.trust`, for example friend 0.9, acquaintance 0.75, stranger 0.6). A guest
+    who already knows the fact keeps their first version. The event log records
+    `news_told` with the fact, the teller and the listeners. Overhearing at word salience
+    (≥ 0.15, E18) gives a copy with half the confidence and `overheard: true`.
+  - *Drift:* the writer only ever sees the speaker's own `told_as`, never the original.
+    The view's `speaker.news` is `[{id, topic, told_as, heard_from (as called),
+    confidence in words}]`. Prefix rules: retell your version in your own words, shorter
+    or coloured but with no new facts; share only news from your list; with no news, talk
+    about yourself, the road or the room (this replaces today's invented news). Add two
+    good and two bad examples. Offline, the scripted writer says
+    "Heard from {source}: {told_as}", trimmed to 160 characters, so its wording does not
+    drift.
+  - *Inspector and metrics:* `minds[guest].news` lists each copy with its `heard_from`
+    name and `hops`. The dashboard shows a fact's chain (Brida ← Edda ← start), and
+    `types.ts` changes in the same commit. `metrics.json` gets `news`: per fact, its
+    holders, its maximum hops, and the path of its first two-hop copy (acceptance
+    scenario 3).
+  - *Tests (`tests/test_facts.py`):* starting copies follow `known_by`; a share gives
+    the listener the line as `told_as` with hops + 1; a second share keeps the first
+    version; an unknown `fact_id` and a `fact_id` on `joke` are rejected; overhearing
+    halves confidence; saves round-trip, and a malformed copy fails loudly. The done test
+    is a lockstep evening with a fake writer that paraphrases: a fact reaches a third
+    guest at hops 2 with words different from the original.
 - [ ] **E20 — Hostile options.** Insults are speech acts; `shove` and `start_fight`
   appear only toward someone with low opinion, given temper, drunkenness, and a recent
   cause. Done: sober guests on good terms never receive hostile candidates.
+  - *Gate (`hostility.py`, pure, from the observation only):*
+    `hostile_targets(observation) -> list[actor_id]`. A target qualifies when they are in
+    sight, the guest's opinion of them is −30 or lower, there is a recent cause (a
+    thought about them of kind `insult`, `quarrel`, `seat_taken`, `friend_insulted` or
+    `cut_in_line` within 120 s), and `temper × (1 + drunkenness.inhibition_modifier)`
+    reaches the threshold. `start_fight` needs a higher threshold than `shove`. All
+    thresholds go in `rules.hostility`.
+  - *Verbs:* add `shove` and `start_fight` as `Activity` entries in a new `confront`
+    family. A family appears only when it has candidates (check `families.py` and
+    pin that with a test), so peaceful requests do not grow. Each verb also needs a
+    candidate rule, a low local utility weighted by the urge, an option sentence, and Jev
+    guidance that hostile acts are rare and have consequences. Until E21 lands, a
+    `shove` is a loud sound (1.0) plus thoughts, and `start_fight` logs and makes a sound.
+  - *Stage 0 leftovers (D11):* quarrels then come from insults, not beer dice, and
+    `visit.grievances` goes away. Both change behavior that existing tests specify
+    (the quarrel dice tests, and the grievances readers in `agents.py`, `feelings.py` and
+    `observation.py`). List those tests and ask the user before replacing them.
+  - *Tests:* a parametrized block in which sober guests with opinion ≥ 0 never get
+    hostile candidates (cases: no cause, old cause, low temper, friend), and a block of
+    positive cases.
 - [ ] **E21 — Fight resolution.** Seeded exchanges with hit chance, damage,
   consciousness, yielding, and knockouts; a shove can stagger or knock down; a knocked
   out guest lies down, gets up groggy, and keeps thoughts. Done: parametrized outcome
   rates (a strong sober guest usually beats a weak drunk one) and seeded replays.
+  - *Shape:* `world["fights"]` holds `{id, a, b, started_at, next_exchange_at,
+    exchanges: [{time, attacker, hit, damage}], outcome}`. An actor gets `health`
+    (0–100) and `condition` (`ok`, `staggered`, `down`, `out`, `groggy`) with `until`.
+  - *Exchange (`fights.py`), every `rules.fight.exchange_seconds`:* the hit chance comes
+    from the attacker's `brawling` against the defender's, times
+    `drunkenness.fight_accuracy`. Damage comes from `strength` × a roll. At 15 health or
+    less, the guest is knocked out: they lie 20–40 s, then are groggy for 60 s, and keep
+    their thoughts. A guest yields below `50 × (1 − courage)` health. Bystanders can
+    separate the fighters (E22). A shove rolls strength against strength: nothing, a
+    stagger for 2 s, or knocked down for 6 s.
+  - *Lifecycle:* fighters' actions are locked while the fight lasts (as scene members
+    get no decisions). Every exchange is a loud stimulus, so E07 attention brings the
+    room's heads round.
+  - *Tests:* rates over 200 seeds as parametrized cases. A strong sober guest beats a
+    weak drunk one at least 80% of the time; equal guests win 50 ± 15%; at least 20% of
+    fights end without a knockout. A seeded fight replays identically.
 - [ ] **E22 — Bystanders and aftermath.** Witnesses watch from a ring, cheer, intervene
   with a chance to separate, back away, leave, or help the fallen up; everyone involved
   gets thoughts; spilled drinks are lost. Done: a forced fight draws at least two kinds
   of reaction that follow the witnesses' traits.
+  - *Reactions (`bystanders.py`):* a `react` family offered only while a fight or a
+    fallen guest is in sight: `watch_fight` (a ring spot 2–3 cells from the fight's
+    center, computed by the body), `cheer`, `intervene` (separation chance from strength
+    and courage against the fighters'), `back_away`, `leave`, and `help_up` (after a
+    knockdown or knockout).
+  - *Aftermath:* thoughts `fought`, `was_attacked`, `saw_fight`, `was_helped` and
+    `separated_us`, with opinion effects. A fighter's or shoved guest's beer is spilled
+    (inventory to 0, with an event).
+  - *Debug:* add a "force fight" command in the debug panel for the done check.
+  - *Tests:* parametrized by traits. Witnesses with high courage and strength
+    intervene more; those with low courage back away or leave. A forced fight in a
+    seeded evening draws at least two kinds of reaction.
 
 ### M5 — Presentation and acceptance
 
@@ -200,6 +653,12 @@ M1 comes first: E01 is a refactor under the existing tests, and E02–E03 make e
 task measurable. Within M2–M4 the body (E05–E08) and characters (E10–E13) can proceed
 in parallel; conversation (E15–E18) needs cards and thoughts; conflict (E20–E22)
 needs stimuli, attention, thoughts, and drunkenness. Art (E23) can start at once.
+
+After M3: refactor R0–R7, then D13 (model health), then E18b
+(memory), then E19. E19 comes before E20–E22 because the chronicle and acceptance
+scenario 3 need news. E20 → E21 → E22 is strict. D13 can also run in parallel with the
+refactor, since it touches only the adapters, the shell and the dashboard. E18b is easier
+after R7, because it touches `turns.py` and `haiku_turns.py`, which R7 moves.
 
 ## Acceptance scenarios
 

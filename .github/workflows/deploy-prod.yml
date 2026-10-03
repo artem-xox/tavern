@@ -36,6 +36,9 @@ jobs:
       - name: Deploy App Platform spec
         id: deploy
         uses: digitalocean/app_action/deploy@v2
+        env:
+          # Substituted into ${TYPESAFE_API_KEY} in .do/app.prod.yaml
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
           app_spec_location: .do/app.prod.yaml

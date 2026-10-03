@@ -4,13 +4,26 @@ from collections.abc import Mapping
 from copy import deepcopy
 from typing import Any
 
+from tavern.actions import action_error
 from tavern.activities import ACTIVITIES
 from tavern.arrival import admit_arrivals, arrival_ranges, arriving, create_actor
+from tavern.attention import attend
 from tavern.closing import call_closing, inn_closed
+from tavern.dozing import nodding_off
+from tavern.drunkenness import wear_off
+from tavern.expression import update_expression
+from tavern.hearing import sound_activity
+from tavern.invitations import honor_invitations, invitations_of
 from tavern.memory import record_event
+from tavern.names import called
+from tavern.queues import (check_lines, cut_in, join_line, leave_line, line_full, line_of, must_wait,
+                           stay_in_line, step_line)
 from tavern.room import create_map, find_object, impassable_cells
 from tavern.routes import gives_way, occupied_cells, plan_route, replan, reserved_spots
+from tavern.scenes import check_conversations, conversation_of, leave_conversation, pressed, side_by_side
 from tavern.sight import line_visible, look_around, refresh_knowledge, visible_cells
+from tavern.thoughts import forget_expired
+from tavern.turns import speak_turns
 from tavern.validation import number, unique_ids
 
 
@@ -37,11 +50,13 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> dict[str, Any]:
               for item in (listed if ranges is None else arriving(listed, ranges, seed))]
     if len({(item["x"], item["y"]) for item in actors}) != len(actors):
         raise ValueError("Actors cannot overlap at startup")
-    world = dict(schema_version=2, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
+    world = dict(schema_version=5, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
                  map=world_map, actors=actors, departed=[], expected=[], closes_at=None,
-                 events=[], rules=_rules())
+                 events=[], stimuli=[], next_stimulus_id=0, conversations=[], next_conversation_id=0,
+                 invitations=[], rules=_rules())
+    check_lines(world)
     for actor in actors:
-        observe_actor(world, actor["id"])
+        _look(world, actor)
         if ranges is not None:
             look_around(world, actor)
     return world
@@ -55,7 +70,29 @@ def _rules() -> dict[str, Any]:
                           if activity.duration is not None},
             # Each beer the pair has drunk beyond the first adds this much quarrel chance,
             # scaled by impatience (2 − both patience traits), up to quarrel_max.
-            "quarrel_per_beer": 0.1, "quarrel_max": 0.5}
+            "quarrel_per_beer": 0.1, "quarrel_max": 0.5,
+            # Seconds a visitor waits in line before reconsidering: base, plus this much per unit
+            # of the patience trait and per unit of urgency of the need the place relieves.
+            "queue_patience": {"base": 5.0, "patience": 40.0, "urgency": 30.0},
+            "queue_needs": {"tap": "thirst", "toilet": "bladder", "darts": "boredom"},
+            # Salience at which a visitor glances at a sound, and at which it interrupts them;
+            # each wall cell between a sound and a listener multiplies its loudness by wall_damping.
+            "attention": {"glance": 0.15, "interrupt": 0.5, "wall_damping": 0.5,
+                          "glance_seconds": 2.0, "turn_seconds": 3.0},
+            # How long each emote shows; a route blocked for long_wait seconds shows `waiting`.
+            "emote_seconds": {"alert": 1.5, "confused": 2.5, "angry": 4.0, "affection": 3.0, "sleep": 5.0,
+                              "waiting": 0.5},
+            "long_wait": 2.0,
+            # A middling drinker's rise per beer, how much wears off each second, and how often a
+            # wasted guest at their table nods off, per second.
+            "drunkenness": {"per_beer": 0.2, "per_second": 0.0005, "doze_per_second": 0.01},
+            # Scenes (`tavern.scenes`, `tavern.turns`): seconds before the first line and per line
+            # at least, reading speed, how long a claimed line may keep the others waiting, social
+            # relief per friendly act, the wish for company below which a scene ends, its size, how
+            # many cells apart guests may stand to talk, and the need that makes a partner decline.
+            "conversation": {"opening": 0.5, "min_gap": 2.5, "chars_per_second": 15.0, "turn_timeout": 10.0,
+                             "relief": 25.0, "satisfied": 25.0, "max_participants": 4, "reach": 2,
+                             "pressing": 75.0}}
 
 
 def _actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any] | None:
@@ -66,64 +103,12 @@ def _target(world: Mapping[str, Any], action: Mapping[str, Any]) -> dict[str, An
     return find_object(world["map"], action.get("target_id"))
 
 
-def _action_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any]) -> str | None:
-    if not isinstance(action.get("id"), str) or not action["id"]:
-        return "Action ID must be a nonempty string"
-    verb = action.get("verb")
-    if not isinstance(verb, str) or verb not in world["rules"]["durations"]:
-        return "Unknown action verb"
-    activity = ACTIVITIES[verb]
-    if activity.partner:
-        return _talk_error(world, actor, action)
-    if activity.requires_item and actor["inventory"][activity.requires_item] <= 0:
-        return f"No {activity.requires_item} in inventory"
-    if activity.target_kinds:
-        return _target_error(world, actor, action)
-    if action.get("target_id") is not None:
-        return "This action does not take a target"
-    return None
-
-
-def _target_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any]) -> str | None:
-    target = _target(world, action)
-    if target is None:
-        return "Target no longer exists"
-    activity = ACTIVITIES[action["verb"]]
-    if target["kind"] not in activity.target_kinds:
-        return "Target does not support this action"
-    if target["reserved_by"] not in (None, actor["id"]):
-        return "Target is reserved by another visitor"
-    if activity.empty_target and target["stock"] <= 0:
-        return activity.empty_target
-    return None
-
-
 def _seat(world: Mapping[str, Any], actor: Mapping[str, Any]) -> dict[str, Any] | None:
     return _target(world, {"target_id": actor.get("seat_id")})
 
 
-def _conversation(world: Mapping[str, Any], actor_id: str) -> dict[str, Any] | None:
-    return next((item for item in world["actors"] if item.get("action")
-                 and item["action"]["verb"] == "talk"
-                 and actor_id in (item["id"], item["action"]["target_id"])), None)
-
-
-def _talk_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any]) -> str | None:
-    partner = _actor(world, action.get("target_id"))
-    if partner is None or partner["id"] == actor["id"]:
-        return "Choose another seated visitor to talk to"
-    left, right = _seat(world, actor), _seat(world, partner)
-    if not left or not right or not left.get("table_id") or left.get("table_id") != right.get("table_id"):
-        return "Visitors must be seated at the same table"
-    if abs(actor["x"] - partner["x"]) + abs(actor["y"] - partner["y"]) > 4:
-        return "Conversation partner is too far away"
-    conversation = _conversation(world, partner["id"])
-    if conversation and conversation["id"] != actor["id"]:
-        return "Visitor is already in a conversation"
-    return None
-
-
 def _clear_action(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
+    leave_line(world, actor)
     for target in world["map"]["objects"]:
         if target["reserved_by"] == actor["id"] and target["id"] != actor.get("seat_id"):
             target["reserved_by"] = None
@@ -133,7 +118,7 @@ def _clear_action(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
 
 def _reject(world: Mapping[str, Any], actor: dict[str, Any], reason: str) -> dict[str, Any]:
     record_event(world, actor, "action_failed", reason)
-    observe_actor(world, actor["id"])
+    _look(world, actor)
     return {"accepted": False, "reason": reason}
 
 
@@ -154,14 +139,70 @@ def start_action(world: dict[str, Any], actor_id: str, action: Mapping[str, Any]
     actor = _actor(world, actor_id)
     if actor is None:
         return {"accepted": False, "reason": "Unknown visitor"}
-    reason = _action_error(world, actor, action)
+    cutting = action.get("verb") == "cut_in_line"
+    action, reason = cut_in(world, action)
+    reason = reason or action_error(world, actor, action)
     if reason:
         _notice_target(world, actor, action)
         return _reject(world, actor, reason)
+    if ACTIVITIES[action["verb"]].partner and line_of(world, actor_id) is not None:
+        return _talk_in_line(world, actor, action)
+    if must_wait(world, actor, action):
+        return _line_up(world, actor, action, cutting)
     plan = plan_route(world, actor, action)
     if plan is None:
         return _reject(world, actor, "No reachable interaction spot")
     _activate(world, actor, action, plan)
+    return {"accepted": True, "reason": None}
+
+
+def _talk_in_line(world: dict[str, Any], actor: dict[str, Any], action: Mapping[str, Any]) -> dict[str, Any]:
+    # Talking to a neighbour in line keeps the place in it, and the talk makes the wait bearable.
+    stay_in_line(world, line_of(world, actor["id"])[0], actor, False)
+    activity = ACTIVITIES[action["verb"]]
+    activity.on_arrival(world, actor, _actor(world, action["target_id"]))
+    if activity.sound:
+        # The sound concerns the partner, as if the talk were the action they started.
+        sound_activity(world, {**actor, "action": action}, activity.sound, activity.doing)
+    return {"accepted": True, "reason": None}
+
+
+def _part(world: dict[str, Any], actor: dict[str, Any], action: Mapping[str, Any]) -> None:
+    # Starting anything but a part in a conversation takes a visitor out of theirs.
+    if not ACTIVITIES[action["verb"]].partner:
+        leave_conversation(world, actor)
+        _finish_parts(world)
+
+
+def _finish_parts(world: Mapping[str, Any]) -> None:
+    # A part in a conversation ends with the visitor's place in its scene.
+    for actor in world["actors"]:
+        action = actor["action"]
+        if action and ACTIVITIES[action["verb"]].partner and conversation_of(world, actor["id"]) is None:
+            record_event(world, actor, "action_completed", f"{actor['name']} completed {action['verb']}")
+            _clear_action(world, actor)
+
+
+def _line_up(world: Mapping[str, Any], actor: dict[str, Any], action: Mapping[str, Any],
+             front: bool) -> dict[str, Any]:
+    # Joining a line is body work: the visitor stands up and walks to its end, or to its front
+    # when cutting in. Choosing the line they already stand in means waiting on.
+    target = _target(world, action)
+    found = line_of(world, actor["id"])
+    if found is not None and found[0] is target:
+        stay_in_line(world, target, actor, front)
+        return {"accepted": True, "reason": None}
+    full = line_full(target)
+    if full:
+        _notice_target(world, actor, action)
+        return _reject(world, actor, full)
+    _part(world, actor, action)
+    actor["seat_id"] = None
+    _clear_action(world, actor)
+    actor.update(action={key: action.get(key) for key in ("id", "verb", "target_id")}, status="queued",
+                 _remaining=world["rules"]["durations"][action["verb"]])
+    record_event(world, actor, "action_started", f"{actor['name']} chose {action['verb']}")
+    join_line(world, target, actor, front)
     return {"accepted": True, "reason": None}
 
 
@@ -175,6 +216,7 @@ def _notice_target(world: Mapping[str, Any], actor: dict[str, Any], action: Mapp
 
 def _activate(world: Mapping[str, Any], actor: dict[str, Any], action: Mapping[str, Any],
               plan: tuple[list[int] | None, list[list[int]]]) -> None:
+    _part(world, actor, action)
     if plan[1] or ACTIVITIES[action["verb"]].leaves_seat:
         actor["seat_id"] = None
     _clear_action(world, actor)
@@ -235,19 +277,25 @@ def _wait_for_route(world: Mapping[str, Any], actor: dict[str, Any], elapsed: fl
 
 
 def _begin_interaction(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
-    reason = _action_error(world, actor, actor["action"])
+    if line_of(world, actor["id"]) is not None:
+        actor.update(status="queued", _move_elapsed=0.0, _blocked_for=0.0)
+        return
+    reason = action_error(world, actor, actor["action"])
     if reason:
         _fail(world, actor, reason)
     else:
         actor.update(status="interacting", _move_elapsed=0.0, _blocked_for=0.0)
-        arrival = ACTIVITIES[actor["action"]["verb"]].on_arrival
-        if arrival:
-            arrival(world, actor, _target(world, actor["action"]))
+        activity = ACTIVITIES[actor["action"]["verb"]]
+        if activity.on_arrival:
+            partner = _actor(world, actor["action"]["target_id"]) if activity.partner else None
+            activity.on_arrival(world, actor, partner or _target(world, actor["action"]))
+        if activity.sound:
+            sound_activity(world, actor, activity.sound, activity.doing)
 
 
 def _interaction_error(world: Mapping[str, Any], actor: Mapping[str, Any]) -> str | None:
     action = actor["action"]
-    reason = _action_error(world, actor, action)
+    reason = action_error(world, actor, action)
     if reason:
         return reason
     if (actor["x"], actor["y"]) in impassable_cells(world["map"]):
@@ -274,12 +322,13 @@ def _interact(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float) -
         _fail(world, actor, reason)
         return
     actor["_remaining"] -= elapsed
-    if actor["_remaining"] <= 0:
+    # A part in a conversation lasts as long as the scene does (see `_finish_parts`).
+    if actor["_remaining"] <= 0 and not ACTIVITIES[actor["action"]["verb"]].partner:
         verb = actor["action"]["verb"]
         _apply_effect(world, actor)
         record_event(world, actor, "action_completed", f"{actor['name']} completed {verb}")
         _clear_action(world, actor)
-        observe_actor(world, actor["id"])
+        _look(world, actor)
 
 
 def _step_actor(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float) -> None:
@@ -287,17 +336,18 @@ def _step_actor(world: Mapping[str, Any], actor: dict[str, Any], elapsed: float)
         actor["needs"][name] = min(100, actor["needs"][name] + rate * elapsed)
     actor["visit"]["seconds"] += elapsed
     if actor["action"]:
+        step_line(world, actor)
         if actor["status"] == "waiting":
             _wait_for_route(world, actor, elapsed)
         elif actor["status"] == "walking":
             _move(world, actor, elapsed)
         elif actor["status"] == "interacting":
             _interact(world, actor, elapsed)
-    observe_actor(world, actor["id"])
+    _look(world, actor)
 
 
 def step_world(world: dict[str, Any], dt: float) -> None:
-    """Advance time, needs, movement, once-only action consequences, and arrivals.
+    """Advance time, needs, movement, once-only action consequences, arrivals, and attention.
 
     Args:
         world: Authoritative mutable world state.
@@ -316,11 +366,22 @@ def step_world(world: dict[str, Any], dt: float) -> None:
     since = world["time"]
     world["time"] += elapsed
     world["tick"] += 1
+    forget_expired(world)
     for actor in world["actors"]:
         _step_actor(world, actor, elapsed)
     _see_off(world)
     call_closing(world, since)
     admit_arrivals(world)
+    check_conversations(world)
+    speak_turns(world)
+    honor_invitations(world, start_action)
+    for actor in attend(world):
+        _clear_action(world, actor)
+    wear_off(world, elapsed)
+    for actor in nodding_off(world, elapsed):
+        _activate(world, actor, {"id": "doze", "verb": "doze", "target_id": None}, (None, []))
+    _finish_parts(world)
+    update_expression(world)
 
 
 def _see_off(world: dict[str, Any]) -> None:
@@ -331,6 +392,14 @@ def _see_off(world: dict[str, Any]) -> None:
         beers = actor["visit"]["beers"]
         record_event(world, actor, "departure",
                 f"{actor['name']} left the inn after {beers} {'beer' if beers == 1 else 'beers'}")
+
+
+def _look(world: Mapping[str, Any], actor: dict[str, Any]) -> list[list[int]]:
+    # The world refreshes what each visitor knows every tick; only a decision needs the full,
+    # copied observation, so the copying stays in observe_actor.
+    visible = visible_cells(world, actor, world["rules"]["vision_radius"])
+    refresh_knowledge(world, actor, visible)
+    return visible
 
 
 def observe_actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
@@ -351,11 +420,11 @@ def observe_actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
     actor = _actor(world, actor_id)
     if actor is None:
         raise ValueError("Unknown visitor")
-    visible = visible_cells(world, actor, world["rules"]["vision_radius"])
-    refresh_knowledge(world, actor, visible)
+    visible = _look(world, actor)
     return {"actor": deepcopy(actor), "objects": deepcopy(list(actor["knowledge"]["objects"].values())),
             "visitors": _visible_visitors(world, actor),
             "memory": deepcopy(actor["memory"][-10:]), "visible_cells": visible, "time": world["time"],
+            "invitations": invitations_of(world, actor),
             "map": {"width": world["map"]["width"], "height": world["map"]["height"]},
             "closed": inn_closed(world)}
 
@@ -371,9 +440,13 @@ def _in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[dict[s
             continue
         seat, action = _seat(world, visitor), visitor["action"] or {}
         target = _target(world, action) or _actor(world, action.get("target_id"))
-        people.append({key: visitor[key] for key in ("id", "name", "x", "y", "seat_id")})
+        # A stranger is known by their looks until the viewer learns their name.
+        people.append({**{key: visitor[key] for key in ("id", "x", "y", "seat_id")}, "name": called(actor, visitor)})
+        scene = conversation_of(world, visitor["id"])
         people[-1].update(table_id=seat.get("table_id") if seat else None,
-                          available=_conversation(world, visitor["id"]) is None,
+                          available=scene is None and not pressed(world, visitor),
+                          conversation=scene["id"] if scene else None,
+                          beside=side_by_side(world, actor, visitor),
                           doing=action.get("verb"), target=target["name"] if target else None)
     return people
 
@@ -392,8 +465,9 @@ def observe_people(world: Mapping[str, Any], actor_id: str) -> list[dict[str, An
 
     Returns:
         Public facts about each visible person: ID, name, cell, seat and table, whether they
-        are free to talk, and their current action verb and target name. Needs, inventory,
-        traits and memories stay private.
+        are free to talk (in no conversation and in no hurry), the conversation they are in,
+        whether they stand beside the viewer (`scenes.side_by_side`), and their current action
+        verb and target name. Needs, inventory, traits and memories stay private.
 
     Raises:
         ValueError: Visitor ID does not exist.

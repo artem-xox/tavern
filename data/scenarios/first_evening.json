@@ -10,53 +10,17 @@
     }
   },
   "guests": [
-    {
-      "id": "mara",
-      "name": "Edda",
-      "color": "#e8a86b",
-      "sprite": "edda",
-      "traits": {"patience": 0.3, "comfort": 0.7, "curiosity": 0.5},
-      "arrives_at": 0
-    },
-    {
-      "id": "ivo",
-      "name": "Rurik",
-      "color": "#81b3c6",
-      "sprite": "rurik",
-      "traits": {"patience": 0.8, "comfort": 0.9, "curiosity": 0.6},
-      "arrives_at": 0
-    },
-    {
-      "id": "nell",
-      "name": "Toren",
-      "color": "#b8aa76",
-      "sprite": "toren",
-      "traits": {"patience": 0.5, "comfort": 0.3, "curiosity": 0.9},
-      "arrives_at": 0
-    },
-    {
-      "id": "brannoc",
-      "name": "Brida",
-      "color": "#b56f5c",
-      "sprite": "cook",
-      "traits": {"patience": 0.9, "comfort": 0.5, "curiosity": 0.2},
-      "arrives_at": 40
-    },
-    {
-      "id": "wenna",
-      "name": "Calder",
-      "color": "#7fae7a",
-      "sprite": "courier",
-      "traits": {"patience": 0.4, "comfort": 0.1, "curiosity": 0.7},
-      "arrives_at": 110
-    },
-    {
-      "id": "osric",
-      "name": "Saye",
-      "color": "#9d8fc4",
-      "sprite": "visitor",
-      "traits": {"patience": 0.2, "comfort": 0.8, "curiosity": 0.3},
-      "arrives_at": 190
-    }
+    {"id": "mara", "name": "Edda", "color": "#e8a86b", "sprite": "edda", "card": "edda", "arrives_at": 0},
+    {"id": "ivo", "name": "Rurik", "color": "#81b3c6", "sprite": "rurik", "card": "rurik", "arrives_at": 0},
+    {"id": "nell", "name": "Toren", "color": "#b8aa76", "sprite": "toren", "card": "toren", "arrives_at": 0},
+    {"id": "brannoc", "name": "Brida", "color": "#b56f5c", "sprite": "cook", "card": "brida", "arrives_at": 40},
+    {"id": "wenna", "name": "Calder", "color": "#7fae7a", "sprite": "courier", "card": "calder", "arrives_at": 110},
+    {"id": "osric", "name": "Saye", "color": "#9d8fc4", "sprite": "visitor", "card": "saye", "arrives_at": 190}
+  ],
+  "relationships": [
+    {"a": "mara", "b": "brannoc", "kind": "old friends",
+     "note": "Brida nursed Edda through a winter fever years ago; since then they trade remedies, recipes and gossip."},
+    {"a": "ivo", "b": "nell", "kind": "rivals",
+     "note": "Rurik has searched Toren's bales at the toll gate twice this season and found nothing; each thinks the other is laughing at him."}
   ]
 }
