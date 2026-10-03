@@ -64,7 +64,10 @@ def _offer(view: Mapping[str, Any]) -> str:
     kinds = view.get("invitations") or []
     invitations = (f" An invite must name one of these invitations: {', '.join(kinds)}; any other act has "
                    "invitation null." if "invite" in view["acts"] and kinds else " Set invitation to null.")
-    return f"ALLOWED NOW\n\nActs you may use for this line: {', '.join(view['acts'])}.{invitations}"
+    # Guests may know each other only by looks, so the answer must name people by ID.
+    others = [f'"{item["id"]}"' for item in view["conversation"]["participants"] if item["id"] != view["speaker"]["id"]]
+    return (f"ALLOWED NOW\n\nActs you may use for this line: {', '.join(view['acts'])}.{invitations} "
+            f"The addressee must be null or one of these ids: {', '.join(others)}.")
 
 
 def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:
