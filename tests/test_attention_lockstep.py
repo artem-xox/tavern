@@ -7,11 +7,11 @@ from typing import Any
 
 import pytest
 
-from tavern.agents import Evaluators
-from tavern.app import TavernRuntime
-from tavern.lockstep import Evening, Pace, run_evening
-from tavern.metrics import attention_counts
-from tavern.world import create_world
+from tavern.mind.agents import Evaluators
+from tavern.server.runtime import TavernRuntime
+from tavern.evening.lockstep import Evening, Pace, run_evening
+from tavern.evening.metrics import attention_counts
+from tavern.hall.world import create_world
 
 KEYED = {"typesafe_api_key": "fake", "model": "jev-latest", "timeout": 1.0, "temperature": 0.0}
 

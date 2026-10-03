@@ -4,8 +4,8 @@ from typing import Any
 
 import pytest
 
-from tavern.scenario import open_evening, parse_scenario
-from tavern.world import start_action, step_world
+from tavern.evening.scenario import open_evening, parse_scenario
+from tavern.hall.world import start_action, step_world
 
 
 def guest(guest_id: str, arrives_at: Any = 0, **fields: Any) -> dict[str, Any]:

@@ -8,7 +8,7 @@ from typing import Any
 import httpx
 import pytest
 
-from tavern.jev import JevError, evaluate_actions, evaluate_actions_metered, evaluate_seats_metered
+from tavern.adapters.jev import JevError, evaluate_actions, evaluate_actions_metered, evaluate_seats_metered
 
 
 def candidates():

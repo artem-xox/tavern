@@ -7,10 +7,10 @@ from typing import Any
 
 import pytest
 
-from tavern.briefing import brief
-from tavern.decisions import stale_requests
-from tavern.memory import record_event
-from tavern.world import create_world, observe_actor, start_action, step_world
+from tavern.mind.briefing import brief
+from tavern.evening.decisions import stale_requests
+from tavern.hall.memory import record_event
+from tavern.hall.world import create_world, observe_actor, start_action, step_world
 
 HALL = Path(__file__).resolve().parents[1] / "data" / "tavern.json"
 

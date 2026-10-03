@@ -5,9 +5,9 @@ from typing import Any, Callable
 
 import pytest
 
-from tavern.cards import PARAMS, parse_cards
-from tavern.persistence import load_world, save_world
-from tavern.scenario import open_evening, parse_scenario
+from tavern.mind.cards import PARAMS, parse_cards
+from tavern.adapters.persistence import load_world, save_world
+from tavern.evening.scenario import open_evening, parse_scenario
 
 
 def card(card_id: str, name: str) -> dict[str, Any]:

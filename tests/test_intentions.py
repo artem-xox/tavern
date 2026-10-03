@@ -6,12 +6,12 @@ from typing import Any
 
 import pytest
 
-from tavern.intentions import (IntentionRules, check_intention, deliver_intention, intention_due,
+from tavern.mind.intentions import (IntentionRules, check_intention, deliver_intention, intention_due,
                                intention_question, intention_requests, intention_view, intention_writer,
                                stale_intentions)
-from tavern.memory import record_event
-from tavern.thoughts import think
-from tavern.world import create_world
+from tavern.hall.memory import record_event
+from tavern.social.thoughts import think
+from tavern.hall.world import create_world
 
 RULES = IntentionRules(interval=180.0, min_gap=3.0)
 CARD = {"id": "edda", "name": "Edda", "sprite": "edda", "occupation": "healer", "background": "Walks the border.",

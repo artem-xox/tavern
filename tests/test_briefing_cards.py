@@ -4,11 +4,11 @@ from typing import Any
 
 import pytest
 
-from tavern.agents import build_candidates
-from tavern.briefing import brief
-from tavern.cards import PARAMS, parse_cards
-from tavern.scenario import open_evening, parse_scenario
-from tavern.world import observe_actor, observe_people
+from tavern.mind.agents import build_candidates
+from tavern.mind.briefing import brief
+from tavern.mind.cards import PARAMS, parse_cards
+from tavern.evening.scenario import open_evening, parse_scenario
+from tavern.hall.world import observe_actor, observe_people
 
 
 def card(card_id: str, name: str, temperament: str, goal: str) -> dict[str, Any]:

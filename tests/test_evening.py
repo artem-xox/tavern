@@ -8,9 +8,10 @@ from typing import Any, Callable, Mapping
 
 import pytest
 
-from tavern.app import TavernRuntime, create_app
-from tavern.persistence import load_world, save_world
-from tavern.world import create_world, observe_actor, observe_people, start_action, step_world
+from tavern.server.api import create_app
+from tavern.server.runtime import TavernRuntime
+from tavern.adapters.persistence import load_world, save_world
+from tavern.hall.world import create_world, observe_actor, observe_people, start_action, step_world
 
 
 def table(table_id: str, x: int, y: int) -> list[dict[str, Any]]:

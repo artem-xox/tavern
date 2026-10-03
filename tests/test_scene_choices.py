@@ -5,12 +5,12 @@ from typing import Any
 
 import pytest
 
-from tavern.agents import build_candidates
-from tavern.briefing import brief
-from tavern.decisions import decision_requests
-from tavern.lockstep import Evening
-from tavern.metrics import conversation_counts
-from tavern.world import create_world, observe_actor, observe_people, start_action, step_world
+from tavern.mind.agents import build_candidates
+from tavern.mind.briefing import brief
+from tavern.evening.decisions import decision_requests
+from tavern.evening.lockstep import Evening
+from tavern.evening.metrics import conversation_counts
+from tavern.hall.world import create_world, observe_actor, observe_people, start_action, step_world
 
 
 def chair(chair_id: str, x: int, y: int) -> dict[str, Any]:

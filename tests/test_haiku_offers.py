@@ -4,9 +4,9 @@ from typing import Any
 
 import pytest
 
-from tavern.conversation import ACTS
-from tavern.haiku_turns import RejectedTurn, parse_turn, turn_question
-from tavern.invitations import KINDS
+from tavern.social.conversation import ACTS
+from tavern.mind.haiku_turns import RejectedTurn, parse_turn, turn_question
+from tavern.social.invitations import KINDS
 
 
 def view(acts: list[str], invitations: list[str]) -> dict[str, Any]:

@@ -6,8 +6,8 @@ from typing import Any
 
 import pytest
 
-from tavern.agents import Evaluator, Evaluators, build_candidates, choose_action
-from tavern.jev import JevError
+from tavern.mind.agents import Evaluator, Evaluators, build_candidates, choose_action
+from tavern.adapters.jev import JevError
 
 
 def observation(objects=None, beer=0, needs=None, traits=None):

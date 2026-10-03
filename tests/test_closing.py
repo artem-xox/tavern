@@ -6,10 +6,10 @@ from typing import Any, Callable
 
 import pytest
 
-from tavern.agents import build_candidates, choose_action
-from tavern.briefing import brief
-from tavern.scenario import open_evening, parse_scenario
-from tavern.world import create_world, observe_actor, observe_people, start_action, step_world
+from tavern.mind.agents import build_candidates, choose_action
+from tavern.mind.briefing import brief
+from tavern.evening.scenario import open_evening, parse_scenario
+from tavern.hall.world import create_world, observe_actor, observe_people, start_action, step_world
 
 
 def hall() -> dict[str, Any]:

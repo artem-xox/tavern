@@ -2,9 +2,9 @@
 
 import pytest
 
-from tavern.memory import log_event
-from tavern.state import find_actor
-from tavern.validation import integer
+from tavern.hall.memory import log_event
+from tavern.hall.state import find_actor
+from tavern.hall.validation import integer
 
 
 @pytest.mark.parametrize("value, expected", [

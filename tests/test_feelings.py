@@ -8,13 +8,13 @@ from typing import Any
 
 import pytest
 
-from tavern.agents import choose_action
-from tavern.app import TavernRuntime
-from tavern.briefing import brief
-from tavern.memory import record_event
-from tavern.persistence import load_world, save_world
-from tavern.thoughts import THOUGHTS, familiarity_of, opinion_of, think
-from tavern.world import create_world, observe_actor, observe_people, start_action, step_world
+from tavern.mind.agents import choose_action
+from tavern.server.runtime import TavernRuntime
+from tavern.mind.briefing import brief
+from tavern.hall.memory import record_event
+from tavern.adapters.persistence import load_world, save_world
+from tavern.social.thoughts import THOUGHTS, familiarity_of, opinion_of, think
+from tavern.hall.world import create_world, observe_actor, observe_people, start_action, step_world
 
 
 def table_room() -> dict[str, Any]:

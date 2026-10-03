@@ -5,8 +5,8 @@ from typing import Any
 
 import pytest
 
-from tavern.controls import forced_action, refill_tap, set_paused, set_speed, toggle_block
-from tavern.world import create_world
+from tavern.server.controls import forced_action, refill_tap, set_paused, set_speed, toggle_block
+from tavern.hall.world import create_world
 
 WALLS = [[0, 0]]
 

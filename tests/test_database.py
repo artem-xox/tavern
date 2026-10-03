@@ -8,8 +8,8 @@ from typing import Any
 from fastapi.testclient import TestClient
 import pytest
 
-from tavern.app import create_app
-from tavern.world import create_world
+from tavern.server.api import create_app
+from tavern.hall.world import create_world
 
 
 def room() -> dict[str, Any]:
@@ -69,7 +69,7 @@ def test_save_command_writes_to_the_store(tmp_path: Path) -> None:
     pytest.param('{"schema_version": 1}', id="incomplete-state"),
 ])
 def test_invalid_database_snapshot_fails_loudly(payload: str) -> None:
-    from tavern.persistence import parse_world
+    from tavern.adapters.persistence import parse_world
 
     with pytest.raises(ValueError):
         parse_world(payload)

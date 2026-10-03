@@ -8,16 +8,16 @@ from typing import Any
 import httpx
 import pytest
 
-from tavern.activities import ACTIVITIES, FAMILIES
-from tavern.agents import Evaluator, Evaluators, build_candidates, choose_action
-from tavern.briefing import brief
-from tavern.decisions import apply_decision
-from tavern.families import family_scores, group_families
-from tavern.jev import JevError, evaluate_actions
-from tavern.lockstep import Evening, Pace, run_evening
-from tavern.recording import Record, format_record, parse_records, record_calls, replay_calls
-from tavern.selection import bounded
-from tavern.world import create_world
+from tavern.body.activities import ACTIVITIES, FAMILIES
+from tavern.mind.agents import Evaluator, Evaluators, build_candidates, choose_action
+from tavern.mind.briefing import brief
+from tavern.evening.decisions import apply_decision
+from tavern.mind.families import family_scores, group_families
+from tavern.adapters.jev import JevError, evaluate_actions
+from tavern.evening.lockstep import Evening, Pace, run_evening
+from tavern.evening.recording import Record, format_record, parse_records, record_calls, replay_calls
+from tavern.mind.selection import bounded
+from tavern.hall.world import create_world
 
 
 def act(verb: str, target: str | None = None) -> dict[str, Any]:

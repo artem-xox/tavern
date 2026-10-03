@@ -5,9 +5,9 @@ from typing import Any
 
 import pytest
 
-from tavern.lockstep import Evening
-from tavern.metrics import evening_metrics, intention_counts
-from tavern.recording import Record, Tariff, request_key
+from tavern.evening.lockstep import Evening
+from tavern.evening.metrics import evening_metrics, intention_counts
+from tavern.evening.recording import Record, Tariff, request_key
 
 HAIKU = Tariff(input=1.0, output=5.0, cache_read=0.10, cache_write=1.25)
 

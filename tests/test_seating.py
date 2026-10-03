@@ -10,9 +10,9 @@ from typing import Any, Awaitable, Callable
 import httpx
 import pytest
 
-from tavern.agents import Evaluators, build_candidates, build_seat_candidates, choose_action
-from tavern.jev import JevError, evaluate_actions, evaluate_seats
-from tavern.world import create_world, observe_actor
+from tavern.mind.agents import Evaluators, build_candidates, build_seat_candidates, choose_action
+from tavern.adapters.jev import JevError, evaluate_actions, evaluate_seats
+from tavern.hall.world import create_world, observe_actor
 
 
 def view(objects: list[dict[str, Any]] | None = None, needs: dict[str, float] | None = None,

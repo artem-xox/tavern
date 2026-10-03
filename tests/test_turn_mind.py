@@ -4,10 +4,10 @@ from typing import Any
 
 import pytest
 
-from tavern.scenes import conversation_of
-from tavern.thoughts import think
-from tavern.turns import turn_view
-from tavern.world import create_world, start_action
+from tavern.social.scenes import conversation_of
+from tavern.social.thoughts import think
+from tavern.social.turns import turn_view
+from tavern.hall.world import create_world, start_action
 
 CARD = {"id": "ada", "sprite": "visitor", "name": "Ada", "occupation": "salt trader",
         "background": "Ada drives salt over the pass.", "temperament": "Warm but shrewd.",

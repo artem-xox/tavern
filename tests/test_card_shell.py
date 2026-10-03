@@ -6,7 +6,8 @@ from typing import Any
 
 import pytest
 
-from tavern.app import create_app, create_default_app
+from tavern.app import create_default_app
+from tavern.server.api import create_app
 
 
 def test_default_app_casts_the_first_evening_from_presets() -> None:

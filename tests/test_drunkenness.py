@@ -6,12 +6,12 @@ from typing import Any, Callable
 
 import pytest
 
-from tavern.app import TavernRuntime
-from tavern.briefing import brief
-from tavern.drunkenness import (STAGES, drink_beer, drunk_stage, fight_accuracy, inhibition_modifier, sober_up,
+from tavern.server.runtime import TavernRuntime
+from tavern.mind.briefing import brief
+from tavern.body.drunkenness import (STAGES, drink_beer, drunk_stage, fight_accuracy, inhibition_modifier, sober_up,
                                 speech_instruction)
-from tavern.persistence import load_world, save_world
-from tavern.world import create_world, observe_actor, start_action, step_world
+from tavern.adapters.persistence import load_world, save_world
+from tavern.hall.world import create_world, observe_actor, start_action, step_world
 
 RULES = {"per_beer": 0.2, "per_second": 0.0005, "doze_per_second": 0.01}
 

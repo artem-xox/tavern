@@ -5,8 +5,8 @@ from typing import Any, Callable
 
 import pytest
 
-from tavern.persistence import load_world, save_world
-from tavern.world import create_world
+from tavern.adapters.persistence import load_world, save_world
+from tavern.hall.world import create_world
 
 
 def hall() -> dict[str, Any]:

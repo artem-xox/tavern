@@ -5,10 +5,10 @@ from typing import Any
 
 import pytest
 
-from tavern.card_compiler import RejectedParams, compile_card, offline_card
-from tavern.cards import PARAMS, CardText
-from tavern.claude import ClaudeError
-from tavern.questions import Question
+from tavern.mind.card_compiler import RejectedParams, compile_card, offline_card
+from tavern.mind.cards import PARAMS, CardText
+from tavern.adapters.claude import ClaudeError
+from tavern.mind.questions import Question
 
 
 def text(**fields: str) -> CardText:

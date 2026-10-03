@@ -6,16 +6,16 @@ from typing import Any
 
 import pytest
 
-from tavern.claude import ClaudeError
-from tavern.conversation import ACTS
-from tavern.haiku_turns import RejectedTurn, claude_writer, parse_turn, turn_question, writer_mode
-from tavern.questions import Question
-from tavern.recording import Record, record_questions, replay_questions
-from tavern.scenes import conversation_of
-from tavern.scripted import scripted_turn
-from tavern.thoughts import think
-from tavern.turns import claim_turns, deliver_turn, turn_view
-from tavern.world import create_world, start_action
+from tavern.adapters.claude import ClaudeError
+from tavern.social.conversation import ACTS
+from tavern.mind.haiku_turns import RejectedTurn, claude_writer, parse_turn, turn_question, writer_mode
+from tavern.mind.questions import Question
+from tavern.evening.recording import Record, record_questions, replay_questions
+from tavern.social.scenes import conversation_of
+from tavern.mind.scripted import scripted_turn
+from tavern.social.thoughts import think
+from tavern.social.turns import claim_turns, deliver_turn, turn_view
+from tavern.hall.world import create_world, start_action
 
 ADA = {"id": "ada", "sprite": "visitor", "name": "Ada", "occupation": "salt trader",
        "background": "Ada drives salt over the pass.", "temperament": "Warm but shrewd.",

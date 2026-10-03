@@ -8,11 +8,12 @@ from typing import Any
 
 import pytest
 
-from tavern.agents import Evaluators
-from tavern.app import TavernRuntime, create_default_app
-from tavern.intentions import IntentionRules
-from tavern.lockstep import Pace, run_evening
-from tavern.world import create_world, start_action
+from tavern.mind.agents import Evaluators
+from tavern.app import create_default_app
+from tavern.server.runtime import TavernRuntime
+from tavern.mind.intentions import IntentionRules
+from tavern.evening.lockstep import Pace, run_evening
+from tavern.hall.world import create_world, start_action
 
 RULES = IntentionRules(interval=180.0, min_gap=3.0)
 HOMEWARD = "Go home before this turns ugly."

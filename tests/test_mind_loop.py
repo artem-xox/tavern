@@ -6,10 +6,10 @@ from typing import Any, Callable, Coroutine
 
 import pytest
 
-from tavern.intentions import INTENTION_RULES
-from tavern.lockstep import LockstepCourier
-from tavern.mind_loop import MindLoop
-from tavern.world import create_world, step_world
+from tavern.mind.intentions import INTENTION_RULES
+from tavern.evening.lockstep import LockstepCourier
+from tavern.evening.mind_loop import MindLoop
+from tavern.hall.world import create_world, step_world
 
 
 @dataclass

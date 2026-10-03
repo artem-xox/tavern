@@ -2,8 +2,8 @@
 
 import pytest
 
-from tavern.activities import ACTIVITIES
-from tavern.rules import default_rules
+from tavern.body.activities import ACTIVITIES
+from tavern.hall.rules import default_rules
 
 
 def test_every_timed_verb_has_its_duration_and_decision_steps_have_none() -> None:

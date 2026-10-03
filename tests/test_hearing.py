@@ -7,11 +7,11 @@ from typing import Any
 
 import pytest
 
-from tavern.activities import ACTIVITIES
-from tavern.closing import call_closing
-from tavern.hearing import EVENT_SOUNDS, Sound, Stimulus, heard_loudness, salience
-from tavern.memory import record_event
-from tavern.world import create_world, start_action
+from tavern.body.activities import ACTIVITIES
+from tavern.hall.closing import call_closing
+from tavern.body.hearing import EVENT_SOUNDS, Sound, Stimulus, heard_loudness, salience
+from tavern.hall.memory import record_event
+from tavern.hall.world import create_world, start_action
 
 HALL = Path(__file__).resolve().parents[1] / "data" / "tavern.json"
 

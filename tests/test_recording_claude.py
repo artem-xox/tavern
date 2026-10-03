@@ -8,9 +8,9 @@ from typing import Any
 
 import pytest
 
-from tavern.claude import HAIKU_4_5, ClaudeError
-from tavern.questions import Question
-from tavern.recording import (Record, Tariff, cost_by_kind, format_record, parse_records, record_questions,
+from tavern.adapters.claude import HAIKU_4_5, ClaudeError
+from tavern.mind.questions import Question
+from tavern.evening.recording import (Record, Tariff, cost_by_kind, format_record, parse_records, record_questions,
                               replay_questions, request_key)
 
 USAGE = {"input_tokens": 100, "output_tokens": 20, "cache_read_input_tokens": 4000,

@@ -7,11 +7,11 @@ from typing import Any
 
 import pytest
 
-from tavern.agents import choose_action
-from tavern.briefing import brief
-from tavern.persistence import load_world, save_world
-from tavern.world import observe_actor, observe_people
-from tavern.thoughts import THOUGHTS, opinion_of
+from tavern.mind.agents import choose_action
+from tavern.mind.briefing import brief
+from tavern.adapters.persistence import load_world, save_world
+from tavern.hall.world import observe_actor, observe_people
+from tavern.social.thoughts import THOUGHTS, opinion_of
 from social_hall import actor, advance, by_the_fire, know, say, scene_of, seated_talk
 
 

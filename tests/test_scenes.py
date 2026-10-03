@@ -6,10 +6,10 @@ from typing import Any
 
 import pytest
 
-from tavern.hearing import EVENT_SOUNDS, Sound, emit
-from tavern.persistence import load_world, save_world
-from tavern.scenes import conversation_of
-from tavern.world import create_world, start_action, step_world
+from tavern.body.hearing import EVENT_SOUNDS, Sound, emit
+from tavern.adapters.persistence import load_world, save_world
+from tavern.social.scenes import conversation_of
+from tavern.hall.world import create_world, start_action, step_world
 
 
 def chair(chair_id: str, x: int, y: int) -> dict[str, Any]:

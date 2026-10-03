@@ -7,8 +7,8 @@ from typing import Any
 
 import pytest
 
-from tavern.decisions import free_to_decide
-from tavern.world import create_world, start_action, step_world
+from tavern.evening.decisions import free_to_decide
+from tavern.hall.world import create_world, start_action, step_world
 
 HALL = json.loads((Path(__file__).parents[1] / "data" / "tavern.json").read_text())
 

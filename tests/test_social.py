@@ -9,10 +9,10 @@ from typing import Any
 
 import pytest
 
-from tavern.agents import build_candidates, choose_action
-from tavern.app import TavernRuntime
-from tavern.persistence import load_world, save_world
-from tavern.world import create_world, observe_actor, start_action, step_world
+from tavern.mind.agents import build_candidates, choose_action
+from tavern.server.runtime import TavernRuntime
+from tavern.adapters.persistence import load_world, save_world
+from tavern.hall.world import create_world, observe_actor, start_action, step_world
 
 
 def common_room() -> dict[str, Any]:

@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 
-from tavern.overhearing import TURN_SOUNDS, overhear_turn
+from tavern.social.overhearing import TURN_SOUNDS, overhear_turn
 from social_hall import actor, advance, say, scene_of, seated_talk
 
 

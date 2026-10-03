@@ -5,8 +5,8 @@ from typing import Any
 
 import pytest
 
-from tavern.persistence import FileStore
-from tavern.world import create_world
+from tavern.adapters.persistence import FileStore
+from tavern.hall.world import create_world
 
 
 def world(tick: int = 0) -> dict[str, Any]:
