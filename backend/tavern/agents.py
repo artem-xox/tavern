@@ -6,7 +6,8 @@ from dataclasses import dataclass
 from random import Random
 from typing import Any, TypedDict
 
-from tavern.briefing import brief, in_use, line_place
+from tavern.briefing import brief
+from tavern.hall_view import in_use, line_place
 from tavern.families import family_scores, group_families
 from tavern.jev import JevError, evaluate_actions, evaluate_seats
 from tavern.observation import known_objects, own_actor

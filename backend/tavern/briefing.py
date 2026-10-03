@@ -1,11 +1,13 @@
 """Plain-language briefings: a visitor's situation and options, told from their own view."""
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from tavern.activities import ACTIVITIES, FAMILIES
 from tavern.feelings import feelings
 from tavern.invitations import invitation_note
+from tavern.hall_view import company_at, headcount, in_use, known_object, label_of, line_place, place_words, steps_to, walk_words
+from tavern.options import family_text, option_text
 from tavern.portrait import portrait
 
 Observation = Mapping[str, Any]
@@ -35,88 +37,12 @@ def brief(observation: Observation, candidates: Sequence[Mapping[str, Any]]) -> 
              feelings(observation), invitation_note(observation), _intention(observation), _people(observation),
              _places(observation), _tables(observation), _recent(observation))
     return {"situation": " ".join(part for part in parts if part),
-            "options": {action["id"]: _family(observation, action) if action["verb"] in FAMILIES
-                        else _option(observation, action) for action in candidates}}
-
-
-def in_use(observation: Observation, item: Mapping[str, Any]) -> bool:
-    """Tell whether a known place is held by someone else, as far as the visitor can tell.
-
-    Args:
-        observation: The visitor's observation: own actor, seated company in sight and,
-            when known, the current world time.
-        item: Known object record, with `reserved_by` and, once observed, `last_seen`.
-
-    Returns:
-        True when someone is visibly sitting on it, or someone else held it at a sighting
-        under 10 seconds old. A place seen busy longer ago is probably free again; without
-        a clock the memory is trusted.
-    """
-    if item["id"] in {person.get("seat_id") for person in observation.get("visitors", [])}:
-        return True
-    if item.get("reserved_by") in (None, observation["actor"]["id"]):
-        return False
-    now, seen = observation.get("time"), item.get("last_seen")
-    return now is None or seen is None or now - seen < 10.0
-
-
-def line_place(observation: Observation, item: Mapping[str, Any]) -> tuple[int, bool]:
-    """Tell where the visitor stands in a known place's line, as last seen.
-
-    Args:
-        observation: The visitor's observation.
-        item: Known object record; one without a line has nobody in it.
-
-    Returns:
-        How many people wait ahead of the visitor, and whether the visitor stands in that line;
-        for someone not in it, everyone waiting is ahead. Like a busy place (see `in_use`), a
-        line seen 10 seconds ago or more has probably cleared; without a clock it is trusted.
-    """
-    waiting = [entry["actor_id"] for entry in item.get("queue", [])]
-    me = observation["actor"]["id"]
-    if me in waiting:
-        return waiting.index(me), True
-    now, seen = observation.get("time"), item.get("last_seen")
-    return (0 if now is not None and seen is not None and now - seen >= 10.0 else len(waiting)), False
-
-
-def _headcount(count: int) -> str:
-    words = ("nobody", "one person", "two people", "three people", "four people", "five people")
-    return words[count] if count < len(words) else f"{count} people"
+            "options": {action["id"]: family_text(observation, action) if action["verb"] in FAMILIES
+                        else option_text(observation, action) for action in candidates}}
 
 
 def _name(observation: Observation) -> str:
     return observation["actor"].get("name") or "The guest"
-
-
-def _object(observation: Observation, object_id: Any) -> Mapping[str, Any] | None:
-    return next((item for item in observation["objects"] if item["id"] == object_id), None)
-
-
-def _label(item: Mapping[str, Any]) -> str:
-    # The world names every object after its ID unless the map gives it a name.
-    return item.get("name") or item["id"]
-
-
-def _visitor(observation: Observation, visitor_id: Any) -> Mapping[str, Any] | None:
-    return next((item for item in observation.get("visitors", []) if item["id"] == visitor_id), None)
-
-
-def _steps(observation: Observation, item: Mapping[str, Any]) -> int:
-    # Walking distance is approximated by grid steps to the nearest spot the place is used from.
-    actor = observation["actor"]
-    spots = item.get("interaction_spots") or [[item["x"], item["y"]]]
-    return min(abs(x - actor["x"]) + abs(y - actor["y"]) for x, y in spots)
-
-
-def _walk(steps: int) -> str:
-    return f"{steps} step{'' if steps == 1 else 's'}"
-
-
-def _place(item: Mapping[str, Any]) -> str:
-    nouns = {"tap": "the tap", "toilet": "the WC", "darts": "the darts board", "door": "the front door",
-             "fireplace": "the fireplace", "window": "a window", "bar": "the bar"}
-    return nouns[item["kind"]] if item["kind"] in nouns else f"the {_label(item)}"
 
 
 def _duration(seconds: float) -> str:
@@ -142,17 +68,17 @@ def _stay(observation: Observation) -> str:
 def _whereabouts(observation: Observation) -> str:
     actor = observation["actor"]
     hands = "holding a full mug of ale" if actor["inventory"]["beer"] else "empty-handed"
-    seat = _object(observation, actor.get("seat_id"))
+    seat = known_object(observation, actor.get("seat_id"))
     if seat:
-        return f"They sit in their own seat, {_label(seat)}, {hands}."
+        return f"They sit in their own seat, {label_of(seat)}, {hands}."
     for item in observation["objects"]:
         ahead, joined = line_place(observation, item)
         if joined:
-            where = ", next to go in" if not ahead else f" with {_headcount(ahead)} waiting ahead of them"
-            return f"They are standing in line for {_place(item)}{where}, {hands}."
+            where = ", next to go in" if not ahead else f" with {headcount(ahead)} waiting ahead of them"
+            return f"They are standing in line for {place_words(item)}{where}, {hands}."
     places = [item for item in observation["objects"] if item["kind"] != "chair"]
-    near = min(places, key=lambda item: _steps(observation, item), default=None)
-    return f"They are standing{f' near {_place(near)}' if near else ''}, {hands}."
+    near = min(places, key=lambda item: steps_to(observation, item), default=None)
+    return f"They are standing{f' near {place_words(near)}' if near else ''}, {hands}."
 
 
 def _trigger(observation: Observation) -> str:
@@ -168,11 +94,11 @@ def _own_seat(observation: Observation) -> str:
     actor = observation["actor"]
     if actor.get("seat_id"):
         return ""
-    own = _object(observation, actor.get("favorite_seat_id"))
+    own = known_object(observation, actor.get("favorite_seat_id"))
     if own is None:
         return "They have not chosen a seat yet."
     taken = in_use(observation, own)
-    return f"Their own seat tonight is {_label(own)}{', but someone else is sitting there now' if taken else ''}."
+    return f"Their own seat tonight is {label_of(own)}{', but someone else is sitting there now' if taken else ''}."
 
 
 def _level(value: float) -> str:
@@ -200,22 +126,22 @@ def _temperament(observation: Observation) -> str:
 
 
 def _shares_table(observation: Observation, visitor: Mapping[str, Any]) -> bool:
-    seat = _object(observation, observation["actor"].get("seat_id"))
+    seat = known_object(observation, observation["actor"].get("seat_id"))
     return bool(seat and visitor.get("seat_id") and visitor.get("table_id") == seat.get("table_id"))
 
 
 def _person(observation: Observation, visitor: Mapping[str, Any]) -> str:
     if visitor.get("seat_id"):
-        table = _object(observation, visitor.get("table_id"))
+        table = known_object(observation, visitor.get("table_id"))
         where = ("across the table from them" if _shares_table(observation, visitor)
-                 else f"at the {_label(table)}" if table else "at a table")
+                 else f"at the {label_of(table)}" if table else "at a table")
         # Someone unavailable who is not talking is visibly in a hurry (see `scenes.pressed`).
         busy = (", busy talking" if visitor.get("conversation") else "" if visitor.get("available", True)
                 else ", in a hurry")
-        return f"{_label(visitor)} sits {where}{busy}"
+        return f"{label_of(visitor)} sits {where}{busy}"
     doing = visitor.get("doing")
     activity = ACTIVITIES.get(doing) if isinstance(doing, str) else None
-    return f"{_label(visitor)} is {activity.doing if activity and activity.doing else 'standing about'}"
+    return f"{label_of(visitor)} is {activity.doing if activity and activity.doing else 'standing about'}"
 
 
 def _intention(observation: Observation) -> str:
@@ -240,11 +166,11 @@ def _people(observation: Observation) -> str:
 
 def _place_note(observation: Observation, item: Mapping[str, Any]) -> str:
     busy = in_use(observation, item)
-    note = f"{_place(item)} {_walk(_steps(observation, item))} away"
+    note = f"{place_words(item)} {walk_words(steps_to(observation, item))} away"
     if item["kind"] == "tap":
         note += f" ({item.get('stock')} servings when last seen)" if item.get("stock") else " (it had run dry)"
     waiting = line_place(observation, item)[0]
-    return note + (" (in use)" if busy else "") + (f" ({_headcount(waiting)} waiting in line)" if waiting else "")
+    return note + (" (in use)" if busy else "") + (f" ({headcount(waiting)} waiting in line)" if waiting else "")
 
 
 def _places(observation: Observation) -> str:
@@ -252,17 +178,11 @@ def _places(observation: Observation) -> str:
     notes = [_place_note(observation, item) for item in observation["objects"] if item["kind"] in kinds]
     windows = [item for item in observation["objects"] if item["kind"] == "window"]
     if windows:
-        notes.append(_place_note(observation, min(windows, key=lambda item: _steps(observation, item))))
+        notes.append(_place_note(observation, min(windows, key=lambda item: steps_to(observation, item))))
     missing = [noun for kind, noun in (("tap", "the tap"), ("toilet", "the WC")) if all(
         item["kind"] != kind for item in observation["objects"])]
     unknown = f" They have not found {' or '.join(missing)} yet." if missing else ""
     return (f"Places they know: {'; '.join(notes)}." if notes else "") + unknown
-
-
-def _company(observation: Observation, table_id: Any) -> str:
-    names = [_label(item) for item in observation.get("visitors", [])
-             if item.get("seat_id") and item.get("table_id") == table_id]
-    return f"{' and '.join(names)} sitting there" if names else "nobody else there"
 
 
 def _table_note(observation: Observation, table: Mapping[str, Any]) -> str:
@@ -270,8 +190,8 @@ def _table_note(observation: Observation, table: Mapping[str, Any]) -> str:
     actor_id = observation["actor"]["id"]
     free = sum(item.get("reserved_by") != actor_id and not in_use(observation, item) for item in chairs)
     comforts = " and ".join(table.get("comforts", [])) or "no special comfort"
-    return (f"{_label(table)} (appeal {table.get('appeal', 0.0):.1f}, {comforts}; "
-            f"{_company(observation, table['id'])}; {free} free chair{'' if free == 1 else 's'})")
+    return (f"{label_of(table)} (appeal {table.get('appeal', 0.0):.1f}, {comforts}; "
+            f"{company_at(observation, table['id'])}; {free} free chair{'' if free == 1 else 's'})")
 
 
 def _tables(observation: Observation) -> str:
@@ -304,148 +224,3 @@ def _recent(observation: Observation) -> str:
     parts = [f"{_ago(now - item['time'])}, {_memory(item)}" for item in memories]
     return f"Recently: {'; '.join(parts)}."
 
-
-def _option(observation: Observation, action: Action) -> str:
-    builders: dict[str, Callable[[Observation, Action], str]] = {
-        "take_beer": _pour, "drink": _drink, "rest": _rest, "seating": _seating, "sit": _sit, "talk": _talk,
-        "join_conversation": _join, "play_darts": _darts, "watch": _watch, "use_toilet": _toilet,
-        "inspect": _inspect, "wait": _wait, "leave": _leave, "cut_in_line": _cut}
-    if action["verb"] not in builders:
-        raise ValueError(f"Cannot describe the action verb {action['verb']!r}")
-    return _waiting(observation, action) or builders[action["verb"]](observation, action)
-
-
-def _waiting(observation: Observation, action: Action) -> str:
-    # Using a busy place with a line means waiting in it; staying in line is the same choice again.
-    item = _object(observation, action.get("target_id"))
-    if item is None or "queue_spots" not in item or action["verb"] == "cut_in_line":
-        return ""
-    ahead, joined = line_place(observation, item)
-    used, place = in_use(observation, item), _place(item)
-    if joined and not ahead:
-        return f"keep waiting in line for {place} (they are next{', while someone uses it' if used else ''})"
-    parts = [f"{_headcount(ahead)} {'is' if ahead == 1 else 'are'} waiting for {place}"
-             f"{' ahead of them' if joined else ''}"] if ahead else []
-    note = ", and ".join([*parts, *(["someone is using it"] if used else [])])
-    if joined:
-        return f"keep waiting in line for {place} ({note})"
-    return f"walk {_walk(_steps(observation, item))} to {place} and wait in line ({note})" if note else ""
-
-
-def _cut(observation: Observation, action: Action) -> str:
-    item = _target(observation, action)
-    ahead = line_place(observation, item)[0]
-    return (f"push to the front of the line for {_place(item)}, ahead of the {_headcount(ahead)} waiting, "
-            "who will resent it")
-
-
-def _target(observation: Observation, action: Action) -> Mapping[str, Any]:
-    target = _object(observation, action["target_id"])
-    if target is None:
-        raise ValueError(f"Cannot describe an unknown target {action['target_id']!r}")
-    return target
-
-
-def _pour(observation: Observation, action: Action) -> str:
-    tap = _target(observation, action)
-    return (f"walk {_walk(_steps(observation, tap))} to the tap and pour a mug of ale "
-            f"({tap.get('stock')} servings when last seen)")
-
-
-def _drink(observation: Observation, action: Action) -> str:
-    if observation["actor"].get("seat_id"):
-        return "sip the mug of ale they are holding, right here in their seat"
-    return "drink the mug of ale they are holding where they stand, as there is no seat to be had"
-
-
-def _rest(observation: Observation, action: Action) -> str:
-    chair = _target(observation, action)
-    return f"walk {_walk(_steps(observation, chair))} to {_label(chair)} and rest there"
-
-
-def _seat_note(observation: Observation, chair: Mapping[str, Any]) -> str:
-    table = _object(observation, chair.get("table_id"))
-    comforts = " and ".join(chair.get("comforts", [])) or "no special comfort"
-    return (f"{_label(table) if table else _label(chair)} (appeal {chair.get('appeal', 0.0):.1f}, {comforts}; "
-            f"{_company(observation, chair.get('table_id'))}; {_walk(_steps(observation, chair))} away)")
-
-
-def _seating(observation: Observation, action: Action) -> str:
-    actor = observation["actor"]
-    free = [item for item in observation["objects"] if item["kind"] == "chair" and item.get("table_id")
-            and not in_use(observation, item) and item["id"] != actor.get("favorite_seat_id")]
-    tables = {item["table_id"]: _seat_note(observation, item) for item in free}
-    choice = "; ".join(tables.values()) or "none"
-    if actor.get("favorite_seat_id"):
-        return f"leave their own seat for a free chair at another table, for instance to join company (free: {choice})"
-    return f"look for a seat and sit down (tables with a free chair: {choice})"
-
-
-def _sit(observation: Observation, action: Action) -> str:
-    actor, chair = observation["actor"], _target(observation, action)
-    company = _company(observation, chair.get("table_id"))
-    if chair["id"] == actor.get("seat_id"):
-        return f"stay in their seat, {_label(chair)}, a while longer to rest, sip and chat ({company})"
-    if chair["id"] == actor.get("favorite_seat_id"):
-        return f"walk {_walk(_steps(observation, chair))} back to their own seat, {_label(chair)}, and sit down ({company})"
-    return f"take the chair {_label(chair)}: {_seat_note(observation, chair)}"
-
-
-def _someone(observation: Observation, visitor_id: Any) -> Mapping[str, Any] | None:
-    # Everyone in sight when observed (`people`), else only seated company.
-    return next((item for item in observation.get("people", []) if item["id"] == visitor_id),
-                None) or _visitor(observation, visitor_id)
-
-
-def _talk(observation: Observation, action: Action) -> str:
-    partner = _someone(observation, action["target_id"])
-    name = _label(partner) if partner else action["target_id"]
-    if partner and not partner.get("seat_id"):
-        return f"start a conversation with {name}, who stands beside them"
-    return f"chat with {name}, who sits across the table from them"
-
-
-def _join(observation: Observation, action: Action) -> str:
-    member = _someone(observation, action["target_id"])
-    if member is None:
-        raise ValueError(f"Cannot describe joining an unseen visitor {action['target_id']!r}")
-    company = observation.get("people") or observation.get("visitors", [])
-    names = [_label(item) for item in company if item.get("conversation") == member.get("conversation")]
-    where = "at their table" if member.get("seat_id") else "beside them"
-    return f"join the conversation {' and '.join(names) or _label(member)} are having {where}"
-
-
-def _darts(observation: Observation, action: Action) -> str:
-    return f"walk {_walk(_steps(observation, _target(observation, action)))} to the darts board and play a round"
-
-
-def _watch(observation: Observation, action: Action) -> str:
-    view = _target(observation, action)
-    sight = "the flames in the fireplace" if view["kind"] == "fireplace" else "the road outside a window"
-    return f"walk {_walk(_steps(observation, view))} and watch {sight} for a while"
-
-
-def _toilet(observation: Observation, action: Action) -> str:
-    return f"walk {_walk(_steps(observation, _target(observation, action)))} to the WC"
-
-
-def _inspect(observation: Observation, action: Action) -> str:
-    if all(item["kind"] != "toilet" for item in observation["objects"]):
-        return "look around the room for places they have not found yet, such as the WC"
-    return "wander around to re-check places they already know (there is nothing new to find)"
-
-
-def _wait(observation: Observation, action: Action) -> str:
-    return "wait where they are and do nothing for a moment"
-
-
-def _leave(observation: Observation, action: Action) -> str:
-    return f"walk {_walk(_steps(observation, _target(observation, action)))} to the front door and go home for the night"
-
-
-def _family(observation: Observation, option: Action) -> str:
-    # Three examples tell one wish from another; any further members are only counted.
-    members = option["members"]
-    shown = "; or ".join(_option(observation, item) for item in members[:3])
-    more = f"; or one of {len(members) - 3} more like these" if len(members) > 3 else ""
-    return f"{FAMILIES[option['verb']]}: {shown}{more}"

@@ -80,7 +80,7 @@ Rules:
   ~400 lines (`world.py`, `app.py`, `scene.ts` today); split first, as a separate step.
 - Adding a verb means one `Activity` in `activities.py` (targets, timing, preconditions,
   effects, wording, pose, family), plus its candidate rule and local utility in `agents.py` and
-  its option sentence in `briefing.py`. The world, Jev, saves, and the client read the table.
+  its option sentence in `options.py`. The world, Jev, saves, and the client read the table.
   Put it in an existing `FAMILIES` entry when it answers the same wish; a new family widens
   every first-stage request.
   Do not add a new per-verb copy where one source can be imported.
