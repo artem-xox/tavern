@@ -8,7 +8,7 @@ import pytest
 
 from tavern.claude import ClaudeError
 from tavern.conversation import ACTS
-from tavern.haiku_turns import RejectedTurn, claude_writer, parse_turn, turn_question
+from tavern.haiku_turns import RejectedTurn, claude_writer, parse_turn, turn_question, writer_mode
 from tavern.questions import Question
 from tavern.recording import Record, record_questions, replay_questions
 from tavern.scenes import conversation_of
@@ -122,6 +122,32 @@ def test_per_call_content_holds_the_scene_mood_drink_places_and_goal(prepare: An
     prepare(world)
     content = turn_question(view_of(world))["content"]
     assert [text for text in expected if text not in content] == []
+
+
+NUDGES = ("Pressing now", "had enough company", "not yet told")
+
+
+@pytest.mark.parametrize("needs, knows_tap, nudges", [
+    pytest.param({}, False, [], id="calm-and-placeless-no-nudge"),
+    pytest.param({"bladder": 85.0}, False, ["Pressing now"], id="pressing-need"),
+    pytest.param({"bladder": 85.0, "thirst": 90.0, "social": 10.0}, True, list(NUDGES), id="everything-at-once"),
+    pytest.param({"social": 10.0}, False, ["had enough company"], id="enough-company"),
+    pytest.param({}, True, ["not yet told"], id="place-not-yet-shared"),
+])
+def test_content_nudges_toward_the_acts_the_moment_calls_for(needs: dict[str, float], knows_tap: bool,
+                                                             nudges: list[str]) -> None:
+    world = scene_world(knows_tap)
+    people(world)["ada"]["needs"].update(needs)
+    content = turn_question(view_of(world))["content"]
+    assert [text for text in NUDGES if text in content] == nudges
+
+
+def test_place_shared_once_is_not_nudged_again() -> None:
+    world = scene_world(knows_tap=True)
+    conversation_of(world, "ada")["turns"] += [
+        {"speaker": "ada", "addressee": "bea", "line": "Tap's by the bar.", "act": "share_place", "time": 1.0},
+        {"speaker": "bea", "addressee": "ada", "line": "Thanks.", "act": "small_talk", "time": 3.0}]
+    assert "not yet told" not in turn_question(view_of(world))["content"]
 
 
 def test_recent_lines_are_in_the_content() -> None:
@@ -239,3 +265,24 @@ def test_unrecorded_turn_fails_loudly_in_a_replay() -> None:
     no_records: list[Record] = []
     with pytest.raises(LookupError):
         asyncio.run(claude_writer(replay_questions("turn", no_records, ClaudeError))(view_of(scene_world()), {}))
+
+
+@pytest.mark.parametrize("requested, keyed, expected", [
+    pytest.param(None, True, "haiku", id="default-with-a-key"),
+    pytest.param(None, False, "scripted", id="default-without-a-key"),
+    pytest.param("scripted", True, "scripted", id="scripted-asked-despite-a-key"),
+    pytest.param("haiku", True, "haiku", id="haiku-asked-with-a-key"),
+])
+def test_writer_mode_uses_haiku_when_a_key_is_configured(requested: str | None, keyed: bool, expected: str) -> None:
+    mode, note = writer_mode(requested, keyed)
+    assert (mode, note is None) == (expected, requested is not None or keyed)
+
+
+@pytest.mark.parametrize("requested", [
+    pytest.param("haiku", id="haiku-without-a-key"),
+    pytest.param("", id="empty-name"),
+    pytest.param("opus", id="unknown-writer"),
+])
+def test_impossible_writer_mode_fails_loudly(requested: str) -> None:
+    with pytest.raises(ValueError):
+        writer_mode(requested, False)

@@ -6,6 +6,7 @@ from typing import Any
 
 from tavern.drunkenness import speech_instruction
 from tavern.questions import Ask, Question
+from tavern.scripted import CONTENT, PRESSING
 from tavern.turn_prompt import shared_prefix, turn_schema
 from tavern.turns import TurnResult, TurnWriter, check_turn
 
@@ -49,8 +50,23 @@ def turn_content(view: Mapping[str, Any]) -> str:
     Returns:
         The per-call text that follows the cached blocks.
     """
+    nudges = _nudges(view["conversation"], view["speaker"])
     return "\n\n".join([_scene(view["conversation"], view["speaker"]), _self(view["speaker"]),
-                        "Write the speaker's next line now."])
+                        *([f"THE MOMENT\n\n{nudges}"] if nudges else []), "Write the speaker's next line now."])
+
+
+def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:
+    # The scripted writer's thresholds (`scripted.PRESSING`, `scripted.CONTENT`) say when a need
+    # presses or company is enough; left to itself, the model rarely leaves or shares places.
+    pressing = [f"{label} {me['needs'][key]:.0f}" for key, label in _NEEDS[:3] if me["needs"][key] >= PRESSING]
+    shared = any(turn["speaker"] == me["id"] and turn["act"] == "share_place" for turn in scene["turns"])
+    return " ".join(text for text in (
+        f"Pressing now: {', '.join(pressing)}. The speaker should excuse themselves and leave the conversation."
+        if pressing else "",
+        "The speaker has had enough company for now and may say goodbye after answering."
+        if me["needs"]["social"] < CONTENT else "",
+        "The speaker has not yet told anyone here where the places they know are; someone may want to know."
+        if me["places"] and not shared else "") if text)
 
 
 def _scene(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:
@@ -137,3 +153,26 @@ def claude_writer(ask: Ask) -> TurnWriter:
     async def write(view: Mapping[str, Any], config: Mapping[str, Any]) -> TurnResult:
         return parse_turn(view, await ask(turn_question(view)))
     return write
+
+
+def writer_mode(requested: str | None, keyed: bool) -> tuple[str, str | None]:
+    """Choose who writes conversation lines.
+
+    Args:
+        requested: `haiku`, `scripted`, or None for Haiku when it can be asked.
+        keyed: Whether Claude can be asked: a key is configured, or a replay has recorded turns.
+
+    Returns:
+        The writer's label, and a note for the output when the default fell back to scripted lines.
+
+    Raises:
+        ValueError: The writer is unknown, or Haiku was asked for without a key.
+    """
+    if requested is None:
+        return ("haiku", None) if keyed else (
+            "scripted", "No ANTHROPIC_API_KEY (or no recorded turns), so the labeled scripted writer speaks")
+    if requested not in ("haiku", "scripted"):
+        raise ValueError(f"Unknown turn writer {requested!r}; choose haiku or scripted")
+    if requested == "haiku" and not keyed:
+        raise ValueError("The Haiku writer needs ANTHROPIC_API_KEY (or recorded turns in a replay)")
+    return requested, None
