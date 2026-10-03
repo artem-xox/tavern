@@ -154,10 +154,22 @@ changes the behavior `test_closing.py` specifies, so it needs a decision.
 - [ ] **E14 — Intentions.** Haiku writes a one-sentence intention on arrival, after
   salient events, and every few minutes; the briefing shows it to Jev. Done: in a
   recorded evening an insult changes the target's intention and later choices.
-- [ ] **E15 — Conversation scenes.** `talk` starts a scene for seated tablemates or
+- [x] **E15 — Conversation scenes.** `talk` starts a scene for seated tablemates or
   guests standing side by side (queue, fire); others join or leave; it ends by act,
   satisfied need, or interrupt. Done: a three-way conversation survives one member
-  leaving for the WC.
+  leaving for the WC. `scenes.py` keeps `world.conversations` (saves are `schema_version`
+  4); `join_conversation` is a new `company` verb; starting any other action, a loud sound,
+  closing time or a goodbye takes a member out, and members get no decisions. `turns.py`
+  owns timing (`max(2.5, len/15)` s per line) and the `TurnWriter` port: runners claim the
+  next turn when a line is spoken, ask the writer asynchronously (lockstep: one virtual
+  latency) and hand the line back; stale lines are dropped, and failures or a claim
+  unanswered 10 s past due fall back to `scripted.py`, the seeded offline writer. Acts
+  (`conversation.ACTS`) carry relief, place sharing and quarrels (`_quarrels` unchanged).
+  A partner pressed by a need declines, and is seen as in a hurry. Seed 5 offline: 14
+  scenes, 32 turns, 6 s stuck (M2 code: 9 s). Live seeds 5 and 1: 9 and 8 scenes, 24 and
+  20 turns, no joins, 6 departures each; 46 s and 33 s stuck, all of it guests refused the
+  busy door after closing (every guest was still in; an M2 rerun of seed 5 also kept
+  everyone and had 24 s), so the open door issue of M2 now dominates stuck time.
 - [ ] **E16 — Turns through Haiku.** The next speaker gets a turn after the previous
   line's reading time; the result is validated and shown as a bubble; failures fall
   back to scripted lines by act. Done: invalid schema and unknown facts are rejected;

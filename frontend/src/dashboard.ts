@@ -1,4 +1,4 @@
-import type { ActivityView, Actor, Command, Snapshot, Verb, World, WorldEvent, WorldObject } from "./types";
+import type { ActivityView, Actor, Command, Conversation, Snapshot, Verb, World, WorldEvent, WorldObject } from "./types";
 
 interface Handlers {
   command: (command: Command) => void;
@@ -269,10 +269,10 @@ export class Dashboard {
 
   private activity(actor: Actor): string {
     if (this.departed(actor)) return "gone home";
-    if (this.world?.actors.some((visitor: Actor): boolean => visitor.action?.verb === "talk" && visitor.action.target_id === actor.id)) return "chatting";
+    const talking: boolean = this.world?.conversations.some((scene: Conversation): boolean => scene.participants.includes(actor.id)) ?? false;
+    if (talking && actor.status !== "queued") return "chatting";
     if (actor.status === "walking" || actor.status === "waiting") return actor.status;
-    if (actor.status === "queued") return "in line";
-    if (actor.action?.verb === "talk") return "chatting";
+    if (actor.status === "queued") return talking ? "chatting in line" : "in line";
     if (actor.action?.verb === "play_darts") return "playing darts";
     if (actor.action?.verb === "watch") return "admiring the view";
     if (actor.seat_id) return actor.action?.verb === "drink" ? "sipping ale" : "seated";

@@ -120,6 +120,30 @@ export interface Stimulus {
   event: string | null;
 }
 
+/** One spoken line of a conversation scene; `addressee` null speaks to everyone. */
+export interface Turn {
+  speaker: string;
+  addressee: string | null;
+  line: string;
+  act: string;
+  time: number;
+}
+
+/** A conversation scene: who talks, at which table (null when standing), and what was said. */
+export interface Conversation {
+  id: string;
+  participants: string[];
+  table_id: string | null;
+  topic: string;
+  turns: Turn[];
+  started_at: number;
+  /** Game time the next line is due. */
+  next_turn_at: number;
+  /** The turn a model is writing, if any, and its answer waiting to be spoken. */
+  writing: { turn: number; speaker: string; since: number } | null;
+  written: { line: string; act: string; addressee: string | null; topic: string } | null;
+}
+
 export interface World {
   schema_version: number;
   tick: number;
@@ -142,6 +166,8 @@ export interface World {
   events: WorldEvent[];
   stimuli: Stimulus[];
   next_stimulus_id: number;
+  conversations: Conversation[];
+  next_conversation_id: number;
 }
 
 export interface Snapshot {
