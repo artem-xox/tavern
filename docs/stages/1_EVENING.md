@@ -202,10 +202,26 @@ changes the behavior `test_closing.py` specifies, so it needs a decision.
   20 turns, no joins, 6 departures each; 46 s and 33 s stuck, all of it guests refused the
   busy door after closing (every guest was still in; an M2 rerun of seed 5 also kept
   everyone and had 24 s), so the open door issue of M2 now dominates stuck time.
-- [ ] **E16 — Turns through Haiku.** The next speaker gets a turn after the previous
+- [x] **E16 — Turns through Haiku.** The next speaker gets a turn after the previous
   line's reading time; the result is validated and shown as a bubble; failures fall
   back to scripted lines by act. Done: invalid schema and unknown facts are rejected;
   cache reads appear in usage; cost per turn is measured.
+  `haiku_turns.py` asks one `Question` per turn: the shared prefix of `turn_prompt.py`
+  (world notes, one rule per `conversation.ACTS` entry, answer fields, style, 19 good/bad
+  examples; 4,857 tokens), then the speaker's card and portrait as a second cached block,
+  then the scene, company (opinion, familiarity, thoughts), feelings, drink, needs, known
+  places, goal and nudges (a pressing need, enough company, untold places, by the scripted
+  thresholds; without them Haiku never left or shared places). The schema's `act` enum
+  comes from the table; `parse_turn` rejects bad shape, unknown acts, absent addressees,
+  lines over 160 characters or with stage directions, and `share_place` without known
+  places (facts wait for E19). Runners use Haiku when `ANTHROPIC_API_KEY` is set
+  (`--writer` overrides headless); turns are recorded as kind `turn` and a replay is
+  byte-identical (seed 5); the snapshot's `ai.writer` shows as a badge, and `metrics.json`
+  has `run.writer` and `writer` (calls, latency, cache hit rate, cost per turn). Live seeds
+  5 and 1 (Jev + Haiku): 52 and 46 turns, 78 and 66 calls (a third are claims dropped when
+  the scene ends first), no fallbacks, ~5,490 cached + ~355 fresh input and ~54 output
+  tokens per call, 94% cache hits, latency p50 1.4 s / p95 2.0 s, $0.0017 per turn, $0.09
+  and $0.08 per evening (Jev $0.04), so no pacing was needed.
 - [ ] **E17 — Speech-act effects.** One table maps acts to thoughts, opinions,
   familiarity, names, knowledge, and invitations (join the table, darts together, buy a
   drink, leave together). Done: the same line with no act changes nothing.
