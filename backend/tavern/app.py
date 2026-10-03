@@ -17,6 +17,7 @@ from tavern.activities import ACTIVITIES, client_activities
 from tavern.cards import parse_cards
 from tavern.cards_api import card_routes
 from tavern.claude import ask_claude
+from tavern.controls import forced_action, refill_tap, set_paused, set_speed, toggle_block
 from tavern.database import initialize_database, load_database_world, save_database_world
 from tavern.decisions import apply_decision, decision_requests, free_to_decide, log_control, stale_requests
 from tavern.feelings import minds
@@ -26,13 +27,11 @@ from tavern.intentions import INTENTION_RULES, Intender, IntentionRules, deliver
 from tavern.jev import evaluate_actions, evaluate_seats
 from tavern.persistence import load_world, save_world
 from tavern.questions import Ask, Question
-from tavern.room import object_cells
 from tavern.scenario import Scenario, open_evening, parse_scenario
 from tavern.scripted import write_scripted_turn
 from tavern.state import Actor, World
 from tavern.turns import TurnWriter, claim_turns, deliver_turn
-from tavern.validation import integer, number
-from tavern.world import create_world, start_action, step_world
+from tavern.world import create_world, step_world
 
 # Session IDs also name save directories, so only path-safe characters are allowed.
 SESSION_ID = re.compile(r"[A-Za-z0-9_-]{8,64}")
@@ -183,58 +182,11 @@ class TavernRuntime:
             if self.intender is not None:
                 self._mind(self.intender)
 
-    def _pause(self, command: Mapping[str, Any]) -> None:
-        if not isinstance(command.get("paused"), bool):
-            raise ValueError("paused must be a boolean")
-        self.world["paused"] = command["paused"]
-
-    def _speed(self, command: Mapping[str, Any]) -> None:
-        self.world["speed"] = number(command.get("value"), "Speed", 0.25, 8)
-
-    def _refill(self, command: Mapping[str, Any]) -> None:
-        amount = integer(command.get("amount"), "Amount", 1, 1000)
-        target = next((item for item in self.world["map"]["objects"]
-                       if item["id"] == command.get("object_id") and item["kind"] == "tap"), None)
-        if target is None:
-            raise ValueError("Unknown beer tap")
-        target["stock"] += amount
-
     def _block(self, command: Mapping[str, Any]) -> None:
-        x = integer(command.get("x"), "Cell x", 0, self.world["map"]["width"] - 1)
-        y = integer(command.get("y"), "Cell y", 0, self.world["map"]["height"] - 1)
-        if not isinstance(command.get("blocked"), bool):
-            raise ValueError("blocked must be a boolean")
-        self._validate_block([x, y], command["blocked"])
-        cells = self.world["map"]["blocked"]
-        if command["blocked"] and [x, y] not in cells:
-            cells.append([x, y])
-        elif not command["blocked"] and [x, y] in cells:
-            cells.remove([x, y])
-
-    def _validate_block(self, cell: list[int], blocked: bool) -> None:
-        if cell in self.map_data["blocked"] and not blocked:
-            raise ValueError("Permanent walls cannot be removed")
-        if any([actor["x"], actor["y"]] == cell for actor in self.world["actors"]):
-            raise ValueError("Cannot change the cell under a visitor")
-        if any(tuple(cell) in object_cells(item) for item in self.world["map"]["objects"]):
-            raise ValueError("Furniture cells cannot be changed")
+        toggle_block(self.world, self.map_data["blocked"], command)
 
     def _force_action(self, command: Mapping[str, Any]) -> None:
-        actor_id = command.get("actor_id")
-        if not isinstance(actor_id, str) or not isinstance(command.get("action"), dict):
-            raise ValueError("Expected actor_id and action")
-        if not any(actor["id"] == actor_id for actor in self.world["actors"]):
-            raise ValueError("Unknown visitor")
-        action = command["action"]
-        if not isinstance(action.get("verb"), str) or not isinstance(action.get("id"), str):
-            raise ValueError("Action id and verb must be strings")
-        if action.get("target_id") is not None and not isinstance(action["target_id"], str):
-            raise ValueError("Action target must be an object ID or null")
-        trial = deepcopy(self.world)
-        result = start_action(trial, actor_id, action)
-        if not result["accepted"]:
-            raise ValueError(result["reason"])
-        self.world = trial
+        self.world, actor_id = forced_action(self.world, command)
         self.revisions[actor_id] = self.revisions.get(actor_id, 0) + 1
 
     def _invalidate_requests(self) -> None:
@@ -323,7 +275,9 @@ class TavernRuntime:
         Raises:
             ValueError: A command or its arguments are invalid.
         """
-        handlers = {"pause": self._pause, "speed": self._speed, "refill": self._refill,
+        handlers = {"pause": lambda item: set_paused(self.world, item),
+                    "speed": lambda item: set_speed(self.world, item),
+                    "refill": lambda item: refill_tap(self.world, item),
                     "block": self._block, "force_action": self._force_action,
                     "save": self._save, "load": self._load, "reset": self._reset}
         if not isinstance(command, Mapping) or not isinstance(command.get("type"), str):
