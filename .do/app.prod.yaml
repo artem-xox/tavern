@@ -72,6 +72,10 @@ services:
     scope: RUN_TIME
     type: SECRET
     value: ${TYPESAFE_API_KEY}
+  - key: ANTHROPIC_API_KEY
+    scope: RUN_TIME
+    type: SECRET
+    value: ${ANTHROPIC_API_KEY}
   - key: AI_TIMEOUT
     scope: RUN_TIME
     value: "8"
