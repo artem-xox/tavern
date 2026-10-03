@@ -10,6 +10,8 @@ from tavern.arrival import admit_arrivals, arrival_ranges, arriving, create_acto
 from tavern.attention import attend
 from tavern.closing import call_closing, inn_closed
 from tavern.conversation import conversation_of
+from tavern.dozing import nodding_off
+from tavern.drunkenness import wear_off
 from tavern.expression import update_expression
 from tavern.hearing import sound_activity
 from tavern.memory import record_event
@@ -76,7 +78,10 @@ def _rules() -> dict[str, Any]:
             # How long each emote shows; a route blocked for long_wait seconds shows `waiting`.
             "emote_seconds": {"alert": 1.5, "confused": 2.5, "angry": 4.0, "affection": 3.0, "sleep": 5.0,
                               "waiting": 0.5},
-            "long_wait": 2.0}
+            "long_wait": 2.0,
+            # A middling drinker's rise per beer, how much wears off each second, and how often a
+            # wasted guest at their table nods off, per second.
+            "drunkenness": {"per_beer": 0.2, "per_second": 0.0005, "doze_per_second": 0.01}}
 
 
 def _actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any] | None:
@@ -325,6 +330,9 @@ def step_world(world: dict[str, Any], dt: float) -> None:
     admit_arrivals(world)
     for actor in attend(world):
         _clear_action(world, actor)
+    wear_off(world, elapsed)
+    for actor in nodding_off(world, elapsed):
+        _activate(world, actor, {"id": "doze", "verb": "doze", "target_id": None}, (None, []))
     update_expression(world)
 
 

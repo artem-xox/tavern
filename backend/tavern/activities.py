@@ -6,6 +6,7 @@ from types import MappingProxyType
 from typing import Any
 
 from tavern.conversation import complete_conversation
+from tavern.drunkenness import drink_beer
 from tavern.hearing import Sound
 from tavern.memory import record_event
 from tavern.thoughts import think
@@ -72,6 +73,9 @@ def _pour(world: Mapping[str, Any], actor: dict[str, Any], tap: dict[str, Any] |
 def _drink(world: Mapping[str, Any], actor: dict[str, Any], target: dict[str, Any] | None) -> None:
     actor["inventory"]["beer"] -= 1
     actor["visit"]["beers"] += 1
+    # Guests without a tolerance trait (cards add it in E10) drink like a middling drinker.
+    tolerance = actor["traits"].get("tolerance", 0.5)
+    actor["drunkenness"] = drink_beer(actor["drunkenness"], tolerance, world["rules"]["drunkenness"])
 
 
 def _chat(world: Mapping[str, Any], actor: dict[str, Any], partner: dict[str, Any] | None) -> None:
@@ -184,6 +188,13 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "pleasure that eases boredom more gently than darts. Comfort-loving guests especially "
                       "enjoy the warmth of the fire, curious ones the view outside. It means leaving their seat "
                       "for a while."),
+    # Involuntary: the world starts it for a wasted guest at their table (`dozing.nodding_off`);
+    # it is never a candidate, and a loud enough sound wakes them.
+    Activity(verb="doze", duration=30.0, needs=MappingProxyType({"fatigue": -30}), label="Doze off",
+             status="dozing", pose="Seated", interruptible=True, doing="dozing at the table",
+             done="dozed off at the table", family="resting",
+             what="doze off where they sit",
+             guidance="Nobody chooses it: a wasted guest nods off at the table and wakes after a while."),
     # A decision step, not a world action: a second evaluation picks the chair to `sit` on.
     Activity(verb="seating", duration=None,
              family="seat_choice",

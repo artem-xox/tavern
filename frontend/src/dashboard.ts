@@ -228,6 +228,7 @@ export class Dashboard {
     const thoughts: string = mind.thoughts.map((thought: Thought): string => `<li class="${thought.mood < 0 ? "bad" : "good"}"><span>${escape(thought.text)}</span><strong>${signed(thought.mood)}</strong><small>${Math.max(0, Math.ceil(thought.expires_at - (this.world?.time ?? 0)))} s left</small></li>`).join("");
     const opinions: string = mind.opinions.map((opinion): string => `<div class="known-object"><span>${escape(opinion.name)} · ${escape(opinion.familiarity)}</span><span>${signed(opinion.opinion)}</span></div>`).join("");
     return `<details id="mind-detail" open><summary>Mood and thoughts <span class="count">${signed(mind.mood)}</span></summary><div class="detail-body">
+      <div class="inventory-row"><span>Drink</span><strong>${escape(mind.stage)} · ${Math.round(mind.drunkenness * 100)}%</strong></div>
       ${thoughts ? `<ul class="thoughts" aria-label="Thoughts">${thoughts}</ul>` : '<p class="helper">No thoughts weigh on them.</p>'}
       ${opinions ? `<p class="stage-heading">Opinions</p>${opinions}` : ""}</div></details>`;
   }

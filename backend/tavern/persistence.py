@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from tavern.activities import ACTIVITIES
+from tavern.drunkenness import check_drunkenness
 from tavern.expression import EMOTES
 from tavern.hearing import Sound
 from tavern.navigation import find_path
@@ -71,6 +72,7 @@ def _validate_actor_runtime(world: Mapping[str, Any]) -> None:
         _validate_seat(actor, world)
         _validate_visit(actor.get("visit"))
         check_mind(actor)
+        check_drunkenness(actor, world["rules"])
         _validate_expression(actor, world)
     for item in world["map"]["objects"]:
         if item.get("reserved_by") is not None and item["reserved_by"] not in actor_ids:
@@ -180,6 +182,7 @@ def _validate_departed(world: Mapping[str, Any]) -> None:
     for item in departed:
         _validate_visit(item.get("visit"))
         check_mind(item)
+        check_drunkenness(item, world["rules"])
         if "left_at" not in item["visit"]:
             raise ValueError("Departed visitor has no departure time")
 

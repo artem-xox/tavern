@@ -72,6 +72,8 @@ export interface Actor {
   thoughts: Thought[];
   /** Base opinion and familiarity per other visitor, before tonight's thoughts. */
   relations: Record<string, { name: string; opinion: number; familiarity: Familiarity }>;
+  /** 0 (sober) to 1 (as drunk as can be); beers raise it and it wears off slowly. */
+  drunkenness: number;
   path: Cell[];
   knowledge: { objects: Record<string, Record<string, unknown>> };
   memory: unknown[];
@@ -106,6 +108,10 @@ export interface Mind {
   thoughts: Thought[];
   /** Base opinion plus active thoughts, −100…100, per person they have a relation with. */
   opinions: { id: string; name: string; opinion: number; familiarity: Familiarity }[];
+  drunkenness: number;
+  stage: "sober" | "tipsy" | "drunk" | "wasted";
+  /** How far the scene sways the sprite, 0–1. */
+  sway: number;
 }
 export type EmoteKind = "alert" | "confused" | "angry" | "affection" | "sleep" | "waiting";
 

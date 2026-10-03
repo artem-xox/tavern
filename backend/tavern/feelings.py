@@ -1,8 +1,9 @@
-"""A visitor's inner state as others read it: mood and opinions in words, and the inspector's view."""
+"""A visitor's inner state as others read it: mood, opinions and drink in words, and the inspector's view."""
 
 from collections.abc import Mapping
 from typing import Any, TypedDict
 
+from tavern.drunkenness import drunk_stage, speech_instruction
 from tavern.thoughts import THOUGHTS, Thought, active_thoughts, mood, opinion_of
 
 
@@ -16,19 +17,27 @@ class Opinion(TypedDict):
 
 
 class Mind(TypedDict):
-    """A visitor's inner state for the inspector: derived mood, active thoughts, opinions."""
+    """A visitor's inner state for the inspector and the scene.
+
+    Derived mood, active thoughts and opinions; drunkenness with its stage, and how far the
+    client sways their sprite.
+    """
 
     mood: float
     thoughts: list[Thought]
     opinions: list[Opinion]
+    drunkenness: float
+    stage: str
+    sway: float
 
 
 def feelings(observation: Mapping[str, Any]) -> str:
-    """Put a visitor's mood, opinions and lingering grievances into words for the briefing.
+    """Put a visitor's mood, opinions, lingering grievances and drink into words for the briefing.
 
     Args:
-        observation: Personal observation; its actor may lack thoughts and relations when
-            built outside the world, and without a `time` every thought still counts.
+        observation: Personal observation; its actor may lack thoughts, relations and
+            drunkenness when built outside the world (they read as none, and sober), and
+            without a `time` every thought still counts.
 
     Returns:
         Sentences such as "They are in a sour mood. They dislike Bea, who took their seat."
@@ -36,7 +45,8 @@ def feelings(observation: Mapping[str, Any]) -> str:
     actor, now = observation["actor"], observation.get("time", float("-inf"))
     grievances = actor.get("visit", {}).get("grievances", [])
     parts = [f"They are {_mood_words(mood(actor, now))}.", *_opinions(actor, now),
-             f"Still rankling tonight: {'; '.join(grievances)}." if grievances else ""]
+             f"Still rankling tonight: {'; '.join(grievances)}." if grievances else "",
+             speech_instruction(actor.get("drunkenness", 0.0))]
     return " ".join(part for part in parts if part)
 
 
@@ -74,12 +84,15 @@ def minds(world: Mapping[str, Any]) -> dict[str, Mind]:
         world: Current world; it is not modified.
 
     Returns:
-        Per visitor ID: derived mood, active thoughts oldest first, and opinions of everyone
-        they have a relation with, in relation order. Unrounded; the client formats them.
+        Per visitor ID: derived mood, active thoughts oldest first, opinions of everyone
+        they have a relation with in relation order, drunkenness, its stage and the sprite's
+        sway. Unrounded; the client formats them.
     """
     now = world["time"]
     return {actor["id"]: Mind(
         mood=mood(actor, now), thoughts=[Thought(**item) for item in active_thoughts(actor["thoughts"], now)],
         opinions=[Opinion(id=other, name=relation["name"], opinion=opinion_of(actor, other, now),
-                          familiarity=relation["familiarity"]) for other, relation in actor["relations"].items()])
+                          familiarity=relation["familiarity"]) for other, relation in actor["relations"].items()],
+        drunkenness=actor["drunkenness"], stage=drunk_stage(actor["drunkenness"]).name,
+        sway=drunk_stage(actor["drunkenness"]).sway)
         for actor in [*world["actors"], *world["departed"]]}

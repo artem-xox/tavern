@@ -38,6 +38,7 @@ def create_actor(data: Mapping[str, Any], world_map: Mapping[str, Any]) -> dict[
                 sprite=sprite, x=x, y=y, traits=traits, needs=needs, inventory={"beer": beer}, status="idle",
                 action=None, path=[], seat_id=None, favorite_seat_id=None,
                 visit={"seconds": 0.0, "beers": 0, "grievances": []}, thoughts=[], relations={},
+                drunkenness=0.0,
                 knowledge={"objects": {}, "cells": []}, memory=[],
                 decision={"source": "local", "scores": {}, "error": None},
                 facing=None, gaze=None, emote=None, interrupted_at=None,
