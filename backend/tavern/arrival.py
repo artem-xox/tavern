@@ -40,6 +40,7 @@ def create_actor(data: Mapping[str, Any], world_map: Mapping[str, Any]) -> dict[
                 visit={"seconds": 0.0, "beers": 0, "grievances": []},
                 knowledge={"objects": {}, "cells": []}, memory=[],
                 decision={"source": "local", "scores": {}, "error": None},
+                facing=None, gaze=None, emote=None, interrupted_at=None,
                 _move_elapsed=0.0, _remaining=0.0, _blocked_for=0.0, _spot=None)
 
 

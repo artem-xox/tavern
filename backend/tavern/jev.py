@@ -6,7 +6,7 @@ from typing import Any, TypedDict
 
 import httpx
 
-from tavern.activities import ACTIVITIES
+from tavern.activities import ACTIVITIES, FAMILIES
 
 
 class JevError(RuntimeError):
@@ -52,10 +52,22 @@ def _visitor_view() -> str:
 
 
 def _activity(action: Mapping[str, Any]) -> tuple[str, str]:
+    if action["verb"] in FAMILIES:
+        return _family(action)
     activity = ACTIVITIES.get(action["verb"])
     if activity is None:
         raise ValueError(f"Jev cannot describe the action verb {action['verb']!r}")
     return activity.what.format(target=repr(action["target_id"])), activity.guidance
+
+
+def _family(option: Mapping[str, Any]) -> tuple[str, str]:
+    # A family is judged as the wish its members share, with each member verb's guidance once.
+    members = option.get("members")
+    if not isinstance(members, list) or not members or any(
+            not isinstance(item, Mapping) or item.get("verb") not in ACTIVITIES for item in members):
+        raise ValueError(f"Family option {option['id']!r} must list its member actions")
+    guidance = dict.fromkeys(ACTIVITIES[item["verb"]].guidance for item in members)
+    return FAMILIES[option["verb"]], " ".join([*guidance, "A second decision then picks which of these they do."])
 
 
 def _guest(observation: Mapping[str, Any]) -> str:

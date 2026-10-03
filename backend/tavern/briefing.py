@@ -3,7 +3,7 @@
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
-from tavern.activities import ACTIVITIES
+from tavern.activities import ACTIVITIES, FAMILIES
 
 Observation = Mapping[str, Any]
 Action = Mapping[str, Any]
@@ -20,16 +20,19 @@ def brief(observation: Observation, candidates: Sequence[Action]) -> dict[str, A
 
     Returns:
         `situation`, one paragraph, and `options`, a phrase per candidate ID that
-        completes "How natural is it for them, right now, to ...".
+        completes "How natural is it for them, right now, to ...". A family option (see
+        `families.group_families`) is told as the family's wish with its first members.
 
     Raises:
         ValueError: A candidate's verb or target cannot be described.
     """
-    parts = (_closing(observation), _stay(observation), _whereabouts(observation), _own_seat(observation),
+    parts = (_closing(observation), _stay(observation), _whereabouts(observation), _trigger(observation),
+             _own_seat(observation),
              _needs(observation), _temperament(observation), _grievances(observation), _people(observation),
              _places(observation), _tables(observation), _recent(observation))
     return {"situation": " ".join(part for part in parts if part),
-            "options": {action["id"]: _option(observation, action) for action in candidates}}
+            "options": {action["id"]: _family(observation, action) if action["verb"] in FAMILIES
+                        else _option(observation, action) for action in candidates}}
 
 
 def in_use(observation: Observation, item: Mapping[str, Any]) -> bool:
@@ -51,6 +54,31 @@ def in_use(observation: Observation, item: Mapping[str, Any]) -> bool:
         return False
     now, seen = observation.get("time"), item.get("last_seen")
     return now is None or seen is None or now - seen < 10.0
+
+
+def line_place(observation: Observation, item: Mapping[str, Any]) -> tuple[int, bool]:
+    """Tell where the visitor stands in a known place's line, as last seen.
+
+    Args:
+        observation: The visitor's observation.
+        item: Known object record; one without a line has nobody in it.
+
+    Returns:
+        How many people wait ahead of the visitor, and whether the visitor stands in that line;
+        for someone not in it, everyone waiting is ahead. Like a busy place (see `in_use`), a
+        line seen 10 seconds ago or more has probably cleared; without a clock it is trusted.
+    """
+    waiting = [entry["actor_id"] for entry in item.get("queue", [])]
+    me = observation["actor"]["id"]
+    if me in waiting:
+        return waiting.index(me), True
+    now, seen = observation.get("time"), item.get("last_seen")
+    return (0 if now is not None and seen is not None and now - seen >= 10.0 else len(waiting)), False
+
+
+def _headcount(count: int) -> str:
+    words = ("nobody", "one person", "two people", "three people", "four people", "five people")
+    return words[count] if count < len(words) else f"{count} people"
 
 
 def _name(observation: Observation) -> str:
@@ -113,9 +141,23 @@ def _whereabouts(observation: Observation) -> str:
     seat = _object(observation, actor.get("seat_id"))
     if seat:
         return f"They sit in their own seat, {_label(seat)}, {hands}."
+    for item in observation["objects"]:
+        ahead, joined = line_place(observation, item)
+        if joined:
+            where = ", next to go in" if not ahead else f" with {_headcount(ahead)} waiting ahead of them"
+            return f"They are standing in line for {_place(item)}{where}, {hands}."
     places = [item for item in observation["objects"] if item["kind"] != "chair"]
     near = min(places, key=lambda item: _steps(observation, item), default=None)
     return f"They are standing{f' near {_place(near)}' if near else ''}, {hands}."
+
+
+def _trigger(observation: Observation) -> str:
+    # What just caught their attention leads the choice it triggered; after 15 s it is old news.
+    now = observation.get("time")
+    noticed = [item for item in observation.get("memory", []) if item["type"] in ("interrupted", "alerted")]
+    if now is None or not noticed or now - noticed[-1]["time"] >= 15:
+        return ""
+    return f"Just now: {noticed[-1]['message']}."
 
 
 def _own_seat(observation: Observation) -> str:
@@ -187,7 +229,8 @@ def _place_note(observation: Observation, item: Mapping[str, Any]) -> str:
     note = f"{_place(item)} {_walk(_steps(observation, item))} away"
     if item["kind"] == "tap":
         note += f" ({item.get('stock')} servings when last seen)" if item.get("stock") else " (it had run dry)"
-    return note + (" (in use)" if busy else "")
+    waiting = line_place(observation, item)[0]
+    return note + (" (in use)" if busy else "") + (f" ({_headcount(waiting)} waiting in line)" if waiting else "")
 
 
 def _places(observation: Observation) -> str:
@@ -239,7 +282,8 @@ def _memory(memory: Mapping[str, Any]) -> str:
 def _recent(observation: Observation) -> str:
     now = observation.get("time")
     # A finished chat is already remembered as the conversation itself.
-    memories = [item for item in observation.get("memory", []) if item["type"] != "action_started"
+    memories = [item for item in observation.get("memory", [])
+                if item["type"] not in ("action_started", "interrupted", "alerted")
                 and not (item["type"] == "action_completed" and item["message"].endswith(" talk"))][-5:]
     if now is None or not memories:
         return ""
@@ -251,10 +295,34 @@ def _option(observation: Observation, action: Action) -> str:
     builders: dict[str, Callable[[Observation, Action], str]] = {
         "take_beer": _pour, "drink": _drink, "rest": _rest, "seating": _seating, "sit": _sit, "talk": _talk,
         "play_darts": _darts, "watch": _watch, "use_toilet": _toilet, "inspect": _inspect, "wait": _wait,
-        "leave": _leave}
+        "leave": _leave, "cut_in_line": _cut}
     if action["verb"] not in builders:
         raise ValueError(f"Cannot describe the action verb {action['verb']!r}")
-    return builders[action["verb"]](observation, action)
+    return _waiting(observation, action) or builders[action["verb"]](observation, action)
+
+
+def _waiting(observation: Observation, action: Action) -> str:
+    # Using a busy place with a line means waiting in it; staying in line is the same choice again.
+    item = _object(observation, action.get("target_id"))
+    if item is None or "queue_spots" not in item or action["verb"] == "cut_in_line":
+        return ""
+    ahead, joined = line_place(observation, item)
+    used, place = in_use(observation, item), _place(item)
+    if joined and not ahead:
+        return f"keep waiting in line for {place} (they are next{', while someone uses it' if used else ''})"
+    parts = [f"{_headcount(ahead)} {'is' if ahead == 1 else 'are'} waiting for {place}"
+             f"{' ahead of them' if joined else ''}"] if ahead else []
+    note = ", and ".join([*parts, *(["someone is using it"] if used else [])])
+    if joined:
+        return f"keep waiting in line for {place} ({note})"
+    return f"walk {_walk(_steps(observation, item))} to {place} and wait in line ({note})" if note else ""
+
+
+def _cut(observation: Observation, action: Action) -> str:
+    item = _target(observation, action)
+    ahead = line_place(observation, item)[0]
+    return (f"push to the front of the line for {_place(item)}, ahead of the {_headcount(ahead)} waiting, "
+            "who will resent it")
 
 
 def _target(observation: Observation, action: Action) -> Mapping[str, Any]:
@@ -341,3 +409,11 @@ def _wait(observation: Observation, action: Action) -> str:
 
 def _leave(observation: Observation, action: Action) -> str:
     return f"walk {_walk(_steps(observation, _target(observation, action)))} to the front door and go home for the night"
+
+
+def _family(observation: Observation, option: Action) -> str:
+    # Three examples tell one wish from another; any further members are only counted.
+    members = option["members"]
+    shown = "; or ".join(_option(observation, item) for item in members[:3])
+    more = f"; or one of {len(members) - 3} more like these" if len(members) > 3 else ""
+    return f"{FAMILIES[option['verb']]}: {shown}{more}"

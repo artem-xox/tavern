@@ -219,11 +219,13 @@ export class Dashboard {
       ${grievances ? `<ul class="grievances" aria-label="Grievances">${grievances}</ul>` : ""}</div>`;
   }
 
-  /** Show the second decision stage: which chair a visitor who decided to sit picked. */
+  /** Show the second decision stage: which chair a visitor who decided to sit picked, or which action of a chosen family. */
   private seatChoice(actor: Actor): string {
-    const seat = actor.decision?.seat;
-    if (!seat) return "";
-    return `<p class="stage-heading">Which seat? <span class="source-tag">${seat.source === "jev" ? "JEV" : "LOCAL"}</span></p>${this.scoreList(seat.scores)}${seat.error ? `<p class="decision-error">Fallback: ${escape(seat.error)}</p>` : ""}`;
+    const family = actor.decision?.family;
+    const stage = actor.decision?.seat ?? family;
+    if (!stage) return "";
+    const heading = family ? `Which ${escape(family.name.replace("_", " "))}?` : "Which seat?";
+    return `<p class="stage-heading">${heading} <span class="source-tag">${stage.source === "jev" ? "JEV" : "LOCAL"}</span></p>${this.scoreList(stage.scores)}${stage.error ? `<p class="decision-error">Fallback: ${escape(stage.error)}</p>` : ""}`;
   }
 
   private scoreList(scores: unknown): string {
@@ -269,6 +271,7 @@ export class Dashboard {
     if (this.departed(actor)) return "gone home";
     if (this.world?.actors.some((visitor: Actor): boolean => visitor.action?.verb === "talk" && visitor.action.target_id === actor.id)) return "chatting";
     if (actor.status === "walking" || actor.status === "waiting") return actor.status;
+    if (actor.status === "queued") return "in line";
     if (actor.action?.verb === "talk") return "chatting";
     if (actor.action?.verb === "play_darts") return "playing darts";
     if (actor.action?.verb === "watch") return "admiring the view";

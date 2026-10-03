@@ -17,6 +17,10 @@ export interface WorldObject {
   interaction_spots: Cell[];
   stock: number | null;
   reserved_by: string | null;
+  /** Cells a line stands on, front first, for places used one visitor at a time. */
+  queue_spots?: Cell[];
+  /** Who waits in that line, front first, and since when (game seconds). */
+  queue?: { actor_id: string; since: number }[];
   appeal?: number;
   comforts?: string[];
   reach?: number;
@@ -37,6 +41,11 @@ export interface DecisionStage {
   error: string | null;
 }
 
+/** The second stage after choosing a family of several actions, such as a pastime. */
+export interface FamilyStage extends DecisionStage {
+  name: string;
+}
+
 export interface Action {
   id: string;
   verb: Verb;
@@ -54,7 +63,7 @@ export interface Actor {
   traits: Record<string, unknown>;
   needs: { thirst: number; fatigue: number; bladder: number; social: number; boredom: number };
   inventory: { beer: number };
-  status: "idle" | "walking" | "interacting" | "waiting";
+  status: "idle" | "walking" | "interacting" | "waiting" | "queued";
   action: Action | null;
   seat_id: string | null;
   favorite_seat_id: string | null;
@@ -62,8 +71,18 @@ export interface Actor {
   path: Cell[];
   knowledge: { objects: Record<string, Record<string, unknown>> };
   memory: unknown[];
-  decision: (DecisionStage & { seat?: DecisionStage }) | null;
+  decision: (DecisionStage & { seat?: DecisionStage; family?: FamilyStage }) | null;
+  /** Where the server turns the visitor; null keeps the seat's, the task's, or the walking direction. */
+  facing: Facing | null;
+  /** A cell the visitor looks at until a game time, drawn by a stimulus. */
+  gaze: { cell: Cell; until: number; stimulus_id: number } | null;
+  emote: { kind: EmoteKind; until: number } | null;
+  /** Game time of the last interrupt that asked for a fresh decision. */
+  interrupted_at: number | null;
 }
+
+export type Facing = "north" | "south" | "east" | "west";
+export type EmoteKind = "alert" | "confused" | "angry" | "affection" | "sleep" | "waiting";
 
 /** A scenario guest still on the way, with tonight's needs already drawn. */
 export interface ExpectedGuest {
@@ -82,6 +101,23 @@ export interface WorldEvent {
   actor_id: string | null;
   type: string;
   message: string;
+}
+
+/** A sound in the hall waiting for the listeners' attention at the end of the tick. */
+export interface Stimulus {
+  id: number;
+  kind: string;
+  noun: string;
+  /** Visitors who made it; empty for a call from a place. */
+  sources: string[];
+  cell: Cell;
+  loudness: number;
+  reach: number;
+  time: number;
+  /** Visitors it concerns without having made it. */
+  about: string[];
+  cause: string;
+  event: string | null;
 }
 
 export interface World {
@@ -104,6 +140,8 @@ export interface World {
   /** Game seconds after opening when the inn closes; null for an evening that never closes. */
   closes_at: number | null;
   events: WorldEvent[];
+  stimuli: Stimulus[];
+  next_stimulus_id: number;
 }
 
 export interface Snapshot {

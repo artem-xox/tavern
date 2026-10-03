@@ -13,7 +13,7 @@ from dotenv import dotenv_values
 from tavern import jev
 from tavern.agents import Evaluators
 from tavern.lockstep import Pace, evening_mode, run_evening
-from tavern.metrics import evening_metrics
+from tavern.metrics import attention_counts, evening_metrics
 from tavern.recording import Record, format_record, parse_records, record_calls, replay_calls
 from tavern.scenario import open_evening, parse_scenario
 
@@ -71,11 +71,12 @@ def evaluators(mode: str, recording: Path | None, calls: list[Record], log: Path
         calls: Receives the evening's calls: recorded live, or loaded for replay.
         log: JSON-lines file each live call is appended to as soon as it ends.
     Returns:
-        Evaluators for both decision stages.
+        Evaluators for every decision stage; the actions within a chosen family are
+        ordinary actions, so Jev scores them with the action question, recorded as `family`.
     """
     if mode == "replay":
         calls.extend(parse_records(recording.read_text()))
-        return Evaluators(replay_calls("actions", calls, jev.JevError), replay_calls("seats", calls, jev.JevError))
+        return Evaluators(*(replay_calls(kind, calls, jev.JevError) for kind in ("actions", "seats", "family")))
     if mode == "local":
         # Without a key the decisions never ask a model; Jev only fills the port.
         return Evaluators(jev.evaluate_actions, jev.evaluate_seats)
@@ -86,7 +87,8 @@ def evaluators(mode: str, recording: Path | None, calls: list[Record], log: Path
         with log.open("a") as lines:
             lines.write(format_record(record))
     return Evaluators(record_calls("actions", jev.evaluate_actions_metered, keep, time.monotonic, jev.JevError),
-                      record_calls("seats", jev.evaluate_seats_metered, keep, time.monotonic, jev.JevError))
+                      record_calls("seats", jev.evaluate_seats_metered, keep, time.monotonic, jev.JevError),
+                      record_calls("family", jev.evaluate_actions_metered, keep, time.monotonic, jev.JevError))
 
 
 def rounded(value: Any) -> Any:
@@ -137,7 +139,8 @@ def main(root: Path) -> None:
                       "model": settings["model"], "temperature": settings["temperature"], "step": pace.step,
                       "model_latency": pace.model_latency, "time_limit": pace.time_limit,
                       "stuck_threshold": args.stuck_threshold, "input_usd_per_million": args.input_price},
-              **evening_metrics(evening, calls, args.input_price, args.stuck_threshold)}
+              **evening_metrics(evening, calls, args.input_price, args.stuck_threshold),
+              "attention": attention_counts(evening)}
     (args.out / "events.jsonl").write_text("".join(json.dumps(event, sort_keys=True) + "\n" for event in evening.events))
     (args.out / "metrics.json").write_text(json.dumps(rounded(report), indent=2) + "\n")
     print(json.dumps(rounded(report), indent=2))
