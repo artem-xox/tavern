@@ -19,18 +19,18 @@ from tavern.cards_api import card_routes
 from tavern.claude import ask_claude
 from tavern.controls import forced_action, refill_tap, set_paused, set_speed, toggle_block
 from tavern.database import initialize_database, load_database_world, save_database_world
-from tavern.decisions import apply_decision, decision_requests, free_to_decide, log_control, stale_requests
+from tavern.decisions import log_control
 from tavern.feelings import minds
 from tavern.haiku_turns import claude_writer
-from tavern.intentions import INTENTION_RULES, Intender, IntentionRules, deliver_intention, intention_requests, \
-    intention_writer, stale_intentions
+from tavern.intentions import INTENTION_RULES, Intender, IntentionRules, intention_writer
 from tavern.jev import evaluate_actions, evaluate_seats
+from tavern.mind_loop import MindLoop, TaskCourier
 from tavern.persistence import load_world, save_world
 from tavern.questions import Ask, Question
 from tavern.scenario import Scenario, open_evening, parse_scenario
 from tavern.scripted import write_scripted_turn
-from tavern.state import Actor, World
-from tavern.turns import TurnWriter, claim_turns, deliver_turn
+from tavern.state import World
+from tavern.turns import TurnWriter
 from tavern.world import create_world, step_world
 
 # Session IDs also name save directories, so only path-safe characters are allowed.
@@ -71,21 +71,18 @@ class TavernRuntime:
         self.session_id = session_id
         self.ai_config = {"model": "jev-latest", "timeout": 8.0, "temperature": 0.25, **ai_config}
         self.rng = Random(seed)
-        self.pending: dict[str, tuple[asyncio.Task[Any], int]] = {}
-        self.revisions: dict[str, int] = {}
-        self.next_decision: dict[str, float] = {}
-        # Game time each pending request was made, to drop those an interrupt overtakes.
-        self.asked_at: dict[str, float] = {}
         self.writer = writer
         # Which writer speaks the lines (`haiku` or `scripted`), for the client's label.
         self.writer_label = writer_label
-        # Lines being written, per claimed turn (scene ID, turn index).
-        self.writing: dict[tuple[str, int], asyncio.Task[Any]] = {}
-        # The mind port (None offline: no intentions), and per guest the intention being written:
-        # its task, when it was asked, and the view it answers.
+        # The mind port (None offline: no intentions).
         self.intender, self.intention_rules = intender, intention_rules
-        self.intending: dict[str, tuple[asyncio.Task[Any], float, dict[str, Any]]] = {}
-        self.next_intention: dict[str, float] = {}
+        self.mind = MindLoop(TaskCourier(), lambda observation: choose_action(observation, self.ai_config, self.rng),
+                             lambda view: self.writer(view, self.ai_config), intender, intention_rules)
+
+    @property
+    def pending(self) -> dict[str, tuple[Any, int]]:
+        """The decisions in flight, per visitor: the task and the revision it was asked at."""
+        return self.mind.pending
 
     def _open(self, seed: int) -> World:
         # A scenario says who comes tonight; without one, the room's own visitors are already in.
@@ -110,62 +107,6 @@ class TavernRuntime:
     def _event(self, message: str) -> None:
         log_control(self.world, message)
 
-    def _apply_decision(self, actor: Actor, task: asyncio.Task[Any], revision: int) -> None:
-        if revision != self.revisions.get(actor["id"], 0) or not free_to_decide(self.world, actor):
-            with suppress(asyncio.CancelledError, Exception):
-                task.result()
-            return
-        self.next_decision[actor["id"]] = apply_decision(self.world, actor, task.result)
-
-    def _collect_decisions(self) -> None:
-        for actor_id, pending in list(self.pending.items()):
-            if not pending[0].done():
-                continue
-            del self.pending[actor_id]
-            self.asked_at.pop(actor_id, None)
-            actor = next((item for item in self.world["actors"] if item["id"] == actor_id), None)
-            if actor is not None:
-                self._apply_decision(actor, *pending)
-            else:
-                # The visitor has gone home; their late thought has nobody to act on it.
-                with suppress(asyncio.CancelledError, Exception):
-                    pending[0].result()
-
-    def _request_decisions(self) -> None:
-        for actor_id, observation in decision_requests(self.world, self.pending, self.next_decision):
-            task = asyncio.create_task(choose_action(observation, self.ai_config, self.rng))
-            self.pending[actor_id] = (task, self.revisions.get(actor_id, 0))
-            self.asked_at[actor_id] = self.world["time"]
-
-    def _collect_lines(self) -> None:
-        for key, task in list(self.writing.items()):
-            if task.done():
-                del self.writing[key]
-                deliver_turn(self.world, *key, task.result)
-
-    def _request_lines(self) -> None:
-        for scene_id, turn, view in claim_turns(self.world):
-            self.writing[(scene_id, turn)] = asyncio.create_task(self.writer(view, self.ai_config))
-
-    def _mind(self, intender: Intender) -> None:
-        # As in the lockstep runner: drop overtaken requests, keep finished ones, ask anew.
-        for actor_id in stale_intentions(self.world, {key: asked for key, (_, asked, _) in self.intending.items()}):
-            self.intending.pop(actor_id)[0].cancel()
-        for actor_id, (task, _, view) in list(self.intending.items()):
-            if task.done():
-                del self.intending[actor_id]
-                self.next_intention[actor_id] = deliver_intention(self.world, actor_id, view, task.result,
-                                                                  self.intention_rules)
-        for actor_id, view in intention_requests(self.world, self.intending, self.next_intention,
-                                                 self.intention_rules):
-            self.intending[actor_id] = (asyncio.create_task(intender(view)), self.world["time"], view)
-
-    def _drop_stale_requests(self) -> None:
-        # As in the lockstep runner, an interrupted visitor's pending thought is dropped and they ask anew.
-        for actor_id in stale_requests(self.world, self.asked_at):
-            self.pending.pop(actor_id)[0].cancel()
-            del self.asked_at[actor_id]
-
     def advance(self, dt: float) -> None:
         """Advance the world without waiting for AI requests.
 
@@ -174,32 +115,17 @@ class TavernRuntime:
         """
         step_world(self.world, dt)
         if not self.world["paused"]:
-            self._drop_stale_requests()
-            self._collect_decisions()
-            self._request_decisions()
-            self._collect_lines()
-            self._request_lines()
-            if self.intender is not None:
-                self._mind(self.intender)
+            self.mind.tick(self.world)
 
     def _block(self, command: Mapping[str, Any]) -> None:
         toggle_block(self.world, self.map_data["blocked"], command)
 
     def _force_action(self, command: Mapping[str, Any]) -> None:
         self.world, actor_id = forced_action(self.world, command)
-        self.revisions[actor_id] = self.revisions.get(actor_id, 0) + 1
+        self.mind.overrule(actor_id)
 
     def _invalidate_requests(self) -> None:
-        for task in [*(task for task, _revision in self.pending.values()), *self.writing.values(),
-                     *(task for task, _, _ in self.intending.values())]:
-            task.cancel()
-        self.pending.clear()
-        self.writing.clear()
-        self.intending.clear()
-        self.next_intention.clear()
-        self.asked_at.clear()
-        self.revisions.clear()
-        self.next_decision.clear()
+        self.mind.invalidate()
 
     def _autosave_path(self) -> Path:
         # Without a database the autosave lives next to the manual save file.
@@ -290,11 +216,7 @@ class TavernRuntime:
 
     async def close(self) -> None:
         """Cancel and drain model requests when the server stops."""
-        tasks = [*(task for task, _revision in self.pending.values()), *self.writing.values(),
-                 *(task for task, _, _ in self.intending.values())]
-        self._invalidate_requests()
-        if tasks:
-            await asyncio.gather(*tasks, return_exceptions=True)
+        await self.mind.close()
 
 
 class TavernSessions:

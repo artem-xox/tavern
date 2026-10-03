@@ -1,18 +1,18 @@
 """Headless evenings in lockstep: fixed game-time steps and a fixed virtual model latency."""
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Coroutine, Mapping
 from dataclasses import dataclass, field
 import math
 from random import Random
 from typing import Any, TypedDict
 
 from tavern.agents import Evaluators, choose_action
-from tavern.decisions import apply_decision, decision_requests, free_to_decide, stale_requests
-from tavern.intentions import INTENTION_RULES, Intender, IntentionRules, deliver_intention, intention_requests, \
-    stale_intentions
+from tavern.decisions import free_to_decide
+from tavern.intentions import INTENTION_RULES, Intender, IntentionRules
+from tavern.mind_loop import MindLoop
 from tavern.scripted import write_scripted_turn
-from tavern.state import World, find_actor
-from tavern.turns import TurnWriter, claim_turns, deliver_turn
+from tavern.state import World
+from tavern.turns import TurnWriter
 from tavern.world import step_world
 
 
@@ -76,21 +76,90 @@ class Evening:
 
 @dataclass
 class _Run:
-    # Per visitor: when they asked, when the answer is due, and the answer.
-    pending: dict[str, tuple[float, float, Mapping[str, Any]]] = field(default_factory=dict)
-    next_decision: dict[str, float] = field(default_factory=dict)
     events: list[dict[str, Any]] = field(default_factory=list)
     choices: list[Choice] = field(default_factory=list)
     spells: list[Spell] = field(default_factory=list)
     stalled_since: dict[str, float] = field(default_factory=dict)
     guests: list[str] = field(default_factory=list)
     gazes: set[tuple[str, int]] = field(default_factory=set)
-    # Per claimed turn (scene ID, turn index): when the written line is due back, and a callable
-    # that returns it or raises the writer's error, as `turns.deliver_turn` expects.
-    lines: dict[tuple[str, int], tuple[float, Any]] = field(default_factory=dict)
-    # Per guest: when their intention was asked, when it is due back, the view, and the outcome.
-    minds: dict[str, tuple[float, float, Mapping[str, Any], Callable[[], Any]]] = field(default_factory=dict)
-    next_intention: dict[str, float] = field(default_factory=dict)
+
+
+@dataclass
+class _Flight:
+    # A request waiting for its turn at `settle`, then for its due time.
+    request: Coroutine[Any, Any, Any]
+    due: float
+    strict: bool
+    answer: Any = None
+    error: Exception | None = None
+    settled: bool = False
+
+
+class LockstepCourier:
+    """The headless courier: requests are answered at once, in the order they were sent, and
+    delivered one fixed virtual latency after they were asked, whatever the model's real speed.
+
+    A replay miss (`LookupError`) always stops the evening. So does any failure of a `strict`
+    request, as a malformed decision request does; the live runtime would show it as "Decision
+    failed". Other failures are kept and raised on delivery, where the world logs them.
+    """
+
+    def __init__(self, latency: float) -> None:
+        """Create a courier.
+
+        Args:
+            latency: Game seconds between asking and delivering an answer.
+        """
+        self.latency = latency
+        self._sent: list[_Flight] = []
+
+    def send(self, request: Coroutine[Any, Any, Any], now: float, strict: bool = False) -> _Flight:
+        """Take a request; it runs at the next `settle`."""
+        flight = _Flight(request, now + self.latency, strict)
+        self._sent.append(flight)
+        return flight
+
+    async def settle(self) -> None:
+        """Run the requests sent since the last settle, in order.
+
+        Raises:
+            LookupError: A replayed request was not recorded.
+            Exception: A strict request failed.
+        """
+        sent, self._sent = self._sent, []
+        for flight in sent:
+            try:
+                flight.answer = await flight.request
+            except LookupError:
+                raise
+            except Exception as error:
+                if flight.strict:
+                    raise
+                flight.error = error
+            flight.settled = True
+
+    def ready(self, ticket: _Flight, now: float) -> bool:
+        """Tell whether the answer is due by `now`."""
+        # Game time sums float steps; the margin absorbs rounding far below one step.
+        return now + 1e-9 >= ticket.due
+
+    def outcome(self, ticket: _Flight) -> Callable[[], Any]:
+        """Return the answer, or raise the request's error."""
+        def result() -> Any:
+            if ticket.error is not None:
+                raise ticket.error
+            return ticket.answer
+        return result
+
+    def cancel(self, ticket: _Flight) -> None:
+        """Abandon a request an event overtook; one not yet run never runs."""
+        if not ticket.settled:
+            ticket.request.close()
+            if ticket in self._sent:
+                self._sent.remove(ticket)
+
+    async def drain(self, tickets: list[_Flight]) -> None:
+        """Nothing is in flight between ticks."""
 
 
 def evening_over(world: Mapping[str, Any], time_limit: float) -> bool:
@@ -167,98 +236,29 @@ async def run_evening(world: World, config: Mapping[str, Any], rng: Random, eval
     if world["paused"]:
         raise ValueError("A paused world never reaches the end of the evening")
     run = _Run(events=list(world["events"]))
+    courier = LockstepCourier(pace.model_latency)
+    mind = MindLoop(courier, lambda observation: choose_action(observation, config, rng, evaluators),
+                    lambda view: writer(view, config), intender, intention_rules)
     _track(world, run)
     while not evening_over(world, pace.time_limit):
         step_world(world, pace.step)
-        _drop_stale(world, run)
-        _apply_due(world, run)
-        await _ask(world, run, config, rng, evaluators, pace.model_latency)
-        _deliver_due(world, run)
-        await _write(world, run, config, writer, pace.model_latency)
-        if intender is not None:
-            await _intend(world, run, intender, intention_rules, pace.model_latency)
+        asked = mind.tick(world)
+        await courier.settle()
+        _record_choices(world, run, courier, asked)
         _collect(world, run)
         _track(world, run)
     _close(run, list(run.stalled_since), world["time"])
     return Evening(run.events, run.choices, run.spells, run.guests, world["time"], len(run.gazes))
 
 
-def _drop_stale(world: Mapping[str, Any], run: _Run) -> None:
-    # As in the live runtime, an interrupted visitor's pending answer is dropped and they ask anew.
-    for actor_id in stale_requests(world, {actor_id: asked for actor_id, (asked, _, _) in run.pending.items()}):
-        del run.pending[actor_id]
-
-
-def _apply_due(world: World, run: _Run) -> None:
-    for actor_id, (_, due, decision) in list(run.pending.items()):
-        # Game time sums float steps; the margin absorbs rounding far below one step.
-        if world["time"] + 1e-9 < due:
-            continue
-        del run.pending[actor_id]
-        actor = find_actor(world, actor_id)
-        # As in the live runtime, an answer for a visitor who left or got busy meanwhile is dropped.
-        if actor is not None and free_to_decide(world, actor):
-            run.next_decision[actor_id] = apply_decision(world, actor, lambda: decision)
-
-
-async def _ask(world: World, run: _Run, config: Mapping[str, Any], rng: Random,
-               evaluators: Evaluators, latency: float) -> None:
-    for actor_id, observation in decision_requests(world, run.pending, run.next_decision):
-        decision = await choose_action(observation, config, rng, evaluators)
-        run.pending[actor_id] = (world["time"], world["time"] + latency, decision)
+def _record_choices(world: Mapping[str, Any], run: _Run, courier: LockstepCourier,
+                    asked: list[tuple[str, Any]]) -> None:
+    for actor_id, ticket in asked:
+        decision = courier.outcome(ticket)()
         second = [(kind, decision[key]) for kind, key in (("seats", "seat"), ("family", "family")) if key in decision]
         stages = [("actions", decision), *second]
         run.choices.extend({"time": world["time"], "actor_id": actor_id, "kind": kind,
                             "source": stage["source"], "error": stage["error"]} for kind, stage in stages)
-
-
-def _deliver_due(world: World, run: _Run) -> None:
-    for key, (due, line) in list(run.lines.items()):
-        if world["time"] + 1e-9 >= due:
-            del run.lines[key]
-            deliver_turn(world, *key, line)
-
-
-async def _write(world: World, run: _Run, config: Mapping[str, Any], writer: TurnWriter,
-                 latency: float) -> None:
-    for scene_id, turn, view in claim_turns(world):
-        try:
-            line = await writer(view, config)
-        except Exception as error:  # Like the live runtime: deliver_turn logs it and scripts the line.
-            run.lines[(scene_id, turn)] = (world["time"] + latency, _raising(error))
-        else:
-            run.lines[(scene_id, turn)] = (world["time"] + latency, lambda line=line: line)
-
-
-def _raising(error: Exception) -> Callable[[], Any]:
-    def outcome() -> Any:
-        raise error
-    return outcome
-
-
-async def _intend(world: World, run: _Run, intender: Intender, rules: IntentionRules,
-                  latency: float) -> None:
-    # As decisions: overtaken requests are dropped, due answers kept, then new requests asked at once.
-    for actor_id in stale_intentions(world, {actor_id: asked for actor_id, (asked, *_) in run.minds.items()}):
-        del run.minds[actor_id]
-    for actor_id, (_, due, view, outcome) in list(run.minds.items()):
-        if world["time"] + 1e-9 >= due:
-            del run.minds[actor_id]
-            run.next_intention[actor_id] = deliver_intention(world, actor_id, view, outcome, rules)
-    for actor_id, view in intention_requests(world, run.minds, run.next_intention, rules):
-        run.minds[actor_id] = (world["time"], world["time"] + latency, view, await _outcome(intender, view))
-
-
-async def _outcome(intender: Intender, view: Mapping[str, Any]) -> Callable[[], Any]:
-    try:
-        written = await intender(view)
-    except LookupError:
-        raise  # A replay miss stops the evening, as for decisions.
-    except Exception as error:  # Kept to raise on delivery, where the world logs the failure.
-        def failed() -> Any:
-            raise error
-        return failed
-    return lambda: written
 
 
 def _collect(world: Mapping[str, Any], run: _Run) -> None:
