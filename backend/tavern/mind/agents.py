@@ -14,7 +14,14 @@ from tavern.mind.selection import bounded, drawable, read_temperature, select
 
 
 class EvaluatorError(RuntimeError):
-    """A recoverable failure of a model evaluator, safe to display in snapshots (`jev.JevError`)."""
+    """A recoverable failure of a model evaluator, safe to display in snapshots (`jev.JevError`).
+
+    `status` is the HTTP status that caused it, when there was one.
+    """
+
+    def __init__(self, message: str, status: int | None = None) -> None:
+        super().__init__(message)
+        self.status = status
 
 
 class Action(TypedDict):

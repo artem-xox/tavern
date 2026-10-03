@@ -18,6 +18,7 @@ from tavern.hall.world import create_world, step_world
 from tavern.mind import agents
 from tavern.mind.feelings import minds
 from tavern.mind.intentions import INTENTION_RULES, Intender, IntentionRules
+from tavern.mind.model_health import HealthBoard
 from tavern.mind.scripted import write_scripted_turn
 from tavern.server.controls import forced_action, refill_tap, set_paused, set_speed, toggle_block
 from tavern.social.turns import TurnWriter
@@ -62,7 +63,7 @@ class TavernRuntime:
                  scenario: Scenario | None = None, writer: TurnWriter = write_scripted_turn,
                  writer_label: str = "scripted",
                  intender: Intender | None = None, intention_rules: IntentionRules = INTENTION_RULES,
-                 choose: Chooser = choose_action) -> None:
+                 choose: Chooser = choose_action, health: HealthBoard | None = None) -> None:
         self.map_data = deepcopy(dict(map_data))
         self.scenario = scenario
         self.world = self._open(seed)
@@ -75,6 +76,8 @@ class TavernRuntime:
         self.writer_label = writer_label
         # The mind port (None offline: no intentions).
         self.intender, self.intention_rules = intender, intention_rules
+        # How Jev and Claude are doing, for the client's badges; None where nobody watches them.
+        self.health = health
         self.mind = MindLoop(TaskCourier(), lambda observation: choose(observation, self.ai_config, self.rng),
                              lambda view: self.writer(view, self.ai_config), intender, intention_rules)
 
@@ -95,12 +98,15 @@ class TavernRuntime:
         Returns:
             Independent world copy, public evaluator configuration, how the client
             names, shows, and targets each verb, and each visitor's inner state (`feelings.minds`).
-            `ai.writer` names who writes conversation lines.
+            `ai.writer` names who writes conversation lines; `ai.health` says how Jev and Claude are
+            doing (`model_health`), when a board is watching them.
         """
         configured = bool(self.ai_config.get("typesafe_api_key"))
+        health = {} if self.health is None else {"health": self.health.snapshot()}
         return {"type": "snapshot", "state": deepcopy(self.world), "ai": {
             "mode": "jev" if configured else "local", "configured": configured,
             "model": self.ai_config["model"], "writer": self.writer_label, "intentions": self.intender is not None,
+            **health,
         }, "activities": client_activities(ACTIVITIES), "minds": minds(self.world)}
 
     def _event(self, message: str) -> None:

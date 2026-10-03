@@ -1,4 +1,9 @@
 export type Cell = [number, number];
+/** The models the server watches. */
+export type Service = "jev" | "claude";
+/** `checking`: not asked yet; `no_key`, `auth` (key refused), `no_credit`, `unreachable` and `degraded` are failures. */
+export type HealthStatus = "checking" | "ok" | "no_key" | "auth" | "no_credit" | "unreachable" | "degraded";
+export interface ServiceHealth { status: HealthStatus; reason: string }
 /** An action verb; the server's activity table lists the verbs it runs. */
 export type Verb = string;
 export type Mode = "local" | "jev";
@@ -271,8 +276,10 @@ export interface World {
 export interface Snapshot {
   type: "snapshot";
   state: World;
-  /** `intentions`: whether a mind (Claude Haiku) writes guests' intentions; false offline. */
-  ai: { mode: Mode; configured?: boolean; model?: string; writer: Writer; intentions: boolean };
+  /** `intentions`: whether a mind (Claude Haiku) writes guests' intentions; false offline. `health`: how
+   *  Jev and Claude are doing (absent where the server does not watch them). */
+  ai: { mode: Mode; configured?: boolean; model?: string; writer: Writer; intentions: boolean;
+        health?: Record<Service, ServiceHealth> };
   activities: Record<Verb, ActivityView>;
   /** Inner state per visitor ID, the departed included. */
   minds: Record<string, Mind>;

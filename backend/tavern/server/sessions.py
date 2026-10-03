@@ -10,8 +10,9 @@ from typing import Any, Mapping
 
 from tavern.evening.scenario import Scenario
 from tavern.mind.intentions import Intender
+from tavern.mind.model_health import HealthBoard
 from tavern.mind.scripted import write_scripted_turn
-from tavern.server.runtime import Store, TavernRuntime
+from tavern.server.runtime import Chooser, Store, TavernRuntime, choose_action
 from tavern.social.turns import TurnWriter
 
 
@@ -25,7 +26,8 @@ class TavernSessions:
     def __init__(self, map_data: Mapping[str, Any], save_dir: Path, ai_config: Mapping[str, Any],
                  seed: int = 0, database_url: str | None = None, scenario: Scenario | None = None,
                  writer: TurnWriter = write_scripted_turn, writer_label: str = "scripted",
-                 intender: Intender | None = None, store_for: Callable[[str], Store] | None = None) -> None:
+                 intender: Intender | None = None, store_for: Callable[[str], Store] | None = None,
+                 choose: Chooser | None = None, health: HealthBoard | None = None) -> None:
         self.map_data = deepcopy(dict(map_data))
         self.writer, self.writer_label = writer, writer_label
         self.save_dir = save_dir
@@ -35,6 +37,7 @@ class TavernSessions:
         # JSON files under `save_dir`).
         self.database_url = database_url
         self.store_for = store_for
+        self.choose, self.health = choose, health
         self.scenario = scenario
         self.rng = Random(seed)
         self.runtimes: dict[str, TavernRuntime] = {}
@@ -64,7 +67,8 @@ class TavernSessions:
             seed = self.scenario.seed
         runtime = TavernRuntime(self.map_data, self.save_dir / session_id / "save.json", self.ai_config, seed,
                                 self.store_for(session_id) if self.store_for else None, self.scenario,
-                                self.writer, self.writer_label, intender=self.intender)
+                                self.writer, self.writer_label, intender=self.intender,
+                                choose=self.choose or choose_action, health=self.health)
         if not runtime.restore():
             # A new evening waits at the door until someone presses Start.
             runtime.world["paused"] = True

@@ -117,3 +117,19 @@ def test_malformed_question_or_config_fails_before_any_call(asked: Question, set
         raise AssertionError("no request may be sent")
     with pytest.raises(ValueError):
         ask(never, asked, settings)
+
+
+@pytest.mark.parametrize("status, body, expected", [
+    pytest.param(401, {"type": "error", "error": {"type": "authentication_error", "message": "bad key"}}, 401,
+                 id="key-refused"),
+    pytest.param(400, {"type": "error", "error": {"type": "invalid_request_error",
+                                                  "message": "Your credit balance is too low to access the API."}},
+                 402, id="credit-balance-too-low"),
+    pytest.param(400, {"type": "error", "error": {"type": "invalid_request_error", "message": "bad field"}}, 400,
+                 id="other-bad-request"),
+])
+def test_failures_carry_a_status_and_a_missing_credit_reads_as_payment_required(
+        status: int, body: dict[str, Any], expected: int) -> None:
+    with pytest.raises(ClaudeError) as raised:
+        ask(reply(body, status))
+    assert raised.value.status == expected

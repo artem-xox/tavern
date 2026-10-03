@@ -112,8 +112,9 @@ def test_timeout_is_explicit_and_secret_safe():
     pytest.param(500, id="server-error"),
 ])
 def test_http_failure_is_explicit(status):
-    with pytest.raises(JevError, match=f"Jev HTTP {status}"):
+    with pytest.raises(JevError, match=f"Jev HTTP {status}") as raised:
         evaluate(httpx.Response(status, text="sensitive response"))
+    assert raised.value.status == status
 
 
 @pytest.mark.parametrize("actions", [

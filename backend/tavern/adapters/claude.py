@@ -18,7 +18,15 @@ _MAX_BREAKPOINTS = 4
 
 
 class ClaudeError(RuntimeError):
-    """A recoverable model or transport failure, safe to display."""
+    """A recoverable model or transport failure, safe to display.
+
+    `status` is the HTTP status that caused it, when there was one; an account out of credit
+    (which the API reports as a bad request) reads as 402.
+    """
+
+    def __init__(self, message: str, status: int | None = None) -> None:
+        super().__init__(message)
+        self.status = status
 
 
 class ClaudeUsage(TypedDict):
@@ -71,7 +79,9 @@ async def _send(client: anthropic.AsyncAnthropic, request: Mapping[str, Any]) ->
     except anthropic.APITimeoutError as error:
         raise ClaudeError("Claude request timed out") from error
     except anthropic.APIStatusError as error:
-        raise ClaudeError(f"Claude HTTP {error.status_code}") from error
+        if error.status_code == 400 and "credit balance" in str(error.message).lower():
+            raise ClaudeError("Claude account has no credit", 402) from error
+        raise ClaudeError(f"Claude HTTP {error.status_code}", error.status_code) from error
     except anthropic.APIConnectionError as error:
         raise ClaudeError("Claude connection failed") from error
 
