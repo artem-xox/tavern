@@ -261,7 +261,7 @@ def shared_prefix(acts: Mapping[str, str]) -> str:
     return "\n\n".join([_ROLE, _WORLD, f"{_ACTS_INTRO}\n{rules}", _ACTS_RULES, _FIELDS, _STYLE, _EXAMPLES])
 
 
-def turn_schema(acts: Mapping[str, str]) -> dict[str, object]:
+def turn_schema(acts: Mapping[str, str], invitations: tuple[str, ...]) -> dict[str, object]:
     """Describe the answer: a line, an act from the table, an addressee or null, and a topic.
 
     The schema is the same for every turn, so it never breaks the cache; which addressees are
@@ -270,6 +270,7 @@ def turn_schema(acts: Mapping[str, str]) -> dict[str, object]:
 
     Args:
         acts: Speech acts by name, in table order.
+        invitations: Every invitation kind an `invite` may carry; other acts carry null.
 
     Returns:
         A JSON schema object.
@@ -279,5 +280,7 @@ def turn_schema(acts: Mapping[str, str]) -> dict[str, object]:
         "act": {"type": "string", "enum": list(acts), "description": "The speech act the line performs."},
         "addressee": {"anyOf": [{"type": "string"}, {"type": "null"}],
                       "description": "ID of the one other person present addressed, or null for everyone."},
-        "topic": {"type": "string", "description": "What the conversation is about now, in a few words."}},
-        "required": ["line", "act", "addressee", "topic"], "additionalProperties": False}
+        "topic": {"type": "string", "description": "What the conversation is about now, in a few words."},
+        "invitation": {"anyOf": [{"type": "string", "enum": list(invitations)}, {"type": "null"}],
+                       "description": "For an invite, the invitation offered; otherwise null."}},
+        "required": ["line", "act", "addressee", "topic", "invitation"], "additionalProperties": False}

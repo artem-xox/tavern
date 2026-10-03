@@ -80,24 +80,23 @@ def test_shared_prefix_is_long_enough_to_cache() -> None:
     assert len(turn_question(view_of(scene_world()))["system"][0]) >= 16_500
 
 
-@pytest.mark.parametrize("acts", [
-    pytest.param({}, id="empty-table"),
-    pytest.param({"greet": "say hello"}, id="single-act"),
-    pytest.param({name: act.meaning for name, act in ACTS.items()}, id="the-act-table"),
-    pytest.param({name: act.meaning for name, act in ACTS.items()} | {"toast": "raise a mug to someone"},
-                 id="act-added-later"),
+@pytest.mark.parametrize("offered", [
+    pytest.param({}, id="nothing-offered"),
+    pytest.param({"greet": ACTS["greet"].meaning}, id="single-act-offered"),
+    pytest.param({name: act.meaning for name, act in ACTS.items()}, id="every-act-offered"),
 ])
-def test_acts_and_their_meanings_come_from_the_table(acts: dict[str, str]) -> None:
-    view = {**view_of(scene_world()), "acts": acts}
-    question = turn_question(view)
-    assert all(f"{name}: {meaning}" in question["system"][0] for name, meaning in acts.items())
-    assert question["schema"]["properties"]["act"]["enum"] == list(acts)
+def test_acts_and_their_meanings_come_from_the_table(offered: dict[str, str]) -> None:
+    # The cached prefix and the schema cover the whole table whatever the moment offers, so
+    # they never change between turns; the offer itself is in the per-call content.
+    question = turn_question({**view_of(scene_world()), "acts": offered})
+    assert all(f"{name}: {act.meaning}" in question["system"][0] for name, act in ACTS.items())
+    assert question["schema"]["properties"]["act"]["enum"] == list(ACTS)
 
 
 def test_answer_schema_asks_for_exactly_a_line_act_addressee_and_topic() -> None:
     schema = turn_question(view_of(scene_world()))["schema"]
     assert (schema["type"], sorted(schema["required"]), schema["additionalProperties"]) == (
-        "object", ["act", "addressee", "line", "topic"], False)
+        "object", ["act", "addressee", "invitation", "line", "topic"], False)
     assert schema["properties"]["addressee"] == {"anyOf": [{"type": "string"}, {"type": "null"}],
                                                  "description": schema["properties"]["addressee"]["description"]}
 

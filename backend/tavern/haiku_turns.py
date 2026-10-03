@@ -4,7 +4,9 @@ from collections.abc import Mapping
 import re
 from typing import Any
 
+from tavern.conversation import ACTS
 from tavern.drunkenness import speech_instruction
+from tavern.invitations import KINDS
 from tavern.questions import Ask, Question
 from tavern.scripted import CONTENT, PRESSING
 from tavern.turn_prompt import shared_prefix, turn_schema
@@ -52,7 +54,17 @@ def turn_content(view: Mapping[str, Any]) -> str:
     """
     nudges = _nudges(view["conversation"], view["speaker"])
     return "\n\n".join([_scene(view["conversation"], view["speaker"]), _self(view["speaker"]),
-                        *([f"THE MOMENT\n\n{nudges}"] if nudges else []), "Write the speaker's next line now."])
+                        *([f"THE MOMENT\n\n{nudges}"] if nudges else []), _offer(view),
+                        "Write the speaker's next line now."])
+
+
+def _offer(view: Mapping[str, Any]) -> str:
+    # The cached prefix explains every act; the moment says which of them fit now
+    # (`conversation.offered_acts`), so the prefix stays the same for every turn.
+    kinds = view.get("invitations") or []
+    invitations = (f" An invite must name one of these invitations: {', '.join(kinds)}; any other act has "
+                   "invitation null." if "invite" in view["acts"] and kinds else " Set invitation to null.")
+    return f"ALLOWED NOW\n\nActs you may use for this line: {', '.join(view['acts'])}.{invitations}"
 
 
 def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:
@@ -105,8 +117,11 @@ def turn_question(view: Mapping[str, Any]) -> Question:
         A question whose first system block is the same for every turn and whose second is the
         same for every turn of one speaker, each closed by a cache breakpoint.
     """
-    return Question(system=[shared_prefix(view["acts"]), card_block(view["speaker"])],
-                    content=turn_content(view), schema=turn_schema(view["acts"]), max_tokens=MAX_TOKENS)
+    # Every act is explained and allowed by the schema, so neither changes from turn to turn;
+    # `check_turn` then holds the answer to what is offered now.
+    acts = {name: act.meaning for name, act in ACTS.items()}
+    return Question(system=[shared_prefix(acts), card_block(view["speaker"])],
+                    content=turn_content(view), schema=turn_schema(acts, tuple(KINDS)), max_tokens=MAX_TOKENS)
 
 
 def parse_turn(view: Mapping[str, Any], answer: Any) -> TurnResult:
@@ -125,7 +140,10 @@ def parse_turn(view: Mapping[str, Any], answer: Any) -> TurnResult:
             the topic is longer than MAX_TOPIC; or the speaker shares places while knowing none.
     """
     try:
-        result = check_turn(view, answer)
+        # The schema always asks for an invitation; null means none, as for every act but invite.
+        given = ({key: value for key, value in answer.items() if key != "invitation" or value is not None}
+                 if isinstance(answer, Mapping) else answer)
+        result = check_turn(view, given)
     except ValueError as error:
         raise RejectedTurn(str(error)) from error
     line = result["line"]
