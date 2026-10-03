@@ -2,7 +2,7 @@ import type { Actor } from "./types";
 
 /** How one character sprite under /characters is drawn. */
 export interface SpriteSheet {
-  /** Display size in pixels: the 68 px cast fills its canvas, other stills carry more margin. */
+  /** Display size in pixels. */
   size: number;
   /** Vertical offset that rests the figure's feet on its cell. */
   lift: number;
@@ -11,10 +11,9 @@ export interface SpriteSheet {
 }
 
 const DIRECTIONS: readonly string[] = ["north", "south", "east", "west"];
-const ALL_POSES: readonly string[] = ["Idle", "Seated", "Darts", "Bathroom", "Drinking", "TakeBeer", "Walking", "Talking"];
-const IDLE_ONLY: readonly string[] = ["Idle"];
+const ALL_POSES: readonly string[] = ["Idle", "Seated", "Darts", "Bathroom", "Drinking", "DrinkingSeated", "TakeBeer", "Walking", "Talking"];
 
-/** Character stills shipped under /characters; a guest whose sprite is not listed looks like the generic visitor. */
+/** Character stills shipped under /characters; an unknown guest looks like Saye. */
 const SPRITES: Readonly<Record<string, SpriteSheet>> = {
   edda: { size: 68, lift: -16, poses: ALL_POSES },
   rurik: { size: 68, lift: -16, poses: ALL_POSES },
@@ -22,9 +21,6 @@ const SPRITES: Readonly<Record<string, SpriteSheet>> = {
   cook: { size: 68, lift: -16, poses: ALL_POSES },
   courier: { size: 68, lift: -16, poses: ALL_POSES },
   visitor: { size: 68, lift: -16, poses: ALL_POSES },
-  merchant: { size: 92, lift: -23, poses: IDLE_ONLY },
-  traveler: { size: 92, lift: -23, poses: IDLE_ONLY },
-  veteran: { size: 92, lift: -23, poses: IDLE_ONLY },
 };
 
 /** Every still to load: one texture per sprite, shipped pose and direction. */
