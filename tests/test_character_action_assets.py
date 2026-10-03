@@ -1,16 +1,20 @@
-"""The browser build must include the still action poses for every demo visitor."""
+"""The browser build must include only the six full-action tavern visitors."""
 
 import subprocess
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+CHARACTERS = ("edda", "rurik", "toren", "cook", "courier", "visitor")
+DIRECTIONS = ("north", "south", "east", "west")
 
 
 def test_action_stills_ship_with_browser_build() -> None:
-    """Check all character poses are available at their runtime URLs."""
+    """Check seated drinking stills ship for every named visitor and no other folder."""
     subprocess.run(["npm", "--prefix", "frontend", "run", "build"], cwd=ROOT, check=True, capture_output=True)
-    for character in ("traveler", "veteran", "merchant"):
-        for action, direction in (("Seated", "south"), ("Darts", "south"), ("Bathroom", "north")):
-            path = ROOT / "frontend" / "dist" / "characters" / character / action / f"{direction}.png"
+    exported = ROOT / "frontend" / "dist" / "characters"
+    assert {folder.name for folder in exported.iterdir() if folder.is_dir()} == set(CHARACTERS)
+    for character in CHARACTERS:
+        for direction in DIRECTIONS:
+            path = exported / character / "DrinkingSeated" / "rotations" / f"{direction}.png"
             assert path.is_file(), f"Missing browser asset: {path}"

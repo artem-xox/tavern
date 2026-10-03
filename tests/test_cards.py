@@ -86,12 +86,12 @@ def presets() -> dict[str, Any]:
     return parse_cards([json.loads(path.read_text()) for path in sorted((ROOT / "data" / "characters").glob("*.json"))])
 
 
-def test_eight_presets_with_distinct_temperaments_and_goals() -> None:
+def test_six_presets_with_distinct_temperaments_and_goals() -> None:
     cards = presets()
-    assert len(cards) == 8
-    assert len({item["temperament"] for item in cards.values()}) == 8
-    assert len({item["goal"] for item in cards.values()}) == 8
-    assert len({tuple(item["params"].values()) for item in cards.values()}) == 8
+    assert len(cards) == 6
+    assert len({item["temperament"] for item in cards.values()}) == 6
+    assert len({item["goal"] for item in cards.values()}) == 6
+    assert len({tuple(item["params"].values()) for item in cards.values()}) == 6
 
 
 def test_presets_use_shipped_sprites() -> None:
