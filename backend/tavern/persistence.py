@@ -10,6 +10,7 @@ from tavern.cards import parse_card
 from tavern.drunkenness import check_drunkenness
 from tavern.expression import EMOTES
 from tavern.hearing import Sound
+from tavern.intentions import check_saved_intention
 from tavern.invitations import KINDS, check_invitations
 from tavern.navigation import find_path
 from tavern.room import find_object
@@ -78,6 +79,7 @@ def _validate_actor_runtime(world: Mapping[str, Any]) -> None:
         check_drunkenness(actor, world["rules"])
         _validate_expression(actor, world)
         _validate_character(actor)
+        check_saved_intention(actor)
     for item in world["map"]["objects"]:
         if item.get("reserved_by") is not None and item["reserved_by"] not in actor_ids:
             raise ValueError("Saved reservation belongs to an unknown actor")
@@ -187,6 +189,7 @@ def _validate_departed(world: Mapping[str, Any]) -> None:
         _validate_visit(item.get("visit"))
         check_mind(item)
         check_drunkenness(item, world["rules"])
+        check_saved_intention(item)
         if "left_at" not in item["visit"]:
             raise ValueError("Departed visitor has no departure time")
 

@@ -15,8 +15,9 @@ from tavern.agents import Evaluators
 from tavern.cards import parse_cards
 from tavern.claude import HAIKU_4_5, ClaudeError, ask_claude
 from tavern.haiku_turns import claude_writer, writer_mode
+from tavern.intentions import Intender, intention_writer
 from tavern.lockstep import Pace, evening_mode, run_evening
-from tavern.metrics import attention_counts, conversation_counts, evening_metrics, writer_stats
+from tavern.metrics import attention_counts, conversation_counts, evening_metrics, intention_counts, writer_stats
 from tavern.questions import Question
 from tavern.recording import (Record, format_record, parse_records, record_calls, record_questions, replay_calls,
                               replay_questions)
@@ -26,7 +27,7 @@ from tavern.turns import TurnWriter
 
 DECIDES = {"local": "the local policy (no model)", "live": "Jev, recorded", "replay": "Jev answers replayed"}
 CLAUDE_MODEL = "claude-haiku-4-5"
-TARIFFS = {"turn": HAIKU_4_5, "card": HAIKU_4_5}
+TARIFFS = {"turn": HAIKU_4_5, "card": HAIKU_4_5, "intention": HAIKU_4_5}
 
 
 def arguments(root: Path) -> argparse.ArgumentParser:
@@ -142,6 +143,40 @@ def turn_writer(writer: str, mode: str, calls: list[Record], keep: Callable[[Rec
     return claude_writer(record_questions("turn", ask, keep, time.monotonic, ClaudeError))
 
 
+def mind(mode: str, values: Mapping[str, Any], prefix: str, calls: list[Record],
+         log: Path) -> tuple[Intender | None, str]:
+    """Wire the mind port that writes guests' intentions, and say how it runs.
+
+    Args:
+        mode: Evening mode.
+        values: Parsed env file; live intentions need `ANTHROPIC_API_KEY`.
+        prefix: Shared system prefix of every intention question.
+        calls: The evening's calls (loaded already in replay mode); live calls are added.
+        log: JSON-lines file each live call is appended to.
+    Returns:
+        The intender, or None offline, and a label for the metrics.
+    """
+    if mode == "replay":
+        if not any(record["kind"] == "intention" for record in calls):
+            return None, "offline: the recording holds no intentions"
+        return intention_writer(prefix, replay_questions("intention", calls, ClaudeError)), "Claude answers replayed"
+    if mode == "local" or not values.get("ANTHROPIC_API_KEY"):
+        return None, f"offline: {'local mode' if mode == 'local' else 'no ANTHROPIC_API_KEY'}, so no intentions"
+    claude = {"anthropic_api_key": values["ANTHROPIC_API_KEY"], "model": "claude-haiku-4-5", "timeout": 30.0,
+              "retries": 1}
+
+    async def metered(question: Question) -> tuple[dict[str, Any], Mapping[str, int]]:
+        answer, usage = await ask_claude(question, claude)
+        return answer, dict(usage)
+
+    def keep(record: Record) -> None:
+        calls.append(record)
+        with log.open("a") as lines:
+            lines.write(format_record(record))
+    asked = record_questions("intention", metered, keep, time.monotonic, ClaudeError)
+    return intention_writer(prefix, asked), "Claude Haiku 4.5 (claude-haiku-4-5), recorded"
+
+
 def rounded(value: Any) -> Any:
     """Round every float in a JSON-like value for display.
 
@@ -191,8 +226,10 @@ def main(root: Path) -> None:
     except (OSError, ValueError) as error:
         parser.error(f"cannot open the evening: {error}")
     settings = config(values, mode)
+    intender, minded = mind(mode, values, (root / "data" / "minds" / "intention_prefix.md").read_text(), calls,
+                            args.out / "calls.jsonl")
     started = time.monotonic()
-    evening = asyncio.run(run_evening(world, settings, Random(args.seed), ports, pace, lines))
+    evening = asyncio.run(run_evening(world, settings, Random(args.seed), ports, pace, lines, intender=intender))
     wall = time.monotonic() - started
     # A replay matches its recording only with the same seed, pace and temperature, so they are shown.
     report = {"run": {"mode": mode, "decides": DECIDES[mode], "note": note, "seed": args.seed,
@@ -200,8 +237,9 @@ def main(root: Path) -> None:
                       "model_latency": pace.model_latency, "time_limit": pace.time_limit,
                       "stuck_threshold": args.stuck_threshold, "input_usd_per_million": args.input_price,
                       "writer": writer, "writer_model": CLAUDE_MODEL if writer == "haiku" else None,
-                      "writer_note": writer_note},
+                      "writer_note": writer_note, "intentions": minded},
               **evening_metrics(evening, calls, args.input_price, args.stuck_threshold, TARIFFS),
+              "intentions": intention_counts(evening),
               "attention": attention_counts(evening), "conversation": conversation_counts(evening),
               "writer": writer_stats(evening, calls, "turn", HAIKU_4_5)}
     (args.out / "events.jsonl").write_text("".join(json.dumps(event, sort_keys=True) + "\n" for event in evening.events))

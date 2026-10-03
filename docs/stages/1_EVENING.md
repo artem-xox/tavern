@@ -183,9 +183,29 @@ changes the behavior `test_closing.py` specifies, so it needs a decision.
   interruptible 30 s `doze` with the sleep emote. Quarrels still roll on beer counts,
   which the existing quarrel tests set. In a live evening (seed 5) guests drink two beers
   at most, so they get tipsy but nobody dozes.
-- [ ] **E14 — Intentions.** Haiku writes a one-sentence intention on arrival, after
+- [x] **E14 — Intentions.** Haiku writes a one-sentence intention on arrival, after
   salient events, and every few minutes; the briefing shows it to Jev. Done: in a
   recorded evening an insult changes the target's intention and later choices.
+  `intentions.py`: a guest's `intention` is `{thought, intention, written_at, trigger}`
+  (`trigger` is `{kind, text, time}`). A guest takes stock on arrival, after an interrupt
+  or alert, a `quarrel`, `seat_taken` or (once E17 adds it) `insult` thought, a scene
+  ending or leaving one, closing time, and every 180 s (`INTENTION_RULES`; at least 3 s
+  between asks, 180 s after a failure). Both runners ask asynchronously like decisions
+  (lockstep: one virtual latency) and drop an answer a salient event overtook or whose
+  guest left; a recorded evening replays byte-identically. The question is a ~5,100-token
+  shared prefix (`data/minds/intention_prefix.md`), the guest's card as a second cached
+  block, then the moment (trigger, previous intention, briefing paragraph, thoughts,
+  drink). The briefing adds "Their intention: … (decided 40 s ago, after: …)" and Jev's
+  guidance says to weigh options against it without ignoring urgent needs; the inspector
+  shows thought and intention. Offline (no `ANTHROPIC_API_KEY`) nobody has one, and the
+  snapshot (`ai.intentions`) and metrics say so. Saves are `schema_version` 5. The done
+  test uses a quarrel (insults wait for E17), a fake writer and a fake Jev. Live: seeds 5
+  and 1 wrote 63 and 45 intentions for $0.111 and $0.071 (about $0.0016 each, 0 failures;
+  Jev $0.050 each); the prefix was written to the cache once and read on every later call.
+  Seed 0 had one quarrel: Toren went from "sit back down with Edda" to "move to the Garden
+  table away from her". A 900 s evening (seed 7, 110 intentions, $0.18) had four: Edda,
+  after quarrelling with Calder, meant to make peace with Brida and go home, talked to
+  Brida, then left at 659 s; Calder meant to settle it at darts and played darts.
 - [x] **E15 — Conversation scenes.** `talk` starts a scene for seated tablemates or
   guests standing side by side (queue, fire); others join or leave; it ends by act,
   satisfied need, or interrupt. Done: a three-way conversation survives one member

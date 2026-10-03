@@ -48,7 +48,9 @@ def _visitor_view() -> str:
         "real tavern guests behave: they settle at a table with their drink, sip it there and chat with whoever "
         "sits with them, and they get up only for a reason - a refill, the WC, a game, a look at the fire - "
         "before going home once the evening has given them what they came for, or has gone sour. Restless "
-        "wandering without a reason is unnatural, and so is ignoring a pressing need."
+        "wandering without a reason is unnatural, and so is ignoring a pressing need. When the situation states "
+        "their intention, weigh each option against their intention: what serves it is natural, what goes against "
+        "it needs a reason, but an urgent need or something that just happened still comes first."
     )
 
 

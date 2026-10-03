@@ -70,6 +70,29 @@ def conversation_counts(evening: Evening) -> ConversationCounts:
             "joins": kinds["joined_conversation"], "leaves": kinds["left_conversation"]}
 
 
+class IntentionCounts(TypedDict):
+    """How guests' intentions went: written and kept, or failed (the old one stayed)."""
+
+    written: int
+    failed: int
+
+
+def intention_counts(evening: Evening) -> IntentionCounts:
+    """Count the evening's written and failed intentions.
+
+    Args:
+        evening: What the lockstep runner logged.
+
+    Returns:
+        Logged `intention` and `intention_failed` events.
+
+    Raises:
+        KeyError: An event has no type.
+    """
+    kinds = Counter(event["type"] for event in evening.events)
+    return {"written": kinds["intention"], "failed": kinds["intention_failed"]}
+
+
 class Metrics(TypedDict):
     """The measures of one evening; durations in game seconds, cost in USD per call kind."""
 
@@ -156,7 +179,8 @@ def evening_metrics(evening: Evening, calls: Sequence[Record], input_usd_per_mil
         calls: The evening's model calls: recorded live, or replayed.
         input_usd_per_million: USD tariff per million input tokens of kinds without a tariff (Jev's).
         stuck_threshold: Seconds a stall may last before it counts as stuck.
-        tariffs: Full tariffs of the call kinds that have one, such as Claude's `turn`.
+        tariffs: Full tariffs of call kinds priced otherwise than Jev, such as Claude's `turn` and
+            `intention`.
 
     Returns:
         Game time, guests and departures; completed activities per verb; conversations and
