@@ -200,6 +200,23 @@
         },
         "animations": {}
       }
+    },
+    {
+      "character": {
+        "id": "861081d8-0b5d-4bb4-8395-01b5ff315d7d",
+        "name": "DrinkingSeated",
+        "prompt": "Stay seated and drink from a tankard held to the mouth. Preserve the existing seated posture, identity, clothing, and medieval pixel-art style.",
+        "size": {"width": 68, "height": 68},
+        "directions": 8,
+        "view": "low top-down"
+      },
+      "folder": "DrinkingSeated",
+      "frames": {"rotations": {
+        "north": "DrinkingSeated/rotations/north.png",
+        "south": "DrinkingSeated/rotations/south.png",
+        "east": "DrinkingSeated/rotations/east.png",
+        "west": "DrinkingSeated/rotations/west.png"
+      }, "animations": {}}
     }
   ],
   "export_version": "3.1",

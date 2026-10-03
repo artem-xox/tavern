@@ -412,7 +412,7 @@ export class TavernScene extends Phaser.Scene {
     const texture: string = `${character}-${pose}-${view.direction}`;
     if (view.sprite.texture.key !== texture) view.sprite.setTexture(texture);
     view.sprite.setDisplaySize(sheet.size, sheet.size);
-    view.sprite.setY(sheet.lift + (pose === "Seated" || pose === "Bathroom" ? 3 : 0));
+    view.sprite.setY(sheet.lift + (pose === "Seated" || pose === "Bathroom" || pose === "DrinkingSeated" ? 3 : 0));
     view.cellX = actor.x;
     view.cellY = actor.y;
     const x: number = (actor.x + 0.5) * size;
@@ -425,7 +425,7 @@ export class TavernScene extends Phaser.Scene {
     const chatting: boolean = !!incoming || actor.action?.verb === "talk";
     const label = (verb: Verb): string | undefined => (verb === "watch" && target?.kind === "fireplace" ? "by the fire" : this.activities[verb]?.status ?? undefined);
     view.status.setText(actor.status === "walking" ? `→ ${label(actor.action?.verb ?? "") ?? "exploring"}` : chatting ? "chatting" : actor.action ? label(actor.action.verb) ?? actor.action.verb : actor.seat_id ? "seated" : "thinking");
-    view.mug.setVisible(actor.inventory.beer > 0 && pose !== "Drinking" && pose !== "TakeBeer");
+    view.mug.setVisible(actor.inventory.beer > 0 && pose !== "Drinking" && pose !== "DrinkingSeated" && pose !== "TakeBeer");
     view.speech.setVisible(chatting);
     view.speech.setText(incoming ? "Quite a story!" : "News from the road…");
     view.container.setDepth(10 + y / 1000);
@@ -434,7 +434,7 @@ export class TavernScene extends Phaser.Scene {
   private actorPose(actor: Actor): string {
     if (actor.status === "walking") return "Walking";
     const pose: string | null | undefined = actor.action ? this.activities[actor.action.verb]?.pose : null;
-    if (actor.status === "interacting" && pose) return pose;
+    if (actor.status === "interacting" && pose) return pose === "Drinking" && actor.seat_id ? "DrinkingSeated" : pose;
     return actor.seat_id ? "Seated" : "Idle";
   }
 

@@ -1,6 +1,6 @@
 # PixelLab character pipeline: 68 px stills
 
-Tested 2026-10-02 with a Tier 1 PixelLab account. Three 68 px character
+Tested 2026-10-03 with a Tier 1 PixelLab account. Six 68 px character
 groups now supply the tavern's visitors. This document records their source
 IDs, the renderer mapping, and the generation limits found in practice.
 
@@ -15,14 +15,15 @@ because the current tool defaults to them.
 
 `frontend/src/types.ts` defines eleven action verbs. `backend/tavern/world.py`
 executes them, while `frontend/src/scene.ts` loads four cardinal views for each
-of eight poses. Walking remains interpolated between cells with one still per
+of nine poses. Walking remains interpolated between cells with one still per
 direction. The beer mug and chat bubble are separate Phaser overlays. The
 pose set below covers every verb without
 making a unique image for actions that look the same.
 
 - `take_beer` → **TakeBeer**, reaching toward the tap. Hide the drawn mug if
   the state already includes a tankard.
-- `drink` → **Drinking**, tankard at mouth. Hide the separate mug overlay.
+- `drink` → **DrinkingSeated** when the actor has a seat; otherwise
+  **Drinking**. Both include a tankard, so hide the separate mug overlay.
 - `rest` and `sit` → **Seated**. The actor also stays Seated between actions
   while `seat_id` is set.
 - `talk` → **Talking** when seated, with the existing speech bubble. A Seated
@@ -90,6 +91,7 @@ group `b846223d-49fb-4387-ab84-3063bbfc30d3`.
 - Darts: `4b329c01-6c44-4def-96d3-5c009ca1fa6f`
 - Bathroom: `6f890123-4ce2-469e-b3ea-e5bdd8adc8a3`
 - Drinking: `ac2b947d-fc05-4586-9a0a-8fc1b274735c`
+- DrinkingSeated: `301f42fc-f5a1-40dd-80c8-53051267644c`
 - TakeBeer: `adbc5b62-8af1-49e5-8e87-780ab38f057f`
 - Walking: `955940d7-7e34-4eeb-9d10-a6d50557b70a`
 - Talking: `4ec12ed2-c48b-4282-a42c-d2e6ef124878`
@@ -102,6 +104,7 @@ group `d0e1751d-6fc5-409c-ae81-9680ed03834b`.
 - Darts: `e1b97886-2ac2-4cf4-b759-cc2df6f9d143`
 - Bathroom: `d8f5a9e3-40bc-4549-8dea-b494cad7e7e7`
 - Drinking: `119b8d75-98a5-43ca-a8f1-768deeec926c`
+- DrinkingSeated: `861081d8-0b5d-4bb4-8395-01b5ff315d7d`
 - TakeBeer: `4716426a-7249-4cba-88b8-1934a37628a3`
 - Walking: `f16d07e9-57d3-464c-a55a-1b7464c2e185`
 - Talking: `926b9960-a169-4050-84af-dd99a8ed9fb1`
@@ -114,6 +117,7 @@ group `7cac920b-56f8-4f3d-9256-2f4fdf0565ad`.
 - Darts: `73ed2a18-7f8c-4780-beb2-282cd7545147`
 - Bathroom: `b6d5d6d9-c583-4259-a29f-7583524120d8`
 - Drinking: `957ae78b-e465-41ad-90da-82f2f04024e6`
+- DrinkingSeated: `e689b767-01b7-477f-90ff-3528365a6f5f`
 - TakeBeer: `e1e67432-381f-47b5-9474-a7d801e6f588`
 - Walking: `feae7f97-da77-4045-85cc-178e3b4fed26`
 - Talking: `4fb7de07-a422-406a-95d0-47f7bbe996c2`
@@ -127,6 +131,7 @@ old Idle-only veteran at 40 seconds, using the existing `cook` folder.
 - Darts: `e7cba64c-bdec-45f7-8b79-e366cd492d44`
 - Bathroom: `ae1e63e8-0bb3-4815-b60e-21c23235c05b`
 - Drinking: `8a86431e-3e7a-414c-b45d-ac982950c0ed`
+- DrinkingSeated: `f5b22b85-d942-4488-8887-40b82df6c3da`
 - TakeBeer: `72841ad4-a481-4e58-b150-802908bcbfa8`
 - Walking: `66c491ee-035c-44e9-85b0-c1fb8d78cdd0`
 - Talking: `7642140b-b6a4-4ab1-9aad-7dfb69b462ab`
@@ -140,6 +145,7 @@ old Idle-only traveler at 110 seconds, using the `courier` folder.
 - Darts: `081c01f9-28ee-4ba3-b63f-4c1f6caa0388`
 - Bathroom: `9979469e-25e6-416e-8888-0f33f668238e`
 - Drinking: `522cabf3-93e2-410c-8ed1-7befc0f4d0ef`
+- DrinkingSeated: `7b1ca7ff-acd4-46f8-9182-bce1918b509d`
 - TakeBeer: `58b5978c-b055-4f37-91a7-7a1e21ddd4fe`
 - Walking: `d6766c3c-4a1d-467c-bc4e-a855632f8c28`
 - Talking: `dcab5a35-bac4-410c-856d-0e128ed9f02b`
@@ -153,14 +159,15 @@ old Idle-only merchant at 190 seconds, using the generic `visitor` folder.
 - Darts: `d944b799-4656-49d4-a35d-9097545503b2`
 - Bathroom: `324dc530-ac0e-4a8a-bde5-9b9fcbbb2c6e`
 - Drinking: `036e6e97-aaa3-4f33-9669-323ce052b8b1`
+- DrinkingSeated: `3822a9e3-68da-46d8-96b6-04e667fa6c74`
 - TakeBeer: `434836a1-0968-43c1-acc6-b4f02e7b43b0`
 - Walking: `16ef800f-fa48-4726-8fac-a4a9c1e9ded2`
 - Talking: `cb3a5e4f-8bcc-4079-835d-e130705f0766`
 
-All 48 native assets (six Idle plus 42 action states) completed at 68 × 68.
+All 54 native assets (six Idle plus 48 action states) completed at 68 × 68.
 Their PixelLab groups have eight rotations each, but only the four cardinal
 rotations are in the browser build. `get_character` confirmed every state is
-in its intended eight-state group. The two discarded
+in its intended nine-state group. The two discarded
 standard-mode trials, Edda
 `5cc40ea8-affe-4283-a534-81f608009bec` and Rurik
 `7b49907f-3d51-40de-9ee0-2589afd1ceef`, and Toren's trial
@@ -184,7 +191,8 @@ South-view inspection found these issues:
 The connected account reported 2,000 Tier 1 generations for this cycle.
 The first three characters used 441 generations. Brida, Calder, and Saye each
 used one Pro Flash base and seven named states. The balance after the six-character
-run was 1,041/2,000. PixelLab quotes 20–40
+run was 1,041/2,000. Six DrinkingSeated states used 120 generations, leaving
+921/2,000. PixelLab quotes 20–40
 generations for `create_character_state`; check `get_balance` before
 batching or retrying.
 The native character states cost much more than a
@@ -231,12 +239,12 @@ stay compatible. Each guest's `sprite` in the scenario
 the poses it has in all four directions. `frontend/src/scene.ts` loads those
 PNGs with nearest-neighbor filtering, drawing this cast at its native 68 px
 size. A pose a sprite lacks is drawn as Idle. Walking status selects
-Walking. Active actions select their named pose; an occupied seat otherwise
-selects Seated. Idle covers watch, inspect, wait, and arrival/departure when
-not moving. The actor faces its seat or action target when stationary.
-The separate mug overlay is hidden during Drinking and TakeBeer, whose art
-already includes a tankard. The old 92 px traveler, veteran, and merchant
-folders remain available but are no longer assigned in the first evening.
+Walking. Drinking while seated selects DrinkingSeated; other active actions
+select their named pose; an occupied seat otherwise selects Seated. Idle
+covers watch, inspect, wait, and arrival/departure when not moving. The actor
+faces its seat or action target when stationary. The separate mug overlay is
+hidden during Drinking, DrinkingSeated, and TakeBeer, whose art already
+includes a tankard. Only these six 68 px character folders ship in the game.
 
 The existing [tavern pixel art plan](PIXEL_ART_REDESIGN.md) remains the room
 counterpart to this character workflow.
