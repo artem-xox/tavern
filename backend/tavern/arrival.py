@@ -126,7 +126,9 @@ def _free_entry(world: Mapping[str, Any], guest_id: str) -> tuple[int, int] | No
 
 
 def _relations(guest_id: str, name: str, ties: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    # Old ties set a guest's opinions before they meet anyone tonight (see thoughts.seed_relations).
+    # Old ties set a guest's opinions before they meet anyone tonight (see thoughts.seed_relations),
+    # and old friends and rivals alike know each other's names.
     pairs = [{"a": guest_id, "b": tie["with"], "kind": tie["kind"]} for tie in ties]
     names = {guest_id: name, **{tie["with"]: tie["name"] for tie in ties}}
-    return seed_relations(pairs, names).get(guest_id, {})
+    return {other: {**relation, "knows_name": True}
+            for other, relation in seed_relations(pairs, names).get(guest_id, {}).items()}

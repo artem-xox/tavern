@@ -8,7 +8,7 @@ timer, ends. When the next turn is spoken is `tavern.turns`' business; what an a
 """
 
 from collections.abc import Mapping
-from typing import Any, TypedDict
+from typing import Any, NotRequired, TypedDict
 
 from tavern.closing import inn_closed
 from tavern.memory import record_event
@@ -16,13 +16,17 @@ from tavern.room import find_object
 
 
 class Turn(TypedDict):
-    """One spoken line: who said it, to whom (None for everyone), the speech act, and the game time."""
+    """One spoken line: who said it, to whom (None for everyone), the speech act, and the game time.
+
+    An `invite` also names the `invitation` kind (see `tavern.invitations`).
+    """
 
     speaker: str
     addressee: str | None
     line: str
     act: str
     time: float
+    invitation: NotRequired[str]
 
 
 class Claim(TypedDict):
@@ -38,7 +42,9 @@ class Conversation(TypedDict):
 
     `participants` are in order of joining (the starter first). `next_turn_at` is when the next line
     is due. `writing` is the turn a runner's writer is working on, if any, and `written` its
-    answer (`turns.TurnResult`) waiting for `next_turn_at`.
+    answer (`turns.TurnResult`) waiting for `next_turn_at`. `invitation` is the one waiting
+    for an answer (`invitations.Invitation`, from and to members), if any; it lapses when either
+    leaves.
     """
 
     id: str
@@ -50,6 +56,7 @@ class Conversation(TypedDict):
     next_turn_at: float
     writing: Claim | None
     written: dict[str, Any] | None
+    invitation: dict[str, str] | None
 
 
 # What a new scene is about, by how many conversations the starter remembers.
@@ -151,7 +158,7 @@ def start_conversation(world: dict[str, Any], actor: dict[str, Any], partner: Ma
         "id": f"conversation-{world['next_conversation_id']}", "participants": [actor["id"], partner["id"]],
         "table_id": table_of(world, actor), "topic": TOPICS[count % len(TOPICS)], "turns": [],
         "started_at": world["time"], "next_turn_at": world["time"] + world["rules"]["conversation"]["opening"],
-        "writing": None, "written": None}
+        "writing": None, "written": None, "invitation": None}
     world["next_conversation_id"] += 1
     world["conversations"].append(scene)
     record_event(world, actor, "conversation_started", f"{actor['name']} started talking to {partner['name']}")
@@ -188,6 +195,7 @@ def leave_conversation(world: dict[str, Any], actor: dict[str, Any]) -> bool:
         return False
     _recast(scene)
     scene["participants"].remove(actor["id"])
+    _lapse(scene)
     record_event(world, actor, "left_conversation", f"{actor['name']} left the conversation")
     if len(scene["participants"]) < 2:
         end_conversation(world, scene, pleasant=True)
@@ -243,6 +251,7 @@ def _drop_departed(world: dict[str, Any], scene: Conversation) -> None:
         return
     _recast(scene)
     scene["participants"] = [actor_id for actor_id in scene["participants"] if actor_id in present]
+    _lapse(scene)
     if len(scene["participants"]) < 2:
         end_conversation(world, scene, pleasant=True)
 
@@ -253,6 +262,13 @@ def _still_there(world: Mapping[str, Any], scene: Conversation, actor: Mapping[s
     people = {item["id"]: item for item in world["actors"]}
     return any(side_by_side(world, actor, people[other]) for other in scene["participants"]
                if other != actor["id"] and other in people)
+
+
+def _lapse(scene: Conversation) -> None:
+    # An invitation nobody is left to make or answer is void.
+    invitation = scene["invitation"]
+    if invitation is not None and not {invitation["from"], invitation["to"]} <= set(scene["participants"]):
+        scene["invitation"] = None
 
 
 def _recast(scene: Conversation) -> None:

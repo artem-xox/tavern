@@ -9,21 +9,27 @@ one that has no answer `rules.conversation.turn_timeout` seconds after it was du
 
 from collections.abc import Awaitable, Callable, Mapping
 from copy import deepcopy
-from typing import Any, TypedDict
+from typing import Any, NotRequired, TypedDict
 
-from tavern.conversation import ACTS
+from tavern.conversation import ACTS, offered_acts
+from tavern.invitations import offered_kinds
+from tavern.names import called, knows_name, looks
+from tavern.overhearing import overhear_turn
 from tavern.scenes import Conversation, Turn
 from tavern.scripted import scripted_turn
+from tavern.thoughts import opinion_of
 
 
 class TurnResult(TypedDict):
     """A written line: the words, the speech act (one of `conversation.ACTS`), whom it addresses
-    (another participant, or None for everyone), and the topic the scene moves on to."""
+    (another participant, or None for everyone), and the topic the scene moves on to. An
+    `invite` also names its `invitation` kind (one of the view's `invitations`)."""
 
     line: str
     act: str
     addressee: str | None
     topic: str
+    invitation: NotRequired[str]
 
 
 # Writes the next line of a scene from the speaker's view (see `turn_view`) and the AI config.
@@ -77,22 +83,44 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
         scene: Scene whose next turn is written.
 
     Returns:
-        `conversation`: ID, topic, index of the turn being written, participants (ID and name)
-        and the latest eight turns; `speaker`: their ID, name, needs, traits, visit and the
-        places they could tell about (tap, WC, darts); `acts`: each act's meaning; `seed`: the
-        evening's seed, for a writer's seeded choices.
+        `conversation`: ID, topic, index of the turn being written, participants (see
+        `_participants`), the latest eight turns and the pending `invitation`, if any;
+        `speaker`: their ID, name, needs, traits, visit, the places they could tell about (tap,
+        WC, darts) and their `opinions` of the others; `acts`: the meaning of each act offered
+        now (`conversation.offered_acts`); `invitations`: the kinds an `invite` may name;
+        `seed`: the evening's seed, for a writer's seeded choices.
     """
     people = {item["id"]: item for item in world["actors"]}
     speaker = people[next_speaker(scene)]
     places = [{key: item[key] for key in ("id", "kind", "name")} for _, item in
               sorted(speaker["knowledge"]["objects"].items()) if item["kind"] in ("tap", "toilet", "darts")]
-    return {"conversation": {"id": scene["id"], "topic": scene["topic"], "turn": len(scene["turns"]),
-                             "participants": [{"id": actor_id, "name": people[actor_id]["name"]}
-                                              for actor_id in scene["participants"]],
+    view = {"conversation": {"id": scene["id"], "topic": scene["topic"], "turn": len(scene["turns"]),
+                             "participants": _participants(world, scene, speaker),
                              "turns": deepcopy(scene["turns"][-8:])},
             "speaker": {"id": speaker["id"], "name": speaker["name"], **deepcopy(
                 {key: speaker[key] for key in ("needs", "traits", "visit")}), "places": places},
-            "acts": {name: act.meaning for name, act in ACTS.items()}, "seed": world["seed"]}
+            "acts": offered_acts(world, scene, speaker), "seed": world["seed"]}
+    _add_invitations(view, world, scene, speaker)
+    return view
+
+
+def _participants(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str, Any]) -> list[dict[str, Any]]:
+    # Everyone in the scene as the speaker knows them: `name` is their looks until the speaker
+    # knows their name (`known`), see `tavern.names`.
+    people = {item["id"]: item for item in world["actors"]}
+    return [{"id": actor_id, "name": called(speaker, people[actor_id]),
+             "known": knows_name(speaker, people[actor_id]) or looks(people[actor_id]) is None}
+            for actor_id in scene["participants"]]
+
+
+def _add_invitations(view: dict[str, Any], world: Mapping[str, Any], scene: Conversation,
+                     speaker: Mapping[str, Any]) -> None:
+    # The pending invitation, the kinds the speaker may offer, and how they regard the others,
+    # which invitations and insults depend on.
+    view["conversation"]["invitation"] = deepcopy(scene["invitation"])
+    view["invitations"] = offered_kinds(world, scene, speaker)
+    view["speaker"]["opinions"] = {item: opinion_of(speaker, item, world["time"])
+                                   for item in scene["participants"] if item != speaker["id"]}
 
 
 def check_turn(view: Mapping[str, Any], result: Any) -> TurnResult:
@@ -106,21 +134,35 @@ def check_turn(view: Mapping[str, Any], result: Any) -> TurnResult:
         The answer as a turn result.
 
     Raises:
-        ValueError: It is not exactly a line, act, addressee and topic; the line or topic is
-            empty or not text; the act is unknown; or it addresses the speaker or someone not
-            in the scene.
+        ValueError: It is not exactly a line, act, addressee and topic (plus an invitation for
+            an `invite`); the line or topic is empty or not text; the act is unknown or not
+            offered now; it addresses the speaker or someone not in the scene; or an `invite`
+            addresses nobody or names a kind not offered.
     """
-    if not isinstance(result, Mapping) or set(result) != _FIELDS:
+    if not isinstance(result, Mapping) or set(result) - {"invitation"} != _FIELDS:
         raise ValueError(f"A turn has exactly the fields {sorted(_FIELDS)}, not {result!r}")
     for key in ("line", "topic"):
         if not isinstance(result[key], str) or not result[key].strip():
             raise ValueError(f"A turn's {key} must be nonempty text, not {result[key]!r}")
     if result["act"] not in view["acts"]:
-        raise ValueError(f"Unknown speech act {result['act']!r}")
+        raise ValueError(f"Unknown speech act {result['act']!r}, or not one offered now")
     others = {item["id"] for item in view["conversation"]["participants"]} - {view["speaker"]["id"]}
     if result["addressee"] is not None and result["addressee"] not in others:
         raise ValueError(f"{result['addressee']!r} is not someone else in the conversation")
-    return {"line": result["line"], "act": result["act"], "addressee": result["addressee"], "topic": result["topic"]}
+    turn: TurnResult = {"line": result["line"], "act": result["act"], "addressee": result["addressee"],
+                        "topic": result["topic"]}
+    if result["act"] == "invite" or "invitation" in result:
+        turn["invitation"] = _invitation(view, result)
+    return turn
+
+
+def _invitation(view: Mapping[str, Any], result: Mapping[str, Any]) -> str:
+    # Only an invite carries an invitation, to someone in particular, of a kind on offer.
+    if result["act"] != "invite" or result["addressee"] is None:
+        raise ValueError("Only an invite to someone in particular carries an invitation")
+    if result.get("invitation") not in view["invitations"]:
+        raise ValueError(f"Invitation {result.get('invitation')!r} is not one on offer")
+    return result["invitation"]
 
 
 def claim_turns(world: Mapping[str, Any]) -> list[tuple[str, int, dict[str, Any]]]:
@@ -195,11 +237,15 @@ def _speak(world: dict[str, Any], scene: Conversation, speaker_id: str, result: 
     people = {item["id"]: item for item in world["actors"]}
     turn: Turn = {"speaker": speaker_id, "addressee": result["addressee"], "line": result["line"],
                   "act": result["act"], "time": world["time"]}
+    if "invitation" in result:
+        turn["invitation"] = result["invitation"]
     scene["turns"].append(turn)
     scene.update(topic=result["topic"], writing=None, written=None,
                  next_turn_at=world["time"] + reading_time(result["line"], world["rules"]["conversation"]))
     listener = people[result["addressee"]]["name"] if result["addressee"] else "everyone"
     _log(world, speaker_id, "turn", f"{people[speaker_id]['name']} to {listener} ({result['act']}): {result['line']}")
+    # Heard before the act takes effect, while the scene still holds everyone who spoke in it.
+    overhear_turn(world, scene, turn)
     effect = ACTS[result["act"]].effect
     if effect:
         effect(world, scene, people[speaker_id], people.get(result["addressee"]))

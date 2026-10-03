@@ -1,7 +1,7 @@
 """Character cards: a guest described in words, plus the 0–1 params the rules read."""
 
 from collections.abc import Mapping, Sequence
-from typing import Any, TypedDict
+from typing import Any, NotRequired, TypedDict
 
 from tavern.validation import number, unique_ids
 
@@ -10,6 +10,8 @@ PARAMS = ("patience", "temper", "sociability", "courage", "strength", "brawling"
 TEXT_FIELDS = ("name", "occupation", "background", "temperament", "speech", "quirks", "secret", "goal")
 # A player's card is sent to a model as-is, so each field is bounded to keep a call's cost bounded.
 _MAX_TEXT = 2000
+# Looks name a stranger in every briefing and line about them, so they stay a short phrase.
+_MAX_LOOKS = 200
 
 
 class CardText(TypedDict):
@@ -26,11 +28,16 @@ class CardText(TypedDict):
 
 
 class Card(CardText):
-    """A complete card: `id`, the `sprite` it is drawn with, its words, and `params` (each of PARAMS, 0–1)."""
+    """A complete card: `id`, the `sprite` it is drawn with, its words, and `params` (each of PARAMS, 0–1).
+
+    `looks` is how strangers see the guest, such as "the grey-bearded man in a green cloak"
+    (see `tavern.names`); a guest whose card has none is known by name to everyone.
+    """
 
     id: str
     sprite: str
     params: dict[str, float]
+    looks: NotRequired[str]
 
 
 def _exact_fields(data: Any, fields: set[str], label: str) -> Mapping[str, Any]:
@@ -82,18 +89,25 @@ def parse_card(data: Any) -> Card:
     """Validate one complete card.
 
     Args:
-        data: Mapping with exactly `id`, `sprite`, the TEXT_FIELDS and `params`.
+        data: Mapping with exactly `id`, `sprite`, the TEXT_FIELDS and `params`, and optionally
+            `looks` (nonempty text of at most 200 characters).
     Returns:
         The card.
     Raises:
         ValueError: A field is missing, unknown or malformed.
     """
-    fields = _exact_fields(data, {"id", "sprite", "params", *TEXT_FIELDS}, "Card")
+    optional = {"looks"} & set(data) if isinstance(data, Mapping) else set()
+    fields = _exact_fields(data, {"id", "sprite", "params", *TEXT_FIELDS, *optional}, "Card")
     words = parse_card_text({key: fields[key] for key in TEXT_FIELDS})
     for key in ("id", "sprite"):
         if not isinstance(fields[key], str) or not fields[key]:
             raise ValueError(f"Card {key} must be a nonempty string")
-    return Card(id=fields["id"], sprite=fields["sprite"], **words, params=parse_params(fields["params"]))
+    card = Card(id=fields["id"], sprite=fields["sprite"], **words, params=parse_params(fields["params"]))
+    if optional:
+        if len(_text(fields["looks"], "looks")) > _MAX_LOOKS:
+            raise ValueError(f"Card looks must be at most {_MAX_LOOKS} characters")
+        card["looks"] = fields["looks"]
+    return card
 
 
 def parse_cards(records: Sequence[Any]) -> dict[str, Card]:

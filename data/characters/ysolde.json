@@ -2,6 +2,7 @@
   "id": "ysolde",
   "name": "Ysolde",
   "sprite": "merchant",
+  "looks": "the well-dressed woman with a salt-white collar",
   "occupation": "salt merchant",
   "background": "Ysolde runs salt wagons from the coast and is buying up the border warehouses one debt at a time.",
   "temperament": "Cool, calculating and polite; she rarely raises her voice and never forgets a slight.",

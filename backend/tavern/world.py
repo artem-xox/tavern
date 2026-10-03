@@ -13,7 +13,9 @@ from tavern.dozing import nodding_off
 from tavern.drunkenness import wear_off
 from tavern.expression import update_expression
 from tavern.hearing import sound_activity
+from tavern.invitations import honor_invitations, invitations_of
 from tavern.memory import record_event
+from tavern.names import called
 from tavern.queues import (check_lines, cut_in, join_line, leave_line, line_full, line_of, must_wait,
                            stay_in_line, step_line)
 from tavern.room import create_map, find_object, impassable_cells
@@ -48,10 +50,10 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> dict[str, Any]:
               for item in (listed if ranges is None else arriving(listed, ranges, seed))]
     if len({(item["x"], item["y"]) for item in actors}) != len(actors):
         raise ValueError("Actors cannot overlap at startup")
-    world = dict(schema_version=4, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
+    world = dict(schema_version=5, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
                  map=world_map, actors=actors, departed=[], expected=[], closes_at=None,
                  events=[], stimuli=[], next_stimulus_id=0, conversations=[], next_conversation_id=0,
-                 rules=_rules())
+                 invitations=[], rules=_rules())
     check_lines(world)
     for actor in actors:
         _look(world, actor)
@@ -372,6 +374,7 @@ def step_world(world: dict[str, Any], dt: float) -> None:
     admit_arrivals(world)
     check_conversations(world)
     speak_turns(world)
+    honor_invitations(world, start_action)
     for actor in attend(world):
         _clear_action(world, actor)
     wear_off(world, elapsed)
@@ -421,6 +424,7 @@ def observe_actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
     return {"actor": deepcopy(actor), "objects": deepcopy(list(actor["knowledge"]["objects"].values())),
             "visitors": _visible_visitors(world, actor),
             "memory": deepcopy(actor["memory"][-10:]), "visible_cells": visible, "time": world["time"],
+            "invitations": invitations_of(world, actor),
             "map": {"width": world["map"]["width"], "height": world["map"]["height"]},
             "closed": inn_closed(world)}
 
@@ -436,7 +440,8 @@ def _in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[dict[s
             continue
         seat, action = _seat(world, visitor), visitor["action"] or {}
         target = _target(world, action) or _actor(world, action.get("target_id"))
-        people.append({key: visitor[key] for key in ("id", "name", "x", "y", "seat_id")})
+        # A stranger is known by their looks until the viewer learns their name.
+        people.append({**{key: visitor[key] for key in ("id", "x", "y", "seat_id")}, "name": called(actor, visitor)})
         scene = conversation_of(world, visitor["id"])
         people[-1].update(table_id=seat.get("table_id") if seat else None,
                           available=scene is None and not pressed(world, visitor),

@@ -2,6 +2,7 @@
   "id": "toren",
   "name": "Toren",
   "sprite": "toren",
+  "looks": "the pedlar with dye-stained hands",
   "occupation": "travelling trader in cloth and dyes",
   "background": "Toren crosses the border twice a season with a mule train of wool and madder dye, buying cheap on one side and selling dear on the other.",
   "temperament": "Restless and endlessly curious; friendly to everyone because everyone might be a customer.",

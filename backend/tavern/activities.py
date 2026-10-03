@@ -8,6 +8,7 @@ from typing import Any
 from tavern.drunkenness import drink_beer
 from tavern.hearing import Sound
 from tavern.memory import record_event
+from tavern.names import called
 from tavern.scenes import join_conversation, start_conversation
 from tavern.thoughts import think
 
@@ -102,8 +103,8 @@ def _settle(world: Mapping[str, Any], actor: dict[str, Any], seat: dict[str, Any
             if owner["id"] != actor["id"] and owner["favorite_seat_id"] == seat["id"]:
                 message = f"{actor['name']} took {owner['name']}'s seat ({seat['name']})"
                 record_event(world, owner, "seat_taken", message)
-                think(owner, "seat_taken", world["time"], f"{actor['name']} took my seat ({seat['name']})", message,
-                      about=actor)
+                think(owner, "seat_taken", world["time"], f"{called(owner, actor)} took my seat ({seat['name']})",
+                      message, about=actor)
     actor.update(seat_id=seat["id"], favorite_seat_id=seat["id"])
 
 
