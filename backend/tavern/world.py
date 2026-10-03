@@ -18,6 +18,7 @@ from tavern.queues import (check_lines, cut_in, join_line, leave_line, line_full
 from tavern.room import create_map, find_object, impassable_cells
 from tavern.routes import gives_way, occupied_cells, plan_route, replan, reserved_spots
 from tavern.sight import line_visible, look_around, refresh_knowledge, visible_cells
+from tavern.thoughts import forget_expired
 from tavern.validation import number, unique_ids
 
 
@@ -316,6 +317,7 @@ def step_world(world: dict[str, Any], dt: float) -> None:
     since = world["time"]
     world["time"] += elapsed
     world["tick"] += 1
+    forget_expired(world)
     for actor in world["actors"]:
         _step_actor(world, actor, elapsed)
     _see_off(world)

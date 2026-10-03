@@ -4,6 +4,7 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 from tavern.activities import ACTIVITIES, FAMILIES
+from tavern.feelings import feelings
 
 Observation = Mapping[str, Any]
 Action = Mapping[str, Any]
@@ -28,7 +29,7 @@ def brief(observation: Observation, candidates: Sequence[Action]) -> dict[str, A
     """
     parts = (_closing(observation), _stay(observation), _whereabouts(observation), _trigger(observation),
              _own_seat(observation),
-             _needs(observation), _temperament(observation), _grievances(observation), _people(observation),
+             _needs(observation), _temperament(observation), feelings(observation), _people(observation),
              _places(observation), _tables(observation), _recent(observation))
     return {"situation": " ".join(part for part in parts if part),
             "options": {action["id"]: _family(observation, action) if action["verb"] in FAMILIES
@@ -193,11 +194,6 @@ def _temperament(observation: Observation) -> str:
         word = f" ({low})" if value < 0.35 else f" ({high})" if value > 0.65 else ""
         parts.append(f"{trait} {value:.1f}{word}")
     return f"Temperament: {', '.join(parts)}."
-
-
-def _grievances(observation: Observation) -> str:
-    grievances = observation["actor"].get("visit", {}).get("grievances", [])
-    return f"Grievances tonight: {'; '.join(grievances)}." if grievances else "Nobody has wronged them tonight."
 
 
 def _shares_table(observation: Observation, visitor: Mapping[str, Any]) -> bool:

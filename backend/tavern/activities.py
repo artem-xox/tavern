@@ -7,7 +7,8 @@ from typing import Any
 
 from tavern.conversation import complete_conversation
 from tavern.hearing import Sound
-from tavern.memory import grieve, record_event
+from tavern.memory import record_event
+from tavern.thoughts import think
 
 # An effect receives the world, the visitor, and the target: an object, a partner, or None.
 Effect = Callable[[Mapping[str, Any], dict[str, Any], dict[str, Any] | None], None]
@@ -87,8 +88,10 @@ def _settle(world: Mapping[str, Any], actor: dict[str, Any], seat: dict[str, Any
     if actor["seat_id"] != seat["id"]:
         for owner in world["actors"]:
             if owner["id"] != actor["id"] and owner["favorite_seat_id"] == seat["id"]:
-                grieve(owner, f"{actor['name']} took my seat ({seat['name']})")
-                record_event(world, owner, "seat_taken", f"{actor['name']} took {owner['name']}'s seat ({seat['name']})")
+                message = f"{actor['name']} took {owner['name']}'s seat ({seat['name']})"
+                record_event(world, owner, "seat_taken", message)
+                think(owner, "seat_taken", world["time"], f"{actor['name']} took my seat ({seat['name']})", message,
+                      about=actor)
     actor.update(seat_id=seat["id"], favorite_seat_id=seat["id"])
 
 
@@ -127,9 +130,10 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              family="company",
              what="chat with {target}, who sits at their table",
              guidance="It eases the wish for company of both and lets them share where the beer, WC and darts "
-                      "are. After a few beers an impatient pair may quarrel instead, leaving both aggrieved; "
-                      "someone who wronged them tonight is poor company. Right after a chat, with their wish "
-                      "for company satisfied, a quiet sip or a rest is more natural than yet another chat."),
+                      "are. After a few beers an impatient pair may quarrel instead, leaving both in a sour "
+                      "mood and thinking less of each other; someone they dislike is poor company. Right after "
+                      "a chat, with their wish for company satisfied, a quiet sip or a rest is more natural "
+                      "than yet another chat."),
     Activity(verb="play_darts", target_kinds=("darts",), duration=10.0, leaves_seat=True,
              needs=MappingProxyType({"boredom": -65}), label="Play darts", status="darts", pose="Darts", interruptible=True,
              sound=Sound("thud", 0.25, 10.0, "darts thudding into the board"),
@@ -164,10 +168,11 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "its course; after a long evening and several beers, a guest left alone in the inn "
                       "naturally heads home. It is also right when the evening has gone wrong: the beer has run "
                       "out (the tap shows stock 0 when last seen) while they are still thirsty, someone took "
-                      "their seat, someone offended them or they had a quarrel (see `self.visit.grievances`), "
+                      "their seat, someone offended them or they had a quarrel and their mood has soured (see the "
+                      "mood, opinions and what still rankles in the situation, and `self.visit.grievances`), "
                       "or their needs keep going unmet. Leaving is a poor choice when they have just arrived, "
                       "still hold an undrunk mug, want a drink that is still available, or are enjoying good "
-                      "company. Impatient guests walk out sooner after a grievance; comfort-loving guests "
+                      "company. Impatient guests walk out sooner when their mood sours; comfort-loving guests "
                       "linger in a cosy seat."),
     # Gazing at the flames or the road outside is a gentler pastime than darts.
     Activity(verb="watch", target_kinds=("window", "fireplace"), duration=8.0,
