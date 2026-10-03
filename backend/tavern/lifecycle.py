@@ -2,6 +2,7 @@
 
 from collections.abc import Mapping
 from copy import deepcopy
+import math
 from typing import Any
 
 from tavern.actions import action_error
@@ -14,6 +15,7 @@ from tavern.routes import gives_way, occupied_cells, replan, reserved_spots
 from tavern.scenes import conversation_of, leave_conversation
 from tavern.sight import refresh_knowledge, visible_cells
 from tavern.state import Actor, World, find_actor
+from tavern.validation import saved_cell
 
 
 def _target(world: Mapping[str, Any], action: Mapping[str, Any]) -> dict[str, Any] | None:
@@ -323,3 +325,51 @@ def look(world: Mapping[str, Any], actor: Actor) -> list[list[int]]:
     visible = visible_cells(world, actor, world["rules"]["vision_radius"])
     refresh_knowledge(world, actor, visible)
     return visible
+
+
+def check_saved_progress(actor: Mapping[str, Any], world_map: Mapping[str, Any]) -> None:
+    """Check a saved visitor's action timers and route.
+
+    Args:
+        actor: Decoded visitor.
+        world_map: Map the route runs on.
+    Raises:
+        ValueError: A timer is negative or not finite, or the route leaves the map or skips a cell.
+    """
+    for key in ("_remaining", "_move_elapsed", "_blocked_for"):
+        value: Any = actor.get(key)
+        if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
+            raise ValueError("Invalid saved action timer")
+    path = actor.get("path")
+    if not isinstance(path, list):
+        raise ValueError("Invalid saved route")
+    previous = [actor["x"], actor["y"]]
+    for cell in path:
+        saved_cell(cell, world_map)
+        if abs(cell[0] - previous[0]) + abs(cell[1] - previous[1]) != 1:
+            raise ValueError("Saved route contains a nonadjacent step")
+        previous = cell
+    if actor.get("_spot") is not None:
+        saved_cell(actor["_spot"], world_map)
+
+
+def check_saved_seat(actor: Mapping[str, Any], world: Mapping[str, Any]) -> None:
+    """Check a saved visitor's own seat and the seat they sit on.
+
+    Args:
+        actor: Decoded visitor.
+        world: Decoded save with the map's chairs.
+    Raises:
+        ValueError: The seat is not a chair they reserved, or they are not at its interaction spot.
+    """
+    chairs = {item["id"] for item in world["map"]["objects"] if item["kind"] == "chair"}
+    if actor.get("favorite_seat_id") is not None and actor["favorite_seat_id"] not in chairs:
+        raise ValueError("Invalid saved own seat")
+    seat_id = actor.get("seat_id")
+    if seat_id is None:
+        return
+    seat = next((item for item in world["map"]["objects"] if item["id"] == seat_id), None)
+    if not seat or seat["kind"] != "chair" or seat.get("reserved_by") != actor["id"]:
+        raise ValueError("Invalid saved seat reservation")
+    if [actor["x"], actor["y"]] not in seat["interaction_spots"]:
+        raise ValueError("Saved visitor is outside their seat")

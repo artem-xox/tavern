@@ -1,10 +1,12 @@
 """What a visitor's body shows: where they look and the emote above their head."""
 
 from collections.abc import Mapping, Sequence
+import math
 from types import MappingProxyType
 from typing import Any, TypedDict
 
 from tavern.state import Actor, World
+from tavern.validation import number, saved_cell
 
 
 class Gaze(TypedDict):
@@ -135,3 +137,30 @@ def _focus(world: Mapping[str, Any], actor: Mapping[str, Any]) -> Mapping[str, A
         return people.get(last["speaker"])
     after = members[(members.index(actor["id"]) + 1) % len(members)]
     return people.get(last["addressee"] if last["addressee"] in members else after)
+
+
+def check_saved_expression(actor: Mapping[str, Any], world: Mapping[str, Any]) -> None:
+    """Check a saved visitor's facing, gaze, emote and interruption time.
+
+    Args:
+        actor: Decoded visitor.
+        world: Decoded save, for the map and the clock.
+    Raises:
+        ValueError: One of them is malformed or out of range.
+    """
+    if actor.get("facing") not in (None, "north", "south", "east", "west"):
+        raise ValueError("Invalid saved facing")
+    gaze, emote, interrupted_at = actor["gaze"], actor["emote"], actor["interrupted_at"]
+    if gaze is not None:
+        if not isinstance(gaze, dict) or set(gaze) != {"cell", "until", "stimulus_id"}:
+            raise ValueError("Invalid saved gaze")
+        saved_cell(gaze["cell"], world["map"])
+        number(gaze["until"], "Saved gaze end", 0, math.inf)
+        if type(gaze["stimulus_id"]) is not int:
+            raise ValueError("Invalid saved gaze cause")
+    if emote is not None:
+        if not isinstance(emote, dict) or set(emote) != {"kind", "until"} or emote["kind"] not in EMOTES:
+            raise ValueError("Invalid saved emote")
+        number(emote["until"], "Saved emote end", 0, math.inf)
+    if interrupted_at is not None:
+        number(interrupted_at, "Saved interruption time", 0, world["time"])

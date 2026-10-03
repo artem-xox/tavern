@@ -8,6 +8,7 @@ from types import MappingProxyType
 from typing import Any, TypedDict
 
 from tavern.state import World
+from tavern.validation import number, saved_cell
 
 
 @dataclass(frozen=True)
@@ -196,3 +197,35 @@ def salience(world: Mapping[str, Any], stimulus: Stimulus, listener: Mapping[str
     relevant = listener["id"] in stimulus["about"] or named or involves_friend
     curiosity = listener["traits"].get("curiosity", 0.5)
     return heard * (1.5 if relevant else 1.0) * (0.75 + 0.5 * curiosity)
+
+
+def check_saved_stimuli(world: Mapping[str, Any]) -> None:
+    """Check the sounds waiting in a saved world.
+
+    Args:
+        world: Decoded save with `stimuli` and `next_stimulus_id`.
+    Raises:
+        ValueError: A stimulus is malformed, from the future, or its ID is repeated or not yet issued.
+    """
+    stimuli, issued = world.get("stimuli"), world.get("next_stimulus_id")
+    if type(issued) is not int or issued < 0 or not isinstance(stimuli, list):
+        raise ValueError("Invalid saved stimuli")
+    for item in stimuli:
+        _validate_stimulus(item, world)
+    ids = [item["id"] for item in stimuli]
+    if len(set(ids)) != len(ids) or any(type(value) is not int or not 0 <= value < issued for value in ids):
+        raise ValueError("Saved stimuli need unique issued IDs")
+
+
+def _validate_stimulus(item: Any, world: Mapping[str, Any]) -> None:
+    keys = {"id", "kind", "noun", "sources", "cell", "loudness", "reach", "time", "about", "cause", "event"}
+    if not isinstance(item, dict) or set(item) != keys:
+        raise ValueError("Invalid saved stimulus")
+    Sound(item["kind"], number(item["loudness"], "Saved loudness", 0, 1), item["reach"], item["noun"])
+    number(item["time"], "Saved stimulus time", 0, world["time"])
+    saved_cell(item["cell"], world["map"])
+    for key in ("sources", "about"):
+        if not isinstance(item[key], list) or any(not isinstance(value, str) for value in item[key]):
+            raise ValueError(f"Invalid saved stimulus {key}")
+    if not isinstance(item["cause"], str) or not isinstance(item["event"], (str, type(None))):
+        raise ValueError("Invalid saved stimulus cause")

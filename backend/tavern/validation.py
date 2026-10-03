@@ -89,3 +89,19 @@ def unique_ids(records: Sequence[Mapping[str, Any]], label: str) -> None:
         raise ValueError(f"{label} require nonempty string IDs")
     if len(set(identifiers)) != len(identifiers):
         raise ValueError(f"Duplicate {label} IDs")
+
+
+def saved_cell(cell: Any, world_map: Mapping[str, Any]) -> None:
+    """Check a cell read from a save.
+
+    Args:
+        cell: Untrusted `[x, y]`.
+        world_map: Map whose `width` and `height` bound it.
+    Raises:
+        ValueError: The cell is not a pair of integers inside the map.
+    """
+    if not isinstance(cell, list) or len(cell) != 2:
+        raise ValueError("Invalid saved cell")
+    for value, limit in zip(cell, (world_map["width"], world_map["height"])):
+        if type(value) is not int or not 0 <= value < limit:
+            raise ValueError("Saved cell is outside the map")

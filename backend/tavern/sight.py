@@ -2,12 +2,14 @@
 
 from collections.abc import Mapping
 from copy import deepcopy
+import math
 from typing import Any
 
 from tavern.names import called
 from tavern.room import find_object
 from tavern.scenes import conversation_of, pressed, side_by_side
 from tavern.state import Actor, find_actor
+from tavern.validation import saved_cell
 
 
 def line_visible(origin: tuple[int, int], target: tuple[int, int], blocked: set[tuple[int, int]]) -> bool:
@@ -120,3 +122,25 @@ def people_in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[
                           beside=side_by_side(world, actor, visitor),
                           doing=action.get("verb"), target=target["name"] if target else None)
     return people
+
+
+def check_saved_knowledge(objects: Mapping[str, Any], world: Mapping[str, Any]) -> None:
+    """Check the places a saved visitor remembers.
+
+    Args:
+        objects: Decoded `knowledge.objects`, by ID.
+        world: Decoded save whose map holds the real objects.
+    Raises:
+        ValueError: A memory names an unknown object or kind, or its sighting is not in the past.
+    """
+    object_ids = {item["id"] for item in world["map"]["objects"]}
+    for identifier, item in objects.items():
+        if not isinstance(item, dict) or identifier not in object_ids or item.get("id") != identifier:
+            raise ValueError("Invalid remembered object")
+        if item.get("kind") not in {"tap", "toilet", "chair", "table", "bar", "darts", "door", "window", "fireplace"}:
+            raise ValueError("Invalid remembered object kind")
+        seen: Any = item.get("last_seen")
+        if type(seen) not in (int, float) or not math.isfinite(seen) or not 0 <= seen <= world["time"]:
+            raise ValueError("Invalid observation time")
+        for spot in item["interaction_spots"]:
+            saved_cell(spot, world["map"])

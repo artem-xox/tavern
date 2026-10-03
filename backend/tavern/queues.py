@@ -16,6 +16,7 @@ from tavern.state import Actor, World
 from tavern.thoughts import think
 from tavern.room import find_object, line_approach
 from tavern.routes import plan_route, replan
+from tavern.validation import number
 
 
 class LineEntry(TypedDict):
@@ -227,3 +228,41 @@ def cut_in(world: Mapping[str, Any], action: Mapping[str, Any]) -> tuple[dict[st
     verb = next(verb for verb, activity in ACTIVITIES.items()
                 if item["kind"] in activity.target_kinds and activity.duration is not None)
     return {**action, "verb": verb}, None
+
+
+def check_saved_lines(world: Mapping[str, Any]) -> None:
+    """Check the lines in a saved world.
+
+    Args:
+        world: Decoded save: every line fits its place, holds known guests who wait for that place
+            once each, and anyone waiting for a place stands in its line.
+    Raises:
+        ValueError: A line or a guest waiting in one is inconsistent.
+    """
+    waiting: set[str] = set()
+    for item in world["map"]["objects"]:
+        if "queue_spots" in item:
+            _validate_line(world, item, waiting)
+    for actor in world["actors"]:
+        target = find_object(world["map"], (actor["action"] or {}).get("target_id"))
+        lined = target is not None and "queue_spots" in target
+        holds = target is not None and target["reserved_by"] == actor["id"]
+        if (actor["status"] == "queued" or lined) and actor["id"] not in waiting and not (lined and holds):
+            raise ValueError("Saved guest waits for a place without standing in its line")
+
+
+def _validate_line(world: Mapping[str, Any], item: Mapping[str, Any], waiting: set[str]) -> None:
+    # Adds everyone in this line to `waiting`, so a guest standing in two lines is caught.
+    actors, line = {actor["id"]: actor for actor in world["actors"]}, item.get("queue")
+    if not isinstance(line, list) or len(line) > len(item["queue_spots"]):
+        raise ValueError("Invalid saved line")
+    for entry in line:
+        if not isinstance(entry, dict) or set(entry) != {"actor_id", "since"}:
+            raise ValueError("Invalid saved place in line")
+        number(entry["since"], "Saved time in line", 0, world["time"])
+        actor = actors.get(entry["actor_id"])
+        if actor is None or actor["id"] in waiting or item["reserved_by"] == actor["id"]:
+            raise ValueError("Saved line holds an unknown, repeated or served guest")
+        if not actor["action"] or actor["action"].get("target_id") != item["id"]:
+            raise ValueError("Saved guest in line is not waiting for that place")
+        waiting.add(actor["id"])

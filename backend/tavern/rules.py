@@ -1,7 +1,13 @@
 """The tunable rules of a new world: rates, timings and thresholds, each with the reason for its number."""
 
+import math
+
+from collections.abc import Mapping
 from tavern.activities import ACTIVITIES
+from tavern.expression import EMOTES
 from tavern.state import Rules
+from tavern.validation import number
+from typing import Any
 
 
 def default_rules() -> Rules:
@@ -41,3 +47,60 @@ def default_rules() -> Rules:
             "conversation": {"opening": 0.5, "min_gap": 2.5, "chars_per_second": 15.0, "turn_timeout": 10.0,
                              "relief": 25.0, "satisfied": 25.0, "max_participants": 4, "reach": 2,
                              "pressing": 75.0}}
+
+
+def check_rules(world: Mapping[str, Any]) -> None:
+    """Check the rules saved with a world.
+
+    Args:
+        world: Decoded save whose `rules` must match `default_rules` in shape: positive rates, one
+            duration per timed verb, all needs, and ordered attention thresholds.
+    Raises:
+        ValueError: A rule is missing, unknown or out of range.
+    """
+    rules = world["rules"]
+    values = [rules["move_seconds"], rules["blocked_timeout"], rules["quarrel_per_beer"], rules["quarrel_max"],
+              *rules["durations"].values(), *rules["need_rates"].values()]
+    if any(type(value) not in (int, float) or not math.isfinite(value) or value <= 0 for value in values):
+        raise ValueError("Invalid saved simulation rates")
+    if type(rules["vision_radius"]) is not int or not 0 <= rules["vision_radius"] <= 100:
+        raise ValueError("Invalid saved vision radius")
+    if set(rules["durations"]) != {verb for verb, activity in ACTIVITIES.items() if activity.duration is not None}:
+        raise ValueError("Invalid saved action definitions")
+    if set(rules["need_rates"]) != {"thirst", "fatigue", "bladder", "social", "boredom"}:
+        raise ValueError("Invalid saved needs")
+    patience = rules["queue_patience"]
+    if set(patience) != {"base", "patience", "urgency"}:
+        raise ValueError("Invalid saved patience in line")
+    for value in patience.values():
+        number(value, "Saved patience in line", 0, math.inf)
+    if not isinstance(rules["queue_needs"], dict) or not set(rules["queue_needs"].values()) <= set(rules["need_rates"]):
+        raise ValueError("Invalid saved needs behind lines")
+    _validate_attention_rules(rules.get("attention"))
+    lifetimes = rules.get("emote_seconds")
+    if not isinstance(lifetimes, dict) or set(lifetimes) != set(EMOTES):
+        raise ValueError("Invalid saved emote lifetimes")
+    for value in [*lifetimes.values(), rules.get("long_wait")]:
+        number(value, "Saved emote time", 0, math.inf)
+    _validate_conversation_rules(rules.get("conversation"))
+
+
+def _validate_conversation_rules(conversation: Any) -> None:
+    keys = {"opening", "min_gap", "chars_per_second", "turn_timeout", "relief", "satisfied", "max_participants",
+            "reach", "pressing"}
+    if not isinstance(conversation, dict) or set(conversation) != keys:
+        raise ValueError("Invalid saved conversation rules")
+    for key in keys:
+        number(conversation[key], f"Saved conversation rule {key}", 0, math.inf)
+    if conversation["chars_per_second"] <= 0 or conversation["max_participants"] < 2:
+        raise ValueError("Saved conversations could never be read or held")
+
+
+def _validate_attention_rules(attention: Any) -> None:
+    keys = {"glance", "interrupt", "wall_damping", "glance_seconds", "turn_seconds"}
+    if not isinstance(attention, dict) or set(attention) != keys:
+        raise ValueError("Invalid saved attention rules")
+    for key in keys:
+        number(attention[key], f"Saved attention rule {key}", 0, math.inf)
+    if not 0 < attention["glance"] <= attention["interrupt"] or attention["wall_damping"] > 1:
+        raise ValueError("Saved attention thresholds are out of order")

@@ -4,6 +4,7 @@ from collections.abc import Mapping, Sequence
 from copy import deepcopy
 from dataclasses import dataclass
 from math import inf
+import math
 from typing import Any, NotRequired, TypedDict, cast
 
 from tavern.arrival import admit_arrivals, arrival_ranges, arriving
@@ -187,3 +188,35 @@ def _expected(scenario: Scenario, seed: int) -> list[ExpectedGuest]:
     # Sorting is stable: guests due at the same moment keep their listed order at the door.
     drawn = [cast(ExpectedGuest, deepcopy(item)) for item in arriving(scenario.guests, scenario.arrival, seed)]
     return sorted(drawn, key=lambda item: item["arrives_at"])
+
+
+def check_saved_expected(world: Mapping[str, Any]) -> None:
+    """Check the guests a saved world still expects.
+
+    Args:
+        world: Decoded save with `expected` and `closes_at`.
+    Raises:
+        ValueError: A guest lacks drawn needs, they are out of order or after closing, or an ID repeats.
+    """
+    closes_at, expected = world.get("closes_at"), world.get("expected")
+    if closes_at is not None:
+        number(closes_at, "Saved closing time", 0, math.inf)
+    if not isinstance(expected, list):
+        raise ValueError("Invalid saved expected guests")
+    guests = [_expected_guest(item, world) for item in expected]
+    times = [item["arrives_at"] for item in guests]
+    if times != sorted(times) or (closes_at is not None and any(time >= closes_at for time in times)):
+        raise ValueError("Saved expected guests must arrive in order before closing")
+    ids = [item["id"] for item in [*world["actors"], *world["departed"], *guests]]
+    if len(set(ids)) != len(ids):
+        raise ValueError("Saved visitors need unique IDs")
+
+
+def _expected_guest(item: Any, world: Mapping[str, Any]) -> Guest:
+    if not isinstance(item, dict) or not isinstance(item.get("needs"), dict):
+        raise ValueError("Saved expected guest has no drawn needs")
+    for need, value in item["needs"].items():
+        if need not in world["rules"]["need_rates"]:
+            raise ValueError(f"Unknown saved need {need!r}")
+        number(value, need, 0, 100)
+    return parse_guest({key: value for key, value in item.items() if key != "needs"})

@@ -1,6 +1,7 @@
 """Visitors arriving for the evening: validated actor records, freshly drawn needs, the way in."""
 
 from collections.abc import Mapping, Sequence
+import math
 from random import Random
 from typing import Any
 
@@ -133,3 +134,23 @@ def _relations(guest_id: str, name: str, ties: Sequence[Mapping[str, Any]]) -> d
     names = {guest_id: name, **{tie["with"]: tie["name"] for tie in ties}}
     return {other: {**relation, "knows_name": True}
             for other, relation in seed_relations(pairs, names).get(guest_id, {}).items()}
+
+
+def check_saved_visit(visit: Any) -> None:
+    """Check a saved visit tally.
+
+    Args:
+        visit: Decoded `visit` of a visitor: seconds, beers, grievances and, once gone, `left_at`.
+    Raises:
+        ValueError: A field is missing, negative or of the wrong type.
+    """
+    if not isinstance(visit, dict) or not isinstance(visit.get("grievances"), list):
+        raise ValueError("Invalid saved visit")
+    # left_at appears only once the visitor has gone home.
+    times = [visit.get("seconds"), visit.get("left_at", 0.0)]
+    if any(type(value) not in (int, float) or not math.isfinite(value) or value < 0 for value in times):
+        raise ValueError("Invalid saved visit time")
+    if type(visit.get("beers")) is not int or visit["beers"] < 0:
+        raise ValueError("Invalid saved beer count")
+    if any(not isinstance(item, str) for item in visit["grievances"]):
+        raise ValueError("Invalid saved grievance")

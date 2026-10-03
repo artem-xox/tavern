@@ -7,13 +7,15 @@ timer, ends. When the next turn is spoken is `tavern.turns`' business; what an a
 `tavern.conversation`'s.
 """
 
-from collections.abc import Mapping
+from collections.abc import Collection, Mapping
+import math
 from typing import TYPE_CHECKING, Any, NotRequired, TypedDict
 
 from tavern.closing import inn_closed
 from tavern.memory import record_event
 from tavern.room import find_object
 from tavern.state import Actor, World
+from tavern.validation import number
 
 if TYPE_CHECKING:  # turns imports this module, so the type crosses the cycle only for the checker.
     from tavern.turns import TurnResult
@@ -286,3 +288,58 @@ def _names(world: Mapping[str, Any], actor_ids: list[str]) -> str:
     people = {item["id"]: item["name"] for item in world["actors"]}
     names = [people[actor_id] for actor_id in actor_ids if actor_id in people]
     return names[0] if len(names) == 1 else f"{', '.join(names[:-1])} and {names[-1]}"
+
+
+def check_saved_scenes(world: Mapping[str, Any], invitation_kinds: Collection[str]) -> None:
+    """Check the conversation scenes in a saved world.
+
+    Args:
+        world: Decoded save.
+        invitation_kinds: Kinds an `invite` turn or written turn may name (`invitations.KINDS`); a
+            parameter because `invitations` imports this module.
+    Raises:
+        ValueError: A scene, turn, claim or written turn is malformed, or a guest is in two scenes.
+    """
+    scenes, issued = world.get("conversations"), world.get("next_conversation_id")
+    if type(issued) is not int or issued < 0 or not isinstance(scenes, list):
+        raise ValueError("Invalid saved conversations")
+    keys = {"id", "participants", "table_id", "topic", "turns", "started_at", "next_turn_at", "writing", "written",
+            "invitation"}
+    taken: list[Any] = []
+    for scene in scenes:
+        if not isinstance(scene, dict) or set(scene) != keys or not isinstance(scene["id"], str):
+            raise ValueError("Invalid saved conversation")
+        _validate_scene(scene, world, invitation_kinds)
+        taken.extend(scene["participants"])
+    if len(set(taken)) != len(taken) or len({scene["id"] for scene in scenes}) != len(scenes):
+        raise ValueError("Saved guests may take part in one conversation at a time")
+
+
+def _validate_scene(scene: Mapping[str, Any], world: Mapping[str, Any], invitation_kinds: Collection[str]) -> None:
+    people, tables = {actor["id"] for actor in world["actors"]}, {
+        item["id"] for item in world["map"]["objects"] if item["kind"] == "table"}
+    members = scene["participants"]
+    if not isinstance(members, list) or len(members) < 2 or len(set(members)) != len(members) or not set(
+            members) <= people:
+        raise ValueError("Saved conversation needs two or more distinct guests")
+    if scene["table_id"] is not None and scene["table_id"] not in tables:
+        raise ValueError("Saved conversation is held at an unknown table")
+    if not isinstance(scene["topic"], str) or not isinstance(scene["turns"], list):
+        raise ValueError("Invalid saved conversation topic or turns")
+    number(scene["started_at"], "Saved conversation start", 0, world["time"])
+    number(scene["next_turn_at"], "Saved next turn", 0, math.inf)
+    for turn in scene["turns"]:
+        # An invite also names its invitation kind.
+        if not isinstance(turn, dict) or set(turn) - {"invitation"} != {"speaker", "addressee", "line", "act", "time"} \
+                or ("invitation" in turn and turn["invitation"] not in invitation_kinds) or not all(
+                isinstance(turn[key], str) for key in ("speaker", "line", "act")):
+            raise ValueError("Invalid saved turn")
+        number(turn["time"], "Saved turn time", 0, world["time"])
+    claim = scene["writing"]
+    if claim is not None and (not isinstance(claim, dict) or set(claim) != {"turn", "speaker", "since"}
+                              or type(claim["turn"]) is not int or not isinstance(claim["speaker"], str)):
+        raise ValueError("Invalid saved turn being written")
+    written = scene["written"]
+    if written is not None and (not isinstance(written, dict) or set(written) - {"invitation"} != {
+            "line", "act", "addressee", "topic"} or ("invitation" in written and written["invitation"] not in invitation_kinds)):
+        raise ValueError("Invalid saved written turn")
