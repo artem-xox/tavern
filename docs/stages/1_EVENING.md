@@ -145,12 +145,27 @@ changes the behavior `test_closing.py` specifies, so it needs a decision.
 - [ ] **E11 — Card compiler.** Haiku extracts params from a free-text card through
   structured output; values are range-checked and shown for confirmation. Done:
   malformed or out-of-range answers are rejected; the offline mode is labeled.
-- [ ] **E12 — Thoughts, mood, opinions.** Events create timed thoughts with mood and
+- [x] **E12 — Thoughts, mood, opinions.** Events create timed thoughts with mood and
   opinion effects; opinions and familiarity are kept per pair. Replaces grievances.
   Done: stacking, expiry, and opinion changes are tested; the inspector lists thoughts.
-- [ ] **E13 — Drunkenness.** Beers raise drunkenness by tolerance; it decays slowly;
+  `thoughts.py`: a taken seat, a cut in line, a quarrel and a chat each leave a thought;
+  repeats of one kind about one person stack up to three, and a fourth replaces the oldest.
+  Mood (thoughts plus needs above 50) and opinion (base plus thoughts, −100…100) are
+  derived; talking makes strangers acquaintances. `visit.grievances` stays as a derived
+  view (latest five bad thoughts), so older readers and tests keep working. The briefing
+  says "They are in a sour mood. They dislike Bea, who took their seat."; the local leave
+  utility weighs the thoughts' mood; friends make sounds more salient; `seed_relations`
+  turns `{a, b, kind}` starting relationships into base opinions, not yet wired to data.
+- [x] **E13 — Drunkenness.** Beers raise drunkenness by tolerance; it decays slowly;
   stages change inhibitions, speech instructions, gait, and fight accuracy. A wasted
   guest may doze at the table. Done: parametrized stage and decay tests.
+  `drunkenness.py`: 0.2 × (1.5 − tolerance) per beer (tolerance 0.5 until cards add it),
+  −0.0005 per second; sober, tipsy (0.2), drunk (0.45), wasted (0.75). The briefing gets a
+  speech sentence, the scene sways sprites, and `inhibition_modifier` and `fight_accuracy`
+  wait for E20–E21. `dozing.py`: a wasted guest in their seat may nod off into an
+  interruptible 30 s `doze` with the sleep emote. Quarrels still roll on beer counts,
+  which the existing quarrel tests set. In a live evening (seed 5) guests drink two beers
+  at most, so they get tipsy but nobody dozes.
 - [ ] **E14 — Intentions.** Haiku writes a one-sentence intention on arrival, after
   salient events, and every few minutes; the briefing shows it to Jev. Done: in a
   recorded evening an insult changes the target's intention and later choices.
