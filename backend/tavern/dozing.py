@@ -9,9 +9,10 @@ from tavern.activities import ACTIVITIES
 from tavern.scenes import conversation_of
 from tavern.drunkenness import drunk_stage
 from tavern.memory import record_event
+from tavern.state import Actor, World
 
 
-def nodding_off(world: dict[str, Any], elapsed: float) -> list[dict[str, Any]]:
+def nodding_off(world: World, elapsed: float) -> list[Actor]:
     """Find the wasted visitors who nod off at their table this tick, and log it.
 
     Only someone sitting in their seat, not talking and doing nothing they would not break

@@ -4,6 +4,8 @@ from collections.abc import Mapping, Sequence
 from types import MappingProxyType
 from typing import Any, TypedDict
 
+from tavern.state import Actor, World
+
 
 class Gaze(TypedDict):
     """A visitor looking at a cell until a game time, because of a stimulus."""
@@ -46,7 +48,7 @@ def facing_toward(origin: Sequence[int], target: Sequence[int]) -> str | None:
     return None
 
 
-def look_at(actor: dict[str, Any], cell: Sequence[int], until: float, stimulus_id: int) -> None:
+def look_at(actor: Actor, cell: Sequence[int], until: float, stimulus_id: int) -> None:
     """Turn a visitor's gaze to a cell for a while.
 
     Args:
@@ -58,7 +60,7 @@ def look_at(actor: dict[str, Any], cell: Sequence[int], until: float, stimulus_i
     actor["gaze"] = Gaze(cell=list(cell), until=until, stimulus_id=stimulus_id)
 
 
-def show_emote(actor: dict[str, Any], kind: str, until: float) -> None:
+def show_emote(actor: Actor, kind: str, until: float) -> None:
     """Show an emote above a visitor, replacing any earlier one.
 
     Args:
@@ -74,7 +76,7 @@ def show_emote(actor: dict[str, Any], kind: str, until: float) -> None:
     actor["emote"] = Emote(kind=kind, until=until)
 
 
-def emote_event(world: Mapping[str, Any], actor: dict[str, Any], kind: str) -> None:
+def emote_event(world: Mapping[str, Any], actor: Actor, kind: str) -> None:
     """Show the emote a logged event calls for, if any (see `EVENT_EMOTES`).
 
     Args:

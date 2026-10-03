@@ -11,7 +11,7 @@ from tavern.decisions import apply_decision, decision_requests, free_to_decide, 
 from tavern.intentions import INTENTION_RULES, Intender, IntentionRules, deliver_intention, intention_requests, \
     stale_intentions
 from tavern.scripted import write_scripted_turn
-from tavern.state import find_actor
+from tavern.state import World, find_actor
 from tavern.turns import TurnWriter, claim_turns, deliver_turn
 from tavern.world import step_world
 
@@ -130,7 +130,7 @@ def evening_mode(requested: str | None, keyed: bool) -> tuple[str, str | None]:
     return requested, None
 
 
-async def run_evening(world: dict[str, Any], config: Mapping[str, Any], rng: Random, evaluators: Evaluators,
+async def run_evening(world: World, config: Mapping[str, Any], rng: Random, evaluators: Evaluators,
                       pace: Pace, writer: TurnWriter = write_scripted_turn, intender: Intender | None = None,
                       intention_rules: IntentionRules = INTENTION_RULES) -> Evening:
     """Play an evening to its end in lockstep.
@@ -189,7 +189,7 @@ def _drop_stale(world: Mapping[str, Any], run: _Run) -> None:
         del run.pending[actor_id]
 
 
-def _apply_due(world: dict[str, Any], run: _Run) -> None:
+def _apply_due(world: World, run: _Run) -> None:
     for actor_id, (_, due, decision) in list(run.pending.items()):
         # Game time sums float steps; the margin absorbs rounding far below one step.
         if world["time"] + 1e-9 < due:
@@ -201,7 +201,7 @@ def _apply_due(world: dict[str, Any], run: _Run) -> None:
             run.next_decision[actor_id] = apply_decision(world, actor, lambda: decision)
 
 
-async def _ask(world: dict[str, Any], run: _Run, config: Mapping[str, Any], rng: Random,
+async def _ask(world: World, run: _Run, config: Mapping[str, Any], rng: Random,
                evaluators: Evaluators, latency: float) -> None:
     for actor_id, observation in decision_requests(world, run.pending, run.next_decision):
         decision = await choose_action(observation, config, rng, evaluators)
@@ -212,14 +212,14 @@ async def _ask(world: dict[str, Any], run: _Run, config: Mapping[str, Any], rng:
                             "source": stage["source"], "error": stage["error"]} for kind, stage in stages)
 
 
-def _deliver_due(world: dict[str, Any], run: _Run) -> None:
+def _deliver_due(world: World, run: _Run) -> None:
     for key, (due, line) in list(run.lines.items()):
         if world["time"] + 1e-9 >= due:
             del run.lines[key]
             deliver_turn(world, *key, line)
 
 
-async def _write(world: dict[str, Any], run: _Run, config: Mapping[str, Any], writer: TurnWriter,
+async def _write(world: World, run: _Run, config: Mapping[str, Any], writer: TurnWriter,
                  latency: float) -> None:
     for scene_id, turn, view in claim_turns(world):
         try:
@@ -236,7 +236,7 @@ def _raising(error: Exception) -> Callable[[], Any]:
     return outcome
 
 
-async def _intend(world: dict[str, Any], run: _Run, intender: Intender, rules: IntentionRules,
+async def _intend(world: World, run: _Run, intender: Intender, rules: IntentionRules,
                   latency: float) -> None:
     # As decisions: overtaken requests are dropped, due answers kept, then new requests asked at once.
     for actor_id in stale_intentions(world, {actor_id: asked for actor_id, (asked, *_) in run.minds.items()}):

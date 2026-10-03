@@ -3,7 +3,7 @@
 import json
 import math
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, cast
 
 from tavern.activities import ACTIVITIES
 from tavern.cards import parse_card
@@ -15,6 +15,7 @@ from tavern.invitations import KINDS, check_invitations
 from tavern.navigation import find_path
 from tavern.room import find_object
 from tavern.scenario import Guest, parse_guest
+from tavern.state import World
 from tavern.thoughts import check_mind
 from tavern.ties import parse_own_ties
 from tavern.validation import number
@@ -379,7 +380,7 @@ def _validate_scene(scene: Mapping[str, Any], world: Mapping[str, Any]) -> None:
         raise ValueError("Invalid saved written turn")
 
 
-def parse_world(encoded: str) -> dict[str, Any]:
+def parse_world(encoded: str) -> World:
     """Validate a serialized world before it replaces the running state.
 
     Args:
@@ -406,12 +407,12 @@ def parse_world(encoded: str) -> dict[str, Any]:
         check_invitations(world)
         if not isinstance(world.get("events"), list):
             raise ValueError("Invalid saved event log")
-        return world
+        return cast(World, world)  # Every part is validated above.
     except (KeyError, TypeError, ValueError, AttributeError) as error:
         raise ValueError(f"Could not load the world: {error}") from error
 
 
-def load_world(path: Path) -> dict[str, Any]:
+def load_world(path: Path) -> World:
     """Read and validate a saved world from disk.
 
     Args:

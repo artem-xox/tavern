@@ -9,6 +9,7 @@ from typing import Any, NotRequired, TypedDict, cast
 from tavern.arrival import admit_arrivals, arrival_ranges, arriving
 from tavern.cards import Card, parse_card
 from tavern.ties import OwnTie, Tie, own_ties, parse_own_ties, parse_ties
+from tavern.state import World
 from tavern.validation import number, unique_ids
 from tavern.world import create_world
 
@@ -159,7 +160,7 @@ def _with_ties(guests: Sequence[Guest], ties: Sequence[Tie]) -> tuple[Guest, ...
     return tuple(Guest(**item, ties=held[item["id"]]) if held[item["id"]] else item for item in guests)
 
 
-def open_evening(room: Mapping[str, Any], scenario: Scenario, seed: int) -> dict[str, Any]:
+def open_evening(room: Mapping[str, Any], scenario: Scenario, seed: int) -> World:
     """Open the inn for a scenario's evening.
 
     Args:
@@ -176,7 +177,7 @@ def open_evening(room: Mapping[str, Any], scenario: Scenario, seed: int) -> dict
     world = create_world({key: value for key, value in room.items() if key not in ("actors", "arrival")}, seed)
     if not any(item["kind"] == "door" for item in world["map"]["objects"]):
         raise ValueError("A scenario needs a door for its guests to come in by")
-    world.update(expected=_expected(scenario, seed), closes_at=scenario.closes_at)
+    world.update({"expected": _expected(scenario, seed), "closes_at": scenario.closes_at})
     admit_arrivals(world)
     return world
 

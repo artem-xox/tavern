@@ -8,11 +8,12 @@ from tavern.memory import record_event
 from tavern.room import impassable_cells
 from tavern.routes import reserved_spots
 from tavern.sight import look_around
+from tavern.state import Actor, World
 from tavern.thoughts import seed_relations
 from tavern.validation import number, position
 
 
-def create_actor(data: Mapping[str, Any], world_map: Mapping[str, Any]) -> dict[str, Any]:
+def create_actor(data: Mapping[str, Any], world_map: Mapping[str, Any]) -> Actor:
     """Build a fresh visitor record with an empty evening ahead.
 
     Args:
@@ -36,7 +37,7 @@ def create_actor(data: Mapping[str, Any], world_map: Mapping[str, Any]) -> dict[
         raise ValueError("Inventory beer must be a nonnegative integer")
     if not isinstance(sprite, str) or not sprite:
         raise ValueError("Actor sprite must be a nonempty string")
-    return dict(id=data["id"], name=data.get("name", data["id"]), color=data.get("color", "#d8ad68"),
+    return Actor(id=data["id"], name=data.get("name", data["id"]), color=data.get("color", "#d8ad68"),
                 sprite=sprite, x=x, y=y, traits=traits, card=data.get("card"), ties=list(data.get("ties", [])),
                 needs=needs, inventory={"beer": beer}, status="idle",
                 action=None, path=[], seat_id=None, favorite_seat_id=None,
@@ -95,7 +96,7 @@ def arriving(actors: Sequence[Mapping[str, Any]], ranges: Mapping[str, tuple[flo
             for item in actors]
 
 
-def admit_arrivals(world: dict[str, Any]) -> None:
+def admit_arrivals(world: World) -> None:
     """Let in the expected guests whose time has come, while a door spot is free for them.
 
     Args:

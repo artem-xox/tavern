@@ -14,10 +14,11 @@ from tavern import invitations, social_acts
 from tavern.memory import record_event
 from tavern.names import called
 from tavern.scenes import Conversation, end_conversation, leave_conversation
+from tavern.state import Actor, World
 from tavern.thoughts import active_thoughts, opinion_of, think
 
 # An act's effect receives the world, the scene, the speaker, and whom they addressed (None for everyone).
-ActEffect = Callable[[dict[str, Any], Conversation, dict[str, Any], dict[str, Any] | None], None]
+ActEffect = Callable[[World, Conversation, Actor, Actor | None], None]
 
 # A speaker may insult only someone they think this little of (E20 adds temper and drink).
 DISLIKED = -10.0
@@ -36,12 +37,12 @@ class Act:
     meaning: str
 
 
-def _members(world: Mapping[str, Any], scene: Conversation) -> list[dict[str, Any]]:
+def _members(world: Mapping[str, Any], scene: Conversation) -> list[Actor]:
     return [item for item in world["actors"] if item["id"] in scene["participants"]]
 
 
-def _relieve(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
-             addressee: dict[str, Any] | None) -> None:
+def _relieve(world: World, scene: Conversation, speaker: Actor,
+             addressee: Actor | None) -> None:
     # A friendly exchange eases everyone's wish for company, not only the speaker's, and the
     # listeners warm to the speaker (stacking is capped in `thoughts`).
     message = f"{speaker['name']} chatted about {scene['topic']}"
@@ -52,16 +53,16 @@ def _relieve(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any]
                   message, about=speaker)
 
 
-def _tell_places(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
-                 addressee: dict[str, Any] | None) -> None:
+def _tell_places(world: World, scene: Conversation, speaker: Actor,
+                 addressee: Actor | None) -> None:
     for listener in _members(world, scene):
         if listener["id"] != speaker["id"]:
             _share_places(speaker, listener)
     _relieve(world, scene, speaker, addressee)
 
 
-def _complain(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
-              addressee: dict[str, Any] | None) -> None:
+def _complain(world: World, scene: Conversation, speaker: Actor,
+              addressee: Actor | None) -> None:
     # A grumble to everyone is taken up by the next in the circle.
     others = [item for item in _members(world, scene) if item["id"] != speaker["id"]]
     partner = addressee if addressee in others else others[0]
@@ -70,8 +71,8 @@ def _complain(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any
         end_conversation(world, scene, pleasant=False)
 
 
-def _insult(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
-            addressee: dict[str, Any] | None) -> None:
+def _insult(world: World, scene: Conversation, speaker: Actor,
+            addressee: Actor | None) -> None:
     # An insult to everyone lands on whoever the speaker thinks least of; the rest of the company
     # resents it if they like the target. Tipsy tempers may flare into a quarrel.
     others = [item for item in _members(world, scene) if item["id"] != speaker["id"]]
@@ -86,8 +87,8 @@ def _insult(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
         end_conversation(world, scene, pleasant=False)
 
 
-def _say_goodbye(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
-                 addressee: dict[str, Any] | None) -> None:
+def _say_goodbye(world: World, scene: Conversation, speaker: Actor,
+                 addressee: Actor | None) -> None:
     leave_conversation(world, speaker)
 
 
@@ -168,7 +169,7 @@ def _quarrels(world: Mapping[str, Any], left: Mapping[str, Any], right: Mapping[
     return Random(f"{world['seed']}:{world['tick']}:{left['id']}:{right['id']}").random() < chance
 
 
-def _quarrel(world: dict[str, Any], actor: dict[str, Any], partner: dict[str, Any], topic: str) -> None:
+def _quarrel(world: World, actor: Actor, partner: Actor, topic: str) -> None:
     message = f"{actor['name']} and {partner['name']} quarreled about {topic}"
     for visitor, other in ((actor, partner), (partner, actor)):
         record_event(world, visitor, "quarrel", message)
@@ -176,7 +177,7 @@ def _quarrel(world: dict[str, Any], actor: dict[str, Any], partner: dict[str, An
               about=other)
 
 
-def _share_places(speaker: Mapping[str, Any], listener: dict[str, Any]) -> None:
+def _share_places(speaker: Mapping[str, Any], listener: Actor) -> None:
     for identifier, known in speaker["knowledge"]["objects"].items():
         if known["kind"] not in ("tap", "toilet", "darts") or identifier in listener["knowledge"]["objects"]:
             continue

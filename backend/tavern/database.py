@@ -6,9 +6,10 @@ from typing import Any, Mapping
 import psycopg
 
 from tavern.persistence import parse_world
+from tavern.state import World
 
 
-def load_database_world(url: str, session_id: str, slot: str) -> dict[str, Any] | None:
+def load_database_world(url: str, session_id: str, slot: str) -> World | None:
     """Read a session's saved world, if one exists.
 
     Args:

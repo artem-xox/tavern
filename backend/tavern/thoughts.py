@@ -7,6 +7,7 @@ from types import MappingProxyType
 from typing import Any, NotRequired, TypedDict
 
 from tavern.names import called
+from tavern.state import Actor, World
 from tavern.validation import number
 
 
@@ -80,7 +81,7 @@ class Relation(TypedDict):
     knows_name: NotRequired[bool]
 
 
-def think(actor: dict[str, Any], kind: str, now: float, text: str, source_event: str,
+def think(actor: Actor, kind: str, now: float, text: str, source_event: str,
           about: Mapping[str, Any] | None = None) -> Thought:
     """Give a visitor a timed thought, stacking repeats up to the kind's cap.
 
@@ -118,7 +119,7 @@ def think(actor: dict[str, Any], kind: str, now: float, text: str, source_event:
     return thought
 
 
-def _meet(actor: dict[str, Any], other: Mapping[str, Any], talked: bool) -> Relation:
+def _meet(actor: Actor, other: Mapping[str, Any], talked: bool) -> Relation:
     # Familiarity only ever grows; talking makes strangers acquaintances.
     relation = actor["relations"].setdefault(other["id"], Relation(
         name=called(actor, other), opinion=0.0, familiarity="stranger", knows_name=False))
@@ -127,8 +128,8 @@ def _meet(actor: dict[str, Any], other: Mapping[str, Any], talked: bool) -> Rela
     return relation
 
 
-def learn_name(actor: dict[str, Any], other: Mapping[str, Any], met: bool,
-               friends: Sequence[dict[str, Any]] = ()) -> None:
+def learn_name(actor: Actor, other: Mapping[str, Any], met: bool,
+               friends: Sequence[Actor] = ()) -> None:
     """Let a visitor learn someone's name; their old friends present learn it from them.
 
     Args:
@@ -151,7 +152,7 @@ def learn_name(actor: dict[str, Any], other: Mapping[str, Any], met: bool,
             learn_name(friend, other, False)
 
 
-def soften(actor: dict[str, Any], about_id: str, now: float) -> bool:
+def soften(actor: Actor, about_id: str, now: float) -> bool:
     """Halve the latest active grudge a visitor holds against someone, once, as an apology does.
 
     Args:
@@ -171,7 +172,7 @@ def soften(actor: dict[str, Any], about_id: str, now: float) -> bool:
     return True
 
 
-def _refresh_grievances(actor: dict[str, Any], now: float) -> None:
+def _refresh_grievances(actor: Actor, now: float) -> None:
     # `visit.grievances` is a derived view kept for older readers (tests, saves, Jev's `self`):
     # the texts of the latest five active thoughts that lower the mood.
     actor["visit"]["grievances"] = [item["text"] for item in active_thoughts(actor["thoughts"], now)

@@ -5,6 +5,7 @@ from typing import Any
 
 from tavern.queues import out_of_patience
 from tavern.scenes import conversation_of
+from tavern.state import Actor, Decision, World
 from tavern.world import observe_actor, observe_people, start_action
 
 
@@ -62,7 +63,7 @@ def stale_requests(world: Mapping[str, Any], asked_at: Mapping[str, float]) -> l
             and actor["interrupted_at"] is not None and actor["interrupted_at"] > asked_at[actor["id"]]]
 
 
-def apply_decision(world: dict[str, Any], actor: dict[str, Any],
+def apply_decision(world: World, actor: Actor,
                    outcome: Callable[[], Mapping[str, Any]]) -> float:
     """Record a visitor's decision and start its action.
 
@@ -77,7 +78,7 @@ def apply_decision(world: dict[str, Any], actor: dict[str, Any],
     """
     try:
         decision = outcome()
-        actor["decision"] = {key: decision[key] for key in ("source", "scores", "error")}
+        actor["decision"] = Decision(source=decision["source"], scores=decision["scores"], error=decision["error"])
         for stage in ("seat", "family"):
             if stage in decision:
                 actor["decision"][stage] = decision[stage]
@@ -92,7 +93,7 @@ def apply_decision(world: dict[str, Any], actor: dict[str, Any],
     return world["time"] + 1.0
 
 
-def log_control(world: dict[str, Any], message: str) -> None:
+def log_control(world: World, message: str) -> None:
     """Log an event that no visitor caused, keeping the latest 100 events.
 
     Args:

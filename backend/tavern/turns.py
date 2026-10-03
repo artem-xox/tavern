@@ -21,6 +21,7 @@ from tavern.overhearing import overhear_turn
 from tavern.portrait import portrait
 from tavern.scenes import Conversation, Turn
 from tavern.scripted import scripted_turn
+from tavern.state import World
 from tavern.thoughts import active_thoughts, familiarity_of, opinion_of
 
 
@@ -212,7 +213,7 @@ def claim_turns(world: Mapping[str, Any]) -> list[tuple[str, int, dict[str, Any]
     return claims
 
 
-def deliver_turn(world: dict[str, Any], scene_id: str, turn: int, outcome: Callable[[], Any]) -> None:
+def deliver_turn(world: World, scene_id: str, turn: int, outcome: Callable[[], Any]) -> None:
     """Hand a writer's answer to its scene, to be spoken when due.
 
     Args:
@@ -243,7 +244,7 @@ def deliver_turn(world: dict[str, Any], scene_id: str, turn: int, outcome: Calla
              f"A line for {view['speaker']['name']} failed ({error}); a scripted one stands in")
 
 
-def speak_turns(world: dict[str, Any]) -> None:
+def speak_turns(world: World) -> None:
     """Speak every scene's line that is due, and let its act take effect.
 
     Args:
@@ -260,7 +261,7 @@ def speak_turns(world: dict[str, Any]) -> None:
         _speak(world, scene, view["speaker"]["id"], scene["written"] or scripted_turn(view))
 
 
-def _speak(world: dict[str, Any], scene: Conversation, speaker_id: str, result: Mapping[str, Any]) -> None:
+def _speak(world: World, scene: Conversation, speaker_id: str, result: Mapping[str, Any]) -> None:
     people = {item["id"]: item for item in world["actors"]}
     turn: Turn = {"speaker": speaker_id, "addressee": result["addressee"], "line": result["line"],
                   "act": result["act"], "time": world["time"]}

@@ -8,11 +8,15 @@ timer, ends. When the next turn is spoken is `tavern.turns`' business; what an a
 """
 
 from collections.abc import Mapping
-from typing import Any, NotRequired, TypedDict
+from typing import TYPE_CHECKING, Any, NotRequired, TypedDict
 
 from tavern.closing import inn_closed
 from tavern.memory import record_event
 from tavern.room import find_object
+from tavern.state import Actor, World
+
+if TYPE_CHECKING:  # turns imports this module, so the type crosses the cycle only for the checker.
+    from tavern.turns import TurnResult
 
 
 class Turn(TypedDict):
@@ -55,7 +59,7 @@ class Conversation(TypedDict):
     started_at: float
     next_turn_at: float
     writing: Claim | None
-    written: dict[str, Any] | None
+    written: "TurnResult | None"
     invitation: dict[str, str] | None
 
 
@@ -142,7 +146,7 @@ def side_by_side(world: Mapping[str, Any], actor: Mapping[str, Any], other: Mapp
     return near and _by_a_view(world, actor) and _by_a_view(world, other)
 
 
-def start_conversation(world: dict[str, Any], actor: dict[str, Any], partner: Mapping[str, Any]) -> Conversation:
+def start_conversation(world: World, actor: Actor, partner: Mapping[str, Any]) -> Conversation:
     """Open a scene between a visitor and a partner free to talk.
 
     Args:
@@ -165,7 +169,7 @@ def start_conversation(world: dict[str, Any], actor: dict[str, Any], partner: Ma
     return scene
 
 
-def join_conversation(world: dict[str, Any], actor: dict[str, Any], member: Mapping[str, Any]) -> None:
+def join_conversation(world: World, actor: Actor, member: Mapping[str, Any]) -> None:
     """Add a visitor to the scene of someone already talking.
 
     Args:
@@ -182,7 +186,7 @@ def join_conversation(world: dict[str, Any], actor: dict[str, Any], member: Mapp
     record_event(world, actor, "joined_conversation", f"{actor['name']} joined {names}'s conversation")
 
 
-def leave_conversation(world: dict[str, Any], actor: dict[str, Any]) -> bool:
+def leave_conversation(world: World, actor: Actor) -> bool:
     """Take a visitor out of their scene; the others carry on while at least two remain.
 
     Args:
@@ -204,7 +208,7 @@ def leave_conversation(world: dict[str, Any], actor: dict[str, Any]) -> bool:
     return True
 
 
-def end_conversation(world: dict[str, Any], scene: Conversation, pleasant: bool) -> None:
+def end_conversation(world: World, scene: Conversation, pleasant: bool) -> None:
     """End a scene. One that ended pleasantly after an exchange is remembered by everyone still in it.
 
     Args:
@@ -222,7 +226,7 @@ def end_conversation(world: dict[str, Any], scene: Conversation, pleasant: bool)
         record_event(world, member, "conversation", message)
 
 
-def check_conversations(world: dict[str, Any]) -> None:
+def check_conversations(world: World) -> None:
     """Let scenes lose members who went away and end those that are over.
 
     A member leaves once gone home, no longer seated at the scene's table, or, standing, no longer
@@ -246,7 +250,7 @@ def check_conversations(world: dict[str, Any]) -> None:
             end_conversation(world, scene, pleasant=True)
 
 
-def _drop_departed(world: dict[str, Any], scene: Conversation) -> None:
+def _drop_departed(world: World, scene: Conversation) -> None:
     # Someone who went home leaves no member record behind to log their leaving with.
     present = {item["id"] for item in world["actors"]}
     if scene not in world["conversations"] or set(scene["participants"]) <= present:

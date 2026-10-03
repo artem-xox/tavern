@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import math
 from typing import Any
 
+from tavern.state import DrunkennessRules
 from tavern.validation import number
 
 
@@ -103,7 +104,7 @@ def speech_instruction(level: float) -> str:
     return drunk_stage(level).speech
 
 
-def drink_beer(level: float, tolerance: float, rules: Mapping[str, float]) -> float:
+def drink_beer(level: float, tolerance: float, rules: DrunkennessRules) -> float:
     """Raise drunkenness by one beer.
 
     Args:
@@ -122,7 +123,7 @@ def drink_beer(level: float, tolerance: float, rules: Mapping[str, float]) -> fl
     return min(1.0, number(level, "Drunkenness", 0, 1) + rise)
 
 
-def sober_up(level: float, seconds: float, rules: Mapping[str, float]) -> float:
+def sober_up(level: float, seconds: float, rules: DrunkennessRules) -> float:
     """Let drunkenness wear off.
 
     Args:

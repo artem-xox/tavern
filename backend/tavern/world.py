@@ -22,13 +22,13 @@ from tavern.room import create_map, find_object, impassable_cells
 from tavern.routes import gives_way, occupied_cells, plan_route, replan, reserved_spots
 from tavern.scenes import check_conversations, conversation_of, leave_conversation, pressed, side_by_side
 from tavern.sight import line_visible, look_around, refresh_knowledge, visible_cells
-from tavern.state import find_actor
+from tavern.state import Actor, Rules, World, find_actor
 from tavern.thoughts import forget_expired
 from tavern.turns import speak_turns
 from tavern.validation import number, unique_ids
 
 
-def create_world(map_data: Mapping[str, Any], seed: int = 0) -> dict[str, Any]:
+def create_world(map_data: Mapping[str, Any], seed: int = 0) -> World:
     """Create and validate an independently owned, serializable room snapshot.
 
     Args:
@@ -51,10 +51,10 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> dict[str, Any]:
               for item in (listed if ranges is None else arriving(listed, ranges, seed))]
     if len({(item["x"], item["y"]) for item in actors}) != len(actors):
         raise ValueError("Actors cannot overlap at startup")
-    world = dict(schema_version=5, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
-                 map=world_map, actors=actors, departed=[], expected=[], closes_at=None,
-                 events=[], stimuli=[], next_stimulus_id=0, conversations=[], next_conversation_id=0,
-                 invitations=[], rules=_rules())
+    world = World(schema_version=5, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
+                  map=world_map, actors=actors, departed=[], expected=[], closes_at=None,
+                  events=[], stimuli=[], next_stimulus_id=0, conversations=[], next_conversation_id=0,
+                  invitations=[], rules=_rules())
     check_lines(world)
     for actor in actors:
         _look(world, actor)
@@ -63,7 +63,7 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> dict[str, Any]:
     return world
 
 
-def _rules() -> dict[str, Any]:
+def _rules() -> Rules:
     return {"move_seconds": 0.35, "blocked_timeout": 3.0, "vision_radius": 5,
             "need_rates": {"thirst": 0.18, "fatigue": 0.12, "bladder": 0.10,
                            "social": 0.18, "boredom": 0.25},
@@ -104,22 +104,22 @@ def _seat(world: Mapping[str, Any], actor: Mapping[str, Any]) -> dict[str, Any] 
     return _target(world, {"target_id": actor.get("seat_id")})
 
 
-def _clear_action(world: dict[str, Any], actor: dict[str, Any]) -> None:
+def _clear_action(world: World, actor: Actor) -> None:
     leave_line(world, actor)
     for target in world["map"]["objects"]:
         if target["reserved_by"] == actor["id"] and target["id"] != actor.get("seat_id"):
             target["reserved_by"] = None
-    actor.update(action=None, status="idle", path=[], _spot=None,
-                 _move_elapsed=0.0, _remaining=0.0, _blocked_for=0.0)
+    actor.update({"action": None, "status": "idle", "path": [], "_spot": None,
+                  "_move_elapsed": 0.0, "_remaining": 0.0, "_blocked_for": 0.0})
 
 
-def _reject(world: dict[str, Any], actor: dict[str, Any], reason: str) -> dict[str, Any]:
+def _reject(world: World, actor: Actor, reason: str) -> dict[str, Any]:
     record_event(world, actor, "action_failed", reason)
     _look(world, actor)
     return {"accepted": False, "reason": reason}
 
 
-def start_action(world: dict[str, Any], actor_id: str, action: Mapping[str, Any]) -> dict[str, Any]:
+def start_action(world: World, actor_id: str, action: Mapping[str, Any]) -> dict[str, Any]:
     """Validate and start a physical action, replacing any current valid action.
 
     Args:
@@ -153,7 +153,7 @@ def start_action(world: dict[str, Any], actor_id: str, action: Mapping[str, Any]
     return {"accepted": True, "reason": None}
 
 
-def _talk_in_line(world: dict[str, Any], actor: dict[str, Any], action: Mapping[str, Any]) -> dict[str, Any]:
+def _talk_in_line(world: World, actor: Actor, action: Mapping[str, Any]) -> dict[str, Any]:
     # Talking to a neighbour in line keeps the place in it, and the talk makes the wait bearable.
     found, activity = line_of(world, actor["id"]), ACTIVITIES[action["verb"]]
     if found is None or activity.on_arrival is None:
@@ -166,14 +166,14 @@ def _talk_in_line(world: dict[str, Any], actor: dict[str, Any], action: Mapping[
     return {"accepted": True, "reason": None}
 
 
-def _part(world: dict[str, Any], actor: dict[str, Any], action: Mapping[str, Any]) -> None:
+def _part(world: World, actor: Actor, action: Mapping[str, Any]) -> None:
     # Starting anything but a part in a conversation takes a visitor out of theirs.
     if not ACTIVITIES[action["verb"]].partner:
         leave_conversation(world, actor)
         _finish_parts(world)
 
 
-def _finish_parts(world: dict[str, Any]) -> None:
+def _finish_parts(world: World) -> None:
     # A part in a conversation ends with the visitor's place in its scene.
     for actor in world["actors"]:
         action = actor["action"]
@@ -182,7 +182,7 @@ def _finish_parts(world: dict[str, Any]) -> None:
             _clear_action(world, actor)
 
 
-def _line_up(world: dict[str, Any], actor: dict[str, Any], action: Mapping[str, Any],
+def _line_up(world: World, actor: Actor, action: Mapping[str, Any],
              front: bool) -> dict[str, Any]:
     # Joining a line is body work: the visitor stands up and walks to its end, or to its front
     # when cutting in. Choosing the line they already stand in means waiting on.
@@ -200,14 +200,14 @@ def _line_up(world: dict[str, Any], actor: dict[str, Any], action: Mapping[str, 
     _part(world, actor, action)
     actor["seat_id"] = None
     _clear_action(world, actor)
-    actor.update(action={key: action.get(key) for key in ("id", "verb", "target_id")}, status="queued",
-                 _remaining=world["rules"]["durations"][action["verb"]])
+    actor.update({"action": {key: action.get(key) for key in ("id", "verb", "target_id")}, "status": "queued",
+                  "_remaining": world["rules"]["durations"][action["verb"]]})
     record_event(world, actor, "action_started", f"{actor['name']} chose {action['verb']}")
     join_line(world, target, actor, front)
     return {"accepted": True, "reason": None}
 
 
-def _notice_target(world: dict[str, Any], actor: dict[str, Any], action: Mapping[str, Any]) -> None:
+def _notice_target(world: World, actor: Actor, action: Mapping[str, Any]) -> None:
     # A visitor turned away from a known place learns why (it is busy or has run dry), so stale
     # memories do not send them back again and again.
     target = _target(world, action)
@@ -215,15 +215,15 @@ def _notice_target(world: dict[str, Any], actor: dict[str, Any], action: Mapping
         actor["knowledge"]["objects"][target["id"]] = {**deepcopy(target), "last_seen": world["time"]}
 
 
-def _activate(world: dict[str, Any], actor: dict[str, Any], action: Mapping[str, Any],
+def _activate(world: World, actor: Actor, action: Mapping[str, Any],
               plan: tuple[list[int] | None, list[list[int]]]) -> None:
     _part(world, actor, action)
     if plan[1] or ACTIVITIES[action["verb"]].leaves_seat:
         actor["seat_id"] = None
     _clear_action(world, actor)
-    actor.update(action={key: action.get(key) for key in ("id", "verb", "target_id")},
-                 _spot=plan[0], path=plan[1], status="walking" if plan[1] else "interacting",
-                 _remaining=world["rules"]["durations"][action["verb"]])
+    actor.update({"action": {key: action.get(key) for key in ("id", "verb", "target_id")},
+                  "_spot": plan[0], "path": plan[1], "status": "walking" if plan[1] else "interacting",
+                  "_remaining": world["rules"]["durations"][action["verb"]]})
     target = _target(world, action)
     if target:
         target["reserved_by"] = actor["id"]
@@ -232,12 +232,12 @@ def _activate(world: dict[str, Any], actor: dict[str, Any], action: Mapping[str,
         _begin_interaction(world, actor)
 
 
-def _fail(world: dict[str, Any], actor: dict[str, Any], reason: str) -> None:
+def _fail(world: World, actor: Actor, reason: str) -> None:
     _clear_action(world, actor)
     _reject(world, actor, reason)
 
 
-def _yield_idle_occupant(world: dict[str, Any], actor: dict[str, Any], next_cell: tuple[int, int]) -> None:
+def _yield_idle_occupant(world: World, actor: Actor, next_cell: tuple[int, int]) -> None:
     occupant = next((item for item in world["actors"] if (item["x"], item["y"]) == next_cell), None)
     if occupant is None or occupant["status"] != "idle" or occupant.get("seat_id"):
         return
@@ -250,7 +250,7 @@ def _yield_idle_occupant(world: dict[str, Any], actor: dict[str, Any], next_cell
         _activate(world, occupant, {"id": "yield", "verb": "wait", "target_id": None}, ([*free], [[*free]]))
 
 
-def _move(world: dict[str, Any], actor: dict[str, Any], elapsed: float) -> None:
+def _move(world: World, actor: Actor, elapsed: float) -> None:
     actor["_move_elapsed"] += elapsed
     while actor["path"] and actor["_move_elapsed"] >= world["rules"]["move_seconds"]:
         next_cell = tuple(actor["path"][0])
@@ -261,13 +261,13 @@ def _move(world: dict[str, Any], actor: dict[str, Any], elapsed: float) -> None:
             return
         actor["x"], actor["y"] = actor["path"].pop(0)
         actor["_move_elapsed"] -= world["rules"]["move_seconds"]
-        actor.update(status="walking", _blocked_for=0.0)
+        actor.update({"status": "walking", "_blocked_for": 0.0})
     if not actor["path"]:
         _begin_interaction(world, actor)
 
 
-def _wait_for_route(world: dict[str, Any], actor: dict[str, Any], elapsed: float) -> None:
-    actor.update(status="waiting", _move_elapsed=0.0)
+def _wait_for_route(world: World, actor: Actor, elapsed: float) -> None:
+    actor.update({"status": "waiting", "_move_elapsed": 0.0})
     actor["_blocked_for"] += elapsed
     if gives_way(world, actor):
         return
@@ -277,25 +277,30 @@ def _wait_for_route(world: dict[str, Any], actor: dict[str, Any], elapsed: float
         _fail(world, actor, "Route remained blocked; try again after the obstruction changes")
 
 
-def _begin_interaction(world: dict[str, Any], actor: dict[str, Any]) -> None:
+def _begin_interaction(world: World, actor: Actor) -> None:
     if line_of(world, actor["id"]) is not None:
-        actor.update(status="queued", _move_elapsed=0.0, _blocked_for=0.0)
+        actor.update({"status": "queued", "_move_elapsed": 0.0, "_blocked_for": 0.0})
         return
-    reason = action_error(world, actor, actor["action"])
+    action = actor["action"]
+    if action is None:
+        raise ValueError(f"{actor['name']} has no action to begin")
+    reason = action_error(world, actor, action)
     if reason:
         _fail(world, actor, reason)
     else:
-        actor.update(status="interacting", _move_elapsed=0.0, _blocked_for=0.0)
-        activity = ACTIVITIES[actor["action"]["verb"]]
+        actor.update({"status": "interacting", "_move_elapsed": 0.0, "_blocked_for": 0.0})
+        activity = ACTIVITIES[action["verb"]]
         if activity.on_arrival:
-            partner = find_actor(world, actor["action"]["target_id"]) if activity.partner else None
-            activity.on_arrival(world, actor, partner or _target(world, actor["action"]))
+            partner = find_actor(world, action["target_id"]) if activity.partner else None
+            activity.on_arrival(world, actor, partner or _target(world, action))
         if activity.sound:
             sound_activity(world, actor, activity.sound, activity.doing)
 
 
 def _interaction_error(world: Mapping[str, Any], actor: Mapping[str, Any]) -> str | None:
     action = actor["action"]
+    if action is None:
+        raise ValueError(f"{actor['name']} has no action to carry on")
     reason = action_error(world, actor, action)
     if reason:
         return reason
@@ -307,8 +312,10 @@ def _interaction_error(world: Mapping[str, Any], actor: Mapping[str, Any]) -> st
     return None
 
 
-def _apply_effect(world: dict[str, Any], actor: dict[str, Any]) -> None:
+def _apply_effect(world: World, actor: Actor) -> None:
     action = actor["action"]
+    if action is None:
+        raise ValueError(f"{actor['name']} has no action to finish")
     activity = ACTIVITIES[action["verb"]]
     target = find_actor(world, action["target_id"]) if activity.partner else _target(world, action)
     if activity.effect:
@@ -317,22 +324,23 @@ def _apply_effect(world: dict[str, Any], actor: dict[str, Any]) -> None:
         actor["needs"][need] = min(100, max(0, actor["needs"][need] + change))
 
 
-def _interact(world: dict[str, Any], actor: dict[str, Any], elapsed: float) -> None:
+def _interact(world: World, actor: Actor, elapsed: float) -> None:
     reason = _interaction_error(world, actor)
     if reason:
         _fail(world, actor, reason)
         return
     actor["_remaining"] -= elapsed
     # A part in a conversation lasts as long as the scene does (see `_finish_parts`).
-    if actor["_remaining"] <= 0 and not ACTIVITIES[actor["action"]["verb"]].partner:
-        verb = actor["action"]["verb"]
+    action = actor["action"]
+    if action is not None and actor["_remaining"] <= 0 and not ACTIVITIES[action["verb"]].partner:
+        verb = action["verb"]
         _apply_effect(world, actor)
         record_event(world, actor, "action_completed", f"{actor['name']} completed {verb}")
         _clear_action(world, actor)
         _look(world, actor)
 
 
-def _step_actor(world: dict[str, Any], actor: dict[str, Any], elapsed: float) -> None:
+def _step_actor(world: World, actor: Actor, elapsed: float) -> None:
     for name, rate in world["rules"]["need_rates"].items():
         actor["needs"][name] = min(100, actor["needs"][name] + rate * elapsed)
     actor["visit"]["seconds"] += elapsed
@@ -347,7 +355,7 @@ def _step_actor(world: dict[str, Any], actor: dict[str, Any], elapsed: float) ->
     _look(world, actor)
 
 
-def step_world(world: dict[str, Any], dt: float) -> None:
+def step_world(world: World, dt: float) -> None:
     """Advance time, needs, movement, once-only action consequences, arrivals, and attention.
 
     Args:
@@ -385,7 +393,7 @@ def step_world(world: dict[str, Any], dt: float) -> None:
     update_expression(world)
 
 
-def _see_off(world: dict[str, Any]) -> None:
+def _see_off(world: World) -> None:
     # Visitors who stepped out keep their record, so the evening stays inspectable.
     for actor in [item for item in world["actors"] if "left_at" in item["visit"]]:
         world["actors"].remove(actor)
@@ -395,7 +403,7 @@ def _see_off(world: dict[str, Any]) -> None:
                 f"{actor['name']} left the inn after {beers} {'beer' if beers == 1 else 'beers'}")
 
 
-def _look(world: Mapping[str, Any], actor: dict[str, Any]) -> list[list[int]]:
+def _look(world: Mapping[str, Any], actor: Actor) -> list[list[int]]:
     # The world refreshes what each visitor knows every tick; only a decision needs the full,
     # copied observation, so the copying stays in observe_actor.
     visible = visible_cells(world, actor, world["rules"]["vision_radius"])

@@ -18,9 +18,9 @@ from typing import Any, TypedDict
 from tavern.briefing import brief
 from tavern.cards import PARAMS, TEXT_FIELDS
 from tavern.drunkenness import drunk_stage
-from tavern.questions import Ask, Question
 from tavern.memory import log_event
-from tavern.state import find_actor
+from tavern.questions import Ask, Question
+from tavern.state import World, find_actor
 from tavern.thoughts import THOUGHTS, active_thoughts
 from tavern.world import observe_actor, observe_people
 
@@ -278,7 +278,7 @@ def intention_writer(prefix: str, ask: Ask) -> Intender:
     return write
 
 
-def deliver_intention(world: dict[str, Any], actor_id: str, view: Mapping[str, Any],
+def deliver_intention(world: World, actor_id: str, view: Mapping[str, Any],
                       outcome: Callable[[], Any], rules: IntentionRules) -> float:
     """Keep a written intention, or log why there is none.
 

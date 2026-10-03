@@ -7,6 +7,8 @@ import re
 from types import MappingProxyType
 from typing import Any, TypedDict
 
+from tavern.state import World
+
 
 @dataclass(frozen=True)
 class Sound:
@@ -66,7 +68,7 @@ EVENT_SOUNDS: Mapping[str, Sound] = MappingProxyType({
 })
 
 
-def emit(world: dict[str, Any], sound: Sound, sources: Sequence[str], cell: Sequence[int],
+def emit(world: World, sound: Sound, sources: Sequence[str], cell: Sequence[int],
          about: Sequence[str], cause: str, event: str | None) -> Stimulus:
     """Make a sound in the hall; listeners attend to it at the end of the tick.
 
@@ -96,7 +98,7 @@ def emit(world: dict[str, Any], sound: Sound, sources: Sequence[str], cell: Sequ
     return stimulus
 
 
-def sound_event(world: dict[str, Any], actor: Mapping[str, Any], event: Mapping[str, Any]) -> None:
+def sound_event(world: World, actor: Mapping[str, Any], event: Mapping[str, Any]) -> None:
     """Let a logged event be heard if it makes a sound (see `EVENT_SOUNDS`).
 
     Args:
@@ -109,7 +111,7 @@ def sound_event(world: dict[str, Any], actor: Mapping[str, Any], event: Mapping[
         emit(world, sound, [actor["id"]], [actor["x"], actor["y"]], [], event["message"], event["type"])
 
 
-def sound_activity(world: dict[str, Any], actor: Mapping[str, Any], sound: Sound, doing: str | None) -> None:
+def sound_activity(world: World, actor: Mapping[str, Any], sound: Sound, doing: str | None) -> None:
     """Let an activity be heard as its interaction begins.
 
     Args:

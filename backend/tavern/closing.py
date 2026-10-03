@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from tavern.hearing import EVENT_SOUNDS, emit
+from tavern.state import World
 
 
 def inn_closed(world: Mapping[str, Any]) -> bool:
@@ -17,7 +18,7 @@ def inn_closed(world: Mapping[str, Any]) -> bool:
     return world["closes_at"] is not None and world["time"] >= world["closes_at"]
 
 
-def call_closing(world: dict[str, Any], since: float) -> None:
+def call_closing(world: World, since: float) -> None:
     """Log closing time on the tick that reaches it, called out loud from the bar.
 
     Args:

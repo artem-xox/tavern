@@ -6,9 +6,10 @@ from typing import Any
 
 from tavern.expression import emote_event
 from tavern.hearing import sound_event
+from tavern.state import Actor, World
 
 
-def record_event(world: dict[str, Any], actor: dict[str, Any], kind: str, message: str) -> None:
+def record_event(world: World, actor: Actor, kind: str, message: str) -> None:
     """Log an event for the room and remember it; it may be heard and show on the visitor's face.
 
     Args:
@@ -26,7 +27,7 @@ def record_event(world: dict[str, Any], actor: dict[str, Any], kind: str, messag
     del actor["memory"][:-25]
 
 
-def log_event(world: dict[str, Any], actor_id: str | None, kind: str, message: str) -> None:
+def log_event(world: World, actor_id: str | None, kind: str, message: str) -> None:
     """Log an event for the room only: no visitor remembers it, and nobody hears it.
 
     Args:

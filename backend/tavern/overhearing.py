@@ -10,6 +10,7 @@ from tavern.memory import record_event
 from tavern.names import called
 from tavern.scenes import Conversation, Turn
 from tavern.social_acts import take_offence
+from tavern.state import Actor, World
 from tavern.thoughts import friends_of, learn_name
 
 # Talk is as loud as the chat a `talk` starts with but carries across a table or two; laughter
@@ -28,7 +29,7 @@ OVERHEAR_ACT = 0.08
 OVERHEAR_GIST = 0.15
 
 
-def overhear_turn(world: dict[str, Any], scene: Conversation, turn: Turn) -> Stimulus:
+def overhear_turn(world: World, scene: Conversation, turn: Turn) -> Stimulus:
     """Make a spoken line heard: a sound from the whole company, caught by guests outside it.
 
     A listener whose salience (`hearing.salience`) reaches `OVERHEAR_ACT` notices the act;
@@ -46,7 +47,8 @@ def overhear_turn(world: dict[str, Any], scene: Conversation, turn: Turn) -> Sti
         the scene, so none of them attends to their own conversation.
     """
     people = {item["id"]: item for item in world["actors"]}
-    speaker, addressee = people[turn["speaker"]], people.get(turn["addressee"])
+    speaker = people[turn["speaker"]]
+    addressee = people.get(turn["addressee"]) if turn["addressee"] is not None else None
     cause = f"{speaker['name']} to {addressee['name'] if addressee else 'everyone'}: \"{turn['line']}\""
     stimulus = emit(world, TURN_SOUNDS[turn["act"]], list(scene["participants"]), [speaker["x"], speaker["y"]],
                     [addressee["id"]] if addressee else [], cause, "turn")
@@ -59,8 +61,8 @@ def overhear_turn(world: dict[str, Any], scene: Conversation, turn: Turn) -> Sti
     return stimulus
 
 
-def _catch(world: dict[str, Any], listener: dict[str, Any], turn: Turn, speaker: dict[str, Any],
-           addressee: dict[str, Any] | None, gist: bool) -> None:
+def _catch(world: World, listener: Actor, turn: Turn, speaker: Actor,
+           addressee: Actor | None, gist: bool) -> None:
     if gist and turn["act"] == "introduce":
         learn_name(listener, speaker, False, world["actors"])
     if turn["act"] != "insult":

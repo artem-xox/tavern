@@ -3,13 +3,14 @@
 from collections.abc import Mapping
 from copy import deepcopy
 from math import hypot
-from typing import Any
+from typing import Any, cast
 
 from tavern.navigation import find_path, select_interaction_spot
+from tavern.state import HallMap
 from tavern.validation import coordinate, number, position, unique_ids
 
 
-def create_map(data: Mapping[str, Any]) -> dict[str, Any]:
+def create_map(data: Mapping[str, Any]) -> HallMap:
     """Validate the hall and rate its tables, without sharing the supplied records.
 
     Args:
@@ -22,13 +23,13 @@ def create_map(data: Mapping[str, Any]) -> dict[str, Any]:
     width, height = data.get("width"), data.get("height")
     if type(width) is not int or type(height) is not int or min(width, height) <= 0:
         raise ValueError("Map dimensions must be positive integers")
-    result = {key: deepcopy(data.get(key, [])) for key in ("blocked", "objects")}
+    result: dict[str, Any] = {key: deepcopy(data.get(key, [])) for key in ("blocked", "objects")}
     result.update(width=width, height=height, tile_size=data.get("tile_size", 32))
     if type(result["tile_size"]) is not int or result["tile_size"] <= 0:
         raise ValueError("Tile size must be a positive integer")
     _validate_objects(result)
     _rate_tables(result)
-    return result
+    return cast(HallMap, result)
 
 
 def _comfort(source: Mapping[str, Any], table: Mapping[str, Any]) -> float:

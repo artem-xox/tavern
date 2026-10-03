@@ -12,6 +12,7 @@ from typing import Any, TypedDict
 from tavern.activities import ACTIVITIES
 from tavern.memory import record_event
 from tavern.names import called
+from tavern.state import Actor, World
 from tavern.thoughts import think
 from tavern.room import find_object, line_approach
 from tavern.routes import plan_route, replan
@@ -93,7 +94,7 @@ def line_full(item: Mapping[str, Any]) -> str | None:
     return f"The line for {item['name']} is full" if len(item["queue"]) >= len(item["queue_spots"]) else None
 
 
-def _cut(world: dict[str, Any], item: Mapping[str, Any], actor: dict[str, Any], passed: list[str]) -> None:
+def _cut(world: World, item: Mapping[str, Any], actor: Actor, passed: list[str]) -> None:
     people = {other["id"]: other for other in world["actors"]}
     if passed:
         record_event(world, actor, "line_cut", f"{actor['name']} cut in line for {item['name']}")
@@ -105,7 +106,7 @@ def _cut(world: dict[str, Any], item: Mapping[str, Any], actor: dict[str, Any], 
               message, about=actor)
 
 
-def join_line(world: dict[str, Any], item: dict[str, Any], actor: dict[str, Any], front: bool) -> None:
+def join_line(world: World, item: dict[str, Any], actor: Actor, front: bool) -> None:
     """Put a visitor at the end of a line, or at its front when they cut in.
 
     Args:
@@ -121,7 +122,7 @@ def join_line(world: dict[str, Any], item: dict[str, Any], actor: dict[str, Any]
     _cut(world, item, actor, passed)
 
 
-def stay_in_line(world: dict[str, Any], item: dict[str, Any], actor: dict[str, Any], front: bool) -> None:
+def stay_in_line(world: World, item: dict[str, Any], actor: Actor, front: bool) -> None:
     """Keep a visitor in their line with renewed patience, moving them to the front if they cut in.
 
     Args:
@@ -140,7 +141,7 @@ def stay_in_line(world: dict[str, Any], item: dict[str, Any], actor: dict[str, A
     _cut(world, item, actor, passed)
 
 
-def leave_line(world: dict[str, Any], actor: dict[str, Any]) -> None:
+def leave_line(world: World, actor: Actor) -> None:
     """Take a visitor out of the line they stand in, if any: they gave up or were called away.
 
     Args:
@@ -175,7 +176,7 @@ def out_of_patience(world: Mapping[str, Any], actor: Mapping[str, Any]) -> bool:
     return world["time"] - item["queue"][place]["since"] >= limit
 
 
-def step_line(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
+def step_line(world: Mapping[str, Any], actor: Actor) -> None:
     """Move a visitor in line up to their queue spot, or from the front to the place once it is free.
 
     Args:
@@ -187,11 +188,13 @@ def step_line(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
         return
     item, place = found
     if place == 0 and _free_for(world, item, actor):
-        plan = plan_route(world, actor, actor["action"])
+        action = actor["action"]
+        plan = None if action is None else plan_route(world, actor, action)
         if plan is not None:
             del item["queue"][0]
             item["reserved_by"] = actor["id"]
-            actor.update(_spot=plan[0], path=plan[1], status="walking", _move_elapsed=0.0, _blocked_for=0.0)
+            actor.update({"_spot": plan[0], "path": plan[1], "status": "walking",
+                          "_move_elapsed": 0.0, "_blocked_for": 0.0})
             return
     spot = item["queue_spots"][place]
     if actor["_spot"] == spot:
@@ -199,7 +202,7 @@ def step_line(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
     # A spot someone still stands on is tried again on the next tick.
     previous, actor["_spot"] = actor["_spot"], spot
     if replan(world, actor):
-        actor.update(status="walking", _blocked_for=0.0)
+        actor.update({"status": "walking", "_blocked_for": 0.0})
     else:
         actor["_spot"] = previous
 

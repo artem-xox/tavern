@@ -9,10 +9,11 @@ from tavern.hearing import Stimulus, salience
 from tavern.memory import record_event
 from tavern.room import object_cells
 from tavern.scenes import leave_conversation
+from tavern.state import Actor, World
 from tavern.thoughts import friends_of
 
 
-def attend(world: dict[str, Any]) -> list[dict[str, Any]]:
+def attend(world: World) -> list[Actor]:
     """Let every visitor attend to the sounds made since the last tick, once each.
 
     Each visitor reacts only to the most salient sound (the earliest on a tie). Below the
@@ -47,7 +48,7 @@ def attend(world: dict[str, Any]) -> list[dict[str, Any]]:
     return stops
 
 
-def _alert(world: dict[str, Any], actor: dict[str, Any], stimulus: Stimulus) -> bool:
+def _alert(world: World, actor: Actor, stimulus: Stimulus) -> bool:
     now = world["time"]
     look_at(actor, stimulus["cell"], now + world["rules"]["attention"]["turn_seconds"], stimulus["id"])
     show_emote(actor, "alert", now + world["rules"]["emote_seconds"]["alert"])

@@ -15,6 +15,7 @@ from tavern.memory import record_event
 from tavern.names import called
 from tavern.room import find_object
 from tavern.scenes import Conversation
+from tavern.state import Actor, World
 from tavern.thoughts import think
 from tavern.validation import number
 
@@ -34,10 +35,10 @@ Invitation = TypedDict("Invitation", {"kind": str, "from": str, "to": str})
 Errand = TypedDict("Errand", {"kind": str, "from": str, "to": str, "stage": str, "held": int})
 
 # Starts an action the way `world.start_action` does: world, visitor ID, action; returns acceptance.
-Start = Callable[[dict[str, Any], str, Mapping[str, Any]], Mapping[str, Any]]
+Start = Callable[[World, str, Mapping[str, Any]], Mapping[str, Any]]
 
 
-def _people(world: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+def _people(world: Mapping[str, Any]) -> dict[str, Actor]:
     return {item["id"]: item for item in world["actors"]}
 
 
@@ -119,8 +120,8 @@ def pending_for(scene: Mapping[str, Any], actor_id: str) -> Invitation | None:
     return invitation if invitation is not None and invitation["to"] == actor_id else None
 
 
-def invite(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
-           addressee: dict[str, Any] | None) -> None:
+def invite(world: World, scene: Conversation, speaker: Actor,
+           addressee: Actor | None) -> None:
     """Leave the invitation of the turn just spoken pending in its scene (the `invite` act).
 
     Args:
@@ -134,8 +135,8 @@ def invite(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
     scene["invitation"] = {"kind": scene["turns"][-1]["invitation"], "from": speaker["id"], "to": addressee["id"]}
 
 
-def accept(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
-           addressee: dict[str, Any] | None) -> None:
+def accept(world: World, scene: Conversation, speaker: Actor,
+           addressee: Actor | None) -> None:
     """Accept the invitation pending for the speaker (the `accept` act); it is carried out this tick.
 
     Args:
@@ -153,8 +154,8 @@ def accept(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
                  f"{KINDS[invitation['kind']]} from {_people(world)[invitation['from']]['name']}")
 
 
-def decline(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
-            addressee: dict[str, Any] | None) -> None:
+def decline(world: World, scene: Conversation, speaker: Actor,
+            addressee: Actor | None) -> None:
     """Decline the invitation pending for the speaker (the `decline` act); nothing else follows.
 
     Args:
@@ -170,7 +171,7 @@ def decline(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
                      f"{KINDS[invitation['kind']]} from {_people(world)[invitation['from']]['name']}")
 
 
-def honor_invitations(world: dict[str, Any], start: Start) -> None:
+def honor_invitations(world: World, start: Start) -> None:
     """Carry every accepted invitation one step further.
 
     `join_table` seats the invitee on a free chair at the inviter's table; `darts_together` sends
@@ -188,7 +189,7 @@ def honor_invitations(world: dict[str, Any], start: Start) -> None:
             world["invitations"].remove(errand)
 
 
-def _step(world: dict[str, Any], errand: Errand, start: Start) -> bool:
+def _step(world: World, errand: Errand, start: Start) -> bool:
     # Returns whether the errand goes on.
     people = _people(world)
     host, guest = people.get(errand["from"]), people.get(errand["to"])
@@ -229,8 +230,8 @@ def _first_steps(world: Mapping[str, Any], errand: Errand, host: Mapping[str, An
         [(guest["id"], _command(verb, target))] if errand["kind"] == "darts_together" else [])
 
 
-def _fetched(world: dict[str, Any], errand: Errand, host: dict[str, Any] | None,
-             guest: dict[str, Any] | None) -> bool:
+def _fetched(world: World, errand: Errand, host: Actor | None,
+             guest: Actor | None) -> bool:
     if host is None or guest is None:
         return False
     if (host["action"] or {}).get("verb") == "take_beer":
@@ -244,7 +245,7 @@ def _fetched(world: dict[str, Any], errand: Errand, host: dict[str, Any] | None,
     return False
 
 
-def _follow(world: dict[str, Any], errand: Errand, guest: dict[str, Any] | None, start: Start) -> bool:
+def _follow(world: World, errand: Errand, guest: Actor | None, start: Start) -> bool:
     # The invitee waits for the door the inviter holds, then follows them out through it.
     if guest is None or (guest["action"] or {}).get("verb") == "leave":
         return False

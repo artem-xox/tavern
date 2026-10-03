@@ -4,6 +4,8 @@ from collections.abc import Mapping
 from copy import deepcopy
 from typing import Any
 
+from tavern.state import Actor
+
 
 def line_visible(origin: tuple[int, int], target: tuple[int, int], blocked: set[tuple[int, int]]) -> bool:
     """Tell whether a straight line between two cells passes no blocked cell.
@@ -52,7 +54,7 @@ def visible_cells(world: Mapping[str, Any], actor: Mapping[str, Any], radius: in
             if abs(x - origin[0]) + abs(y - origin[1]) <= radius and line_visible(origin, (x, y), blocked)]
 
 
-def look_around(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
+def look_around(world: Mapping[str, Any], actor: Actor) -> None:
     """Let a visitor stepping in through the door take in the whole hall.
 
     Args:
@@ -63,7 +65,7 @@ def look_around(world: Mapping[str, Any], actor: dict[str, Any]) -> None:
     refresh_knowledge(world, actor, visible_cells(world, actor, radius))
 
 
-def refresh_knowledge(world: Mapping[str, Any], actor: dict[str, Any], visible: list[list[int]]) -> None:
+def refresh_knowledge(world: Mapping[str, Any], actor: Actor, visible: list[list[int]]) -> None:
     """Remember the cells seen and the current state of every object anchored in them.
 
     A line is seen where it stands: a place whose queue spot is in sight is remembered too,

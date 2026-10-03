@@ -5,6 +5,7 @@ from typing import Any
 
 from tavern.navigation import find_path, select_interaction_spot
 from tavern.room import find_object, impassable_cells
+from tavern.state import Actor
 
 
 def reserved_spots(world: Mapping[str, Any], actor_id: str) -> list[tuple[int, int]]:
@@ -92,7 +93,7 @@ def occupied_cells(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[t
     return [(item["x"], item["y"]) for item in world["actors"] if item["id"] != actor["id"]]
 
 
-def replan(world: Mapping[str, Any], actor: dict[str, Any]) -> bool:
+def replan(world: Mapping[str, Any], actor: Actor) -> bool:
     """Find a new way around people blocking the route to the chosen spot.
 
     Args:

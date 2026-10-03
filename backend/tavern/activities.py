@@ -10,10 +10,12 @@ from tavern.hearing import Sound
 from tavern.memory import record_event
 from tavern.names import called
 from tavern.scenes import join_conversation, start_conversation
+from tavern.state import Actor, World
 from tavern.thoughts import think
 
 # An effect receives the world, the visitor, and the target: an object, a partner, or None.
-Effect = Callable[[dict[str, Any], dict[str, Any], dict[str, Any] | None], None]
+# The target is a place or, for a part in a conversation, the partner.
+Effect = Callable[[World, Actor, Any], None]
 
 
 @dataclass(frozen=True)
@@ -70,14 +72,14 @@ class Activity:
     sound: Sound | None = None
 
 
-def _pour(world: dict[str, Any], actor: dict[str, Any], tap: dict[str, Any] | None) -> None:
+def _pour(world: World, actor: Actor, tap: dict[str, Any] | None) -> None:
     if tap is None:
         raise ValueError("Pouring a beer needs a tap")
     tap["stock"] -= 1
     actor["inventory"]["beer"] += 1
 
 
-def _drink(world: dict[str, Any], actor: dict[str, Any], target: dict[str, Any] | None) -> None:
+def _drink(world: World, actor: Actor, target: dict[str, Any] | None) -> None:
     actor["inventory"]["beer"] -= 1
     actor["visit"]["beers"] += 1
     # Guests without a tolerance trait (cards add it in E10) drink like a middling drinker.
@@ -85,24 +87,24 @@ def _drink(world: dict[str, Any], actor: dict[str, Any], target: dict[str, Any] 
     actor["drunkenness"] = drink_beer(actor["drunkenness"], tolerance, world["rules"]["drunkenness"])
 
 
-def _open_scene(world: dict[str, Any], actor: dict[str, Any], partner: dict[str, Any] | None) -> None:
+def _open_scene(world: World, actor: Actor, partner: Actor | None) -> None:
     if partner is None:
         raise ValueError("Starting a conversation needs a partner")
     start_conversation(world, actor, partner)
 
 
-def _join_scene(world: dict[str, Any], actor: dict[str, Any], member: dict[str, Any] | None) -> None:
+def _join_scene(world: World, actor: Actor, member: Actor | None) -> None:
     if member is None:
         raise ValueError("Joining a conversation needs a member to join")
     join_conversation(world, actor, member)
 
 
-def _go_home(world: dict[str, Any], actor: dict[str, Any], door: dict[str, Any] | None) -> None:
+def _go_home(world: World, actor: Actor, door: dict[str, Any] | None) -> None:
     # step_world moves the visitor out once every actor has finished this tick.
     actor["visit"]["left_at"] = world["time"]
 
 
-def _settle(world: dict[str, Any], actor: dict[str, Any], seat: dict[str, Any] | None) -> None:
+def _settle(world: World, actor: Actor, seat: dict[str, Any] | None) -> None:
     # The chair a visitor sits down on becomes their own; taking someone else's own seat wrongs them.
     if seat is None:
         raise ValueError("Settling down needs a seat")
@@ -113,7 +115,7 @@ def _settle(world: dict[str, Any], actor: dict[str, Any], seat: dict[str, Any] |
                 record_event(world, owner, "seat_taken", message)
                 think(owner, "seat_taken", world["time"], f"{called(owner, actor)} took my seat ({seat['name']})",
                       message, about=actor)
-    actor.update(seat_id=seat["id"], favorite_seat_id=seat["id"])
+    actor.update({"seat_id": seat["id"], "favorite_seat_id": seat["id"]})
 
 
 ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity for activity in (

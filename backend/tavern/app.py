@@ -29,6 +29,7 @@ from tavern.questions import Ask, Question
 from tavern.room import object_cells
 from tavern.scenario import Scenario, open_evening, parse_scenario
 from tavern.scripted import write_scripted_turn
+from tavern.state import Actor, World
 from tavern.turns import TurnWriter, claim_turns, deliver_turn
 from tavern.validation import integer, number
 from tavern.world import create_world, start_action, step_world
@@ -87,7 +88,7 @@ class TavernRuntime:
         self.intending: dict[str, tuple[asyncio.Task[Any], float, dict[str, Any]]] = {}
         self.next_intention: dict[str, float] = {}
 
-    def _open(self, seed: int) -> dict[str, Any]:
+    def _open(self, seed: int) -> World:
         # A scenario says who comes tonight; without one, the room's own visitors are already in.
         if self.scenario is None:
             return create_world(self.map_data, seed)
@@ -110,7 +111,7 @@ class TavernRuntime:
     def _event(self, message: str) -> None:
         log_control(self.world, message)
 
-    def _apply_decision(self, actor: dict[str, Any], task: asyncio.Task[Any], revision: int) -> None:
+    def _apply_decision(self, actor: Actor, task: asyncio.Task[Any], revision: int) -> None:
         if revision != self.revisions.get(actor["id"], 0) or not free_to_decide(self.world, actor):
             with suppress(asyncio.CancelledError, Exception):
                 task.result()
@@ -302,7 +303,7 @@ class TavernRuntime:
         self.world = restored
         return True
 
-    def _read_autosave(self) -> dict[str, Any] | None:
+    def _read_autosave(self) -> World | None:
         if self.database_url:
             return load_database_world(self.database_url, self.session_id, "auto")
         path = self._autosave_path()
