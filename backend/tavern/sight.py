@@ -4,7 +4,10 @@ from collections.abc import Mapping
 from copy import deepcopy
 from typing import Any
 
-from tavern.state import Actor
+from tavern.names import called
+from tavern.room import find_object
+from tavern.scenes import conversation_of, pressed, side_by_side
+from tavern.state import Actor, find_actor
 
 
 def line_visible(origin: tuple[int, int], target: tuple[int, int], blocked: set[tuple[int, int]]) -> bool:
@@ -85,3 +88,35 @@ def refresh_knowledge(world: Mapping[str, Any], actor: Actor, visible: list[list
             record["last_seen"] = world["time"]
             actor["knowledge"]["objects"][item["id"]] = record
 
+
+def people_in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """List everyone a visitor can see and what they are visibly doing.
+
+    Args:
+        world: Current world; it is not modified.
+        actor: Visitor doing the looking.
+
+    Returns:
+        Public facts about each visible person (see `world.observe_people`): ID, name as the
+        viewer calls them, cell, seat and table, whether they are free to talk, their
+        conversation, whether they stand beside the viewer, and their current verb and target name.
+    """
+    walls = set(map(tuple, world["map"]["blocked"]))
+    people = []
+    for visitor in world["actors"]:
+        # People in the hall are in plain sight from anywhere in it, so walls alone hide them.
+        # What someone is doing is public; their needs, purse and memories are not.
+        if visitor["id"] == actor["id"] or not line_visible(
+                (actor["x"], actor["y"]), (visitor["x"], visitor["y"]), walls):
+            continue
+        seat, action = find_object(world["map"], visitor.get("seat_id")), visitor["action"] or {}
+        target = find_object(world["map"], action.get("target_id")) or find_actor(world, action.get("target_id"))
+        # A stranger is known by their looks until the viewer learns their name.
+        people.append({**{key: visitor[key] for key in ("id", "x", "y", "seat_id")}, "name": called(actor, visitor)})
+        scene = conversation_of(world, visitor["id"])
+        people[-1].update(table_id=seat.get("table_id") if seat else None,
+                          available=scene is None and not pressed(world, visitor),
+                          conversation=scene["id"] if scene else None,
+                          beside=side_by_side(world, actor, visitor),
+                          doing=action.get("verb"), target=target["name"] if target else None)
+    return people
