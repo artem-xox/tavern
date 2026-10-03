@@ -99,7 +99,8 @@ def latest_trigger(world: Mapping[str, Any], actor: Mapping[str, Any], since: fl
         found.append(Trigger(kind="closing", text="The innkeeper called closing time", time=world["closes_at"]))
     found += [Trigger(kind=SALIENT_EVENTS[item["type"]], text=item["message"], time=item["time"])
               for item in actor["memory"] if item["type"] in SALIENT_EVENTS]
-    return max((item for item in found if item["time"] > since), key=lambda item: item["time"], default=None)
+    # A thought's time is derived from its expiry and may carry float error; a tick is far longer.
+    return max((item for item in found if item["time"] > since + 1e-6), key=lambda item: item["time"], default=None)
 
 
 def intention_due(world: Mapping[str, Any], actor: Mapping[str, Any], rules: IntentionRules) -> Trigger | None:
