@@ -1,0 +1,23 @@
+{
+  "id": "bren",
+  "name": "Bren",
+  "sprite": "veteran",
+  "occupation": "old soldier turned charcoal burner",
+  "background": "Bren fought in two border wars and now burns charcoal in the hills, coming down to the inn when his sacks are sold.",
+  "temperament": "Gruff and quarrelsome when drinking, loyal to old comrades to the bone; courage he has, tact he lacks.",
+  "speech": "Loud, coarse, full of war stories; calls younger men 'boy' whatever their age.",
+  "quirks": "Shows his scars unasked; drinks fast; keeps his knife on the table.",
+  "secret": "He deserted at the end of the second war and has lied about it ever since.",
+  "goal": "Drink the coin from his charcoal, find an old comrade to share stories with, and prove he can still win at darts.",
+  "params": {
+    "patience": 0.35,
+    "temper": 0.85,
+    "sociability": 0.6,
+    "courage": 0.9,
+    "strength": 0.85,
+    "brawling": 0.9,
+    "tolerance": 0.85,
+    "comfort": 0.4,
+    "curiosity": 0.35
+  }
+}

@@ -139,12 +139,29 @@ changes the behavior `test_closing.py` specifies, so it needs a decision.
 
 ### M3 — Characters and conversation
 
-- [ ] **E10 — Character cards.** Schema, validation, and eight presets with distinct
+- [x] **E10 — Character cards.** Schema, validation, and eight presets with distinct
   temperaments and goals, plus two starting relationships. Done: invalid cards fail
-  loudly; the briefing includes the goal and temperament.
-- [ ] **E11 — Card compiler.** Haiku extracts params from a free-text card through
+  loudly; the briefing includes the goal and temperament. `cards.py` validates a card
+  (`id`, `name`, `sprite`, eight text fields, nine params in `params`); presets are in
+  `data/characters/`. A scenario guest names its card (`"card": "edda"`), keeps its
+  name, sprite and color, and takes the card's params as `traits`, so the trait names
+  the local policy reads still work. Starting `relationships` (`old friends`, `rivals`,
+  with a note) live in the scenario (`ties.py`, `Scenario.ties` for E12) and each guest
+  holds its side; the briefing adds occupation, temperament, goal and ties
+  (`portrait.py`). Saves are `schema_version` 4. Without the card library,
+  `parse_scenario` reads only the schedule, because `test_first_evening.py` parses the
+  repository scenario on its own.
+- [x] **E11 — Card compiler.** Haiku extracts params from a free-text card through
   structured output; values are range-checked and shown for confirmation. Done:
   malformed or out-of-range answers are rejected; the offline mode is labeled.
+  `claude.py` is the Claude adapter later tasks reuse: a `Question` (one to four cached
+  system blocks, per-call content, schema) goes in through the `Ask` port
+  (`questions.py`), and a JSON object comes out, with usage including cache reads and
+  writes; failures raise `ClaudeError`. `recording.py` records, replays and prices
+  Claude kinds with a `Tariff`. `POST /api/cards/compile` returns the proposed params
+  (`compiled: false` and a note offline) using the server's key. Live: three cards
+  compiled in 1.8–2.8 s for $0.0015 each; a 4,306-token prefix was written once and
+  read from the cache on the next call.
 - [x] **E12 — Thoughts, mood, opinions.** Events create timed thoughts with mood and
   opinion effects; opinions and familiarity are kept per pair. Replaces grievances.
   Done: stacking, expiry, and opinion changes are tested; the inspector lists thoughts.

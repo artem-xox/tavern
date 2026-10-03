@@ -2,12 +2,14 @@
 
 from collections import deque
 from collections.abc import Awaitable, Callable, Mapping, Sequence
+from dataclasses import astuple, dataclass
 import hashlib
 import json
 import math
 from typing import Any, TypedDict, cast
 
 from tavern.agents import Action, Evaluator
+from tavern.questions import Ask, Question
 
 # A metered evaluator answers like an Evaluator and also returns the token usage its provider
 # reported for the call, or None when it reported none (see `jev.evaluate_actions_metered`).
@@ -15,14 +17,20 @@ Metered = Callable[[Mapping[str, Any], Sequence[Action], Mapping[str, Any]],
                    Awaitable[tuple[dict[str, float], Mapping[str, int] | None]]]
 
 
+# A metered port answers a question like `questions.Ask` and also returns the token usage its
+# provider reported (see `claude.ask_claude`).
+MeteredAsk = Callable[[Question], Awaitable[tuple[dict[str, Any], Mapping[str, int] | None]]]
+
+
 class Record(TypedDict):
     """One model call, as a line of a recording.
 
-    `kind` names the call (`actions`, `seats` and `family` are Jev's; a new model adds its own kind) and
+    `kind` names the call (`actions`, `seats` and `family` are Jev's, `card` is Claude's) and
     `key` hashes kind and request. `request` is what the model was asked, never credentials;
-    `response` is its answer (Jev: scores by candidate ID), or None after a failure whose
-    message is `error`. `usage` holds the provider's token counters, None when it reported
-    none, and `latency` the wall-clock seconds the call took.
+    `response` is its answer (Jev: scores by candidate ID; Claude: the JSON object), or None
+    after a failure whose message is `error`. `usage` holds the provider's token counters
+    (Claude's include cache reads and writes), None when it reported none, and `latency` the
+    wall-clock seconds the call took.
     """
 
     kind: str
@@ -43,6 +51,26 @@ class KindCost(TypedDict):
     input_tokens: int
     output_tokens: int
     usd: float
+
+
+@dataclass(frozen=True)
+class Tariff:
+    """A model's USD prices per million tokens: input, output, cache reads and cache writes."""
+
+    input: float
+    output: float
+    cache_read: float
+    cache_write: float
+
+
+class ClaudeCost(KindCost):
+    """The calls of a kind priced by a full tariff, with the cache reads and writes reported."""
+
+    cache_read_input_tokens: int
+    cache_creation_input_tokens: int
+
+
+_COUNTERS = ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens")
 
 
 def request_key(kind: str, request: Mapping[str, Any]) -> str:
@@ -141,6 +169,70 @@ def _scores(response: Any, candidates: Sequence[Action]) -> dict[str, float]:
     return dict(response)
 
 
+def record_questions(kind: str, ask: MeteredAsk, keep: Callable[[Record], None], clock: Callable[[], float],
+                     recoverable: type[Exception]) -> Ask:
+    """Wrap a metered model port so every question is kept as a record.
+
+    Args:
+        kind: Call kind written into each record, e.g. `card`.
+        ask: Metered port that answers the questions, e.g. `claude.ask_claude` bound to its config.
+        keep: Receives each record as soon as its call ends.
+        clock: Monotonic seconds for measuring latency.
+        recoverable: Failure the consumer falls back from (`ClaudeError`); it is recorded, then
+            raised again.
+
+    Returns:
+        A port answering as `ask` does, without the usage.
+    """
+    async def recorded(question: Question) -> dict[str, Any]:
+        request, started = _plain(question), clock()
+        try:
+            answer, usage = await ask(question)
+        except recoverable as error:
+            keep(_record(kind, request, None, str(error), None, clock() - started))
+            raise
+        keep(_record(kind, request, answer, None, usage, clock() - started))
+        return answer
+    return recorded
+
+
+def replay_questions(kind: str, records: Sequence[Record], recoverable: type[Exception]) -> Ask:
+    """Answer questions from a recording instead of a model.
+
+    Args:
+        kind: Call kind to answer; records of other kinds are not used.
+        records: Recorded calls in the order they were made.
+        recoverable: Failure type a recorded error is raised as.
+
+    Returns:
+        A port returning the recorded answer of an identical question; identical questions get
+        their recorded answers in order. It raises LookupError for a question without an unused
+        recorded answer, ValueError when the recorded answer is not a JSON object, and
+        `recoverable` for a recorded failure.
+    """
+    answers: dict[str, deque[Record]] = {}
+    for record in records:
+        if record["kind"] == kind:
+            answers.setdefault(record["key"], deque()).append(record)
+
+    async def replayed(question: Question) -> dict[str, Any]:
+        key = request_key(kind, _plain(question))
+        if not answers.get(key):
+            raise LookupError(f"No recorded {kind} call is left for request {key}")
+        record = answers[key].popleft()
+        if record["error"] is not None:
+            raise recoverable(record["error"])
+        if not isinstance(record["response"], dict):
+            raise ValueError(f"Recorded {kind} answer is not a JSON object: {record['response']!r}")
+        return dict(record["response"])
+    return replayed
+
+
+def _plain(question: Question) -> dict[str, Any]:
+    # Stored as plain JSON data, so a record compares equal to itself read back from its file.
+    return json.loads(json.dumps(dict(question), allow_nan=False))
+
+
 def format_record(record: Record) -> str:
     """Write a record as one JSON line.
 
@@ -201,33 +293,56 @@ def _check_measures(usage: Any, latency: Any) -> None:
         raise ValueError("latency must be a nonnegative number of seconds")
 
 
-def cost_by_kind(records: Sequence[Record], input_usd_per_million: float) -> dict[str, KindCost]:
+def cost_by_kind(records: Sequence[Record], input_usd_per_million: float,
+                 tariffs: Mapping[str, Tariff] | None = None) -> dict[str, KindCost]:
     """Sum calls, tokens and cost per call kind.
 
     Args:
         records: Recorded calls.
-        input_usd_per_million: USD tariff per million input tokens. Every kind recorded so far
-            is a Jev call, and Jev output tokens are free.
+        input_usd_per_million: USD tariff per million input tokens of every kind without a
+            tariff of its own: Jev's, whose output tokens are free.
+        tariffs: Full tariffs of the kinds that have one, such as Claude's (`claude.HAIKU_4_5`).
 
     Returns:
         Per kind, in name order: calls, failed calls, answered calls without reported usage,
-        reported input and output tokens, and the unrounded cost in USD.
+        reported input and output tokens (and, for kinds with a tariff, cache reads and
+        writes, as a `ClaudeCost`), and the unrounded cost in USD.
 
     Raises:
-        ValueError: The price is negative or not finite.
+        ValueError: A price is negative or not finite.
     """
-    if not 0 <= input_usd_per_million < math.inf:
-        raise ValueError(f"Input price must be a nonnegative USD amount, not {input_usd_per_million!r}")
+    priced = dict(tariffs or {})
+    for price in [input_usd_per_million, *(value for tariff in priced.values() for value in astuple(tariff))]:
+        if not 0 <= price < math.inf:
+            raise ValueError(f"A price must be a nonnegative USD amount, not {price!r}")
     summary: dict[str, KindCost] = {}
     for record in sorted(records, key=lambda item: item["kind"]):
-        kind = summary.setdefault(record["kind"], {"calls": 0, "failures": 0, "missing_usage": 0,
-                                                    "input_tokens": 0, "output_tokens": 0, "usd": 0.0})
-        # Calls without reported usage add no tokens; `missing_usage` says how many there were.
-        usage = record["usage"] or {"input_tokens": 0, "output_tokens": 0}
-        kind["calls"] += 1
-        kind["failures"] += record["error"] is not None
-        kind["missing_usage"] += record["error"] is None and record["usage"] is None
-        kind["input_tokens"] += usage["input_tokens"]
-        kind["output_tokens"] += usage["output_tokens"]
-        kind["usd"] = kind["input_tokens"] / 1_000_000 * input_usd_per_million
+        kind = summary.setdefault(record["kind"], _no_cost(record["kind"] in priced))
+        _count(kind, record)
+        kind["usd"] = _usd(kind, priced.get(record["kind"]), input_usd_per_million)
     return summary
+
+
+def _no_cost(cached: bool) -> KindCost:
+    empty = {"calls": 0, "failures": 0, "missing_usage": 0, "input_tokens": 0, "output_tokens": 0, "usd": 0.0}
+    return cast(KindCost, {**empty, **({"cache_read_input_tokens": 0, "cache_creation_input_tokens": 0} if cached
+                                       else {})})
+
+
+def _count(kind: KindCost, record: Record) -> None:
+    # Calls without reported usage add no tokens; `missing_usage` says how many there were. A
+    # counter the provider left out of a reported usage counts as zero.
+    kind["calls"] += 1
+    kind["failures"] += record["error"] is not None
+    kind["missing_usage"] += record["error"] is None and record["usage"] is None
+    for counter in _COUNTERS:
+        if counter in kind:
+            kind[counter] += (record["usage"] or {}).get(counter, 0)  # type: ignore[literal-required]
+
+
+def _usd(kind: Mapping[str, Any], tariff: Tariff | None, input_usd_per_million: float) -> float:
+    if tariff is None:
+        return kind["input_tokens"] / 1_000_000 * input_usd_per_million
+    return (kind["input_tokens"] * tariff.input + kind["output_tokens"] * tariff.output
+            + kind["cache_read_input_tokens"] * tariff.cache_read
+            + kind["cache_creation_input_tokens"] * tariff.cache_write) / 1_000_000

@@ -47,7 +47,7 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> dict[str, Any]:
               for item in (listed if ranges is None else arriving(listed, ranges, seed))]
     if len({(item["x"], item["y"]) for item in actors}) != len(actors):
         raise ValueError("Actors cannot overlap at startup")
-    world = dict(schema_version=3, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
+    world = dict(schema_version=4, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
                  map=world_map, actors=actors, departed=[], expected=[], closes_at=None,
                  events=[], stimuli=[], next_stimulus_id=0, rules=_rules())
     check_lines(world)

@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from tavern.activities import ACTIVITIES
+from tavern.cards import parse_card
 from tavern.drunkenness import check_drunkenness
 from tavern.expression import EMOTES
 from tavern.hearing import Sound
@@ -13,6 +14,7 @@ from tavern.navigation import find_path
 from tavern.room import find_object
 from tavern.scenario import Guest, parse_guest
 from tavern.thoughts import check_mind
+from tavern.ties import parse_own_ties
 from tavern.validation import number
 from tavern.world import create_world
 
@@ -74,6 +76,7 @@ def _validate_actor_runtime(world: Mapping[str, Any]) -> None:
         check_mind(actor)
         check_drunkenness(actor, world["rules"])
         _validate_expression(actor, world)
+        _validate_character(actor)
     for item in world["map"]["objects"]:
         if item.get("reserved_by") is not None and item["reserved_by"] not in actor_ids:
             raise ValueError("Saved reservation belongs to an unknown actor")
@@ -272,6 +275,13 @@ def _validate_expression(actor: Mapping[str, Any], world: Mapping[str, Any]) -> 
         number(interrupted_at, "Saved interruption time", 0, world["time"])
 
 
+def _validate_character(actor: Mapping[str, Any]) -> None:
+    # A visitor not cast from a card (the room's own, or an inline scenario guest) has none.
+    if actor["card"] is not None:
+        parse_card(actor["card"])
+    parse_own_ties(actor["ties"])
+
+
 def _validate_attention_rules(attention: Any) -> None:
     keys = {"glance", "interrupt", "wall_damping", "glance_seconds", "turn_seconds"}
     if not isinstance(attention, dict) or set(attention) != keys:
@@ -319,7 +329,7 @@ def parse_world(encoded: str) -> dict[str, Any]:
     """
     try:
         world = json.loads(encoded)
-        if not isinstance(world, dict) or world.get("schema_version") != 3:
+        if not isinstance(world, dict) or world.get("schema_version") != 4:
             raise ValueError("Unsupported snapshot version")
         json.dumps(world, allow_nan=False)
         _validate_clock(world)

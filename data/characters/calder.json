@@ -1,0 +1,23 @@
+{
+  "id": "calder",
+  "name": "Calder",
+  "sprite": "courier",
+  "occupation": "post rider for the margrave",
+  "background": "Calder carries sealed letters between the border forts and the margrave's town, changing horses at this inn more often than he sleeps in a bed.",
+  "temperament": "Impatient and quick to bristle, proud of his speed; restless when he has to wait.",
+  "speech": "Clipped, hurried sentences; talks about roads and horses; interrupts.",
+  "quirks": "Never takes off his riding gloves; drums on the table; stands rather than sits when he can.",
+  "secret": "He reads the letters he carries when the seals can be lifted cleanly.",
+  "goal": "Wash the road dust down quickly and hear any news worth carrying before he rides on at first light.",
+  "params": {
+    "patience": 0.4,
+    "temper": 0.7,
+    "sociability": 0.6,
+    "courage": 0.65,
+    "strength": 0.55,
+    "brawling": 0.45,
+    "tolerance": 0.5,
+    "comfort": 0.1,
+    "curiosity": 0.7
+  }
+}
