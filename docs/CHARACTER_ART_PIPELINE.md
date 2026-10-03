@@ -96,18 +96,19 @@ group `b846223d-49fb-4387-ab84-3063bbfc30d3`.
 - Walking: `955940d7-7e34-4eeb-9d10-a6d50557b70a`
 - Talking: `4ec12ed2-c48b-4282-a42c-d2e6ef124878`
 
-**Rurik, border guard** — base `206359ae-58b9-4175-988e-4325b536abeb`,
-group `d0e1751d-6fc5-409c-ae81-9680ed03834b`.
+**Rurik, border guard** — base `72d81d2b-8274-46e4-b30d-607db83e6c2e`,
+group `58958b80-af4b-46ac-a0b6-28e5bb25a722`. This leaner dark-haired
+guard replaces the compact, round original Rurik group.
 
-- Idle: `206359ae-58b9-4175-988e-4325b536abeb`
-- Seated: `0d4e08a3-c4ba-43e5-bfc5-e1d92a5cf3dd`
-- Darts: `e1b97886-2ac2-4cf4-b759-cc2df6f9d143`
-- Bathroom: `d8f5a9e3-40bc-4549-8dea-b494cad7e7e7`
-- Drinking: `119b8d75-98a5-43ca-a8f1-768deeec926c`
-- DrinkingSeated: `861081d8-0b5d-4bb4-8395-01b5ff315d7d`
-- TakeBeer: `4716426a-7249-4cba-88b8-1934a37628a3`
-- Walking: `f16d07e9-57d3-464c-a55a-1b7464c2e185`
-- Talking: `926b9960-a169-4050-84af-dd99a8ed9fb1`
+- Idle: `72d81d2b-8274-46e4-b30d-607db83e6c2e`
+- Seated: `07db65b7-7059-4788-94e0-8cb5db9d169f`
+- Darts: `5d01b034-a05a-4c4c-9a31-326f96fe5c6b`
+- Bathroom: `344ab737-ca30-4fc5-90d4-3f9a61745be5`
+- Drinking: `dc7044ae-d910-402a-9c88-25163031511c`
+- DrinkingSeated: `1f31ede0-033b-4242-a6ea-93a309e3117c`
+- TakeBeer: `7dcf0724-4c4f-48fd-aa29-4e909f62be87`
+- Walking: `e70328c5-6101-4baf-91dd-c59437856941`
+- Talking: `27cf2480-4f04-4e2f-8de8-9344743b4914`
 
 **Toren, border trader** — base `ca874ea8-7b06-410b-9d4e-7ea585b9b93c`,
 group `7cac920b-56f8-4f3d-9256-2f4fdf0565ad`.
@@ -178,12 +179,12 @@ South-view inspection found these issues:
 - Edda's Seated, Talking, Drinking, and Darts are visibly different from Idle.
   Bathroom is close to Seated, which is acceptable only if the privy screen
   supplies clear context. Walking looks too close to Idle at normal size.
-- Rurik's Seated and Talking are legible. Darts has a weak arm gesture;
-  Walking also looks too close to Idle. Drinking reads more like a held mug
-  than an obvious sip. His TakeBeer south image appears back-facing, so that
-  view needs art correction if a future layout puts the tap south of him.
-- Edda and Rurik are more compact and rounder than the old 92 px cast. A
-  running tavern preview showed all three new sprites readable at native size.
+- Rurik's replacement group has a slimmer full-body silhouette that matches
+  Toren and the newer cast. Its south previews make Darts, Drinking,
+  TakeBeer, Walking, Talking, and DrinkingSeated visibly distinct. The
+  original compact group is no longer shipped.
+- Edda is more compact and rounder than the old 92 px cast. A running tavern
+  preview showed the 68 px sprites readable at native size.
 - Toren's south views show readable Seated, Darts, Drinking, TakeBeer, and
   Talking actions. His Walking pose is subtle. The four shipped directions
   and foot pivots should be checked in the running tavern as art review.
@@ -192,7 +193,8 @@ The connected account reported 2,000 Tier 1 generations for this cycle.
 The first three characters used 441 generations. Brida, Calder, and Saye each
 used one Pro Flash base and seven named states. The balance after the six-character
 run was 1,041/2,000. Six DrinkingSeated states used 120 generations, leaving
-921/2,000. PixelLab quotes 20–40
+921/2,000. Rurik's replacement group used 166 generations, leaving 755/2,000.
+PixelLab quotes 20–40
 generations for `create_character_state`; check `get_balance` before
 batching or retrying.
 The native character states cost much more than a
