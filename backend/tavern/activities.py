@@ -5,10 +5,10 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any
 
-from tavern.conversation import complete_conversation
 from tavern.drunkenness import drink_beer
 from tavern.hearing import Sound
 from tavern.memory import record_event
+from tavern.scenes import join_conversation, start_conversation
 from tavern.thoughts import think
 
 # An effect receives the world, the visitor, and the target: an object, a partner, or None.
@@ -22,8 +22,11 @@ class Activity:
     Attributes:
         verb: Action verb used in actions, events, and saved worlds.
         target_kinds: Object kinds it can target; empty for verbs without an object target.
-        partner: Whether it targets another visitor instead of an object.
-        duration: Seconds of interaction, or None for a decision step that never runs in the world.
+        partner: Whether it targets another visitor instead of an object. Such a verb is a part in a
+            conversation scene (`tavern.scenes`): the scene, not a timer, ends it.
+        joins: Whether it joins the partner's scene instead of starting one with them.
+        duration: Seconds of interaction (nominal for a scene part), or None for a decision step
+            that never runs in the world.
         family: The `FAMILIES` entry it is chosen under: a first decision picks the family, a
             second the action within it, so requests stay small as verbs and guests grow.
         requires_item: Inventory item the visitor must hold to start.
@@ -50,6 +53,7 @@ class Activity:
     family: str
     target_kinds: tuple[str, ...] = ()
     partner: bool = False
+    joins: bool = False
     requires_item: str | None = None
     empty_target: str | None = None
     leaves_seat: bool = False
@@ -78,8 +82,12 @@ def _drink(world: Mapping[str, Any], actor: dict[str, Any], target: dict[str, An
     actor["drunkenness"] = drink_beer(actor["drunkenness"], tolerance, world["rules"]["drunkenness"])
 
 
-def _chat(world: Mapping[str, Any], actor: dict[str, Any], partner: dict[str, Any] | None) -> None:
-    complete_conversation(world, actor, partner)
+def _open_scene(world: Mapping[str, Any], actor: dict[str, Any], partner: dict[str, Any] | None) -> None:
+    start_conversation(world, actor, partner)
+
+
+def _join_scene(world: Mapping[str, Any], actor: dict[str, Any], member: dict[str, Any] | None) -> None:
+    join_conversation(world, actor, member)
 
 
 def _go_home(world: Mapping[str, Any], actor: dict[str, Any], door: dict[str, Any] | None) -> None:
@@ -128,16 +136,24 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              guidance="Sitting in their own seat is a guest's natural resting state: it eases tiredness, it is "
                       "where they sip their ale, and it lets them chat with whoever shares the table. Getting "
                       "up needs a reason."),
-    Activity(verb="talk", partner=True, duration=8.0, effect=_chat, label="Chat with a neighbor",
+    Activity(verb="talk", partner=True, duration=8.0, on_arrival=_open_scene, label="Chat with a neighbor",
              status="chatting", pose="Talking",
              sound=Sound("chat", 0.25, 6.0, "a conversation"), doing="talking", done="chatted",
              family="company",
-             what="chat with {target}, who sits at their table",
+             what="start a conversation with {target}, who sits at their table or stands beside them",
              guidance="It eases the wish for company of both and lets them share where the beer, WC and darts "
                       "are. After a few beers an impatient pair may quarrel instead, leaving both in a sour "
                       "mood and thinking less of each other; someone they dislike is poor company. Right after "
                       "a chat, with their wish for company satisfied, a quiet sip or a rest is more natural "
                       "than yet another chat."),
+    Activity(verb="join_conversation", partner=True, joins=True, duration=8.0, on_arrival=_join_scene,
+             label="Join a conversation", status="chatting", pose="Talking", doing="joining a conversation",
+             done="joined a conversation",
+             family="company",
+             what="join the conversation {target} is having at their table or beside them",
+             guidance="Joining company already talking eases the wish for company like a chat of their own and "
+                      "is how a stranger gets to know people; it is poor manners to barge in on someone who "
+                      "wronged them tonight."),
     Activity(verb="play_darts", target_kinds=("darts",), duration=10.0, leaves_seat=True,
              needs=MappingProxyType({"boredom": -65}), label="Play darts", status="darts", pose="Darts", interruptible=True,
              sound=Sound("thud", 0.25, 10.0, "darts thudding into the board"),
@@ -219,7 +235,7 @@ FAMILIES: Mapping[str, str] = MappingProxyType({
     "refreshment": "get something to drink",
     "resting": "sit down for a rest",
     "seat_choice": "find a seat at a table, or move to another one",
-    "company": "chat with someone at their table",
+    "company": "chat with someone at their table or beside them, or join a conversation",
     "pastime": "pass the time",
     "wc": "use the WC",
     "exploring": "explore the room",

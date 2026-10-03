@@ -43,6 +43,32 @@ def attention_counts(evening: Evening) -> AttentionCounts:
     return {"interrupts": interrupts, "alerts": alerts, "glances": evening.gazes - interrupts - alerts}
 
 
+class ConversationCounts(TypedDict):
+    """How conversation scenes went: scenes started, lines spoken, guests who joined and who left."""
+
+    scenes: int
+    turns: int
+    joins: int
+    leaves: int
+
+
+def conversation_counts(evening: Evening) -> ConversationCounts:
+    """Count the evening's conversation scenes, turns, joins and leaves.
+
+    Args:
+        evening: What the lockstep runner logged.
+
+    Returns:
+        Logged `conversation_started`, `turn`, `joined_conversation` and `left_conversation` events.
+
+    Raises:
+        KeyError: An event has no type.
+    """
+    kinds = Counter(event["type"] for event in evening.events)
+    return {"scenes": kinds["conversation_started"], "turns": kinds["turn"],
+            "joins": kinds["joined_conversation"], "leaves": kinds["left_conversation"]}
+
+
 class Metrics(TypedDict):
     """The measures of one evening; durations in game seconds, cost in USD per call kind."""
 

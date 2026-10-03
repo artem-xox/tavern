@@ -6,7 +6,7 @@ from random import Random
 from typing import Any
 
 from tavern.activities import ACTIVITIES
-from tavern.conversation import conversation_of
+from tavern.scenes import conversation_of
 from tavern.drunkenness import drunk_stage
 from tavern.memory import record_event
 

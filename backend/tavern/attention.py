@@ -8,6 +8,7 @@ from tavern.expression import look_at, show_emote
 from tavern.hearing import Stimulus, salience
 from tavern.memory import record_event
 from tavern.room import object_cells
+from tavern.scenes import leave_conversation
 from tavern.thoughts import friends_of
 
 
@@ -19,6 +20,8 @@ def attend(world: dict[str, Any]) -> list[dict[str, Any]]:
     `glance_seconds` unless already looking at something; above it they turn to it for `turn_seconds`, show an alert, and either
     break off an interruptible activity (or, when idle, drop a pending decision: see
     `interrupted_at`) or, busy with something they finish first, just remember hearing it.
+    Such a sound also takes them out of any conversation scene, so the scene loses a member or
+    ends; their part in it (`talk`, `join_conversation`) breaks off although no timer could.
 
     Args:
         world: World whose pending `stimuli` are consumed; visitors are updated in place and
@@ -49,8 +52,9 @@ def _alert(world: dict[str, Any], actor: dict[str, Any], stimulus: Stimulus) -> 
     look_at(actor, stimulus["cell"], now + world["rules"]["attention"]["turn_seconds"], stimulus["id"])
     show_emote(actor, "alert", now + world["rules"]["emote_seconds"]["alert"])
     heard = f"{stimulus['noun']} {_landmark(world['map'], stimulus['cell'])}"
+    leave_conversation(world, actor)
     action = actor["action"]
-    if action and not ACTIVITIES[action["verb"]].interruptible:
+    if action and not (ACTIVITIES[action["verb"]].interruptible or ACTIVITIES[action["verb"]].partner):
         record_event(world, actor, "alerted", f"{actor['name']} heard {heard} while busy: {stimulus['cause']}")
         return False
     actor["interrupted_at"] = now

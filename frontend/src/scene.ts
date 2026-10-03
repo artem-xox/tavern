@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { drawBar, drawChair, drawDarts, drawDoor, drawFireplace, drawTable, drawTap, drawToilet, drawWindow, hearthFacing } from "./furniture";
 import { shippedPose, spriteOf, stills } from "./sprites";
-import type { ActivityView, Actor, Cell, EmoteKind, Mind, Verb, World, WorldObject } from "./types";
+import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Mind, Turn, Verb, World, WorldObject } from "./types";
 
 /** Glyph and colour of each emote above a visitor's head. */
 const EMOTE_GLYPHS: Record<EmoteKind, [string, string]> = {
@@ -299,13 +299,15 @@ export class TavernScene extends Phaser.Scene {
     view.targetY = y;
     view.name.setText(actor.name);
     view.sway = this.minds[actor.id]?.sway ?? 0;
-    const incoming: Actor | undefined = this.world?.actors.find((visitor: Actor): boolean => visitor.action?.verb === "talk" && visitor.action.target_id === actor.id);
-    const chatting: boolean = !!incoming || actor.action?.verb === "talk";
+    // The bubble shows the scene's latest line over its speaker until the next one is spoken.
+    const scene: Conversation | undefined = this.world?.conversations.find((item: Conversation): boolean => item.participants.includes(actor.id));
+    const line: Turn | undefined = scene?.turns[scene.turns.length - 1];
+    const chatting: boolean = scene !== undefined;
     const label = (verb: Verb): string | undefined => (verb === "watch" && target?.kind === "fireplace" ? "by the fire" : this.activities[verb]?.status ?? undefined);
     view.status.setText(actor.status === "walking" ? `→ ${label(actor.action?.verb ?? "") ?? "exploring"}` : chatting ? "chatting" : actor.action ? label(actor.action.verb) ?? actor.action.verb : actor.seat_id ? "seated" : "thinking");
     view.mug.setVisible(actor.inventory.beer > 0 && pose !== "Drinking" && pose !== "TakeBeer");
-    view.speech.setVisible(chatting);
-    view.speech.setText(incoming ? "Quite a story!" : "News from the road…");
+    view.speech.setVisible(line?.speaker === actor.id);
+    view.speech.setText(line?.line ?? "");
     this.showEmote(view, actor);
     view.container.setDepth(10 + y / 1000);
   }

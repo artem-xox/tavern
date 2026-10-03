@@ -4,8 +4,8 @@ from collections.abc import Mapping
 from typing import Any
 
 from tavern.activities import ACTIVITIES
-from tavern.conversation import conversation_of
 from tavern.room import find_object
+from tavern.scenes import conversation_of, pressed, side_by_side, table_of
 
 
 def _actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any] | None:
@@ -14,10 +14,6 @@ def _actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any] | None:
 
 def _target(world: Mapping[str, Any], action: Mapping[str, Any]) -> dict[str, Any] | None:
     return find_object(world["map"], action.get("target_id"))
-
-
-def _seat(world: Mapping[str, Any], actor: Mapping[str, Any]) -> dict[str, Any] | None:
-    return _target(world, {"target_id": actor.get("seat_id")})
 
 
 def action_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any]) -> str | None:
@@ -66,13 +62,34 @@ def _target_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Ma
 def _talk_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any]) -> str | None:
     partner = _actor(world, action.get("target_id"))
     if partner is None or partner["id"] == actor["id"]:
-        return "Choose another seated visitor to talk to"
-    left, right = _seat(world, actor), _seat(world, partner)
-    if not left or not right or not left.get("table_id") or left.get("table_id") != right.get("table_id"):
-        return "Visitors must be seated at the same table"
-    if abs(actor["x"] - partner["x"]) + abs(actor["y"] - partner["y"]) > 4:
-        return "Conversation partner is too far away"
-    conversation = conversation_of(world, partner["id"])
-    if conversation and conversation["id"] != actor["id"]:
+        return "Choose another visitor to talk to"
+    if conversation_of(world, actor["id"]) is not None:
+        # Someone already talking carries on with their part for as long as their scene lasts.
+        current = actor.get("action")
+        carrying_on = current is not None and current.get("id") == action["id"]
+        return None if carrying_on else "Visitor is already in a conversation"
+    scene = conversation_of(world, partner["id"])
+    if ACTIVITIES[action["verb"]].joins:
+        return _join_error(world, actor, partner, scene)
+    if scene is not None:
         return "Visitor is already in a conversation"
-    return None
+    # Someone a need presses on declines, so they can see to it instead of being drawn back in.
+    if pressed(world, partner):
+        return f"{partner['name']} has something more pressing to see to"
+    return None if _close_enough(world, actor, partner) else "Visitors must sit at one table or stand side by side"
+
+
+def _join_error(world: Mapping[str, Any], actor: Mapping[str, Any], member: Mapping[str, Any],
+                scene: Mapping[str, Any] | None) -> str | None:
+    if scene is None:
+        return "Visitor is not in a conversation"
+    if len(scene["participants"]) >= world["rules"]["conversation"]["max_participants"]:
+        return "The conversation is full"
+    if scene["table_id"] is not None:
+        return None if table_of(world, actor) == scene["table_id"] else "Join a conversation at your own table"
+    return None if side_by_side(world, actor, member) else "Stand beside someone in the conversation to join it"
+
+
+def _close_enough(world: Mapping[str, Any], actor: Mapping[str, Any], partner: Mapping[str, Any]) -> bool:
+    table = table_of(world, actor)
+    return (table is not None and table == table_of(world, partner)) or side_by_side(world, actor, partner)

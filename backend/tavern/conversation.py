@@ -1,50 +1,82 @@
-"""Outcomes of a chat between tablemates: shared places, relief, or a quarrel."""
+"""Speech acts in a conversation scene and their outcomes: relief, shared places, or a quarrel."""
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from copy import deepcopy
+from dataclasses import dataclass
 from random import Random
+from types import MappingProxyType
 from typing import Any
 
 from tavern.memory import record_event
+from tavern.scenes import Conversation, end_conversation, leave_conversation
 from tavern.thoughts import think
 
+# An act's effect receives the world, the scene, the speaker, and whom they addressed (None for everyone).
+ActEffect = Callable[[dict[str, Any], Conversation, dict[str, Any], dict[str, Any] | None], None]
 
-def conversation_of(world: Mapping[str, Any], actor_id: str) -> dict[str, Any] | None:
-    """Find the visitor talking to, or being talked to by, someone.
 
-    Args:
-        world: Current world.
-        actor_id: Visitor whose chat is looked up.
+@dataclass(frozen=True)
+class Act:
+    """What a speech act does once spoken, and what it means to whoever writes the lines.
 
-    Returns:
-        The visitor whose `talk` action includes them, or None when they are not chatting.
+    Attributes:
+        effect: Consequence in the world, or None for an act that changes nothing.
+        meaning: When a speaker uses it and what follows, for a turn writer.
     """
-    return next((item for item in world["actors"] if item.get("action")
-                 and item["action"]["verb"] == "talk"
-                 and actor_id in (item["id"], item["action"]["target_id"])), None)
+
+    effect: ActEffect | None
+    meaning: str
 
 
-def complete_conversation(world: Mapping[str, Any], actor: dict[str, Any], partner: dict[str, Any]) -> None:
-    """Settle a finished chat: both share places and feel less lonely, or they quarrel.
+def _members(world: Mapping[str, Any], scene: Conversation) -> list[dict[str, Any]]:
+    return [item for item in world["actors"] if item["id"] in scene["participants"]]
 
-    Args:
-        world: World whose event log, seed, and tick are used.
-        actor: Visitor who started the chat.
-        partner: Visitor they talked to.
-    """
-    topics = ("stories from the road", "the inn's beer", "their next journey", "a game of darts")
-    count = sum(item["type"] == "conversation" for item in actor["memory"])
-    topic = topics[count % len(topics)]
-    if _quarrels(world, actor, partner):
-        _quarrel(world, actor, partner, topic)
-        return
-    _share_places(actor, partner)
-    _share_places(partner, actor)
-    message = f"{actor['name']} and {partner['name']} chatted about {topic}"
-    for visitor, other in ((actor, partner), (partner, actor)):
-        visitor["needs"]["social"] = max(0, visitor["needs"]["social"] - 60)
-        record_event(world, visitor, "conversation", message)
-        think(visitor, "chat", world["time"], f"Chatted with {other['name']} about {topic}", message, about=other)
+
+def _relieve(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
+             addressee: dict[str, Any] | None) -> None:
+    # A friendly exchange eases everyone's wish for company, not only the speaker's, and the
+    # listeners warm to the speaker (stacking is capped in `thoughts`).
+    message = f"{speaker['name']} chatted about {scene['topic']}"
+    for member in _members(world, scene):
+        member["needs"]["social"] = max(0.0, member["needs"]["social"] - world["rules"]["conversation"]["relief"])
+        if member["id"] != speaker["id"]:
+            think(member, "chat", world["time"], f"Chatted with {speaker['name']} about {scene['topic']}",
+                  message, about=speaker)
+
+
+def _tell_places(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
+                 addressee: dict[str, Any] | None) -> None:
+    for listener in _members(world, scene):
+        if listener["id"] != speaker["id"]:
+            _share_places(speaker, listener)
+    _relieve(world, scene, speaker, addressee)
+
+
+def _complain(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
+              addressee: dict[str, Any] | None) -> None:
+    # A grumble to everyone is taken up by the next in the circle.
+    others = [item for item in _members(world, scene) if item["id"] != speaker["id"]]
+    partner = addressee if addressee in others else others[0]
+    if _quarrels(world, speaker, partner):
+        _quarrel(world, speaker, partner, scene["topic"])
+        end_conversation(world, scene, pleasant=False)
+
+
+def _say_goodbye(world: dict[str, Any], scene: Conversation, speaker: dict[str, Any],
+                 addressee: dict[str, Any] | None) -> None:
+    leave_conversation(world, speaker)
+
+
+ACTS: Mapping[str, Act] = MappingProxyType({
+    "greet": Act(None, "open the conversation, or welcome someone who joined it"),
+    "small_talk": Act(_relieve, "pass the time pleasantly; it eases everyone's wish for company"),
+    "share_place": Act(_tell_places, "tell the others where the tap, the WC or the darts are; they learn "
+                                     "every such place the speaker knows, and it eases the wish for company"),
+    "joke": Act(_relieve, "make the others laugh; it eases everyone's wish for company"),
+    "complain": Act(_complain, "grumble about something; after a few beers an impatient pair may quarrel, "
+                               "which ends the conversation and leaves both in a sour mood"),
+    "leave_conversation": Act(_say_goodbye, "say goodbye and leave; the others carry on while two remain"),
+})
 
 
 def _quarrels(world: Mapping[str, Any], left: Mapping[str, Any], right: Mapping[str, Any]) -> bool:

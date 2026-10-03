@@ -208,7 +208,10 @@ def _person(observation: Observation, visitor: Mapping[str, Any]) -> str:
         table = _object(observation, visitor.get("table_id"))
         where = ("across the table from them" if _shares_table(observation, visitor)
                  else f"at the {_label(table)}" if table else "at a table")
-        return f"{_label(visitor)} sits {where}{'' if visitor.get('available', True) else ', busy talking'}"
+        # Someone unavailable who is not talking is visibly in a hurry (see `scenes.pressed`).
+        busy = (", busy talking" if visitor.get("conversation") else "" if visitor.get("available", True)
+                else ", in a hurry")
+        return f"{_label(visitor)} sits {where}{busy}"
     activity = ACTIVITIES.get(visitor.get("doing"))
     return f"{_label(visitor)} is {activity.doing if activity and activity.doing else 'standing about'}"
 
@@ -292,8 +295,8 @@ def _recent(observation: Observation) -> str:
 def _option(observation: Observation, action: Action) -> str:
     builders: dict[str, Callable[[Observation, Action], str]] = {
         "take_beer": _pour, "drink": _drink, "rest": _rest, "seating": _seating, "sit": _sit, "talk": _talk,
-        "play_darts": _darts, "watch": _watch, "use_toilet": _toilet, "inspect": _inspect, "wait": _wait,
-        "leave": _leave, "cut_in_line": _cut}
+        "join_conversation": _join, "play_darts": _darts, "watch": _watch, "use_toilet": _toilet,
+        "inspect": _inspect, "wait": _wait, "leave": _leave, "cut_in_line": _cut}
     if action["verb"] not in builders:
         raise ValueError(f"Cannot describe the action verb {action['verb']!r}")
     return _waiting(observation, action) or builders[action["verb"]](observation, action)
@@ -375,10 +378,28 @@ def _sit(observation: Observation, action: Action) -> str:
     return f"take the chair {_label(chair)}: {_seat_note(observation, chair)}"
 
 
+def _someone(observation: Observation, visitor_id: Any) -> Mapping[str, Any] | None:
+    # Everyone in sight when observed (`people`), else only seated company.
+    return next((item for item in observation.get("people", []) if item["id"] == visitor_id),
+                None) or _visitor(observation, visitor_id)
+
+
 def _talk(observation: Observation, action: Action) -> str:
-    partner = _visitor(observation, action["target_id"])
+    partner = _someone(observation, action["target_id"])
     name = _label(partner) if partner else action["target_id"]
+    if partner and not partner.get("seat_id"):
+        return f"start a conversation with {name}, who stands beside them"
     return f"chat with {name}, who sits across the table from them"
+
+
+def _join(observation: Observation, action: Action) -> str:
+    member = _someone(observation, action["target_id"])
+    if member is None:
+        raise ValueError(f"Cannot describe joining an unseen visitor {action['target_id']!r}")
+    company = observation.get("people") or observation.get("visitors", [])
+    names = [_label(item) for item in company if item.get("conversation") == member.get("conversation")]
+    where = "at their table" if member.get("seat_id") else "beside them"
+    return f"join the conversation {' and '.join(names) or _label(member)} are having {where}"
 
 
 def _darts(observation: Observation, action: Action) -> str:
