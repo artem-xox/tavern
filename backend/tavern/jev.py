@@ -7,9 +7,10 @@ from typing import Any, TypedDict, cast
 import httpx
 
 from tavern.activities import ACTIVITIES, FAMILIES
+from tavern.agents import EvaluatorError
 
 
-class JevError(RuntimeError):
+class JevError(EvaluatorError):
     """A recoverable model or transport failure, safe to display in snapshots."""
 
 

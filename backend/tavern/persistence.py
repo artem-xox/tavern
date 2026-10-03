@@ -123,6 +123,48 @@ def _validate_character(actor: Mapping[str, Any]) -> None:
     parse_own_ties(actor["ties"])
 
 
+class FileStore:
+    """One session's worlds in JSON files: the manual save at a path, the autosave beside it."""
+
+    def __init__(self, manual: Path) -> None:
+        """Create a store.
+
+        Args:
+            manual: File of the manual save; the autosave is `autosave.json` in the same folder.
+        """
+        self.manual = manual
+
+    def _path(self, slot: str) -> Path:
+        return self.manual if slot == "manual" else self.manual.with_name("autosave.json")
+
+    def load(self, slot: str) -> World | None:
+        """Read a saved world.
+
+        Args:
+            slot: `manual` or `auto`.
+
+        Returns:
+            The validated world, or None when nothing was saved in that slot.
+
+        Raises:
+            ValueError: The file is unreadable or invalid.
+        """
+        path = self._path(slot)
+        return load_world(path) if path.is_file() else None
+
+    def save(self, world: Mapping[str, Any], slot: str) -> None:
+        """Write a world atomically.
+
+        Args:
+            world: Current authoritative state.
+            slot: `manual` or `auto`.
+
+        Raises:
+            ValueError: The world cannot be serialized or written.
+        """
+        save_world(world, self._path(slot))
+
+
 def parse_world(encoded: str) -> World:
     """Validate a serialized world before it replaces the running state.
 

@@ -167,15 +167,14 @@ def test_websocket_command_errors_do_not_disconnect(tmp_path: Path) -> None:
         assert socket.receive_json()["state"]["paused"] is True
 
 
-def test_slow_ai_does_not_freeze_world_or_override_forced_action(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_slow_ai_does_not_freeze_world_or_override_forced_action(tmp_path: Path) -> None:
     async def scenario() -> None:
         gate = asyncio.Event()
         async def delayed_choice(observation: Any, config: Any, rng: Any) -> dict[str, Any]:
             await gate.wait()
             return {"action": {"id": "take_beer:tap", "verb": "take_beer", "target_id": "tap"},
                     "source": "jev", "scores": {"take_beer:tap": 4}, "error": None}
-        monkeypatch.setattr("tavern.app.choose_action", delayed_choice)
-        engine = runtime(tmp_path)
+        engine = TavernRuntime(room(), tmp_path / "save.json", {"typesafe_api_key": None}, choose=delayed_choice)
         engine.advance(0.1)
         await asyncio.sleep(0)
         engine.command({"type": "force_action", "actor_id": "ada", "action": {

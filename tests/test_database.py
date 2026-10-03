@@ -17,50 +17,48 @@ def room() -> dict[str, Any]:
             "objects": [], "actors": [{"id": "ada", "name": "Ada", "x": 1, "y": 1}]}
 
 
+class FakeStore:
+    """Keeps one session's worlds like the database does: by slot, None where nothing was saved."""
+
+    def __init__(self, session_id: str, saved: dict[str, Any] | None, log: list[tuple[str, str, str, Any]]) -> None:
+        self.session_id, self.saved, self.log = session_id, saved, log
+
+    def load(self, slot: str) -> dict[str, Any] | None:
+        self.log.append(("read", self.session_id, slot, None))
+        return deepcopy(self.saved) if self.saved else None
+
+    def save(self, world: dict[str, Any], slot: str) -> None:
+        self.log.append(("write", self.session_id, slot, deepcopy(world)))
+
+
 @pytest.mark.parametrize("stored,expected", [
     pytest.param(None, (0, True), id="empty-database"),
     pytest.param("saved", (7, True), id="single-running-snapshot"),
 ])
-def test_database_session_is_restored_paused(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, stored: str | None,
-    expected: tuple[int, bool],
-) -> None:
-    from tavern import app as app_module
-
+def test_stored_session_is_restored_paused(tmp_path: Path, stored: str | None, expected: tuple[int, bool]) -> None:
     map_path = tmp_path / "map.json"
     map_path.write_text(json.dumps(room()))
     saved = create_world(room())
     saved["tick"] = 7
-    reads: list[tuple[str, str]] = []
-    def load(url: str, session_id: str, slot: str) -> dict[str, Any] | None:
-        reads.append((session_id, slot))
-        return deepcopy(saved) if stored else None
-    monkeypatch.setattr(app_module, "load_database_world", load)
-    monkeypatch.setattr(app_module, "initialize_database", lambda url: None)
-    monkeypatch.setattr(app_module, "save_database_world", lambda world, url, session_id, slot: None)
+    log: list[tuple[str, str, str, Any]] = []
     application = create_app(map_path, tmp_path / "saves", {}, run_loop=False,
-                             database_url="postgresql://test")
+                             store_for=lambda session_id: FakeStore(session_id, saved if stored else None, log))
     with TestClient(application):
         world = application.state.sessions.open("device-test").world
         assert (world["tick"], world["paused"]) == expected
-    assert reads == [("device-test", "auto")]
+    assert [(kind, who, slot) for kind, who, slot, _ in log if kind == "read"] == [("read", "device-test", "auto")]
 
 
-def test_save_command_writes_to_database(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    from tavern import app as app_module
-
+def test_save_command_writes_to_the_store(tmp_path: Path) -> None:
     map_path = tmp_path / "map.json"
     map_path.write_text(json.dumps(room()))
-    writes: list[tuple[dict[str, Any], str, str]] = []
-    monkeypatch.setattr(app_module, "load_database_world", lambda url, session_id, slot: None)
-    monkeypatch.setattr(app_module, "initialize_database", lambda url: None)
-    monkeypatch.setattr(app_module, "save_database_world",
-                        lambda world, url, session_id, slot: writes.append((deepcopy(world), session_id, slot)))
+    log: list[tuple[str, str, str, Any]] = []
     application = create_app(map_path, tmp_path / "saves", {}, run_loop=False,
-                             database_url="postgresql://test")
+                             store_for=lambda session_id: FakeStore(session_id, None, log))
     with TestClient(application):
         application.state.sessions.open("device-test").command({"type": "save"})
-    assert [(world["schema_version"], session_id, slot) for world, session_id, slot in writes] == [
+    assert [(world["schema_version"], session_id, slot)
+            for kind, session_id, slot, world in log if kind == "write"] == [
         (5, "device-test", "manual"), (5, "device-test", "auto"),
     ]
 

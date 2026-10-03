@@ -6,12 +6,15 @@ from random import Random
 from typing import Any, TypedDict
 
 from tavern.briefing import brief
-from tavern.hall_view import in_use, line_place
 from tavern.families import family_scores, group_families
-from tavern.jev import JevError, evaluate_actions, evaluate_seats
+from tavern.hall_view import in_use, line_place
 from tavern.local_policy import local_scores, local_seat_scores
 from tavern.observation import known_objects, own_actor
 from tavern.selection import bounded, drawable, read_temperature, select
+
+
+class EvaluatorError(RuntimeError):
+    """A recoverable failure of a model evaluator, safe to display in snapshots (`jev.JevError`)."""
 
 
 class Action(TypedDict):
@@ -23,7 +26,7 @@ class Action(TypedDict):
 
 
 # Scores each candidate 0–1 from the evaluator view, the candidates and the AI config;
-# raises JevError on a recoverable model failure, which falls back to the local policy.
+# raises EvaluatorError on a recoverable model failure, which falls back to the local policy.
 Evaluator = Callable[[Mapping[str, Any], Sequence[Mapping[str, Any]], Mapping[str, Any]], Awaitable[dict[str, float]]]
 
 
@@ -48,6 +51,11 @@ class Decision(TypedDict):
     source: str
     scores: dict[str, float]
     error: str | None
+
+
+async def _unwired(view: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
+                   config: Mapping[str, Any]) -> dict[str, float]:
+    raise ValueError("Asking a model needs evaluators; the shell supplies them")
 
 
 def _action(verb: str, target: str | None = None) -> Action:
@@ -214,7 +222,7 @@ async def choose_action(
         config: Explicit API key, model, timeout and selection temperature.
         rng: Seeded random generator owned by the calling simulation.
         evaluators: Model port asked when the config holds a key. New callers pass it;
-            None falls back to the Jev adapter (a known leak, see below).
+            None asks no model: a config with a model key then fails loudly.
         limit: Most options one request may hold; the local policy keeps the best ones.
 
     Returns:
@@ -228,9 +236,7 @@ async def choose_action(
     Raises:
         ValueError: Observation, configuration or limit is malformed.
     """
-    # Known leak: without explicit evaluators the Jev functions imported into this module are
-    # looked up at call time, which is the seam the Stage 0 tests patch.
-    evaluators = evaluators or Evaluators(evaluate_actions, evaluate_seats)
+    evaluators = evaluators or Evaluators(_unwired, _unwired)
     options, temperature = build_candidates(observation), read_temperature(config)
     # Every concrete action is scored together, so a family is worth its best member.
     local = local_scores(observation, [item for option in options for item in option.get("members", [option])])
@@ -269,7 +275,7 @@ async def _decide(
         try:
             scores = await remote(_evaluator_view(observation, candidates), candidates, config)
             source = "jev"
-        except JevError as failure:
+        except EvaluatorError as failure:
             error = str(failure)
     return {"action": select(drawable(candidates, scores), scores, temperature, rng),
             "source": source, "scores": scores, "error": error}

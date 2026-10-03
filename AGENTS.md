@@ -70,8 +70,6 @@ Rules:
   means `TavernRuntime.snapshot()` and `frontend/src/types.ts` change together.
 - Content is data (`data/tavern.json`). Rules key off an object's `kind`, never a
   hardcoded character or object id.
-- Known leak, do not copy: `agents.py` imports `jev.py` and its tests `monkeypatch` it.
-  If your task touches that seam, pass the evaluator in as an argument instead.
 
 ## Extending
 

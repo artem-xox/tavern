@@ -10,7 +10,7 @@ from typing import Any, Awaitable, Callable
 import httpx
 import pytest
 
-from tavern.agents import build_candidates, build_seat_candidates, choose_action
+from tavern.agents import Evaluators, build_candidates, build_seat_candidates, choose_action
 from tavern.jev import JevError, evaluate_actions, evaluate_seats
 from tavern.world import create_world, observe_actor
 
@@ -61,6 +61,10 @@ def config(**fields: Any) -> dict[str, Any]:
 def visit(seconds: float, beers: int, grievances: list[str]) -> dict[str, Any]:
     """Describe what has happened to a visitor during this visit."""
     return {"seconds": seconds, "beers": beers, "grievances": grievances}
+
+
+async def no_seat_judgement(observation: Any, candidates: Any, settings: Any) -> dict[str, float]:
+    raise AssertionError("This test expects no judgement of seats")
 
 
 def request_body(candidates: list[dict[str, Any]], evaluate: Callable[..., Awaitable[Any]] = evaluate_actions,
@@ -201,32 +205,30 @@ def test_seating_resolves_to_the_cosiest_seat_for_a_comfort_lover() -> None:
     assert (sorted(result["seat"]["scores"]), result["seat"]["source"]) == (["sit:hearth", "sit:plain"], "local")
 
 
-def test_jev_judges_both_the_wish_to_sit_and_the_seat(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_jev_judges_both_the_wish_to_sit_and_the_seat() -> None:
     async def actions(observation: Any, candidates: Any, settings: Any) -> dict[str, float]:
         return {action["id"]: float(action["verb"] == "seating") for action in candidates}
 
     async def seats(observation: Any, candidates: Any, settings: Any) -> dict[str, float]:
         return {action["id"]: float(action["target_id"] == "plain") for action in candidates}
 
-    monkeypatch.setattr("tavern.agents.evaluate_actions", actions)
-    monkeypatch.setattr("tavern.agents.evaluate_seats", seats)
     observation = view([seat("plain"), seat("hearth", appeal=0.5)])
-    result = asyncio.run(choose_action(observation, config(typesafe_api_key="test"), Random(0)))
+    result = asyncio.run(choose_action(observation, config(typesafe_api_key="test"), Random(0),
+                                       Evaluators(actions, seats)))
     assert (result["action"]["id"], result["source"], result["seat"]) == (
         "sit:plain", "jev", {"source": "jev", "scores": {"sit:hearth": 0.0, "sit:plain": 1.0}, "error": None})
 
 
-def test_failed_seat_judgement_falls_back_visibly(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_failed_seat_judgement_falls_back_visibly() -> None:
     async def actions(observation: Any, candidates: Any, settings: Any) -> dict[str, float]:
         return {action["id"]: float(action["verb"] == "seating") for action in candidates}
 
     async def seats(observation: Any, candidates: Any, settings: Any) -> dict[str, float]:
         raise JevError("Jev request timed out")
 
-    monkeypatch.setattr("tavern.agents.evaluate_actions", actions)
-    monkeypatch.setattr("tavern.agents.evaluate_seats", seats)
     observation = view([seat("plain"), seat("hearth", appeal=0.5)])
-    result = asyncio.run(choose_action(observation, config(typesafe_api_key="test"), Random(0)))
+    result = asyncio.run(choose_action(observation, config(typesafe_api_key="test"), Random(0),
+                                       Evaluators(actions, seats)))
     assert (result["action"]["verb"], result["seat"]["source"], result["seat"]["error"]) == (
         "sit", "local", "Jev request timed out")
 
@@ -255,14 +257,13 @@ def test_local_policy_decides_when_to_go_home(history: dict[str, Any], needs: di
     pytest.param(0.5, True, id="moderately-worthwhile-exit-may-be-drawn"),
     pytest.param(1.0, True, id="clearly-best-exit-drawn"),
 ])
-def test_walking_out_needs_the_evaluators_endorsement(monkeypatch: pytest.MonkeyPatch,
-                                                      leave_score: float, drawn: bool) -> None:
+def test_walking_out_needs_the_evaluators_endorsement(leave_score: float, drawn: bool) -> None:
     async def actions(observation: Any, candidates: Any, settings: Any) -> dict[str, float]:
         return {action["id"]: leave_score if action["verb"] == "leave" else 0.5 for action in candidates}
 
-    monkeypatch.setattr("tavern.agents.evaluate_actions", actions)
     settings = config(typesafe_api_key="test", temperature=0.25)
-    verbs = {asyncio.run(choose_action(view([door()]), settings, Random(seed)))["action"]["verb"]
+    verbs = {asyncio.run(choose_action(view([door()]), settings, Random(seed),
+                                       Evaluators(actions, no_seat_judgement)))["action"]["verb"]
              for seed in range(100)}
     assert ("leave" in verbs) == drawn
 
@@ -287,14 +288,14 @@ def test_a_chair_seen_occupied_is_taken_whatever_memory_says() -> None:
     pytest.param(0.9, True, id="close-second-is-sometimes-drawn"),
     pytest.param(0.7, False, id="clearly-worse-option-never-drawn"),
 ])
-def test_only_options_close_to_the_best_are_drawn(monkeypatch: pytest.MonkeyPatch,
-                                                  runner_up: float, drawn: bool) -> None:
+def test_only_options_close_to_the_best_are_drawn(runner_up: float, drawn: bool) -> None:
     async def actions(observation: Any, candidates: Any, settings: Any) -> dict[str, float]:
         return {action["id"]: 1.0 if action["verb"] == "wait" else runner_up for action in candidates}
 
-    monkeypatch.setattr("tavern.agents.evaluate_actions", actions)
     settings = config(typesafe_api_key="test", temperature=0.25)
-    verbs = {asyncio.run(choose_action(view(), settings, Random(seed)))["action"]["verb"] for seed in range(100)}
+    verbs = {asyncio.run(choose_action(view(), settings, Random(seed),
+                                       Evaluators(actions, no_seat_judgement)))["action"]["verb"]
+             for seed in range(100)}
     assert ("inspect" in verbs) == drawn
 
 
@@ -311,17 +312,17 @@ def test_beer_is_drunk_seated_when_a_seat_is_to_be_had(seats: list[dict[str, Any
     assert ("drink" in [action["id"] for action in build_candidates(observation)]) == offered
 
 
-def test_jev_reads_a_briefing_instead_of_raw_maps(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_jev_reads_a_briefing_instead_of_raw_maps() -> None:
     sent: list[Any] = []
 
     async def actions(observation: Any, candidates: Any, settings: Any) -> dict[str, float]:
         sent.append(observation)
         return {action["id"]: 0.5 for action in candidates}
 
-    monkeypatch.setattr("tavern.agents.evaluate_actions", actions)
     layout = json.loads((Path(__file__).parents[1] / "data" / "tavern.json").read_text())
     observation = observe_actor(create_world(layout), "mara")
-    asyncio.run(choose_action(observation, config(typesafe_api_key="test"), Random(0)))
+    asyncio.run(choose_action(observation, config(typesafe_api_key="test"), Random(0),
+                              Evaluators(actions, no_seat_judgement)))
     assert set(sent[0]) == {"situation", "options", "self"}
     assert set(sent[0]["options"]) == {action["id"] for action in build_candidates(observation)}
     assert "knowledge" not in sent[0]["self"]

@@ -62,3 +62,24 @@ def initialize_database(url: str) -> None:
         with connection.cursor() as cursor:
             cursor.execute("CREATE TABLE IF NOT EXISTS tavern_session (session_id text NOT NULL, "
                            "slot text NOT NULL, snapshot jsonb NOT NULL, PRIMARY KEY (session_id, slot))")
+
+
+class DatabaseStore:
+    """One session's worlds in the PostgreSQL table, by slot."""
+
+    def __init__(self, url: str, session_id: str) -> None:
+        """Create a store.
+
+        Args:
+            url: PostgreSQL connection URL.
+            session_id: Device session that owns the snapshots.
+        """
+        self.url, self.session_id = url, session_id
+
+    def load(self, slot: str) -> World | None:
+        """Read the session's world in a slot (see `load_database_world`)."""
+        return load_database_world(self.url, self.session_id, slot)
+
+    def save(self, world: Mapping[str, Any], slot: str) -> None:
+        """Replace the session's world in a slot (see `save_database_world`)."""
+        save_database_world(world, self.url, self.session_id, slot)

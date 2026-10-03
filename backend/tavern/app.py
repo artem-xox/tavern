@@ -1,6 +1,7 @@
 """FastAPI transport and nonblocking orchestration of autonomous tavern agents."""
 
 import asyncio
+from collections.abc import Callable, Coroutine
 from contextlib import asynccontextmanager, suppress
 from copy import deepcopy
 import json
@@ -8,7 +9,7 @@ import os
 from pathlib import Path
 from random import Random
 import re
-from typing import Any, AsyncIterator, Mapping
+from typing import Any, AsyncIterator, Mapping, Protocol
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 
@@ -18,14 +19,14 @@ from tavern.cards import parse_cards
 from tavern.cards_api import card_routes
 from tavern.claude import ask_claude
 from tavern.controls import forced_action, refill_tap, set_paused, set_speed, toggle_block
-from tavern.database import initialize_database, load_database_world, save_database_world
+from tavern.database import DatabaseStore, initialize_database
 from tavern.decisions import log_control
 from tavern.feelings import minds
 from tavern.haiku_turns import claude_writer
 from tavern.intentions import INTENTION_RULES, Intender, IntentionRules, intention_writer
 from tavern.jev import evaluate_actions, evaluate_seats
 from tavern.mind_loop import MindLoop, TaskCourier
-from tavern.persistence import load_world, save_world
+from tavern.persistence import FileStore
 from tavern.questions import Ask, Question
 from tavern.scenario import Scenario, open_evening, parse_scenario
 from tavern.scripted import write_scripted_turn
@@ -54,21 +55,34 @@ async def choose_action(observation: Mapping[str, Any], config: Mapping[str, Any
     return await agents.choose_action(observation, config, rng, agents.Evaluators(evaluate_actions, evaluate_seats))
 
 
+# Decides a visitor's next action from their observation, the AI config and the runtime's generator.
+Chooser = Callable[[Mapping[str, Any], Mapping[str, Any], Random], Coroutine[Any, Any, dict[str, Any]]]
+
+
+class Store(Protocol):
+    """Where one session's worlds are kept, by slot: `manual` or `auto`."""
+
+    def load(self, slot: str) -> World | None:
+        """Read the world in a slot; None when nothing was saved there. Raises ValueError if invalid."""
+
+    def save(self, world: World, slot: str) -> None:
+        """Replace the world in a slot."""
+
+
 class TavernRuntime:
     """Own world state, one asynchronous decision request per visitor and one line per scene."""
 
     def __init__(self, map_data: Mapping[str, Any], save_path: Path,
-                 ai_config: Mapping[str, Any], seed: int = 0,
-                 database_url: str | None = None, session_id: str = "local",
+                 ai_config: Mapping[str, Any], seed: int = 0, store: Store | None = None,
                  scenario: Scenario | None = None, writer: TurnWriter = write_scripted_turn,
                  writer_label: str = "scripted",
-                 intender: Intender | None = None, intention_rules: IntentionRules = INTENTION_RULES) -> None:
+                 intender: Intender | None = None, intention_rules: IntentionRules = INTENTION_RULES,
+                 choose: Chooser = choose_action) -> None:
         self.map_data = deepcopy(dict(map_data))
         self.scenario = scenario
         self.world = self._open(seed)
-        self.save_path = save_path
-        self.database_url = database_url
-        self.session_id = session_id
+        # Without a store the worlds go to JSON files: the manual save at `save_path`, the autosave beside it.
+        self.store: Store = store or FileStore(save_path)
         self.ai_config = {"model": "jev-latest", "timeout": 8.0, "temperature": 0.25, **ai_config}
         self.rng = Random(seed)
         self.writer = writer
@@ -76,7 +90,7 @@ class TavernRuntime:
         self.writer_label = writer_label
         # The mind port (None offline: no intentions).
         self.intender, self.intention_rules = intender, intention_rules
-        self.mind = MindLoop(TaskCourier(), lambda observation: choose_action(observation, self.ai_config, self.rng),
+        self.mind = MindLoop(TaskCourier(), lambda observation: choose(observation, self.ai_config, self.rng),
                              lambda view: self.writer(view, self.ai_config), intender, intention_rules)
 
     @property
@@ -127,22 +141,11 @@ class TavernRuntime:
     def _invalidate_requests(self) -> None:
         self.mind.invalidate()
 
-    def _autosave_path(self) -> Path:
-        # Without a database the autosave lives next to the manual save file.
-        return self.save_path.with_name("autosave.json")
-
-    def _write(self, slot: str, path: Path) -> None:
-        if self.database_url:
-            save_database_world(self.world, self.database_url, self.session_id, slot)
-        else:
-            save_world(self.world, path)
-
     def _save(self, command: Mapping[str, Any]) -> None:
-        self._write("manual", self.save_path)
+        self.store.save(self.world, "manual")
 
     def _load(self, command: Mapping[str, Any]) -> None:
-        restored = (load_database_world(self.database_url, self.session_id, "manual") if self.database_url
-                    else load_world(self.save_path))
+        restored = self.store.load("manual")
         if restored is None:
             raise ValueError("No saved world exists")
         self._invalidate_requests()
@@ -153,9 +156,9 @@ class TavernRuntime:
 
         Raises:
             ValueError: The world cannot be serialized or written to a file.
-            psycopg.Error: The database cannot be written.
+            psycopg.Error: The database store cannot write it.
         """
-        self._write("auto", self._autosave_path())
+        self.store.save(self.world, "auto")
 
     def restore(self) -> bool:
         """Replace the world with the session's autosave, paused.
@@ -168,7 +171,7 @@ class TavernRuntime:
             psycopg.Error: The database cannot be read.
         """
         try:
-            restored = self._read_autosave()
+            restored = self.store.load("auto")
         except ValueError as error:
             # An unreadable autosave must not lock the device out of the inn: a new evening opens.
             self._event(f"The saved evening could not be restored ({error}); a new evening begins")
@@ -180,12 +183,6 @@ class TavernRuntime:
         restored["paused"] = True
         self.world = restored
         return True
-
-    def _read_autosave(self) -> World | None:
-        if self.database_url:
-            return load_database_world(self.database_url, self.session_id, "auto")
-        path = self._autosave_path()
-        return load_world(path) if path.is_file() else None
 
     def _reset(self, command: Mapping[str, Any]) -> None:
         # Restart opens a new, running evening: new arrival needs, visitors back at the door.
@@ -225,13 +222,16 @@ class TavernSessions:
     def __init__(self, map_data: Mapping[str, Any], save_dir: Path, ai_config: Mapping[str, Any],
                  seed: int = 0, database_url: str | None = None, scenario: Scenario | None = None,
                  writer: TurnWriter = write_scripted_turn, writer_label: str = "scripted",
-                 intender: Intender | None = None) -> None:
+                 intender: Intender | None = None, store_for: Callable[[str], Store] | None = None) -> None:
         self.map_data = deepcopy(dict(map_data))
         self.writer, self.writer_label = writer, writer_label
         self.save_dir = save_dir
         self.intender = intender
         self.ai_config = dict(ai_config)
+        # Which database backs the sessions, if any; `store_for` makes each session's store (default:
+        # JSON files under `save_dir`).
         self.database_url = database_url
+        self.store_for = store_for
         self.scenario = scenario
         self.rng = Random(seed)
         self.runtimes: dict[str, TavernRuntime] = {}
@@ -259,9 +259,9 @@ class TavernSessions:
         seed = self.rng.randrange(1 << 30)
         if self.scenario is not None and self.scenario.seed is not None:
             seed = self.scenario.seed
-        runtime = TavernRuntime(self.map_data, self.save_dir / session_id / "save.json", self.ai_config,
-                                seed, self.database_url, session_id, self.scenario, self.writer, self.writer_label,
-                                intender=self.intender)
+        runtime = TavernRuntime(self.map_data, self.save_dir / session_id / "save.json", self.ai_config, seed,
+                                self.store_for(session_id) if self.store_for else None, self.scenario,
+                                self.writer, self.writer_label, intender=self.intender)
         if not runtime.restore():
             # A new evening waits at the door until someone presses Start.
             runtime.world["paused"] = True
@@ -352,7 +352,8 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
                run_loop: bool = True, database_url: str | None = None, seed: int = 0,
                scenario_path: Path | None = None, characters_dir: Path | None = None,
                ask: Ask | None = None, writer: TurnWriter = write_scripted_turn,
-               writer_label: str = "scripted", intender: Intender | None = None) -> FastAPI:
+               writer_label: str = "scripted", intender: Intender | None = None,
+               store_for: Callable[[str], Store] | None = None) -> FastAPI:
     """Construct the local server with explicit paths and AI configuration.
 
     Args:
@@ -360,7 +361,8 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
         save_dir: Directory of per-session snapshot files, used without a database.
         ai_config: Evaluator settings, including an optional server-only key.
         run_loop: Whether to start automatic ticking; false for focused API tests.
-        database_url: Optional PostgreSQL URL for persistent session snapshots.
+        database_url: Optional PostgreSQL URL for persistent session snapshots; unless `store_for`
+            is given, each session then keeps its worlds there.
         seed: Seed of the sessions' arrivals and decision policies.
         scenario_path: Optional JSON scenario; sessions then open its evenings instead of
             starting with the room's own visitors.
@@ -372,6 +374,8 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
         writer_label: Name of that writer shown to the client (`haiku` or `scripted`).
         intender: Optional mind port writing guests' intentions; without it guests have none
             and the snapshot says so.
+        store_for: Optional maker of a session's store from its ID, in place of the database or
+            the JSON files.
     Returns:
         Application serving JSON state and a bidirectional WebSocket per device session.
         Sessions advance only while a page is open and always reopen paused.
@@ -382,10 +386,11 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
     cards = (parse_cards([json.loads(path.read_text()) for path in sorted(characters_dir.glob("*.json"))])
              if characters_dir else None)
     scenario = parse_scenario(json.loads(scenario_path.read_text()), cards) if scenario_path else None
-    if database_url:
+    if database_url and store_for is None:
         initialize_database(database_url)
+        store_for = lambda session_id: DatabaseStore(database_url, session_id)
     sessions = TavernSessions(map_data, save_dir, ai_config, seed, database_url, scenario, writer, writer_label,
-                              intender)
+                              intender, store_for)
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         ticker = asyncio.create_task(_run_world(sessions, 0.1)) if run_loop else None
