@@ -259,8 +259,13 @@ def _score_lines(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
 
 
 def _leave_utility(observation: Mapping[str, Any]) -> float:
-    # Visitors go home content after a long evening with a few beers, or early when it goes wrong.
+    # Visitors go home content after a long evening with a few beers, or early when it goes wrong,
+    # and at once when they agreed to walk home with someone (observations built outside the
+    # world carry no invitations).
     actor = observation["actor"]
+    if any(item["kind"] == "leave_together" and item["stage"] != "pending"
+           for item in observation.get("invitations", [])):
+        return 0.95
     needs, visit = actor["needs"], actor.get("visit", {})
     seconds, patience = visit.get("seconds", 0), actor.get("traits", {}).get("patience", 0.5)
     calm = 1 - sum(needs.get(name, 0) for name in ("thirst", "fatigue", "bladder", "social", "boredom")) / 500

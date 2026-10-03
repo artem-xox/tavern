@@ -10,6 +10,7 @@ from tavern.cards import parse_card
 from tavern.drunkenness import check_drunkenness
 from tavern.expression import EMOTES
 from tavern.hearing import Sound
+from tavern.invitations import KINDS, check_invitations
 from tavern.navigation import find_path
 from tavern.room import find_object
 from tavern.scenario import Guest, parse_guest
@@ -333,7 +334,8 @@ def _validate_conversations(world: Mapping[str, Any]) -> None:
     scenes, issued = world.get("conversations"), world.get("next_conversation_id")
     if type(issued) is not int or issued < 0 or not isinstance(scenes, list):
         raise ValueError("Invalid saved conversations")
-    keys = {"id", "participants", "table_id", "topic", "turns", "started_at", "next_turn_at", "writing", "written"}
+    keys = {"id", "participants", "table_id", "topic", "turns", "started_at", "next_turn_at", "writing", "written",
+            "invitation"}
     taken: list[Any] = []
     for scene in scenes:
         if not isinstance(scene, dict) or set(scene) != keys or not isinstance(scene["id"], str):
@@ -358,7 +360,9 @@ def _validate_scene(scene: Mapping[str, Any], world: Mapping[str, Any]) -> None:
     number(scene["started_at"], "Saved conversation start", 0, world["time"])
     number(scene["next_turn_at"], "Saved next turn", 0, math.inf)
     for turn in scene["turns"]:
-        if not isinstance(turn, dict) or set(turn) != {"speaker", "addressee", "line", "act", "time"} or not all(
+        # An invite also names its invitation kind.
+        if not isinstance(turn, dict) or set(turn) - {"invitation"} != {"speaker", "addressee", "line", "act", "time"} \
+                or ("invitation" in turn and turn["invitation"] not in KINDS) or not all(
                 isinstance(turn[key], str) for key in ("speaker", "line", "act")):
             raise ValueError("Invalid saved turn")
         number(turn["time"], "Saved turn time", 0, world["time"])
@@ -367,7 +371,8 @@ def _validate_scene(scene: Mapping[str, Any], world: Mapping[str, Any]) -> None:
                               or type(claim["turn"]) is not int or not isinstance(claim["speaker"], str)):
         raise ValueError("Invalid saved turn being written")
     written = scene["written"]
-    if written is not None and (not isinstance(written, dict) or set(written) != {"line", "act", "addressee", "topic"}):
+    if written is not None and (not isinstance(written, dict) or set(written) - {"invitation"} != {
+            "line", "act", "addressee", "topic"} or ("invitation" in written and written["invitation"] not in KINDS)):
         raise ValueError("Invalid saved written turn")
 
 
@@ -383,7 +388,7 @@ def parse_world(encoded: str) -> dict[str, Any]:
     """
     try:
         world = json.loads(encoded)
-        if not isinstance(world, dict) or world.get("schema_version") != 4:
+        if not isinstance(world, dict) or world.get("schema_version") != 5:
             raise ValueError("Unsupported snapshot version")
         json.dumps(world, allow_nan=False)
         _validate_clock(world)
@@ -395,6 +400,7 @@ def parse_world(encoded: str) -> dict[str, Any]:
         _validate_expected(world)
         _validate_stimuli(world)
         _validate_conversations(world)
+        check_invitations(world)
         if not isinstance(world.get("events"), list):
             raise ValueError("Invalid saved event log")
         return world

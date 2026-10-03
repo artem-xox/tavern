@@ -4,8 +4,9 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 import math
 from types import MappingProxyType
-from typing import Any, TypedDict
+from typing import Any, NotRequired, TypedDict
 
+from tavern.names import called
 from tavern.validation import number
 
 
@@ -35,9 +36,19 @@ THOUGHTS: Mapping[str, ThoughtKind] = MappingProxyType({
     "line_cut": ThoughtKind(-4.0, -10.0, 180.0, 3, "cut in line ahead of them"),
     "quarrel": ThoughtKind(-8.0, -20.0, 300.0, 3, "quarreled with them", acquaints=True),
     "chat": ThoughtKind(3.0, 6.0, 240.0, 3, "had a pleasant chat with them", acquaints=True),
+    # Speech acts (`conversation.ACTS`) and what follows them.
+    "compliment": ThoughtKind(4.0, 8.0, 240.0, 2, "paid them a compliment", acquaints=True),
+    "boast_admired": ThoughtKind(1.0, 3.0, 180.0, 2, "told a fine tale of themselves", acquaints=True),
+    "boast_tiresome": ThoughtKind(-1.0, -4.0, 180.0, 2, "boasted at them", acquaints=True),
+    "insulted": ThoughtKind(-6.0, -20.0, 300.0, 3, "insulted them", acquaints=True),
+    "agreed": ThoughtKind(0.0, 3.0, 240.0, 3, "agreed with them", acquaints=True),
+    "disagreed": ThoughtKind(0.0, -3.0, 240.0, 3, "disagreed with them", acquaints=True),
+    "treated": ThoughtKind(3.0, 10.0, 300.0, 2, "bought them a drink", acquaints=True),
+    "friend_insulted": ThoughtKind(-3.0, -12.0, 300.0, 3, "insulted someone they like"),
 })
 
 FAMILIARITY = ("stranger", "acquaintance", "friend")
+_BASE_RELATION = {"name", "opinion", "familiarity"}
 
 # Starting relationships a scenario may name, as (base opinion, familiarity), held both ways.
 _STARTING: Mapping[str, tuple[float, str]] = MappingProxyType({
@@ -57,11 +68,16 @@ class Thought(TypedDict):
 
 
 class Relation(TypedDict):
-    """How a visitor regards one other person, before tonight's thoughts."""
+    """How a visitor regards one other person, before tonight's thoughts.
+
+    `name` is what the visitor calls them: their looks until `knows_name` (see `tavern.names`).
+    Relations from `seed_relations` leave the flag to the caller.
+    """
 
     name: str
     opinion: float
     familiarity: str
+    knows_name: NotRequired[bool]
 
 
 def think(actor: dict[str, Any], kind: str, now: float, text: str, source_event: str,
@@ -102,12 +118,57 @@ def think(actor: dict[str, Any], kind: str, now: float, text: str, source_event:
     return thought
 
 
-def _meet(actor: dict[str, Any], other: Mapping[str, Any], talked: bool) -> None:
+def _meet(actor: dict[str, Any], other: Mapping[str, Any], talked: bool) -> Relation:
     # Familiarity only ever grows; talking makes strangers acquaintances.
     relation = actor["relations"].setdefault(other["id"], Relation(
-        name=other["name"], opinion=0.0, familiarity="stranger"))
+        name=called(actor, other), opinion=0.0, familiarity="stranger", knows_name=False))
     if talked and relation["familiarity"] == "stranger":
         relation["familiarity"] = "acquaintance"
+    return relation
+
+
+def learn_name(actor: dict[str, Any], other: Mapping[str, Any], met: bool,
+               friends: Sequence[dict[str, Any]] = ()) -> None:
+    """Let a visitor learn someone's name; their old friends present learn it from them.
+
+    Args:
+        actor: Visitor learning it, whose relation to `other` is created or updated in place.
+        other: Person whose name it is.
+        met: Whether the two met to learn it (an introduction), which makes strangers
+            acquaintances; an overheard or passed-on name does not.
+        friends: Everyone else in the hall; those who count the visitor as a `friend` learn it
+            too, once, without meeting `other`.
+    """
+    if actor["id"] == other["id"]:
+        return
+    relation = _meet(actor, other, met)
+    known = relation.get("knows_name", False)
+    relation.update(name=other["name"], knows_name=True)
+    if known:
+        return
+    for friend in friends:
+        if friend["id"] != other["id"] and familiarity_of(friend, actor["id"]) == "friend":
+            learn_name(friend, other, False)
+
+
+def soften(actor: dict[str, Any], about_id: str, now: float) -> bool:
+    """Halve the latest active grudge a visitor holds against someone, once, as an apology does.
+
+    Args:
+        actor: Visitor whose thoughts are updated in place.
+        about_id: Person who apologized.
+        now: Current game time.
+
+    Returns:
+        Whether there was an unsoftened grudge (an active thought lowering the opinion).
+    """
+    grudges = [item for item in active_thoughts(actor["thoughts"], now) if item["about"] == about_id
+               and item["opinion"] < 0 and item["opinion"] == THOUGHTS[item["kind"]].opinion]
+    if not grudges:
+        return False
+    grudges[-1].update(mood=grudges[-1]["mood"] / 2, opinion=grudges[-1]["opinion"] / 2)
+    _refresh_grievances(actor, now)
+    return True
 
 
 def _refresh_grievances(actor: dict[str, Any], now: float) -> None:
@@ -261,7 +322,8 @@ def check_mind(actor: Mapping[str, Any]) -> None:
         for key in ("mood", "opinion", "expires_at"):
             number(item[key], f"Saved thought {key}", -math.inf, math.inf)
     for other, relation in relations.items():
-        if not isinstance(relation, dict) or set(relation) != set(Relation.__annotations__) \
-                or relation["familiarity"] not in FAMILIARITY or not isinstance(relation["name"], str):
+        if not isinstance(relation, dict) or set(relation) - {"knows_name"} != _BASE_RELATION \
+                or relation["familiarity"] not in FAMILIARITY or not isinstance(relation["name"], str) \
+                or not isinstance(relation.get("knows_name", False), bool):
             raise ValueError(f"Invalid saved relation with {other!r}")
         number(relation["opinion"], "Saved base opinion", -100, 100)

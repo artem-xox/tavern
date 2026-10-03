@@ -2,6 +2,7 @@
   "id": "calder",
   "name": "Calder",
   "sprite": "courier",
+  "looks": "the lean rider in mud-spattered gloves",
   "occupation": "post rider for the margrave",
   "background": "Calder carries sealed letters between the border forts and the margrave's town, changing horses at this inn more often than he sleeps in a bed.",
   "temperament": "Impatient and quick to bristle, proud of his speed; restless when he has to wait.",

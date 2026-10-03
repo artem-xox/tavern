@@ -11,6 +11,7 @@ from typing import Any, TypedDict
 
 from tavern.activities import ACTIVITIES
 from tavern.memory import record_event
+from tavern.names import called
 from tavern.thoughts import think
 from tavern.room import find_object, line_approach
 from tavern.routes import plan_route, replan
@@ -100,8 +101,8 @@ def _cut(world: Mapping[str, Any], item: Mapping[str, Any], actor: dict[str, Any
         victim = people[actor_id]
         message = f"{actor['name']} cut in line ahead of {victim['name']} at {item['name']}"
         record_event(world, victim, "line_cut", message)
-        think(victim, "line_cut", world["time"], f"{actor['name']} cut in line ahead of me at {item['name']}", message,
-              about=actor)
+        think(victim, "line_cut", world["time"], f"{called(victim, actor)} cut in line ahead of me at {item['name']}",
+              message, about=actor)
 
 
 def join_line(world: Mapping[str, Any], item: dict[str, Any], actor: dict[str, Any], front: bool) -> None:

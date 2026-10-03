@@ -76,8 +76,11 @@ export interface Actor {
   /** `grievances` is derived on the server: the texts of the latest active thoughts that lower the mood. */
   visit: { seconds: number; beers: number; grievances: string[]; left_at?: number };
   thoughts: Thought[];
-  /** Base opinion and familiarity per other visitor, before tonight's thoughts. */
-  relations: Record<string, { name: string; opinion: number; familiarity: Familiarity }>;
+  /**
+   * Base opinion and familiarity per other visitor, before tonight's thoughts. `name` is what this
+   * visitor calls them: their looks until `knows_name`.
+   */
+  relations: Record<string, { name: string; opinion: number; familiarity: Familiarity; knows_name?: boolean }>;
   /** 0 (sober) to 1 (as drunk as can be); beers raise it and it wears off slowly. */
   drunkenness: number;
   path: Cell[];
@@ -106,6 +109,8 @@ export interface CharacterCard {
   secret: string;
   goal: string;
   params: Record<string, number>;
+  /** How strangers see the guest until they learn the name. */
+  looks?: string;
 }
 
 /** A starting relationship as one guest holds it. */
@@ -189,6 +194,24 @@ export interface Turn {
   line: string;
   act: string;
   time: number;
+  /** The invitation kind an `invite` offers. */
+  invitation?: InvitationKind;
+}
+
+export type InvitationKind = "join_table" | "darts_together" | "buy_drink" | "leave_together";
+
+/** An invitation waiting in a scene for the invitee's answer. */
+export interface Invitation {
+  kind: InvitationKind;
+  from: string;
+  to: string;
+}
+
+/** An accepted invitation the world is carrying out. */
+export interface Errand extends Invitation {
+  stage: "accepted" | "fetching" | "following";
+  /** Ale the inviter held before fetching one for the invitee. */
+  held: number;
 }
 
 /** A conversation scene: who talks, at which table (null when standing), and what was said. */
@@ -203,7 +226,8 @@ export interface Conversation {
   next_turn_at: number;
   /** The turn a model is writing, if any, and its answer waiting to be spoken. */
   writing: { turn: number; speaker: string; since: number } | null;
-  written: { line: string; act: string; addressee: string | null; topic: string } | null;
+  written: { line: string; act: string; addressee: string | null; topic: string; invitation?: InvitationKind } | null;
+  invitation: Invitation | null;
 }
 
 export interface World {
@@ -230,6 +254,8 @@ export interface World {
   next_stimulus_id: number;
   conversations: Conversation[];
   next_conversation_id: number;
+  /** Accepted invitations under way. */
+  invitations: Errand[];
 }
 
 export interface Snapshot {

@@ -61,7 +61,7 @@ def test_save_command_writes_to_database(tmp_path: Path, monkeypatch: pytest.Mon
     with TestClient(application):
         application.state.sessions.open("device-test").command({"type": "save"})
     assert [(world["schema_version"], session_id, slot) for world, session_id, slot in writes] == [
-        (4, "device-test", "manual"), (4, "device-test", "auto"),
+        (5, "device-test", "manual"), (5, "device-test", "auto"),
     ]
 
 
