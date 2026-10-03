@@ -11,9 +11,13 @@ from collections.abc import Awaitable, Callable, Mapping
 from copy import deepcopy
 from typing import Any, TypedDict
 
+from tavern.cards import TEXT_FIELDS
 from tavern.conversation import ACTS
+from tavern.feelings import feelings
+from tavern.portrait import portrait
 from tavern.scenes import Conversation, Turn
 from tavern.scripted import scripted_turn
+from tavern.thoughts import active_thoughts, familiarity_of, opinion_of
 
 
 class TurnResult(TypedDict):
@@ -79,8 +83,12 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
     Returns:
         `conversation`: ID, topic, index of the turn being written, participants (ID and name)
         and the latest eight turns; `speaker`: their ID, name, needs, traits, visit and the
-        places they could tell about (tap, WC, darts); `acts`: each act's meaning; `seed`: the
-        evening's seed, for a writer's seeded choices.
+        places they could tell about (tap, WC, darts), plus who they are and how they feel (see
+        `_mind`); `acts`: each act's meaning; `seed`: the evening's seed, for a writer's seeded
+        choices.
+
+    Raises:
+        KeyError: The speaker's record lacks a field the view reads.
     """
     people = {item["id"]: item for item in world["actors"]}
     speaker = people[next_speaker(scene)]
@@ -91,8 +99,28 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
                                               for actor_id in scene["participants"]],
                              "turns": deepcopy(scene["turns"][-8:])},
             "speaker": {"id": speaker["id"], "name": speaker["name"], **deepcopy(
-                {key: speaker[key] for key in ("needs", "traits", "visit")}), "places": places},
+                {key: speaker[key] for key in ("needs", "traits", "visit")}), "places": places,
+                         **_mind(world, scene, speaker)},
             "acts": {name: act.meaning for name, act in ACTS.items()}, "seed": world["seed"]}
+
+
+def _mind(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str, Any]) -> dict[str, Any]:
+    # Who the speaker is and how they feel, for a model writer: `card` (the card's words, or None),
+    # `portrait`, `feelings` in words, `drunkenness` (0–1; kept out of `feelings`, so a writer
+    # words it once), and `company`: their opinion of, familiarity with, and active thoughts
+    # about each other participant, in order of joining.
+    now, card = world["time"], speaker["card"]
+    others = [item for item in world["actors"] if item["id"] in scene["participants"] and item["id"] != speaker["id"]]
+    others.sort(key=lambda item: scene["participants"].index(item["id"]))
+    thoughts = active_thoughts(speaker["thoughts"], now)
+    return {"card": None if card is None else {key: card[key] for key in TEXT_FIELDS},
+            "portrait": portrait(speaker),
+            "feelings": feelings({"actor": {**speaker, "drunkenness": 0.0}, "time": now}),
+            "drunkenness": speaker["drunkenness"],
+            "company": [{"id": other["id"], "name": other["name"], "opinion": opinion_of(speaker, other["id"], now),
+                         "familiarity": familiarity_of(speaker, other["id"]),
+                         "thoughts": [item["text"] for item in thoughts if item["about"] == other["id"]]}
+                        for other in others]}
 
 
 def check_turn(view: Mapping[str, Any], result: Any) -> TurnResult:
