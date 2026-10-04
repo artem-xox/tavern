@@ -265,6 +265,8 @@ def check_conversations(world: World) -> None:
     A member leaves once gone home, no longer seated at the scene's table, or, standing, no longer
     beside anyone in it. Every scene ends at closing time, and, once its members have exchanged
     a line or two, when all their wish for company has dropped below `rules.conversation.satisfied`.
+    Either way, and for a guest's goodbye, it waits `rules.conversation.linger` seconds after the last
+    line, so that line is on screen and the speaker still there while it is heard.
 
     Args:
         world: World whose scenes are updated in place.
@@ -277,10 +279,27 @@ def check_conversations(world: World) -> None:
             if scene in world["conversations"] and not _still_there(world, scene, actor):
                 leave_conversation(world, actor)
         _drop_departed(world, scene)
+        _see_off_leaver(world, scene)
         members = [item for item in world["actors"] if item["id"] in scene["participants"]]
-        if scene in world["conversations"] and len(scene["turns"]) >= 2 and all(
+        if scene in world["conversations"] and len(scene["turns"]) >= 2 and _heard_out(world, scene) and all(
                 item["needs"]["social"] < world["rules"]["conversation"]["satisfied"] for item in members):
             end_conversation(world, scene, pleasant=True)
+
+
+def _heard_out(world: Mapping[str, Any], scene: Conversation) -> bool:
+    # A scene with no line yet has nothing to hear out.
+    return not scene["turns"] or world["time"] >= scene["turns"][-1]["time"] + world["rules"]["conversation"]["linger"]
+
+
+def _see_off_leaver(world: World, scene: Conversation) -> None:
+    # Whoever said goodbye last leaves once it is heard; `rules.conversation.linger` is no longer than
+    # `min_gap`, so no other line comes in between.
+    if scene not in world["conversations"] or not scene["turns"] or not _heard_out(world, scene):
+        return
+    last = scene["turns"][-1]
+    leaver = next((item for item in world["actors"] if item["id"] == last["speaker"]), None)
+    if last["act"] == "leave_conversation" and leaver is not None and leaver["id"] in scene["participants"]:
+        leave_conversation(world, leaver)
 
 
 def _drop_departed(world: World, scene: Conversation) -> None:

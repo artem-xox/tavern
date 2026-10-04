@@ -39,11 +39,13 @@ def default_rules() -> Rules:
             # wasted guest at their table nods off, per second.
             "drunkenness": {"per_beer": 0.2, "per_second": 0.0005, "doze_per_second": 0.01},
             # Scenes (`tavern.social.scenes`, `tavern.social.turns`): seconds before the first line and per line
-            # at least, reading speed, how long a claimed line may keep the others waiting, social
+            # at least, how long a scene holds its guests once a closing line is spoken (so it can be heard),
+            # reading speed, how long a claimed line may keep the others waiting, social
             # relief per friendly act, the wish for company below which a scene ends, its size, how
             # many cells apart guests may stand to talk, the need that makes a partner decline, and how many
             # lines (`tavern.social.heard`) a guest remembers of tonight's talk.
-            "conversation": {"opening": 0.5, "min_gap": 2.5, "chars_per_second": 15.0, "turn_timeout": 10.0,
+            "conversation": {"opening": 0.5, "min_gap": 2.5, "linger": 2.0, "chars_per_second": 15.0,
+                             "turn_timeout": 10.0,
                              "relief": 25.0, "satisfied": 25.0, "max_participants": 4, "reach": 2,
                              "pressing": 75.0, "recall_lines": 40},
             # News (`tavern.social.facts`): how far a listener believes what a teller says, by how well they
@@ -119,12 +121,14 @@ def _validate_news_rules(news: Any) -> None:
 
 
 def _validate_conversation_rules(conversation: Any) -> None:
-    keys = {"opening", "min_gap", "chars_per_second", "turn_timeout", "relief", "satisfied", "max_participants",
+    keys = {"opening", "min_gap", "linger", "chars_per_second", "turn_timeout", "relief", "satisfied", "max_participants",
             "reach", "pressing", "recall_lines"}
     if not isinstance(conversation, dict) or set(conversation) != keys:
         raise ValueError("Invalid saved conversation rules")
     for key in keys:
         number(conversation[key], f"Saved conversation rule {key}", 0, math.inf)
+    if conversation["linger"] > conversation["min_gap"]:
+        raise ValueError("Saved conversations would speak again before a closing line was heard out")
     if conversation["chars_per_second"] <= 0 or conversation["max_participants"] < 2:
         raise ValueError("Saved conversations could never be read or held")
     integer(conversation["recall_lines"], "Saved conversation rule recall_lines", 1, 1000)

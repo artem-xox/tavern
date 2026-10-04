@@ -36,8 +36,6 @@ const CHUNK_WORDS = 10;
 /** Reading speed for a piece, in characters per second (the server's `chars_per_second`), and the least it stays up. */
 const READ_CHARS_PER_SECOND = 15;
 const MIN_CHUNK_MS = 1500;
-/** How long the last piece stays up once its conversation is over, so it can still be read. */
-export const LINGER_MS = 2000;
 
 /**
  * Split a line into pieces of about eight to ten words, as even as possible (no one-word tail).
@@ -71,9 +69,4 @@ export function chunkAt(chunks: readonly string[], elapsedMs: number): number {
     if (left < 0) return index;
   }
   return chunks.length - 1;
-}
-
-/** Milliseconds until every piece has had its time. */
-export function lineMs(chunks: readonly string[]): number {
-  return chunks.reduce((total: number, chunk: string): number => total + chunkMs(chunk), 0);
 }

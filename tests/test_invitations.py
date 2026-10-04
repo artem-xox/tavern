@@ -73,6 +73,7 @@ def test_pending_invitation_lapses_when_the_inviter_leaves_the_scene() -> None:
     know(world, "ada", "darts")
     say(world, "invite", "Darts, Bea?", addressee="bea", invitation="darts_together")
     say(world, "leave_conversation", "I'll be off.")  # Bea, addressed, says goodbye: the invitation lapses
+    advance(world, 2.1)  # ...once the goodbye is heard
     assert scene_of(world)["invitation"] is None
 
 
