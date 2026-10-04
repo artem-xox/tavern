@@ -643,22 +643,22 @@
       "id": "table-5",
       "kind": "table",
       "name": "East table",
-      "x": 16,
-      "y": 9
+      "x": 15,
+      "y": 6
     },
     {
       "id": "chair-9",
       "kind": "chair",
       "name": "East table \u00b7 west",
-      "x": 15,
-      "y": 9,
+      "x": 14,
+      "y": 6,
       "walkable": true,
       "table_id": "table-5",
       "facing": "east",
       "interaction_spots": [
         [
-          15,
-          9
+          14,
+          6
         ]
       ]
     },
@@ -666,15 +666,15 @@
       "id": "chair-10",
       "kind": "chair",
       "name": "East table \u00b7 east",
-      "x": 17,
-      "y": 9,
+      "x": 16,
+      "y": 6,
       "walkable": true,
       "table_id": "table-5",
       "facing": "west",
       "interaction_spots": [
         [
-          17,
-          9
+          16,
+          6
         ]
       ]
     },
