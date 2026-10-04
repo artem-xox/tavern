@@ -98,7 +98,8 @@ export function drawBar(g: Phaser.GameObjects.Graphics, object: WorldObject, siz
   drawMug(g, x + width - 19, y + 10);
 }
 
-export function drawTable(g: Phaser.GameObjects.Graphics, object: WorldObject, size: number): void {
+/** The bare tabletop: shadow, rim, planks and inlay. */
+function drawTableTop(g: Phaser.GameObjects.Graphics, object: WorldObject, size: number): void {
   const x: number = object.x * size;
   const y: number = object.y * size;
   const width: number = (object.width ?? 1) * size;
@@ -110,6 +111,14 @@ export function drawTable(g: Phaser.GameObjects.Graphics, object: WorldObject, s
     g.lineStyle(1, 0x785037, 0.5).lineBetween(x + 4, y + row, x + width - 4, y + row);
   }
   g.lineStyle(1, 0xe6c187, 0.6).strokeRoundedRect(x + 3, y + 3, width - 6, height - 6, 3);
+}
+
+export function drawTable(g: Phaser.GameObjects.Graphics, object: WorldObject, size: number): void {
+  drawTableTop(g, object, size);
+  const x: number = object.x * size;
+  const y: number = object.y * size;
+  const width: number = (object.width ?? 1) * size;
+  const height: number = (object.height ?? 1) * size;
   g.fillStyle(0xe8dbc0).fillRoundedRect(x + width - 19, y + height - 19, 11, 10, 1);
   drawMug(g, x + 13, y + 13);
   drawMug(g, x + width - 13, y + height - 12);
