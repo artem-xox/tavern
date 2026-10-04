@@ -75,9 +75,9 @@ E16 measures this; E28 sets the budget.
 ## Status
 
 M1–M3, the refactor R0–R8, the model health markers (D13), U1 (no labels in the hall) and E18b
-(conversation memory) and E19 (facts and retelling) are done (2026-10-04). Next:
+(conversation memory) and E19 (facts and retelling) are done (2026-10-04). Done: dice (G0–G5, 2026-10-04). Next:
 
-1. **Dice (G0–G5).** Guests agree to a game of dice, play it at a dice table, and others watch.
+1. **Dice (G0–G5), done.** Guests agree to a game of dice, play it at a dice table, and others watch.
 2. **M4, news and conflict (E20–E22).** E20 gives guests hostile options.
 
 The door at closing (D02) is fixed: it takes as many leavers at once as it has spots (offline
@@ -1058,7 +1058,7 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
     evening is byte-identical to `main`'s. In the browser: Edda and Toren played, Rurik was sent to watch
     and stood at the table's west spot; at the result the feed shows all three "completed", and Rurik's
     boredom fell to 1.
-- [ ] **G5 — Numbers and the story.**
+- [x] **G5 — Numbers and the story.**
   - *Metrics:* `metrics.json` gets `dice`: `{games, abandoned, onlookers, wins: {actor_id: n}}`,
     counted from the `dice_won`, `dice_abandoned` and `dice_watched` events.
   - *Intentions:* `intentions.SALIENT_EVENTS` maps `dice_won` and `dice_lost` to a `dice`
@@ -1070,6 +1070,23 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
     cost per evening against E19's $0.19, and one moment from the log (an invitation, the walk,
     the whoop, an onlooker's memory). Tick the boxes and update the status here and in
     [PLAN.md](../PLAN.md).
+  - *Result (2026-10-04):* `metrics.dice_metrics` (games, abandoned, onlookers, wins per guest) is in
+    `metrics.json` as `dice`; `intentions.SALIENT_EVENTS` maps `dice_won` and `dice_lost` to a `dice`
+    trigger, so players take stock after a game and a save holding that trigger loads back. The lockstep
+    done test (seeds 1 and 2, a writer that invites to dice whenever it can) plays games to a result and
+    `dice.games` counts them. `make check` passes (1,864 tests). Offline seed 5 plays no dice (see G3) and is
+    byte-identical to `main`'s. **Live (Jev + Haiku), both replays byte-identical:** seed 5, 432 game s,
+    10 scenes, 24 turns, no fallbacks, two darts invitations and no dice, stuck 22.2 s, about $0.18 for the
+    evening; seed 1, 432 game s, 12 scenes, 26 turns, no fallbacks, one game of dice, stuck 21.2 s, $0.18
+    ($0.0026 per turn). The seed 1 game: at 364 s Rurik (Haiku, nudged by his boredom) invited Edda to a
+    game of dice, she accepted, they sat down at 367 s and at 392 s "Rurik beat Edda at dice". No onlooker
+    watched (nobody was near enough or bored enough), and no game was abandoned; so `dice` read
+    `{games: 1, abandoned: 0, onlookers: 0, wins: {ivo: 1}}`. One odd moment: Edda's intention written just
+    after she accepted says she means to decline the game; the invitation was already honoured, a case of a
+    model changing its mind after the game's yes (it is not a rule violation, but E28 should count it).
+    One game in two live evenings is thin; the nudge works but invitations stay rare, so raising
+    `scripted.INVITES` or making the nudge stronger is open for E28.
+
 
 ### M5 — Presentation and acceptance
 
