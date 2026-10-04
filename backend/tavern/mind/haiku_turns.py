@@ -1,6 +1,6 @@
 """The Haiku turn writer: a conversation line asked of Claude, laid out for caching and checked at the boundary."""
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 import re
 from typing import Any
 
@@ -53,8 +53,9 @@ def turn_content(view: Mapping[str, Any]) -> str:
         The per-call text that follows the cached blocks.
     """
     nudges = _nudges(view["conversation"], view["speaker"])
-    return "\n\n".join([_scene(view["conversation"], view["speaker"]), _self(view["speaker"]),
-                        *([f"THE MOMENT\n\n{nudges}"] if nudges else []), _offer(view),
+    earlier = _earlier(view["speaker"].get("earlier") or [])
+    return "\n\n".join([_scene(view["conversation"], view["speaker"]), *([earlier] if earlier else []),
+                        _self(view["speaker"]), *([f"THE MOMENT\n\n{nudges}"] if nudges else []), _offer(view),
                         "Write the speaker's next line now."])
 
 
@@ -96,6 +97,16 @@ def _scene(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:
     said = "\n".join(lines) if lines else "No one has spoken yet: the speaker opens the conversation."
     return (f"THE SCENE\n\nLine {scene['turn'] + 1} of a conversation about {scene['topic']}.\n"
             f"Present besides the speaker:\n" + "\n".join(present) + f"\n\nRecent lines, oldest first:\n{said}")
+
+
+def _earlier(scenes: Sequence[Mapping[str, Any]]) -> str:
+    # What the speaker already said and heard in other conversations tonight; the style rules say
+    # not to greet those people again or repeat a subject. Empty when nothing was heard.
+    if not scenes:
+        return ""
+    blocks = [f"With {', '.join(scene['with']) or 'no one who answered'}:\n" +
+              "\n".join(f"- {line['speaker']}: \"{line['line']}\"" for line in scene["lines"]) for scene in scenes]
+    return "EARLIER TONIGHT\n\nOther conversations you were in, oldest first.\n" + "\n".join(blocks)
 
 
 def _self(me: Mapping[str, Any]) -> str:

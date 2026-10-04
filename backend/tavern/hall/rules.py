@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from tavern.body.activities import ACTIVITIES
 from tavern.body.expression import EMOTES
 from tavern.hall.state import Rules
-from tavern.hall.validation import number
+from tavern.hall.validation import integer, number
 from typing import Any
 
 
@@ -43,10 +43,11 @@ def default_rules() -> Rules:
             # Scenes (`tavern.social.scenes`, `tavern.social.turns`): seconds before the first line and per line
             # at least, reading speed, how long a claimed line may keep the others waiting, social
             # relief per friendly act, the wish for company below which a scene ends, its size, how
-            # many cells apart guests may stand to talk, and the need that makes a partner decline.
+            # many cells apart guests may stand to talk, the need that makes a partner decline, and how many
+            # lines (`tavern.social.heard`) a guest remembers of tonight's talk.
             "conversation": {"opening": 0.5, "min_gap": 2.5, "chars_per_second": 15.0, "turn_timeout": 10.0,
                              "relief": 25.0, "satisfied": 25.0, "max_participants": 4, "reach": 2,
-                             "pressing": 75.0}}
+                             "pressing": 75.0, "recall_lines": 40}}
 
 
 def check_rules(world: Mapping[str, Any]) -> None:
@@ -87,13 +88,14 @@ def check_rules(world: Mapping[str, Any]) -> None:
 
 def _validate_conversation_rules(conversation: Any) -> None:
     keys = {"opening", "min_gap", "chars_per_second", "turn_timeout", "relief", "satisfied", "max_participants",
-            "reach", "pressing"}
+            "reach", "pressing", "recall_lines"}
     if not isinstance(conversation, dict) or set(conversation) != keys:
         raise ValueError("Invalid saved conversation rules")
     for key in keys:
         number(conversation[key], f"Saved conversation rule {key}", 0, math.inf)
     if conversation["chars_per_second"] <= 0 or conversation["max_participants"] < 2:
         raise ValueError("Saved conversations could never be read or held")
+    integer(conversation["recall_lines"], "Saved conversation rule recall_lines", 1, 1000)
 
 
 def _validate_attention_rules(attention: Any) -> None:

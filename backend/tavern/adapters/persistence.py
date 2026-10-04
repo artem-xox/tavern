@@ -20,6 +20,7 @@ from tavern.hall.validation import saved_cell
 from tavern.hall.world import create_world
 from tavern.mind.cards import parse_card
 from tavern.mind.intentions import check_saved_intention
+from tavern.social.heard import check_heard
 from tavern.social.invitations import KINDS, check_invitations
 from tavern.social.scenes import check_saved_scenes
 from tavern.social.thoughts import check_mind
@@ -81,6 +82,7 @@ def _validate_actor_runtime(world: Mapping[str, Any]) -> None:
         check_saved_seat(actor, world)
         check_saved_visit(actor.get("visit"))
         check_mind(actor)
+        check_heard(actor, world["rules"])
         check_drunkenness(actor, world["rules"])
         check_saved_expression(actor, world)
         _validate_character(actor)
@@ -110,6 +112,7 @@ def _validate_departed(world: Mapping[str, Any]) -> None:
     for item in departed:
         check_saved_visit(item.get("visit"))
         check_mind(item)
+        check_heard(item, world["rules"])
         check_drunkenness(item, world["rules"])
         check_saved_intention(item)
         if "left_at" not in item["visit"]:
@@ -177,7 +180,7 @@ def parse_world(encoded: str) -> World:
     """
     try:
         world = json.loads(encoded)
-        if not isinstance(world, dict) or world.get("schema_version") != 5:
+        if not isinstance(world, dict) or world.get("schema_version") != 6:
             raise ValueError("Unsupported snapshot version")
         json.dumps(world, allow_nan=False)
         _validate_clock(world)

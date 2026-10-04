@@ -45,7 +45,7 @@ def create_actor(data: Mapping[str, Any], world_map: Mapping[str, Any]) -> Actor
                 visit={"seconds": 0.0, "beers": 0, "grievances": []}, thoughts=[],
                 relations=_relations(data["id"], data.get("name", data["id"]), data.get("ties", [])),
                 drunkenness=0.0,
-                knowledge={"objects": {}, "cells": []}, memory=[],
+                knowledge={"objects": {}, "cells": []}, memory=[], heard=[],
                 decision={"source": "local", "scores": {}, "error": None},
                 facing=None, gaze=None, emote=None, interrupted_at=None, intention=None,
                 _move_elapsed=0.0, _remaining=0.0, _blocked_for=0.0, _spot=None)

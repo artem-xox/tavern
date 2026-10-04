@@ -1,7 +1,12 @@
 import Phaser from "phaser";
+import { placeBubble } from "./bubble";
 import { drawBar, drawChair, drawDarts, drawDoor, drawFireplace, drawTable, drawTap, drawToilet, drawWindow, hearthFacing } from "./furniture";
 import { shippedPose, spriteOf, stills } from "./sprites";
 import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Mind, Turn, Verb, World, WorldObject } from "./types";
+
+/** Speech bubbles wrap at this many pixels and draw above every guest. */
+const BUBBLE_WRAP = 180;
+const BUBBLE_DEPTH = 1000;
 
 /** Glyph and colour of each emote above a visitor's head. */
 const EMOTE_GLYPHS: Record<EmoteKind, [string, string]> = {
@@ -103,8 +108,16 @@ export class TavernScene extends Phaser.Scene {
       view.container.y += (view.targetY - view.container.y) * blend;
       // Drunk guests sway; each at their own pace, so a table of drinkers does not rock in step.
       view.sprite.setAngle(view.sway * 8 * Math.sin(time / 420 + view.cellX * 1.7 + view.cellY));
+      this.placeSpeech(view);
     }
     this.drawHearthGlow(time);
+  }
+
+  /** Keep a speech bubble over its speaker, inside the map and above the other guests. */
+  private placeSpeech(view: ActorView): void {
+    if (!view.speech.visible) return;
+    const placement = placeBubble(view.container.x, view.container.y, view.speech.width, view.speech.height, this.scale);
+    view.speech.setOrigin(0.5, placement.originY).setPosition(placement.x, placement.y);
   }
 
   /** Let firelight flicker on the floor in front of each fireplace. */
@@ -225,7 +238,7 @@ export class TavernScene extends Phaser.Scene {
   private syncVisitors(world: World, reset: boolean): void {
     const ids: Set<string> = new Set(world.actors.map((actor: Actor): string => actor.id));
     for (const [id, view] of this.visitors) {
-      if (!ids.has(id)) { view.container.destroy(); this.visitors.delete(id); }
+      if (!ids.has(id)) { view.container.destroy(); view.speech.destroy(); this.visitors.delete(id); }
     }
     for (const actor of world.actors) {
       let view: ActorView | undefined = this.visitors.get(actor.id);
@@ -243,9 +256,10 @@ export class TavernScene extends Phaser.Scene {
     const mugBody: Phaser.GameObjects.Rectangle = this.add.rectangle(0, 0, 7, 10, 0xd6a252);
     const foam: Phaser.GameObjects.Ellipse = this.add.ellipse(0, -5, 8, 4, 0xffebc2);
     const mug: Phaser.GameObjects.Container = this.add.container(12, 3, [mugBody, foam]);
-    const speech: Phaser.GameObjects.Text = this.add.text(0, -70, "", { fontFamily: "Georgia", fontSize: "10px", color: "#48392b", backgroundColor: "#f4e6c6", padding: { x: 6, y: 4 } }).setOrigin(0.5).setVisible(false);
+    // Outside the container, so it can sit above every guest and be kept inside the map each frame.
+    const speech: Phaser.GameObjects.Text = this.add.text(0, 0, "", { fontFamily: "Georgia", fontSize: "12px", color: "#48392b", backgroundColor: "#f4e6c6", align: "center", lineSpacing: 3, padding: { x: 8, y: 5 }, wordWrap: { width: BUBBLE_WRAP, useAdvancedWrap: true } }).setOrigin(0.5, 1).setDepth(BUBBLE_DEPTH).setVisible(false);
     const emote: Phaser.GameObjects.Text = this.add.text(17, -44, "", { fontFamily: "system-ui", fontSize: "12px", fontStyle: "bold", backgroundColor: "#f4e6c6", padding: { x: 4, y: 1 } }).setOrigin(0.5).setVisible(false);
-    const container: Phaser.GameObjects.Container = this.add.container(0, 0, [shadow, selection, sprite, name, mug, speech, emote]);
+    const container: Phaser.GameObjects.Container = this.add.container(0, 0, [shadow, selection, sprite, name, mug, emote]);
     return { container, sprite, name, selection, mug, speech, emote, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south", sway: 0 };
   }
 

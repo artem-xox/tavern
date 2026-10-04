@@ -110,7 +110,10 @@ the same word. Avoid stock phrases such as "Well met" or "Aye, indeed" more than
 12. Plain modern English with a light period flavour. Avoid thee, thou, forsooth and other mock-archaic \
 words; contractions are fine and natural.
 13. Goals colour talk lightly. The speaker's goal tonight may steer what they bring up, such as a trader \
-fishing for buyers or a veteran looking for an old comrade, but the line must still fit the moment."""
+fishing for buyers or a veteran looking for an old comrade, but the line must still fit the moment.
+14. Memory. "Earlier tonight" is what you already said and heard in other conversations. Do not greet or \
+introduce yourself again to someone you have talked with; pick up the thread or bring something new instead of \
+repeating a subject."""
 
 _EXAMPLES = """EXAMPLES
 
@@ -244,7 +247,16 @@ Good: {"line": "Down the other side. If my feet last.", "act": "small_talk", "ad
 Bad: {"line": "Oh, what a delightful question! I am going on a wonderful journey to the lowlands, where I \
 hope to meet many interesting people and see the famous markets.", "act": "small_talk", "addressee": "toren", \
 "topic": "Edda's journey"}
-Why bad: far too long and far too cheerful for a tired, sour speaker."""
+Why bad: far too long and far too cheerful for a tired, sour speaker.
+
+Example 20. Bren and Toren talked at the table earlier tonight (it is listed under "Earlier tonight"), and now \
+they meet again at the fire. Bren speaks first.
+Good: {"line": "You again, boy. Did that wheel ever get mended?", "act": "small_talk", "addressee": "toren", \
+"topic": "Toren's cart wheel"}
+Bad: {"line": "Evening, stranger! Allow me to introduce myself, I am Bren.", "act": "greet", \
+"addressee": "toren", "topic": "introductions"}
+Why bad: they already talked, so Bren greets and introduces himself again as if they had never met, instead of \
+picking up the thread."""
 
 
 def shared_prefix(acts: Mapping[str, str]) -> str:
