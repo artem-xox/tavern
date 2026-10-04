@@ -19,7 +19,7 @@ WATCH = "watch_dice"
 
 def playing(*watchers: dict[str, Any], waiting: bool = False) -> dict[str, Any]:
     """Ada and Bea (or only Ada) at the dice table, with the watchers placed by hand, a few seconds in."""
-    world = table_hall(guest("ada", (7, 8)), guest("bea", (11, 8)), *watchers)
+    world = table_hall(guest("ada", (8, 8)), guest("bea", (12, 8)), *watchers)
     assert start(world, "ada", "play_dice", "dice-chair-1")["accepted"]
     if not waiting:
         assert start(world, "bea", "play_dice", "dice-chair-2")["accepted"]
@@ -120,7 +120,7 @@ def test_onlookers_stand_on_different_spots_and_never_reserve_the_table() -> Non
 
 def test_once_every_spot_is_taken_the_next_onlooker_is_refused() -> None:
     names = ("cid", "dan", "eve", "fay", "gus")
-    world = playing(*[onlooker(name, (12, 6 + index)) for index, name in enumerate(names)])
+    world = playing(*[onlooker(name, (13, 6 + index)) for index, name in enumerate(names)])
     answers = [start(world, name, WATCH, "dice-table")["accepted"] for name in names]
     assert answers == [True, True, True, True, False]
 

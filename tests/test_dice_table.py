@@ -86,12 +86,12 @@ def standing(*cells: tuple[int, int]) -> dict[str, Any]:
 
 
 def test_a_guest_by_the_dice_table_is_told_to_stand_near_it_and_not_near_its_chair() -> None:
-    world = standing((8, 8))
+    world = standing((9, 8))
     assert "standing near the dice table" in brief(observe_actor(world, "ada"), [])["situation"]
 
 
 def test_a_noise_at_a_dice_chair_is_placed_by_the_dice_table() -> None:
-    world = standing((12, 8), (8, 8))
+    world = standing((13, 8), (9, 8))
     record_event(world, world["actors"][1], "quarrel", "Bea and Cid quarreled about dice")
     attend(world)
     heard = [item["message"] for item in world["actors"][0]["memory"] if item["type"] in ("interrupted", "alerted")]
