@@ -97,8 +97,9 @@ def _concrete_candidates(observation: Mapping[str, Any]) -> list[Action]:
         Stable, unique action dictionaries. Inspection and waiting are always offered.
         Table chairs appear as one `seating` wish until the visitor owns a seat; their
         own free seat appears as `sit`, with `seating` again only while company they could
-        join is in sight. Leaving needs a known, free door. Once the inn has closed, going
-        home is the only option, or waiting a turn while every known door is busy.
+        join is in sight. Leaving needs a known door; a door is shared (see
+        `Activity.shared_target`), so it is never busy. Once the inn has closed, going home is
+        the only option, or waiting a turn when no door is known.
 
     Raises:
         ValueError: Observation, needs, inventory, closing flag or object records are malformed.

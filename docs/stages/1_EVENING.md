@@ -78,11 +78,14 @@ E16 measures this; E28 sets the budget.
 M1–M3, the refactor R0–R8, the model health markers (D13), U1 (no labels in the hall) and E18b
 (conversation memory) and E19 (facts and retelling) are done (2026-10-04). Next:
 
-1. **The barkeep (B0–B6).** A barkeep keeps to four cells behind the bar, pours every mug,
-   and chats with guests who lean on the counter.
-2. **M4, news and conflict (E20–E22).** E20 gives guests hostile options.
+1. **Dice (G0–G5).** Guests agree to a game of dice, play it at a dice table, and others watch.
+2. **The barkeep (B0–B6).** A barkeep keeps to four cells behind the bar, pours every mug,
+   and chats with guests who lean on the counter. Dice and the barkeep may go in either
+   order (see Order).
+3. **M4, news and conflict (E20–E22).** E20 gives guests hostile options.
 
-The door at closing (D02) is parked in the tech-debt table and is not a task. The code now
+The door at closing (D02) is fixed: it takes as many leavers at once as it has spots (offline
+seed 5: the last guest left 6.6 s after closing, was 42.8 s; stuck time 27.1 s → 6.1 s). The code now
 lives in packages (`backend/tavern/hall`, `body`, `social`, `mind`, `evening`, `adapters`,
 `server`); the task texts below name modules by their old flat file names, so find one with
 `git ls-files | grep <name>.py`.
@@ -581,9 +584,8 @@ Shared rules for M4. New concepts get their own pure modules (`facts.py`, `hosti
 `fights.py`, `bystanders.py`), each with its own test file. Each one is wired into
 `step_world`, `conversation.ACTS` or `activities.py` with one small edit. The proposed
 fields below get frozen in the task text before coding (step 2 of "Working on a task").
-Each task bumps `schema_version` once. Seeded chance uses the
-`Random(f"{seed}:{tick}:…")` pattern; E21 makes its third use, so E21 first extracts it
-into `chance.roll(world, *keys)` as a separate refactor commit.
+Each task bumps `schema_version` once. Seeded chance goes through `chance.roll(world, *keys)`,
+which G0 extracts from the `Random(f"{seed}:{tick}:…")` pattern before the dice make its third use.
 
 - [x] **E19 — Facts and retelling.** Guests start with news by occupation; sharing
   stores the speaker's words as the listener's version, and retelling paraphrases it.
@@ -759,6 +761,240 @@ into `chance.roll(world, *keys)` as a separate refactor commit.
   - *Tests:* parametrized by traits. Witnesses with high courage and strength
     intervene more; those with low courage back away or leave. A forced fight in a
     seeded evening draws at least two kinds of reaction.
+  - *Reuse:* `watch_fight` can stand on G4's `Activity.shared` and `Activity.game`, with the
+    fight in place of the game.
+
+### Dice — a game at the table (G0–G5)
+
+Added 2026-10-04 at the user's request; it comes before E20 (see Order). Two guests agree in a
+conversation to play dice, walk to the dice table together and play there seated, in the
+talking pose, while others gather round to watch. A seeded roll picks the winner, with odds from
+the players' traits and drunkenness. For the central test, a game is a small story with a cause
+(the invitation), witnesses (the onlookers) and an outcome everyone remembers (a winner and a
+loser).
+
+Decisions for every G task (frozen 2026-10-04; change them here first if the code disagrees):
+
+- **The place.** Two new object kinds. `dice_table` is a table with dice on it; its
+  `interaction_spots` are where onlookers stand. `dice_chair` is walkable like a chair, with a
+  `facing` and a `table_id` that must name a `dice_table`. A dice chair is not a `chair`: nobody
+  owns it, it is never offered for `seating`, `sit` or `rest`, and playing never sets `seat_id`,
+  so the seating, table-talk and dozing rules leave players alone. One dice table stands in the
+  open middle of the hall (`data/tavern.json`, after the regular tables):
+
+  ```json
+  {"id": "dice-table", "kind": "dice_table", "name": "Dice table", "x": 10, "y": 8,
+   "interaction_spots": [[10, 7], [10, 9], [8, 8], [12, 8]]},
+  {"id": "dice-chair-1", "kind": "dice_chair", "name": "Dice table · west", "x": 9, "y": 8,
+   "walkable": true, "table_id": "dice-table", "facing": "east", "interaction_spots": [[9, 8]]},
+  {"id": "dice-chair-2", "kind": "dice_chair", "name": "Dice table · east", "x": 11, "y": 8,
+   "walkable": true, "table_id": "dice-table", "facing": "west", "interaction_spots": [[11, 8]]}
+  ```
+
+- **Two verbs, both in the `pastime` family,** so no first-stage request grows. `play_dice`
+  targets a dice chair. Only an accepted `dice_together` invitation (G3) or the debug panel's
+  forced action starts it, so like `doze` it is never a candidate. `watch_dice` targets a dice
+  table and is a candidate while a game is under way there (G4).
+- **The game, not a timer, ends them.** A new `Activity.game` flag works as `partner` does for
+  scenes: `lifecycle` never completes a `game` activity on its timer; `dice.settle_games` does.
+- **The game record** lives on its table, as a line lives on its place: `create_map` gives every
+  dice table `game: None`, and while guests sit at it `game` is
+  `{"players": [IDs in the order they sat down], "since": when the first sat down,
+  "ends_at": when the result falls, or None while one player waits}`.
+- **Who wins.**
+
+  ```
+  form(guest)   = 0.4·patience + 0.3·curiosity + 0.3·courage − 0.6·drunkenness
+  P(first wins) = clamp(0.5 + 0.5·(form(first) − form(second)), 0.2, 0.8)
+  the first player (players[0]) wins when chance.roll(world, "dice", table_id, first, second) < P
+  ```
+
+  Patience keeps a cool head and does not chase a loss, curiosity reads the odds and the
+  opponent, and courage bets boldly on the right throw. Drunkenness (0–1) already reflects
+  tolerance, so tolerance is not counted again. A trait a guest lacks counts as 0.5, as
+  `tolerance` does in `activities._drink`. The clamp keeps dice mostly luck: the sharpest player
+  beats the dullest four times in five. Examples: equal guests 0.5; same traits but the opponent
+  drunk (0.45) 0.635; all three traits 0.8 against 0.2, both sober, 0.8 (the cap). Every number
+  here is a rule in `rules.dice` (G2).
+- **The look.** Players use the pose `TalkingSeated` (the seated talking stills every sprite
+  ships) and face across the table, along their chair's `facing`. Onlookers stand and face the
+  table. The client draws the dice table as the ordinary table top with two dice in place of the
+  candle and mugs, on a green rug, and draws its chairs like any chair. No captions (U1).
+- **Out of scope:** stakes and money (Stage 3); talk during a game (players are in no scene, and
+  nobody can start one with them, because they neither sit at a table nor stand by a view);
+  onlookers chatting with each other; grudges or fights over a lost game (E20 may add
+  `lost_at_dice` to its causes); new art.
+- **Seed-sensitive tests.** G1 changes the hall and G3 the scripted writer, so whole evenings
+  play differently (`test_a_news_item_reaches_a_third_guest_in_other_words` uses seeds 1 and 2;
+  `test_first_evening.py`). If one fails, stop and report the seed and the failure. Do not
+  change a seed or an assertion without the user's approval.
+
+- [ ] **G0 — One roll, one list of kinds (refactor, no behavior change).**
+  - *Roll:* `hall/chance.py` gets `roll(world, *keys: str) -> float`, a draw in [0, 1) from
+    `Random(":".join([str(world["seed"]), str(world["tick"]), *keys]))`. It replaces the two
+    inline rolls with the very same strings, so nothing replays differently:
+    `conversation._quarrels` uses `roll(world, left["id"], right["id"])` and
+    `dozing.nodding_off` uses `roll(world, actor["id"], "doze")`. `scripted.py` keeps its own
+    `Random`, because the view seeds it, not the world. Add `chance` to the `hall/` list in
+    AGENTS.md.
+  - *Kinds:* `room.OBJECT_KINDS`, one tuple of object kinds, replaces the three copies in
+    `room._validate_kind`, `sight.check_saved_knowledge` and `observation.known_objects`.
+    Error messages stay as they are.
+  - *Tests (`tests/test_chance.py`):* the same world and keys give the same number; another
+    tick, seed or key gives another; one case pins the old string form.
+  - *Check:* `make check`. Record a fresh offline baseline on `main` first (the hall's behavior
+    changed after R0), then show that the offline evening and the replay of `runs/e19-live` are
+    byte-identical, with the commands under "Before M4 — Refactor".
+- [ ] **G1 — The dice table in the hall.** Furniture only; nobody plays yet.
+  - *Data and validation:* add the three objects above. In `room.py`, `SEAT_KINDS = ("chair",
+    "dice_chair")` may be walkable, and a seat's `table_id` must name a table of the matching
+    kind (`chair` → `table`, `dice_chair` → `dice_table`). A dice table needs interaction spots
+    (the existing rule demands them for every kind it does not exempt). Only `table` objects are
+    rated for appeal, as now.
+  - *Wording:* `hall_view.place_words` says "the dice table". `attention._landmark` and the
+    briefing's "standing near" skip `SEAT_KINDS`, as they skip chairs today: a table names its
+    place.
+  - *Client:* `types.ts` adds both kinds. `furniture.ts` splits `drawTable` into the top and its
+    props (a refactor: regular tables look the same) and adds `drawDiceTable`: the top plus two
+    ivory dice with pips. `scene.ts` draws a `dice_chair` with `drawChair` and lays a green rug
+    under the dice table. If `scene.ts` would pass 400 lines, first move `drawRugs` to
+    `furniture.ts` (D01) in its own commit.
+  - *Tests (`tests/test_dice_table.py`):* the repository hall has one dice table with a dice
+    chair on each side, facing it; dice chairs never appear in `build_seat_candidates`, nor as a
+    `sit` or `rest` target; observations and saved knowledge accept both kinds. Error cases: a
+    dice chair naming a regular table, a chair naming a dice table, a walkable dice table, a dice
+    table without spots.
+  - *Check:* `make check` and `make build`; `make run` and a screenshot of the hall; the offline
+    evening (seed 5): scenes and stuck time against E19's (28 scenes, 27.1 s), and guests route
+    round the table.
+- [ ] **G2 — A game at the table.** Two guests seated at the dice table play one game, and the
+  formula above picks the winner.
+  - *Refactor first (own commit):* take `lifecycle.complete_action(world, actor)` out of
+    `_interact`: apply the effect and the needs, log `action_completed`, clear the action, look.
+  - *Table:* `Activity.game: bool = False` ("a seat at, or a place round, a game: the game, not
+    a timer, ends it"); `_interact` completes on the timer only when the activity is neither
+    `partner` nor `game`. `play_dice`: `target_kinds=("dice_chair",)`, `duration=30.0`
+    (nominal), `game=True`, `leaves_seat=True`, `interruptible=False`,
+    `needs={"boredom": -70, "social": -20}`, `pose="TalkingSeated"`,
+    `sound=Sound("dice", 0.25, 8.0, "dice rattling on a table")`, `label="Play dice"`,
+    `status="dice"`, `doing="playing dice"`, `done="played dice"`, `family="pastime"`, and a
+    `what` and `guidance` that say it is the seat at a game they agreed to.
+  - *Module `social/dice.py`* (add it to AGENTS.md): `form`, `win_chance(first, second,
+    rules)`, `settle_games(world) -> Settled` (frozen dataclass with `done` and `released`
+    lists of actors) and `check_saved_games`. Each tick, per dice table in map order:
+    1. A player whose action is no longer `play_dice` on one of its chairs, or who has left,
+       drops out; a game broken off that way releases the other player with `dice_abandoned`
+       ("Edda's game of dice broke off").
+    2. A guest who has reached a chair (status `interacting`) joins `players`. The second sets
+       `ends_at = now + game_seconds` and logs `dice_started` for both ("Rurik and Edda sat down
+       to a game of dice").
+    3. A player left alone for `wait_seconds` is released with `dice_abandoned` ("Edda gave up
+       waiting for a game of dice").
+    4. At `ends_at` the result falls: `dice_won` for the winner and `dice_lost` for the loser,
+       both "Rurik beat Edda at dice", plus their thoughts. Both players are `done`, and `game`
+       goes back to None.
+
+    `world.step_world` calls it right after `honor_invitations`, then `complete_action` for
+    `done` and `clear_action` for `released`.
+  - *Rules:* `rules.dice = {"skill": {"patience": 0.4, "curiosity": 0.3, "courage": 0.3},
+    "drink": 0.6, "edge": 0.5, "odds": [0.2, 0.8], "game_seconds": 25.0,
+    "wait_seconds": 30.0}`, a `DiceRules` TypedDict in `state.py`, and `check_rules`: skill
+    weights are trait names, at least 0 and sum to 1; `drink` is at least 0; the odds are
+    symmetric round 0.5; the seconds are positive.
+  - *Consequences:* `thoughts.THOUGHTS` gets `won_at_dice` (mood +5, opinion +2, 300 s, stack
+    3, "lost to them at dice", acquaints) and `lost_at_dice` (mood −4, opinion −6, 300 s, stack
+    3, "beat them at dice", acquaints). `hearing.EVENT_SOUNDS["dice_won"] = Sound("cheer", 0.3,
+    12.0, "a whoop at the dice table")`, below the interrupt level, so it turns heads without
+    breaking off what people do.
+  - *Saves and snapshot:* `schema_version` 8 (approved for Stage 1; name the bump in the commit,
+    since `test_database.py` and `test_intention_saves.py` pin it). `parse_world` calls
+    `dice.check_saved_games`: `game` is None or has exactly the three keys; one or two distinct
+    players who are present and whose action is `play_dice` on that table's chairs; `ends_at`
+    is None exactly while one player waits; times lie between 0 and now, `since` ≤ `ends_at`.
+    `types.ts` gets `WorldObject.game?: DiceGame | null`.
+  - *Client:* a guest interacting with a target that has a `facing` faces that way
+    (`updateVisitor`: `target.facing ?? facingTarget(...)`), so players face each other. The
+    hover line adds "· Rurik and Edda playing" for a dice table with a game.
+  - *Tests (`tests/test_dice.py`, with a small hall helper):* `win_chance` cases (equal guests,
+    a drunk opponent, sharp against dull at the cap, missing traits as 0.5, and
+    P(a, b) + P(b, a) = 1); error cases (drunkenness or a trait outside 0–1). Rates over 400
+    seeded games: the 0.8 case wins 72–88%, equal guests 43–57%. Through `start_action` and
+    `step_world`: the game starts only once both sit; neither player is free to decide during
+    it; after `game_seconds` there is exactly one `dice_won` and one `dice_lost`, both players
+    are idle with boredom relieved and a thought each; a lone player is released after
+    `wait_seconds` without a thought; forcing another action on one player releases the other;
+    the same seed gives the same winner; a save made mid-game round-trips; a malformed game fails
+    loudly (three players, an absent player, `ends_at` before `since`, `ends_at` set while one
+    waits).
+  - *Check:* `make check` and `make build`. In `make run`, force `play_dice` for two guests from
+    the debug panel and attach a screenshot: both seated in the talking pose facing each other,
+    dice on the table, the hover showing the game, and the result in the event feed.
+- [ ] **G3 — Agreeing to play.** The `dice_together` invitation sends both guests to the table.
+  - *Refactor first (own commit, AGENTS.md "O"):* dice would be a third special case in
+    `invitations._first_steps`, so first turn it into a table of one function per kind
+    (`_FIRST_STEPS`), with no behavior change.
+  - *Kind:* `KINDS["dice_together"] = "play a game of dice"`. `offered_kinds` offers it while the
+    speaker knows a dice table and `dice.open_chairs(world, table_id)` returns its two chairs (no
+    game, neither chair reserved). On `accept` the host starts `play_dice` on the first chair (map
+    order) and the guest on the second; the errand ends there, as `darts_together`'s does. If the
+    table was taken in between, the errand fails with `invitation_failed`. If only the host could
+    start, they wait alone until G2's timeout releases them.
+  - *Words:* `conversation.ACTS["invite"]` names `dice_together` (a game of dice at the dice
+    table). The turn prefix's description of the hall mentions the dice table and gains one good
+    example of a dice invitation; `data/minds/intention_prefix.md` adds "play dice with someone,
+    or watch a game" to what guests do. Both prefixes only grow, so they stay above 4,096 tokens.
+    `haiku_turns._nudges` adds "You are bored, and the dice table stands free." when boredom is
+    50 or more and `dice_together` is on offer. Unnudged, the two E19 live evenings had three
+    accepted invitations in all, two of them to darts, so a game would be rare without it.
+  - *Scripted writer:* `INVITE_LINES["dice_together"] = "Care for a game of dice, {name}?"`. It
+    wishes for dice before darts when boredom is 50 or more and courage 0.5 or more (a game of
+    chance wants some nerve), and accepts when boredom is 30 or more, as for darts. `types.ts`
+    adds the kind to `InvitationKind`.
+  - *Tests:* offered or not (table unknown, a game under way, a chair reserved, open); accepting
+    sends the two to different chairs; a table taken before the answer fails the errand;
+    `check_invitations` accepts the kind; the scripted writer invites to dice when bored and
+    bold and to darts when bored and timid; the nudge shows only when it should; the schema's
+    enum holds the kind. Done test: a lockstep evening whose fake writer invites to dice plays a
+    game to a result.
+  - *Check:* `make check` and `make build`, the offline evening, and a live evening (seed 5)
+    with its replay. Record the dice invitations Haiku made; none is a finding, not a failure.
+- [ ] **G4 — Onlookers.** Guests who see a game may gather round to watch it.
+  - *Table:* `Activity.shared: bool = False` ("many guests use the target at once, each from an
+    interaction spot of their own; it is never reserved"): `actions._target_error` and
+    `lifecycle.activate` skip the reservation for it, and `routes.plan_route` already keeps the
+    spots apart. `watch_dice`: `target_kinds=("dice_table",)`, `shared=True`, `game=True`,
+    `interruptible=True`, `duration=25.0` (nominal), `needs={"boredom": -45}`, no pose
+    (standing), `label="Watch the dice"`, `status="watching dice"`,
+    `doing="watching a game of dice"`, `done="watched a game of dice"`, `family="pastime"`.
+  - *Game:* `settle_games` counts the guests watching a table as its onlookers. They are `done`
+    when the result falls, and each remembers `dice_watched` ("Saw Rurik beat Edda at dice").
+    An onlooker at a table with no game under way is released.
+  - *Choice:* the candidate rule in `agents.py` offers `watch_dice` on every known dice table
+    whose remembered `game` has two players (never after closing). Local utility in
+    `local_policy.py`: `max(0, 0.1 + 0.5·boredom + 0.25·curiosity − 0.3·max(thirst, fatigue,
+    bladder))`. Option sentence in `options.py`: "walk a few steps to the dice table and watch
+    Rurik and Edda play dice", with the players named as the guest calls them. Jev guidance: a
+    game draws a crowd; watching eases boredom, and curious guests love to see who wins; it means
+    leaving their seat until the game ends.
+  - *Tests:* offered only while a game is under way (no game, one player waiting, two playing,
+    the inn closed); the option names the players as the watcher calls them; the utility grows
+    with boredom and curiosity; two onlookers stand on different spots, and once every spot is
+    taken the next is refused; onlookers finish with the game and remember the result; an
+    onlooker who arrives after the result is released.
+  - *Check:* `make check`, the offline evening, and `make run` with a forced game and a guest
+    forced to watch: screenshot.
+- [ ] **G5 — Numbers and the story.**
+  - *Metrics:* `metrics.json` gets `dice`: `{games, abandoned, onlookers, wins: {actor_id: n}}`,
+    counted from the `dice_won`, `dice_abandoned` and `dice_watched` events.
+  - *Intentions:* `intentions.SALIENT_EVENTS` maps `dice_won` and `dice_lost` to a `dice`
+    trigger, so a guest takes stock after a game. Check that saved intentions accept it.
+  - *Done:* in a lockstep evening of the first scenario (seeds 1 and 2) with a writer that
+    invites to dice whenever it can, a game reaches a result and `dice.games` counts it. Run the
+    offline evening (seed 5) and a live one (Jev + Haiku, seed 5) with a byte-identical replay.
+    Record games, abandoned games, onlookers, each winner with their chance, stuck time, the
+    cost per evening against E19's $0.19, and one moment from the log (an invitation, the walk,
+    the whoop, an onlooker's memory). Tick the boxes and update the status here and in
+    [PLAN.md](../PLAN.md).
 
 ### The barkeep (B0–B6)
 
@@ -829,9 +1065,11 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
   (`test_a_news_item_reaches_a_third_guest_in_other_words` uses seeds 1 and 2). If one fails,
   stop and report the seed and the failure. Do not change a seed or an assertion without the
   user's approval.
-- **Shared with other planned work.** `lifecycle.complete_action` (B0) and `Activity.shared` (B4)
-  are also proposed by the dice tasks. If one already exists when you start, reuse it. The save
-  bump takes the next free `schema_version`.
+- **Shared with the dice tasks.** B0's `lifecycle.complete_action` is G2's first refactor:
+  whichever task comes first builds it, and the other reuses it. B4 reuses
+  `Activity.shared_target`, which the D02 fix added for the door and which G4's `Activity.shared`
+  would duplicate. B3's timer condition may meet G2's `Activity.game` (see B3). Each block's save
+  bump takes the next free `schema_version`. The dice table at (10, 8) is far from the bar.
 
 - [ ] **B0 — One way to finish an action (refactor, no behavior change).** Take
   `lifecycle.complete_action(world, actor)` out of `_interact`: apply the effect and the needs, log
@@ -865,7 +1103,8 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     (1, 1) routed to the tap's spot, and a guest sent to inspect, never step on a staff cell; an idle
     guest at (2, 2) is never yielded onto (2, 1); blocking a staff cell is refused.
   - *Check:* `make check` and `make build`; `make run` and a screenshot (duckboards behind the bar,
-    guests keep out); the offline evening (seed 5) against E19's (28 scenes, 27.1 s stuck).
+    guests keep out); the offline evening (seed 5) against a fresh run on `main` (6.1 s stuck
+    since the D02 fix).
 - [ ] **B2 — The barkeep on duty.** He stands behind the bar; guests still pour their own.
   - *Scenario:* `first_evening.json` gets
     `"staff": [{"id": "hob", "name": "Hob", "color": "#c98f4a", "sprite": "bartender", "card": "hob", "post": "bar"}]`.
@@ -968,11 +1207,10 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     a screenshot of Hob pouring while the guest waits. Run the offline evening (seed 5) and compare
     beers served, give-ups in line and stuck time against B2.
 - [ ] **B4 — Leaning on the bar.** Guests stand at the counter and can talk with the barkeep.
-  - *Table:* `Activity.shared: bool = False` ("many guests use the target at once, each from an
-    interaction spot of their own; it is never reserved"). `actions._target_error` and
-    `lifecycle.activate` skip the reservation for it; `routes.plan_route` already keeps the spots
-    apart.
-    - `stand_at_bar`: `target_kinds=("bar",)`, `shared=True`, `duration=12.0`,
+  - *Table:* reuse `Activity.shared_target` (added for the door in the D02 fix):
+    `lifecycle.activate` never reserves such a target, and `routes.plan_route` already keeps the
+    spots apart, so the bar's three spots are its capacity.
+    - `stand_at_bar`: `target_kinds=("bar",)`, `shared_target=True`, `duration=12.0`,
       `interruptible=True`, `needs={"boredom": -20, "social": -10}`, no pose,
       `label="Stand at the bar"`, `status="at the bar"`, `doing="leaning on the bar"`,
       `done="stood at the bar"`, `family="company"`. Its `what` and `guidance` say they lean on
@@ -1090,9 +1328,14 @@ scenario 3 need news. E20 → E21 → E22 is strict. D13 can also run in paralle
 refactor, since it touches only the adapters, the shell and the dashboard. E18b is easier
 after R7, because it touches `turns.py` and `haiku_turns.py`, which R7 moves.
 
-After E19 comes the barkeep (B0–B6), at the user's request (2026-10-04), then E20–E22. B0 → B1 →
-B2 → B3 → B4 → B5 → B6 is strict. E22's bystanders can later let the barkeep step in, since he
-already stands on the activity system.
+After E19: dice (G0–G5) and the barkeep (B0–B6), both at the user's request (2026-10-04), then
+E20–E22. The two blocks may go in either order. G0 → G1 → G2 → G3 → G5 is strict; G4 needs only G2
+and may come before G3. B0 → B1 → B2 → B3 → B4 → B5 → B6 is strict. Whichever block comes second
+reuses what the first built: `lifecycle.complete_action` (G2's first refactor, B0) and the next
+free `schema_version`. B4, and G4 in place of its `Activity.shared`, reuse the door's
+`Activity.shared_target`. E21 then rolls through G0's `chance.roll`; E22's `watch_fight` can reuse
+G4's sharing and `Activity.game`, and its
+bystanders can later let the barkeep step in, since he already stands on the activity system.
 
 ## Acceptance scenarios
 
