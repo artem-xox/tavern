@@ -214,7 +214,7 @@ def quarrel_nearby(world: dict[str, Any]) -> None:
 def test_scene_ends(cause: Callable[[dict[str, Any]], None]) -> None:
     world = talking(at_table("ada", "bea"))
     cause(world)
-    advance(world, 3.5)
+    advance(world, 6.0)
     assert (world["conversations"], actor(world, "ada")["action"]) == ([], None)
 
 
@@ -231,7 +231,7 @@ def test_scene_ending_pleasantly_is_remembered_as_a_conversation() -> None:
     world = talking(at_table("ada", "bea", social=90))
     advance(world, 6)
     content(world)
-    advance(world, 0.2)
+    advance(world, 2.6)
     chats = [event["message"] for event in world["events"] if event["type"] == "conversation"]
     assert chats and chats[0].startswith("Ada and Bea chatted about")
 

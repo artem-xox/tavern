@@ -126,6 +126,7 @@ class ConversationRules(TypedDict):
 
     opening: float
     min_gap: float
+    linger: float
     chars_per_second: float
     turn_timeout: float
     relief: float

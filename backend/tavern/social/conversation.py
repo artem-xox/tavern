@@ -13,7 +13,7 @@ from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World
 from tavern.social import facts, invitations, social_acts
 from tavern.social.names import called
-from tavern.social.scenes import Conversation, end_conversation, leave_conversation
+from tavern.social.scenes import Conversation, end_conversation
 from tavern.social.thoughts import active_thoughts, opinion_of, think
 
 # An act's effect receives the world, the scene, the speaker, and whom they addressed (None for everyone).
@@ -85,11 +85,6 @@ def _insult(world: World, scene: Conversation, speaker: Actor,
         end_conversation(world, scene, pleasant=False)
 
 
-def _say_goodbye(world: World, scene: Conversation, speaker: Actor,
-                 addressee: Actor | None) -> None:
-    leave_conversation(world, speaker)
-
-
 ACTS: Mapping[str, Act] = MappingProxyType({
     "greet": Act(None, "open the conversation, or welcome someone who joined it"),
     "remark": Act(None, "say something that needs no consequence, such as a question, an answer or an aside; "
@@ -104,7 +99,8 @@ ACTS: Mapping[str, Act] = MappingProxyType({
                           "carries across the hall"),
     "complain": Act(None, "grumble about something; it changes nothing by itself, though a grumble about someone "
                           "may be followed by an insult"),
-    "leave_conversation": Act(_say_goodbye, "say goodbye and leave; the others carry on while two remain"),
+    # The speaker leaves once the line is heard (`scenes.check_conversations`), not as it is spoken.
+    "leave_conversation": Act(None, "say goodbye and leave; the others carry on while two remain"),
     "introduce": Act(social_acts.introduce, "tell the others the speaker's name; until then strangers know "
                                             "them only by their looks. Strangers become acquaintances"),
     "compliment": Act(social_acts.compliment, "praise the addressee (everyone, if nobody in particular); it "

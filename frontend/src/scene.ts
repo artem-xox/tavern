@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { LINGER_MS, chunkAt, lineMs, placeBubble, splitLine } from "./bubble";
+import { chunkAt, placeBubble, splitLine } from "./bubble";
 import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawFireplace, drawRugs, drawTable, drawTap, drawToilet, drawWindow, hearthFacing } from "./furniture";
 import { shippedPose, spriteOf, stills } from "./sprites";
 import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Mind, Turn, Verb, World, WorldObject } from "./types";
@@ -36,8 +36,8 @@ interface ActorView {
   speech: Phaser.GameObjects.Container;
   speechBox: Phaser.GameObjects.Graphics;
   speechText: Phaser.GameObjects.Text;
-  /** The line being told in pieces: when it began, and when it goes down (null while its scene lives). */
-  talk: { key: string; chunks: string[]; start: number; release: number | null } | null;
+  /** The line being told in pieces, and when it began. */
+  talk: { key: string; chunks: string[]; start: number } | null;
   emote: Phaser.GameObjects.Text;
   targetX: number;
   targetY: number;
@@ -127,7 +127,6 @@ export class TavernScene extends Phaser.Scene {
   /** Show the piece of the line now due in a bubble over its speaker, inside the map and above the other guests. */
   private placeSpeech(view: ActorView): void {
     const now: number = this.time.now;
-    if (view.talk && view.talk.release !== null && now >= view.talk.release) view.talk = null;
     view.speech.setVisible(view.talk !== null);
     if (!view.talk) return;
     const piece: string = view.talk.chunks[chunkAt(view.talk.chunks, now - view.talk.start)]!;
@@ -306,20 +305,13 @@ export class TavernScene extends Phaser.Scene {
     view.container.setDepth(10 + y / 1000);
   }
 
-  /** Tell the scene's latest line over its speaker in pieces, and keep the last piece up a while after the scene ends. */
+  /** Tell the scene's latest line over its speaker in pieces; the server keeps the scene up while the last one is heard. */
   private tellLine(view: ActorView, actor: Actor): void {
     const scene: Conversation | undefined = this.world?.conversations.find((item: Conversation): boolean => item.participants.includes(actor.id));
     const line: Turn | undefined = scene?.turns[scene.turns.length - 1];
-    const now: number = this.time.now;
-    if (line?.speaker === actor.id) {
-      const key: string = `${line.time}:${line.line}`;
-      if (view.talk?.key !== key) view.talk = { key, chunks: splitLine(line.line), start: now, release: null };
-      else view.talk.release = null;
-    } else if (scene !== undefined) {
-      view.talk = null;
-    } else if (view.talk && view.talk.release === null) {
-      view.talk.release = Math.max(now, view.talk.start + lineMs(view.talk.chunks)) + LINGER_MS;
-    }
+    if (line?.speaker !== actor.id) { view.talk = null; return; }
+    const key: string = `${line.time}:${line.line}`;
+    if (view.talk?.key !== key) view.talk = { key, chunks: splitLine(line.line), start: this.time.now };
   }
 
   private showEmote(view: ActorView, actor: Actor): void {

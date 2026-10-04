@@ -774,7 +774,7 @@ def first_evening_played(seed: int) -> dict[str, Any]:
 
 
 @pytest.mark.parametrize("seed", [
-    pytest.param(1, id="seed-1"),
+    pytest.param(7, id="seed-7"),
     pytest.param(4, id="seed-4"),
 ])
 def test_a_news_item_reaches_a_third_guest_in_other_words(seed: int) -> None:

@@ -277,8 +277,36 @@ def test_a_complaint_never_ends_in_a_quarrel(opinion: float) -> None:
 def test_saying_goodbye_leaves_a_bigger_scene_running() -> None:
     world = talking("cid")
     spoken(world, "leave_conversation", "I must be off.")
+    advance(world, 2.0)  # the goodbye is heard out first
     assert (conversation_of(world, "ada"), conversation_of(world, "bea")["participants"]) == (
         None, ["bea", "cid"])
+
+
+@pytest.mark.parametrize("seconds, still_talking", [
+    pytest.param(0.5, True, id="just-said-goodbye"),
+    pytest.param(2.0, False, id="after-the-last-words-were-heard"),
+])
+def test_a_guest_finishes_saying_goodbye_before_leaving(seconds: float, still_talking: bool) -> None:
+    world = talking("cid")
+    spoken(world, "leave_conversation", "I must be off.")
+    advance(world, seconds)
+    assert (conversation_of(world, "ada") is not None, actor(world, "ada")["action"] is not None) == (
+        still_talking, still_talking)
+
+
+@pytest.mark.parametrize("seconds, scenes", [
+    pytest.param(1.5, 1, id="last-line-still-being-heard"),
+    pytest.param(2.5, 0, id="last-line-heard"),
+])
+def test_a_scene_that_has_had_enough_ends_after_its_last_line_is_heard(seconds: float, scenes: int) -> None:
+    world = talking()
+    scene = world["conversations"][0]
+    scene["turns"] += [{"speaker": "ada", "addressee": "bea", "line": "Aye.", "act": "remark", "time": world["time"]}] * 2
+    scene["next_turn_at"] = world["time"] + 100
+    for item in world["actors"]:
+        item["needs"]["social"] = 0.0
+    advance(world, seconds)
+    assert len(world["conversations"]) == scenes
 
 
 def keyed_writer(calls: list[float], clock: Callable[[], float]) -> Callable[..., Any]:
