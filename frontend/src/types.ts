@@ -77,6 +77,8 @@ export interface Actor {
   color: string | number;
   /** Character art under /characters; the scene falls back to the generic visitor. */
   sprite: string;
+  /** The ID of the bar they work at, or null for a guest. */
+  post: string | null;
   x: number;
   y: number;
   traits: Record<string, unknown>;

@@ -25,8 +25,8 @@ def minded() -> dict[str, Any]:
     return world
 
 
-def test_new_worlds_are_version_8() -> None:
-    assert create_world(hall())["schema_version"] == 8
+def test_new_worlds_are_version_9() -> None:
+    assert create_world(hall())["schema_version"] == 9
 
 
 def test_intentions_survive_save_and_load(tmp_path: Path) -> None:

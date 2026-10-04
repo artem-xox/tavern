@@ -1,10 +1,10 @@
-"""Staff cells: the floor behind a bar that only staff walk on, and what a hall must say about it."""
+"""Staff: who works behind a bar, and the cells only they walk on."""
 
 from collections.abc import Mapping
 from typing import Any
 
 from tavern.hall.navigation import find_path
-from tavern.hall.room import impassable_cells, line_approach, object_cells
+from tavern.hall.room import find_object, impassable_cells, line_approach, object_cells
 
 FACINGS = ("north", "south", "east", "west")
 
@@ -33,17 +33,128 @@ def check_staff_cells(world_map: Mapping[str, Any]) -> None:
     _check_nothing_cut_off(world_map, off_limits(world_map, {}))
 
 
+def on_staff(actor: Mapping[str, Any]) -> bool:
+    """Tell whether a visitor works at a bar rather than visiting.
+
+    Args:
+        actor: Visitor; one without a `post` (a hand-made test visitor) is a guest.
+
+    Returns:
+        True when their `post` names a bar.
+    """
+    return actor.get("post") is not None
+
+
+def guests(world: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    """List the visitors in the hall who came for the evening, not to work.
+
+    Args:
+        world: Current world.
+
+    Returns:
+        Present visitors without a post, in actor order.
+    """
+    return [actor for actor in world["actors"] if not on_staff(actor)]
+
+
+def post_of(world_map: Mapping[str, Any], actor: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Find the bar a staff member works at.
+
+    Args:
+        world_map: Validated map.
+        actor: Visitor on staff.
+
+    Returns:
+        The bar, which has staff cells.
+
+    Raises:
+        ValueError: Their post is no bar with staff cells.
+    """
+    bar = find_object(world_map, actor.get("post"))
+    if bar is None or bar["kind"] != "bar" or not bar.get("staff_cells"):
+        raise ValueError(f"Staff post {actor.get('post')!r} must be a bar with staff cells")
+    return bar
+
+
+def pour_cell(world_map: Mapping[str, Any], bar: Mapping[str, Any]) -> tuple[int, int]:
+    """Find the staff cell where a bar's staff stand to serve a tap.
+
+    Args:
+        world_map: Validated map.
+        bar: Bar with staff cells.
+
+    Returns:
+        The first staff cell, in listed order, that is orthogonally next to a tap.
+
+    Raises:
+        ValueError: No staff cell is next to a tap (`check_staff_cells` forbids it).
+    """
+    taps = {cell for item in world_map["objects"] if item["kind"] == "tap" for cell in object_cells(item)}
+    for x, y in bar["staff_cells"]:
+        if any((x + dx, y + dy) in taps for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+            return (x, y)
+    raise ValueError(f"Bar {bar['id']!r} has no staff cell next to a tap")
+
+
+def facing_of(world_map: Mapping[str, Any], actor: Mapping[str, Any]) -> str | None:
+    """Tell which way a staff member looks when nothing turns their head.
+
+    Args:
+        world_map: Validated map.
+        actor: Visitor.
+
+    Returns:
+        Their bar's `staff_facing`, or None for a guest, whose seat or task decides.
+    """
+    return post_of(world_map, actor)["staff_facing"] if on_staff(actor) else None
+
+
 def off_limits(world_map: Mapping[str, Any], actor: Mapping[str, Any]) -> list[tuple[int, int]]:
     """List the cells a visitor may not walk on.
 
     Args:
         world_map: Validated map.
-        actor: The visitor who walks. Every visitor is a guest for now.
+        actor: The visitor who walks.
 
     Returns:
-        The staff cells of every bar, in map order.
+        For a guest, the staff cells of every bar, in map order. For a staff member, every cell of
+        the hall but the staff cells of their own bar.
     """
+    if on_staff(actor):
+        own = {tuple(cell) for cell in post_of(world_map, actor)["staff_cells"]}
+        return [(x, y) for y in range(world_map["height"]) for x in range(world_map["width"]) if (x, y) not in own]
     return [(x, y) for item in world_map["objects"] for x, y in item.get("staff_cells", [])]
+
+
+def check_saved_staff(world: Mapping[str, Any]) -> None:
+    """Check the posts of a saved world's visitors.
+
+    Args:
+        world: Decoded save whose actors and departed visitors each carry a `post`.
+
+    Raises:
+        ValueError: A visitor lacks a post or has one that is not a string or null; staff have left,
+            sit on a seat, stand off their bar's staff cells or work at something that is no bar with
+            staff cells; a bar has two staff members; or a guest stands on a staff cell.
+    """
+    people = [*world["actors"], *world["departed"]]
+    if any("post" not in person or not (person["post"] is None or isinstance(person["post"], str))
+           for person in people):
+        raise ValueError("Invalid saved post")
+    if any(person["post"] is not None for person in world["departed"]):
+        raise ValueError("Saved staff cannot have gone home")
+    bars = {item["id"]: item for item in world["map"]["objects"] if item["kind"] == "bar" and item.get("staff_cells")}
+    behind = {tuple(cell) for bar in bars.values() for cell in bar["staff_cells"]}
+    posts = [person["post"] for person in world["actors"] if person["post"] is not None]
+    if len(set(posts)) != len(posts):
+        raise ValueError("Saved bar has more than one staff member")
+    for person in world["actors"]:
+        if person["post"] is None:
+            if (person["x"], person["y"]) in behind:
+                raise ValueError("Saved guest stands behind the bar")
+        elif person["post"] not in bars or person["seat_id"] is not None or [
+                person["x"], person["y"]] not in bars[person["post"]]["staff_cells"]:
+            raise ValueError("Saved staff member must stand on the staff cells of a bar, unseated")
 
 
 def _check_stretch(world_map: Mapping[str, Any], bar_id: str, cells: Any) -> None:

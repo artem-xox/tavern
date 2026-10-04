@@ -46,6 +46,8 @@ def arguments(root: Path) -> argparse.ArgumentParser:
                         help="who comes tonight, when, and when the inn closes")
     parser.add_argument("--characters", type=Path, default=root / "data" / "characters",
                         help="character cards the scenario casts its guests from")
+    parser.add_argument("--staff", type=Path, default=root / "data" / "staff",
+                        help="cards the scenario casts its staff from")
     parser.add_argument("--mode", choices=("local", "live", "replay"),
                         help="default: live when TYPESAFE_API_KEY is in the env file, else local")
     parser.add_argument("--out", type=Path, default=root / "runs" / "evening-0")
@@ -257,7 +259,9 @@ def main(root: Path) -> None:
     room = json.loads((root / "data" / "tavern.json").read_text())
     try:
         cards = parse_cards([json.loads(path.read_text()) for path in sorted(args.characters.glob("*.json"))])
-        world = open_evening(room, parse_scenario(json.loads(args.scenario.read_text()), cards), args.seed)
+        staff_cards = parse_cards([json.loads(path.read_text()) for path in sorted(args.staff.glob("*.json"))])
+        world = open_evening(room, parse_scenario(json.loads(args.scenario.read_text()), cards, staff_cards),
+                             args.seed)
     except (OSError, ValueError) as error:
         parser.error(f"cannot open the evening: {error}")
     settings = config(values, mode)

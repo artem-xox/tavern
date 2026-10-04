@@ -1221,14 +1221,14 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     at 371 lines, under 400, so no split was needed). 25 tests in `tests/test_staff.py`, including a 7×3
     hall whose one corridor the cells would cut. The offline evening (seed 5) is byte-identical to `main`'s,
     as it should be for floor alone; in the browser the duckboards show behind the bar.
-- [ ] **B2 — The barkeep on duty.** He stands behind the bar; guests still pour their own.
+- [x] **B2 — The barkeep on duty.** He stands behind the bar; guests still pour their own.
   - *Scenario:* `first_evening.json` gets
     `"staff": [{"id": "hob", "name": "Hob", "color": "#c98f4a", "sprite": "bartender", "card": "hob", "post": "bar"}]`.
     `parse_scenario` reads this optional section into `Scenario.staff: tuple[StaffMember, ...] = ()`.
     A `StaffMember` has id, name, color, sprite, traits, post and an optional card. It gets a
     guest's checks except `arrives_at`. IDs are unique across guests and staff. Staff are not in
     `relationships` or `news`, whose checks keep using guest IDs only.
-  - *Opening:* `open_evening` calls `staff.take_posts(world, scenario.staff)` before
+  - *Opening:* `open_evening` calls `arrival.take_posts(world, scenario.staff)` before
     `admit_arrivals`. Each member becomes an actor (`create_actor`, all needs 0) on their post's
     pour cell, with `post` set. The arrival is logged as `on_duty` ("Hob took his place behind the
     Oak bar"), and the barkeep looks around. A post must be a bar with staff cells, with one member
@@ -1269,6 +1269,25 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
       a departed staff member, a guest on a staff cell, an actor without `post`.
   - *Check:* `make check` and `make build`; `make run` and a screenshot (Hob behind the bar,
     facing the hall); the offline evening (seed 5).
+  - *Built (2026-10-04):* `hall/staff.py` gains `on_staff`, `guests`, `post_of`, `pour_cell`, `facing_of`,
+    the staff branch of `off_limits` and `check_saved_staff`. `take_posts` lives in `hall/arrival.py`, not in
+    `staff.py` as drafted: it builds actors with `create_actor`, and `arrival` already imports `routes`, which
+    imports `staff`, so the other way round would be a cycle. `scenario.StaffMember`, `parse_staff_member`
+    and `Scenario.staff` hold the section; `parse_scenario(data, cards, staff_cards)` casts staff from their
+    own cards (`data/staff/hob.json`, `--staff` in `scripts/evening.py`, `staff_dir` in `create_app`), so
+    `test_cards.py` still sees six presets. A staff member is refused every action by `start_action` ("Hob
+    works behind the bar"), is never `free_to_decide`, gets no intention request and no needs; the
+    lockstep runner ends the evening and tracks stalls by `guests(world)`; `expression._facing` falls back to
+    the post's `staff_facing`. Saves are `schema_version` 9, with the bump named in the commit
+    (`test_database.py` and `test_intention_saves.py`, renamed `test_new_worlds_are_version_9`, pin it). The
+    snapshot's `Actor.post` is in `types.ts` and the `bartender` sprite (with `PouringBeer`) in `sprites.ts`.
+    51 tests in `tests/test_staff.py` (B1 and B2). Test edits, because the repository evening now holds a
+    fourth person from the start: `test_first_evening.py` (approved: staff are skipped and only guests are
+    counted at the end), `test_app.py` and `test_scenario_sessions.py` (4 actors at opening, one more
+    sprite), `test_card_shell.py` (guests are counted by `post is None`, and Hob's card is checked). Offline
+    evening, seed 5: the guests' events are identical to B1's (`cmp` on the events without Hob's), and Hob adds
+    three (`on_duty` and two `interrupted`, when he turns his head toward a noise); 431 s, 26 scenes, 11.2 s
+    stuck as before.
 - [ ] **B3 — The barkeep pours.** Guests order at the tap and he serves them.
   - *Table:* `Activity.served: bool = False` ("while staff tend the bar, the bar's service, not a
     timer, completes it") and `Activity.staff_only: bool = False` ("only staff do it, and only the

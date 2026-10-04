@@ -45,7 +45,8 @@ def test_snapshot_and_health_never_expose_api_credentials(tmp_path: Path) -> Non
 
 def test_default_factory_resolves_repository_map() -> None:
     world = create_default_app().state.sessions.open("device-test").world
-    assert (world["map"]["width"], len(world["actors"])) == (20, 3)
+    # Hob the barkeep is at his bar before the first guest comes in; three guests arrive at once.
+    assert (world["map"]["width"], len(world["actors"])) == (20, 4)
 
 
 def test_default_factory_does_not_use_unenabled_database(monkeypatch: pytest.MonkeyPatch) -> None:

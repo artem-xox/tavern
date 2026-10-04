@@ -13,7 +13,7 @@ from tavern.hall.memory import record_event
 from tavern.hall.room import find_object, impassable_cells
 from tavern.hall.routes import gives_way, occupied_cells, replan, reserved_spots
 from tavern.hall.sight import refresh_knowledge, visible_cells
-from tavern.hall.staff import off_limits
+from tavern.hall.staff import off_limits, on_staff
 from tavern.hall.state import Actor, World, find_actor
 from tavern.hall.validation import saved_cell
 from tavern.social.scenes import conversation_of, leave_conversation
@@ -315,7 +315,8 @@ def step_actor(world: World, actor: Actor, elapsed: float) -> None:
         actor: Visitor, updated in place.
         elapsed: Game seconds since the last tick.
     """
-    for name, rate in world["rules"]["need_rates"].items():
+    # Staff are at work: nothing builds up in them, so they are never pressed, thirsty or bored.
+    for name, rate in ({} if on_staff(actor) else world["rules"]["need_rates"]).items():
         actor["needs"][name] = min(100, actor["needs"][name] + rate * elapsed)
     actor["visit"]["seconds"] += elapsed
     if actor["action"]:

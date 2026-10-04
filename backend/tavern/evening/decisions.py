@@ -4,6 +4,7 @@ from collections.abc import Callable, Container, Mapping
 from typing import Any
 
 from tavern.body.queues import out_of_patience
+from tavern.hall.staff import on_staff
 from tavern.hall.state import Actor, Decision, World
 from tavern.hall.world import observe_actor, observe_people, start_action
 from tavern.social.scenes import conversation_of
@@ -17,11 +18,12 @@ def free_to_decide(world: Mapping[str, Any], actor: Mapping[str, Any]) -> bool:
         actor: Visitor in that world.
 
     Returns:
-        True when they are idle, or have run out of patience in a line, and take part in no
-        conversation scene: members leave a scene by its own rules (a goodbye, an interrupt,
+        True when they are a guest, idle or out of patience in a line, and take part in no
+        conversation scene (staff never decide: their routine is `tavern.body.bartending`): members leave a scene by its own rules (a goodbye, an interrupt,
         closing time), never by being pulled away mid-chat.
     """
-    return (actor["status"] == "idle" or out_of_patience(world, actor)) and conversation_of(world, actor["id"]) is None
+    return (not on_staff(actor) and (actor["status"] == "idle" or out_of_patience(world, actor))
+            and conversation_of(world, actor["id"]) is None)
 
 
 def decision_requests(world: Mapping[str, Any], pending: Container[str],

@@ -63,6 +63,8 @@ class Actor(TypedDict):
     name: str
     color: str
     sprite: str
+    # The ID of the bar they work at (see `tavern.hall.staff`), or None for a guest.
+    post: str | None
     x: int
     y: int
     traits: dict[str, float]

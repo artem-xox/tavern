@@ -10,6 +10,7 @@ import pytest
 
 from tavern.mind.agents import choose_action
 from tavern.evening.scenario import Scenario, open_evening, parse_scenario
+from tavern.hall.staff import guests
 from tavern.hall.world import observe_actor, observe_people, start_action, step_world
 
 ROOT = Path(__file__).parents[1]
@@ -28,16 +29,16 @@ def listening(world: Mapping[str, Any], actor: Mapping[str, Any]) -> bool:
 
 
 async def play(world: dict[str, Any], rng: Random, limit: float, tick: float = 0.25) -> int:
-    """Run the evening with the offline policy, like the server, until the inn is empty or time runs out.
+    """Run the evening with the offline policy, like the server, until no guest is left or time runs out.
 
-    Idle guests decide at most once a second. Ticks are coarser than the server's 0.1 s to keep
+    Staff decide nothing. Idle guests decide at most once a second. Ticks are coarser than the server's 0.1 s to keep
     the test quick; movement and timers accumulate the same way. Returns the most guests ever
     found sharing a cell.
     """
     ready: dict[str, float] = {}
     overlap = 0
-    while (world["actors"] or world["expected"]) and world["time"] < limit:
-        for actor in list(world["actors"]):
+    while (guests(world) or world["expected"]) and world["time"] < limit:
+        for actor in guests(world):
             if actor["status"] != "idle" or world["time"] < ready.get(actor["id"], 0.0) or listening(world, actor):
                 continue
             observation = {**observe_actor(world, actor["id"]), "people": observe_people(world, actor["id"])}
@@ -64,7 +65,8 @@ def test_six_guests_arrive_over_time_and_all_go_home_by_closing(seed: int) -> No
     # A guest's arrival is when their visit began: they left `seconds` after it.
     arrived = {item["id"]: item["visit"]["left_at"] - item["visit"]["seconds"] for item in world["departed"]}
     last_out = max(item["visit"]["left_at"] for item in world["departed"])
-    assert (world["actors"], world["expected"], overlap) == ([], [], 0)
+    # The barkeep stays at his bar all night: the hall is empty of guests, not of people.
+    assert (guests(world), world["expected"], overlap) == ([], [], 0)
     assert sorted(arrived) == sorted(schedule)
     assert [arrived[guest] >= time - 0.01 for guest, time in schedule.items()] == [True] * len(schedule)
     assert len({round(time) for time in arrived.values()}) >= 4

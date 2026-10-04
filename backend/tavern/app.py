@@ -43,7 +43,7 @@ def create_default_app() -> FastAPI:
     return create_app(root / "data" / "tavern.json", root / "saves", config,
                       database_url=database_url, seed=Random().randrange(1 << 30),
                       scenario_path=root / "data" / "scenarios" / "first_evening.json",
-                      characters_dir=root / "data" / "characters",
+                      characters_dir=root / "data" / "characters", staff_dir=root / "data" / "staff",
                       ask=ask, intender=None if ask is None else intention_writer(
                           (root / "data" / "minds" / "intention_prefix.md").read_text(), ask),
                       choose=_jev_chooser(board), health=board, probes=probes(config, os.environ.get("ANTHROPIC_API_KEY")),
