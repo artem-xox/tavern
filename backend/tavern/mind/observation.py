@@ -4,6 +4,7 @@ import math
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from tavern.hall.room import OBJECT_KINDS
 from tavern.hall.validation import number
 
 
@@ -69,7 +70,7 @@ def known_objects(observation: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     for item in objects:
         if not isinstance(item, Mapping) or not isinstance(item.get("id"), str) or not item["id"]:
             raise ValueError("Observed objects must have nonempty string IDs")
-        if item.get("kind") not in ("tap", "chair", "toilet", "table", "bar", "darts", "door", "window", "fireplace"):
+        if item.get("kind") not in OBJECT_KINDS:
             raise ValueError("Unknown observed object kind")
         if "appeal" in item:
             number(item["appeal"], "Seat appeal", 0, 1)

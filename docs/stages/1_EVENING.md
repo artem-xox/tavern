@@ -825,7 +825,7 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
   `test_first_evening.py`). If one fails, stop and report the seed and the failure. Do not
   change a seed or an assertion without the user's approval.
 
-- [ ] **G0 — One roll, one list of kinds (refactor, no behavior change).**
+- [x] **G0 — One roll, one list of kinds (refactor, no behavior change).**
   - *Roll:* `hall/chance.py` gets `roll(world, *keys: str) -> float`, a draw in [0, 1) from
     `Random(":".join([str(world["seed"]), str(world["tick"]), *keys]))`. It replaces the two
     inline rolls with the very same strings, so nothing replays differently:
@@ -841,6 +841,13 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
   - *Check:* `make check`. Record a fresh offline baseline on `main` first (the hall's behavior
     changed after R0), then show that the offline evening and the replay of `runs/e19-live` are
     byte-identical, with the commands under "Before M4 — Refactor".
+  - *Result (2026-10-04):* `hall/chance.py` holds `roll`; `conversation._quarrels` and
+    `dozing.nodding_off` use it, and `room.OBJECT_KINDS` serves the map check, `sight` and
+    `observation`. `make check` passes (1,739 tests, mypy clean). The offline evening (seed 5) is
+    byte-identical to a baseline recorded on `main` first (`events.jsonl` and `calls.jsonl`). **The
+    replay half of the check could not run:** `runs/e19-live` no longer replays even on `main`
+    (`No recorded intention call is left`), because the door-capacity change (D02) altered the
+    evening after it was recorded. G5 records a fresh live evening and its replay.
 - [ ] **G1 — The dice table in the hall.** Furniture only; nobody plays yet.
   - *Data and validation:* add the three objects above. In `room.py`, `SEAT_KINDS = ("chair",
     "dice_chair")` may be walkable, and a seat's `table_id` must name a table of the matching

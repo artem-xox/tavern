@@ -2,11 +2,11 @@
 
 from collections.abc import Mapping
 import math
-from random import Random
 from typing import Any
 
 from tavern.body.activities import ACTIVITIES
 from tavern.body.drunkenness import drunk_stage
+from tavern.hall.chance import roll
 from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World
 from tavern.social.scenes import conversation_of
@@ -31,7 +31,7 @@ def nodding_off(world: World, elapsed: float) -> list[Actor]:
         if drunk_stage(actor["drunkenness"]).name != "wasted" or not _can_doze(world, actor):
             continue
         # Seeded by the evening, tick and visitor, so a replay or a reloaded save dozes alike.
-        if Random(f"{world['seed']}:{world['tick']}:{actor['id']}:doze").random() < chance:
+        if roll(world, actor["id"], "doze") < chance:
             record_event(world, actor, "dozed_off", f"{actor['name']} nodded off at the table")
             dozers.append(actor)
     return dozers

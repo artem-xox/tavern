@@ -9,6 +9,9 @@ from tavern.hall.navigation import find_path, select_interaction_spot
 from tavern.hall.state import HallMap
 from tavern.hall.validation import coordinate, number, position, unique_ids
 
+# Every kind of object a hall may hold; saves, observations and the map check against this one list.
+OBJECT_KINDS = ("tap", "chair", "toilet", "table", "bar", "darts", "door", "window", "fireplace")
+
 
 def create_map(data: Mapping[str, Any]) -> HallMap:
     """Validate the hall and rate its tables, without sharing the supplied records.
@@ -140,8 +143,7 @@ def _validate_objects(world_map: dict[str, Any]) -> None:
 
 
 def _validate_kind(item: Mapping[str, Any]) -> None:
-    kinds = ("tap", "chair", "toilet", "table", "bar", "darts", "door", "window", "fireplace")
-    if item.get("kind") not in kinds:
+    if item.get("kind") not in OBJECT_KINDS:
         raise ValueError("Unknown object kind")
     if item["kind"] in ("window", "fireplace"):
         number(item.get("appeal"), "Comfort appeal", 0, 1)

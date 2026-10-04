@@ -5,7 +5,7 @@ from copy import deepcopy
 import math
 from typing import Any
 
-from tavern.hall.room import find_object
+from tavern.hall.room import OBJECT_KINDS, find_object
 from tavern.hall.state import Actor, find_actor
 from tavern.hall.validation import saved_cell
 from tavern.social.names import called
@@ -137,7 +137,7 @@ def check_saved_knowledge(objects: Mapping[str, Any], world: Mapping[str, Any]) 
     for identifier, item in objects.items():
         if not isinstance(item, dict) or identifier not in object_ids or item.get("id") != identifier:
             raise ValueError("Invalid remembered object")
-        if item.get("kind") not in {"tap", "toilet", "chair", "table", "bar", "darts", "door", "window", "fireplace"}:
+        if item.get("kind") not in OBJECT_KINDS:
             raise ValueError("Invalid remembered object kind")
         seen: Any = item.get("last_seen")
         if type(seen) not in (int, float) or not math.isfinite(seen) or not 0 <= seen <= world["time"]:

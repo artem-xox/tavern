@@ -47,7 +47,7 @@ Functional core, imperative shell. Dependencies point inward only.
 
 - **Core** — pure rules, no I/O, in `backend/tavern/` packages named for a concept:
   - `hall/` the world and its state (`world.py` public API, `lifecycle.py` action state
-    machine, `state.py` types, `rules.py`, `room`, `routes`, `sight`, `arrival`, `closing`,
+    machine, `state.py` types, `rules.py`, `chance`, `room`, `routes`, `sight`, `arrival`, `closing`,
     `memory` event log, `validation`).
   - `body/` what executes an action: `activities.py` (the verb table), `actions`, `queues`,
     `hearing`, `attention`, `expression`, `drunkenness`, `dozing`.
