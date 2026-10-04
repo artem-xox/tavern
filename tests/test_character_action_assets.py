@@ -10,11 +10,12 @@ DIRECTIONS = ("north", "south", "east", "west")
 
 
 def test_action_stills_ship_with_browser_build() -> None:
-    """Check seated drinking stills ship for every named visitor and no other folder."""
+    """Check seated action stills ship for every named visitor and no other folder."""
     subprocess.run(["npm", "--prefix", "frontend", "run", "build"], cwd=ROOT, check=True, capture_output=True)
     exported = ROOT / "frontend" / "dist" / "characters"
     assert {folder.name for folder in exported.iterdir() if folder.is_dir()} == set(CHARACTERS)
     for character in CHARACTERS:
         for direction in DIRECTIONS:
-            path = exported / character / "DrinkingSeated" / "rotations" / f"{direction}.png"
-            assert path.is_file(), f"Missing browser asset: {path}"
+            for pose in ("DrinkingSeated", "TalkingSeated"):
+                path = exported / character / pose / "rotations" / f"{direction}.png"
+                assert path.is_file(), f"Missing browser asset: {path}"

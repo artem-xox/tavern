@@ -11,7 +11,7 @@ export interface SpriteSheet {
 }
 
 const DIRECTIONS: readonly string[] = ["north", "south", "east", "west"];
-const ALL_POSES: readonly string[] = ["Idle", "Seated", "Darts", "Bathroom", "Drinking", "DrinkingSeated", "TakeBeer", "Walking", "Talking"];
+const ALL_POSES: readonly string[] = ["Idle", "Seated", "Darts", "Bathroom", "Drinking", "DrinkingSeated", "TalkingSeated", "TakeBeer", "Walking", "Talking"];
 
 /** Character stills shipped under /characters; an unknown guest looks like Saye. */
 const SPRITES: Readonly<Record<string, SpriteSheet>> = {
