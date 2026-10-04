@@ -76,10 +76,11 @@ E16 measures this; E28 sets the budget.
 ## Status
 
 M1–M3, the refactor R0–R8, the model health markers (D13), U1 (no labels in the hall) and E18b
-(conversation memory) and E19 (facts and retelling) are done (2026-10-04). Done: dice (G0–G5, 2026-10-04). Next:
+(conversation memory) and E19 (facts and retelling) are done (2026-10-04). Done: dice (G0–G5) and the
+barkeep (B0–B6), both 2026-10-04. Next:
 
 1. **Dice (G0–G5), done.** Guests agree to a game of dice, play it at a dice table, and others watch.
-2. **The barkeep (B0–B6).** A barkeep keeps to four cells behind the bar, pours every mug,
+2. **The barkeep (B0–B6), done.** A barkeep keeps to four cells behind the bar, pours every mug,
    and chats with guests who lean on the counter.
 3. **M4, news and conflict (E20–E22).** E20 gives guests hostile options.
 
@@ -1462,7 +1463,7 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     times (90 s: Toren; 103 s and 108 s: Edda, the second time because her first scene ended before he
     heard her speak), guests start 3 chats with him, 24 turns involve him, 12 beers poured, 426 s, 6.1 s
     stuck (longest 3.1 s).
-- [ ] **B6 — Numbers and the story.**
+- [x] **B6 — Numbers and the story.**
   - *Metrics:* `metrics.json` gets `bar`: `{served, opened, lines, news_told}`. `served` counts
     `served` events; `opened`, `lines` and `news_told` count `conversation_started`, `turn` and
     `news_told` events whose actor is on staff (staff IDs come from the final world).
@@ -1480,6 +1481,29 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     - one moment from the log.
 
     Tick the boxes and update the status here and in [PLAN.md](../PLAN.md).
+  - *Built (2026-10-04):* `metrics.bar_metrics(events, staff)` (a `BarCounts`: `served`, `opened`,
+    `lines`, `news_told`, counted from the events whose actor is on staff; a chat a guest opens with the
+    barkeep is not one he opened) is in `metrics.json` as `bar` (`scripts/evening.py` takes the staff IDs from
+    the final world). 8 cases in `tests/test_bar_metrics.py`. The done checks are
+    `tests/test_barkeep_evening.py`, on seeds 1 and 4 (the news test's seeds, see B3) with the repository
+    scenario cast from its cards: every `take_beer` completion has its `served` event and Hob speaks, and,
+    on a second run played in 10 s stretches, he is on a staff cell at every one of the ~40 samples. A
+    test cannot see every tick, but he only moves by `bartending` over staff cells.
+  - *Results:* offline, seed 5 (`--mode local --writer scripted`): 426 s, all six home, 12 beers poured,
+    `bar` = served 12, opened 7, lines 13, news told 2, 6.1 s stuck (longest 3.1 s). **Live (Jev + Haiku,
+    seed 5, 434 game s, 237 wall s, 0 errors, a replay of its calls byte-identical):** 14 beers poured, 17
+    guests joined a line and 2 left it (gave up), 19 scenes, 53 turn calls for 35 lines (one scripted
+    fallback), `bar` = served 14, opened 15, lines 17, news told 0. Cost $0.243 (Jev $0.048; lines $0.111, or
+    $0.0032 a turn, 88% cache hits; intentions $0.084) against E19's $0.19: the barkeep adds about 20
+    more lines and a third more turns, not a model of his own. **News:** Brida told Hob the margrave's
+    fever at 315 s (hop 1), and he told it on to nobody, so no item went two hops (acceptance scenario
+    3 stays open for E28). **Stuck time 25.2 s** (Calder 9.0 s, Brida 5.0 s, Saye 5.0 s, Edda 3.1 s): all
+    of it is closing time, 421–430 s, when the door's three spots are held by the first three leavers and
+    the others are refused ("No reachable interaction spot") once a second until a spot frees; that is
+    D02's rule, not the bar. Moments from the log: 144 s, Hob to Rurik: "What'll you have? The house ale's
+    fresh tonight."; Rurik: "House ale sounds good. Long watch tonight."; and at 315 s Brida to Hob: "Down
+    tomorrow, aye. The manor kitchen won't run itself, and the margrave's been abed with fever". Slips
+    that D19 records: Hob proposes darts and a "silver penny a round" as if he could leave the bar.
 
 ### M5 — Presentation and acceptance
 
