@@ -1086,6 +1086,13 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
     model changing its mind after the game's yes (it is not a rule violation, but E28 should count it).
     One game in two live evenings is thin; the nudge works but invitations stay rare, so raising
     `scripted.INVITES` or making the nudge stronger is open for E28.
+  - *More live evenings (Jev + Haiku, seeds 2, 3 and 7, same day):* one game each (Rurik beat Edda at 314 s,
+    Toren beat Brida at 182 s, Edda beat Brida at 296 s), no abandoned games, no onlookers (Jev never picked
+    `watch_dice`; the players' own table was the only company near it), one turn fallback in seed 3, $0.17–0.21
+    and 21–36 s stuck per evening. With seed 1, four of five live evenings had a game. In seed 2 Edda
+    herself proposed it ("Rurik, fancy a round at the dice table?"), Rurik accepted, and after the game both
+    wrote new intentions from the result ("I beat her fair and square, and she took it well enough"; "I've lost
+    my coin and my temper both"): the `dice` trigger does its job.
 
 
 ### M5 — Presentation and acceptance
