@@ -40,18 +40,6 @@
       0
     ],
     [
-      9,
-      0
-    ],
-    [
-      10,
-      0
-    ],
-    [
-      11,
-      0
-    ],
-    [
       12,
       0
     ],
@@ -258,6 +246,14 @@
     [
       19,
       13
+    ],
+    [
+      19,
+      5
+    ],
+    [
+      19,
+      6
     ]
   ],
   "objects": [
@@ -341,26 +337,26 @@
       "id": "darts",
       "kind": "darts",
       "name": "Darts",
-      "x": 2,
-      "y": 9,
+      "x": 1,
+      "y": 8,
       "interaction_spots": [
         [
-          3,
-          9
+          2,
+          8
         ]
       ],
       "queue_spots": [
         [
+          3,
+          8
+        ],
+        [
           4,
-          9
+          8
         ],
         [
           5,
-          9
-        ],
-        [
-          6,
-          9
+          8
         ]
       ]
     },
@@ -389,19 +385,23 @@
       "id": "fireplace",
       "kind": "fireplace",
       "name": "Fireplace",
-      "x": 19,
-      "y": 5,
-      "height": 2,
+      "x": 9,
+      "y": 0,
+      "width": 3,
       "appeal": 0.5,
       "reach": 5,
       "interaction_spots": [
         [
-          18,
-          5
+          9,
+          1
         ],
         [
-          18,
-          6
+          10,
+          1
+        ],
+        [
+          11,
+          1
         ]
       ]
     },
@@ -454,22 +454,22 @@
       "id": "table-1",
       "kind": "table",
       "name": "Hearth table",
-      "x": 15,
-      "y": 6
+      "x": 10,
+      "y": 5
     },
     {
       "id": "chair-1",
       "kind": "chair",
       "name": "Hearth table \u00b7 west",
-      "x": 14,
-      "y": 6,
+      "x": 9,
+      "y": 5,
       "walkable": true,
       "table_id": "table-1",
       "facing": "east",
       "interaction_spots": [
         [
-          14,
-          6
+          9,
+          5
         ]
       ]
     },
@@ -477,15 +477,15 @@
       "id": "chair-2",
       "kind": "chair",
       "name": "Hearth table \u00b7 east",
-      "x": 16,
-      "y": 6,
+      "x": 11,
+      "y": 5,
       "walkable": true,
       "table_id": "table-1",
       "facing": "west",
       "interaction_spots": [
         [
-          16,
-          6
+          11,
+          5
         ]
       ]
     },

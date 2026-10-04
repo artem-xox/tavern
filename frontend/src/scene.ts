@@ -180,8 +180,8 @@ export class TavernScene extends Phaser.Scene {
         this.floor.fillStyle(0x667568, 0.25).fillRect((x + 0.45) * size, (y + 0.45) * size, 4, 4);
       }
     }
-    this.floor.fillStyle(0xddd1aa, 0.35).fillRect(3.3 * size, 9.2 * size, 3, size * 0.6);
-    for (const [x, y] of [[2, 2], [18, 7]]) {
+    this.floor.fillStyle(0xddd1aa, 0.35).fillRect(2.3 * size, 8.2 * size, 3, size * 0.6);
+    for (const [x, y] of [[2, 2], [10, 2]]) {
       for (let radius: number = 3; radius > 0; radius -= 1) {
         this.floor.fillStyle(0xf5ce82, 0.025).fillCircle((x! + 0.5) * size, (y! + 0.5) * size, radius * size);
       }

@@ -69,7 +69,7 @@ QUARREL, CHAT = EVENT_SOUNDS["quarrel"], ACTIVITIES["talk"].sound
     pytest.param(CHAT, (3, 6), (5, 6), True, id="remark-heard-across-the-table"),
     pytest.param(CHAT, (3, 6), (16, 6), False, id="remark-not-heard-across-the-hall"),
     pytest.param(CHAT, (14, 6), (17, 3), False, id="remark-at-the-hearth-not-heard-in-the-wc"),
-    pytest.param(ACTIVITIES["play_darts"].sound, (3, 9), (5, 11), True, id="darts-thud-heard-nearby"),
+    pytest.param(ACTIVITIES["play_darts"].sound, (2, 8), (4, 10), True, id="darts-thud-heard-nearby"),
     pytest.param(EVENT_SOUNDS["arrival"], (10, 12), (14, 11), True, id="door-heard-from-a-near-table"),
 ])
 def test_who_hears_what_in_the_hall(sound: Sound, source: tuple[int, int], listener: tuple[int, int],
@@ -158,7 +158,7 @@ def test_events_emit_stimuli(kinds: list[str], expected: list[tuple[str, list[st
 
 @pytest.mark.parametrize("verb, target, cell, about", [
     pytest.param("talk", "bea", [3, 6], ["bea"], id="chat-concerns-the-partner"),
-    pytest.param("play_darts", "darts", [3, 9], [], id="darts-thud"),
+    pytest.param("play_darts", "darts", [2, 8], [], id="darts-thud"),
 ])
 def test_activities_sound_when_the_interaction_begins(verb: str, target: str, cell: list[int],
                                                       about: list[str]) -> None:

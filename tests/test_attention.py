@@ -67,7 +67,7 @@ def events(world: Mapping[str, Any], kind: str) -> list[str]:
     pytest.param((5, 6), drinking, ((8, 7), (9, 7)), "east", None, id="drinking-breaks-off"),
     pytest.param((5, 6), lambda world: start(world, "sit", "chair-4"), ((8, 7), (9, 7)), "east", None,
                  id="sitting-breaks-off"),
-    pytest.param((3, 9), lambda world: start(world, "play_darts", "darts"), ((8, 7), (9, 7)), "east", None,
+    pytest.param((2, 8), lambda world: start(world, "play_darts", "darts"), ((8, 7), (9, 7)), "east", None,
                  id="darts-break-off"),
     pytest.param((1, 4), lambda world: start(world, "watch", "window-1"), ((6, 4), (7, 4)), "east", None,
                  id="watching-breaks-off"),
@@ -93,7 +93,7 @@ def test_a_shout_turns_heads_at_once_and_stops_what_can_stop(
 def test_a_guest_in_the_wc_finishes_and_then_knows_why_heads_turned() -> None:
     world = hall(guest("ada", (17, 3)))
     start(world, "use_toilet", "toilet")
-    quarrel(world, (12, 3), (11, 3))
+    quarrel(world, (14, 3), (13, 3))
     ticks(world, 25)
     assert (events(world, "action_completed"), events(world, "interrupted")) == (["Ada completed use_toilet"], [])
     assert events(world, "alerted") == [
@@ -113,8 +113,8 @@ def darts_nearby(world: dict[str, Any]) -> None:
 
 @pytest.mark.parametrize("cell, bea, cause, gaze", [
     pytest.param((5, 11), (10, 12), door_opens, [10, 12], id="door-draws-a-glance"),
-    pytest.param((5, 11), (3, 9), darts_nearby, [3, 9], id="darts-draw-a-glance"),
-    pytest.param((16, 6), (3, 9), darts_nearby, None, id="darts-unheard-across-the-hall"),
+    pytest.param((4, 10), (2, 8), darts_nearby, [2, 8], id="darts-draw-a-glance"),
+    pytest.param((16, 6), (2, 8), darts_nearby, None, id="darts-unheard-across-the-hall"),
     pytest.param((5, 11), (10, 12), lambda world: None, None, id="silence"),
 ])
 def test_quiet_sounds_only_draw_a_glance(cell: tuple[int, int], bea: tuple[int, int],
