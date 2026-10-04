@@ -621,6 +621,41 @@ into `chance.roll(world, *keys)` as a separate refactor commit.
     `types.ts` changes in the same commit. `metrics.json` gets `news`: per fact, its
     holders, its maximum hops, and the path of its first two-hop copy (acceptance
     scenario 3).
+  - *Frozen shape (2026-10-04, before coding):*
+    - *Module:* `social/facts.py` owns `parse_news`, `starting_facts`, `tell`, `overhear`, `chain`,
+      `check_facts` and the news metrics; tests are in `tests/test_facts.py`.
+    - *Ids:* `known_by` holds scenario guest IDs, not names: Edda `mara`, Rurik `ivo`, Toren `nell`,
+      Brida `brannoc`, Calder `wenna`, Saye `osric`.
+    - *Where copies start:* `open_evening` stores `world["news"]` (the originals; `[]` for a world
+      without a scenario); `arrival.admit_arrivals` fills `knowledge["facts"]` from it by `known_by`
+      when a guest comes in, so the scenario's `Guest` and `ExpectedGuest` keep their shape.
+      `create_actor` starts with `knowledge["facts"] = {}`. Keys are kept sorted by ID, so scripted
+      choices and replays are deterministic.
+    - *Turn:* `fact_id` joins `TurnResult` and `scenes.Turn` (`NotRequired[str]`). The answer schema
+      always requires `fact_id` (string or null); `parse_turn` drops a null, as it does for
+      `invitation`. `facts.tell` reads `scene["turns"][-1]`, like `invitations.invite`, so `ActEffect`
+      keeps its signature.
+    - *Who gets a copy:* every other member of the scene who lacks the fact, whoever the line
+      addresses (as `share_place`). The event is `news_told` through `log_event` (no sound, no emote).
+      Overhearing uses `news_overheard`.
+    - *Rules:* `rules.news.trust` = `{friend: 0.9, acquaintance: 0.75, stranger: 0.6}` and
+      `rules.news.overheard` = 0.5 (the confidence factor), checked in `check_rules`.
+    - *Writer view:* `speaker.news` is `[{id, topic, told_as, heard_from, confidence}]`, with
+      `heard_from` as the speaker calls the source (`names.called`, looked up among `actors` and
+      `departed`) and null at hops 0. `haiku_turns` turns the number into words (0.85 or more "you
+      are sure of it", 0.6 "you believe it", below "a rumour you half believe") and adds a nudge when
+      the speaker holds news this company has not heard from them.
+    - *Scripted writer:* `share_news` once per scene, the fact chosen by sorted ID; the line is
+      "Heard from {source}: {told_as}" cut to 160 characters, a leading "Heard from …: " removed
+      first so prefixes never nest; at hops 0 the line is `told_as` itself.
+    - *Inspector:* `minds[guest].news` is `[{id, topic, told_as, heard_from, hops, confidence,
+      overheard, chain}]`, where `chain` is the names from the guest back to the start ("Brida",
+      "Edda", "start"), computed by `facts.chain` over `actors + departed`; `types.ts` and the
+      dashboard follow.
+    - *Metrics:* `metrics.json` `news` is computed from the final world (not from event messages):
+      per fact `{holders, max_hops, first_two_hop_path}`.
+    - *Saves:* `schema_version` 7; `parse_world` checks `world["news"]` and every `knowledge.facts`
+      (present and departed guests) with `facts.check_facts`.
   - *Tests (`tests/test_facts.py`):* starting copies follow `known_by`; a share gives
     the listener the line as `told_as` with hops + 1; a second share keeps the first
     version; an unknown `fact_id` and a `fact_id` on `joke` are rejected; overhearing
