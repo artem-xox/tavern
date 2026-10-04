@@ -291,3 +291,28 @@ def _nearest_rank(values: Sequence[float], share: float) -> float | None:
     # The smallest value with at least `share` of the values at or below it; None for none.
     ordered = sorted(values)
     return ordered[max(0, math.ceil(share * len(ordered)) - 1)] if ordered else None
+
+
+class DiceCounts(TypedDict):
+    """How the dice went: games played to a result, games broken off or given up (one `dice_abandoned`
+    event for the guest left sitting), guests who watched a game to its end, and games won per guest ID."""
+
+    games: int
+    abandoned: int
+    onlookers: int
+    wins: dict[str, int]
+
+
+def dice_metrics(events: Sequence[Mapping[str, Any]]) -> DiceCounts:
+    """Count the dice played in an evening.
+
+    Args:
+        events: The complete event log: `dice_won` (one per game, logged for the winner),
+            `dice_abandoned` and `dice_watched`.
+
+    Returns:
+        The counts, with wins per guest ID in order of the first win.
+    """
+    wins = Counter(event["actor_id"] for event in events if event["type"] == "dice_won")
+    return {"games": sum(wins.values()), "abandoned": sum(event["type"] == "dice_abandoned" for event in events),
+            "onlookers": sum(event["type"] == "dice_watched" for event in events), "wins": dict(wins)}

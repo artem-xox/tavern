@@ -139,6 +139,14 @@ def _watch(observation: Observation, action: Action) -> str:
     return f"walk {walk_words(steps_to(observation, view))} and watch {sight} for a while"
 
 
+def _watch_dice(observation: Observation, action: Action) -> str:
+    table = _target(observation, action)
+    players = [_someone(observation, identifier) for identifier in (table.get("game") or {}).get("players", [])]
+    names = [label_of(item) for item in players if item is not None]
+    game = f"{' and '.join(names)} play dice" if len(names) == 2 else "a game of dice"
+    return f"walk {walk_words(steps_to(observation, table))} to the dice table and watch {game}"
+
+
 def _toilet(observation: Observation, action: Action) -> str:
     return f"walk {walk_words(steps_to(observation, _target(observation, action)))} to the WC"
 
@@ -176,5 +184,6 @@ def family_text(observation: Observation, option: Action) -> str:
 # Each verb's option sentence; a new verb needs an entry here (and one in `activities.ACTIVITIES`).
 _OPTIONS: Mapping[str, Callable[[Observation, Action], str]] = {
     "take_beer": _pour, "drink": _drink, "rest": _rest, "seating": _seating, "sit": _sit, "talk": _talk,
-    "join_conversation": _join, "play_darts": _darts, "watch": _watch, "use_toilet": _toilet,
+    "join_conversation": _join, "play_darts": _darts, "watch": _watch, "watch_dice": _watch_dice,
+    "use_toilet": _toilet,
     "inspect": _inspect, "wait": _wait, "leave": _leave, "cut_in_line": _cut}

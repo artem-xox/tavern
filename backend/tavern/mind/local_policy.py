@@ -41,6 +41,9 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
         # A gentler pastime than darts that comfort-loving visitors favour, once nothing presses.
         "watch": ((0.05 + 0.45 * actor["needs"].get("boredom", 0) / 100 + 0.3 * traits.get("comfort", 0.5))
                   * (1 - max(thirst, fatigue, bladder))),
+        # A game draws the bored and the curious, unless a need presses.
+        "watch_dice": max(0.0, 0.1 + 0.5 * actor["needs"].get("boredom", 0) / 100 + 0.25 * traits.get("curiosity", 0.5)
+                          - 0.3 * max(thirst, fatigue, bladder)),
         "use_toilet": bladder,
         "inspect": 0.08 + 0.12 * traits.get("curiosity", 0.5) + 0.4 * missing_relief,
         "wait": max(0.0, 0.08 + 0.12 * traits.get("patience", 0.5) - 0.08 * max(thirst, fatigue, bladder)),

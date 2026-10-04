@@ -136,7 +136,7 @@ def place_words(item: Mapping[str, Any]) -> str:
         "the tap", "the WC", ... or "the <label>" for other kinds.
     """
     nouns = {"tap": "the tap", "toilet": "the WC", "darts": "the darts board", "door": "the front door",
-             "fireplace": "the fireplace", "window": "a window", "bar": "the bar"}
+             "fireplace": "the fireplace", "window": "a window", "bar": "the bar", "dice_table": "the dice table"}
     return nouns[item["kind"]] if item["kind"] in nouns else f"the {label_of(item)}"
 
 

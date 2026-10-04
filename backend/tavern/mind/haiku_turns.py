@@ -6,7 +6,7 @@ from typing import Any
 
 from tavern.body.drunkenness import speech_instruction
 from tavern.mind.questions import Ask, Question
-from tavern.mind.scripted import CONTENT, MAX_LINE, PRESSING
+from tavern.mind.scripted import BORED, CONTENT, MAX_LINE, PRESSING
 from tavern.mind.turn_prompt import shared_prefix, turn_schema
 from tavern.social.conversation import ACTS
 from tavern.social.invitations import KINDS
@@ -53,7 +53,7 @@ def turn_content(view: Mapping[str, Any]) -> str:
     Returns:
         The per-call text that follows the cached blocks.
     """
-    nudges = _nudges(view["conversation"], view["speaker"])
+    nudges = _nudges(view["conversation"], view["speaker"], view.get("invitations") or [])
     earlier = _earlier(view["speaker"].get("earlier") or [])
     return "\n\n".join([_scene(view["conversation"], view["speaker"]), *([earlier] if earlier else []),
                         _self(view["speaker"]), _news(view["speaker"]), *([f"THE MOMENT\n\n{nudges}"] if nudges else []), _offer(view),
@@ -72,7 +72,7 @@ def _offer(view: Mapping[str, Any]) -> str:
             f"The addressee must be null or one of these ids: {', '.join(others)}.")
 
 
-def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:
+def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequence[str]) -> str:
     # The scripted writer's thresholds (`scripted.PRESSING`, `scripted.CONTENT`) say when a need
     # presses or company is enough; left to itself, the model rarely leaves or shares places.
     pressing = [f"{label} {me['needs'][key]:.0f}" for key, label in _NEEDS[:3] if me["needs"][key] >= PRESSING]
@@ -86,7 +86,9 @@ def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:
         "The speaker has not yet told anyone here where the places they know are; someone may want to know."
         if me["places"] and not shared else "",
         "The speaker carries news the others have not heard from them; telling one piece is welcome."
-        if me.get("news") and not told else "") if text)
+        if me.get("news") and not told else "",
+        "The speaker is bored, and the dice table stands free: a game of dice is a fine thing to propose."
+        if me["needs"]["boredom"] >= BORED and "dice_together" in invitations else "") if text)
 
 
 def _scene(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:

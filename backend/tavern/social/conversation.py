@@ -6,10 +6,10 @@ The game-owned rule: words alone change nothing; only a line's act does (see `AC
 from collections.abc import Callable, Mapping
 from copy import deepcopy
 from dataclasses import dataclass
-from random import Random
 from types import MappingProxyType
 from typing import Any
 
+from tavern.hall.chance import roll
 from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World
 from tavern.social import facts, invitations, social_acts
@@ -131,7 +131,8 @@ ACTS: Mapping[str, Act] = MappingProxyType({
                                           "little worse of the speaker"),
     "invite": Act(invitations.invite, "invite the addressee to do something together, naming one of the "
                                       "offered `invitation` kinds: join_table (come and sit at the speaker's "
-                                      "table), darts_together (play darts together), buy_drink (the speaker "
+                                      "table), darts_together (play darts together), dice_together (play a "
+                                      "game of dice at the dice table), buy_drink (the speaker "
                                       "fetches them an ale), leave_together (walk home together). It waits "
                                       "for the addressee's answer"),
     "accept": Act(invitations.accept, "accept the invitation waiting for the speaker; the game then sets "
@@ -177,7 +178,7 @@ def _quarrels(world: Mapping[str, Any], left: Mapping[str, Any], right: Mapping[
     temper = 2 - left["traits"].get("patience", 0.5) - right["traits"].get("patience", 0.5)
     chance = min(rules["quarrel_max"], rules["quarrel_per_beer"] * tipsy * temper)
     # Seeded by the evening and tick, so a replay or a reloaded save rolls the same dice.
-    return Random(f"{world['seed']}:{world['tick']}:{left['id']}:{right['id']}").random() < chance
+    return roll(world, left["id"], right["id"]) < chance
 
 
 def _quarrel(world: World, actor: Actor, partner: Actor, topic: str) -> None:

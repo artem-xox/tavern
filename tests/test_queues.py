@@ -87,7 +87,7 @@ def test_a_guest_leaving_the_wc_is_never_trapped_by_one_waiting_for_it(leaver: s
     pytest.param(5, 4, id="five-guests-form-a-line"),
 ])
 def test_guests_at_one_tap_form_a_line_without_overlaps(guests: int, longest: int) -> None:
-    cells = [(9, 7), (10, 8), (8, 9), (11, 10), (12, 7)][:guests]
+    cells = [(9, 7), (10, 6), (8, 9), (11, 10), (12, 7)][:guests]
     world = create_world(hall([(f"g{index}", x, y) for index, (x, y) in enumerate(cells)], needs={"thirst": 80}))
     for index in range(guests):
         assert start_action(world, f"g{index}", command("take_beer", "tap"))["accepted"]
@@ -102,7 +102,7 @@ def test_guests_at_one_tap_form_a_line_without_overlaps(guests: int, longest: in
 
 
 def test_people_in_line_stand_on_its_spots_in_order() -> None:
-    world = create_world(hall([("ann", 6, 3), ("bob", 9, 7), ("cid", 10, 8)], needs={"thirst": 80}))
+    world = create_world(hall([("ann", 6, 3), ("bob", 9, 7), ("cid", 10, 6)], needs={"thirst": 80}))
     assert start_action(world, "ann", command("take_beer", "tap"))["accepted"]
     for guest in ("bob", "cid"):
         assert start_action(world, guest, command("take_beer", "tap"))["accepted"]

@@ -29,7 +29,8 @@ The hall is one long room. A great fireplace warms one end; windows look out ove
 There are several tables with chairs and a couple of benches. There is no barkeep tonight: guests draw their \
 own ale from a self-service tap by the bar, and sometimes stand in line for it. Past the tables is the WC, \
 a small privy room that one person uses at a time, so there can be a line there too. On one wall hangs a darts \
-board where guests throw for fun or for a small wager. When the bell rings for closing, everyone must go home \
+board where guests throw for fun or for a small wager, and by the fire a dice table has two chairs for a game of \
+chance that others like to watch. When the bell rings for closing, everyone must go home \
 or up to their beds, and the evening is over.
 
 Guests are ordinary travellers and locals: traders, carters, soldiers off duty, charcoal burners, pilgrims, \
@@ -284,7 +285,12 @@ Good: {"line": "Nothing worth the telling. My mule sulked all the way up.", "act
 Bad: {"line": "Haven't you heard? The fort burned down last night.", "act": "share_news", "addressee": "edda", \
 "topic": "the fort", "fact_id": "fort_fire"}
 Why bad: Toren holds no such news, so "fort_fire" is not on his list and the story is invented. Without news, \
-talk about yourself, the road or the room."""
+talk about yourself, the road or the room.
+
+Example 23. Brida is bored and bold; the dice table by the fire stands free, and she is talking with Edda, whom \
+she likes. The invitations on offer include dice_together.
+Good: {"line": "The dice table's free, Edda. A round to see whose luck holds?", "act": "invite", \
+"addressee": "edda", "topic": "a game of dice", "invitation": "dice_together"}"""
 
 
 def shared_prefix(acts: Mapping[str, str]) -> str:

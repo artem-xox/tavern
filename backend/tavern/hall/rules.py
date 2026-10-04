@@ -7,6 +7,7 @@ from tavern.body.activities import ACTIVITIES
 from tavern.body.expression import EMOTES
 from tavern.hall.state import Rules
 from tavern.hall.validation import integer, number
+from tavern.social.dice import check_dice_rules
 from typing import Any
 
 
@@ -51,7 +52,12 @@ def default_rules() -> Rules:
             # News (`tavern.social.facts`): how far a listener believes what a teller says, by how well they
             # know the teller (friends are believed most), and the share of that belief kept by a guest who only
             # overheard it.
-            "news": {"trust": {"friend": 0.9, "acquaintance": 0.75, "stranger": 0.6}, "overheard": 0.5}}
+            "news": {"trust": {"friend": 0.9, "acquaintance": 0.75, "stranger": 0.6}, "overheard": 0.5},
+            # Dice (`tavern.social.dice`): a player's form is the weighted traits less drunkenness times `drink`;
+            # half the gap in form (`edge`) moves the first player's chance off 0.5, kept within `odds` so
+            # luck always counts. A game takes game_seconds once two sit; a lone player waits wait_seconds.
+            "dice": {"skill": {"patience": 0.4, "curiosity": 0.3, "courage": 0.3}, "drink": 0.6, "edge": 0.5,
+                     "odds": [0.2, 0.8], "game_seconds": 25.0, "wait_seconds": 30.0}}
 
 
 def check_rules(world: Mapping[str, Any]) -> None:
@@ -89,6 +95,7 @@ def check_rules(world: Mapping[str, Any]) -> None:
         number(value, "Saved emote time", 0, math.inf)
     _validate_conversation_rules(rules.get("conversation"))
     _validate_news_rules(rules.get("news"))
+    check_dice_rules(rules.get("dice"))
 
 
 def _validate_news_rules(news: Any) -> None:

@@ -98,7 +98,8 @@ export function drawBar(g: Phaser.GameObjects.Graphics, object: WorldObject, siz
   drawMug(g, x + width - 19, y + 10);
 }
 
-export function drawTable(g: Phaser.GameObjects.Graphics, object: WorldObject, size: number): void {
+/** The bare tabletop: shadow, rim, planks and inlay. */
+function drawTableTop(g: Phaser.GameObjects.Graphics, object: WorldObject, size: number): void {
   const x: number = object.x * size;
   const y: number = object.y * size;
   const width: number = (object.width ?? 1) * size;
@@ -110,6 +111,14 @@ export function drawTable(g: Phaser.GameObjects.Graphics, object: WorldObject, s
     g.lineStyle(1, 0x785037, 0.5).lineBetween(x + 4, y + row, x + width - 4, y + row);
   }
   g.lineStyle(1, 0xe6c187, 0.6).strokeRoundedRect(x + 3, y + 3, width - 6, height - 6, 3);
+}
+
+export function drawTable(g: Phaser.GameObjects.Graphics, object: WorldObject, size: number): void {
+  drawTableTop(g, object, size);
+  const x: number = object.x * size;
+  const y: number = object.y * size;
+  const width: number = (object.width ?? 1) * size;
+  const height: number = (object.height ?? 1) * size;
   g.fillStyle(0xe8dbc0).fillRoundedRect(x + width - 19, y + height - 19, 11, 10, 1);
   drawMug(g, x + 13, y + 13);
   drawMug(g, x + width - 13, y + height - 12);
@@ -119,6 +128,53 @@ export function drawTable(g: Phaser.GameObjects.Graphics, object: WorldObject, s
   g.fillStyle(0x69553a).fillEllipse(cx, cy + 3, 14, 8);
   g.fillStyle(0xf2dfae).fillRect(cx - 2, cy - 6, 4, 10);
   g.fillStyle(0xffd884).fillEllipse(cx, cy - 8, 4, 7);
+}
+
+/** The dice table: the bare top with a pair of ivory dice mid-throw and no candle or mugs. */
+export function drawDiceTable(g: Phaser.GameObjects.Graphics, object: WorldObject, size: number): void {
+  drawTableTop(g, object, size);
+  const cx: number = (object.x + (object.width ?? 1) / 2) * size;
+  const cy: number = (object.y + (object.height ?? 1) / 2) * size;
+  drawDie(g, cx - 5, cy + 2, 3, -0.25);
+  drawDie(g, cx + 6, cy - 3, 5, 0.35);
+}
+
+/** One die, turned by `tilt` radians, showing `pips` pips (1–6). */
+function drawDie(g: Phaser.GameObjects.Graphics, x: number, y: number, pips: number, tilt: number): void {
+  const side: number = 10;
+  const corner = (dx: number, dy: number): { x: number; y: number } => ({
+    x: x + dx * Math.cos(tilt) - dy * Math.sin(tilt), y: y + dx * Math.sin(tilt) + dy * Math.cos(tilt) });
+  g.fillStyle(0x33251d, 0.4).fillRoundedRect(x - side / 2 + 1, y - side / 2 + 3, side, side, 2);
+  const half: number = side / 2;
+  g.fillStyle(0xf3ead2).fillPoints([corner(-half, -half), corner(half, -half), corner(half, half), corner(-half, half)], true);
+  g.lineStyle(1, 0x8a7656).strokePoints([corner(-half, -half), corner(half, -half), corner(half, half), corner(-half, half)], true);
+  const spots: [number, number][][] = [[[0, 0]], [[-2.5, -2.5], [2.5, 2.5]], [[-2.5, -2.5], [0, 0], [2.5, 2.5]],
+    [[-2.5, -2.5], [2.5, -2.5], [-2.5, 2.5], [2.5, 2.5]], [[-2.5, -2.5], [2.5, -2.5], [0, 0], [-2.5, 2.5], [2.5, 2.5]],
+    [[-2.5, -2.5], [2.5, -2.5], [-2.5, 0], [2.5, 0], [-2.5, 2.5], [2.5, 2.5]]];
+  for (const [dx, dy] of spots[pips - 1]!) {
+    const pip = corner(dx, dy);
+    g.fillStyle(0x2b211b).fillCircle(pip.x, pip.y, 1.1);
+  }
+}
+
+/** Lay a rug under every table and its chairs, kept clear of the walls. */
+export function drawRugs(floor: Phaser.GameObjects.Graphics, objects: WorldObject[], size: number): void {
+  const palette: [number, number][] = [[0x8d463a, 0xd2a367], [0x526455, 0xabbd92], [0x4b5874, 0xa9b6cf], [0x7b5b30, 0xd9b26b]];
+  objects.filter((object: WorldObject): boolean => object.kind === "table" || object.kind === "dice_table").forEach((table: WorldObject, index: number): void => {
+    // Card-table green for the dice, so the game's corner reads at a glance.
+    const [fill, trim] = table.kind === "dice_table" ? [0x2f5a3e, 0x9cc79a] : palette[index % palette.length]!;
+    const x: number = (table.x - 1.2) * size;
+    const y: number = (table.y - 0.3) * size;
+    const width: number = ((table.width ?? 1) + 2.4) * size;
+    const height: number = ((table.height ?? 1) + 0.6) * size;
+    floor.fillStyle(0x2b211b, 0.35).fillRoundedRect(x - 2, y + 3, width + 4, height, 7);
+    floor.fillStyle(fill).fillRoundedRect(x, y, width, height, 6);
+    floor.lineStyle(2, trim, 0.55).strokeRoundedRect(x + 4, y + 4, width - 8, height - 8, 4);
+    for (let col: number = 0; col < 6; col += 1) {
+      const cx: number = x + (col + 0.5) * width / 6;
+      floor.lineStyle(1, trim, 0.2).strokePoints([{ x: cx, y: y + height / 2 - 6 }, { x: cx + 6, y: y + height / 2 }, { x: cx, y: y + height / 2 + 6 }, { x: cx - 6, y: y + height / 2 }], true);
+    }
+  });
 }
 
 function drawMug(g: Phaser.GameObjects.Graphics, x: number, y: number): void {

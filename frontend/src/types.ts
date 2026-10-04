@@ -10,9 +10,16 @@ export type Mode = "local" | "jev";
 /** Who writes conversation lines: Claude Haiku, or the offline scripted writer. */
 export type Writer = "haiku" | "scripted";
 
+/** A game of dice at a dice table: the players in the order they sat down, and when it began and ends (null while one waits). */
+export interface DiceGame {
+  players: string[];
+  since: number;
+  ends_at: number | null;
+}
+
 export interface WorldObject {
   id: string;
-  kind: "tap" | "toilet" | "chair" | "bar" | "table" | "darts" | "door" | "window" | "fireplace";
+  kind: "tap" | "toilet" | "chair" | "bar" | "table" | "darts" | "door" | "window" | "fireplace" | "dice_table" | "dice_chair";
   name: string;
   x: number;
   y: number;
@@ -28,6 +35,8 @@ export interface WorldObject {
   queue_spots?: Cell[];
   /** Who waits in that line, front first, and since when (game seconds). */
   queue?: { actor_id: string; since: number }[];
+  /** The game under way at a dice table; null when none. */
+  game?: DiceGame | null;
   appeal?: number;
   comforts?: string[];
   reach?: number;
@@ -245,7 +254,7 @@ export interface Turn {
   fact_id?: string;
 }
 
-export type InvitationKind = "join_table" | "darts_together" | "buy_drink" | "leave_together";
+export type InvitationKind = "join_table" | "darts_together" | "dice_together" | "buy_drink" | "leave_together";
 
 /** An invitation waiting in a scene for the invitee's answer. */
 export interface Invitation {

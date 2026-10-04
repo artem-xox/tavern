@@ -15,8 +15,9 @@ fireplace on one side; a few windows look out on the road and the dark fields be
 a handful of tables, some by the fire, some by a window, some in plain corners. The tap stands at
 the end of the bar: there is no barkeep tonight, so guests pour their own ale and sometimes wait
 their turn in a short line. There is a WC at the back, behind a door, used by one person at a time,
-so a line can form there too. A darts board hangs on one wall. The front door leads out to the road
-and home.
+so a line can form there too. A darts board hangs on one wall. A dice table with two chairs stands by
+the fire, where two guests who agree to a game play and others gather to watch. The front door leads
+out to the road and home.
 
 People come here after a day's work or a day's travel: drovers, couriers, toll guards, healers,
 cooks, pedlars, soldiers on leave, farmers from the river villages. They come to rest their feet,
@@ -44,6 +45,7 @@ Intentions must be things the guest could do tonight in this hall, with these ac
 - chat with someone sitting at their table or standing beside them, or join a conversation already
   going on;
 - play a round of darts, or watch the fire or the road through a window for a while;
+- play dice with someone at the dice table, or stand by it and watch a game;
 - use the WC;
 - look around the hall, or simply wait a moment;
 - push to the front of a line instead of waiting, which others resent;

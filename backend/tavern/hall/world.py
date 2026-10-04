@@ -13,8 +13,8 @@ from tavern.body.expression import update_expression
 from tavern.body.queues import check_lines, cut_in, line_of, must_wait
 from tavern.hall.arrival import admit_arrivals, arrival_ranges, arriving, create_actor
 from tavern.hall.closing import call_closing, inn_closed
-from tavern.hall.lifecycle import (activate, clear_action, finish_parts, line_up, look, notice_target, reject,
-                              step_actor, talk_in_line)
+from tavern.hall.lifecycle import (activate, clear_action, complete_action, finish_parts, line_up, look, notice_target,
+                              reject, step_actor, talk_in_line)
 from tavern.hall.memory import record_event
 from tavern.hall.room import create_map
 from tavern.hall.routes import plan_route
@@ -22,6 +22,7 @@ from tavern.hall.rules import default_rules
 from tavern.hall.sight import look_around, people_in_sight, visible_cells
 from tavern.hall.state import World, find_actor
 from tavern.hall.validation import number, unique_ids
+from tavern.social.dice import settle_games
 from tavern.social.invitations import honor_invitations, invitations_of
 from tavern.social.scenes import check_conversations
 from tavern.social.thoughts import forget_expired
@@ -51,7 +52,7 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> World:
               for item in (listed if ranges is None else arriving(listed, ranges, seed))]
     if len({(item["x"], item["y"]) for item in actors}) != len(actors):
         raise ValueError("Actors cannot overlap at startup")
-    world = World(schema_version=7, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
+    world = World(schema_version=8, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
                   map=world_map, actors=actors, departed=[], expected=[], closes_at=None,
                   events=[], stimuli=[], next_stimulus_id=0, conversations=[], next_conversation_id=0,
                   invitations=[], news=[], rules=default_rules())
@@ -126,6 +127,11 @@ def step_world(world: World, dt: float) -> None:
     check_conversations(world)
     speak_turns(world)
     honor_invitations(world, start_action)
+    games = settle_games(world)
+    for actor in games.done:
+        complete_action(world, actor)
+    for actor in games.released:
+        clear_action(world, actor)
     for actor in attend(world):
         clear_action(world, actor)
     wear_off(world, elapsed)

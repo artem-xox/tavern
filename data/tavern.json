@@ -605,6 +605,63 @@
           11
         ]
       ]
+    },
+    {
+      "id": "dice-table",
+      "kind": "dice_table",
+      "name": "Dice table",
+      "x": 10,
+      "y": 8,
+      "interaction_spots": [
+        [
+          10,
+          7
+        ],
+        [
+          10,
+          9
+        ],
+        [
+          8,
+          8
+        ],
+        [
+          12,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "dice-chair-1",
+      "kind": "dice_chair",
+      "name": "Dice table \u00b7 west",
+      "x": 9,
+      "y": 8,
+      "walkable": true,
+      "table_id": "dice-table",
+      "facing": "east",
+      "interaction_spots": [
+        [
+          9,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "dice-chair-2",
+      "kind": "dice_chair",
+      "name": "Dice table \u00b7 east",
+      "x": 11,
+      "y": 8,
+      "walkable": true,
+      "table_id": "dice-table",
+      "facing": "west",
+      "interaction_spots": [
+        [
+          11,
+          8
+        ]
+      ]
     }
   ],
   "arrival": {

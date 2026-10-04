@@ -18,8 +18,8 @@ dice while others watch, get drunk, and sometimes shove or fight. The player onl
 the evening and watches. See [Stage 1 tasks](stages/1_EVENING.md).
 
 **Status (2026-10-04):** M1–M3, the refactor R0–R8, D13 (Jev and Claude health markers), U1
-(no labels in the hall), E18b (conversation memory) and E19 (facts and retelling) are done. Next:
-the dice game (G0–G5) and the barkeep (B0–B6), in either order, then E20 of M4 (news and conflict).
+(no labels in the hall), E18b (conversation memory), E19 (facts and retelling) and the dice game (G0–G5)
+are done. Next: the barkeep (B0–B6), then E20 of M4 (news and conflict).
 
 **Done when:** recorded live evenings meet the Stage 1 metrics, an observer can retell
 a story from at least one of them, and its chronicle cites only logged events.
