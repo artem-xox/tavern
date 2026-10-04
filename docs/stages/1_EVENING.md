@@ -76,13 +76,13 @@ E16 measures this; E28 sets the budget.
 ## Status
 
 M1–M3, the refactor R0–R8, the model health markers (D13), U1 (no labels in the hall) and E18b
-(conversation memory) and E19 (facts and retelling) are done (2026-10-04). Done: dice (G0–G5) and the
-barkeep (B0–B6), both 2026-10-04. Next:
+(conversation memory) and E19 (facts and retelling) are done (2026-10-04). Done: dice (G0–G5), the
+barkeep (B0–B6) and E20 (hostile options), all 2026-10-04. Next:
 
 1. **Dice (G0–G5), done.** Guests agree to a game of dice, play it at a dice table, and others watch.
 2. **The barkeep (B0–B6), done.** A barkeep keeps to four cells behind the bar, pours every mug,
    and chats with guests who lean on the counter.
-3. **M4, news and conflict (E20–E22).** E20 gives guests hostile options.
+3. **M4, news and conflict (E20–E22).** E20 (hostile options) is done; E21 resolves fights next.
 
 The door at closing (D02) is fixed: it takes as many leavers at once as it has spots (offline
 seed 5: the last guest left 6.6 s after closing, was 42.8 s; stuck time 27.1 s → 6.1 s). The code now
@@ -702,7 +702,7 @@ which G0 extracts from the `Random(f"{seed}:{tick}:…")` pattern before the dic
     one a week now, broth only." (the original: "...abed with a fever for a week, and the manor kitchen is
     told to send up nothing but broth"); at 222 s Toren's account of the robbery reached Calder (hop 1) and, from
     the next table, Rurik (overheard).
-- [ ] **E20 — Hostile options.** Insults are speech acts; `shove` and `start_fight`
+- [x] **E20 — Hostile options.** Insults are speech acts; `shove` and `start_fight`
   appear only toward someone with low opinion, given temper, drunkenness, and a recent
   cause. Done: sober guests on good terms never receive hostile candidates.
   - *Gate (`hostility.py`, pure, from the observation only):*
@@ -725,6 +725,71 @@ which G0 extracts from the `Random(f"{seed}:{tick}:…")` pattern before the dic
   - *Tests:* a parametrized block in which sober guests with opinion ≥ 0 never get
     hostile candidates (cases: no cause, old cause, low temper, friend), and a block of
     positive cases.
+  - *Frozen shape (2026-10-04, before coding):* the text above has three corrections.
+    The thought kinds are `insulted` and `line_cut` (not `insult`, `cut_in_line`).
+    `drunkenness.inhibition_modifier` is a multiplier (1.0 sober), so the urge is
+    `temper × inhibition_modifier(drunkenness)`, not `temper × (1 + …)`. The observation carries no
+    rules, so the thresholds are module constants in `hostility.py`, as `THOUGHTS` and the drunk
+    stages are, not `rules.hostility`; that also keeps the rules out of one more save (D08).
+    - *Module:* `social/hostility.py` owns `HOSTILITY` (opinion −30, recent 120 s, urge needed: `shove`
+      0.45, `start_fight` 0.85) and `hostile_targets(observation, verb) -> list[str]`, sorted by ID,
+      for `verb` one of `shove`, `start_fight` (every `start_fight` target is also a `shove` target).
+      Tests are in `tests/test_hostility.py`.
+    - *A target qualifies when:* they are in `observation["people"]`, are not staff (no `post`) and not
+      the guest; they sit at the guest's table or stand beside them (the rule for `talk`, so the world
+      can check the same thing); the guest's `opinion_of` them is −30 or lower; one of the guest's
+      active thoughts about them is a `HOSTILE_CAUSES` kind (`insulted`, `quarrel`, `seat_taken`,
+      `friend_insulted`, `line_cut`) formed within 120 s (formed = `expires_at` − the kind's seconds);
+      and `urge` reaches the verb's threshold. A guest with no `temper` trait has urge 0: hostility is
+      opt-in, so a hand-made observation or a Stage 0 visitor is never hostile.
+    - *Verbs:* `Activity.confronts` (new): targets another visitor but is not a scene part; it starts
+      where the actor stands (no walking) and ends on its timer. `shove` (1.0 s) and `start_fight`
+      (2.0 s) are in the new family `confront`. `action_error` refuses a target who is missing, the
+      actor, staff, or neither at the actor's table nor beside them. The world does not re-check the
+      gate: like every verb it checks only what is physically possible.
+    - *Effects until E21:* a completed `shove` logs `shove` (loud sound 1.0, reach 24) and gives the
+      victim the thought `shoved` (mood −8, opinion −25, 300 s) about the shover; a completed
+      `start_fight` logs `fight_started` (sound 1.0, reach 30) and gives the victim `attacked` (mood
+      −10, opinion −35, 300 s). Nothing else changes yet: E21 resolves the fight, E22 adds reactions.
+    - *Mind side:* `agents._hostile_candidates` offers each qualifying target as `shove:<id>` and
+      `start_fight:<id>`; `local_policy` weighs them low (`shove` 0.1 + 0.3 × urge, `start_fight`
+      0.05 + 0.2 × urge, urge capped at 1); `options` has a sentence for each; the verbs' `guidance`
+      tells Jev that hostile acts are rare and have consequences.
+    - *Saves:* `schema_version` 10 (the rules' `durations` gain two verbs, so older saves are
+      rejected); the approved bump is named in the commit, and the tests that pin 9 follow.
+  - *Built (2026-10-04):* `social/hostility.py` (`HOSTILITY`, `hostile_targets`, `urge`), `Activity.confronts`,
+    the verbs `shove` and `start_fight` in the new `confront` family, `_confront_error` in `body/actions.py`, the
+    thoughts `shoved` and `attacked`, the sounds `scuffle` and `brawl`, and the three mind tables
+    (`agents._hostile`, `local_policy`, `options`). Hostile options are appended after the peaceful ones,
+    so a peaceful request is byte-identical to before. D11 is paid: a quarrel now comes only from an `insult`
+    whose target already thinks ill of the speaker (opinion −10 or less, the `DISLIKED` line, read before the
+    insult's own thought lands), so an insult stings first and an answer in kind quarrels; `complain` has no
+    consequence of its own; the beer dice and `rules.quarrel_per_beer`/`quarrel_max` are gone. `visit.grievances`
+    is gone from the world, the saves, the observation check and `types.ts`; what still rankles is read from the
+    thoughts by `thoughts.rankling(actor, now)`, which also feeds the briefing's "Still rankling tonight" line
+    and the local policy's reading of a wronged guest. Saves are `schema_version` 10, with the approved bump
+    named in the commit: `test_database.py` and `test_intention_saves.py` pin 10 (the second test is renamed
+    `test_new_worlds_are_version_10`).
+  - *Tests:* new `test_hostility.py` (the gate: 13 peaceful and 11 positive cases, ordering, a bad verb),
+    `test_confront.py` (the world's side, and a grudge turning into a fight through an ordinary decision),
+    `test_hostile_options.py` (candidates, family, scores, wording), with `hostile_view.py` for the hand-made
+    observation. Changed with the user's approval (D11), each named here: quarrel dice replaced by a grudge in
+    `test_turns.py` (`test_a_complaint_never_ends_in_a_quarrel`), `test_speech_acts.py` (the insult test, five
+    cases), `test_evening.py` (the quarrel-from-talk test, now four cases, and `test_quarrel_aggrieves_both_and_leaves_them_lonely`),
+    `test_feelings.py` (`seated`, and the quarrel case is now "an-insult-and-a-quarrel": Ada holds the insult and
+    the quarrel) and `test_intention_runners.py` (`quarrelsome` has a mutual grudge, and the fake writer insults);
+    grievances replaced by thoughts in `test_thoughts.py` (`rankling`), `test_briefing.py`, `test_queues.py`,
+    `test_seating.py` (`wrongs`), `test_evening.py`; the two cases that validated the removed field
+    (`malformed-grievances`, `malformed-grievance`) are gone; stale `"grievances": []` fixture keys are removed.
+  - *Results:* `make check` 2062 tests (1983 before), mypy clean, `make build` passes. Offline, seeds 5, 1 and 2
+    (scripted, 426 game s each): no shove, fight or quarrel, because the scripted writer never insults and only
+    seat-taking grudges formed (4, 2 and 3 events, −15 opinion each against the −30 line); on the old rule some
+    quarrels came from beer dice. Live (Jev + Haiku, seed 5, 426 game s): 22 scenes, 44 turns, 308 calls, 0 failed,
+    0 fallbacks, $0.272 per evening, $0.00304 per turn against $0.00272 for E19 (+$0.00032, under the $0.0005
+    limit), 88.2% cache hits, p50 1.6 s; a replay is byte-identical (`cmp` of `events.jsonl`). **No guest insulted
+    anyone, so no hostile option was offered live:** the proof is the tests, including the one that takes a guest
+    with a grudge from `choose_action` to a `start_fight` in the world. How often Haiku's guests turn on each
+    other is for E28 to count; E21 resolves the blow and E22 the room's reaction.
 - [ ] **E21 — Fight resolution.** Seeded exchanges with hit chance, damage,
   consciousness, yielding, and knockouts; a shove can stagger or knock down; a knocked
   out guest lies down, gets up groggy, and keeps thoughts. Done: parametrized outcome
