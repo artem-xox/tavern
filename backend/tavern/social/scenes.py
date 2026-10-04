@@ -126,9 +126,17 @@ def _by_a_view(world: Mapping[str, Any], actor: Mapping[str, Any]) -> bool:
                if item["kind"] in ("fireplace", "window") for x, y in item["interaction_spots"])
 
 
-def _bar_of(world: Mapping[str, Any], person: Mapping[str, Any]) -> str | None:
-    # The bar someone stands at: a guest on one of its interaction spots, or its staff member on one of
-    # its staff cells. Only those exact cells count, not the cells round them.
+def bar_of(world: Mapping[str, Any], person: Mapping[str, Any]) -> str | None:
+    """Tell at which bar someone stands.
+
+    Args:
+        world: Current world.
+        person: Visitor.
+
+    Returns:
+        The ID of the bar a guest stands on a spot of, or whose staff cells its staff member stands on;
+        only those exact cells count, not the cells round them. None otherwise.
+    """
     cell = [person["x"], person["y"]]
     for item in world["map"]["objects"]:
         if item["kind"] != "bar":
@@ -164,8 +172,8 @@ def side_by_side(world: Mapping[str, Any], actor: Mapping[str, Any], other: Mapp
         return mine[0] == theirs[0] and abs(mine[1] - theirs[1]) == 1
     if "walking" in (actor["status"], other["status"]):
         return False
-    at_bar = _bar_of(world, actor)
-    if at_bar is not None and at_bar == _bar_of(world, other):
+    at_bar = bar_of(world, actor)
+    if at_bar is not None and at_bar == bar_of(world, other):
         return True
     near =max(abs(actor["x"] - other["x"]), abs(actor["y"] - other["y"])) <= world["rules"]["conversation"]["reach"]
     return near and _by_a_view(world, actor) and _by_a_view(world, other)

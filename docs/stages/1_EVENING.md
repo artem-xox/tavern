@@ -1429,7 +1429,7 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     bar and chat with the barkeep". 20 tests in `tests/test_bar_chat.py`. Offline evening, seed 5: 4 stands
     at the bar and 25 scene events with Hob (Toren to Hob at 103 s: "Room for one more, friend?"; they
     introduce themselves; Hob tells where the ale is), 12 beers poured, 427 s, 0.0 s stuck.
-- [ ] **B5 — The barkeep greets.** He steps over to a guest at the bar and opens the talk.
+- [x] **B5 — The barkeep greets.** He steps over to a guest at the bar and opens the talk.
   - *Routine:* `tend_bar` gets two more steps, after hand-over and pour. They apply to a staff
     member who is idle and in no scene, while the inn is open. The guest he looks to is the first,
     in actor order, who stands at his bar, is in no scene, is not `pressed`, and whom he has not
@@ -1448,6 +1448,20 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     - He does not greet after closing, nor a guest who is pressed or already in a scene.
   - *Check:* `make check` and `make build`; `make run` and a screenshot of a chat across the bar;
     the offline evening; a live evening (seed 5) with a byte-identical replay.
+  - *Built (2026-10-04):* `bartending.tend_bar` gains the two steps as drafted: an idle barkeep with no
+    order and no scene, while the inn is open, picks the first guest (actor order) who `scenes.bar_of`
+    says is at his bar (now public), is in no scene, is not `pressed` and whom he has not heard speak
+    within `rules.bartending.chat_gap`; he walks over his staff cells to the cell across from them (their
+    column, else the nearest, the first listed on a tie) with a `wait`, then starts `talk` through
+    `action_error` and `activate`. `rules.bartending = {"chat_gap": 60.0}` (`BartendingRules`, checked in
+    `check_rules`: a saved world with no, zero, negative, non-numeric or an extra rule is refused; the
+    schema stays 9, since 9 is unreleased). `staff.guests` returns `list[Actor]`. 13 tests in
+    `tests/test_bar_greeting.py`; the "in a scene of their own" case sets both guests' wish for company to
+    100 so the scene outlasts the barkeep's approach (scenes end by themselves once the guests have talked
+    enough, and the case would otherwise pass for the wrong reason). Offline evening, seed 5: Hob greets 7
+    times (90 s: Toren; 103 s and 108 s: Edda, the second time because her first scene ended before he
+    heard her speak), guests start 3 chats with him, 24 turns involve him, 12 beers poured, 426 s, 6.1 s
+    stuck (longest 3.1 s).
 - [ ] **B6 — Numbers and the story.**
   - *Metrics:* `metrics.json` gets `bar`: `{served, opened, lines, news_told}`. `served` counts
     `served` events; `opened`, `lines` and `news_told` count `conversation_started`, `turn` and

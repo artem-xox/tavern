@@ -162,6 +162,13 @@ class DiceRules(TypedDict):
     wait_seconds: float
 
 
+class BartendingRules(TypedDict):
+    """How a barkeep chats (see `tavern.body.bartending`): the seconds he leaves a guest he has heard speak
+    before he greets them again."""
+
+    chat_gap: float
+
+
 class Rules(TypedDict):
     """The tunable rules of the world, kept in every save."""
 
@@ -181,6 +188,7 @@ class Rules(TypedDict):
     conversation: ConversationRules
     news: NewsRules
     dice: DiceRules
+    bartending: BartendingRules
 
 
 class HallMap(TypedDict):

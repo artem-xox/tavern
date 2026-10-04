@@ -5,6 +5,7 @@ from typing import Any
 
 from tavern.hall.navigation import find_path
 from tavern.hall.room import find_object, impassable_cells, line_approach, object_cells
+from tavern.hall.state import Actor
 
 FACINGS = ("north", "south", "east", "west")
 
@@ -45,7 +46,7 @@ def on_staff(actor: Mapping[str, Any]) -> bool:
     return actor.get("post") is not None
 
 
-def guests(world: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+def guests(world: Mapping[str, Any]) -> list[Actor]:
     """List the visitors in the hall who came for the evening, not to work.
 
     Args:
