@@ -610,24 +610,24 @@
       "id": "dice-table",
       "kind": "dice_table",
       "name": "Dice table",
-      "x": 16,
-      "y": 9,
+      "x": 9,
+      "y": 8,
       "interaction_spots": [
         [
-          16,
+          9,
+          7
+        ],
+        [
+          9,
+          9
+        ],
+        [
+          7,
           8
         ],
         [
-          16,
-          10
-        ],
-        [
-          14,
-          9
-        ],
-        [
-          18,
-          9
+          11,
+          8
         ]
       ]
     },
@@ -635,15 +635,15 @@
       "id": "dice-chair-1",
       "kind": "dice_chair",
       "name": "Dice table \u00b7 west",
-      "x": 15,
-      "y": 9,
+      "x": 8,
+      "y": 8,
       "walkable": true,
       "table_id": "dice-table",
       "facing": "east",
       "interaction_spots": [
         [
-          15,
-          9
+          8,
+          8
         ]
       ]
     },
@@ -651,15 +651,15 @@
       "id": "dice-chair-2",
       "kind": "dice_chair",
       "name": "Dice table \u00b7 east",
-      "x": 17,
-      "y": 9,
+      "x": 10,
+      "y": 8,
       "walkable": true,
       "table_id": "dice-table",
       "facing": "west",
       "interaction_spots": [
         [
-          17,
-          9
+          10,
+          8
         ]
       ]
     }

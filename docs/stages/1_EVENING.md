@@ -775,19 +775,18 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
   `interaction_spots` are where onlookers stand. `dice_chair` is walkable like a chair, with a
   `facing` and a `table_id` that must name a `dice_table`. A dice chair is not a `chair`: nobody
   owns it, it is never offered for `seating`, `sit` or `rest`, and playing never sets `seat_id`,
-  so the seating, table-talk and dozing rules leave players alone. One dice table stands on the
-  right of the hall, between the hearth table and the corner table (`data/tavern.json`, after the
-  regular tables). The open middle was the first choice, but existing tests put guests and a
-  quarrel on its cells and name the nearest landmark (`test_queues.py`, `test_attention.py`), and
-  tests may not change for a furniture move:
+  so the seating, table-talk and dozing rules leave players alone. One dice table stands in the middle
+  of the hall, between the four tables (`data/tavern.json`, after the regular tables). A first try at
+  (10, 8) broke four tests that put guests on its cells, so it moved one cell west, to (9, 8); that
+  leaves one existing test with a different landmark in its text (see G1's result):
 
   ```json
-  {"id": "dice-table", "kind": "dice_table", "name": "Dice table", "x": 16, "y": 9,
-   "interaction_spots": [[16, 8], [16, 10], [14, 9], [18, 9]]},
-  {"id": "dice-chair-1", "kind": "dice_chair", "name": "Dice table · west", "x": 15, "y": 9,
-   "walkable": true, "table_id": "dice-table", "facing": "east", "interaction_spots": [[15, 9]]},
-  {"id": "dice-chair-2", "kind": "dice_chair", "name": "Dice table · east", "x": 17, "y": 9,
-   "walkable": true, "table_id": "dice-table", "facing": "west", "interaction_spots": [[17, 9]]}
+  {"id": "dice-table", "kind": "dice_table", "name": "Dice table", "x": 9, "y": 8,
+   "interaction_spots": [[9, 7], [9, 9], [7, 8], [11, 8]]},
+  {"id": "dice-chair-1", "kind": "dice_chair", "name": "Dice table · west", "x": 8, "y": 8,
+   "walkable": true, "table_id": "dice-table", "facing": "east", "interaction_spots": [[8, 8]]},
+  {"id": "dice-chair-2", "kind": "dice_chair", "name": "Dice table · east", "x": 10, "y": 8,
+   "walkable": true, "table_id": "dice-table", "facing": "west", "interaction_spots": [[10, 8]]}
   ```
 
 - **Two verbs, both in the `pastime` family,** so no first-stage request grows. `play_dice`
@@ -883,7 +882,13 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
     rules were mutation-checked). `make check` (1,756 tests) and `make build` pass; in the browser
     the table stands on a green rug with its dice and two chairs, and the console is clean.
     The offline evening (seed 5) is byte-identical to `main`'s (16 scenes, stuck time unchanged):
-    the table is in nobody's way, and nothing yet offers a guest the dice. No existing test changed.
+    the table is in nobody's way, and nothing yet offers a guest the dice. The table first stood on the
+    right of the hall so that no existing test had to change; the user then asked for the middle, so it
+    moved to (9, 8). **One existing test was edited, with the user's request as the reason:**
+    `test_attention.py::test_the_briefing_names_the_trigger_while_it_is_fresh` stages a quarrel at (8, 7)
+    and (9, 7) and pins the landmark in the briefing's text; the nearest place is now "the Dice table", so
+    "near the Window table" became "near the Dice table" (nothing else in it changed). Every other test
+    passes unchanged, and the offline evening is still byte-identical.
 - [x] **G2 — A game at the table.** Two guests seated at the dice table play one game, and the
   formula above picks the winner.
   - *Refactor first (own commit):* take `lifecycle.complete_action(world, actor)` out of

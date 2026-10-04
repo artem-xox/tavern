@@ -19,7 +19,7 @@ WATCH = "watch_dice"
 
 def playing(*watchers: dict[str, Any], waiting: bool = False) -> dict[str, Any]:
     """Ada and Bea (or only Ada) at the dice table, with the watchers placed by hand, a few seconds in."""
-    world = table_hall(guest("ada", (14, 9)), guest("bea", (18, 9)), *watchers)
+    world = table_hall(guest("ada", (7, 8)), guest("bea", (11, 8)), *watchers)
     assert start(world, "ada", "play_dice", "dice-chair-1")["accepted"]
     if not waiting:
         assert start(world, "bea", "play_dice", "dice-chair-2")["accepted"]

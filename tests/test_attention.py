@@ -147,7 +147,7 @@ def test_the_briefing_names_the_trigger_while_it_is_fresh() -> None:
     fresh = brief(observe_actor(world, "ada"), [])["situation"]
     ticks(world, 200)
     later = brief(observe_actor(world, "ada"), [])["situation"]
-    trigger = ("Just now: Ada broke off and turned toward a loud quarrel near the Window table: "
+    trigger = ("Just now: Ada broke off and turned toward a loud quarrel near the Dice table: "
                "Bea and Cid quarreled about the inn's beer.")
     assert (trigger in fresh, "broke off" in later, actor(world, "ada")["interrupted_at"]) == (
         True, False, pytest.approx(0.1))

@@ -35,7 +35,7 @@ def table_hall(*actors: dict[str, Any]) -> dict[str, Any]:
 
 def two_players(**seed_and_traits: Any) -> dict[str, Any]:
     """Ada by the west chair and Bea by the east one, both sent to play."""
-    world = table_hall(guest("ada", (14, 9), seed_and_traits.get("ada")), guest("bea", (18, 9), seed_and_traits.get("bea")))
+    world = table_hall(guest("ada", (7, 8), seed_and_traits.get("ada")), guest("bea", (11, 8), seed_and_traits.get("bea")))
     sit_down(world, "ada", "dice-chair-1")
     sit_down(world, "bea", "dice-chair-2")
     return world
@@ -129,7 +129,7 @@ def test_the_same_seed_and_tick_draw_the_same_winner() -> None:
 
 
 def test_the_game_begins_only_once_both_have_sat_down() -> None:
-    world = table_hall(guest("ada", (14, 9)), guest("bea", (18, 9)))
+    world = table_hall(guest("ada", (7, 8)), guest("bea", (11, 8)))
     sit_down(world, "ada", "dice-chair-1")
     advance(world, 2)
     assert (table(world)["game"]["players"], table(world)["game"]["ends_at"], happened(world, "dice_started")) == (["ada"], None, [])
@@ -179,7 +179,7 @@ def test_a_cheer_rings_out_at_the_win_but_never_loudly_enough_to_interrupt() -> 
 
 
 def test_a_player_left_alone_gives_up_waiting_without_a_thought() -> None:
-    world = table_hall(guest("ada", (14, 9)))
+    world = table_hall(guest("ada", (7, 8)))
     sit_down(world, "ada", "dice-chair-1")
     advance(world, RULES["wait_seconds"] + 3)
     assert happened(world, "dice_abandoned") == ["Ada gave up waiting for a game of dice"]
@@ -219,7 +219,7 @@ def test_a_sharp_sober_player_usually_beats_a_dull_drunk_one_in_a_played_game() 
     room = {key: value for key, value in LAYOUT.items() if key != "arrival"}
     sharp_wins = 0
     for seed in range(40):
-        world = create_world({**room, "actors": [guest("ada", (14, 9), SHARP), guest("bea", (18, 9), DULL)]}, seed=seed)
+        world = create_world({**room, "actors": [guest("ada", (7, 8), SHARP), guest("bea", (11, 8), DULL)]}, seed=seed)
         who(world, "bea")["drunkenness"] = 0.6
         sit_down(world, "ada", "dice-chair-1")
         sit_down(world, "bea", "dice-chair-2")
@@ -236,7 +236,7 @@ def test_a_save_made_mid_game_loads_back_unchanged() -> None:
 
 
 def test_a_save_made_while_one_player_waits_loads_back_unchanged() -> None:
-    world = table_hall(guest("ada", (14, 9)))
+    world = table_hall(guest("ada", (7, 8)))
     sit_down(world, "ada", "dice-chair-1")
     advance(world, 5)
     assert table(world)["game"]["ends_at"] is None
