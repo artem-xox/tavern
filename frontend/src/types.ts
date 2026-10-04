@@ -89,7 +89,7 @@ export interface Actor {
   /** 0 (sober) to 1 (as drunk as can be); beers raise it and it wears off slowly. */
   drunkenness: number;
   path: Cell[];
-  knowledge: { objects: Record<string, Record<string, unknown>> };
+  knowledge: { objects: Record<string, Record<string, unknown>>; facts: Record<string, Fact> };
   memory: unknown[];
   /** The lines this visitor spoke or heard tonight, oldest first, the newest 40 kept. */
   heard: Heard[];
@@ -257,6 +257,28 @@ export interface Conversation {
   invitation: Invitation | null;
 }
 
+/** A news item of tonight's scenario: the original words, and the guests who start out knowing it. */
+export interface News {
+  id: string;
+  topic: string;
+  text: string;
+  known_by: string[];
+}
+
+/** One visitor's copy of a news item: the words they heard it in, from whom, and how far they believe it. */
+export interface Fact {
+  topic: string;
+  told_as: string;
+  /** The visitor who told it; null for a first holder (hops 0). */
+  heard_from: string | null;
+  heard_at: number;
+  /** 0 (not at all) to 1 (sure). */
+  confidence: number;
+  hops: number;
+  /** Caught from a conversation the visitor was not in. */
+  overheard: boolean;
+}
+
 export interface World {
   schema_version: number;
   tick: number;
@@ -283,6 +305,8 @@ export interface World {
   next_conversation_id: number;
   /** Accepted invitations under way. */
   invitations: Errand[];
+  /** The evening's news as first written; visitors' copies are in their `knowledge.facts`. */
+  news: News[];
 }
 
 export interface Snapshot {

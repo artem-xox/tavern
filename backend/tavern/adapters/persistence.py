@@ -20,6 +20,7 @@ from tavern.hall.validation import saved_cell
 from tavern.hall.world import create_world
 from tavern.mind.cards import parse_card
 from tavern.mind.intentions import check_saved_intention
+from tavern.social.facts import check_saved_news
 from tavern.social.heard import check_heard
 from tavern.social.invitations import KINDS, check_invitations
 from tavern.social.scenes import check_saved_scenes
@@ -180,7 +181,7 @@ def parse_world(encoded: str) -> World:
     """
     try:
         world = json.loads(encoded)
-        if not isinstance(world, dict) or world.get("schema_version") != 6:
+        if not isinstance(world, dict) or world.get("schema_version") != 7:
             raise ValueError("Unsupported snapshot version")
         json.dumps(world, allow_nan=False)
         _validate_clock(world)
@@ -190,6 +191,7 @@ def parse_world(encoded: str) -> World:
         check_saved_lines(world)
         _validate_departed(world)
         check_saved_expected(world)
+        check_saved_news(world)
         check_saved_stimuli(world)
         check_saved_scenes(world, KINDS)
         check_invitations(world)
