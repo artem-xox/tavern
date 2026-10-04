@@ -1,11 +1,11 @@
-"""The browser build must include Idle stills for the six tavern visitors."""
+"""The browser build must include Idle stills for tavern character art."""
 
 import subprocess
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CHARACTERS = ("edda", "rurik", "toren", "cook", "courier", "visitor")
+CHARACTERS = ("edda", "rurik", "toren", "cook", "courier", "visitor", "bartender")
 
 
 def test_character_stills_ship_with_browser_build() -> None:

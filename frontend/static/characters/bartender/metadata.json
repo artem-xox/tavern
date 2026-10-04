@@ -1,0 +1,58 @@
+{
+  "group_id": "cb4f83c0-6a75-42c5-8b96-6aaa6eeb0485",
+  "states": [
+    {
+      "character": {"id": "734654fd-d26d-48a3-abb8-05c14ba97a78", "name": "Idle", "size": {"width": 68, "height": 68}, "directions": 8, "view": "low top-down"},
+      "folder": "Idle",
+      "frames": {"rotations": {"north": "Idle/rotations/north.png", "south": "Idle/rotations/south.png", "east": "Idle/rotations/east.png", "west": "Idle/rotations/west.png"}, "animations": {}}
+    },
+    {
+      "character": {"id": "a2c4fb9c-fa19-4086-85b2-70f43825b847", "name": "Seated", "size": {"width": 68, "height": 68}, "directions": 8, "view": "low top-down"},
+      "folder": "Seated",
+      "frames": {"rotations": {"north": "Seated/rotations/north.png", "south": "Seated/rotations/south.png", "east": "Seated/rotations/east.png", "west": "Seated/rotations/west.png"}, "animations": {}}
+    },
+    {
+      "character": {"id": "5ce24871-8c34-4c0b-b929-e07246458a25", "name": "Darts", "size": {"width": 68, "height": 68}, "directions": 8, "view": "low top-down"},
+      "folder": "Darts",
+      "frames": {"rotations": {"north": "Darts/rotations/north.png", "south": "Darts/rotations/south.png", "east": "Darts/rotations/east.png", "west": "Darts/rotations/west.png"}, "animations": {}}
+    },
+    {
+      "character": {"id": "92292b97-9e0f-4a3f-97d5-ce4690524766", "name": "Bathroom", "size": {"width": 68, "height": 68}, "directions": 8, "view": "low top-down"},
+      "folder": "Bathroom",
+      "frames": {"rotations": {"north": "Bathroom/rotations/north.png", "south": "Bathroom/rotations/south.png", "east": "Bathroom/rotations/east.png", "west": "Bathroom/rotations/west.png"}, "animations": {}}
+    },
+    {
+      "character": {"id": "d47d395e-19ce-40ad-bfd4-0bfd116ca502", "name": "Drinking", "size": {"width": 68, "height": 68}, "directions": 8, "view": "low top-down"},
+      "folder": "Drinking",
+      "frames": {"rotations": {"north": "Drinking/rotations/north.png", "south": "Drinking/rotations/south.png", "east": "Drinking/rotations/east.png", "west": "Drinking/rotations/west.png"}, "animations": {}}
+    },
+    {
+      "character": {"id": "37eb7f2d-2060-4b49-bf27-0d1b2a90fc2a", "name": "DrinkingSeated", "size": {"width": 68, "height": 68}, "directions": 8, "view": "low top-down"},
+      "folder": "DrinkingSeated",
+      "frames": {"rotations": {"north": "DrinkingSeated/rotations/north.png", "south": "DrinkingSeated/rotations/south.png", "east": "DrinkingSeated/rotations/east.png", "west": "DrinkingSeated/rotations/west.png"}, "animations": {}}
+    },
+    {
+      "character": {"id": "ca683f35-da34-4115-aada-9bab49972137", "name": "TalkingSeated", "size": {"width": 68, "height": 68}, "directions": 8, "view": "low top-down"},
+      "folder": "TalkingSeated",
+      "frames": {"rotations": {"north": "TalkingSeated/rotations/north.png", "south": "TalkingSeated/rotations/south.png", "east": "TalkingSeated/rotations/east.png", "west": "TalkingSeated/rotations/west.png"}, "animations": {}}
+    },
+    {
+      "character": {"id": "524239e9-6e99-4cb3-ad78-2d7e5e405635", "name": "TakeBeer", "size": {"width": 68, "height": 68}, "directions": 8, "view": "low top-down"},
+      "folder": "TakeBeer",
+      "frames": {"rotations": {"north": "TakeBeer/rotations/north.png", "south": "TakeBeer/rotations/south.png", "east": "TakeBeer/rotations/east.png", "west": "TakeBeer/rotations/west.png"}, "animations": {}}
+    },
+    {
+      "character": {"id": "08e9caf3-ed49-4984-88fa-b32657329c5b", "name": "Walking", "size": {"width": 68, "height": 68}, "directions": 8, "view": "low top-down"},
+      "folder": "Walking",
+      "frames": {"rotations": {"north": "Walking/rotations/north.png", "south": "Walking/rotations/south.png", "east": "Walking/rotations/east.png", "west": "Walking/rotations/west.png"}, "animations": {}}
+    },
+    {
+      "character": {"id": "4b692a20-da96-4fb4-9f7b-3df3e1b33356", "name": "Talking", "size": {"width": 68, "height": 68}, "directions": 8, "view": "low top-down"},
+      "folder": "Talking",
+      "frames": {"rotations": {"north": "Talking/rotations/north.png", "south": "Talking/rotations/south.png", "east": "Talking/rotations/east.png", "west": "Talking/rotations/west.png"}, "animations": {}}
+    }
+  ],
+  "export_version": "3.1",
+  "exported_directions": ["north", "south", "east", "west"],
+  "source_directions": 8
+}

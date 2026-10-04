@@ -1,16 +1,16 @@
-"""The browser build must include only the six full-action tavern visitors."""
+"""The browser build must include the full-action tavern character art."""
 
 import subprocess
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CHARACTERS = ("edda", "rurik", "toren", "cook", "courier", "visitor")
+CHARACTERS = ("edda", "rurik", "toren", "cook", "courier", "visitor", "bartender")
 DIRECTIONS = ("north", "south", "east", "west")
 
 
 def test_action_stills_ship_with_browser_build() -> None:
-    """Check seated action stills ship for every named visitor and no other folder."""
+    """Check seated action stills ship for every shipped character folder."""
     subprocess.run(["npm", "--prefix", "frontend", "run", "build"], cwd=ROOT, check=True, capture_output=True)
     exported = ROOT / "frontend" / "dist" / "characters"
     assert {folder.name for folder in exported.iterdir() if folder.is_dir()} == set(CHARACTERS)
