@@ -121,6 +121,25 @@ export function drawTable(g: Phaser.GameObjects.Graphics, object: WorldObject, s
   g.fillStyle(0xffd884).fillEllipse(cx, cy - 8, 4, 7);
 }
 
+/** Lay a rug under every table and its chairs, kept clear of the walls. */
+export function drawRugs(floor: Phaser.GameObjects.Graphics, objects: WorldObject[], size: number): void {
+  const palette: [number, number][] = [[0x8d463a, 0xd2a367], [0x526455, 0xabbd92], [0x4b5874, 0xa9b6cf], [0x7b5b30, 0xd9b26b]];
+  objects.filter((object: WorldObject): boolean => object.kind === "table").forEach((table: WorldObject, index: number): void => {
+    const [fill, trim] = palette[index % palette.length]!;
+    const x: number = (table.x - 1.2) * size;
+    const y: number = (table.y - 0.3) * size;
+    const width: number = ((table.width ?? 1) + 2.4) * size;
+    const height: number = ((table.height ?? 1) + 0.6) * size;
+    floor.fillStyle(0x2b211b, 0.35).fillRoundedRect(x - 2, y + 3, width + 4, height, 7);
+    floor.fillStyle(fill).fillRoundedRect(x, y, width, height, 6);
+    floor.lineStyle(2, trim, 0.55).strokeRoundedRect(x + 4, y + 4, width - 8, height - 8, 4);
+    for (let col: number = 0; col < 6; col += 1) {
+      const cx: number = x + (col + 0.5) * width / 6;
+      floor.lineStyle(1, trim, 0.2).strokePoints([{ x: cx, y: y + height / 2 - 6 }, { x: cx + 6, y: y + height / 2 }, { x: cx, y: y + height / 2 + 6 }, { x: cx - 6, y: y + height / 2 }], true);
+    }
+  });
+}
+
 function drawMug(g: Phaser.GameObjects.Graphics, x: number, y: number): void {
   g.lineStyle(2, 0xe6d5ad).strokeRoundedRect(x + 1, y - 2, 7, 7, 2);
   g.fillStyle(0xcea15e).fillRoundedRect(x - 4, y - 5, 8, 12, 2);

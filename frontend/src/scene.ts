@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { placeBubble } from "./bubble";
-import { drawBar, drawChair, drawDarts, drawDoor, drawFireplace, drawTable, drawTap, drawToilet, drawWindow, hearthFacing } from "./furniture";
+import { drawBar, drawChair, drawDarts, drawDoor, drawFireplace, drawRugs, drawTable, drawTap, drawToilet, drawWindow, hearthFacing } from "./furniture";
 import { shippedPose, spriteOf, stills } from "./sprites";
 import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Mind, Turn, Verb, World, WorldObject } from "./types";
 
@@ -162,7 +162,7 @@ export class TavernScene extends Phaser.Scene {
       }
     }
     this.drawRoomDetails(size);
-    this.drawRugs(world, size);
+    drawRugs(this.floor, world.map.objects, size);
     for (const [x, y] of blocked) this.drawWall(x * size, y * size, size);
     // Doors, windows and the fireplace sit inside the outer wall.
     for (const object of world.map.objects.filter((item: WorldObject): boolean => ["door", "window", "fireplace"].includes(item.kind))) {
@@ -170,25 +170,6 @@ export class TavernScene extends Phaser.Scene {
         for (let dx: number = 0; dx < (object.width ?? 1); dx += 1) this.drawWall((object.x + dx) * size, (object.y + dy) * size, size);
       }
     }
-  }
-
-  /** Lay a rug under every table and its chairs, kept clear of the walls. */
-  private drawRugs(world: World, size: number): void {
-    const palette: [number, number][] = [[0x8d463a, 0xd2a367], [0x526455, 0xabbd92], [0x4b5874, 0xa9b6cf], [0x7b5b30, 0xd9b26b]];
-    world.map.objects.filter((object: WorldObject): boolean => object.kind === "table").forEach((table: WorldObject, index: number): void => {
-      const [fill, trim] = palette[index % palette.length]!;
-      const x: number = (table.x - 1.2) * size;
-      const y: number = (table.y - 0.3) * size;
-      const width: number = ((table.width ?? 1) + 2.4) * size;
-      const height: number = ((table.height ?? 1) + 0.6) * size;
-      this.floor.fillStyle(0x2b211b, 0.35).fillRoundedRect(x - 2, y + 3, width + 4, height, 7);
-      this.floor.fillStyle(fill).fillRoundedRect(x, y, width, height, 6);
-      this.floor.lineStyle(2, trim, 0.55).strokeRoundedRect(x + 4, y + 4, width - 8, height - 8, 4);
-      for (let col: number = 0; col < 6; col += 1) {
-        const cx: number = x + (col + 0.5) * width / 6;
-        this.floor.lineStyle(1, trim, 0.2).strokePoints([{ x: cx, y: y + height / 2 - 6 }, { x: cx + 6, y: y + height / 2 }, { x: cx, y: y + height / 2 + 6 }, { x: cx - 6, y: y + height / 2 }], true);
-      }
-    });
   }
 
   private drawRoomDetails(size: number): void {
