@@ -12,7 +12,7 @@ from typing import Any
 
 from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World
-from tavern.social import invitations, social_acts
+from tavern.social import facts, invitations, social_acts
 from tavern.social.names import called
 from tavern.social.scenes import Conversation, end_conversation, leave_conversation
 from tavern.social.thoughts import active_thoughts, opinion_of, think
@@ -61,6 +61,12 @@ def _tell_places(world: World, scene: Conversation, speaker: Actor,
     _relieve(world, scene, speaker, addressee)
 
 
+def _tell_news(world: World, scene: Conversation, speaker: Actor,
+               addressee: Actor | None) -> None:
+    facts.tell(world, scene, speaker, addressee)
+    _relieve(world, scene, speaker, addressee)
+
+
 def _complain(world: World, scene: Conversation, speaker: Actor,
               addressee: Actor | None) -> None:
     # A grumble to everyone is taken up by the next in the circle.
@@ -99,9 +105,9 @@ ACTS: Mapping[str, Act] = MappingProxyType({
     "small_talk": Act(_relieve, "pass the time pleasantly; it eases everyone's wish for company"),
     "share_place": Act(_tell_places, "tell the others where the tap, the WC or the darts are; they learn "
                                      "every such place the speaker knows, and it eases the wish for company"),
-    "share_news": Act(None, "tell the others a piece of news the speaker holds, naming it in `fact_id`; the words "
-                            "spoken are the version the others will carry on, so retell it in the speaker's own "
-                            "words without adding facts"),
+    "share_news": Act(_tell_news, "tell the others a piece of news the speaker holds, naming it in `fact_id`; the "
+                                  "words spoken are the version the others will carry on, so retell it in the "
+                                  "speaker's own words without adding facts. It eases everyone's wish for company"),
     "joke": Act(_relieve, "make the others laugh; it eases everyone's wish for company, and the laughter "
                           "carries across the hall"),
     "complain": Act(_complain, "grumble about something; after a few beers an impatient pair may quarrel, "

@@ -135,6 +135,14 @@ class ConversationRules(TypedDict):
     recall_lines: int
 
 
+class NewsRules(TypedDict):
+    """How news is believed (see `tavern.social.facts`): `trust` by the listener's familiarity with the
+    teller, and the `overheard` share of belief kept by a guest who was not in the conversation."""
+
+    trust: dict[str, float]
+    overheard: float
+
+
 class Rules(TypedDict):
     """The tunable rules of the world, kept in every save."""
 
@@ -152,6 +160,7 @@ class Rules(TypedDict):
     long_wait: float
     drunkenness: DrunkennessRules
     conversation: ConversationRules
+    news: NewsRules
 
 
 class HallMap(TypedDict):

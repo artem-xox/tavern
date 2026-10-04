@@ -3,8 +3,12 @@
 from collections.abc import Mapping, Sequence
 from typing import Any, TypedDict
 
+from tavern.hall.memory import log_event
+from tavern.hall.state import Actor, World
 from tavern.hall.validation import number, unique_ids
 from tavern.social.names import called
+from tavern.social.scenes import Conversation
+from tavern.social.thoughts import familiarity_of
 
 MAX_TEXT = 200  # Characters of a news item: a few sentences a guest could tell in one or two lines.
 
@@ -116,6 +120,33 @@ def carried(world: Mapping[str, Any], holder: Mapping[str, Any]) -> list[Carried
     return [Carried(id=fact_id, topic=copy["topic"], told_as=copy["told_as"], confidence=copy["confidence"],
                     heard_from=None if copy["heard_from"] is None else called(holder, people[copy["heard_from"]]))
             for fact_id, copy in sorted(holder["knowledge"]["facts"].items())]
+
+
+def tell(world: World, scene: Conversation, speaker: Actor, addressee: Actor | None) -> None:
+    """Give everyone else in the scene who lacks it a copy of the news the last turn told.
+
+    Args:
+        world: Current world; `rules.news.trust` says how far each listener believes the teller.
+        scene: Speaker's scene, whose last turn carries the `fact_id` told (validated by `turns.check_turn`).
+        speaker: Guest telling the news.
+        addressee: Unused: a telling is heard by the whole company, whoever it addresses.
+    """
+    turn = scene["turns"][-1]
+    told = speaker["knowledge"]["facts"][turn["fact_id"]]
+    heard = []
+    for listener in world["actors"]:
+        copies = listener["knowledge"]["facts"]
+        # A listener who already knows the news keeps the version they first heard.
+        if listener["id"] not in scene["participants"] or listener["id"] == speaker["id"] or turn["fact_id"] in copies:
+            continue
+        trust = world["rules"]["news"]["trust"][familiarity_of(listener, speaker["id"])]
+        copies[turn["fact_id"]] = Fact(topic=told["topic"], told_as=turn["line"], heard_from=speaker["id"],
+                                       heard_at=world["time"], confidence=told["confidence"] * trust,
+                                       hops=told["hops"] + 1, overheard=False)
+        heard.append(listener["name"])
+    if heard:
+        names = heard[0] if len(heard) == 1 else f"{', '.join(heard[:-1])} and {heard[-1]}"
+        log_event(world, speaker["id"], "news_told", f"{speaker['name']} told {told['topic']} to {names}")
 
 
 def check_saved_news(world: Mapping[str, Any]) -> None:

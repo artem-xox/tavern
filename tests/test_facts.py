@@ -328,3 +328,126 @@ def test_a_saved_turn_with_a_wrong_fact_is_rejected(tmp_path: Path, corrupt: Cal
 def test_the_answer_schema_allows_a_fact_id_or_null_whatever_the_act() -> None:
     schema = turn_question(view_of(talk_with_news()))["schema"]
     assert schema["properties"]["fact_id"]["anyOf"] == [{"type": "string"}, {"type": "null"}]
+
+
+def befriend(world: dict[str, Any], listener: str, other: str, familiarity: str) -> None:
+    """Let a guest regard another with the given familiarity."""
+    actor(world, listener)["relations"][other] = {"name": other.title(), "opinion": 0.0, "familiarity": familiarity,
+                                                  "knows_name": True}
+
+
+def copy_of(world: dict[str, Any], guest_id: str, fact_id: str = "toll") -> dict[str, Any] | None:
+    """A guest's copy of a news item, or None."""
+    return actor(world, guest_id)["knowledge"]["facts"].get(fact_id)
+
+
+def tell(world: dict[str, Any], line: str = "They say the toll is doubled.", fact_id: str = "toll") -> str:
+    """Let the speaker of Ada and Bea's scene tell the news."""
+    return say(world, "share_news", line, fact_id=fact_id)
+
+
+def test_the_listener_carries_the_words_they_heard_one_hop_further() -> None:
+    world = talk_with_news("ada")
+    tell(world, "They say the toll is doubled.")
+    assert copy_of(world, "bea") == {"topic": "the toll", "told_as": "They say the toll is doubled.",
+                                     "heard_from": "ada", "heard_at": scene_of(world)["turns"][-1]["time"],
+                                     "confidence": 0.6, "hops": 1, "overheard": False}
+
+
+@pytest.mark.parametrize("familiarity, confidence", [
+    pytest.param("friend", 0.9, id="friend"),
+    pytest.param("acquaintance", 0.75, id="acquaintance"),
+    pytest.param("stranger", 0.6, id="stranger"),
+])
+def test_belief_is_the_tellers_confidence_times_trust_in_the_teller(familiarity: str, confidence: float) -> None:
+    world = talk_with_news("ada")
+    befriend(world, "bea", "ada", familiarity)
+    tell(world)
+    assert copy_of(world, "bea")["confidence"] == pytest.approx(confidence)
+
+
+def test_a_doubtful_teller_passes_on_less_belief() -> None:
+    world = talk_with_news()
+    hold(world, "ada", confidence=0.8, heard_from="cid", hops=2)
+    befriend(world, "bea", "ada", "acquaintance")
+    tell(world)
+    assert (copy_of(world, "bea")["confidence"], copy_of(world, "bea")["hops"]) == (pytest.approx(0.6), 3)
+
+
+def test_everyone_in_the_scene_but_the_teller_gets_a_copy_whoever_is_addressed() -> None:
+    world = seated_talk(social=100.0, cid_joins=True)
+    hold(world, "ada")
+    say(world, "share_news", "They say the toll is doubled.", addressee="bea", fact_id="toll")
+    assert [guest for guest in ("ada", "bea", "cid") if copy_of(world, guest)["hops"] > 0] == ["bea", "cid"]
+
+
+def test_a_guest_outside_the_scene_gets_nothing() -> None:
+    world = talk_with_news("ada")
+    tell(world)
+    assert copy_of(world, "cid") is None
+
+
+def test_a_guest_who_already_knows_the_news_keeps_their_first_version() -> None:
+    world = talk_with_news("ada", "bea")
+    actor(world, "bea")["knowledge"]["facts"]["toll"]["told_as"] = "Bea's own version."
+    tell(world)
+    assert copy_of(world, "bea")["told_as"] == "Bea's own version."
+
+
+def test_a_second_telling_does_not_replace_the_first_version() -> None:
+    world = talk_with_news("ada")
+    tell(world, "They say the toll is doubled.")
+    say(world, "small_talk")
+    tell(world, "A different telling.")
+    assert copy_of(world, "bea")["told_as"] == "They say the toll is doubled."
+
+
+def test_news_told_is_logged_with_the_teller_and_listeners() -> None:
+    world = seated_talk(social=100.0, cid_joins=True)
+    hold(world, "ada")
+    tell(world)
+    [event] = [item for item in world["events"] if item["type"] == "news_told"]
+    assert (event["actor_id"], "Ada" in event["message"], "the toll" in event["message"],
+            "Bea and Cid" in event["message"]) == ("ada", True, True, True)
+
+
+def test_nothing_is_logged_when_everyone_already_knew() -> None:
+    world = talk_with_news("ada", "bea")
+    tell(world)
+    assert [item for item in world["events"] if item["type"] == "news_told"] == []
+
+
+def test_telling_news_eases_everyones_wish_for_company() -> None:
+    world = talk_with_news("ada")
+    before = [actor(world, guest)["needs"]["social"] for guest in ("ada", "bea")]
+    tell(world)
+    after = [actor(world, guest)["needs"]["social"] for guest in ("ada", "bea")]
+    assert all(now < was for now, was in zip(after, before))
+
+
+def test_telling_the_same_line_without_the_act_gives_no_copy() -> None:
+    world = talk_with_news("ada")
+    say(world, "remark", "They say the toll is doubled.")
+    assert copy_of(world, "bea") is None
+
+
+def break_rules(**fields: Any) -> Callable[[dict[str, Any]], None]:
+    """Overwrite the saved news rules."""
+    return lambda world: world["rules"]["news"].update(fields)
+
+
+@pytest.mark.parametrize("corrupt", [
+    pytest.param(lambda world: world["rules"].pop("news"), id="no-news-rules"),
+    pytest.param(break_rules(extra=1), id="unknown-news-rule"),
+    pytest.param(break_rules(trust={"friend": 0.9, "acquaintance": 0.75}), id="trust-without-strangers"),
+    pytest.param(break_rules(trust={"friend": 1.5, "acquaintance": 0.75, "stranger": 0.6}), id="trust-above-one"),
+    pytest.param(break_rules(trust={"friend": 0.9, "acquaintance": 0.75, "stranger": 0.0}), id="no-trust-at-all"),
+    pytest.param(break_rules(overheard=0.0), id="overheard-counts-for-nothing"),
+    pytest.param(break_rules(overheard=2), id="overheard-above-one"),
+])
+def test_corrupt_news_rules_are_rejected(tmp_path: Path, corrupt: Callable[[dict[str, Any]], Any]) -> None:
+    world = talk_with_news("ada")
+    corrupt(world)
+    save_world(world, tmp_path / "corrupt.json")
+    with pytest.raises(ValueError):
+        load_world(tmp_path / "corrupt.json")
