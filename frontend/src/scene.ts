@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { placeBubble } from "./bubble";
-import { drawBar, drawChair, drawDarts, drawDoor, drawFireplace, drawRugs, drawTable, drawTap, drawToilet, drawWindow, hearthFacing } from "./furniture";
+import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawFireplace, drawRugs, drawTable, drawTap, drawToilet, drawWindow, hearthFacing } from "./furniture";
 import { shippedPose, spriteOf, stills } from "./sprites";
 import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Mind, Turn, Verb, World, WorldObject } from "./types";
 
@@ -209,9 +209,10 @@ export class TavernScene extends Phaser.Scene {
     this.furniture.fillEllipse(x + ((object.width ?? 1) - 1) * size / 2, y + 10, size * (object.width ?? 1) * 0.9, 12);
     if (object.kind === "tap") drawTap(this.furniture, x, y);
     if (object.kind === "toilet") drawToilet(this.furniture, x, y);
-    if (object.kind === "chair") drawChair(this.furniture, x, y, object.facing);
+    if (object.kind === "chair" || object.kind === "dice_chair") drawChair(this.furniture, x, y, object.facing);
     if (object.kind === "bar") drawBar(this.furniture, object, size);
     if (object.kind === "table") { drawTable(this.furniture, object, size); }
+    if (object.kind === "dice_table") drawDiceTable(this.furniture, object, size);
     if (object.kind === "darts") drawDarts(this.furniture, x, y);
     if (object.reserved_by) this.furniture.lineStyle(2, 0xe6c88d, 0.75).strokeCircle(x, y, 15);
   }

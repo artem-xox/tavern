@@ -4,6 +4,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 from tavern.body.activities import ACTIVITIES, FAMILIES
+from tavern.hall.room import SEAT_TABLES
 from tavern.mind.feelings import feelings
 from tavern.mind.hall_view import company_at, headcount, in_use, known_object, label_of, line_place, place_words, steps_to, walk_words
 from tavern.mind.options import family_text, option_text
@@ -76,7 +77,7 @@ def _whereabouts(observation: Observation) -> str:
         if joined:
             where = ", next to go in" if not ahead else f" with {headcount(ahead)} waiting ahead of them"
             return f"They are standing in line for {place_words(item)}{where}, {hands}."
-    places = [item for item in observation["objects"] if item["kind"] != "chair"]
+    places = [item for item in observation["objects"] if item["kind"] not in SEAT_TABLES]
     near = min(places, key=lambda item: steps_to(observation, item), default=None)
     return f"They are standing{f' near {place_words(near)}' if near else ''}, {hands}."
 

@@ -7,7 +7,7 @@ from tavern.body.activities import ACTIVITIES
 from tavern.body.expression import look_at, show_emote
 from tavern.body.hearing import Stimulus, salience
 from tavern.hall.memory import record_event
-from tavern.hall.room import object_cells
+from tavern.hall.room import SEAT_TABLES, object_cells
 from tavern.hall.state import Actor, World
 from tavern.social.scenes import leave_conversation
 from tavern.social.thoughts import friends_of
@@ -66,7 +66,7 @@ def _alert(world: World, actor: Actor, stimulus: Stimulus) -> bool:
 
 def _landmark(world_map: Mapping[str, Any], cell: Sequence[int]) -> str:
     # Chairs are named after their tables, so the tables name the place; ties go to map order.
-    places = [item for item in world_map["objects"] if item["kind"] != "chair"]
+    places = [item for item in world_map["objects"] if item["kind"] not in SEAT_TABLES]
     if not places:
         return "in the hall"
     nearest = min(places, key=lambda item: min(abs(x - cell[0]) + abs(y - cell[1]) for x, y in object_cells(item)))

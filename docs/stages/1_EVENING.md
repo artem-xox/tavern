@@ -775,16 +775,19 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
   `interaction_spots` are where onlookers stand. `dice_chair` is walkable like a chair, with a
   `facing` and a `table_id` that must name a `dice_table`. A dice chair is not a `chair`: nobody
   owns it, it is never offered for `seating`, `sit` or `rest`, and playing never sets `seat_id`,
-  so the seating, table-talk and dozing rules leave players alone. One dice table stands in the
-  open middle of the hall (`data/tavern.json`, after the regular tables):
+  so the seating, table-talk and dozing rules leave players alone. One dice table stands on the
+  right of the hall, between the hearth table and the corner table (`data/tavern.json`, after the
+  regular tables). The open middle was the first choice, but existing tests put guests and a
+  quarrel on its cells and name the nearest landmark (`test_queues.py`, `test_attention.py`), and
+  tests may not change for a furniture move:
 
   ```json
-  {"id": "dice-table", "kind": "dice_table", "name": "Dice table", "x": 10, "y": 8,
-   "interaction_spots": [[10, 7], [10, 9], [8, 8], [12, 8]]},
-  {"id": "dice-chair-1", "kind": "dice_chair", "name": "Dice table · west", "x": 9, "y": 8,
-   "walkable": true, "table_id": "dice-table", "facing": "east", "interaction_spots": [[9, 8]]},
-  {"id": "dice-chair-2", "kind": "dice_chair", "name": "Dice table · east", "x": 11, "y": 8,
-   "walkable": true, "table_id": "dice-table", "facing": "west", "interaction_spots": [[11, 8]]}
+  {"id": "dice-table", "kind": "dice_table", "name": "Dice table", "x": 16, "y": 9,
+   "interaction_spots": [[16, 8], [16, 10], [14, 9], [18, 9]]},
+  {"id": "dice-chair-1", "kind": "dice_chair", "name": "Dice table · west", "x": 15, "y": 9,
+   "walkable": true, "table_id": "dice-table", "facing": "east", "interaction_spots": [[15, 9]]},
+  {"id": "dice-chair-2", "kind": "dice_chair", "name": "Dice table · east", "x": 17, "y": 9,
+   "walkable": true, "table_id": "dice-table", "facing": "west", "interaction_spots": [[17, 9]]}
   ```
 
 - **Two verbs, both in the `pastime` family,** so no first-stage request grows. `play_dice`
@@ -848,7 +851,7 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
     replay half of the check could not run:** `runs/e19-live` no longer replays even on `main`
     (`No recorded intention call is left`), because the door-capacity change (D02) altered the
     evening after it was recorded. G5 records a fresh live evening and its replay.
-- [ ] **G1 — The dice table in the hall.** Furniture only; nobody plays yet.
+- [x] **G1 — The dice table in the hall.** Furniture only; nobody plays yet.
   - *Data and validation:* add the three objects above. In `room.py`, `SEAT_KINDS = ("chair",
     "dice_chair")` may be walkable, and a seat's `table_id` must name a table of the matching
     kind (`chair` → `table`, `dice_chair` → `dice_table`). A dice table needs interaction spots
@@ -870,6 +873,17 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
   - *Check:* `make check` and `make build`; `make run` and a screenshot of the hall; the offline
     evening (seed 5): scenes and stuck time against E19's (28 scenes, 27.1 s), and guests route
     round the table.
+  - *Result (2026-10-04):* `room.OBJECT_KINDS` lists both kinds and `room.SEAT_TABLES` maps each
+    seat kind to its table kind (a walkable object must be a seat; a seat's table must exist and be
+    of the matching kind). `hall_view.place_words` says "the dice table"; `attention._landmark` and
+    the briefing skip every seat kind. The client (`furniture.drawDiceTable`, a green rug in
+    `drawRugs`, `types.ts`) draws the table with two ivory dice; `drawTable` was split into
+    `drawTableTop` and its props, and `drawRugs` moved out of `scene.ts` (387 → 368 lines), each
+    in its own refactor commit. 17 tests in `tests/test_dice_table.py` (the briefing and landmark
+    rules were mutation-checked). `make check` (1,756 tests) and `make build` pass; in the browser
+    the table stands on a green rug with its dice and two chairs, and the console is clean.
+    The offline evening (seed 5) is byte-identical to `main`'s (16 scenes, stuck time unchanged):
+    the table is in nobody's way, and nothing yet offers a guest the dice. No existing test changed.
 - [ ] **G2 — A game at the table.** Two guests seated at the dice table play one game, and the
   formula above picks the winner.
   - *Refactor first (own commit):* take `lifecycle.complete_action(world, actor)` out of

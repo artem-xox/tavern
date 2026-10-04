@@ -10,7 +10,12 @@ from tavern.hall.state import HallMap
 from tavern.hall.validation import coordinate, number, position, unique_ids
 
 # Every kind of object a hall may hold; saves, observations and the map check against this one list.
-OBJECT_KINDS = ("tap", "chair", "toilet", "table", "bar", "darts", "door", "window", "fireplace")
+OBJECT_KINDS = ("tap", "chair", "toilet", "table", "bar", "darts", "door", "window", "fireplace",
+                "dice_table", "dice_chair")
+
+# The seats, and the kind of table each stands at. Only a `chair` is somebody's own seat (`seat_id`);
+# a `dice_chair` belongs to a game (`tavern.social.dice`), so seating, resting and dozing never see it.
+SEAT_TABLES = {"chair": ("table", "a regular table"), "dice_chair": ("dice_table", "a dice table")}
 
 
 def create_map(data: Mapping[str, Any]) -> HallMap:
@@ -119,8 +124,8 @@ def _validate_footprint(item: Mapping[str, Any], world_map: Mapping[str, Any]) -
         coordinate(y, world_map["height"])
     if type(item.get("walkable", False)) is not bool:
         raise ValueError("Furniture walkability must be a boolean")
-    if item.get("walkable") and item.get("kind") != "chair":
-        raise ValueError("Only chair seats may be walkable furniture")
+    if item.get("walkable") and item.get("kind") not in SEAT_TABLES:
+        raise ValueError("Only seats may be walkable furniture")
 
 
 def _validate_objects(world_map: dict[str, Any]) -> None:
@@ -162,10 +167,17 @@ def _validate_spots(world_map: Mapping[str, Any]) -> None:
         for spot in spots:
             if not find_path(spot, spot, world_map["width"], world_map["height"], obstacles):
                 raise ValueError("Interaction spots must be walkable")
-        if item.get("table_id") is not None and not any(
-                table["id"] == item["table_id"] and table["kind"] == "table"
-                for table in world_map["objects"]):
-            raise ValueError("Chair table must refer to an existing table")
+        if item.get("table_id") is not None:
+            _validate_seat_table(item, world_map)
+
+
+def _validate_seat_table(item: Mapping[str, Any], world_map: Mapping[str, Any]) -> None:
+    table = find_object(world_map, item["table_id"])
+    if table is None or table["kind"] not in ("table", "dice_table"):
+        raise ValueError("Chair table must refer to an existing table")
+    kind, words = SEAT_TABLES.get(item["kind"], (table["kind"], ""))
+    if table["kind"] != kind:
+        raise ValueError(f"A {item['kind'].replace('_', ' ')} must stand at {words}")
 
 
 def _validate_lines(world_map: dict[str, Any]) -> None:

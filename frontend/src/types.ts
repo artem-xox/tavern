@@ -12,7 +12,7 @@ export type Writer = "haiku" | "scripted";
 
 export interface WorldObject {
   id: string;
-  kind: "tap" | "toilet" | "chair" | "bar" | "table" | "darts" | "door" | "window" | "fireplace";
+  kind: "tap" | "toilet" | "chair" | "bar" | "table" | "darts" | "door" | "window" | "fireplace" | "dice_table" | "dice_chair";
   name: string;
   x: number;
   y: number;
