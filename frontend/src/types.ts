@@ -223,6 +223,8 @@ export interface Turn {
   time: number;
   /** The invitation kind an `invite` offers. */
   invitation?: InvitationKind;
+  /** The news a `share_news` tells (a key of the speaker's `knowledge.facts`). */
+  fact_id?: string;
 }
 
 export type InvitationKind = "join_table" | "darts_together" | "buy_drink" | "leave_together";
@@ -253,7 +255,8 @@ export interface Conversation {
   next_turn_at: number;
   /** The turn a model is writing, if any, and its answer waiting to be spoken. */
   writing: { turn: number; speaker: string; since: number } | null;
-  written: { line: string; act: string; addressee: string | null; topic: string; invitation?: InvitationKind } | null;
+  written: { line: string; act: string; addressee: string | null; topic: string; invitation?: InvitationKind;
+    fact_id?: string } | null;
   invitation: Invitation | null;
 }
 

@@ -1,9 +1,10 @@
-"""News and the copies guests carry of it: the scenario's items, who starts holding them, and saved copies."""
+"""News and guests' copies of it: the scenario's items, who holds them, how they read, and saved copies."""
 
 from collections.abc import Mapping, Sequence
 from typing import Any, TypedDict
 
 from tavern.hall.validation import number, unique_ids
+from tavern.social.names import called
 
 MAX_TEXT = 200  # Characters of a news item: a few sentences a guest could tell in one or two lines.
 
@@ -33,6 +34,17 @@ class Fact(TypedDict):
     confidence: float
     hops: int
     overheard: bool
+
+
+class Carried(TypedDict):
+    """A copy as its holder's writer sees it: `heard_from` is the teller as the holder calls them (None
+    for a first holder). Only the holder's own words (`told_as`) are shown, never the original."""
+
+    id: str
+    topic: str
+    told_as: str
+    heard_from: str | None
+    confidence: float
 
 
 def parse_news(value: Any, guests: Sequence[str]) -> tuple[News, ...]:
@@ -88,6 +100,22 @@ def starting_facts(news: Sequence[News], guest_id: str, now: float) -> dict[str,
     return {item["id"]: Fact(topic=item["topic"], told_as=item["text"], heard_from=None, heard_at=now,
                              confidence=1.0, hops=0, overheard=False)
             for item in news if guest_id in item["known_by"]}
+
+
+def carried(world: Mapping[str, Any], holder: Mapping[str, Any]) -> list[Carried]:
+    """List the news a guest could tell, in their own words.
+
+    Args:
+        world: Current world; a teller is looked up among the guests present and gone home.
+        holder: The guest.
+
+    Returns:
+        Their copies by news ID, with the teller named as the holder calls them (`names.called`).
+    """
+    people = {item["id"]: item for item in [*world["actors"], *world["departed"]]}
+    return [Carried(id=fact_id, topic=copy["topic"], told_as=copy["told_as"], confidence=copy["confidence"],
+                    heard_from=None if copy["heard_from"] is None else called(holder, people[copy["heard_from"]]))
+            for fact_id, copy in sorted(holder["knowledge"]["facts"].items())]
 
 
 def check_saved_news(world: Mapping[str, Any]) -> None:

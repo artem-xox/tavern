@@ -99,6 +99,9 @@ ACTS: Mapping[str, Act] = MappingProxyType({
     "small_talk": Act(_relieve, "pass the time pleasantly; it eases everyone's wish for company"),
     "share_place": Act(_tell_places, "tell the others where the tap, the WC or the darts are; they learn "
                                      "every such place the speaker knows, and it eases the wish for company"),
+    "share_news": Act(None, "tell the others a piece of news the speaker holds, naming it in `fact_id`; the words "
+                            "spoken are the version the others will carry on, so retell it in the speaker's own "
+                            "words without adding facts"),
     "joke": Act(_relieve, "make the others laugh; it eases everyone's wish for company, and the laughter "
                           "carries across the hall"),
     "complain": Act(_complain, "grumble about something; after a few beers an impatient pair may quarrel, "
@@ -145,7 +148,8 @@ def offered_acts(world: Mapping[str, Any], scene: Conversation, speaker: Mapping
         while someone present knows the speaker only by their looks; `insult` while the
         speaker thinks `DISLIKED` or less of someone present; `apologize` while someone holds
         a grudge against them; `invite` while an invitation kind is possible and none is
-        pending; `accept` and `decline` while an invitation waits for their answer.
+        pending; `accept` and `decline` while an invitation waits for their answer; `share_news`
+        while they hold any news.
     """
     others = [item for item in _members(world, scene) if item["id"] != speaker["id"]]
     now, asked = world["time"], invitations.pending_for(scene, speaker["id"]) is not None
@@ -154,6 +158,7 @@ def offered_acts(world: Mapping[str, Any], scene: Conversation, speaker: Mapping
         "insult": any(opinion_of(speaker, item["id"], now) <= DISLIKED for item in others),
         "apologize": any(thought["about"] == speaker["id"] and thought["opinion"] < 0
                          for item in others for thought in active_thoughts(item["thoughts"], now)),
+        "share_news": bool(speaker["knowledge"]["facts"]),
         "invite": bool(invitations.offered_kinds(world, scene, speaker)),
         "accept": asked, "decline": asked}
     return {name: act.meaning for name, act in ACTS.items() if situational.get(name, True)}

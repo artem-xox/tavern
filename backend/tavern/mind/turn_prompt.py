@@ -294,5 +294,7 @@ def turn_schema(acts: Mapping[str, str], invitations: tuple[str, ...]) -> dict[s
                       "description": "ID of the one other person present addressed, or null for everyone."},
         "topic": {"type": "string", "description": "What the conversation is about now, in a few words."},
         "invitation": {"anyOf": [{"type": "string", "enum": list(invitations)}, {"type": "null"}],
-                       "description": "For an invite, the invitation offered; otherwise null."}},
-        "required": ["line", "act", "addressee", "topic", "invitation"], "additionalProperties": False}
+                       "description": "For an invite, the invitation offered; otherwise null."},
+        "fact_id": {"anyOf": [{"type": "string"}, {"type": "null"}],
+                    "description": "For share_news, the id of the news told, one of yours; otherwise null."}},
+        "required": ["line", "act", "addressee", "topic", "invitation", "fact_id"], "additionalProperties": False}

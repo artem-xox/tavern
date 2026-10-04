@@ -154,8 +154,9 @@ def parse_turn(view: Mapping[str, Any], answer: Any) -> TurnResult:
             the topic is longer than MAX_TOPIC; or the speaker shares places while knowing none.
     """
     try:
-        # The schema always asks for an invitation; null means none, as for every act but invite.
-        given = ({key: value for key, value in answer.items() if key != "invitation" or value is not None}
+        # The schema always asks for an invitation and a fact; null means none, as for every act but
+        # invite and share_news.
+        given = ({key: value for key, value in answer.items() if key not in ("invitation", "fact_id") or value is not None}
                  if isinstance(answer, Mapping) else answer)
         result = check_turn(view, given)
     except ValueError as error:

@@ -10,6 +10,9 @@ import pytest
 from tavern.adapters.persistence import load_world, save_world
 from tavern.evening.scenario import open_evening, parse_scenario
 from tavern.hall.world import step_world
+from tavern.mind.haiku_turns import RejectedTurn, parse_turn, turn_question
+from tavern.social.turns import check_turn, turn_view
+from social_hall import actor, scene_of, say, seated_talk
 
 
 ROOT = Path(__file__).parents[1]
@@ -180,3 +183,148 @@ def test_the_first_evening_has_four_to_six_news_items_each_held_by_a_guest() -> 
     parsed = parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()))
     assert 4 <= len(parsed.news) <= 6
     assert {holder for entry in parsed.news for holder in entry["known_by"]} <= {guest["id"] for guest in parsed.guests}
+
+
+def hold(world: dict[str, Any], guest_id: str, fact_id: str = "toll", told_as: str = "The toll is doubled.",
+         **fields: Any) -> None:
+    """Let a guest of a hall without a scenario hold a copy of a news item, adding the item to the world."""
+    if all(entry["id"] != fact_id for entry in world["news"]):
+        world["news"].append({"id": fact_id, "topic": f"the {fact_id}", "text": "The toll has doubled.",
+                              "known_by": [guest_id]})
+    actor(world, guest_id)["knowledge"]["facts"][fact_id] = {
+        "topic": f"the {fact_id}", "told_as": told_as, "heard_from": None, "heard_at": 0.0, "confidence": 1.0,
+        "hops": 0, "overheard": False, **fields}
+
+
+def talk_with_news(*holders: str) -> dict[str, Any]:
+    """Ada and Bea sit talking; the given guests hold the toll news."""
+    world = seated_talk(social=100.0)
+    for guest_id in holders:
+        hold(world, guest_id)
+    return world
+
+
+def view_of(world: dict[str, Any]) -> dict[str, Any]:
+    """The turn view of Ada and Bea's scene; Ada speaks first."""
+    return turn_view(world, scene_of(world))
+
+
+@pytest.mark.parametrize("holders, offered", [
+    pytest.param([], False, id="speaker-without-news"),
+    pytest.param(["bea"], False, id="only-the-listener-holds-news"),
+    pytest.param(["ada"], True, id="speaker-with-news"),
+    pytest.param(["ada", "bea"], True, id="both-hold-news"),
+])
+def test_share_news_is_offered_only_while_the_speaker_holds_news(holders: list[str], offered: bool) -> None:
+    assert ("share_news" in view_of(talk_with_news(*holders))["acts"]) is offered
+
+
+def test_the_view_shows_the_speaker_their_own_copies_by_id() -> None:
+    world = talk_with_news()
+    hold(world, "ada", "wolves", "Wolves took a sheep.", heard_from="bea", hops=1, confidence=0.75)
+    hold(world, "ada", "toll")
+    assert view_of(world)["speaker"]["news"] == [
+        {"id": "toll", "topic": "the toll", "told_as": "The toll is doubled.", "heard_from": None, "confidence": 1.0},
+        {"id": "wolves", "topic": "the wolves", "told_as": "Wolves took a sheep.", "heard_from": "Bea",
+         "confidence": 0.75}]
+
+
+def test_the_view_names_a_teller_as_the_speaker_calls_them() -> None:
+    world = talk_with_news()
+    actor(world, "ada")["relations"] = {}
+    actor(world, "bea")["card"] = {"looks": "the stout woman with a pipe"}
+    hold(world, "ada", "toll", heard_from="bea", hops=1)
+    assert view_of(world)["speaker"]["news"][0]["heard_from"] == "the stout woman with a pipe"
+
+
+def test_the_view_names_a_teller_who_has_gone_home() -> None:
+    world = talk_with_news()
+    hold(world, "ada", "toll", heard_from="cid", hops=1)
+    world["departed"].append(world["actors"].pop(2))
+    assert view_of(world)["speaker"]["news"][0]["heard_from"] == "Cid"
+
+
+def retold(**fields: Any) -> dict[str, Any]:
+    """A writer's answer that tells the toll news."""
+    return {"line": "They say the toll is doubled.", "act": "share_news", "addressee": "bea", "topic": "the toll",
+            "fact_id": "toll", **fields}
+
+
+def without(*names: str) -> dict[str, Any]:
+    """A news-telling answer lacking some fields."""
+    return {key: value for key, value in retold().items() if key not in names}
+
+
+def test_a_turn_telling_news_the_speaker_holds_is_valid() -> None:
+    assert check_turn(view_of(talk_with_news("ada")), retold()) == retold()
+
+
+@pytest.mark.parametrize("answer", [
+    pytest.param(without("fact_id"), id="news-without-a-fact"),
+    pytest.param(retold(fact_id=None), id="news-with-a-null-fact"),
+    pytest.param(retold(fact_id="rumour"), id="a-fact-the-speaker-does-not-hold"),
+    pytest.param(retold(fact_id=7), id="malformed-fact"),
+    pytest.param({**retold(), "act": "joke"}, id="fact-on-a-joke"),
+    pytest.param({**retold(fact_id=None), "act": "joke"}, id="null-fact-on-a-joke"),
+])
+def test_a_turn_with_the_wrong_fact_is_rejected(answer: dict[str, Any]) -> None:
+    with pytest.raises(ValueError):
+        check_turn(view_of(talk_with_news("ada")), answer)
+
+
+def test_news_cannot_be_told_by_a_speaker_who_holds_none() -> None:
+    with pytest.raises(ValueError):
+        check_turn(view_of(talk_with_news("bea")), retold())
+
+
+@pytest.mark.parametrize("answer, expected", [
+    pytest.param(retold(), retold(), id="news-with-its-fact"),
+    pytest.param({**without("fact_id", "act"), "act": "small_talk", "fact_id": None},
+                 without("fact_id", "act") | {"act": "small_talk"}, id="null-fact-means-none"),
+])
+def test_the_model_boundary_reads_a_fact_and_drops_a_null_one(answer: dict[str, Any],
+                                                               expected: dict[str, Any]) -> None:
+    assert parse_turn(view_of(talk_with_news("ada")), answer) == expected
+
+
+@pytest.mark.parametrize("answer", [
+    pytest.param(retold(fact_id=None), id="news-with-a-null-fact"),
+    pytest.param(retold(fact_id="rumour"), id="unknown-fact"),
+    pytest.param({**retold(), "act": "joke"}, id="fact-on-a-joke"),
+])
+def test_the_model_boundary_rejects_a_wrong_fact(answer: dict[str, Any]) -> None:
+    with pytest.raises(RejectedTurn):
+        parse_turn(view_of(talk_with_news("ada")), answer)
+
+
+def test_a_spoken_news_turn_keeps_its_fact_and_other_turns_have_none() -> None:
+    world = talk_with_news("ada")
+    say(world, "share_news", "They say the toll is doubled.", fact_id="toll")
+    say(world, "small_talk", "Hm.")
+    assert [turn.get("fact_id") for turn in scene_of(world)["turns"]] == ["toll", None]
+
+
+def test_a_conversation_with_news_survives_save_and_load(tmp_path: Path) -> None:
+    world = talk_with_news("ada")
+    say(world, "share_news", "They say the toll is doubled.", fact_id="toll")
+    save_world(world, tmp_path / "evening.json")
+    assert load_world(tmp_path / "evening.json") == world
+
+
+@pytest.mark.parametrize("corrupt", [
+    pytest.param(lambda scene: scene["turns"][0].update(fact_id="rumour"), id="turn-names-an-unknown-fact"),
+    pytest.param(lambda scene: scene["turns"][0].update(fact_id=7), id="turn-fact-is-not-text"),
+    pytest.param(lambda scene: scene["turns"][0].update(fact_id=None), id="turn-with-a-null-fact"),
+])
+def test_a_saved_turn_with_a_wrong_fact_is_rejected(tmp_path: Path, corrupt: Callable[[dict[str, Any]], Any]) -> None:
+    world = talk_with_news("ada")
+    say(world, "share_news", "They say the toll is doubled.", fact_id="toll")
+    corrupt(scene_of(world))
+    save_world(world, tmp_path / "corrupt.json")
+    with pytest.raises(ValueError):
+        load_world(tmp_path / "corrupt.json")
+
+
+def test_the_answer_schema_allows_a_fact_id_or_null_whatever_the_act() -> None:
+    schema = turn_question(view_of(talk_with_news()))["schema"]
+    assert schema["properties"]["fact_id"]["anyOf"] == [{"type": "string"}, {"type": "null"}]
