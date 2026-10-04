@@ -1,15 +1,21 @@
 """News and the copies of it that guests carry: the scenario's items, who starts holding them, and saves."""
 
-from collections.abc import Callable
+import asyncio
+from collections.abc import Callable, Mapping
 import json
 from pathlib import Path
+from random import Random
 from typing import Any
 
 import pytest
 
 from tavern.adapters.persistence import load_world, save_world
+from tavern.evening.lockstep import Pace, run_evening
+from tavern.evening.metrics import news_metrics
 from tavern.evening.scenario import open_evening, parse_scenario
 from tavern.hall.world import step_world
+from tavern.mind.agents import Evaluators
+from tavern.mind.cards import parse_cards
 from tavern.mind.feelings import minds
 from tavern.mind.haiku_turns import RejectedTurn, parse_turn, turn_question
 from tavern.mind.scripted import scripted_turn
@@ -701,3 +707,85 @@ def test_a_saved_path_survives_save_and_load(tmp_path: Path) -> None:
     world = passed_along()
     save_world(world, tmp_path / "evening.json")
     assert load_world(tmp_path / "evening.json") == world
+
+
+def reach_of(world: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """The news metrics of a world, as plain dicts."""
+    return {fact_id: dict(reach) for fact_id, reach in news_metrics(world).items()}
+
+
+def test_news_metrics_follow_a_fact_to_its_furthest_holder_and_first_two_hop_path() -> None:
+    assert reach_of(passed_along()) == {"toll": {"holders": ["Ada", "Bea", "Cid"], "max_hops": 2,
+                                                 "first_two_hop_path": ["Cid", "Bea", "Ada", "start"]}}
+
+
+def test_the_first_two_hop_path_is_the_one_that_arrived_first() -> None:
+    world = passed_along()
+    actor(world, "cid")["knowledge"]["facts"]["toll"]["heard_at"] = 5.0
+    hold(world, "dan", "toll", heard_from="bea", hops=2, heard_at=3.0, confidence=0.4)
+    assert reach_of(world)["toll"]["first_two_hop_path"] == ["Dan", "Bea", "Ada", "start"]
+
+
+def test_news_nobody_passed_on_reached_no_further_than_its_first_holders() -> None:
+    assert reach_of(talk_with_news("ada")) == {"toll": {"holders": ["Ada"], "max_hops": 0,
+                                                        "first_two_hop_path": None}}
+
+
+def test_news_nobody_holds_has_no_holders() -> None:
+    world = talk_with_news("ada")
+    world["news"].append(item("salt", ["cid"]))
+    assert reach_of(world)["salt"] == {"holders": [], "max_hops": 0, "first_two_hop_path": None}
+
+
+def test_a_world_without_news_has_no_news_metrics() -> None:
+    assert news_metrics(seated_talk()) == {}
+
+
+def test_holders_who_went_home_still_count() -> None:
+    world = passed_along()
+    world["departed"].append(world["actors"].pop(0))
+    assert reach_of(world)["toll"]["holders"] == ["Bea", "Cid", "Ada"]
+
+
+async def never_asked(*arguments: Any) -> dict[str, float]:
+    """A Jev evaluator that must not be called: the evening is played by the local policy."""
+    raise AssertionError("Jev was asked in an offline evening")
+
+
+async def paraphrasing_writer(view: Mapping[str, Any], config: Mapping[str, Any]) -> dict[str, Any]:
+    """A turn writer that is scripted except that it retells news in other words, as a model would."""
+    result = dict(scripted_turn(view))
+    if result["act"] == "share_news":
+        mine = next(copy for copy in view["speaker"]["news"] if copy["id"] == result["fact_id"])
+        result["line"] = f"They say {mine['told_as'][0].lower()}{mine['told_as'][1:]}"[:160]
+    return result
+
+
+def first_evening_played(seed: int) -> dict[str, Any]:
+    """Play the repository's first evening offline in lockstep with the paraphrasing writer; return its world."""
+    room = json.loads((ROOT / "data" / "tavern.json").read_text())
+    cards = parse_cards([json.loads(path.read_text()) for path in sorted((ROOT / "data" / "characters").glob("*.json"))])
+    data = json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text())
+    world = open_evening(room, parse_scenario(data, cards), seed)
+    config = {"model": "jev-latest", "timeout": 1.0, "temperature": 0.25, "typesafe_api_key": None}
+    asyncio.run(run_evening(world, config, Random(seed), Evaluators(never_asked, never_asked),
+                            Pace(step=0.25, model_latency=1.0, time_limit=1200.0), paraphrasing_writer))
+    return world
+
+
+@pytest.mark.parametrize("seed", [
+    pytest.param(1, id="seed-1"),
+    pytest.param(2, id="seed-2"),
+])
+def test_a_news_item_reaches_a_third_guest_in_other_words(seed: int) -> None:
+    world = first_evening_played(seed)
+    originals = {entry["id"]: entry for entry in world["news"]}
+    paths = {fact_id: reach["first_two_hop_path"] for fact_id, reach in news_metrics(world).items()
+             if reach["first_two_hop_path"] is not None}
+    assert paths, "no news item travelled two hops"
+    for fact_id, path in paths.items():
+        third = next(guest for guest in [*world["actors"], *world["departed"]] if guest["name"] == path[0])
+        copy = third["knowledge"]["facts"][fact_id]
+        assert copy["hops"] == 2
+        assert copy["told_as"] != originals[fact_id]["text"] and copy["told_as"].startswith("They say")
+        assert len(path) == 4 and path[-1] == "start"

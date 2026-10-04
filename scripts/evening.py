@@ -14,7 +14,7 @@ from tavern.adapters import jev
 from tavern.adapters.claude import HAIKU_4_5, ClaudeError, ask_claude
 from tavern.adapters.probes import probes
 from tavern.evening.lockstep import Pace, evening_mode, run_evening
-from tavern.evening.metrics import attention_counts, conversation_counts, evening_metrics, intention_counts, writer_stats
+from tavern.evening.metrics import attention_counts, conversation_counts, evening_metrics, intention_counts, news_metrics, writer_stats
 from tavern.evening.recording import (Record, format_record, parse_records, record_calls, record_questions, replay_calls,
                               replay_questions)
 from tavern.evening.scenario import open_evening, parse_scenario
@@ -277,6 +277,7 @@ def main(root: Path) -> None:
               **evening_metrics(evening, calls, args.input_price, args.stuck_threshold, TARIFFS),
               "intentions": intention_counts(evening),
               "attention": attention_counts(evening), "conversation": conversation_counts(evening),
+              "news": news_metrics(world),
               "writer": writer_stats(evening, calls, "turn", HAIKU_4_5)}
     (args.out / "events.jsonl").write_text("".join(json.dumps(event, sort_keys=True) + "\n" for event in evening.events))
     (args.out / "metrics.json").write_text(json.dumps(rounded(report), indent=2) + "\n")
