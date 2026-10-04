@@ -10,6 +10,7 @@ import pytest
 from tavern.adapters.persistence import load_world, save_world
 from tavern.evening.scenario import open_evening, parse_scenario
 from tavern.hall.world import step_world
+from tavern.mind.feelings import minds
 from tavern.mind.haiku_turns import RejectedTurn, parse_turn, turn_question
 from tavern.mind.scripted import scripted_turn
 from tavern.social.turns import check_turn, turn_view
@@ -634,3 +635,69 @@ def test_the_prefix_teaches_retelling_and_no_longer_allows_invented_news() -> No
     prefix = turn_question(view_of(talk_with_news()))["system"][0]
     assert ("small personal news from the road is fine" in prefix, "fact_id" in prefix, "Example 22." in prefix) == (
         False, True, True)
+
+
+def passed_along() -> dict[str, Any]:
+    """Ada knew the toll news, told Bea (one hop), who told Cid (two hops)."""
+    world = seated_talk(social=100.0)
+    hold(world, "ada", told_as="The toll is doubled.")
+    hold(world, "bea", told_as="They say the toll is doubled.", heard_from="ada", hops=1, confidence=0.6)
+    hold(world, "cid", told_as="Folk say the toll went up.", heard_from="bea", hops=2, confidence=0.4)
+    return world
+
+
+@pytest.mark.parametrize("guest_id, expected", [
+    pytest.param("ada", {"heard_from": None, "hops": 0, "chain": ["Ada", "start"]}, id="first-holder"),
+    pytest.param("bea", {"heard_from": "Ada", "hops": 1, "chain": ["Bea", "Ada", "start"]}, id="one-hop"),
+    pytest.param("cid", {"heard_from": "Bea", "hops": 2, "chain": ["Cid", "Bea", "Ada", "start"]}, id="two-hops"),
+])
+def test_the_inspector_shows_each_copy_with_its_teller_and_path(guest_id: str, expected: dict[str, Any]) -> None:
+    [news] = minds(passed_along())[guest_id]["news"]
+    assert {key: news[key] for key in expected} == expected
+
+
+def test_the_inspector_lists_the_copy_with_its_words_belief_and_overhearing() -> None:
+    world = passed_along()
+    actor(world, "cid")["knowledge"]["facts"]["toll"]["overheard"] = True
+    assert minds(world)["cid"]["news"] == [{
+        "id": "toll", "topic": "the toll", "told_as": "Folk say the toll went up.", "heard_from": "Bea", "hops": 2,
+        "confidence": 0.4, "overheard": True, "chain": ["Cid", "Bea", "Ada", "start"]}]
+
+
+def test_the_inspector_names_people_by_their_names_even_when_the_guest_knows_only_their_looks() -> None:
+    world = passed_along()
+    actor(world, "bea")["card"] = {"looks": "the stout woman with a pipe"}
+    actor(world, "cid")["relations"] = {}
+    assert minds(world)["cid"]["news"][0]["chain"][1] == "Bea"
+
+
+def test_the_inspector_follows_a_path_through_a_guest_who_has_gone_home() -> None:
+    world = passed_along()
+    world["departed"].append(world["actors"].pop(0))
+    assert minds(world)["cid"]["news"][0]["chain"] == ["Cid", "Bea", "Ada", "start"]
+
+
+def test_a_guest_with_no_news_has_an_empty_list() -> None:
+    assert minds(talk_with_news("ada"))["bea"]["news"] == []
+
+
+@pytest.mark.parametrize("corrupt", [
+    pytest.param(lambda world: actor(world, "ada")["knowledge"]["facts"].pop("toll"), id="teller-lacks-the-news"),
+    pytest.param(lambda world: actor(world, "ada")["knowledge"]["facts"]["toll"].update(
+        heard_from="cid", hops=3), id="teller-two-hops-away-from-a-three-hop-copy"),
+    pytest.param(lambda world: actor(world, "bea")["knowledge"]["facts"]["toll"].update(hops=2),
+                 id="hops-skip-the-tellers-hops"),
+])
+def test_a_saved_path_that_does_not_lead_back_is_rejected(tmp_path: Path,
+                                                         corrupt: Callable[[dict[str, Any]], Any]) -> None:
+    world = passed_along()
+    corrupt(world)
+    save_world(world, tmp_path / "corrupt.json")
+    with pytest.raises(ValueError):
+        load_world(tmp_path / "corrupt.json")
+
+
+def test_a_saved_path_survives_save_and_load(tmp_path: Path) -> None:
+    world = passed_along()
+    save_world(world, tmp_path / "evening.json")
+    assert load_world(tmp_path / "evening.json") == world

@@ -51,6 +51,20 @@ class Carried(TypedDict):
     confidence: float
 
 
+class Inspected(TypedDict):
+    """A copy as the inspector shows it: the teller by name (None for a first holder), and the `chain` of
+    names from the holder back through each teller to the word "start"."""
+
+    id: str
+    topic: str
+    told_as: str
+    heard_from: str | None
+    hops: int
+    confidence: float
+    overheard: bool
+    chain: list[str]
+
+
 def parse_news(value: Any, guests: Sequence[str]) -> tuple[News, ...]:
     """Validate a scenario's news.
 
@@ -120,6 +134,32 @@ def carried(world: Mapping[str, Any], holder: Mapping[str, Any]) -> list[Carried
     return [Carried(id=fact_id, topic=copy["topic"], told_as=copy["told_as"], confidence=copy["confidence"],
                     heard_from=None if copy["heard_from"] is None else called(holder, people[copy["heard_from"]]))
             for fact_id, copy in sorted(holder["knowledge"]["facts"].items())]
+
+
+def inspected(world: Mapping[str, Any], holder: Mapping[str, Any]) -> list[Inspected]:
+    """List a guest's copies of the news for the inspector, each with the path it came by.
+
+    Args:
+        world: Current world; tellers are looked up among the guests present and gone home.
+        holder: The guest.
+
+    Returns:
+        Their copies by news ID, with real names (the inspector sees what the guest may not). A chain such
+        as ["Brida", "Edda", "start"] reads: Brida heard it from Edda, who knew it from the start.
+    """
+    people = {item["id"]: item for item in [*world["actors"], *world["departed"]]}
+    shown = []
+    for fact_id, copy in sorted(holder["knowledge"]["facts"].items()):
+        # Saves guarantee each teller holds a copy one hop nearer the start (`check_saved_news`).
+        names, step = [holder["name"]], copy
+        for _ in range(copy["hops"]):
+            teller = people[step["heard_from"]]
+            names.append(teller["name"])
+            step = teller["knowledge"]["facts"][fact_id]
+        shown.append(Inspected(id=fact_id, topic=copy["topic"], told_as=copy["told_as"], hops=copy["hops"],
+                               heard_from=None if copy["heard_from"] is None else people[copy["heard_from"]]["name"],
+                               confidence=copy["confidence"], overheard=copy["overheard"], chain=[*names, "start"]))
+    return shown
 
 
 def tell(world: World, scene: Conversation, speaker: Actor, addressee: Actor | None) -> None:
@@ -192,6 +232,20 @@ def check_saved_news(world: Mapping[str, Any]) -> None:
             raise ValueError(f"Saved facts of {guest['id']!r} must be a record")
         for fact_id, copy in copies.items():
             _check_copy(fact_id, copy, originals, tellers, world["time"])
+    _check_paths(present)
+
+
+def _check_paths(guests: Sequence[Mapping[str, Any]]) -> None:
+    # Every teller holds the news one hop nearer the start, so a path always leads back (and never loops).
+    held = {item["id"]: item["knowledge"]["facts"] for item in guests}
+    for guest in guests:
+        for fact_id, copy in guest["knowledge"]["facts"].items():
+            if copy["heard_from"] is None:
+                continue
+            told = held[copy["heard_from"]].get(fact_id)
+            if told is None or told["hops"] != copy["hops"] - 1:
+                raise ValueError(f"Saved copy of news {fact_id!r} of {guest['id']!r} has no path back through "
+                                 f"{copy['heard_from']!r}")
 
 
 def _check_copy(fact_id: str, copy: Any, originals: Mapping[str, News], tellers: set[str], now: float) -> None:

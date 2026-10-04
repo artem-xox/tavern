@@ -173,6 +173,24 @@ export interface Mind {
   stage: "sober" | "tipsy" | "drunk" | "wasted";
   /** How far the scene sways the sprite, 0–1. */
   sway: number;
+  /** Copies of the news this visitor carries, by news ID, each with the path it came by. */
+  news: NewsCopy[];
+}
+
+/** A copy of a news item for the inspector: names, not IDs, and the path back to the start. */
+export interface NewsCopy {
+  id: string;
+  topic: string;
+  /** The words the visitor heard it in. */
+  told_as: string;
+  /** Who told it; null for a first holder. */
+  heard_from: string | null;
+  hops: number;
+  /** 0 (not at all) to 1 (sure). */
+  confidence: number;
+  overheard: boolean;
+  /** Names from this visitor back through each teller, ending in "start". */
+  chain: string[];
 }
 export type EmoteKind = "alert" | "confused" | "angry" | "affection" | "sleep" | "waiting";
 
