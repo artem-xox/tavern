@@ -115,11 +115,6 @@ function drawTableTop(g: Phaser.GameObjects.Graphics, object: WorldObject, size:
 
 export function drawTable(g: Phaser.GameObjects.Graphics, object: WorldObject, size: number): void {
   drawTableTop(g, object, size);
-  const x: number = object.x * size;
-  const y: number = object.y * size;
-  const width: number = (object.width ?? 1) * size;
-  const height: number = (object.height ?? 1) * size;
-  g.fillStyle(0xe8dbc0).fillRoundedRect(x + width - 19, y + height - 19, 11, 10, 1);
 }
 
 /** The dice table: the bare top with a pair of ivory dice mid-throw and no candle or mugs. */
@@ -153,7 +148,7 @@ function drawDie(g: Phaser.GameObjects.Graphics, x: number, y: number, pips: num
 export function drawRugs(floor: Phaser.GameObjects.Graphics, objects: WorldObject[], size: number): void {
   objects.filter((object: WorldObject): boolean => object.kind === "table" || object.kind === "dice_table").forEach((table: WorldObject): void => {
     // Yellow for every ordinary table; card-table green for the dice, so the game's corner reads at a glance.
-    const [fill, trim] = table.kind === "dice_table" ? [0x2f5a3e, 0x9cc79a] : [0xc9a032, 0xf1d98a];
+    const [fill, trim] = table.kind === "dice_table" ? [0x2f5a3e, 0x9cc79a] : [0x7b5b30, 0xd9b26b];
     const x: number = (table.x - 1.2) * size;
     const y: number = (table.y - 0.3) * size;
     const width: number = ((table.width ?? 1) + 2.4) * size;
