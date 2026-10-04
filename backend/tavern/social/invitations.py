@@ -218,16 +218,37 @@ def _command(verb: str, target: str | None) -> dict[str, Any]:
 def _first_steps(world: Mapping[str, Any], errand: Errand, host: Mapping[str, Any],
                  guest: Mapping[str, Any]) -> list[tuple[str, dict[str, Any]]] | None:
     # Who starts what when the invitation is accepted, or None when it cannot be done.
-    if errand["kind"] == "join_table":
-        chair = free_chair(world, home_table(world, host), guest)
-        return [(guest["id"], _command("sit", chair))] if chair else None
-    place = {"darts_together": "darts", "buy_drink": "tap", "leave_together": "door"}[errand["kind"]]
-    target = _known(host, place)
-    if target is None:
-        return None
-    verb = {"darts": "play_darts", "tap": "take_beer", "door": "leave"}[place]
-    return [(host["id"], _command(verb, target))] + (
-        [(guest["id"], _command(verb, target))] if errand["kind"] == "darts_together" else [])
+    return _FIRST_STEPS[errand["kind"]](world, host, guest)
+
+
+def _seat_guest(world: Mapping[str, Any], host: Mapping[str, Any],
+                guest: Mapping[str, Any]) -> list[tuple[str, dict[str, Any]]] | None:
+    chair = free_chair(world, home_table(world, host), guest)
+    return [(guest["id"], _command("sit", chair))] if chair else None
+
+
+def _both_play_darts(world: Mapping[str, Any], host: Mapping[str, Any],
+                     guest: Mapping[str, Any]) -> list[tuple[str, dict[str, Any]]] | None:
+    board = _known(host, "darts")
+    return None if board is None else [(who["id"], _command("play_darts", board)) for who in (host, guest)]
+
+
+def _host_pours(world: Mapping[str, Any], host: Mapping[str, Any],
+                guest: Mapping[str, Any]) -> list[tuple[str, dict[str, Any]]] | None:
+    tap = _known(host, "tap")
+    return None if tap is None else [(host["id"], _command("take_beer", tap))]
+
+
+def _host_heads_home(world: Mapping[str, Any], host: Mapping[str, Any],
+                     guest: Mapping[str, Any]) -> list[tuple[str, dict[str, Any]]] | None:
+    door = _known(host, "door")
+    return None if door is None else [(host["id"], _command("leave", door))]
+
+
+# What accepting each kind sets in motion first: who starts which action, or None when it cannot be done.
+_FIRST_STEPS: Mapping[str, Callable[..., list[tuple[str, dict[str, Any]]] | None]] = MappingProxyType({
+    "join_table": _seat_guest, "darts_together": _both_play_darts, "buy_drink": _host_pours,
+    "leave_together": _host_heads_home})
 
 
 def _fetched(world: World, errand: Errand, host: Actor | None,
