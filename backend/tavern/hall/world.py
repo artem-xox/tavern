@@ -7,6 +7,7 @@ from typing import Any
 from tavern.body.actions import action_error
 from tavern.body.activities import ACTIVITIES
 from tavern.body.attention import attend
+from tavern.body.bartending import tend_bar
 from tavern.body.dozing import nodding_off
 from tavern.body.drunkenness import wear_off
 from tavern.body.expression import update_expression
@@ -132,6 +133,7 @@ def step_world(world: World, dt: float) -> None:
     check_conversations(world)
     speak_turns(world)
     honor_invitations(world, start_action)
+    tend_bar(world)
     games = settle_games(world)
     for actor in games.done:
         complete_action(world, actor)

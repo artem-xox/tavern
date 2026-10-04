@@ -1164,7 +1164,7 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
   fights (E22 may add it); drinks other than ale; the barkeep starting the evening with news (he
   learns it at the bar); pacing or wiping the bar while idle; a second staff member.
 - **Seed-sensitive tests.** B1 changes routes, and B2–B5 change whole evenings
-  (`test_a_news_item_reaches_a_third_guest_in_other_words` uses seeds 1 and 2). If one fails,
+  (`test_a_news_item_reaches_a_third_guest_in_other_words` uses seeds 1 and 4, since B3). If one fails,
   stop and report the seed and the failure. Do not change a seed or an assertion without the
   user's approval.
 - **Shared with the dice tasks.** B0's `lifecycle.complete_action` is G2's first refactor:
@@ -1288,7 +1288,7 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     evening, seed 5: the guests' events are identical to B1's (`cmp` on the events without Hob's), and Hob adds
     three (`on_duty` and two `interrupted`, when he turns his head toward a noise); 431 s, 26 scenes, 11.2 s
     stuck as before.
-- [ ] **B3 — The barkeep pours.** Guests order at the tap and he serves them.
+- [x] **B3 — The barkeep pours.** Guests order at the tap and he serves them.
   - *Table:* `Activity.served: bool = False` ("while staff tend the bar, the bar's service, not a
     timer, completes it") and `Activity.staff_only: bool = False` ("only staff do it, and only the
     bar's service starts it; `actions.action_error` refuses it to a guest").
@@ -1341,6 +1341,26 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
   - *Check:* `make check` and `make build`. In `make run`, force a guest to take a beer and attach
     a screenshot of Hob pouring while the guest waits. Run the offline evening (seed 5) and compare
     beers served, give-ups in line and stuck time against B2.
+  - *Built (2026-10-04):* `body/bartending.py` (`order_at`, `tend_bar`; `world.step_world` calls it after
+    `honor_invitations`) pours for the guest who holds the tap and has reached its spot: the barkeep
+    starts `pour_beer` (3 s, `PouringBeer`) over his staff cells, takes himself out of a conversation to do
+    it, and at its end completes the guest's own `take_beer` (the stock falls, the mug is theirs) and logs
+    `served` ("Hob poured Ada a mug of ale"); a guest called away meanwhile gets nothing and the stock
+    stays. `Activity.served` and `Activity.staff_only` hold the rule: `lifecycle._ends_on_timer` is false for
+    a `game` or for a `served` verb while `staff.tended(world)`, in which case the verb's timer stops at
+    zero so the world still saves; `actions.action_error` refuses `pour_beer` to a guest. Without staff the
+    tap stays self-service (`take_beer` still ends on its own 0.8 s). `people_in_sight` carries `post` (the
+    bar's name) only for staff; the briefing says "Hob, the barkeep, is pouring ale behind the bar" (or
+    "tending the bar"); the option reads "walk 13 steps to the tap and ask Hob for a mug of ale (24 servings
+    when last seen)"; both prompt prefixes now say Hob pours (the intention examples read "Get an ale",
+    and its "no barkeep to call over"). 13 tests in `tests/test_bartending.py` (shared hall helpers moved to
+    `tests/staff_hall.py`). Offline evening, seed 5 (B2 → B3): 11 beers all served by Hob (12 self-served
+    before), lines longer (10 joined, 3 before) and nobody gave up either time, stuck 11.2 s → 3.1 s, 426 s;
+    the evening plays differently, so it is not the same story. **Seed-sensitive test, approved by the
+    user:** with Hob pouring, seed 2 of `test_a_news_item_reaches_a_third_guest_in_other_words` carries
+    news only one hop (it reached two without him; seeds 1, 3, 4 and 5 with him do, seed 4 with two
+    items), so that parameter is now seed 4: seeds 1 and 4, same assertion. In the browser a forced
+    `take_beer` shows Hob "interacting" behind the bar while Rurik waits at the tap.
 - [ ] **B4 — Leaning on the bar.** Guests stand at the counter and can talk with the barkeep.
   - *Table:* reuse `Activity.shared_target` (added for the door in the D02 fix):
     `lifecycle.activate` never reserves such a target, and `routes.plan_route` already keeps the

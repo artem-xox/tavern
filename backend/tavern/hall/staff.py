@@ -57,6 +57,18 @@ def guests(world: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     return [actor for actor in world["actors"] if not on_staff(actor)]
 
 
+def tended(world: Mapping[str, Any]) -> bool:
+    """Tell whether anyone is at work behind a bar, so that the bar serves its guests.
+
+    Args:
+        world: Current world.
+
+    Returns:
+        True while a staff member is in the hall.
+    """
+    return any(on_staff(actor) for actor in world["actors"])
+
+
 def post_of(world_map: Mapping[str, Any], actor: Mapping[str, Any]) -> Mapping[str, Any]:
     """Find the bar a staff member works at.
 

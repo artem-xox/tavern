@@ -13,8 +13,8 @@ world directly: you set the direction, and the game decides whether and how it h
 The Last Inn is a single low hall of dark timber and whitewash. A fire burns in a wide stone
 fireplace on one side; a few windows look out on the road and the dark fields beyond. Guests sit at
 a handful of tables, some by the fire, some by a window, some in plain corners. The tap stands at
-the end of the bar: there is no barkeep tonight, so guests pour their own ale and sometimes wait
-their turn in a short line. There is a WC at the back, behind a door, used by one person at a time,
+the end of the bar, and Hob the barkeep works behind it all evening: he pours every mug himself, so
+guests walk up to the tap, wait for him, and sometimes wait their turn in a short line. There is a WC at the back, behind a door, used by one person at a time,
 so a line can form there too. A darts board hangs on one wall. A dice table with two chairs stands by
 the fire, where two guests who agree to a game play and others gather to watch. The front door leads
 out to the road and home.
@@ -38,8 +38,8 @@ in, a rival sneers, a quarrel flares at the next table, the ale goes to their he
 
 Intentions must be things the guest could do tonight in this hall, with these activities:
 
-- pour a mug of ale at the tap (waiting in line if others are ahead), and drink it in their seat or
-  standing;
+- get a mug of ale at the tap, where the barkeep pours it (waiting in line if others are ahead), and
+  drink it in their seat or standing;
 - find a seat at a table, sit in their own seat, rest there, or move to another table, for instance
   to join company or to get away from someone;
 - chat with someone sitting at their table or standing beside them, or join a conversation already
@@ -51,10 +51,11 @@ Intentions must be things the guest could do tonight in this hall, with these ac
 - push to the front of a line instead of waiting, which others resent;
 - go home for the night through the front door.
 
-There is nothing else: no food to order, no rooms to rent, no barkeep to call, no money to spend, no
+There is nothing else: no food to order, no rooms to rent, no barkeep to call over (he pours at the tap
+and stays behind the bar), no money to spend, no
 horses to saddle, no letters to write, and no fighting. Guests do not leave and come back. If a guest
 wants something outside this list ("ask the innkeeper about a room", "buy everyone a round", "punch
-him"), translate it into what they can do here ("stay at the fire until closing", "pour another ale
+him"), translate it into what they can do here ("stay at the fire until closing", "get another ale
 and sit with the drovers", "move to another table, away from him").
 
 An intention may name people who are in the inn tonight, and places in the hall. It should not name
@@ -120,7 +121,7 @@ their card.
   speech describes it: a drover speaks plainly, a scholar carefully, a soldier bluntly. It says how
   they read the situation, not what they will do. It may be wry, bitter, warm, worried, or tired.
   Twenty words at most.
-- The intention is one sentence in the plain imperative, as a note to themselves: "Pour another ale
+- The intention is one sentence in the plain imperative, as a note to themselves: "Get another ale
   and sit by the fire with Brida." It names the next concrete activity and, when it matters, the
   person or place, and may add the reason or the step after it. Twenty-five words at most.
 - English only. No modern idioms, no technology, no swearing beyond "damn", "hell" and the like.
@@ -140,7 +141,7 @@ detail.
 Example 1. Edda, a sharp-tongued healer who came to rest her feet and hear news of the fever.
 Prompt: arrival. Thirst strong, tiredness strong. Brida, an old friend, sits at the fire table.
 - thought: My feet ache and there sits Brida by the fire, thank the saints.
-- intention: Pour an ale, then sit with Brida by the fire and ask about the fever.
+- intention: Get an ale, then sit with Brida by the fire and ask about the fever.
 
 Example 2. Rurik, a toll guard, proud and suspicious, rivals with the pedlar Toren.
 Prompt: arrival. Toren is at the window table, laughing with a stranger.
@@ -186,7 +187,7 @@ Prompt: closing time.
 Example 10. Ysolde, a widow who runs a mill, proud and lonely.
 Prompt: arrival. Nobody she knows; thirst strong; wish for company strong.
 - thought: Not a face I know, but the fire is warm and the room is friendly enough.
-- intention: Pour an ale and sit at the busiest table, and see who talks.
+- intention: Get an ale and sit at the busiest table, and see who talks.
 
 Example 11. Bren, a hot-tempered drover, three beers, quarrelled with Calder over a game of darts.
 Prompt: the quarrel. Mood foul.
@@ -219,14 +220,14 @@ Prompt: someone cut ahead of him in line at the tap.
 - intention: Wait my turn at the tap and say nothing, but remember that face.
 
 Example 17. Brida.
-Prompt: alerted while pouring by a quarrel at Edda's table.
+Prompt: alerted while waiting at the tap by a quarrel at Edda's table.
 - thought: That is Edda's voice, and she sounds angry.
 - intention: Take my ale back to Edda's table and see what the trouble is.
 
 Example 18. Calder.
 Prompt: arrival. Bladder strong, thirst strong.
 - thought: Half a day in the saddle and not one stop on the road.
-- intention: Find the WC first, then pour an ale.
+- intention: Find the WC first, then get an ale.
 
 Example 19. Ysolde, after a pleasant chat with Toren.
 Prompt: the conversation ended because Toren went to the tap.
@@ -248,7 +249,7 @@ Example 22. Saye, at closing time.
 
 Example 23. Edda, arrival, but Bren, whom she dislikes, sits at the fire table.
 - thought: The fire table is taken by that loud drover, of all people.
-- intention: Pour an ale and sit by the window instead, out of his way.
+- intention: Get an ale and sit by the window instead, out of his way.
 
 Example 24. Calder, a pause, the evening going well, wish for company eased, boredom strong.
 - thought: Good company, but I am itching to do something.
@@ -264,7 +265,7 @@ Example 26. Rurik, a pause, two beers, Toren sits two tables away and has not lo
 
 Example 27. Brida, arrival, the fire table full, Edda not yet here.
 - thought: No Edda yet, and the fire is crowded with drovers.
-- intention: Pour an ale and keep a chair free for Edda at the window table.
+- intention: Get an ale and keep a chair free for Edda at the window table.
 
 Example 28. Calder, someone took his seat while he was at the WC.
 Prompt: seat taken by Bren, who has a temper. Courage low.
@@ -286,7 +287,7 @@ Prompt: insult. Mood sour, temper middling, two beers.
 
 Example 32. Rurik after that exchange, prompted by the end of the conversation.
 - thought: I spoke too sharply, but she started it with her remedies.
-- intention: Pour another ale and sit at the far end of the hall for a while.
+- intention: Get another ale and sit at the far end of the hall for a while.
 
 Example 33. Toren, wasted after four beers, at a pause.
 - thought: The room is swaying and everyone is my friend tonight.

@@ -50,7 +50,7 @@ Functional core, imperative shell. Dependencies point inward only.
     machine, `state.py` types, `rules.py`, `chance`, `room`, `routes`, `sight`, `staff`, `arrival`, `closing`,
     `memory` event log, `validation`).
   - `body/` what executes an action: `activities.py` (the verb table), `actions`, `queues`,
-    `hearing`, `attention`, `expression`, `drunkenness`, `dozing`.
+    `bartending`, `hearing`, `attention`, `expression`, `drunkenness`, `dozing`.
   - `social/` guests among guests: `thoughts`, `ties`, `names`, `scenes`, `conversation`,
     `social_acts`, `invitations`, `dice`, `overhearing`, `turns`.
   - `mind/` what a guest observes and decides: `briefing`, `options`, `hall_view`,

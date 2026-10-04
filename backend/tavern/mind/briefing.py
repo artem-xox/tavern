@@ -142,6 +142,8 @@ def _person(observation: Observation, visitor: Mapping[str, Any]) -> str:
         return f"{label_of(visitor)} sits {where}{busy}"
     doing = visitor.get("doing")
     activity = ACTIVITIES.get(doing) if isinstance(doing, str) else None
+    if visitor.get("post"):
+        return f"{label_of(visitor)}, the barkeep, is {activity.doing if activity and activity.doing else 'tending the bar'}"
     return f"{label_of(visitor)} is {activity.doing if activity and activity.doing else 'standing about'}"
 
 

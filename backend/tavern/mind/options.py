@@ -62,8 +62,10 @@ def _target(observation: Observation, action: Action) -> Mapping[str, Any]:
 
 def _pour(observation: Observation, action: Action) -> str:
     tap = _target(observation, action)
-    return (f"walk {walk_words(steps_to(observation, tap))} to the tap and pour a mug of ale "
-            f"({tap.get('stock')} servings when last seen)")
+    # With a barkeep in sight the guest asks for the mug, as he pours them; otherwise they pour their own.
+    barkeep = next((person for person in observation.get("people", []) if person.get("post")), None)
+    pour = f"ask {label_of(barkeep)} for a mug of ale" if barkeep else "pour a mug of ale"
+    return f"walk {walk_words(steps_to(observation, tap))} to the tap and {pour} ({tap.get('stock')} servings when last seen)"
 
 
 def _drink(observation: Observation, action: Action) -> str:

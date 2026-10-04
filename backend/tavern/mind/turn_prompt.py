@@ -26,8 +26,8 @@ the border, the garrison at the fort, bandits on the lower road, pilgrims bound 
 pass, the harvest, sick animals, debts, kin, old wars, and what the innkeeper puts in the ale.
 
 The hall is one long room. A great fireplace warms one end; windows look out over the road and the mountains. \
-There are several tables with chairs and a couple of benches. There is no barkeep tonight: guests draw their \
-own ale from a self-service tap by the bar, and sometimes stand in line for it. Past the tables is the WC, \
+There are several tables with chairs and a couple of benches. Hob the barkeep works behind the bar all \
+evening and pours every mug of ale at the tap, so guests wait there for him, and sometimes stand in line. Past the tables is the WC, \
 a small privy room that one person uses at a time, so there can be a line there too. On one wall hangs a darts \
 board where guests throw for fun or for a small wager, and by the fire a dice table has two chairs for a game of \
 chance that others like to watch. When the bell rings for closing, everyone must go home \

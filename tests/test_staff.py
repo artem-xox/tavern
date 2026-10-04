@@ -17,9 +17,9 @@ from tavern.evening.scenario import open_evening, parse_scenario
 from tavern.hall.staff import off_limits
 from tavern.hall.world import create_world, start_action, step_world
 from tavern.mind.agents import Evaluators
-from tavern.mind.cards import parse_cards
 from tavern.mind.intentions import INTENTION_RULES, intention_requests
 from tavern.server.controls import forced_action, toggle_block
+from staff_hall import HOB, ROOT, cards, hob_of, opened, plan
 
 LAYOUT = json.loads((Path(__file__).parents[1] / "data" / "tavern.json").read_text())
 CELLS = [[2, 1], [3, 1], [4, 1], [5, 1]]
@@ -137,34 +137,6 @@ def test_the_operator_cannot_block_or_clear_a_cell_behind_the_bar(cell: list[int
 
 
 # --- B2: the barkeep on duty -------------------------------------------------------------------------------
-
-ROOT = Path(__file__).parents[1]
-HOB = {"id": "hob", "name": "Hob", "color": "#c98f4a", "sprite": "bartender", "post": "bar",
-       "traits": {"patience": 0.8, "courage": 0.6}}
-NEEDS = {"thirst": [55, 90], "fatigue": [40, 80], "bladder": [0, 25], "social": [15, 65], "boredom": [5, 35]}
-
-
-def cards(folder: str) -> dict[str, Any]:
-    """The repository's character cards of a folder, by ID."""
-    return parse_cards([json.loads(path.read_text()) for path in sorted((ROOT / "data" / folder).glob("*.json"))])
-
-
-def plan(*staff: dict[str, Any], guests: int = 2, **fields: Any) -> dict[str, Any]:
-    """A scenario of inline guests arriving at the start and closing at 300 s, with the given staff."""
-    people = [{"id": name, "name": name.capitalize(), "color": "#ccaa88", "sprite": "visitor",
-               "traits": {"patience": 0.5}, "arrives_at": 0} for name in ("ada", "bea", "cid")[:guests]]
-    return {"guests": people, "arrival": {"needs": NEEDS}, "closes_at": 300, "staff": list(staff), **fields}
-
-
-def opened(*staff: dict[str, Any], **fields: Any) -> dict[str, Any]:
-    """The repository's hall opened for a small evening with the given staff."""
-    return open_evening(LAYOUT, parse_scenario(plan(*staff, **fields)), seed=1)
-
-
-def hob_of(world: dict[str, Any]) -> dict[str, Any]:
-    """The barkeep, who is in the hall."""
-    return next(item for item in world["actors"] if item["id"] == "hob")
-
 
 def test_the_barkeep_opens_the_evening_behind_the_bar_facing_the_hall() -> None:
     world = opened(HOB)
