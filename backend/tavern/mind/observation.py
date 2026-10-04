@@ -43,11 +43,9 @@ def _validate_visit(actor: Mapping[str, Any]) -> None:
     if not isinstance(visit, Mapping):
         raise ValueError("Visit must be a mapping")
     number(visit.get("seconds", 0), "Visit seconds", 0, math.inf)
-    beers, grievances = visit.get("beers", 0), visit.get("grievances", [])
+    beers = visit.get("beers", 0)
     if isinstance(beers, bool) or not isinstance(beers, int) or beers < 0:
         raise ValueError("Beers drunk must be a nonnegative integer")
-    if not isinstance(grievances, list) or any(not isinstance(item, str) for item in grievances):
-        raise ValueError("Grievances must be a list of strings")
     own = actor.get("favorite_seat_id")
     if own is not None and (not isinstance(own, str) or not own):
         raise ValueError("Own seat must be a chair ID or null")

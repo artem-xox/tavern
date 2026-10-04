@@ -32,7 +32,6 @@ class Visit(TypedDict):
 
     seconds: float
     beers: int
-    grievances: list[str]
     left_at: NotRequired[float]
 
 
@@ -177,8 +176,6 @@ class Rules(TypedDict):
     vision_radius: int
     need_rates: dict[str, float]
     durations: dict[str, float]
-    quarrel_per_beer: float
-    quarrel_max: float
     queue_patience: QueueRules
     queue_needs: dict[str, str]
     attention: AttentionRules

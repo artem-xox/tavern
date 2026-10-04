@@ -19,7 +19,7 @@ the evening and watches. See [Stage 1 tasks](stages/1_EVENING.md).
 
 **Status (2026-10-04):** M1–M3, the refactor R0–R8, D13 (Jev and Claude health markers), U1
 (no labels in the hall), E18b (conversation memory), E19 (facts and retelling), the dice game (G0–G5)
-and the barkeep (B0–B6) are done. Next: E20 of M4 (news and conflict).
+the barkeep (B0–B6) and E20 of M4 (hostile options) are done. Next: E21 (fight resolution).
 
 **Done when:** recorded live evenings meet the Stage 1 metrics, an observer can retell
 a story from at least one of them, and its chronicle cites only logged events.
@@ -62,7 +62,6 @@ next milestone before starting that milestone.
 | D08 | Every save carries a copy of the rules | `state.Rules` in `world["rules"]`, written by `rules.default_rules()` | Taking rules out of saves changes the save format, so that waits for Stage 4 |
 | D09 | Model wiring is written twice, and the copy in the entry point is untested | `app.create_default_app` and `scripts/evening.py` (`evaluators`, `turn_writer`, `mind`) | After R5 |
 | D10 | `MODE=local` is not offline: Haiku still writes lines when `ANTHROPIC_API_KEY` is set, although intentions go offline | `make evening MODE=local` spent $0.06 on 38 turn calls (2026-10-03) | Small task: local means no model calls unless `--writer haiku` is given. Write the test first |
-| D11 | Stage 0 leftovers still run | the derived `visit.grievances` view; quarrel dice rolled on beer counts (`quarrel_per_beer`), which Stage 1 replaces with speech acts and escalation | E20 |
 | D12 | `observe_actor` deep-copies state for every decision | most of the headless wall time (E03) | When headless runs get too slow for E28's 20 offline evenings |
 | D14 | CI does not run mypy | `make check` runs it, `.github/workflows/ci.yml` runs `pytest`, the frontend check and the build only | Add `- run: mypy` to the workflow (`.github/` is ask-first) |
 | D15 | Small leftovers in the launch wiring | `create_default_app` builds the Claude port twice (`ask = _claude_port(...)` twice); `scripts/evening.py` repeats the wiring (D09) | Delete the duplicate line; merge the wiring with D09 |
@@ -71,3 +70,4 @@ next milestone before starting that milestone.
 | D18 | Live turn fallbacks keep coming from two Haiku slips: an `invitation` on an `accept`, and a line over 160 characters | one of each in the two E19 live evenings (a fallback per evening) | Small task: accept (and drop) an invitation on `accept`/`decline`, or say so in the prefix; the length rule stays |
 | D19 | Haiku's barkeep forgets he is at work: he offers to play darts and a wager ("A silver penny a round, then."), and opens most chats with the same "Evening. …" formula | live evening, seed 5 (2026-10-04): lines at 220 s and 227 s to Edda, and 160 s, 67 s and 89 s | Not checkable by a rule. Say in rule 16 that the barkeep never offers games or money, or have E28 count them |
 | D20 | A guest's save fails to load once their conversation has outlasted the talk's 8 s: a part in a scene is never clamped at zero, so `_remaining` goes negative and `check_saved_progress` rejects it | read in `lifecycle._interact` and shown by hand (`_remaining` of -3.0 gives "Invalid saved action timer"); not yet seen in a live autosave. A `game` and a `served` verb are clamped | Failing test first (save during a 12 s conversation), then clamp every held-open verb; a bug fix, in its own commit |
+| D21 | `intentions.SALIENT_THOUGHTS` names `insult`, but the thought kind is `insulted`, so an insult never makes a guest take stock; the new `shoved` and `attacked` are not listed either | `grep -n SALIENT_THOUGHTS backend/tavern/mind/intentions.py`: `("quarrel", "seat_taken", "insult")`; `thoughts.THOUGHTS` has no `insult` (found 2026-10-04, while building E20) | Failing test first (an insulted guest asks for a new intention), then list `insulted`, `shoved` and `attacked`; it changes recorded evenings, so replay-pinned tests move with it. Before E21 |

@@ -5,7 +5,7 @@ from typing import Any, TypedDict
 
 from tavern.body.drunkenness import drunk_stage, speech_instruction
 from tavern.social.facts import Inspected, inspected
-from tavern.social.thoughts import THOUGHTS, Thought, active_thoughts, mood, opinion_of
+from tavern.social.thoughts import THOUGHTS, Thought, active_thoughts, mood, opinion_of, rankling
 
 
 class Opinion(TypedDict):
@@ -34,7 +34,7 @@ class Mind(TypedDict):
 
 
 def feelings(observation: Mapping[str, Any]) -> str:
-    """Put a visitor's mood, opinions, lingering grievances and drink into words for the briefing.
+    """Put a visitor's mood, opinions, what still rankles and drink into words for the briefing.
 
     Args:
         observation: Personal observation; its actor may lack thoughts, relations and
@@ -45,9 +45,9 @@ def feelings(observation: Mapping[str, Any]) -> str:
         Sentences such as "They are in a sour mood. They dislike Bea, who took their seat."
     """
     actor, now = observation["actor"], observation.get("time", float("-inf"))
-    grievances = actor.get("visit", {}).get("grievances", [])
+    rankles = rankling(actor, now)
     parts = [f"They are {_mood_words(mood(actor, now))}.", *_opinions(actor, now),
-             f"Still rankling tonight: {'; '.join(grievances)}." if grievances else "",
+             f"Still rankling tonight: {'; '.join(rankles)}." if rankles else "",
              speech_instruction(actor.get("drunkenness", 0.0))]
     return " ".join(part for part in parts if part)
 

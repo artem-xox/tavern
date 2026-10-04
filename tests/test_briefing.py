@@ -7,6 +7,7 @@ import pytest
 from tavern.mind.agents import build_candidates
 from tavern.mind.briefing import brief
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action, step_world
+from tavern.social.thoughts import think
 
 
 def table(table_id: str, name: str, x: int, y: int) -> list[dict[str, Any]]:
@@ -54,9 +55,9 @@ def settled() -> dict[str, Any]:
     for actor_id, seat in (("ada", "hearth-west"), ("bea", "hearth-east")):
         assert start_action(world, actor_id, {"id": "sit", "verb": "sit", "target_id": seat})["accepted"]
     advance(world, 20)
-    ada = world["actors"][0]
+    ada, bea = world["actors"][0], world["actors"][1]
     ada["inventory"]["beer"] = 1
-    ada["visit"]["grievances"].append("Quarreled with Bea about the inn's beer")
+    think(ada, "quarrel", world["time"], "Quarreled with Bea about the inn's beer", "quarrel", about=bea)
     return look(world, "ada")
 
 
@@ -70,7 +71,7 @@ def settled() -> dict[str, Any]:
     pytest.param(newcomer, "seating", "Hearth table", id="seating-names-the-free-tables"),
     pytest.param(settled, "situation", "holding a full mug", id="mug-in-hand"),
     pytest.param(settled, "situation", "Hearth table · west", id="own-seat-by-name"),
-    pytest.param(settled, "situation", "Quarreled with Bea", id="grievances-remembered"),
+    pytest.param(settled, "situation", "Quarreled with Bea", id="a-slight-still-rankles"),
     pytest.param(settled, "sit:hearth-west", "stay", id="own-seat-means-staying-put"),
     pytest.param(settled, "talk:bea", "across the table", id="talk-partner-at-the-table"),
     pytest.param(settled, "drink", "sip", id="drinking-seated"),

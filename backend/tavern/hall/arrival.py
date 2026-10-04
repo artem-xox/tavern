@@ -45,7 +45,7 @@ def create_actor(data: Mapping[str, Any], world_map: Mapping[str, Any]) -> Actor
                 ties=list(data.get("ties", [])),
                 needs=needs, inventory={"beer": beer}, status="idle",
                 action=None, path=[], seat_id=None, favorite_seat_id=None,
-                visit={"seconds": 0.0, "beers": 0, "grievances": []}, thoughts=[],
+                visit={"seconds": 0.0, "beers": 0}, thoughts=[],
                 relations=_relations(data["id"], data.get("name", data["id"]), data.get("ties", [])),
                 drunkenness=0.0,
                 knowledge={"objects": {}, "cells": [], "facts": {}}, memory=[], heard=[],
@@ -168,11 +168,11 @@ def check_saved_visit(visit: Any) -> None:
     """Check a saved visit tally.
 
     Args:
-        visit: Decoded `visit` of a visitor: seconds, beers, grievances and, once gone, `left_at`.
+        visit: Decoded `visit` of a visitor: seconds, beers and, once gone, `left_at`.
     Raises:
         ValueError: A field is missing, negative or of the wrong type.
     """
-    if not isinstance(visit, dict) or not isinstance(visit.get("grievances"), list):
+    if not isinstance(visit, dict):
         raise ValueError("Invalid saved visit")
     # left_at appears only once the visitor has gone home.
     times = [visit.get("seconds"), visit.get("left_at", 0.0)]
@@ -180,5 +180,3 @@ def check_saved_visit(visit: Any) -> None:
         raise ValueError("Invalid saved visit time")
     if type(visit.get("beers")) is not int or visit["beers"] < 0:
         raise ValueError("Invalid saved beer count")
-    if any(not isinstance(item, str) for item in visit["grievances"]):
-        raise ValueError("Invalid saved grievance")

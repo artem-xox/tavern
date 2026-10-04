@@ -12,6 +12,7 @@ from tavern.server.api import create_app
 from tavern.server.runtime import TavernRuntime
 from tavern.adapters.persistence import load_world, save_world
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action, step_world
+from tavern.social.thoughts import rankling
 
 
 def table(table_id: str, x: int, y: int) -> list[dict[str, Any]]:
@@ -275,11 +276,11 @@ def test_first_seat_becomes_the_visitors_own_for_the_visit() -> None:
     assert (ada["seat_id"], ada["favorite_seat_id"]) == (None, "warm-west")
 
 
-@pytest.mark.parametrize("sitter, grievances", [
+@pytest.mark.parametrize("sitter, rankles", [
     pytest.param("ada", [], id="owner-returns-to-own-seat"),
     pytest.param("bea", ["Bea took my seat (warm · west)"], id="someone-else-takes-it"),
 ])
-def test_taking_someones_seat_aggrieves_its_owner(sitter: str, grievances: list[str]) -> None:
+def test_taking_someones_seat_aggrieves_its_owner(sitter: str, rankles: list[str]) -> None:
     world = create_world(inn())
     assert start_action(world, "ada", command("sit", "warm-west"))["accepted"]
     advance(world, 20)
@@ -288,8 +289,8 @@ def test_taking_someones_seat_aggrieves_its_owner(sitter: str, grievances: list[
     assert start_action(world, sitter, command("sit", "warm-west"))["accepted"]
     advance(world, 20)
     ada = visitor(world, "ada")
-    assert ada["visit"]["grievances"] == grievances
-    assert sum(event["type"] == "seat_taken" for event in ada["memory"]) == len(grievances)
+    assert rankling(ada, world["time"]) == rankles
+    assert sum(event["type"] == "seat_taken" for event in ada["memory"]) == len(rankles)
     assert visitor(world, sitter)["favorite_seat_id"] == "warm-west"
 
 
@@ -302,16 +303,26 @@ def test_visit_keeps_count_of_time_and_beers() -> None:
         advance(world, 4)
     assert ada["visit"]["beers"] == 2
     assert ada["visit"]["seconds"] == pytest.approx(world["time"])
+    assert set(ada["visit"]) == {"seconds", "beers"}  # what rankles is read from the thoughts, not kept here
 
 
-@pytest.mark.parametrize("beers, patience, outcome", [
-    pytest.param(0, 0.0, "conversation", id="sober-impatient-pair-stays-friendly"),
-    pytest.param(3, 0.0, "quarrel", id="tipsy-impatient-pair-quarrels"),
-    pytest.param(3, 1.0, "conversation", id="tipsy-patient-pair-stays-friendly"),
+def dislike_each_other(world: dict[str, Any], opinion: float) -> None:
+    """Ada and Bea each think this much of the other."""
+    for actor, other in (("ada", "bea"), ("bea", "ada")):
+        visitor(world, actor)["relations"][other] = {"name": other.title(), "opinion": opinion,
+                                                     "familiarity": "acquaintance"}
+
+
+@pytest.mark.parametrize("beers, patience, opinion, outcome", [
+    pytest.param(0, 0.0, 0.0, "conversation", id="sober-impatient-pair-stays-friendly"),
+    pytest.param(3, 0.0, 0.0, "conversation", id="tipsy-impatient-pair-stays-friendly"),
+    pytest.param(3, 1.0, -40.0, "conversation", id="tipsy-patient-pair-that-dislike-each-other-stays-civil"),
+    pytest.param(3, 0.0, -40.0, "quarrel", id="tipsy-impatient-pair-that-dislike-each-other-quarrels"),
 ])
-def test_ale_and_impatience_turn_talk_into_quarrels(beers: int, patience: float, outcome: str) -> None:
+def test_ale_and_impatience_turn_talk_into_quarrels_only_between_guests_who_dislike_each_other(
+        beers: int, patience: float, opinion: float, outcome: str) -> None:
     world = seated_inn()
-    world["rules"].update(quarrel_per_beer=1.0, quarrel_max=1.0)
+    dislike_each_other(world, opinion)
     for actor in world["actors"]:
         actor["visit"]["beers"] = beers
         actor["traits"]["patience"] = patience
@@ -322,7 +333,7 @@ def test_ale_and_impatience_turn_talk_into_quarrels(beers: int, patience: float,
 
 def test_quarrel_aggrieves_both_and_leaves_them_lonely() -> None:
     world = seated_inn()
-    world["rules"].update(quarrel_per_beer=1.0, quarrel_max=1.0)
+    dislike_each_other(world, -40.0)
     for actor in world["actors"]:
         actor["visit"]["beers"] = 3
         actor["traits"]["patience"] = 0.0
@@ -330,9 +341,9 @@ def test_quarrel_aggrieves_both_and_leaves_them_lonely() -> None:
     assert start_action(world, "ada", command("talk", "bea"))["accepted"]
     advance(world, 10)
     after = [actor["needs"]["social"] for actor in world["actors"]]
-    assert [len(actor["visit"]["grievances"]) for actor in world["actors"]] == [1, 1]
+    assert [[item["kind"] for item in actor["thoughts"] if item["kind"] == "quarrel"] for actor in world["actors"]] == [
+        ["quarrel"], ["quarrel"]]
     assert [later >= earlier for earlier, later in zip(before, after)] == [True, True]
-    assert visitor(world, "ada")["visit"]["grievances"][0].startswith("Quarreled with Bea")
 
 
 def watchable_inn() -> dict[str, Any]:
@@ -387,7 +398,6 @@ def test_evening_state_survives_save_and_load(tmp_path: Path) -> None:
     pytest.param(lambda world: world["actors"][0].update(favorite_seat_id="missing"), id="unknown-own-seat"),
     pytest.param(lambda world: world["actors"][0]["visit"].update(beers=-1), id="negative-beers"),
     pytest.param(lambda world: world["actors"][0].update(visit=[]), id="malformed-visit"),
-    pytest.param(lambda world: world["actors"][0]["visit"].update(grievances=[None]), id="malformed-grievance"),
 ])
 def test_corrupt_evening_state_is_rejected(tmp_path: Path, corrupt: Callable[[dict[str, Any]], Any]) -> None:
     world = evening()

@@ -23,9 +23,6 @@ def default_rules() -> Rules:
                            "social": 0.18, "boredom": 0.25},
             "durations": {verb: activity.duration for verb, activity in ACTIVITIES.items()
                           if activity.duration is not None},
-            # Each beer the pair has drunk beyond the first adds this much quarrel chance,
-            # scaled by impatience (2 − both patience traits), up to quarrel_max.
-            "quarrel_per_beer": 0.1, "quarrel_max": 0.5,
             # Seconds a visitor waits in line before reconsidering: base, plus this much per unit
             # of the patience trait and per unit of urgency of the need the place relieves.
             "queue_patience": {"base": 5.0, "patience": 40.0, "urgency": 30.0},
@@ -73,7 +70,7 @@ def check_rules(world: Mapping[str, Any]) -> None:
         ValueError: A rule is missing, unknown or out of range.
     """
     rules = world["rules"]
-    values = [rules["move_seconds"], rules["blocked_timeout"], rules["quarrel_per_beer"], rules["quarrel_max"],
+    values = [rules["move_seconds"], rules["blocked_timeout"],
               *rules["durations"].values(), *rules["need_rates"].values()]
     if any(type(value) not in (int, float) or not math.isfinite(value) or value <= 0 for value in values):
         raise ValueError("Invalid saved simulation rates")

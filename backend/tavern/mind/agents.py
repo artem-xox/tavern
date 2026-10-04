@@ -11,6 +11,7 @@ from tavern.mind.hall_view import in_use, line_place
 from tavern.mind.local_policy import local_scores, local_seat_scores
 from tavern.mind.observation import known_objects, own_actor
 from tavern.mind.selection import bounded, drawable, read_temperature, select
+from tavern.social.hostility import HOSTILITY, hostile_targets
 
 
 class EvaluatorError(RuntimeError):
@@ -121,7 +122,8 @@ def _concrete_candidates(observation: Mapping[str, Any]) -> list[Action]:
             continue
         actions.extend(_line_options(observation, item, _action(verbs[item["kind"]], item["id"])))
     return [*actions, *_seat_wish(observation, objects), *_views(observation, objects), *_games(objects),
-            *_bar_stand(observation, actor, objects), *talks, _action("inspect"), _action("wait")]
+            *_bar_stand(observation, actor, objects), *talks, _action("inspect"), _action("wait"),
+            *_hostile(observation)]
 
 
 def _line_options(observation: Mapping[str, Any], item: Mapping[str, Any], action: Action) -> list[Action]:
@@ -178,6 +180,12 @@ def _bar_stand(observation: Mapping[str, Any], actor: Mapping[str, Any],
     return [_action("stand_at_bar", item["id"]) for item in sorted(objects, key=lambda item: item["id"])
             if item["kind"] == "bar" and [actor["x"], actor["y"]] not in item["interaction_spots"]
             and any(tuple(spot) not in taken for spot in item["interaction_spots"])]
+
+
+def _hostile(observation: Mapping[str, Any]) -> list[Action]:
+    # Turning on someone is offered only to a guest with a grudge, a temper and the nerve (`hostility`);
+    # a fight asks more than a shove, so every target of one is also a target of the other.
+    return [_action(verb, target) for verb in HOSTILITY.urge for target in hostile_targets(observation, verb)]
 
 
 def _free_seats(observation: Mapping[str, Any], objects: Sequence[Mapping[str, Any]]) -> list[Mapping[str, Any]]:

@@ -35,6 +35,8 @@ def action_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Map
         return f"Only staff can {verb.replace('_', ' ')}"
     if activity.partner:
         return _talk_error(world, actor, action)
+    if activity.confronts:
+        return _confront_error(world, actor, action)
     if activity.requires_item and actor["inventory"][activity.requires_item] <= 0:
         return f"No {activity.requires_item} in inventory"
     if activity.target_kinds:
@@ -77,6 +79,17 @@ def _talk_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapp
     if pressed(world, partner):
         return f"{partner['name']} has something more pressing to see to"
     return None if _close_enough(world, actor, partner) else "Visitors must sit at one table or stand side by side"
+
+
+def _confront_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any]) -> str | None:
+    # Within reach is the reach of a chat. Whether the grudge is enough is for the decision to weigh,
+    # as with any other verb: the world checks only what is possible.
+    victim = find_actor(world, action.get("target_id"))
+    if victim is None or victim["id"] == actor["id"]:
+        return "Choose another visitor to confront"
+    if on_staff(victim):
+        return f"{victim['name']} works behind the bar and is not to be fought"
+    return None if _close_enough(world, actor, victim) else "Visitors must sit at one table or stand side by side"
 
 
 def _join_error(world: Mapping[str, Any], actor: Mapping[str, Any], member: Mapping[str, Any],

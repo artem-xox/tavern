@@ -5,14 +5,14 @@ from typing import Any
 import pytest
 
 from tavern.social.thoughts import (THOUGHTS, active_thoughts, familiarity_of, forget_expired, friends_of, mood,
-                             opinion_of, seed_relations, think)
+                             opinion_of, rankling, seed_relations, think)
 
 
 def guest(actor_id: str, **needs: float) -> dict[str, Any]:
     """Build a calm visitor with no thoughts or relationships yet."""
     calm = {"thirst": 10, "fatigue": 10, "bladder": 10, "social": 10, "boredom": 10}
     return {"id": actor_id, "name": actor_id.capitalize(), "needs": {**calm, **needs},
-            "visit": {"seconds": 0.0, "beers": 0, "grievances": []}, "thoughts": [], "relations": {}}
+            "visit": {"seconds": 0.0, "beers": 0}, "thoughts": [], "relations": {}}
 
 
 def wrong(victim: dict[str, Any], kind: str, culprit: dict[str, Any], now: float = 0.0) -> None:
@@ -110,26 +110,26 @@ def test_mood_adds_pressing_needs_to_thoughts() -> None:
 
 @pytest.mark.parametrize("kinds, expected", [
     pytest.param([], [], id="empty"),
-    pytest.param(["chat"], [], id="pleasant-thoughts-are-no-grievance"),
+    pytest.param(["chat"], [], id="pleasant-thoughts-do-not-rankle"),
     pytest.param(["seat_taken"], ["Bea did it (seat_taken)"], id="single"),
     pytest.param(["line_cut", "line_cut"], ["Bea did it (line_cut)"] * 2, id="duplicates-listed-each"),
     pytest.param(["line_cut"] * 3 + ["seat_taken"] * 3, ["Bea did it (line_cut)"] * 2 + ["Bea did it (seat_taken)"] * 3,
                  id="latest-five"),
 ])
-def test_grievances_list_the_active_bad_thoughts(kinds: list[str], expected: list[str]) -> None:
+def test_rankling_lists_the_active_bad_thoughts(kinds: list[str], expected: list[str]) -> None:
     ada, bea = guest("ada"), guest("bea")
     for kind in kinds:
         wrong(ada, kind, bea)
-    assert ada["visit"]["grievances"] == expected
+    assert rankling(ada, 0.0) == expected
 
 
-def test_forgetting_drops_expired_thoughts_and_their_grievances() -> None:
+def test_forgetting_drops_expired_thoughts_and_what_rankled_with_them() -> None:
     ada, bea = guest("ada"), guest("bea")
     wrong(ada, "line_cut", bea)
     wrong(ada, "seat_taken", bea, now=100.0)
+    assert rankling(ada, CUT.seconds + 1) == ["Bea did it (seat_taken)"]
     forget_expired({"time": CUT.seconds + 1, "actors": [ada]})
-    assert ([thought["kind"] for thought in ada["thoughts"]], ada["visit"]["grievances"]) == (
-        ["seat_taken"], ["Bea did it (seat_taken)"])
+    assert [thought["kind"] for thought in ada["thoughts"]] == ["seat_taken"]
 
 
 def test_a_thought_keeps_its_cause() -> None:

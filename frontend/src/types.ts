@@ -92,8 +92,7 @@ export interface Actor {
   action: Action | null;
   seat_id: string | null;
   favorite_seat_id: string | null;
-  /** `grievances` is derived on the server: the texts of the latest active thoughts that lower the mood. */
-  visit: { seconds: number; beers: number; grievances: string[]; left_at?: number };
+  visit: { seconds: number; beers: number; left_at?: number };
   thoughts: Thought[];
   /**
    * Base opinion and familiarity per other visitor, before tonight's thoughts. `name` is what this

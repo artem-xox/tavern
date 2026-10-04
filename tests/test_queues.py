@@ -9,6 +9,7 @@ import pytest
 
 from tavern.evening.decisions import free_to_decide
 from tavern.hall.world import create_world, start_action, step_world
+from tavern.social.thoughts import rankling
 
 HALL = json.loads((Path(__file__).parents[1] / "data" / "tavern.json").read_text())
 
@@ -175,8 +176,8 @@ def test_cutting_in_line_wrongs_everyone_it_passes() -> None:
     for guest in ("ann", "bob", "cid"):
         assert start_action(world, guest, command("play_darts", "darts"))["accepted"]
     assert start_action(world, "dan", command("cut_in_line", "darts"))["accepted"]
-    grievances = {guest: visitor(world, guest)["visit"]["grievances"] for guest in ("ann", "bob", "cid", "dan")}
-    assert (line(world, "darts"), visitor(world, "dan")["action"]["verb"], grievances) == (
+    rankles = {guest: rankling(visitor(world, guest), world["time"]) for guest in ("ann", "bob", "cid", "dan")}
+    assert (line(world, "darts"), visitor(world, "dan")["action"]["verb"], rankles) == (
         ["dan", "bob", "cid"], "play_darts",
         {"ann": [], "bob": ["Dan cut in line ahead of me at Darts"],
          "cid": ["Dan cut in line ahead of me at Darts"], "dan": []})

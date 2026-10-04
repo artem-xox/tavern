@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any
 
-from tavern.hall.chance import roll
 from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World
 from tavern.social import facts, invitations, social_acts
@@ -20,7 +19,8 @@ from tavern.social.thoughts import active_thoughts, opinion_of, think
 # An act's effect receives the world, the scene, the speaker, and whom they addressed (None for everyone).
 ActEffect = Callable[[World, Conversation, Actor, Actor | None], None]
 
-# A speaker may insult only someone they think this little of (E20 adds temper and drink).
+# A speaker may insult only someone they think this little of; an insult is answered with a quarrel by
+# a target who thinks as little of the speaker.
 DISLIKED = -10.0
 
 
@@ -67,28 +67,20 @@ def _tell_news(world: World, scene: Conversation, speaker: Actor,
     _relieve(world, scene, speaker, addressee)
 
 
-def _complain(world: World, scene: Conversation, speaker: Actor,
-              addressee: Actor | None) -> None:
-    # A grumble to everyone is taken up by the next in the circle.
-    others = [item for item in _members(world, scene) if item["id"] != speaker["id"]]
-    partner = addressee if addressee in others else others[0]
-    if _quarrels(world, speaker, partner):
-        _quarrel(world, speaker, partner, scene["topic"])
-        end_conversation(world, scene, pleasant=False)
-
-
 def _insult(world: World, scene: Conversation, speaker: Actor,
             addressee: Actor | None) -> None:
     # An insult to everyone lands on whoever the speaker thinks least of; the rest of the company
-    # resents it if they like the target. Tipsy tempers may flare into a quarrel.
+    # resents it if they like the target. A target who already thinks ill of the speaker answers in kind,
+    # which is a quarrel; one who does not is only stung (the insult itself is the next grudge).
     others = [item for item in _members(world, scene) if item["id"] != speaker["id"]]
     target = addressee or min(others, key=lambda item: opinion_of(speaker, item["id"], world["time"]))
+    answers_back = opinion_of(target, speaker["id"], world["time"]) <= DISLIKED
     message = f"{speaker['name']} insulted {target['name']}"
     record_event(world, target, "insulted", message)
     think(target, "insulted", world["time"], f"{called(target, speaker)} insulted me", message, about=speaker)
     for member in others:
         social_acts.take_offence(world, member, speaker, target)
-    if _quarrels(world, speaker, target):
+    if answers_back:
         _quarrel(world, speaker, target, scene["topic"])
         end_conversation(world, scene, pleasant=False)
 
@@ -110,8 +102,8 @@ ACTS: Mapping[str, Act] = MappingProxyType({
                                   "speaker's own words without adding facts. It eases everyone's wish for company"),
     "joke": Act(_relieve, "make the others laugh; it eases everyone's wish for company, and the laughter "
                           "carries across the hall"),
-    "complain": Act(_complain, "grumble about something; after a few beers an impatient pair may quarrel, "
-                               "which ends the conversation and leaves both in a sour mood"),
+    "complain": Act(None, "grumble about something; it changes nothing by itself, though a grumble about someone "
+                          "may be followed by an insult"),
     "leave_conversation": Act(_say_goodbye, "say goodbye and leave; the others carry on while two remain"),
     "introduce": Act(social_acts.introduce, "tell the others the speaker's name; until then strangers know "
                                             "them only by their looks. Strangers become acquaintances"),
@@ -121,7 +113,8 @@ ACTS: Mapping[str, Act] = MappingProxyType({
                                     "like the speaker, are mildly impressed, impatient ones mildly put off"),
     "insult": Act(_insult, "insult the addressee, someone the speaker dislikes; it sours their mood and their "
                            "opinion of the speaker, offends anyone nearby who likes them, rings out across "
-                           "the hall, and after a few beers may start a quarrel that ends the conversation"),
+                           "the hall; if the addressee already thinks ill of the speaker it is answered in kind, "
+                           "a quarrel that ends the conversation"),
     "apologize": Act(social_acts.apologize, "apologize to the addressee (everyone, if nobody in particular) "
                                             "for a wrong; it halves the latest grudge each holds against the "
                                             "speaker"),
@@ -169,16 +162,6 @@ def offered_acts(world: Mapping[str, Any], scene: Conversation, speaker: Mapping
         "invite": bool(invitations.offered_kinds(world, scene, speaker)),
         "accept": asked, "decline": asked}
     return {name: act.meaning for name, act in ACTS.items() if situational.get(name, True)}
-
-
-def _quarrels(world: Mapping[str, Any], left: Mapping[str, Any], right: Mapping[str, Any]) -> bool:
-    # Ale loosens tongues: a sober pair never quarrels, a tipsy impatient pair often does.
-    rules = world["rules"]
-    tipsy = max(0, left["visit"]["beers"] + right["visit"]["beers"] - 1)
-    temper = 2 - left["traits"].get("patience", 0.5) - right["traits"].get("patience", 0.5)
-    chance = min(rules["quarrel_max"], rules["quarrel_per_beer"] * tipsy * temper)
-    # Seeded by the evening and tick, so a replay or a reloaded save rolls the same dice.
-    return roll(world, left["id"], right["id"]) < chance
 
 
 def _quarrel(world: World, actor: Actor, partner: Actor, topic: str) -> None:
