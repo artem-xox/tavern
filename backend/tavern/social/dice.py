@@ -13,6 +13,7 @@ from typing import Any
 
 from tavern.hall.chance import roll
 from tavern.hall.memory import record_event
+from tavern.hall.room import find_object
 from tavern.hall.state import Actor, DiceRules, World
 from tavern.hall.validation import number
 from tavern.mind.cards import PARAMS
@@ -84,6 +85,28 @@ def winner(world: World, table_id: str, first: Actor, second: Actor) -> Actor:
     """
     chance = win_chance(first, second, world["rules"]["dice"])
     return first if roll(world, "dice", table_id, first["id"], second["id"]) < chance else second
+
+
+def open_chairs(world: Mapping[str, Any], table_id: str) -> list[str]:
+    """Tell which chairs of a dice table two guests could take now.
+
+    Args:
+        world: Current world.
+        table_id: A dice table.
+
+    Returns:
+        Its first two chairs in map order when no game is under way and neither is reserved
+        (the walk to one reserves it), else an empty list.
+
+    Raises:
+        ValueError: The ID is no dice table.
+    """
+    table = find_object(world["map"], table_id)
+    if table is None or table["kind"] != "dice_table":
+        raise ValueError(f"{table_id!r} is not a dice table")
+    chairs = [item for item in world["map"]["objects"] if item["kind"] == "dice_chair" and item["table_id"] == table_id]
+    free = table["game"] is None and len(chairs) >= 2 and all(item["reserved_by"] is None for item in chairs)
+    return [item["id"] for item in chairs[:2]] if free else []
 
 
 def settle_games(world: World) -> Settled:

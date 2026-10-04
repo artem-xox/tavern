@@ -15,6 +15,7 @@ from tavern.hall.memory import record_event
 from tavern.hall.room import find_object
 from tavern.hall.state import Actor, World
 from tavern.hall.validation import number
+from tavern.social.dice import PLAY, open_chairs
 from tavern.social.names import called
 from tavern.social.scenes import Conversation
 from tavern.social.thoughts import think
@@ -23,6 +24,7 @@ from tavern.social.thoughts import think
 KINDS: Mapping[str, str] = MappingProxyType({
     "join_table": "come and sit at their table",
     "darts_together": "play darts together",
+    "dice_together": "play a game of dice",
     "buy_drink": "have an ale on them",
     "leave_together": "walk home together",
 })
@@ -101,9 +103,15 @@ def offered_kinds(world: Mapping[str, Any], scene: Mapping[str, Any], speaker: M
                  and home_table(world, people[item]) != table]
     offered = {"join_table": bool(outsiders) and free_chair(world, table, outsiders[0]) is not None,
                "darts_together": _known(speaker, "darts") is not None,
+               "dice_together": _dice_table_free(world, speaker),
                "buy_drink": _known(speaker, "tap") is not None,
                "leave_together": _known(speaker, "door") is not None}
     return [kind for kind in KINDS if offered[kind]]
+
+
+def _dice_table_free(world: Mapping[str, Any], actor: Mapping[str, Any]) -> bool:
+    table = _known(actor, "dice_table")
+    return table is not None and bool(open_chairs(world, table))
 
 
 def pending_for(scene: Mapping[str, Any], actor_id: str) -> Invitation | None:
@@ -233,6 +241,13 @@ def _both_play_darts(world: Mapping[str, Any], host: Mapping[str, Any],
     return None if board is None else [(who["id"], _command("play_darts", board)) for who in (host, guest)]
 
 
+def _both_play_dice(world: Mapping[str, Any], host: Mapping[str, Any],
+                    guest: Mapping[str, Any]) -> list[tuple[str, dict[str, Any]]] | None:
+    table = _known(host, "dice_table")
+    chairs = open_chairs(world, table) if table else []
+    return [(who["id"], _command(PLAY, chair)) for who, chair in zip((host, guest), chairs)] if chairs else None
+
+
 def _host_pours(world: Mapping[str, Any], host: Mapping[str, Any],
                 guest: Mapping[str, Any]) -> list[tuple[str, dict[str, Any]]] | None:
     tap = _known(host, "tap")
@@ -247,7 +262,8 @@ def _host_heads_home(world: Mapping[str, Any], host: Mapping[str, Any],
 
 # What accepting each kind sets in motion first: who starts which action, or None when it cannot be done.
 _FIRST_STEPS: Mapping[str, Callable[..., list[tuple[str, dict[str, Any]]] | None]] = MappingProxyType({
-    "join_table": _seat_guest, "darts_together": _both_play_darts, "buy_drink": _host_pours,
+    "join_table": _seat_guest, "darts_together": _both_play_darts, "dice_together": _both_play_dice,
+    "buy_drink": _host_pours,
     "leave_together": _host_heads_home})
 
 

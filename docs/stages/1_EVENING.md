@@ -967,7 +967,7 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
     "Beat the grey-haired woman smelling of sage at dice" (the looks, not the name: they are
     strangers). `lifecycle.py` is now 393 lines, 7 below the limit: split it before the next
     task that grows it.
-- [ ] **G3 — Agreeing to play.** The `dice_together` invitation sends both guests to the table.
+- [x] **G3 — Agreeing to play.** The `dice_together` invitation sends both guests to the table.
   - *Refactor first (own commit, AGENTS.md "O"):* dice would be a third special case in
     `invitations._first_steps`, so first turn it into a table of one function per kind
     (`_FIRST_STEPS`), with no behavior change.
@@ -981,7 +981,7 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
     table). The turn prefix's description of the hall mentions the dice table and gains one good
     example of a dice invitation; `data/minds/intention_prefix.md` adds "play dice with someone,
     or watch a game" to what guests do. Both prefixes only grow, so they stay above 4,096 tokens.
-    `haiku_turns._nudges` adds "You are bored, and the dice table stands free." when boredom is
+    `haiku_turns._nudges` adds "The speaker is bored, and the dice table stands free: a game of dice is a fine thing to propose." when boredom is
     50 or more and `dice_together` is on offer. Unnudged, the two E19 live evenings had three
     accepted invitations in all, two of them to darts, so a game would be rare without it.
   - *Scripted writer:* `INVITE_LINES["dice_together"] = "Care for a game of dice, {name}?"`. It
@@ -996,6 +996,20 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
     game to a result.
   - *Check:* `make check` and `make build`, the offline evening, and a live evening (seed 5)
     with its replay. Record the dice invitations Haiku made; none is a finding, not a failure.
+  - *Result (2026-10-04):* `dice.open_chairs` (a table's first two chairs when no game is under way and
+    neither is reserved; `ValueError` for anything that is no dice table) feeds both `offered_kinds` and
+    the new `_both_play_dice` entry of `invitations._FIRST_STEPS`, which became a table in its own
+    refactor commit. `KINDS` holds `dice_together`; `conversation.ACTS["invite"]`, the turn prompt (the
+    hall paragraph and Example 23) and the intention prefix name the dice table. The scripted writer
+    (`scripted.BORED` 50, `BOLD` 0.5) invites bored and bold guests to dice, merely bored ones to darts,
+    and accepts at boredom 30. 28 tests in `tests/test_dice_invitation.py`, among them the done test: a
+    lockstep first evening (seeds 1 and 2) whose writer invites to dice whenever it can plays games to a
+    result. `make check` passes (1,837 tests; seeds 1 and 2 of the news test and `test_first_evening.py` are
+    unaffected). **Offline evenings play no dice:** the scripted writer never got an invitation out in any of
+    seeds 1–8 (main has none either: scenes end after two or three lines, before its once-a-scene
+    invitation draw), so seed 5 is byte-identical to `main`'s and games appear in live evenings, where the
+    nudge asks Haiku to propose them. If G5's live evenings show none, raise `scripted.INVITES` or the
+    nudge before judging the feature.
 - [ ] **G4 — Onlookers.** Guests who see a game may gather round to watch it.
   - *Table:* `Activity.shared: bool = False` ("many guests use the target at once, each from an
     interaction spot of their own; it is never reserved"): `actions._target_error` and

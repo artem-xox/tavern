@@ -131,7 +131,8 @@ ACTS: Mapping[str, Act] = MappingProxyType({
                                           "little worse of the speaker"),
     "invite": Act(invitations.invite, "invite the addressee to do something together, naming one of the "
                                       "offered `invitation` kinds: join_table (come and sit at the speaker's "
-                                      "table), darts_together (play darts together), buy_drink (the speaker "
+                                      "table), darts_together (play darts together), dice_together (play a "
+                                      "game of dice at the dice table), buy_drink (the speaker "
                                       "fetches them an ale), leave_together (walk home together). It waits "
                                       "for the addressee's answer"),
     "accept": Act(invitations.accept, "accept the invitation waiting for the speaker; the game then sets "

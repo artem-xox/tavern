@@ -254,7 +254,7 @@ export interface Turn {
   fact_id?: string;
 }
 
-export type InvitationKind = "join_table" | "darts_together" | "buy_drink" | "leave_together";
+export type InvitationKind = "join_table" | "darts_together" | "dice_together" | "buy_drink" | "leave_together";
 
 /** An invitation waiting in a scene for the invitee's answer. */
 export interface Invitation {

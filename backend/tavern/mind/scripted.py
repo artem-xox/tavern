@@ -33,6 +33,7 @@ PLACE_LINES: Mapping[str, str] = MappingProxyType({
     "darts": "There's a darts board here."})
 INVITE_LINES: Mapping[str, str] = MappingProxyType({
     "join_table": "Come sit at my table, {name}.", "darts_together": "Fancy a round of darts?",
+    "dice_together": "Care for a game of dice, {name}?",
     "buy_drink": "Let me buy you an ale.", "leave_together": "Shall we walk home together?"})
 
 MAX_LINE = 160  # Characters of a line: the style asks for about 120, and a little over still reads in a bubble.
@@ -46,6 +47,8 @@ BOASTS = 0.05  # Share of friendly lines that are boasts.
 INVITES = 0.25  # Chance per line that a guest who could invite someone does, once a scene.
 DISLIKED = -10.0  # An insult is only for someone the speaker thinks this little of.
 LONG_STAY = 300.0  # Game seconds after which a guest is ready to walk home with someone.
+BORED = 50.0  # A guest this bored asks for a game, of darts or of dice.
+BOLD = 0.5  # A guest this brave (courage trait) prefers dice, a game of chance, to darts.
 
 
 def scripted_turn(view: Mapping[str, Any]) -> "TurnResult":
@@ -176,10 +179,12 @@ def _disliked(view: Mapping[str, Any]) -> bool:
 
 def _invitation(view: Mapping[str, Any]) -> str | None:
     # What the speaker would like company for, among the kinds on offer: walking home after a long
-    # stay, darts when bored, a table when lonely, else an ale for the other. Views written for
+    # stay, dice when bored and bold, darts when merely bored, a table when lonely, else an ale for the other. Views written for
     # scenes before invitations existed offer none.
     offered, me = view.get("invitations", []), view["speaker"]
-    wishes = [("leave_together", me["visit"]["seconds"] >= LONG_STAY), ("darts_together", me["needs"]["boredom"] >= 50),
+    wishes = [("leave_together", me["visit"]["seconds"] >= LONG_STAY),
+              ("dice_together", me["needs"]["boredom"] >= BORED and me["traits"].get("courage", 0.5) >= BOLD),
+              ("darts_together", me["needs"]["boredom"] >= BORED),
               ("join_table", me["needs"]["social"] >= 50), ("buy_drink", True)]
     return next((kind for kind, wished in wishes if wished and kind in offered), None)
 
@@ -187,7 +192,8 @@ def _invitation(view: Mapping[str, Any]) -> str | None:
 def _answer(kind: str, me: Mapping[str, Any]) -> str:
     # An ale is always welcome; the rest are accepted when the invitee wants what they offer.
     needs = me["needs"]
-    wanted = {"buy_drink": True, "darts_together": needs["boredom"] >= 30, "join_table": needs["social"] >= CONTENT,
+    wanted = {"buy_drink": True, "darts_together": needs["boredom"] >= 30, "dice_together": needs["boredom"] >= 30,
+              "join_table": needs["social"] >= CONTENT,
               "leave_together": me["visit"]["seconds"] >= LONG_STAY}
     return "accept" if wanted[kind] else "decline"
 
