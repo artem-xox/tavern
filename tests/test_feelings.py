@@ -45,13 +45,14 @@ def actor(world: dict[str, Any], actor_id: str) -> dict[str, Any]:
 
 
 def seated(beers: int = 0) -> dict[str, Any]:
-    """Seat Ada and Bea at the table; with beers, impatient and sure to quarrel when they talk."""
+    """Seat Ada and Bea at the table; with beers, impatient and, thinking ill of each other, sure to quarrel when they talk."""
     world = create_world(table_room())
     for actor_id, seat in (("ada", "west"), ("bea", "east")):
         assert start_action(world, actor_id, command("sit", seat))["accepted"]
-    world["rules"].update(quarrel_per_beer=1.0, quarrel_max=1.0)
-    for guest in world["actors"]:
+    for guest, other in zip(world["actors"], ("bea", "ada")):
         guest["visit"]["beers"], guest["traits"]["patience"] = beers, 0.0
+        if beers:
+            guest["relations"][other] = {"name": other.title(), "opinion": -40.0, "familiarity": "acquaintance"}
     return world
 
 
@@ -75,17 +76,19 @@ def talked(beers: int) -> Callable[[], dict[str, Any]]:
     return scene
 
 
-@pytest.mark.parametrize("scene, kind, familiarity", [
-    pytest.param(took_seat, "seat_taken", "stranger", id="a-taken-seat"),
-    pytest.param(talked(3), "quarrel", "acquaintance", id="a-quarrel"),
-    pytest.param(talked(0), "chat", "acquaintance", id="a-pleasant-chat"),
+@pytest.mark.parametrize("scene, kinds, familiarity, opinion", [
+    pytest.param(took_seat, ["seat_taken"], "stranger", THOUGHTS["seat_taken"].opinion, id="a-taken-seat"),
+    # Ada thought -40 of Bea already; Bea insulted her, and the quarrel followed at once.
+    pytest.param(talked(3), ["insulted", "quarrel"], "acquaintance",
+                 -40.0 + THOUGHTS["insulted"].opinion + THOUGHTS["quarrel"].opinion, id="an-insult-and-a-quarrel"),
+    pytest.param(talked(0), ["chat"], "acquaintance", THOUGHTS["chat"].opinion, id="a-pleasant-chat"),
 ])
-def test_events_leave_thoughts_about_who_caused_them(scene: Callable[[], dict[str, Any]], kind: str,
-                                                     familiarity: str) -> None:
+def test_events_leave_thoughts_about_who_caused_them(scene: Callable[[], dict[str, Any]], kinds: list[str],
+                                                     familiarity: str, opinion: float) -> None:
     world = scene()
     ada = actor(world, "ada")
     assert ([(item["kind"], item["about"]) for item in ada["thoughts"]], familiarity_of(ada, "bea"),
-            opinion_of(ada, "bea", world["time"])) == ([(kind, "bea")], familiarity, THOUGHTS[kind].opinion)
+            opinion_of(ada, "bea", world["time"])) == ([(kind, "bea") for kind in kinds], familiarity, opinion)
 
 
 def test_thoughts_are_forgotten_once_they_expire() -> None:

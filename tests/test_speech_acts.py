@@ -102,15 +102,23 @@ def test_a_repeated_apology_softens_only_once_per_grudge() -> None:
     assert opinions(world)[1] == pytest.approx(Q.opinion / 2)
 
 
-def test_tipsy_insult_may_end_in_a_quarrel() -> None:
+@pytest.mark.parametrize("beers, patience, opinion, quarrel", [
+    pytest.param(0, 0.5, 0.0, False, id="a-first-slight-only-stings"),
+    pytest.param(3, 0.0, 0.0, False, id="drink-and-temper-alone-start-no-quarrel"),
+    pytest.param(3, 0.0, -9.0, False, id="a-grudge-just-below-the-line"),
+    pytest.param(0, 0.5, -10.0, True, id="a-sober-insult-on-a-grudge-quarrels"),
+    pytest.param(3, 1.0, -40.0, True, id="a-patient-pair-with-a-deep-grudge-quarrels"),
+])
+def test_an_insult_ends_in_a_quarrel_only_on_someone_who_already_thinks_ill_of_the_speaker(
+        beers: int, patience: float, opinion: float, quarrel: bool) -> None:
     world = seated_talk()
     hated(world)
-    world["rules"].update(quarrel_per_beer=1.0, quarrel_max=1.0)
+    actor(world, "bea")["relations"]["ada"] = {"name": "Ada", "opinion": opinion, "familiarity": "acquaintance"}
     for item in world["actors"]:
-        item["visit"]["beers"], item["traits"]["patience"] = 3, 0.0
+        item["visit"]["beers"], item["traits"]["patience"] = beers, patience
     say(world, "insult", "You drunken sot.")
-    assert (scene_of(world), sorted(item["kind"] for item in actor(world, "bea")["thoughts"])) == (
-        None, ["insulted", "quarrel"])
+    assert (scene_of(world) is None, sorted(item["kind"] for item in actor(world, "bea")["thoughts"])) == (
+        quarrel, ["insulted", "quarrel"] if quarrel else ["insulted"])
 
 
 def test_introduction_makes_strangers_acquaintances_known_by_name() -> None:

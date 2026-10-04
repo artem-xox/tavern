@@ -40,13 +40,14 @@ def command(verb: str, target: str | None = None) -> dict[str, Any]:
 
 
 def quarrelsome() -> dict[str, Any]:
-    """Ada and Bea, seated, tipsy and impatient, talk; the first line is due at 5 s."""
+    """Ada and Bea, seated, tipsy, impatient and each thinking ill of the other, talk; the first line is due at 5 s."""
     world = create_world(hall(), 4)
-    world["rules"].update(quarrel_per_beer=1.0, quarrel_max=1.0)
     for actor_id, seat in (("ada", "west"), ("bea", "east")):
         assert start_action(world, actor_id, command("sit", seat))["accepted"]
         actor = next(item for item in world["actors"] if item["id"] == actor_id)
         actor["needs"]["social"], actor["visit"]["beers"], actor["traits"]["patience"] = 100.0, 3, 0.0
+        other = "bea" if actor_id == "ada" else "ada"
+        actor["relations"][other] = {"name": other.title(), "opinion": -40.0, "familiarity": "acquaintance"}
         actor["knowledge"]["objects"]["door"] = {**world["map"]["objects"][3], "last_seen": 0.0}
     assert start_action(world, "ada", command("talk", "bea"))["accepted"]
     world["conversations"][0]["next_turn_at"] = 5.0
@@ -54,9 +55,9 @@ def quarrelsome() -> dict[str, Any]:
 
 
 async def complaining(view: Mapping[str, Any], config: Mapping[str, Any]) -> dict[str, Any]:
-    """A fake turn writer: the speaker complains to the other, which ends in a quarrel."""
+    """A fake turn writer: the speaker insults the other, who thinks ill of them, which ends in a quarrel."""
     other = next(item["id"] for item in view["conversation"]["participants"] if item["id"] != view["speaker"]["id"])
-    return {"line": "This ale is piss.", "act": "complain", "addressee": other, "topic": "the ale"}
+    return {"line": "This ale is piss, and so are you.", "act": "insult", "addressee": other, "topic": "the ale"}
 
 
 def minding(asked: list[tuple[float, str, str]], clock: Any) -> Any:

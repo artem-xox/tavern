@@ -192,8 +192,8 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              family="company",
              what="start a conversation with {target}, who sits at their table or stands beside them",
              guidance="It eases the wish for company of both and lets them share where the beer, WC and darts "
-                      "are. After a few beers an impatient pair may quarrel instead, leaving both in a sour "
-                      "mood and thinking less of each other; someone they dislike is poor company. Right after "
+                      "are. Someone they dislike is poor company: an insult to a guest who already thinks ill of them "
+                      "ends in a quarrel, leaving both in a sour mood and thinking less of each other. Right after "
                       "a chat, with their wish for company satisfied, a quiet sip or a rest is more natural "
                       "than yet another chat."),
     Activity(verb="join_conversation", partner=True, joins=True, duration=8.0, on_arrival=_join_scene,

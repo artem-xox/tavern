@@ -304,14 +304,23 @@ def test_visit_keeps_count_of_time_and_beers() -> None:
     assert ada["visit"]["seconds"] == pytest.approx(world["time"])
 
 
-@pytest.mark.parametrize("beers, patience, outcome", [
-    pytest.param(0, 0.0, "conversation", id="sober-impatient-pair-stays-friendly"),
-    pytest.param(3, 0.0, "quarrel", id="tipsy-impatient-pair-quarrels"),
-    pytest.param(3, 1.0, "conversation", id="tipsy-patient-pair-stays-friendly"),
+def dislike_each_other(world: dict[str, Any], opinion: float) -> None:
+    """Ada and Bea each think this much of the other."""
+    for actor, other in (("ada", "bea"), ("bea", "ada")):
+        visitor(world, actor)["relations"][other] = {"name": other.title(), "opinion": opinion,
+                                                     "familiarity": "acquaintance"}
+
+
+@pytest.mark.parametrize("beers, patience, opinion, outcome", [
+    pytest.param(0, 0.0, 0.0, "conversation", id="sober-impatient-pair-stays-friendly"),
+    pytest.param(3, 0.0, 0.0, "conversation", id="tipsy-impatient-pair-stays-friendly"),
+    pytest.param(3, 1.0, -40.0, "conversation", id="tipsy-patient-pair-that-dislike-each-other-stays-civil"),
+    pytest.param(3, 0.0, -40.0, "quarrel", id="tipsy-impatient-pair-that-dislike-each-other-quarrels"),
 ])
-def test_ale_and_impatience_turn_talk_into_quarrels(beers: int, patience: float, outcome: str) -> None:
+def test_ale_and_impatience_turn_talk_into_quarrels_only_between_guests_who_dislike_each_other(
+        beers: int, patience: float, opinion: float, outcome: str) -> None:
     world = seated_inn()
-    world["rules"].update(quarrel_per_beer=1.0, quarrel_max=1.0)
+    dislike_each_other(world, opinion)
     for actor in world["actors"]:
         actor["visit"]["beers"] = beers
         actor["traits"]["patience"] = patience
@@ -322,7 +331,7 @@ def test_ale_and_impatience_turn_talk_into_quarrels(beers: int, patience: float,
 
 def test_quarrel_aggrieves_both_and_leaves_them_lonely() -> None:
     world = seated_inn()
-    world["rules"].update(quarrel_per_beer=1.0, quarrel_max=1.0)
+    dislike_each_other(world, -40.0)
     for actor in world["actors"]:
         actor["visit"]["beers"] = 3
         actor["traits"]["patience"] = 0.0
@@ -330,9 +339,9 @@ def test_quarrel_aggrieves_both_and_leaves_them_lonely() -> None:
     assert start_action(world, "ada", command("talk", "bea"))["accepted"]
     advance(world, 10)
     after = [actor["needs"]["social"] for actor in world["actors"]]
-    assert [len(actor["visit"]["grievances"]) for actor in world["actors"]] == [1, 1]
+    assert [[item["kind"] for item in actor["thoughts"] if item["kind"] == "quarrel"] for actor in world["actors"]] == [
+        ["quarrel"], ["quarrel"]]
     assert [later >= earlier for earlier, later in zip(before, after)] == [True, True]
-    assert visitor(world, "ada")["visit"]["grievances"][0].startswith("Quarreled with Bea")
 
 
 def watchable_inn() -> dict[str, Any]:

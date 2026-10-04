@@ -261,14 +261,17 @@ def test_friendly_acts_ease_everyones_wish_for_company(act: str, relieved: bool)
     assert [actor(world, name)["needs"]["social"] < 90 for name in ("ada", "bea", "cid")] == [relieved] * 3
 
 
-def test_complaint_from_a_tipsy_impatient_guest_ends_in_a_quarrel() -> None:
+@pytest.mark.parametrize("opinion", [
+    pytest.param(0.0, id="tipsy-and-impatient"),
+    pytest.param(-40.0, id="tipsy-impatient-and-disliked"),
+])
+def test_a_complaint_never_ends_in_a_quarrel(opinion: float) -> None:
     world = talking()
-    world["rules"].update(quarrel_per_beer=1.0, quarrel_max=1.0)
     for item in world["actors"]:
         item["visit"]["beers"], item["traits"]["patience"] = 3, 0.0
+    actor(world, "bea")["relations"]["ada"] = {"name": "Ada", "opinion": opinion, "familiarity": "acquaintance"}
     spoken(world, "complain", "This ale is piss.")
-    assert (world["conversations"], [len(actor(world, name)["visit"]["grievances"]) for name in ("ada", "bea")]) == (
-        [], [1, 1])
+    assert (len(world["conversations"]), [actor(world, name)["thoughts"] for name in ("ada", "bea")]) == (1, [[], []])
 
 
 def test_saying_goodbye_leaves_a_bigger_scene_running() -> None:
