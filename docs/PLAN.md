@@ -11,21 +11,23 @@ briefing. See [Stage 0](stages/0_DEMO.md).
 
 ## 1. A believable evening — in progress
 
-Four to six guests from character cards spend one evening in the hall. They queue,
-react to noise, talk through Claude Haiku 4.5 with speech acts, pass on news, get drunk,
-and sometimes shove or fight. The player only sets up the evening and watches.
+Four to six guests from character cards spend one evening in the hall. A barkeep works
+behind the bar: he pours every mug and chats with whoever leans on the counter. Guests
+queue, react to noise, talk through Claude Haiku 4.5 with speech acts, pass on news, get
+drunk, and sometimes shove or fight. The player only sets up the evening and watches.
 See [Stage 1 tasks](stages/1_EVENING.md).
 
 **Status (2026-10-04):** M1–M3, the refactor R0–R8, D13 (Jev and Claude health markers), U1
-(no labels in the hall), E18b (conversation memory) and E19 (facts and retelling) are done. Next: E20 of M4 (news and conflict).
+(no labels in the hall), E18b (conversation memory) and E19 (facts and retelling) are done. Next:
+the barkeep (B0–B6), then E20 of M4 (news and conflict).
 
 **Done when:** recorded live evenings meet the Stage 1 metrics, an observer can retell
 a story from at least one of them, and its chronicle cites only logged events.
 
 ## 2. Staff and commands
 
-Add a barkeep and a bouncer whose actions use the same activity system, and let the
-player give them commands: serve, refill, calm someone down, throw someone out.
+The barkeep of Stage 1 (B0–B6) takes the player's commands, and a bouncer joins him on
+the same activity system: serve, refill, calm someone down, throw someone out.
 
 **Done when:** a player command changes how an evening's incident ends.
 
