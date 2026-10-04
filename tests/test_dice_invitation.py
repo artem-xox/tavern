@@ -11,6 +11,7 @@ import pytest
 
 from tavern.adapters.persistence import load_world, save_world
 from tavern.evening.lockstep import Pace, run_evening
+from tavern.evening.metrics import dice_metrics
 from tavern.evening.scenario import open_evening, parse_scenario
 from tavern.hall.world import create_world, start_action
 from tavern.mind.agents import Evaluators
@@ -233,8 +234,10 @@ def test_a_game_invited_to_in_the_first_evening_reaches_a_result(seed: int) -> N
     scenario = parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()), cards)
     world = open_evening(room, scenario, seed)
     config = {"model": "jev-latest", "timeout": 1.0, "temperature": 0.25, "typesafe_api_key": None}
-    asyncio.run(run_evening(world, config, Random(seed), Evaluators(never_asked, never_asked),
-                            Pace(step=0.25, model_latency=1.0, time_limit=1200.0), dicing_writer))
-    won = [event["message"] for event in world["events"] if event["type"] == "dice_won"]
-    started = [event for event in world["events"] if event["type"] == "dice_started"]
+    evening = asyncio.run(run_evening(world, config, Random(seed), Evaluators(never_asked, never_asked),
+                                      Pace(step=0.25, model_latency=1.0, time_limit=1200.0), dicing_writer))
+    won = [event["message"] for event in evening.events if event["type"] == "dice_won"]
+    started = [event for event in evening.events if event["type"] == "dice_started"]
     assert started and won, "no game of dice was played"
+    counts = dice_metrics(evening.events)
+    assert (counts["games"], sum(counts["wins"].values())) == (len(won), len(won))

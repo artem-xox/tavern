@@ -78,7 +78,8 @@ INTENTION_RULES = IntentionRules(interval=180.0, min_gap=3.0)
 
 # Remembered events that make a guest take stock, by trigger kind.
 SALIENT_EVENTS: Mapping[str, str] = MappingProxyType({
-    "interrupted": "interrupted", "alerted": "alerted", "conversation": "scene_end", "left_conversation": "scene_end"})
+    "interrupted": "interrupted", "alerted": "alerted", "conversation": "scene_end", "left_conversation": "scene_end",
+    "dice_won": "dice", "dice_lost": "dice"})
 # Thought kinds that make a guest take stock; `insult` counts once a speech act gives that thought.
 SALIENT_THOUGHTS = ("quarrel", "seat_taken", "insult")
 _LONGEST = 400
