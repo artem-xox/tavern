@@ -120,7 +120,7 @@ def _concrete_candidates(observation: Mapping[str, Any]) -> list[Action]:
         if item["kind"] == "tap" and "social" in actor["needs"] and actor["needs"]["thirst"] < 35:
             continue
         actions.extend(_line_options(observation, item, _action(verbs[item["kind"]], item["id"])))
-    return [*actions, *_seat_wish(observation, objects), *_views(observation, objects),
+    return [*actions, *_seat_wish(observation, objects), *_views(observation, objects), *_games(objects),
             *talks, _action("inspect"), _action("wait")]
 
 
@@ -159,6 +159,12 @@ def _views(observation: Mapping[str, Any], objects: Sequence[Mapping[str, Any]])
     nearest = min((item for item in free if item["kind"] == "window"), default=None,
                   key=lambda item: abs(item["x"] - actor["x"]) + abs(item["y"] - actor["y"]))
     return [_action("watch", item["id"]) for item in free if item["kind"] == "fireplace" or item is nearest]
+
+
+def _games(objects: Sequence[Mapping[str, Any]]) -> list[Action]:
+    # A game under way, as the visitor last saw it (two players seated), draws onlookers to its table.
+    return [_action("watch_dice", item["id"]) for item in sorted(objects, key=lambda item: item["id"])
+            if item["kind"] == "dice_table" and len((item.get("game") or {}).get("players", [])) == 2]
 
 
 def _free_seats(observation: Mapping[str, Any], objects: Sequence[Mapping[str, Any]]) -> list[Mapping[str, Any]]:

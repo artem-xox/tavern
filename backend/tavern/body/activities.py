@@ -186,6 +186,14 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              what="sit at the dice table {target} for a game of dice they agreed to",
              guidance="A seat at a game they agreed to: it eases boredom and the wish for company, and lasts until "
                       "the dice are thrown."),
+    # A crowd round a game under way: it ends with the game (or at once when there is none).
+    Activity(verb="watch_dice", target_kinds=("dice_table",), shared_target=True, duration=25.0, game=True,
+             leaves_seat=True, needs=MappingProxyType({"boredom": -45}), label="Watch the dice",
+             status="watching dice", interruptible=True, doing="watching a game of dice",
+             done="watched a game of dice", family="pastime",
+             what="walk over to the dice table {target} and watch the game being played there",
+             guidance="A game of dice draws a crowd: watching eases boredom, and curious guests love to see who "
+                      "wins. It means leaving their seat until the game ends."),
     Activity(verb="use_toilet", target_kinds=("toilet",), duration=2.0, leaves_seat=True,
              needs=MappingProxyType({"bladder": -65}), label="Use the toilet", status="WC", pose="Bathroom",
              doing="heading to the WC", done="used the WC",

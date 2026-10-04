@@ -21,6 +21,7 @@ from tavern.social.names import called
 from tavern.social.thoughts import think
 
 PLAY = "play_dice"
+WATCH = "watch_dice"
 _GAME_FIELDS = {"players", "since", "ends_at"}
 
 
@@ -134,19 +135,31 @@ def settle_games(world: World) -> Settled:
 
 
 def _settle(world: World, table: dict[str, Any], done: list[Actor], released: list[Actor]) -> None:
+    watchers = _watching(world, table)
+    thrown = _play(world, table, done, released)
+    if thrown is not None:
+        for actor in watchers:
+            record_event(world, actor, "dice_watched", f"{actor['name']} watched {thrown[0]['name']} beat {thrown[1]['name']} at dice")
+        done.extend(watchers)
+    elif table["game"] is None or table["game"]["ends_at"] is None:
+        released.extend(watchers)  # No game under way: a game broken off, or one that never began or is long over.
+
+
+def _play(world: World, table: dict[str, Any], done: list[Actor], released: list[Actor]) -> tuple[Actor, Actor] | None:
+    # Returns the winner and the loser when the result falls this tick.
     seated = _seated(world, table)
     game = table["game"]
     if game is not None and not set(game["players"]) <= {item["id"] for item in seated}:
         released.extend(_break_off(world, table, seated))
-        return
+        return None
     if game is None and not seated:
-        return
+        return None
     game = table["game"] = game or {"players": [], "since": world["time"], "ends_at": None}
     game["players"] += [item["id"] for item in seated if item["id"] not in game["players"]]
     if len(game["players"]) > 2:
         raise ValueError(f"{len(game['players'])} guests sit at {table['name']}, which has two chairs")
     players = [next(item for item in seated if item["id"] == identifier) for identifier in game["players"]]
-    _run_clock(world, table, players, done, released)
+    return _run_clock(world, table, players, done, released)
 
 
 def _break_off(world: World, table: dict[str, Any], seated: list[Actor]) -> list[Actor]:
@@ -159,7 +172,7 @@ def _break_off(world: World, table: dict[str, Any], seated: list[Actor]) -> list
 
 
 def _run_clock(world: World, table: dict[str, Any], players: list[Actor], done: list[Actor],
-               released: list[Actor]) -> None:
+               released: list[Actor]) -> tuple[Actor, Actor] | None:
     rules, now, game = world["rules"]["dice"], world["time"], table["game"]
     if len(players) == 2 and game["ends_at"] is None:
         game["ends_at"] = now + rules["game_seconds"]
@@ -170,9 +183,11 @@ def _run_clock(world: World, table: dict[str, Any], players: list[Actor], done: 
         released.append(players[0])
         table["game"] = None
     elif game["ends_at"] is not None and now >= game["ends_at"]:
-        _throw(world, table, players[0], players[1])
+        thrown = _throw(world, table, players[0], players[1])
         done.extend(players)
         table["game"] = None
+        return thrown
+    return None
 
 
 def _seated(world: Mapping[str, Any], table: Mapping[str, Any]) -> list[Actor]:
@@ -183,7 +198,13 @@ def _seated(world: Mapping[str, Any], table: Mapping[str, Any]) -> list[Actor]:
             and item["action"]["target_id"] in chairs and item["status"] == "interacting"]
 
 
-def _throw(world: World, table: Mapping[str, Any], first: Actor, second: Actor) -> None:
+def _watching(world: Mapping[str, Any], table: Mapping[str, Any]) -> list[Actor]:
+    # Guests who have reached the table to watch, in world order.
+    return [item for item in world["actors"] if item["action"] and item["action"]["verb"] == WATCH
+            and item["action"]["target_id"] == table["id"] and item["status"] == "interacting"]
+
+
+def _throw(world: World, table: Mapping[str, Any], first: Actor, second: Actor) -> tuple[Actor, Actor]:
     champion = winner(world, table["id"], first, second)
     loser = second if champion is first else first
     message = f"{champion['name']} beat {loser['name']} at dice"
@@ -191,6 +212,7 @@ def _throw(world: World, table: Mapping[str, Any], first: Actor, second: Actor) 
     record_event(world, loser, "dice_lost", message)
     think(champion, "won_at_dice", world["time"], f"Beat {called(champion, loser)} at dice", message, about=loser)
     think(loser, "lost_at_dice", world["time"], f"Lost to {called(loser, champion)} at dice", message, about=champion)
+    return champion, loser
 
 
 def check_saved_games(world: Mapping[str, Any]) -> None:

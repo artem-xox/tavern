@@ -1010,16 +1010,15 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
     invitation draw), so seed 5 is byte-identical to `main`'s and games appear in live evenings, where the
     nudge asks Haiku to propose them. If G5's live evenings show none, raise `scripted.INVITES` or the
     nudge before judging the feature.
-- [ ] **G4 — Onlookers.** Guests who see a game may gather round to watch it.
-  - *Table:* `Activity.shared: bool = False` ("many guests use the target at once, each from an
-    interaction spot of their own; it is never reserved"): `actions._target_error` and
-    `lifecycle.activate` skip the reservation for it, and `routes.plan_route` already keeps the
-    spots apart. `watch_dice`: `target_kinds=("dice_table",)`, `shared=True`, `game=True`,
-    `interruptible=True`, `duration=25.0` (nominal), `needs={"boredom": -45}`, no pose
-    (standing), `label="Watch the dice"`, `status="watching dice"`,
+- [x] **G4 — Onlookers.** Guests who see a game may gather round to watch it.
+  - *Table:* `Activity.shared_target` already exists (the door-capacity change, D02: "several
+    visitors may use the target at once, so it is never reserved; each takes a spot of their own"),
+    so there is no new flag. `watch_dice`: `target_kinds=("dice_table",)`, `shared_target=True`,
+    `game=True`, `interruptible=True`, `duration=25.0` (nominal), `leaves_seat=True`,
+    `needs={"boredom": -45}`, no pose (standing), `label="Watch the dice"`, `status="watching dice"`,
     `doing="watching a game of dice"`, `done="watched a game of dice"`, `family="pastime"`.
   - *Game:* `settle_games` counts the guests watching a table as its onlookers. They are `done`
-    when the result falls, and each remembers `dice_watched` ("Saw Rurik beat Edda at dice").
+    when the result falls, and each remembers `dice_watched` ("Cid watched Rurik beat Edda at dice").
     An onlooker at a table with no game under way is released.
   - *Choice:* the candidate rule in `agents.py` offers `watch_dice` on every known dice table
     whose remembered `game` has two players (never after closing). Local utility in
@@ -1035,6 +1034,22 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
     onlooker who arrives after the result is released.
   - *Check:* `make check`, the offline evening, and `make run` with a forced game and a guest
     forced to watch: screenshot.
+  - *Result (2026-10-04):* `watch_dice` joins the activity table; `dice.settle_games` finds the guests who
+    have reached the table (`_watching`), finishes them when the result falls (each logs and remembers
+    `dice_watched`), and lets them go when no game is under way (broken off, never begun, or long over).
+    The candidate rule (`agents._games`) offers it for a known dice table whose remembered `game` has two
+    players, `local_policy` scores it `0.1 + 0.5·boredom + 0.25·curiosity − 0.3·(worst of thirst, fatigue,
+    bladder)`, and `options._watch_dice` says "walk … to the dice table and watch Ada and the stout woman
+    with a pipe play dice", the players as the watcher calls them. The planned `Activity.shared` was not
+    needed: `shared_target` does it. 16 tests in `tests/test_dice_onlookers.py` (shared helpers in
+    `tests/dice_hall.py`): offered only while two play (not for a lone player, a finished game or a
+    closed inn), naming, the score rising with boredom and curiosity and falling with a pressing need,
+    four onlookers on four spots and a fifth refused, nobody reserving the table, onlookers finishing with
+    the game and remembering it, a late arrival let go, a broken-off game letting its onlookers go
+    without a result, and a save made mid-watch. `make check` (1,854 tests) passes and the offline
+    evening is byte-identical to `main`'s. In the browser: Edda and Toren played, Rurik was sent to watch
+    and stood at the table's west spot; at the result the feed shows all three "completed", and Rurik's
+    boredom fell to 1.
 - [ ] **G5 — Numbers and the story.**
   - *Metrics:* `metrics.json` gets `dice`: `{games, abandoned, onlookers, wins: {actor_id: n}}`,
     counted from the `dice_won`, `dice_abandoned` and `dice_watched` events.
