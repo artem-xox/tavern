@@ -13,6 +13,7 @@ from tavern.hall.memory import record_event
 from tavern.hall.room import find_object, impassable_cells
 from tavern.hall.routes import gives_way, occupied_cells, replan, reserved_spots
 from tavern.hall.sight import refresh_knowledge, visible_cells
+from tavern.hall.staff import off_limits
 from tavern.hall.state import Actor, World, find_actor
 from tavern.hall.validation import saved_cell
 from tavern.social.scenes import conversation_of, leave_conversation
@@ -188,7 +189,8 @@ def _yield_idle_occupant(world: World, actor: Actor, next_cell: tuple[int, int])
     occupant = next((item for item in world["actors"] if (item["x"], item["y"]) == next_cell), None)
     if occupant is None or occupant["status"] != "idle" or occupant.get("seat_id"):
         return
-    blocked = set(impassable_cells(world["map"]) + occupied_cells(world, occupant) + reserved_spots(world, occupant["id"]))
+    blocked = set(impassable_cells(world["map"]) + off_limits(world["map"], occupant)
+                  + occupied_cells(world, occupant) + reserved_spots(world, occupant["id"]))
     x, y = next_cell
     cells = ((x + 1, y), (x, y + 1), (x - 1, y), (x, y - 1))
     free = next((cell for cell in cells if cell not in blocked and

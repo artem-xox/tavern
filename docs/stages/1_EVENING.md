@@ -1173,13 +1173,14 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
   B3's timer condition may meet G2's `Activity.game` (see B3). Each block's save
   bump takes the next free `schema_version`. The dice table at (10, 8) is far from the bar.
 
-- [ ] **B0 — One way to finish an action (refactor, no behavior change).** Take
+- [x] **B0 — One way to finish an action (refactor, no behavior change).** Take
   `lifecycle.complete_action(world, actor)` out of `_interact`: apply the effect and the needs, log
   `action_completed`, clear the action, look. Skip B0 if `complete_action` already exists.
+  *Skipped (2026-10-04): G2 built `complete_action` already.*
   - *Check:* `make check`. First record a fresh offline baseline on `main` (the hall's behavior
     has changed since R0). Then show that the offline evening (seed 5) is byte-identical, with the
     commands under "Before M4 — Refactor".
-- [ ] **B1 — Staff cells behind the bar.** Floor only; nobody works there yet.
+- [x] **B1 — Staff cells behind the bar.** Floor only; nobody works there yet.
   - *Module `hall/staff.py`* (add it to the `hall/` list in AGENTS.md): `check_staff_cells(world_map)`,
     called by `room.create_map`, and `off_limits(world_map, actor) -> list[tuple[int, int]]`. In B1
     it returns every bar's staff cells; B2 adds the branch for staff.
@@ -1207,6 +1208,19 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
   - *Check:* `make check` and `make build`; `make run` and a screenshot (duckboards behind the bar,
     guests keep out); the offline evening (seed 5) against a fresh run on `main` (6.1 s stuck
     since the D02 fix).
+  - *Built (2026-10-04):* `hall/staff.py` holds `check_staff_cells` and `off_limits(world_map, actor)`.
+    `world.create_world` calls the check right after `create_map`, not `create_map` itself: the check reads
+    `room` (cells, spots, `line_approach`), so `room` importing it would be a cycle. Saves are checked too,
+    since `persistence.check_saved_geometry` builds a world. Messages name the bar and the rule (a non-bar,
+    missing or unknown `staff_facing`, not a nonempty list of cells, not distinct or inside the hall, not
+    free floor, not one stretch, on a spot, a queue spot or a line's way in, no cell next to a tap, or cutting
+    a place off). `routes.plan_route` and `replan` (and with them the inspection plan),
+    `lifecycle._yield_idle_occupant` and `controls._validate_block` ("Cells behind the bar cannot be
+    changed") use `off_limits`. The repository bar has `staff_cells` (2, 1)…(5, 1) facing south; the client
+    types gained both fields and `furniture.drawStaffFloor` lays duckboards on the cells (`scene.ts` stays
+    at 371 lines, under 400, so no split was needed). 25 tests in `tests/test_staff.py`, including a 7×3
+    hall whose one corridor the cells would cut. The offline evening (seed 5) is byte-identical to `main`'s,
+    as it should be for floor alone; in the browser the duckboards show behind the bar.
 - [ ] **B2 — The barkeep on duty.** He stands behind the bar; guests still pour their own.
   - *Scenario:* `first_evening.json` gets
     `"staff": [{"id": "hob", "name": "Hob", "color": "#c98f4a", "sprite": "bartender", "card": "hob", "post": "bar"}]`.

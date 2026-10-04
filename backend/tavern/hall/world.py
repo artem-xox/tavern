@@ -20,6 +20,7 @@ from tavern.hall.room import create_map
 from tavern.hall.routes import plan_route
 from tavern.hall.rules import default_rules
 from tavern.hall.sight import look_around, people_in_sight, visible_cells
+from tavern.hall.staff import check_staff_cells
 from tavern.hall.state import World, find_actor
 from tavern.hall.validation import number, unique_ids
 from tavern.social.dice import settle_games
@@ -46,6 +47,7 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> World:
         ValueError: Layout, IDs, resources, arrival ranges, or actor values are invalid.
     """
     world_map = create_map(map_data)
+    check_staff_cells(world_map)
     unique_ids(map_data.get("actors", []), "actor")
     ranges, listed = arrival_ranges(map_data), map_data.get("actors", [])
     actors = [create_actor(item, world_map)
