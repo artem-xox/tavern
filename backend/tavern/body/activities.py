@@ -34,6 +34,8 @@ class Activity:
             second the action within it, so requests stay small as verbs and guests grow.
         requires_item: Inventory item the visitor must hold to start.
         empty_target: Refusal when the target has no stock left, or None when stock does not matter.
+        shared_target: Whether several visitors may use the target at once, so it is never reserved;
+            each takes a spot of their own, and the spots are the target's capacity.
         leaves_seat: Whether starting it gives up the visitor's seat even without walking away.
         needs: Changes to needs on completion, clamped to 0–100.
         effect: Further consequences on completion.
@@ -59,6 +61,7 @@ class Activity:
     joins: bool = False
     requires_item: str | None = None
     empty_target: str | None = None
+    shared_target: bool = False
     leaves_seat: bool = False
     needs: Mapping[str, float] = field(default_factory=lambda: MappingProxyType({}))
     effect: Effect | None = None
@@ -188,7 +191,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              family="idling",
              what="wait a moment and do nothing",
              guidance="Idling where they stand is rarely the most natural thing."),
-    Activity(verb="leave", target_kinds=("door",), duration=1.0, effect=_go_home, label="Go home",
+    Activity(verb="leave", target_kinds=("door",), shared_target=True, duration=1.0, effect=_go_home, label="Go home",
              status="going home", doing="heading for the door", done="left",
              family="going_home",
              what="leave the inn for the night through {target}, ending their visit for good",
