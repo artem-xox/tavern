@@ -280,11 +280,26 @@ def _interact(world: World, actor: Actor, elapsed: float) -> None:
     # A part in a conversation lasts as long as the scene does (see `finish_parts`).
     action = actor["action"]
     if action is not None and actor["_remaining"] <= 0 and not ACTIVITIES[action["verb"]].partner:
-        verb = action["verb"]
-        _apply_effect(world, actor)
-        record_event(world, actor, "action_completed", f"{actor['name']} completed {verb}")
-        clear_action(world, actor)
-        look(world, actor)
+        complete_action(world, actor)
+
+
+def complete_action(world: World, actor: Actor) -> None:
+    """Finish a visitor's action: apply its effect and needs, log it, and let them stand idle.
+
+    Args:
+        world: Current world.
+        actor: Visitor with an action, updated in place.
+
+    Raises:
+        ValueError: The visitor has no action to finish.
+    """
+    action = actor["action"]
+    if action is None:
+        raise ValueError(f"{actor['name']} has no action to finish")
+    _apply_effect(world, actor)
+    record_event(world, actor, "action_completed", f"{actor['name']} completed {action['verb']}")
+    clear_action(world, actor)
+    look(world, actor)
 
 
 def step_actor(world: World, actor: Actor, elapsed: float) -> None:
