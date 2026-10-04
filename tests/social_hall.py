@@ -104,7 +104,7 @@ def by_the_fire() -> dict[str, Any]:
 
 
 def say(world: dict[str, Any], act: str, line: str = "Well now.", addressee: str | None = "other",
-        invitation: str | None = None) -> str:
+        invitation: str | None = None, fact_id: str | None = None) -> str:
     """Let whoever speaks next in Ada's scene say a line with an act, and speak it.
 
     Args:
@@ -113,6 +113,7 @@ def say(world: dict[str, Any], act: str, line: str = "Well now.", addressee: str
         line: Words.
         addressee: Whom it addresses; "other" means the participant after the speaker, None everyone.
         invitation: Invitation kind of an `invite`.
+        fact_id: News a `share_news` tells.
 
     Returns:
         The speaker's ID.
@@ -125,6 +126,8 @@ def say(world: dict[str, Any], act: str, line: str = "Well now.", addressee: str
     result = {"line": line, "act": act, "addressee": target, "topic": "the road"}
     if invitation is not None:
         result["invitation"] = invitation
+    if fact_id is not None:
+        result["fact_id"] = fact_id
     deliver_turn(world, scene_id, turn, lambda: result)
     for _ in range(100):
         if len(scene["turns"]) > turn:

@@ -8,6 +8,7 @@ from typing import Any, TypedDict
 
 from tavern.evening.lockstep import Evening, Spell
 from tavern.evening.recording import KindCost, Record, Tariff, cost_by_kind
+from tavern.social.facts import inspected
 
 
 class StuckTime(TypedDict):
@@ -200,6 +201,41 @@ def evening_metrics(evening: Evening, calls: Sequence[Record], input_usd_per_mil
             "errors": sum(item["error"] is not None for item in evening.choices),
             "cost": cost_by_kind(calls, input_usd_per_million, tariffs),
             "stuck": stuck_time(evening.spells, evening.guests, stuck_threshold)}
+
+
+class NewsReach(TypedDict):
+    """How far one news item travelled: the names of its `holders` (first holders included), the most
+    `max_hops` any copy is from the original holders, and the path (see `facts.inspected`) of the first
+    copy that arrived at two hops, or None."""
+
+    holders: list[str]
+    max_hops: int
+    first_two_hop_path: list[str] | None
+
+
+def news_metrics(world: Mapping[str, Any]) -> dict[str, NewsReach]:
+    """Measure how each news item of the evening spread, from the world as it ended.
+
+    Args:
+        world: Final world of an evening; its news and every guest's copies, the departed included.
+
+    Returns:
+        Per news ID, in the scenario's order, its reach. Holders are listed present guests first, then
+        the departed; of several copies that reached two hops, the one heard earliest wins, and a tie
+        goes to the earlier in that order. An item nobody holds has no holders and zero hops.
+    """
+    guests = [*world["actors"], *world["departed"]]
+    shown = {guest["id"]: {copy["id"]: copy for copy in inspected(world, guest)} for guest in guests}
+    reach: dict[str, NewsReach] = {}
+    for news in world["news"]:
+        holders = [guest for guest in guests if news["id"] in shown[guest["id"]]]
+        two_hops = sorted((guest for guest in holders if shown[guest["id"]][news["id"]]["hops"] == 2),
+                          key=lambda guest: guest["knowledge"]["facts"][news["id"]]["heard_at"])
+        reach[news["id"]] = {
+            "holders": [guest["name"] for guest in holders],
+            "max_hops": max((shown[guest["id"]][news["id"]]["hops"] for guest in holders), default=0),
+            "first_two_hop_path": shown[two_hops[0]["id"]][news["id"]]["chain"] if two_hops else None}
+    return reach
 
 
 class WriterStats(TypedDict):

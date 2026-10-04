@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from tavern.body.expression import Emote, Gaze
     from tavern.body.hearing import Stimulus
     from tavern.mind.intentions import Intention
+    from tavern.social.facts import Fact, News
     from tavern.social.heard import Heard
     from tavern.social.invitations import Errand
     from tavern.evening.scenario import ExpectedGuest
@@ -36,10 +37,12 @@ class Visit(TypedDict):
 
 
 class Knowledge(TypedDict):
-    """What a visitor has seen: the places they remember (`objects`, by ID) and the cells they know."""
+    """What a visitor knows: the places they remember (`objects`, by ID), the cells they know, and their
+    copies of the news (`facts`, by news ID)."""
 
     objects: dict[str, dict[str, Any]]
     cells: list[list[int]]
+    facts: "dict[str, Fact]"
 
 
 class Decision(TypedDict):
@@ -132,6 +135,14 @@ class ConversationRules(TypedDict):
     recall_lines: int
 
 
+class NewsRules(TypedDict):
+    """How news is believed (see `tavern.social.facts`): `trust` by the listener's familiarity with the
+    teller, and the `overheard` share of belief kept by a guest who was not in the conversation."""
+
+    trust: dict[str, float]
+    overheard: float
+
+
 class Rules(TypedDict):
     """The tunable rules of the world, kept in every save."""
 
@@ -149,6 +160,7 @@ class Rules(TypedDict):
     long_wait: float
     drunkenness: DrunkennessRules
     conversation: ConversationRules
+    news: NewsRules
 
 
 class HallMap(TypedDict):
@@ -181,6 +193,7 @@ class World(TypedDict):
     conversations: "list[Conversation]"
     next_conversation_id: int
     invitations: "list[Errand]"
+    news: "list[News]"
     rules: Rules
 
 

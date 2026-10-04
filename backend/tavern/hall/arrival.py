@@ -11,6 +11,7 @@ from tavern.hall.routes import reserved_spots
 from tavern.hall.sight import look_around
 from tavern.hall.state import Actor, World
 from tavern.hall.validation import number, position
+from tavern.social.facts import starting_facts
 from tavern.social.thoughts import seed_relations
 
 
@@ -45,7 +46,7 @@ def create_actor(data: Mapping[str, Any], world_map: Mapping[str, Any]) -> Actor
                 visit={"seconds": 0.0, "beers": 0, "grievances": []}, thoughts=[],
                 relations=_relations(data["id"], data.get("name", data["id"]), data.get("ties", [])),
                 drunkenness=0.0,
-                knowledge={"objects": {}, "cells": []}, memory=[], heard=[],
+                knowledge={"objects": {}, "cells": [], "facts": {}}, memory=[], heard=[],
                 decision={"source": "local", "scores": {}, "error": None},
                 facing=None, gaze=None, emote=None, interrupted_at=None, intention=None,
                 _move_elapsed=0.0, _remaining=0.0, _blocked_for=0.0, _spot=None)
@@ -112,6 +113,7 @@ def admit_arrivals(world: World) -> None:
             return
         guest = world["expected"].pop(0)
         actor = create_actor({**guest, "x": cell[0], "y": cell[1]}, world["map"])
+        actor["knowledge"]["facts"] = starting_facts(world["news"], actor["id"], world["time"])
         world["actors"].append(actor)
         record_event(world, actor, "arrival", f"{actor['name']} came in")
         look_around(world, actor)

@@ -62,6 +62,11 @@ goodbye in the words, briefly and naturally.
 - Complain when the speaker has something real to grumble about: their mood, a grievance, a person they \
 dislike, the ale, the noise, the cold, the line at the tap. Drink and impatience make complaints likelier.
 - Joke when the speaker's temperament allows it and the mood is not foul. Not everyone is funny.
+- Share news only when the speaker carries some (the list "News the speaker carries"), only an item from that \
+list, and name it in fact_id. Retell it as the speaker would, from their own version and in their own words; it \
+may be shorter or blunter, and coloured by how sure the speaker is, but it never adds facts, names, numbers or \
+causes that the version does not hold. With no news, talk about the speaker, the road or the room instead, and \
+never pretend to have heard something.
 - Otherwise make small talk that answers or builds on the previous line.
 - Do not repeat the act and content of the speaker's own previous line; move the conversation along."""
 
@@ -75,7 +80,9 @@ addressed to everyone in the conversation. Use only ids from the "Present" list,
 id. Answering a question goes to whoever asked it. A greeting to a newcomer goes to the newcomer.
 - topic: a few words naming what the conversation is about after this line, such as "the snow on the pass", \
 "Bren's war stories" or "the price of salt". Keep the current topic unless the line changes the subject. At \
-most about six words, no full sentences."""
+most about six words, no full sentences.
+- invitation: for an invite, the invitation kind offered; otherwise null.
+- fact_id: for share_news, the id of the news item told, one from the speaker's own list; otherwise null."""
 
 _STYLE = """STYLE RULES
 
@@ -104,7 +111,8 @@ a drunk one may drop a hint, never a confession.
 names for people who are not there.
 10. Stay inside the world. No modern words or ideas (okay, guys, stress, weekend, minutes on a clock, \
 technology). No meta talk about games, prompts, players or acts. No facts about the world that contradict \
-these notes. Do not invent dramatic events in the hall; small personal news from the road is fine.
+these notes. Do not invent dramatic events in the hall, and do not invent news: the only news that exists is on the speaker's \
+list.
 11. Variety. Do not reuse the exact wording of earlier lines in the conversation. Do not start every line with \
 the same word. Avoid stock phrases such as "Well met" or "Aye, indeed" more than once in a conversation.
 12. Plain modern English with a light period flavour. Avoid thee, thou, forsooth and other mock-archaic \
@@ -113,7 +121,10 @@ words; contractions are fine and natural.
 fishing for buyers or a veteran looking for an old comrade, but the line must still fit the moment.
 14. Memory. "Earlier tonight" is what you already said and heard in other conversations. Do not greet or \
 introduce yourself again to someone you have talked with; pick up the thread or bring something new instead of \
-repeating a subject."""
+repeating a subject.
+15. Retelling. News passes from mouth to mouth and changes a little each time. Say the speaker's version in \
+their own words, shorter, blunter or hedged as their confidence suggests, without copying it word for word and \
+without knowing more than their version says."""
 
 _EXAMPLES = """EXAMPLES
 
@@ -256,7 +267,24 @@ Good: {"line": "You again, boy. Did that wheel ever get mended?", "act": "small_
 Bad: {"line": "Evening, stranger! Allow me to introduce myself, I am Bren.", "act": "greet", \
 "addressee": "toren", "topic": "introductions"}
 Why bad: they already talked, so Bren greets and introduces himself again as if they had never met, instead of \
-picking up the thread."""
+picking up the thread.
+
+Example 21. Calder, a post rider, carries the news "salt_toll", which he heard from Rurik as: "They doubled the \
+salt toll at the gate. Carters are turning back." He is fairly sure of it, and tells Brida, who is at the table.
+Good: {"line": "Salt will cost you more, Brida. The gate toll's doubled, Rurik says, and carters turn back.", \
+"act": "share_news", "addressee": "brida", "topic": "the salt toll", "fact_id": "salt_toll"}
+Bad: {"line": "The margrave doubled the salt toll to four pennies a sack because his purse is empty.", \
+"act": "share_news", "addressee": "brida", "topic": "the salt toll", "fact_id": "salt_toll"}
+Why bad: the margrave, the four pennies and the empty purse are not in Calder's version; a retelling may trim \
+and colour the news but never adds to it.
+
+Example 22. Toren has no news on his list. He talks with Edda, who just asked what is new.
+Good: {"line": "Nothing worth the telling. My mule sulked all the way up.", "act": "small_talk", \
+"addressee": "edda", "topic": "Toren's mule", "fact_id": null}
+Bad: {"line": "Haven't you heard? The fort burned down last night.", "act": "share_news", "addressee": "edda", \
+"topic": "the fort", "fact_id": "fort_fire"}
+Why bad: Toren holds no such news, so "fort_fire" is not on his list and the story is invented. Without news, \
+talk about yourself, the road or the room."""
 
 
 def shared_prefix(acts: Mapping[str, str]) -> str:
@@ -294,5 +322,7 @@ def turn_schema(acts: Mapping[str, str], invitations: tuple[str, ...]) -> dict[s
                       "description": "ID of the one other person present addressed, or null for everyone."},
         "topic": {"type": "string", "description": "What the conversation is about now, in a few words."},
         "invitation": {"anyOf": [{"type": "string", "enum": list(invitations)}, {"type": "null"}],
-                       "description": "For an invite, the invitation offered; otherwise null."}},
-        "required": ["line", "act", "addressee", "topic", "invitation"], "additionalProperties": False}
+                       "description": "For an invite, the invitation offered; otherwise null."},
+        "fact_id": {"anyOf": [{"type": "string"}, {"type": "null"}],
+                    "description": "For share_news, the id of the news told, one of yours; otherwise null."}},
+        "required": ["line", "act", "addressee", "topic", "invitation", "fact_id"], "additionalProperties": False}

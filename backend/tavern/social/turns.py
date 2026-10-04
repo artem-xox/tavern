@@ -18,6 +18,7 @@ from tavern.mind.feelings import feelings
 from tavern.mind.portrait import portrait
 from tavern.mind.scripted import scripted_turn
 from tavern.social.conversation import ACTS, offered_acts
+from tavern.social.facts import carried
 from tavern.social.heard import earlier_lines, hear_line
 from tavern.social.invitations import offered_kinds
 from tavern.social.names import called, knows_name, looks
@@ -29,13 +30,15 @@ from tavern.social.thoughts import active_thoughts, familiarity_of, opinion_of
 class TurnResult(TypedDict):
     """A written line: the words, the speech act (one of `conversation.ACTS`), whom it addresses
     (another participant, or None for everyone), and the topic the scene moves on to. An
-    `invite` also names its `invitation` kind (one of the view's `invitations`)."""
+    `invite` also names its `invitation` kind (one of the view's `invitations`), and a `share_news` the
+    `fact_id` of the news it tells (one of the speaker's `news`)."""
 
     line: str
     act: str
     addressee: str | None
     topic: str
     invitation: NotRequired[str]
+    fact_id: NotRequired[str]
 
 
 # Writes the next line of a scene from the speaker's view (see `turn_view`) and the AI config.
@@ -44,6 +47,7 @@ class TurnResult(TypedDict):
 TurnWriter = Callable[[Mapping[str, Any], Mapping[str, Any]], Coroutine[Any, Any, TurnResult]]
 
 _FIELDS = {"line", "act", "addressee", "topic"}
+_OPTIONAL = {"invitation", "fact_id"}
 EARLIER_LINES = 24  # Most lines of other scenes a turn writer is shown: enough to recall, cheap to send.
 
 
@@ -149,6 +153,7 @@ def _mind(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str, A
             "feelings": feelings({"actor": {**speaker, "drunkenness": 0.0}, "time": now}),
             "drunkenness": speaker["drunkenness"],
             "earlier": earlier_lines(speaker, EARLIER_LINES, scene["id"]),
+            "news": carried(world, speaker),
             "company": [{"id": other["id"], "name": other["name"], "opinion": opinion_of(speaker, other["id"], now),
                          "familiarity": familiarity_of(speaker, other["id"]),
                          "thoughts": [item["text"] for item in thoughts if item["about"] == other["id"]]}
@@ -171,7 +176,7 @@ def check_turn(view: Mapping[str, Any], result: Any) -> TurnResult:
             offered now; it addresses the speaker or someone not in the scene; or an `invite`
             addresses nobody or names a kind not offered.
     """
-    if not isinstance(result, Mapping) or set(result) - {"invitation"} != _FIELDS:
+    if not isinstance(result, Mapping) or set(result) - _OPTIONAL != _FIELDS:
         raise ValueError(f"A turn has exactly the fields {sorted(_FIELDS)}, not {result!r}")
     for key in ("line", "topic"):
         if not isinstance(result[key], str) or not result[key].strip():
@@ -185,6 +190,8 @@ def check_turn(view: Mapping[str, Any], result: Any) -> TurnResult:
                         "topic": result["topic"]}
     if result["act"] == "invite" or "invitation" in result:
         turn["invitation"] = _invitation(view, result)
+    if result["act"] == "share_news" or "fact_id" in result:
+        turn["fact_id"] = _fact(view, result)
     return turn
 
 
@@ -195,6 +202,15 @@ def _invitation(view: Mapping[str, Any], result: Mapping[str, Any]) -> str:
     if result.get("invitation") not in view["invitations"]:
         raise ValueError(f"Invitation {result.get('invitation')!r} is not one on offer")
     return result["invitation"]
+
+
+def _fact(view: Mapping[str, Any], result: Mapping[str, Any]) -> str:
+    # Only news-telling names a fact, and one the speaker holds.
+    if result["act"] != "share_news":
+        raise ValueError("Only telling news names a fact")
+    if result.get("fact_id") not in {item["id"] for item in view["speaker"].get("news") or []}:
+        raise ValueError(f"Fact {result.get('fact_id')!r} is not news the speaker holds")
+    return result["fact_id"]
 
 
 def claim_turns(world: Mapping[str, Any]) -> list[tuple[str, int, dict[str, Any]]]:
@@ -271,6 +287,8 @@ def _speak(world: World, scene: Conversation, speaker_id: str, result: Mapping[s
                   "act": result["act"], "time": world["time"]}
     if "invitation" in result:
         turn["invitation"] = result["invitation"]
+    if "fact_id" in result:
+        turn["fact_id"] = result["fact_id"]
     scene["turns"].append(turn)
     scene.update({"topic": result["topic"], "writing": None, "written": None,
                   "next_turn_at": world["time"] + reading_time(result["line"], world["rules"]["conversation"])})

@@ -12,6 +12,7 @@ from tavern.hall.state import World
 from tavern.hall.validation import number, unique_ids
 from tavern.hall.world import create_world
 from tavern.mind.cards import Card, parse_card
+from tavern.social.facts import News, parse_news
 from tavern.social.ties import OwnTie, Tie, own_ties, parse_own_ties, parse_ties
 
 
@@ -43,7 +44,8 @@ class Scenario:
     """A validated evening plan; `closes_at` is in game seconds after opening.
 
     `ties` are the starting relationships between guests, in listed order: what later
-    systems seed opinions and familiarity from.
+    systems seed opinions and familiarity from. `news` is what the evening's guests start
+    out knowing (see `facts`).
     """
 
     guests: tuple[Guest, ...]
@@ -51,6 +53,7 @@ class Scenario:
     closes_at: float
     seed: int | None
     ties: tuple[Tie, ...] = ()
+    news: tuple[News, ...] = ()
 
 
 def _fields(data: Any, required: set[str], optional: set[str], label: str) -> Mapping[str, Any]:
@@ -104,7 +107,7 @@ def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None) -> Scenar
     Args:
         data: Decoded scenario with `guests`, `arrival` need ranges (as in a room's `arrival`
             section), `closes_at` in game seconds, an optional integer `seed` and optional
-            starting `relationships` (see `ties.parse_ties`). A guest is either described
+            starting `relationships` (see `ties.parse_ties`) and optional `news` (see `facts.parse_news`). A guest is either described
             inline with `traits`, or cast from a character card named by ID in `card`, with
             the card's name and sprite.
         cards: Character cards by ID. Without them only the schedule is read: guests cast from
@@ -114,18 +117,20 @@ def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None) -> Scenar
     Raises:
         ValueError: A section is missing, unknown or malformed, there are no guests, guest IDs
             repeat, a guest would arrive at or after closing time, a guest's card is unknown
-            or does not match them, or a relationship is invalid.
+            or does not match them, or a relationship or news item is invalid.
     """
-    fields = _fields(data, {"guests", "arrival", "closes_at"}, {"seed", "relationships"}, "Scenario")
+    fields = _fields(data, {"guests", "arrival", "closes_at"}, {"seed", "relationships", "news"}, "Scenario")
     closes_at = number(fields["closes_at"], "Closing time", 0, inf)
     seed = fields.get("seed")
     if seed is not None and type(seed) is not int:
         raise ValueError("Scenario seed must be an integer")
     guests = _guests(fields["guests"], closes_at, cards)
     ties = parse_ties(fields.get("relationships", []), [item["id"] for item in guests])
+    news = parse_news(fields.get("news", []), [item["id"] for item in guests])
     # `arrival` is a required field above, so its ranges are never None here.
     arrival = cast(dict[str, tuple[float, float]], arrival_ranges(fields))
-    return Scenario(guests=_with_ties(guests, ties), arrival=arrival, closes_at=closes_at, seed=seed, ties=ties)
+    return Scenario(guests=_with_ties(guests, ties), arrival=arrival, closes_at=closes_at, seed=seed, ties=ties,
+                    news=news)
 
 
 def _guests(value: Any, closes_at: float, cards: Mapping[str, Card] | None) -> tuple[Guest, ...]:
@@ -178,7 +183,8 @@ def open_evening(room: Mapping[str, Any], scenario: Scenario, seed: int) -> Worl
     world = create_world({key: value for key, value in room.items() if key not in ("actors", "arrival")}, seed)
     if not any(item["kind"] == "door" for item in world["map"]["objects"]):
         raise ValueError("A scenario needs a door for its guests to come in by")
-    world.update({"expected": _expected(scenario, seed), "closes_at": scenario.closes_at})
+    world.update({"expected": _expected(scenario, seed), "closes_at": scenario.closes_at,
+                  "news": [News(**item) for item in scenario.news]})
     admit_arrivals(world)
     return world
 

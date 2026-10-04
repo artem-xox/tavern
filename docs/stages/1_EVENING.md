@@ -75,9 +75,9 @@ E16 measures this; E28 sets the budget.
 ## Status
 
 M1–M3, the refactor R0–R8, the model health markers (D13), U1 (no labels in the hall) and E18b
-(conversation memory) are done (2026-10-04). Next:
+(conversation memory) and E19 (facts and retelling) are done (2026-10-04). Next:
 
-1. **M4, news and conflict (E19–E22).** E19 replaces the news Haiku invents today.
+1. **M4, news and conflict (E20–E22).** E20 gives guests hostile options.
 
 The door at closing (D02) is parked in the tech-debt table and is not a task. The code now
 lives in packages (`backend/tavern/hall`, `body`, `social`, `mind`, `evening`, `adapters`,
@@ -582,7 +582,7 @@ Each task bumps `schema_version` once. Seeded chance uses the
 `Random(f"{seed}:{tick}:…")` pattern; E21 makes its third use, so E21 first extracts it
 into `chance.roll(world, *keys)` as a separate refactor commit.
 
-- [ ] **E19 — Facts and retelling.** Guests start with news by occupation; sharing
+- [x] **E19 — Facts and retelling.** Guests start with news by occupation; sharing
   stores the speaker's words as the listener's version, and retelling paraphrases it.
   Done: a fact reaches a third guest in a recorded evening, with drifted wording and
   its path visible in the inspector.
@@ -621,12 +621,82 @@ into `chance.roll(world, *keys)` as a separate refactor commit.
     `types.ts` changes in the same commit. `metrics.json` gets `news`: per fact, its
     holders, its maximum hops, and the path of its first two-hop copy (acceptance
     scenario 3).
+  - *Frozen shape (2026-10-04, before coding):*
+    - *Module:* `social/facts.py` owns `parse_news`, `starting_facts`, `tell`, `overhear`, `chain`,
+      `check_facts` and the news metrics; tests are in `tests/test_facts.py`.
+    - *Ids:* `known_by` holds scenario guest IDs, not names: Edda `mara`, Rurik `ivo`, Toren `nell`,
+      Brida `brannoc`, Calder `wenna`, Saye `osric`.
+    - *Where copies start:* `open_evening` stores `world["news"]` (the originals; `[]` for a world
+      without a scenario); `arrival.admit_arrivals` fills `knowledge["facts"]` from it by `known_by`
+      when a guest comes in, so the scenario's `Guest` and `ExpectedGuest` keep their shape.
+      `create_actor` starts with `knowledge["facts"] = {}`. Readers sort copies by ID (`facts.carried`,
+      `facts.inspected`), so views and replays do not depend on the order they were heard in.
+    - *Turn:* `fact_id` joins `TurnResult` and `scenes.Turn` (`NotRequired[str]`). The answer schema
+      always requires `fact_id` (string or null); `parse_turn` drops a null, as it does for
+      `invitation`. `facts.tell` reads `scene["turns"][-1]`, like `invitations.invite`, so `ActEffect`
+      keeps its signature.
+    - *Who gets a copy:* every other member of the scene who lacks the fact, whoever the line
+      addresses (as `share_place`). The event is `news_told` through `log_event` (no sound, no emote).
+      Overhearing uses `news_overheard`.
+    - *Rules:* `rules.news.trust` = `{friend: 0.9, acquaintance: 0.75, stranger: 0.6}` and
+      `rules.news.overheard` = 0.5 (the confidence factor), checked in `check_rules`.
+    - *Writer view:* `speaker.news` is `[{id, topic, told_as, heard_from, confidence}]`, with
+      `heard_from` as the speaker calls the source (`names.called`, looked up among `actors` and
+      `departed`) and null at hops 0. `haiku_turns` turns the number into words (0.85 or more "you
+      are sure of it", 0.55 "you believe it", below "a rumour you half believe"; the cut sits under 0.6
+      so float products never tip a stranger's word over) and adds a nudge when
+      the speaker holds news this company has not heard from them.
+    - *Scripted writer:* `share_news` once per scene, the fact drawn by the seeded rule from those not yet told in the scene
+      (sorted by ID); the line is
+      "Heard from {source}: {told_as}" cut to 160 characters, a leading "Heard from …: " removed
+      first so prefixes never nest; at hops 0 the line is `told_as` itself.
+    - *Inspector:* `minds[guest].news` is `[{id, topic, told_as, heard_from, hops, confidence,
+      overheard, chain}]`, where `chain` is the names from the guest back to the start ("Brida",
+      "Edda", "start"), computed by `facts.inspected` over `actors + departed`; `types.ts` and the
+      dashboard follow.
+    - *Metrics:* `metrics.json` `news` is computed from the final world (not from event messages):
+      per fact `{holders, max_hops, first_two_hop_path}`.
+    - *Saves:* `schema_version` 7; `parse_world` checks `world["news"]` and every `knowledge.facts`
+      (present and departed guests) with `facts.check_saved_news`, which also requires every teller to
+      hold the news one hop nearer the start, so a path always leads back and never loops.
   - *Tests (`tests/test_facts.py`):* starting copies follow `known_by`; a share gives
     the listener the line as `told_as` with hops + 1; a second share keeps the first
     version; an unknown `fact_id` and a `fact_id` on `joke` are rejected; overhearing
     halves confidence; saves round-trip, and a malformed copy fails loudly. The done test
     is a lockstep evening with a fake writer that paraphrases: a fact reaches a third
     guest at hops 2 with words different from the original.
+  - *Built (2026-10-04):* `social/facts.py` owns the news (`parse_news`, `starting_facts`, `tell`,
+    `overhear`, `carried` for the writer, `inspected` for the inspector, `check_saved_news`);
+    `share_news` joins `conversation.ACTS` (its effect tells, then eases the wish for company like
+    `share_place`) and a turn carries `fact_id`. The scenario gets five items (`data/scenarios/first_evening.json`:
+    salt toll, the Wolf's Bend robbery, the margrave's fever, closing the pass, deserters; `known_by` holds
+    guest IDs), `world["news"]` the originals, `knowledge.facts` each guest's copies. Rules are
+    `rules.news.trust` (friend 0.9, acquaintance 0.75, stranger 0.6) and `rules.news.overheard` (0.5).
+    Saves are `schema_version` 7, with the approved bump named in the commit: `test_database.py` and
+    `test_intention_saves.py` pin 7, and `test_haiku_turns.py`'s schema test (renamed) expects `fact_id`
+    among the required fields. Hand-made views without `speaker.news` still render (`.get`), as with
+    `earlier`. Prefix rule 15 and examples 21–22 teach retelling; style rule 10 no longer allows
+    invented news, and the scripted line "Heard the pass is snowed in." (an invented news item) is gone.
+    The prefix is 22,633 characters. `metrics.json` has `news` per item (holders, furthest hops, first
+    two-hop path), read from the final world by `metrics.news_metrics`; `Mind.news`, `Actor.knowledge.facts`,
+    `World.news` and `Turn.fact_id` are in `types.ts`, and the dashboard's mind panel lists each copy as
+    "topic · Brida ← Edda ← start" with its words and belief.
+  - *Results:* tests prove the done check: an offline lockstep evening with a paraphrasing writer carries
+    news to a third guest on seeds 1 and 2 (`test_a_news_item_reaches_a_third_guest_in_other_words`).
+    Offline scripted, seed 5: 28 scenes and 69 turns (main: 14 and 40), six guests home, five items
+    reached 5/5/5/1/2 holders, and "salt toll" went two hops (Saye ← Brida ← Rurik); stuck time 27.1 s as
+    about nine 3-s stalls, longest 3.1 s (main: 9.1 s), because there is more talking and sitting. Live (Jev +
+    Haiku, 30 calls, 0 failed, a replay of seed 5 byte-identical): seed 5, 494 game s, 9 scenes, 23 turns,
+    4 news tellings (one a Haiku misuse, below), 2 overheard, one fallback (an invitation attached to an
+    `accept`), $0.00272 per turn against $0.00241 on `main` the same day (+$0.00031, under the $0.0005 limit),
+    87.2% cache hits, p50 1.7 s, $0.19 per evening; seed 1: 477 s, 9 scenes, 22 turns, one fallback (a line
+    over 160 characters), $0.00238 per turn, 91.0% cache hits, $0.17. **Neither live evening carried news
+    two hops:** evenings were short (9 scenes) and each news item was told once, so the live check of this
+    task's "done" is not met; acceptance scenario 3 (one item two hops over five live evenings) stays open
+    for E28. Moments from the log: seed 5, 160 s, Edda to Rurik: "A fever's no tale—the margrave's been abed with
+    one a week now, broth only." (the original: "...abed with a fever for a week, and the manor kitchen is
+    told to send up nothing but broth"); at 222 s Toren's account of the robbery reached Calder (hop 1) and, from
+    the next table, Rurik (overheard).
 - [ ] **E20 — Hostile options.** Insults are speech acts; `shove` and `start_fight`
   appear only toward someone with low opinion, given temper, drunkenness, and a recent
   cause. Done: sober guests on good terms never receive hostile candidates.

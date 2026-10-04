@@ -2,6 +2,7 @@
 
 from collections.abc import Mapping
 from random import Random
+import re
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
@@ -12,7 +13,7 @@ if TYPE_CHECKING:  # turns imports this module, so the types cross the cycle onl
 # {me} the speaker.
 LINES: Mapping[str, tuple[str, ...]] = MappingProxyType({
     "greet": ("Evening, {name}!", "Well met, {name}.", "Room for one more, {name}?"),
-    "small_talk": ("Cold on the road tonight.", "Busy night for the inn.", "Heard the pass is snowed in.",
+    "small_talk": ("Cold on the road tonight.", "Busy night for the inn.", "Long climb up to this inn.",
                    "Fine fire they keep here."),
     "joke": ("My mule drinks less than me.", "This ale could raise the dead.", "Came for one. Still here."),
     "complain": ("This ale tastes of old boots.", "Too loud in here, {name}.", "You never listen, {name}."),
@@ -34,6 +35,9 @@ INVITE_LINES: Mapping[str, str] = MappingProxyType({
     "join_table": "Come sit at my table, {name}.", "darts_together": "Fancy a round of darts?",
     "buy_drink": "Let me buy you an ale.", "leave_together": "Shall we walk home together?"})
 
+MAX_LINE = 160  # Characters of a line: the style asks for about 120, and a little over still reads in a bubble.
+_HEARD_FROM = re.compile(r"^Heard from [^:]*: ")  # A retold version starts like this; it is never nested.
+
 PRESSING = 75.0  # A thirst, tiredness or bladder this strong takes a guest out of any conversation.
 CONTENT = 25.0  # Below this wish for company, a guest has had enough talk.
 JOKES = 0.3  # Share of friendly lines that are jokes.
@@ -51,7 +55,8 @@ def scripted_turn(view: Mapping[str, Any]) -> "TurnResult":
     speaker pressed by a need says goodbye, and so does one with company enough once they have
     said something besides a greeting. Otherwise, using only acts the view offers, a stranger
     introduces themselves once; a tipsy, impatient speaker may insult someone they dislike once,
-    or complain once; a patient one apologizes once to whoever holds a grudge; they tell where
+    or complain once; a patient one apologizes once to whoever holds a grudge; they tell a piece
+    of news they hold that the scene has not heard from them, once (see `_retold`); they tell where
     the places they know are, once; they may invite the addressee once (see `_invitation`);
     then they make small talk, joke, compliment, agree or boast.
 
@@ -71,7 +76,10 @@ def scripted_turn(view: Mapping[str, Any]) -> "TurnResult":
     act, kind = _act(view, rng)
     addressee = _addressee(scene, me, act)
     name = addressee["name"] if addressee.get("known", True) else "friend"
-    if kind == "share_place":
+    if kind == "share_news":
+        fact = rng.choice(_untold(scene, me))
+        line = _retold(fact)
+    elif kind == "share_place":
         line = PLACE_LINES[rng.choice(me["places"])["kind"]]  # Every known place is shared; the line names one.
     elif act == "invite":
         line = INVITE_LINES[kind]
@@ -81,7 +89,24 @@ def scripted_turn(view: Mapping[str, Any]) -> "TurnResult":
                             "addressee": addressee["id"], "topic": scene["topic"]}
     if act == "invite":
         result["invitation"] = kind
+    if kind == "share_news":
+        result["fact_id"] = fact["id"]
     return result
+
+
+def _untold(scene: Mapping[str, Any], me: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    # The speaker's news not yet told in this scene, so nobody is told back what they just told; the
+    # copies are listed by ID, which keeps the seeded draw among them reproducible.
+    told = {turn.get("fact_id") for turn in scene["turns"]}
+    return [item for item in me["news"] if item["id"] not in told]
+
+
+def _retold(fact: Mapping[str, Any]) -> str:
+    # A first holder says the news as it is; anyone else names whom they heard it from, in their own
+    # version, so scripted wording never drifts (and `Heard from` never nests).
+    words = _HEARD_FROM.sub("", fact["told_as"])
+    line = words if fact["heard_from"] is None else f"Heard from {fact['heard_from']}: {words}"
+    return line[:MAX_LINE]
 
 
 def _addressee(scene: Mapping[str, Any], me: Mapping[str, Any], act: str) -> Mapping[str, Any]:
@@ -121,6 +146,8 @@ def _opening_up(view: Mapping[str, Any], said: set[str], rng: Random) -> tuple[s
         return "complain", "complain"
     if "apologize" in acts and "apologize" not in said and me["traits"].get("patience", 0.5) >= 0.5:
         return "apologize", "apologize"
+    if "share_news" in acts and "share_news" not in said and _untold(view["conversation"], me):
+        return "share_news", "share_news"
     if "share_place" not in said and me["places"]:
         return "share_place", "share_place"
     kind = _invitation(view)

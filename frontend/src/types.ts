@@ -89,7 +89,7 @@ export interface Actor {
   /** 0 (sober) to 1 (as drunk as can be); beers raise it and it wears off slowly. */
   drunkenness: number;
   path: Cell[];
-  knowledge: { objects: Record<string, Record<string, unknown>> };
+  knowledge: { objects: Record<string, Record<string, unknown>>; facts: Record<string, Fact> };
   memory: unknown[];
   /** The lines this visitor spoke or heard tonight, oldest first, the newest 40 kept. */
   heard: Heard[];
@@ -173,6 +173,24 @@ export interface Mind {
   stage: "sober" | "tipsy" | "drunk" | "wasted";
   /** How far the scene sways the sprite, 0–1. */
   sway: number;
+  /** Copies of the news this visitor carries, by news ID, each with the path it came by. */
+  news: NewsCopy[];
+}
+
+/** A copy of a news item for the inspector: names, not IDs, and the path back to the start. */
+export interface NewsCopy {
+  id: string;
+  topic: string;
+  /** The words the visitor heard it in. */
+  told_as: string;
+  /** Who told it; null for a first holder. */
+  heard_from: string | null;
+  hops: number;
+  /** 0 (not at all) to 1 (sure). */
+  confidence: number;
+  overheard: boolean;
+  /** Names from this visitor back through each teller, ending in "start". */
+  chain: string[];
 }
 export type EmoteKind = "alert" | "confused" | "angry" | "affection" | "sleep" | "waiting";
 
@@ -223,6 +241,8 @@ export interface Turn {
   time: number;
   /** The invitation kind an `invite` offers. */
   invitation?: InvitationKind;
+  /** The news a `share_news` tells (a key of the speaker's `knowledge.facts`). */
+  fact_id?: string;
 }
 
 export type InvitationKind = "join_table" | "darts_together" | "buy_drink" | "leave_together";
@@ -253,8 +273,31 @@ export interface Conversation {
   next_turn_at: number;
   /** The turn a model is writing, if any, and its answer waiting to be spoken. */
   writing: { turn: number; speaker: string; since: number } | null;
-  written: { line: string; act: string; addressee: string | null; topic: string; invitation?: InvitationKind } | null;
+  written: { line: string; act: string; addressee: string | null; topic: string; invitation?: InvitationKind;
+    fact_id?: string } | null;
   invitation: Invitation | null;
+}
+
+/** A news item of tonight's scenario: the original words, and the guests who start out knowing it. */
+export interface News {
+  id: string;
+  topic: string;
+  text: string;
+  known_by: string[];
+}
+
+/** One visitor's copy of a news item: the words they heard it in, from whom, and how far they believe it. */
+export interface Fact {
+  topic: string;
+  told_as: string;
+  /** The visitor who told it; null for a first holder (hops 0). */
+  heard_from: string | null;
+  heard_at: number;
+  /** 0 (not at all) to 1 (sure). */
+  confidence: number;
+  hops: number;
+  /** Caught from a conversation the visitor was not in. */
+  overheard: boolean;
 }
 
 export interface World {
@@ -283,6 +326,8 @@ export interface World {
   next_conversation_id: number;
   /** Accepted invitations under way. */
   invitations: Errand[];
+  /** The evening's news as first written; visitors' copies are in their `knowledge.facts`. */
+  news: News[];
 }
 
 export interface Snapshot {

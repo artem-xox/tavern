@@ -17,7 +17,7 @@ and sometimes shove or fight. The player only sets up the evening and watches.
 See [Stage 1 tasks](stages/1_EVENING.md).
 
 **Status (2026-10-04):** M1–M3, the refactor R0–R8, D13 (Jev and Claude health markers), U1
-(no labels in the hall) and E18b (conversation memory) are done. Next: M4 (news and conflict).
+(no labels in the hall), E18b (conversation memory) and E19 (facts and retelling) are done. Next: E20 of M4 (news and conflict).
 
 **Done when:** recorded live evenings meet the Stage 1 metrics, an observer can retell
 a story from at least one of them, and its chronicle cites only logged events.
@@ -66,3 +66,5 @@ next milestone before starting that milestone.
 | D14 | CI does not run mypy | `make check` runs it, `.github/workflows/ci.yml` runs `pytest`, the frontend check and the build only | Add `- run: mypy` to the workflow (`.github/` is ask-first) |
 | D15 | Small leftovers in the launch wiring | `create_default_app` builds the Claude port twice (`ask = _claude_port(...)` twice); `scripts/evening.py` repeats the wiring (D09) | Delete the duplicate line; merge the wiring with D09 |
 | D16 | Some types cross an import cycle only for the checker | `TYPE_CHECKING` imports in `state.py`, `scripted.py`→`TurnResult`, `scenes.py`→`TurnResult` | Move `TurnResult` and the other cross-module records to the module that owns the concept when one gets a third user |
+| D17 | Haiku misuses `share_news`: it picks the act for lines that are no news, or invents words under a real `fact_id` | live evenings, seeds 5 and 1 (2026-10-04): "Need to know if the fever's crept this far up yet." and "Fever's in the river villages too, three weeks now." as `share_news` | Not checkable by a rule (it is a meaning). Tighten the act's text and examples, or have E28 count them |
+| D18 | Live turn fallbacks keep coming from two Haiku slips: an `invitation` on an `accept`, and a line over 160 characters | one of each in the two E19 live evenings (a fallback per evening) | Small task: accept (and drop) an invitation on `accept`/`decline`, or say so in the prefix; the length rule stays |

@@ -1,4 +1,4 @@
-import type { ActivityView, Actor, Command, Conversation, Intention, Mind, ServiceHealth, Snapshot, Thought, Verb, World, WorldEvent, WorldObject } from "./types";
+import type { ActivityView, Actor, Command, Conversation, Intention, Mind, NewsCopy, ServiceHealth, Snapshot, Thought, Verb, World, WorldEvent, WorldObject } from "./types";
 
 interface Handlers {
   command: (command: Command) => void;
@@ -256,10 +256,12 @@ export class Dashboard {
     const signed = (value: number): string => `${value > 0 ? "+" : ""}${Math.round(value)}`;
     const thoughts: string = mind.thoughts.map((thought: Thought): string => `<li class="${thought.mood < 0 ? "bad" : "good"}"><span>${escape(thought.text)}</span><strong>${signed(thought.mood)}</strong><small>${Math.max(0, Math.ceil(thought.expires_at - (this.world?.time ?? 0)))} s left</small></li>`).join("");
     const opinions: string = mind.opinions.map((opinion): string => `<div class="known-object"><span>${escape(opinion.name)} · ${escape(opinion.familiarity)}</span><span>${signed(opinion.opinion)}</span></div>`).join("");
+    const news: string = mind.news.map((copy: NewsCopy): string => `<div class="known-object"><span>${escape(copy.topic)}${copy.overheard ? " · overheard" : ""} · ${escape(copy.chain.join(" ← "))}</span><span>${Math.round(copy.confidence * 100)}%</span></div><p class="helper">“${escape(copy.told_as)}”</p>`).join("");
     return `<details id="mind-detail" open><summary>Mood and thoughts <span class="count">${signed(mind.mood)}</span></summary><div class="detail-body">
       <div class="inventory-row"><span>Drink</span><strong>${escape(mind.stage)} · ${Math.round(mind.drunkenness * 100)}%</strong></div>
       ${thoughts ? `<ul class="thoughts" aria-label="Thoughts">${thoughts}</ul>` : '<p class="helper">No thoughts weigh on them.</p>'}
-      ${opinions ? `<p class="stage-heading">Opinions</p>${opinions}` : ""}</div></details>`;
+      ${opinions ? `<p class="stage-heading">Opinions</p>${opinions}` : ""}
+      ${news ? `<p class="stage-heading">News</p>${news}` : ""}</div></details>`;
   }
 
   /** Show the second decision stage: which chair a visitor who decided to sit picked, or which action of a chosen family. */

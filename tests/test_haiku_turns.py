@@ -93,10 +93,10 @@ def test_acts_and_their_meanings_come_from_the_table(offered: dict[str, str]) ->
     assert question["schema"]["properties"]["act"]["enum"] == list(ACTS)
 
 
-def test_answer_schema_asks_for_exactly_a_line_act_addressee_and_topic() -> None:
+def test_answer_schema_asks_for_exactly_a_line_act_addressee_topic_invitation_and_fact() -> None:
     schema = turn_question(view_of(scene_world()))["schema"]
     assert (schema["type"], sorted(schema["required"]), schema["additionalProperties"]) == (
-        "object", ["act", "addressee", "invitation", "line", "topic"], False)
+        "object", ["act", "addressee", "fact_id", "invitation", "line", "topic"], False)
     assert schema["properties"]["addressee"] == {"anyOf": [{"type": "string"}, {"type": "null"}],
                                                  "description": schema["properties"]["addressee"]["description"]}
 

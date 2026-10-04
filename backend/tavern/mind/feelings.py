@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from typing import Any, TypedDict
 
 from tavern.body.drunkenness import drunk_stage, speech_instruction
+from tavern.social.facts import Inspected, inspected
 from tavern.social.thoughts import THOUGHTS, Thought, active_thoughts, mood, opinion_of
 
 
@@ -20,7 +21,7 @@ class Mind(TypedDict):
     """A visitor's inner state for the inspector and the scene.
 
     Derived mood, active thoughts and opinions; drunkenness with its stage, and how far the
-    client sways their sprite.
+    client sways their sprite, and their copies of the news with the path of each (`facts.inspected`).
     """
 
     mood: float
@@ -29,6 +30,7 @@ class Mind(TypedDict):
     drunkenness: float
     stage: str
     sway: float
+    news: list[Inspected]
 
 
 def feelings(observation: Mapping[str, Any]) -> str:
@@ -85,8 +87,8 @@ def minds(world: Mapping[str, Any]) -> dict[str, Mind]:
 
     Returns:
         Per visitor ID: derived mood, active thoughts oldest first, opinions of everyone
-        they have a relation with in relation order, drunkenness, its stage and the sprite's
-        sway. Unrounded; the client formats them.
+        they have a relation with in relation order, drunkenness, its stage, the sprite's
+        sway and their news by ID. Unrounded; the client formats them.
     """
     now = world["time"]
     return {actor["id"]: Mind(
@@ -94,5 +96,5 @@ def minds(world: Mapping[str, Any]) -> dict[str, Mind]:
         opinions=[Opinion(id=other, name=relation["name"], opinion=opinion_of(actor, other, now),
                           familiarity=relation["familiarity"]) for other, relation in actor["relations"].items()],
         drunkenness=actor["drunkenness"], stage=drunk_stage(actor["drunkenness"]).name,
-        sway=drunk_stage(actor["drunkenness"]).sway)
+        sway=drunk_stage(actor["drunkenness"]).sway, news=inspected(world, actor))
         for actor in [*world["actors"], *world["departed"]]}

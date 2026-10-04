@@ -47,7 +47,11 @@ def default_rules() -> Rules:
             # lines (`tavern.social.heard`) a guest remembers of tonight's talk.
             "conversation": {"opening": 0.5, "min_gap": 2.5, "chars_per_second": 15.0, "turn_timeout": 10.0,
                              "relief": 25.0, "satisfied": 25.0, "max_participants": 4, "reach": 2,
-                             "pressing": 75.0, "recall_lines": 40}}
+                             "pressing": 75.0, "recall_lines": 40},
+            # News (`tavern.social.facts`): how far a listener believes what a teller says, by how well they
+            # know the teller (friends are believed most), and the share of that belief kept by a guest who only
+            # overheard it.
+            "news": {"trust": {"friend": 0.9, "acquaintance": 0.75, "stranger": 0.6}, "overheard": 0.5}}
 
 
 def check_rules(world: Mapping[str, Any]) -> None:
@@ -84,6 +88,19 @@ def check_rules(world: Mapping[str, Any]) -> None:
     for value in [*lifetimes.values(), rules.get("long_wait")]:
         number(value, "Saved emote time", 0, math.inf)
     _validate_conversation_rules(rules.get("conversation"))
+    _validate_news_rules(rules.get("news"))
+
+
+def _validate_news_rules(news: Any) -> None:
+    if not isinstance(news, dict) or set(news) != {"trust", "overheard"}:
+        raise ValueError("Invalid saved news rules")
+    trust = news["trust"]
+    if not isinstance(trust, dict) or set(trust) != {"friend", "acquaintance", "stranger"}:
+        raise ValueError("Saved news trust must cover friends, acquaintances and strangers")
+    for value in [*trust.values(), news["overheard"]]:
+        # A belief of nothing would make a copy worthless, so each share is above zero.
+        if not 0 < number(value, "Saved news rule", 0, 1):
+            raise ValueError("Saved news rules must be above zero")
 
 
 def _validate_conversation_rules(conversation: Any) -> None:

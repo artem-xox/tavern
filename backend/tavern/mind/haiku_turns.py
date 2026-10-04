@@ -6,19 +6,20 @@ from typing import Any
 
 from tavern.body.drunkenness import speech_instruction
 from tavern.mind.questions import Ask, Question
-from tavern.mind.scripted import CONTENT, PRESSING
+from tavern.mind.scripted import CONTENT, MAX_LINE, PRESSING
 from tavern.mind.turn_prompt import shared_prefix, turn_schema
 from tavern.social.conversation import ACTS
 from tavern.social.invitations import KINDS
 from tavern.social.turns import TurnResult, TurnWriter, check_turn
 
-MAX_LINE = 160  # Characters; the style asks for about 120, and a little over still reads in a bubble.
 MAX_TOPIC = 60  # Characters; a topic is a few words.
 MAX_TOKENS = 200  # Bounds the answer: a short JSON object.
 # Stage directions: an action in asterisks, or a leading (or bracketed) note on how it is said.
 _DIRECTION = re.compile(r"[*\[\]]|^\s*\(")
 _NEEDS = (("thirst", "thirst"), ("fatigue", "tiredness"), ("bladder", "bladder"), ("social", "wish for company"),
           ("boredom", "boredom"))
+# How the speaker holds a piece of news, by confidence: the writer is shown words, never the number.
+_BELIEF = ((0.85, "you are sure of it"), (0.55, "you believe it"), (0.0, "a rumour you half believe"))
 _FAMILIARITY = {"stranger": "a stranger to you", "acquaintance": "an acquaintance", "friend": "an old friend"}
 
 
@@ -55,7 +56,7 @@ def turn_content(view: Mapping[str, Any]) -> str:
     nudges = _nudges(view["conversation"], view["speaker"])
     earlier = _earlier(view["speaker"].get("earlier") or [])
     return "\n\n".join([_scene(view["conversation"], view["speaker"]), *([earlier] if earlier else []),
-                        _self(view["speaker"]), *([f"THE MOMENT\n\n{nudges}"] if nudges else []), _offer(view),
+                        _self(view["speaker"]), _news(view["speaker"]), *([f"THE MOMENT\n\n{nudges}"] if nudges else []), _offer(view),
                         "Write the speaker's next line now."])
 
 
@@ -76,13 +77,16 @@ def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:
     # presses or company is enough; left to itself, the model rarely leaves or shares places.
     pressing = [f"{label} {me['needs'][key]:.0f}" for key, label in _NEEDS[:3] if me["needs"][key] >= PRESSING]
     shared = any(turn["speaker"] == me["id"] and turn["act"] == "share_place" for turn in scene["turns"])
+    told = any(turn["speaker"] == me["id"] and turn["act"] == "share_news" for turn in scene["turns"])
     return " ".join(text for text in (
         f"Pressing now: {', '.join(pressing)}. The speaker should excuse themselves and leave the conversation."
         if pressing else "",
         "The speaker has had enough company for now and may say goodbye after answering."
         if me["needs"]["social"] < CONTENT else "",
         "The speaker has not yet told anyone here where the places they know are; someone may want to know."
-        if me["places"] and not shared else "") if text)
+        if me["places"] and not shared else "",
+        "The speaker carries news the others have not heard from them; telling one piece is welcome."
+        if me.get("news") and not told else "") if text)
 
 
 def _scene(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:
@@ -121,6 +125,18 @@ def _self(me: Mapping[str, Any]) -> str:
             f"Places you know: {places}.\nYour goal tonight: {goal}")
 
 
+def _news(me: Mapping[str, Any]) -> str:
+    # The speaker's own copies, in the words they heard, never the original; how sure they are is in words.
+    # A hand-made view without the field carries no news, as with `earlier`.
+    if not me.get("news"):
+        return ("NEWS THE SPEAKER CARRIES\n\nNone, so the speaker cannot use share_news and talks about "
+                "themselves, the road or the room.")
+    items = [f'- id "{item["id"]}", {item["topic"]}: "{item["told_as"]}" ('
+             f'{"you knew it before tonight" if item["heard_from"] is None else "heard from " + item["heard_from"]}; '
+             f'{next(words for floor, words in _BELIEF if item["confidence"] >= floor)})' for item in me["news"]]
+    return "NEWS THE SPEAKER CARRIES\n\nYour version of each, as you heard it:\n" + "\n".join(items)
+
+
 def turn_question(view: Mapping[str, Any]) -> Question:
     """Ask for the next line: shared instructions, then the speaker's card, then the moment.
 
@@ -154,8 +170,9 @@ def parse_turn(view: Mapping[str, Any], answer: Any) -> TurnResult:
             the topic is longer than MAX_TOPIC; or the speaker shares places while knowing none.
     """
     try:
-        # The schema always asks for an invitation; null means none, as for every act but invite.
-        given = ({key: value for key, value in answer.items() if key != "invitation" or value is not None}
+        # The schema always asks for an invitation and a fact; null means none, as for every act but
+        # invite and share_news.
+        given = ({key: value for key, value in answer.items() if key not in ("invitation", "fact_id") or value is not None}
                  if isinstance(answer, Mapping) else answer)
         result = check_turn(view, given)
     except ValueError as error:
