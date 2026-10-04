@@ -170,7 +170,7 @@ old Idle-only merchant at 190 seconds, using the generic `visitor` folder.
 - DrinkingSeated: `3822a9e3-68da-46d8-96b6-04e667fa6c74`
 - TalkingSeated: `7040497a-9622-408b-831d-1baa71e64b4b`
 - TakeBeer: `434836a1-0968-43c1-acc6-b4f02e7b43b0`
-- Walking: `16ef800f-fa48-4726-8fac-a4a9c1e9ded2`
+- Walking: `51dbc70e-56ab-40eb-b4a3-a388f250b062` (regenerated for a consistent storyteller silhouette)
 - Talking: `cb3a5e4f-8bcc-4079-835d-e130705f0766`
 
 All 60 native assets (six Idle plus 54 action states) completed at 68 × 68.

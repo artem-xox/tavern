@@ -46,3 +46,12 @@ def test_rurik_uses_replacement_pixel_lab_group() -> None:
         (ROOT / "frontend" / "static" / "characters" / "rurik" / "metadata.json").read_text()
     )
     assert metadata["group_id"] != "d0e1751d-6fc5-409c-ae81-9680ed03834b"
+
+
+def test_saye_uses_the_regenerated_walking_state() -> None:
+    """Keep the visually inconsistent storyteller walk out of the shipped roster."""
+    metadata = json.loads(
+        (ROOT / "frontend" / "static" / "characters" / "visitor" / "metadata.json").read_text()
+    )
+    walking = next(state for state in metadata["states"] if state["folder"] == "Walking")
+    assert walking["character"]["id"] != "16ef800f-fa48-4726-8fac-a4a9c1e9ded2"
