@@ -7,7 +7,7 @@ from tavern.hall.memory import log_event
 from tavern.hall.state import Actor, World
 from tavern.hall.validation import number, unique_ids
 from tavern.social.names import called
-from tavern.social.scenes import Conversation
+from tavern.social.scenes import Conversation, Turn
 from tavern.social.thoughts import familiarity_of
 
 MAX_TEXT = 200  # Characters of a news item: a few sentences a guest could tell in one or two lines.
@@ -147,6 +147,28 @@ def tell(world: World, scene: Conversation, speaker: Actor, addressee: Actor | N
     if heard:
         names = heard[0] if len(heard) == 1 else f"{', '.join(heard[:-1])} and {heard[-1]}"
         log_event(world, speaker["id"], "news_told", f"{speaker['name']} told {told['topic']} to {names}")
+
+
+def overhear(world: World, listener: Actor, speaker: Actor, turn: Turn) -> None:
+    """Give a guest outside the scene a copy of news they made out the words of.
+
+    Args:
+        world: Current world; `rules.news.overheard` is the share of the teller's confidence they keep.
+        listener: Guest who made out the line.
+        speaker: Guest who told the news; `turn["fact_id"]` is one of their copies.
+        turn: The spoken line, kept as the listener's words. A listener who already knows the news keeps
+            their first version.
+    """
+    copies = listener["knowledge"]["facts"]
+    if turn["fact_id"] in copies:
+        return
+    told = speaker["knowledge"]["facts"][turn["fact_id"]]
+    copies[turn["fact_id"]] = Fact(topic=told["topic"], told_as=turn["line"], heard_from=speaker["id"],
+                                   heard_at=world["time"],
+                                   confidence=told["confidence"] * world["rules"]["news"]["overheard"],
+                                   hops=told["hops"] + 1, overheard=True)
+    log_event(world, listener["id"], "news_overheard",
+              f"{listener['name']} overheard {called(listener, speaker)} tell {told['topic']}")
 
 
 def check_saved_news(world: Mapping[str, Any]) -> None:

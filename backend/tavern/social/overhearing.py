@@ -7,6 +7,7 @@ from typing import Any
 from tavern.body.hearing import Sound, Stimulus, emit, salience
 from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World
+from tavern.social import facts
 from tavern.social.conversation import ACTS
 from tavern.social.names import called
 from tavern.social.scenes import Conversation, Turn
@@ -34,7 +35,7 @@ def overhear_turn(world: World, scene: Conversation, turn: Turn) -> Stimulus:
 
     A listener whose salience (`hearing.salience`) reaches `OVERHEAR_ACT` notices the act;
     one reaching `OVERHEAR_GIST` makes out the words. Making out an introduction teaches the
-    speaker's name; making out an insult to someone the listener likes makes them resent the
+    speaker's name; making out news gives them a copy (`facts.overhear`); making out an insult to someone the listener likes makes them resent the
     insulter (`social_acts.take_offence`); any insult noticed is remembered.
 
     Args:
@@ -65,6 +66,8 @@ def _catch(world: World, listener: Actor, turn: Turn, speaker: Actor,
            addressee: Actor | None, gist: bool) -> None:
     if gist and turn["act"] == "introduce":
         learn_name(listener, speaker, False, world["actors"])
+    if gist and turn["act"] == "share_news":
+        facts.overhear(world, listener, speaker, turn)
     if turn["act"] != "insult":
         return
     if not gist or addressee is None:

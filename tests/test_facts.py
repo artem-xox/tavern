@@ -12,7 +12,7 @@ from tavern.evening.scenario import open_evening, parse_scenario
 from tavern.hall.world import step_world
 from tavern.mind.haiku_turns import RejectedTurn, parse_turn, turn_question
 from tavern.social.turns import check_turn, turn_view
-from social_hall import actor, scene_of, say, seated_talk
+from social_hall import actor, advance, scene_of, say, seated_talk
 
 
 ROOT = Path(__file__).parents[1]
@@ -381,8 +381,9 @@ def test_everyone_in_the_scene_but_the_teller_gets_a_copy_whoever_is_addressed()
     assert [guest for guest in ("ada", "bea", "cid") if copy_of(world, guest)["hops"] > 0] == ["bea", "cid"]
 
 
-def test_a_guest_outside_the_scene_gets_nothing() -> None:
+def test_a_guest_outside_the_scene_and_out_of_earshot_gets_nothing() -> None:
     world = talk_with_news("ada")
+    out_of_earshot(world)
     tell(world)
     assert copy_of(world, "cid") is None
 
@@ -451,3 +452,74 @@ def test_corrupt_news_rules_are_rejected(tmp_path: Path, corrupt: Callable[[dict
     save_world(world, tmp_path / "corrupt.json")
     with pytest.raises(ValueError):
         load_world(tmp_path / "corrupt.json")
+
+
+def next_table(world: dict[str, Any]) -> None:
+    """Cid, at the next table, hears Ada and Bea well enough to make out their words."""
+
+
+def out_of_earshot(world: dict[str, Any]) -> None:
+    """Cid has walked to the far wall, curious about nothing."""
+    cid = actor(world, "cid")
+    cid.update(x=11, y=7, seat_id=None, action=None, status="idle")
+    cid["traits"]["curiosity"] = 0.0
+
+
+def noticed_only(world: dict[str, Any]) -> None:
+    """Cid is far enough to notice the talk but not to make out the words, and curious about nothing."""
+    cid = actor(world, "cid")
+    cid.update(x=2, y=7, seat_id=None, action=None, status="idle")
+    cid["traits"]["curiosity"] = 0.0
+
+
+@pytest.mark.parametrize("place, copied", [
+    pytest.param(next_table, True, id="words-made-out-at-the-next-table"),
+    pytest.param(noticed_only, False, id="only-the-act-noticed"),
+    pytest.param(out_of_earshot, False, id="out-of-earshot"),
+])
+def test_news_is_overheard_only_where_the_words_are_made_out(place: Callable[[dict[str, Any]], None],
+                                                              copied: bool) -> None:
+    world = talk_with_news("ada")
+    advance(world, 0.2)
+    place(world)
+    tell(world)
+    assert (copy_of(world, "cid") is not None) is copied
+
+
+def test_an_overheard_copy_has_half_the_tellers_confidence_and_says_so() -> None:
+    world = talk_with_news("ada")
+    advance(world, 0.2)
+    tell(world, "They say the toll is doubled.")
+    assert copy_of(world, "cid") == {"topic": "the toll", "told_as": "They say the toll is doubled.",
+                                     "heard_from": "ada", "heard_at": scene_of(world)["turns"][-1]["time"],
+                                     "confidence": 0.5, "hops": 1, "overheard": True}
+
+
+def test_an_overheard_copy_halves_a_doubtful_tellers_confidence() -> None:
+    world = talk_with_news()
+    hold(world, "ada", confidence=0.8, heard_from="bea", hops=1)
+    advance(world, 0.2)
+    tell(world)
+    assert copy_of(world, "cid")["confidence"] == pytest.approx(0.4)
+
+
+def test_an_overhearer_who_already_knows_the_news_keeps_their_version() -> None:
+    world = talk_with_news("ada", "cid")
+    actor(world, "cid")["knowledge"]["facts"]["toll"]["told_as"] = "Cid's own version."
+    advance(world, 0.2)
+    tell(world)
+    assert copy_of(world, "cid")["told_as"] == "Cid's own version."
+
+
+def test_overhearing_is_logged_in_the_overhearers_terms() -> None:
+    world = talk_with_news("ada")
+    advance(world, 0.2)
+    tell(world)
+    [event] = [item for item in world["events"] if item["type"] == "news_overheard"]
+    assert (event["actor_id"], event["message"]) == ("cid", "Cid overheard Ada tell the toll")
+
+
+def test_a_guest_in_the_scene_is_not_counted_as_overhearing() -> None:
+    world = talk_with_news("ada")
+    tell(world)
+    assert copy_of(world, "bea")["overheard"] is False
