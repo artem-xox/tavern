@@ -8,6 +8,7 @@ from typing import Any, TypedDict
 
 from tavern.evening.decisions import free_to_decide
 from tavern.evening.mind_loop import MindLoop
+from tavern.hall.staff import guests
 from tavern.hall.state import World
 from tavern.hall.world import step_world
 from tavern.mind.agents import Evaluators, choose_action
@@ -170,10 +171,11 @@ def evening_over(world: Mapping[str, Any], time_limit: float) -> bool:
         time_limit: Game time that cuts the evening off.
 
     Returns:
-        True once every visitor has left and nobody else is expected, or the time limit is
-        reached. Worlds without a scenario expect nobody.
+        True once every guest has left and nobody else is expected, or the time limit is
+        reached. Staff stay on, so they never keep an evening going. Worlds without a scenario
+        expect nobody.
     """
-    return (not world["actors"] and not world.get("expected")) or world["time"] >= time_limit
+    return (not guests(world) and not world.get("expected")) or world["time"] >= time_limit
 
 
 def evening_mode(requested: str | None, keyed: bool) -> tuple[str, str | None]:
@@ -274,7 +276,7 @@ def _collect(world: Mapping[str, Any], run: _Run) -> None:
 
 
 def _track(world: Mapping[str, Any], run: _Run) -> None:
-    present = {actor["id"]: actor for actor in world["actors"]}
+    present = {actor["id"]: actor for actor in guests(world)}
     for actor_id, actor in present.items():
         if actor_id not in run.guests:
             run.guests.append(actor_id)

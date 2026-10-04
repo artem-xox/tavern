@@ -12,9 +12,12 @@ from tavern.server.api import create_app
 
 def test_default_app_casts_the_first_evening_from_presets() -> None:
     world = create_default_app().state.sessions.open("device-cards-test").world
-    guests = [*world["actors"], *world["expected"]]
+    present = [item for item in world["actors"] if item["post"] is None]
+    guests = [*present, *world["expected"]]
     assert [item["card"]["id"] for item in guests] == ["edda", "rurik", "toren", "brida", "calder", "saye"]
-    assert [item["name"] for item in world["actors"][1]["ties"]] == ["Toren"]
+    assert [item["name"] for item in present[1]["ties"]] == ["Toren"]
+    # The barkeep is cast from the staff cards, which the guests' presets do not include.
+    assert [item["card"]["id"] for item in world["actors"] if item["post"] is not None] == ["hob"]
 
 
 def files(tmp_path: Path, card: dict[str, Any]) -> dict[str, Path]:

@@ -38,6 +38,9 @@ class Activity:
             each takes a spot of their own, and the spots are the target's capacity.
         leaves_seat: Whether starting it gives up the visitor's seat even without walking away.
         game: Whether a game, not this timer, ends it (`tavern.social.dice`); `duration` is only nominal.
+        served: Whether, while staff tend a bar (`tavern.hall.staff.tended`), the bar's service, not this timer,
+            ends it (`tavern.body.bartending`); `duration` is then only nominal. Without staff the timer does.
+        staff_only: Whether only staff do it, and only the bar's own routine starts it: a guest is refused.
         needs: Changes to needs on completion, clamped to 0–100.
         effect: Further consequences on completion.
         on_arrival: Called when the visitor reaches the target, before the interaction runs.
@@ -65,6 +68,8 @@ class Activity:
     shared_target: bool = False
     leaves_seat: bool = False
     game: bool = False
+    served: bool = False
+    staff_only: bool = False
     needs: Mapping[str, float] = field(default_factory=lambda: MappingProxyType({}))
     effect: Effect | None = None
     on_arrival: Effect | None = None
@@ -125,12 +130,20 @@ def _settle(world: World, actor: Actor, seat: dict[str, Any] | None) -> None:
 
 ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity for activity in (
     Activity(verb="take_beer", target_kinds=("tap",), duration=0.8, empty_target="Beer tap is empty",
-             leaves_seat=True, effect=_pour, label="Get a beer", status="getting ale", pose="TakeBeer",
+             leaves_seat=True, served=True, effect=_pour, label="Get a beer", status="getting ale", pose="TakeBeer",
              doing="fetching ale", done="poured a mug of ale",
              family="refreshment",
-             what="walk to the tap {target} and pour a mug of ale to carry",
+             what="walk to the tap {target} and get a mug of ale to carry: the barkeep pours it, or they pour "
+                  "their own when nobody tends the bar",
              guidance="Thirsty guests and newcomers naturally fetch a drink. It is pointless while they already "
                       "hold a mug, or when the tap has run dry."),
+    # Never a candidate: the barkeep's own routine (`tavern.body.bartending`) pours for the guest waiting at the
+    # tap, and a guest is refused it. The routine, not the timer, ends it.
+    Activity(verb="pour_beer", duration=3.0, served=True, staff_only=True, label="Pour a beer", status="pouring",
+             pose="PouringBeer", doing="pouring ale behind the bar", done="poured a mug of ale",
+             family="refreshment",
+             what="pour a mug of ale for the guest waiting at the tap",
+             guidance="Nobody chooses it: the barkeep pours for whoever waits at the tap."),
     Activity(verb="drink", duration=3.0, requires_item="beer",
              needs=MappingProxyType({"thirst": -60, "bladder": 25}), effect=_drink, label="Drink beer", interruptible=True,
              status="sipping ale", pose="Drinking", doing="drinking", done="drank a beer",
@@ -170,6 +183,15 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              guidance="Joining company already talking eases the wish for company like a chat of their own and "
                       "is how a stranger gets to know people; it is poor manners to barge in on someone who "
                       "wronged them tonight."),
+    # Leaning on the bar is how a guest comes within reach of the barkeep: standing there they are side by side
+    # with him (`scenes.side_by_side`), and chat with him as with a neighbour.
+    Activity(verb="stand_at_bar", target_kinds=("bar",), shared_target=True, duration=12.0, leaves_seat=True,
+             needs=MappingProxyType({"boredom": -20, "social": -10}), label="Stand at the bar", status="at the bar",
+             interruptible=True, doing="leaning on the bar", done="stood at the bar", family="company",
+             what="walk over to the bar {target} and lean on it, where the barkeep chats with whoever stands there",
+             guidance="Leaning on the bar puts a guest within reach of the barkeep, who tends it all evening, "
+                      "passes on what he hears and answers a word or two; it eases boredom and the wish for "
+                      "company a little. It means leaving their seat for a while."),
     Activity(verb="play_darts", target_kinds=("darts",), duration=10.0, leaves_seat=True,
              needs=MappingProxyType({"boredom": -65}), label="Play darts", status="darts", pose="Darts", interruptible=True,
              sound=Sound("thud", 0.25, 10.0, "darts thudding into the board"),
@@ -268,7 +290,7 @@ FAMILIES: Mapping[str, str] = MappingProxyType({
     "refreshment": "get something to drink",
     "resting": "sit down for a rest",
     "seat_choice": "find a seat at a table, or move to another one",
-    "company": "chat with someone at their table or beside them, or join a conversation",
+    "company": "chat with someone at their table or beside them, join a conversation, or lean on the bar",
     "pastime": "pass the time",
     "wc": "use the WC",
     "exploring": "explore the room",

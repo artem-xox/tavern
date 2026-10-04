@@ -75,14 +75,18 @@ def _offer(view: Mapping[str, Any]) -> str:
 def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequence[str]) -> str:
     # The scripted writer's thresholds (`scripted.PRESSING`, `scripted.CONTENT`) say when a need
     # presses or company is enough; left to itself, the model rarely leaves or shares places.
+    # A barkeep's needs read as all at 0, which would send him off for company enough: his nudge says he stays.
+    duty = me.get("on_duty")
     pressing = [f"{label} {me['needs'][key]:.0f}" for key, label in _NEEDS[:3] if me["needs"][key] >= PRESSING]
     shared = any(turn["speaker"] == me["id"] and turn["act"] == "share_place" for turn in scene["turns"])
     told = any(turn["speaker"] == me["id"] and turn["act"] == "share_news" for turn in scene["turns"])
     return " ".join(text for text in (
+        f"You are the barkeep, on duty behind the {duty}: you stay while the guest does, and leave only to pour."
+        if duty else "",
         f"Pressing now: {', '.join(pressing)}. The speaker should excuse themselves and leave the conversation."
-        if pressing else "",
+        if pressing and not duty else "",
         "The speaker has had enough company for now and may say goodbye after answering."
-        if me["needs"]["social"] < CONTENT else "",
+        if me["needs"]["social"] < CONTENT and not duty else "",
         "The speaker has not yet told anyone here where the places they know are; someone may want to know."
         if me["places"] and not shared else "",
         "The speaker carries news the others have not heard from them; telling one piece is welcome."
@@ -93,7 +97,9 @@ def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequen
 
 def _scene(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:
     people = {item["id"]: item["name"] for item in scene["participants"]}
-    present = [f"- {item['name']} (id \"{item['id']}\"): {_FAMILIARITY[item['familiarity']]}; your opinion of "
+    barkeeps = {item["id"] for item in scene["participants"] if item.get("on_duty")}
+    present = [f"- {item['name']}{' (the barkeep)' if item['id'] in barkeeps else ''} (id \"{item['id']}\"): "
+               f"{_FAMILIARITY[item['familiarity']]}; your opinion of "
                f"them is {item['opinion']:+.0f} on -100 to 100" + (f"; on your mind: {'; '.join(item['thoughts'])}"
                                                                     if item["thoughts"] else "")
                for item in me["company"]]

@@ -21,6 +21,7 @@ const SPRITES: Readonly<Record<string, SpriteSheet>> = {
   cook: { size: 68, lift: -16, poses: ALL_POSES },
   courier: { size: 68, lift: -16, poses: ALL_POSES },
   visitor: { size: 68, lift: -16, poses: ALL_POSES },
+  bartender: { size: 68, lift: -16, poses: [...ALL_POSES, "PouringBeer"] },
 };
 
 /** Every still to load: one texture per sprite, shipped pose and direction. */

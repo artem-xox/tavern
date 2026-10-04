@@ -57,7 +57,10 @@ def default_rules() -> Rules:
             # half the gap in form (`edge`) moves the first player's chance off 0.5, kept within `odds` so
             # luck always counts. A game takes game_seconds once two sit; a lone player waits wait_seconds.
             "dice": {"skill": {"patience": 0.4, "curiosity": 0.3, "courage": 0.3}, "drink": 0.6, "edge": 0.5,
-                     "odds": [0.2, 0.8], "game_seconds": 25.0, "wait_seconds": 30.0}}
+                     "odds": [0.2, 0.8], "game_seconds": 25.0, "wait_seconds": 30.0},
+            # Bartending (`tavern.body.bartending`): a barkeep leaves a guest alone for this many seconds after
+            # hearing them speak, so he is neither silent nor a bore at the bar.
+            "bartending": {"chat_gap": 60.0}}
 
 
 def check_rules(world: Mapping[str, Any]) -> None:
@@ -96,6 +99,14 @@ def check_rules(world: Mapping[str, Any]) -> None:
     _validate_conversation_rules(rules.get("conversation"))
     _validate_news_rules(rules.get("news"))
     check_dice_rules(rules.get("dice"))
+    _validate_bartending_rules(rules.get("bartending"))
+
+
+def _validate_bartending_rules(bartending: Any) -> None:
+    if not isinstance(bartending, dict) or set(bartending) != {"chat_gap"}:
+        raise ValueError("Invalid saved bartending rules")
+    if not 0 < number(bartending["chat_gap"], "Saved chat gap", 0, math.inf):
+        raise ValueError("A saved chat gap must be positive")
 
 
 def _validate_news_rules(news: Any) -> None:

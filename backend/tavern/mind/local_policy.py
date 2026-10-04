@@ -38,6 +38,9 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
         # Joining company already talking is a little less natural than starting a chat.
         "join_conversation": 0.35 + 0.6 * actor["needs"].get("social", 0) / 100,
         "play_darts": 0.15 + 0.65 * actor["needs"].get("boredom", 0) / 100,
+        # A chat across the bar suits the sociable and curious, once nothing presses.
+        "stand_at_bar": max(0.0, 0.05 + 0.45 * actor["needs"].get("social", 0) / 100
+                            + 0.15 * traits.get("curiosity", 0.5) - 0.25 * max(thirst, fatigue, bladder)),
         # A gentler pastime than darts that comfort-loving visitors favour, once nothing presses.
         "watch": ((0.05 + 0.45 * actor["needs"].get("boredom", 0) / 100 + 0.3 * traits.get("comfort", 0.5))
                   * (1 - max(thirst, fatigue, bladder))),

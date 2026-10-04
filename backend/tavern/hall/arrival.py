@@ -1,4 +1,4 @@
-"""Visitors arriving for the evening: validated actor records, freshly drawn needs, the way in."""
+"""Visitors arriving for the evening: validated actor records, freshly drawn needs, the way in, the staff at their posts."""
 
 from collections.abc import Mapping, Sequence
 import math
@@ -9,6 +9,7 @@ from tavern.hall.memory import record_event
 from tavern.hall.room import impassable_cells
 from tavern.hall.routes import reserved_spots
 from tavern.hall.sight import look_around
+from tavern.hall.staff import pour_cell, post_of
 from tavern.hall.state import Actor, World
 from tavern.hall.validation import number, position
 from tavern.social.facts import starting_facts
@@ -40,7 +41,8 @@ def create_actor(data: Mapping[str, Any], world_map: Mapping[str, Any]) -> Actor
     if not isinstance(sprite, str) or not sprite:
         raise ValueError("Actor sprite must be a nonempty string")
     return Actor(id=data["id"], name=data.get("name", data["id"]), color=data.get("color", "#d8ad68"),
-                sprite=sprite, x=x, y=y, traits=traits, card=data.get("card"), ties=list(data.get("ties", [])),
+                sprite=sprite, post=data.get("post"), x=x, y=y, traits=traits, card=data.get("card"),
+                ties=list(data.get("ties", [])),
                 needs=needs, inventory={"beer": beer}, status="idle",
                 action=None, path=[], seat_id=None, favorite_seat_id=None,
                 visit={"seconds": 0.0, "beers": 0, "grievances": []}, thoughts=[],
@@ -116,6 +118,30 @@ def admit_arrivals(world: World) -> None:
         actor["knowledge"]["facts"] = starting_facts(world["news"], actor["id"], world["time"])
         world["actors"].append(actor)
         record_event(world, actor, "arrival", f"{actor['name']} came in")
+        look_around(world, actor)
+
+
+def take_posts(world: World, members: Sequence[Mapping[str, Any]]) -> None:
+    """Put the staff at their bars, before the first guest comes in.
+
+    Args:
+        world: New world. Each member becomes a visitor with every need at 0, standing on the pour cell of
+            their bar and facing as its staff do, and looks around the hall.
+        members: Scenario staff (`scenario.StaffMember`): a guest's fields but `arrives_at`, and a `post`.
+
+    Raises:
+        ValueError: A post is no bar with staff cells, or a bar already has a staff member.
+    """
+    for member in members:
+        bar = post_of(world["map"], member)
+        if any(item["post"] == member["post"] for item in world["actors"]):
+            raise ValueError(f"The {bar['name']} already has a staff member")
+        x, y = pour_cell(world["map"], bar)
+        actor = create_actor({**member, "x": x, "y": y, "needs": {need: 0 for need in world["rules"]["need_rates"]}},
+                             world["map"])
+        actor["facing"] = bar["staff_facing"]
+        world["actors"].append(actor)
+        record_event(world, actor, "on_duty", f"{actor['name']} took his place behind the {bar['name']}")
         look_around(world, actor)
 
 

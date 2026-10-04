@@ -5,6 +5,7 @@ import math
 from types import MappingProxyType
 from typing import Any, TypedDict
 
+from tavern.hall.staff import facing_of
 from tavern.hall.state import Actor, World
 from tavern.hall.validation import number, saved_cell
 
@@ -120,7 +121,8 @@ def _facing(world: Mapping[str, Any], actor: Mapping[str, Any]) -> str | None:
     if actor["gaze"]:
         return facing_toward(origin, actor["gaze"]["cell"])
     partner = _focus(world, actor)
-    return facing_toward(origin, (partner["x"], partner["y"])) if partner else None
+    # Staff with nobody to look at face the hall, as their bar says.
+    return facing_toward(origin, (partner["x"], partner["y"])) if partner else facing_of(world["map"], actor)
 
 
 def _focus(world: Mapping[str, Any], actor: Mapping[str, Any]) -> Mapping[str, Any] | None:

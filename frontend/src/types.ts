@@ -37,6 +37,9 @@ export interface WorldObject {
   queue?: { actor_id: string; since: number }[];
   /** The game under way at a dice table; null when none. */
   game?: DiceGame | null;
+  /** Cells behind a bar that only staff walk on, and the way its staff look when idle. */
+  staff_cells?: Cell[];
+  staff_facing?: "north" | "south" | "east" | "west";
   appeal?: number;
   comforts?: string[];
   reach?: number;
@@ -74,6 +77,8 @@ export interface Actor {
   color: string | number;
   /** Character art under /characters; the scene falls back to the generic visitor. */
   sprite: string;
+  /** The ID of the bar they work at, or null for a guest. */
+  post: string | null;
   x: number;
   y: number;
   traits: Record<string, unknown>;

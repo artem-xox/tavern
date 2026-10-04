@@ -63,6 +63,8 @@ class Actor(TypedDict):
     name: str
     color: str
     sprite: str
+    # The ID of the bar they work at (see `tavern.hall.staff`), or None for a guest.
+    post: str | None
     x: int
     y: int
     traits: dict[str, float]
@@ -160,6 +162,13 @@ class DiceRules(TypedDict):
     wait_seconds: float
 
 
+class BartendingRules(TypedDict):
+    """How a barkeep chats (see `tavern.body.bartending`): the seconds he leaves a guest he has heard speak
+    before he greets them again."""
+
+    chat_gap: float
+
+
 class Rules(TypedDict):
     """The tunable rules of the world, kept in every save."""
 
@@ -179,6 +188,7 @@ class Rules(TypedDict):
     conversation: ConversationRules
     news: NewsRules
     dice: DiceRules
+    bartending: BartendingRules
 
 
 class HallMap(TypedDict):

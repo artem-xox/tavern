@@ -68,7 +68,7 @@ async def _serve_socket(socket: WebSocket, sessions: TavernSessions) -> None:
 def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
                run_loop: bool = True, database_url: str | None = None, seed: int = 0,
                scenario_path: Path | None = None, characters_dir: Path | None = None,
-               ask: Ask | None = None, writer: TurnWriter = write_scripted_turn,
+               staff_dir: Path | None = None, ask: Ask | None = None, writer: TurnWriter = write_scripted_turn,
                writer_label: str = "scripted", intender: Intender | None = None,
                store_for: Callable[[str], Store] | None = None, choose: Chooser | None = None,
                health: HealthBoard | None = None,
@@ -87,6 +87,8 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
             starting with the room's own visitors.
         characters_dir: Optional folder of character cards (one JSON file each) the scenario
             casts its guests from.
+        staff_dir: Optional folder of the staff's cards (one JSON file each), kept apart from the
+            guests' so that no staff member is offered as a guest.
         ask: Optional Claude port bound to the server's key, for the card compiler; without
             it the compiler runs its labeled offline mode.
         writer: Turn writer of every session's conversation lines; scripted by default.
@@ -109,7 +111,10 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
     map_data = json.loads(map_path.read_text())
     cards = (parse_cards([json.loads(path.read_text()) for path in sorted(characters_dir.glob("*.json"))])
              if characters_dir else None)
-    scenario = parse_scenario(json.loads(scenario_path.read_text()), cards) if scenario_path else None
+    staff_cards = (parse_cards([json.loads(path.read_text()) for path in sorted(staff_dir.glob("*.json"))])
+                   if staff_dir else None)
+    scenario = (parse_scenario(json.loads(scenario_path.read_text()), cards, staff_cards)
+                if scenario_path else None)
     if database_url and store_for is None:
         initialize_database(database_url)
         store_for = lambda session_id: DatabaseStore(database_url, session_id)

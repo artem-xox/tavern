@@ -5,6 +5,7 @@ from typing import Any
 
 from tavern.body.activities import ACTIVITIES
 from tavern.hall.room import find_object
+from tavern.hall.staff import on_staff
 from tavern.hall.state import find_actor
 from tavern.social.scenes import conversation_of, pressed, side_by_side, table_of
 
@@ -30,6 +31,8 @@ def action_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Map
     if not isinstance(verb, str) or verb not in world["rules"]["durations"]:
         return "Unknown action verb"
     activity = ACTIVITIES[verb]
+    if activity.staff_only and not on_staff(actor):
+        return f"Only staff can {verb.replace('_', ' ')}"
     if activity.partner:
         return _talk_error(world, actor, action)
     if activity.requires_item and actor["inventory"][activity.requires_item] <= 0:

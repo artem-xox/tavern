@@ -6,13 +6,14 @@ import math
 from typing import Any
 
 from tavern.body.actions import action_error
-from tavern.body.activities import ACTIVITIES
+from tavern.body.activities import ACTIVITIES, Activity
 from tavern.body.hearing import sound_activity
 from tavern.body.queues import join_line, leave_line, line_full, line_of, stay_in_line, step_line
 from tavern.hall.memory import record_event
 from tavern.hall.room import find_object, impassable_cells
 from tavern.hall.routes import gives_way, occupied_cells, replan, reserved_spots
 from tavern.hall.sight import refresh_knowledge, visible_cells
+from tavern.hall.staff import off_limits, on_staff, tended
 from tavern.hall.state import Actor, World, find_actor
 from tavern.hall.validation import saved_cell
 from tavern.social.scenes import conversation_of, leave_conversation
@@ -188,7 +189,8 @@ def _yield_idle_occupant(world: World, actor: Actor, next_cell: tuple[int, int])
     occupant = next((item for item in world["actors"] if (item["x"], item["y"]) == next_cell), None)
     if occupant is None or occupant["status"] != "idle" or occupant.get("seat_id"):
         return
-    blocked = set(impassable_cells(world["map"]) + occupied_cells(world, occupant) + reserved_spots(world, occupant["id"]))
+    blocked = set(impassable_cells(world["map"]) + off_limits(world["map"], occupant)
+                  + occupied_cells(world, occupant) + reserved_spots(world, occupant["id"]))
     x, y = next_cell
     cells = ((x + 1, y), (x, y + 1), (x - 1, y), (x, y - 1))
     free = next((cell for cell in cells if cell not in blocked and
@@ -277,13 +279,18 @@ def _interact(world: World, actor: Actor, elapsed: float) -> None:
         _fail(world, actor, reason)
         return
     actor["_remaining"] -= elapsed
-    # A part in a conversation lasts as long as the scene does (see `finish_parts`), and a game as long as
-    # the game does (`tavern.social.dice`); a game's timer stops at zero so the world still saves.
+    # A part in a conversation lasts as long as the scene does (see `finish_parts`), a game as long as the
+    # game does (`tavern.social.dice`) and a served order until the bar serves it (`tavern.body.bartending`);
+    # their timers stop at zero so the world still saves.
     action = actor["action"]
-    if action is not None and ACTIVITIES[action["verb"]].game:
+    if action is not None and not _ends_on_timer(world, ACTIVITIES[action["verb"]]):
         actor["_remaining"] = max(0.0, actor["_remaining"])
     elif action is not None and actor["_remaining"] <= 0 and not ACTIVITIES[action["verb"]].partner:
         complete_action(world, actor)
+
+
+def _ends_on_timer(world: Mapping[str, Any], activity: Activity) -> bool:
+    return not (activity.game or (activity.served and tended(world)))
 
 
 def complete_action(world: World, actor: Actor) -> None:
@@ -313,7 +320,8 @@ def step_actor(world: World, actor: Actor, elapsed: float) -> None:
         actor: Visitor, updated in place.
         elapsed: Game seconds since the last tick.
     """
-    for name, rate in world["rules"]["need_rates"].items():
+    # Staff are at work: nothing builds up in them, so they are never pressed, thirsty or bored.
+    for name, rate in ({} if on_staff(actor) else world["rules"]["need_rates"]).items():
         actor["needs"][name] = min(100, actor["needs"][name] + rate * elapsed)
     actor["visit"]["seconds"] += elapsed
     if actor["action"]:

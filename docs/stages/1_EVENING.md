@@ -76,10 +76,11 @@ E16 measures this; E28 sets the budget.
 ## Status
 
 M1–M3, the refactor R0–R8, the model health markers (D13), U1 (no labels in the hall) and E18b
-(conversation memory) and E19 (facts and retelling) are done (2026-10-04). Done: dice (G0–G5, 2026-10-04). Next:
+(conversation memory) and E19 (facts and retelling) are done (2026-10-04). Done: dice (G0–G5) and the
+barkeep (B0–B6), both 2026-10-04. Next:
 
 1. **Dice (G0–G5), done.** Guests agree to a game of dice, play it at a dice table, and others watch.
-2. **The barkeep (B0–B6).** A barkeep keeps to four cells behind the bar, pours every mug,
+2. **The barkeep (B0–B6), done.** A barkeep keeps to four cells behind the bar, pours every mug,
    and chats with guests who lean on the counter.
 3. **M4, news and conflict (E20–E22).** E20 gives guests hostile options.
 
@@ -1159,12 +1160,13 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
   them. Starting a pour takes him out of any conversation.
 - **The look.** Sprite `bartender`, with every pose the guests have plus `PouringBeer`. He faces
   `staff_facing` (south, toward the hall) unless a sound or a partner turns his head. The client
-  draws the staff cells as darker duckboards, with no captions (U1).
+  draws the staff cells as plain floor, exactly like the rest (the user's call, 2026-10-04), and no
+  captions (U1).
 - **Out of scope:** commands for the barkeep (Stage 2); prices and tips (Stage 3); breaking up
   fights (E22 may add it); drinks other than ale; the barkeep starting the evening with news (he
   learns it at the bar); pacing or wiping the bar while idle; a second staff member.
 - **Seed-sensitive tests.** B1 changes routes, and B2–B5 change whole evenings
-  (`test_a_news_item_reaches_a_third_guest_in_other_words` uses seeds 1 and 2). If one fails,
+  (`test_a_news_item_reaches_a_third_guest_in_other_words` uses seeds 1 and 4, since B3). If one fails,
   stop and report the seed and the failure. Do not change a seed or an assertion without the
   user's approval.
 - **Shared with the dice tasks.** B0's `lifecycle.complete_action` is G2's first refactor:
@@ -1173,13 +1175,14 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
   B3's timer condition may meet G2's `Activity.game` (see B3). Each block's save
   bump takes the next free `schema_version`. The dice table at (10, 8) is far from the bar.
 
-- [ ] **B0 — One way to finish an action (refactor, no behavior change).** Take
+- [x] **B0 — One way to finish an action (refactor, no behavior change).** Take
   `lifecycle.complete_action(world, actor)` out of `_interact`: apply the effect and the needs, log
   `action_completed`, clear the action, look. Skip B0 if `complete_action` already exists.
+  *Skipped (2026-10-04): G2 built `complete_action` already.*
   - *Check:* `make check`. First record a fresh offline baseline on `main` (the hall's behavior
     has changed since R0). Then show that the offline evening (seed 5) is byte-identical, with the
     commands under "Before M4 — Refactor".
-- [ ] **B1 — Staff cells behind the bar.** Floor only; nobody works there yet.
+- [x] **B1 — Staff cells behind the bar.** Floor only; nobody works there yet.
   - *Module `hall/staff.py`* (add it to the `hall/` list in AGENTS.md): `check_staff_cells(world_map)`,
     called by `room.create_map`, and `off_limits(world_map, actor) -> list[tuple[int, int]]`. In B1
     it returns every bar's staff cells; B2 adds the branch for staff.
@@ -1195,26 +1198,38 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     `controls._validate_block` refuses staff cells: "Cells behind the bar cannot be changed".
   - *Data:* the bar in `data/tavern.json` gets the two fields above.
   - *Client:* in `types.ts`, `WorldObject` gains `staff_cells?: number[][]` and
-    `staff_facing?: Facing`. `furniture.ts` gets `drawStaffFloor`, which lays darker duckboards on
-    the staff cells; `scene.ts` makes one call to it where it draws the floor. `scene.ts` is at 387
-    lines: if it would pass 400, first move `drawRugs` to `furniture.ts` (D01) in its own commit.
+    `staff_facing?: Facing`. The cells are drawn as plain floor, like the rest of it (the user asked
+    for no tint), so nothing is drawn for them.
   - *Tests (`tests/test_staff.py`):* the repository bar has four staff cells, and (5, 1) is next to
     the tap. Error cases: staff cells on a table, on a blocked cell, on furniture, with a gap, on
     the tap's spot, on a queue spot, with no tap beside them, with a missing or unknown
     `staff_facing`, `staff_facing` without cells, cells that cut a place off. Behavior: a guest at
     (1, 1) routed to the tap's spot, and a guest sent to inspect, never step on a staff cell; an idle
     guest at (2, 2) is never yielded onto (2, 1); blocking a staff cell is refused.
-  - *Check:* `make check` and `make build`; `make run` and a screenshot (duckboards behind the bar,
+  - *Check:* `make check` and `make build`; `make run` and a screenshot (plain floor behind the bar,
     guests keep out); the offline evening (seed 5) against a fresh run on `main` (6.1 s stuck
     since the D02 fix).
-- [ ] **B2 — The barkeep on duty.** He stands behind the bar; guests still pour their own.
+  - *Built (2026-10-04):* `hall/staff.py` holds `check_staff_cells` and `off_limits(world_map, actor)`.
+    `world.create_world` calls the check right after `create_map`, not `create_map` itself: the check reads
+    `room` (cells, spots, `line_approach`), so `room` importing it would be a cycle. Saves are checked too,
+    since `persistence.check_saved_geometry` builds a world. Messages name the bar and the rule (a non-bar,
+    missing or unknown `staff_facing`, not a nonempty list of cells, not distinct or inside the hall, not
+    free floor, not one stretch, on a spot, a queue spot or a line's way in, no cell next to a tap, or cutting
+    a place off). `routes.plan_route` and `replan` (and with them the inspection plan),
+    `lifecycle._yield_idle_occupant` and `controls._validate_block` ("Cells behind the bar cannot be
+    changed") use `off_limits`. The repository bar has `staff_cells` (2, 1)…(5, 1) facing south; the client
+    types gained both fields, and the cells are drawn as plain floor (a first version tinted them with
+    duckboards; the user asked for none, so it was removed). 25 tests in `tests/test_staff.py`, including a
+    7×3 hall whose one corridor the cells would cut. The offline evening (seed 5) is byte-identical to
+    `main`'s, as it should be for floor alone.
+- [x] **B2 — The barkeep on duty.** He stands behind the bar; guests still pour their own.
   - *Scenario:* `first_evening.json` gets
     `"staff": [{"id": "hob", "name": "Hob", "color": "#c98f4a", "sprite": "bartender", "card": "hob", "post": "bar"}]`.
     `parse_scenario` reads this optional section into `Scenario.staff: tuple[StaffMember, ...] = ()`.
     A `StaffMember` has id, name, color, sprite, traits, post and an optional card. It gets a
     guest's checks except `arrives_at`. IDs are unique across guests and staff. Staff are not in
     `relationships` or `news`, whose checks keep using guest IDs only.
-  - *Opening:* `open_evening` calls `staff.take_posts(world, scenario.staff)` before
+  - *Opening:* `open_evening` calls `arrival.take_posts(world, scenario.staff)` before
     `admit_arrivals`. Each member becomes an actor (`create_actor`, all needs 0) on their post's
     pour cell, with `post` set. The arrival is logged as `on_duty` ("Hob took his place behind the
     Oak bar"), and the barkeep looks around. A post must be a bar with staff cells, with one member
@@ -1255,7 +1270,26 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
       a departed staff member, a guest on a staff cell, an actor without `post`.
   - *Check:* `make check` and `make build`; `make run` and a screenshot (Hob behind the bar,
     facing the hall); the offline evening (seed 5).
-- [ ] **B3 — The barkeep pours.** Guests order at the tap and he serves them.
+  - *Built (2026-10-04):* `hall/staff.py` gains `on_staff`, `guests`, `post_of`, `pour_cell`, `facing_of`,
+    the staff branch of `off_limits` and `check_saved_staff`. `take_posts` lives in `hall/arrival.py`, not in
+    `staff.py` as drafted: it builds actors with `create_actor`, and `arrival` already imports `routes`, which
+    imports `staff`, so the other way round would be a cycle. `scenario.StaffMember`, `parse_staff_member`
+    and `Scenario.staff` hold the section; `parse_scenario(data, cards, staff_cards)` casts staff from their
+    own cards (`data/staff/hob.json`, `--staff` in `scripts/evening.py`, `staff_dir` in `create_app`), so
+    `test_cards.py` still sees six presets. A staff member is refused every action by `start_action` ("Hob
+    works behind the bar"), is never `free_to_decide`, gets no intention request and no needs; the
+    lockstep runner ends the evening and tracks stalls by `guests(world)`; `expression._facing` falls back to
+    the post's `staff_facing`. Saves are `schema_version` 9, with the bump named in the commit
+    (`test_database.py` and `test_intention_saves.py`, renamed `test_new_worlds_are_version_9`, pin it). The
+    snapshot's `Actor.post` is in `types.ts` and the `bartender` sprite (with `PouringBeer`) in `sprites.ts`.
+    51 tests in `tests/test_staff.py` (B1 and B2). Test edits, because the repository evening now holds a
+    fourth person from the start: `test_first_evening.py` (approved: staff are skipped and only guests are
+    counted at the end), `test_app.py` and `test_scenario_sessions.py` (4 actors at opening, one more
+    sprite), `test_card_shell.py` (guests are counted by `post is None`, and Hob's card is checked). Offline
+    evening, seed 5: the guests' events are identical to B1's (`cmp` on the events without Hob's), and Hob adds
+    three (`on_duty` and two `interrupted`, when he turns his head toward a noise); 431 s, 26 scenes, 11.2 s
+    stuck as before.
+- [x] **B3 — The barkeep pours.** Guests order at the tap and he serves them.
   - *Table:* `Activity.served: bool = False` ("while staff tend the bar, the bar's service, not a
     timer, completes it") and `Activity.staff_only: bool = False` ("only staff do it, and only the
     bar's service starts it; `actions.action_error` refuses it to a guest").
@@ -1308,7 +1342,27 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
   - *Check:* `make check` and `make build`. In `make run`, force a guest to take a beer and attach
     a screenshot of Hob pouring while the guest waits. Run the offline evening (seed 5) and compare
     beers served, give-ups in line and stuck time against B2.
-- [ ] **B4 — Leaning on the bar.** Guests stand at the counter and can talk with the barkeep.
+  - *Built (2026-10-04):* `body/bartending.py` (`order_at`, `tend_bar`; `world.step_world` calls it after
+    `honor_invitations`) pours for the guest who holds the tap and has reached its spot: the barkeep
+    starts `pour_beer` (3 s, `PouringBeer`) over his staff cells, takes himself out of a conversation to do
+    it, and at its end completes the guest's own `take_beer` (the stock falls, the mug is theirs) and logs
+    `served` ("Hob poured Ada a mug of ale"); a guest called away meanwhile gets nothing and the stock
+    stays. `Activity.served` and `Activity.staff_only` hold the rule: `lifecycle._ends_on_timer` is false for
+    a `game` or for a `served` verb while `staff.tended(world)`, in which case the verb's timer stops at
+    zero so the world still saves; `actions.action_error` refuses `pour_beer` to a guest. Without staff the
+    tap stays self-service (`take_beer` still ends on its own 0.8 s). `people_in_sight` carries `post` (the
+    bar's name) only for staff; the briefing says "Hob, the barkeep, is pouring ale behind the bar" (or
+    "tending the bar"); the option reads "walk 13 steps to the tap and ask Hob for a mug of ale (24 servings
+    when last seen)"; both prompt prefixes now say Hob pours (the intention examples read "Get an ale",
+    and its "no barkeep to call over"). 13 tests in `tests/test_bartending.py` (shared hall helpers moved to
+    `tests/staff_hall.py`). Offline evening, seed 5 (B2 → B3): 11 beers all served by Hob (12 self-served
+    before), lines longer (10 joined, 3 before) and nobody gave up either time, stuck 11.2 s → 3.1 s, 426 s;
+    the evening plays differently, so it is not the same story. **Seed-sensitive test, approved by the
+    user:** with Hob pouring, seed 2 of `test_a_news_item_reaches_a_third_guest_in_other_words` carries
+    news only one hop (it reached two without him; seeds 1, 3, 4 and 5 with him do, seed 4 with two
+    items), so that parameter is now seed 4: seeds 1 and 4, same assertion. In the browser a forced
+    `take_beer` shows Hob "interacting" behind the bar while Rurik waits at the tap.
+- [x] **B4 — Leaning on the bar.** Guests stand at the counter and can talk with the barkeep.
   - *Table:* reuse `Activity.shared_target` (added for the door in the D02 fix):
     `lifecycle.activate` never reserves such a target, and `routes.plan_route` already keeps the
     spots apart, so the bar's three spots are its capacity.
@@ -1360,7 +1414,23 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     - The scripted barkeep does not say goodbye first, and the nudge text is right.
   - *Check:* `make check` and `make build`; the offline evening (seed 5), where some guest leans on
     the bar and talks with Hob.
-- [ ] **B5 — The barkeep greets.** He steps over to a guest at the bar and opens the talk.
+  - *Built (2026-10-04):* `stand_at_bar` (family `company`, `shared_target`, 12 s) is a new `Activity`; the bar
+    in `data/tavern.json` has spots (3, 3), (4, 3), (5, 3). `scenes.side_by_side` is also true for two people
+    at the same bar (`_bar_of`: a guest on one of its spots, its staff member on a staff cell, exact cells
+    only), so a guest at the bar sees Hob as "beside them" and `talk` with him passes `actions._close_enough`.
+    `agents._bar_stand` offers it while a barkeep is in sight, the guest is not on a spot and one spot is
+    free (a closed inn offers only going home, as before); the local utility is as drafted, and the option
+    reads "walk … to the bar and lean on it, where Hob tends it", with "chat with Hob across the bar" for
+    the talk. For the writers: `turn_view` adds `speaker.on_duty` (the bar's name) and `on_duty: true` on a
+    barkeep among `participants`; `invitations.offered_kinds` is empty for him and when everyone else in the
+    scene is staff, `check_turn` refuses an `invite` to someone on duty, the scripted writer never has him
+    say goodbye, and `haiku_turns` swaps his need nudges for "You are the barkeep, on duty behind the Oak
+    bar: you stay while the guest does, and leave only to pour." and names him "Hob (the barkeep)" in the
+    scene. Prefix rule 16 and example 24 teach the model the barkeep; the intention prefix gains "lean on the
+    bar and chat with the barkeep". 20 tests in `tests/test_bar_chat.py`. Offline evening, seed 5: 4 stands
+    at the bar and 25 scene events with Hob (Toren to Hob at 103 s: "Room for one more, friend?"; they
+    introduce themselves; Hob tells where the ale is), 12 beers poured, 427 s, 0.0 s stuck.
+- [x] **B5 — The barkeep greets.** He steps over to a guest at the bar and opens the talk.
   - *Routine:* `tend_bar` gets two more steps, after hand-over and pour. They apply to a staff
     member who is idle and in no scene, while the inn is open. The guest he looks to is the first,
     in actor order, who stands at his bar, is in no scene, is not `pressed`, and whom he has not
@@ -1379,7 +1449,21 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     - He does not greet after closing, nor a guest who is pressed or already in a scene.
   - *Check:* `make check` and `make build`; `make run` and a screenshot of a chat across the bar;
     the offline evening; a live evening (seed 5) with a byte-identical replay.
-- [ ] **B6 — Numbers and the story.**
+  - *Built (2026-10-04):* `bartending.tend_bar` gains the two steps as drafted: an idle barkeep with no
+    order and no scene, while the inn is open, picks the first guest (actor order) who `scenes.bar_of`
+    says is at his bar (now public), is in no scene, is not `pressed` and whom he has not heard speak
+    within `rules.bartending.chat_gap`; he walks over his staff cells to the cell across from them (their
+    column, else the nearest, the first listed on a tie) with a `wait`, then starts `talk` through
+    `action_error` and `activate`. `rules.bartending = {"chat_gap": 60.0}` (`BartendingRules`, checked in
+    `check_rules`: a saved world with no, zero, negative, non-numeric or an extra rule is refused; the
+    schema stays 9, since 9 is unreleased). `staff.guests` returns `list[Actor]`. 13 tests in
+    `tests/test_bar_greeting.py`; the "in a scene of their own" case sets both guests' wish for company to
+    100 so the scene outlasts the barkeep's approach (scenes end by themselves once the guests have talked
+    enough, and the case would otherwise pass for the wrong reason). Offline evening, seed 5: Hob greets 7
+    times (90 s: Toren; 103 s and 108 s: Edda, the second time because her first scene ended before he
+    heard her speak), guests start 3 chats with him, 24 turns involve him, 12 beers poured, 426 s, 6.1 s
+    stuck (longest 3.1 s).
+- [x] **B6 — Numbers and the story.**
   - *Metrics:* `metrics.json` gets `bar`: `{served, opened, lines, news_told}`. `served` counts
     `served` events; `opened`, `lines` and `news_told` count `conversation_started`, `turn` and
     `news_told` events whose actor is on staff (staff IDs come from the final world).
@@ -1397,6 +1481,29 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     - one moment from the log.
 
     Tick the boxes and update the status here and in [PLAN.md](../PLAN.md).
+  - *Built (2026-10-04):* `metrics.bar_metrics(events, staff)` (a `BarCounts`: `served`, `opened`,
+    `lines`, `news_told`, counted from the events whose actor is on staff; a chat a guest opens with the
+    barkeep is not one he opened) is in `metrics.json` as `bar` (`scripts/evening.py` takes the staff IDs from
+    the final world). 8 cases in `tests/test_bar_metrics.py`. The done checks are
+    `tests/test_barkeep_evening.py`, on seeds 1 and 4 (the news test's seeds, see B3) with the repository
+    scenario cast from its cards: every `take_beer` completion has its `served` event and Hob speaks, and,
+    on a second run played in 10 s stretches, he is on a staff cell at every one of the ~40 samples. A
+    test cannot see every tick, but he only moves by `bartending` over staff cells.
+  - *Results:* offline, seed 5 (`--mode local --writer scripted`): 426 s, all six home, 12 beers poured,
+    `bar` = served 12, opened 7, lines 13, news told 2, 6.1 s stuck (longest 3.1 s). **Live (Jev + Haiku,
+    seed 5, 434 game s, 237 wall s, 0 errors, a replay of its calls byte-identical):** 14 beers poured, 17
+    guests joined a line and 2 left it (gave up), 19 scenes, 53 turn calls for 35 lines (one scripted
+    fallback), `bar` = served 14, opened 15, lines 17, news told 0. Cost $0.243 (Jev $0.048; lines $0.111, or
+    $0.0032 a turn, 88% cache hits; intentions $0.084) against E19's $0.19: the barkeep adds about 20
+    more lines and a third more turns, not a model of his own. **News:** Brida told Hob the margrave's
+    fever at 315 s (hop 1), and he told it on to nobody, so no item went two hops (acceptance scenario
+    3 stays open for E28). **Stuck time 25.2 s** (Calder 9.0 s, Brida 5.0 s, Saye 5.0 s, Edda 3.1 s): all
+    of it is closing time, 421–430 s, when the door's three spots are held by the first three leavers and
+    the others are refused ("No reachable interaction spot") once a second until a spot frees; that is
+    D02's rule, not the bar. Moments from the log: 144 s, Hob to Rurik: "What'll you have? The house ale's
+    fresh tonight."; Rurik: "House ale sounds good. Long watch tonight."; and at 315 s Brida to Hob: "Down
+    tomorrow, aye. The manor kitchen won't run itself, and the margrave's been abed with fever". Slips
+    that D19 records: Hob proposes darts and a "silver penny a round" as if he could leave the bar.
 
 ### M5 — Presentation and acceptance
 

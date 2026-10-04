@@ -17,6 +17,7 @@ from typing import Any, TypedDict
 
 from tavern.body.drunkenness import drunk_stage
 from tavern.hall.memory import log_event
+from tavern.hall.staff import on_staff
 from tavern.hall.state import World, find_actor
 from tavern.hall.world import observe_actor, observe_people
 from tavern.mind.briefing import brief
@@ -148,7 +149,8 @@ def intention_requests(world: Mapping[str, Any], pending: Container[str], next_a
     """
     requests = []
     for actor in world["actors"]:
-        if actor["id"] in pending or world["time"] < next_allowed.get(actor["id"], 0.0):
+        # Staff keep no intentions: their routine is the bar's, not a plan of the evening.
+        if on_staff(actor) or actor["id"] in pending or world["time"] < next_allowed.get(actor["id"], 0.0):
             continue
         trigger = intention_due(world, actor, rules)
         if trigger is not None:

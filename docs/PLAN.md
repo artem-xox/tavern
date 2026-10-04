@@ -18,8 +18,8 @@ dice while others watch, get drunk, and sometimes shove or fight. The player onl
 the evening and watches. See [Stage 1 tasks](stages/1_EVENING.md).
 
 **Status (2026-10-04):** M1–M3, the refactor R0–R8, D13 (Jev and Claude health markers), U1
-(no labels in the hall), E18b (conversation memory), E19 (facts and retelling) and the dice game (G0–G5)
-are done. Next: the barkeep (B0–B6), then E20 of M4 (news and conflict).
+(no labels in the hall), E18b (conversation memory), E19 (facts and retelling), the dice game (G0–G5)
+and the barkeep (B0–B6) are done. Next: E20 of M4 (news and conflict).
 
 **Done when:** recorded live evenings meet the Stage 1 metrics, an observer can retell
 a story from at least one of them, and its chronicle cites only logged events.
@@ -69,3 +69,5 @@ next milestone before starting that milestone.
 | D16 | Some types cross an import cycle only for the checker | `TYPE_CHECKING` imports in `state.py`, `scripted.py`→`TurnResult`, `scenes.py`→`TurnResult` | Move `TurnResult` and the other cross-module records to the module that owns the concept when one gets a third user |
 | D17 | Haiku misuses `share_news`: it picks the act for lines that are no news, or invents words under a real `fact_id` | live evenings, seeds 5 and 1 (2026-10-04): "Need to know if the fever's crept this far up yet." and "Fever's in the river villages too, three weeks now." as `share_news` | Not checkable by a rule (it is a meaning). Tighten the act's text and examples, or have E28 count them |
 | D18 | Live turn fallbacks keep coming from two Haiku slips: an `invitation` on an `accept`, and a line over 160 characters | one of each in the two E19 live evenings (a fallback per evening) | Small task: accept (and drop) an invitation on `accept`/`decline`, or say so in the prefix; the length rule stays |
+| D19 | Haiku's barkeep forgets he is at work: he offers to play darts and a wager ("A silver penny a round, then."), and opens most chats with the same "Evening. …" formula | live evening, seed 5 (2026-10-04): lines at 220 s and 227 s to Edda, and 160 s, 67 s and 89 s | Not checkable by a rule. Say in rule 16 that the barkeep never offers games or money, or have E28 count them |
+| D20 | A guest's save fails to load once their conversation has outlasted the talk's 8 s: a part in a scene is never clamped at zero, so `_remaining` goes negative and `check_saved_progress` rejects it | read in `lifecycle._interact` and shown by hand (`_remaining` of -3.0 gives "Invalid saved action timer"); not yet seen in a live autosave. A `game` and a `served` verb are clamped | Failing test first (save during a 12 s conversation), then clamp every held-open verb; a bug fix, in its own commit |

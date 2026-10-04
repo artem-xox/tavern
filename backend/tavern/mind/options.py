@@ -62,8 +62,10 @@ def _target(observation: Observation, action: Action) -> Mapping[str, Any]:
 
 def _pour(observation: Observation, action: Action) -> str:
     tap = _target(observation, action)
-    return (f"walk {walk_words(steps_to(observation, tap))} to the tap and pour a mug of ale "
-            f"({tap.get('stock')} servings when last seen)")
+    # With a barkeep in sight the guest asks for the mug, as he pours them; otherwise they pour their own.
+    barkeep = next((person for person in observation.get("people", []) if person.get("post")), None)
+    pour = f"ask {label_of(barkeep)} for a mug of ale" if barkeep else "pour a mug of ale"
+    return f"walk {walk_words(steps_to(observation, tap))} to the tap and {pour} ({tap.get('stock')} servings when last seen)"
 
 
 def _drink(observation: Observation, action: Action) -> str:
@@ -114,6 +116,8 @@ def _someone(observation: Observation, visitor_id: Any) -> Mapping[str, Any] | N
 def _talk(observation: Observation, action: Action) -> str:
     partner = _someone(observation, action["target_id"])
     name = label_of(partner) if partner else action["target_id"]
+    if partner and partner.get("post"):
+        return f"chat with {name} across the bar"
     if partner and not partner.get("seat_id"):
         return f"start a conversation with {name}, who stands beside them"
     return f"chat with {name}, who sits across the table from them"
@@ -131,6 +135,12 @@ def _join(observation: Observation, action: Action) -> str:
 
 def _darts(observation: Observation, action: Action) -> str:
     return f"walk {walk_words(steps_to(observation, _target(observation, action)))} to the darts board and play a round"
+
+
+def _bar(observation: Observation, action: Action) -> str:
+    barkeep = next((person for person in observation.get("people", []) if person.get("post")), None)
+    return (f"walk {walk_words(steps_to(observation, _target(observation, action)))} to the bar and lean on it, "
+            f"where {label_of(barkeep) if barkeep else 'the barkeep'} tends it")
 
 
 def _watch(observation: Observation, action: Action) -> str:
@@ -184,6 +194,7 @@ def family_text(observation: Observation, option: Action) -> str:
 # Each verb's option sentence; a new verb needs an entry here (and one in `activities.ACTIVITIES`).
 _OPTIONS: Mapping[str, Callable[[Observation, Action], str]] = {
     "take_beer": _pour, "drink": _drink, "rest": _rest, "seating": _seating, "sit": _sit, "talk": _talk,
-    "join_conversation": _join, "play_darts": _darts, "watch": _watch, "watch_dice": _watch_dice,
+    "join_conversation": _join, "play_darts": _darts, "stand_at_bar": _bar, "watch": _watch,
+    "watch_dice": _watch_dice,
     "use_toilet": _toilet,
     "inspect": _inspect, "wait": _wait, "leave": _leave, "cut_in_line": _cut}

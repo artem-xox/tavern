@@ -17,6 +17,9 @@
     {"id": "wenna", "name": "Calder", "color": "#7fae7a", "sprite": "courier", "card": "calder", "arrives_at": 110},
     {"id": "osric", "name": "Saye", "color": "#9d8fc4", "sprite": "visitor", "card": "saye", "arrives_at": 190}
   ],
+  "staff": [
+    {"id": "hob", "name": "Hob", "color": "#c98f4a", "sprite": "bartender", "card": "hob", "post": "bar"}
+  ],
   "news": [
     {"id": "salt_toll", "topic": "the salt toll",
      "text": "The margrave has doubled the salt toll at the border post, and carters are turning back rather than pay it.",

@@ -7,7 +7,7 @@ from math import inf
 import math
 from typing import Any, NotRequired, TypedDict, cast
 
-from tavern.hall.arrival import admit_arrivals, arrival_ranges, arriving
+from tavern.hall.arrival import admit_arrivals, arrival_ranges, arriving, take_posts
 from tavern.hall.state import World
 from tavern.hall.validation import number, unique_ids
 from tavern.hall.world import create_world
@@ -33,6 +33,22 @@ class Guest(TypedDict):
     ties: NotRequired[list[OwnTie]]
 
 
+class StaffMember(TypedDict):
+    """Someone the scenario puts to work behind a bar: a guest's fields but `arrives_at`, and a `post`.
+
+    `post` is the ID of the bar they work at (see `tavern.hall.staff`). A member cast from a card
+    carries it, and their `traits` are its params.
+    """
+
+    id: str
+    name: str
+    color: str
+    sprite: str
+    traits: dict[str, float]
+    post: str
+    card: NotRequired[Card]
+
+
 class ExpectedGuest(Guest):
     """A guest still on the way, kept in the world's `expected` list with tonight's needs drawn."""
 
@@ -45,7 +61,8 @@ class Scenario:
 
     `ties` are the starting relationships between guests, in listed order: what later
     systems seed opinions and familiarity from. `news` is what the evening's guests start
-    out knowing (see `facts`).
+    out knowing (see `facts`). `staff` work the evening and are at their posts before the first guest
+    comes in.
     """
 
     guests: tuple[Guest, ...]
@@ -54,6 +71,7 @@ class Scenario:
     seed: int | None
     ties: tuple[Tie, ...] = ()
     news: tuple[News, ...] = ()
+    staff: tuple[StaffMember, ...] = ()
 
 
 def _fields(data: Any, required: set[str], optional: set[str], label: str) -> Mapping[str, Any]:
@@ -94,43 +112,75 @@ def parse_guest(data: Any) -> Guest:
     return guest
 
 
-def _matching_card(guest: Guest, data: Any) -> Card:
+def parse_staff_member(data: Any) -> StaffMember:
+    """Validate one staff member of the evening.
+
+    Args:
+        data: Record with exactly `id`, `name`, `color`, `sprite`, `traits` (names to 0–1 values) and
+            `post` (the ID of a bar), and optionally the `card` they are cast from.
+    Returns:
+        The staff member.
+    Raises:
+        ValueError: A field is missing, unknown or malformed, or the name, sprite or traits differ from
+            their card's. Whether the post is a bar with staff cells is checked when the evening opens.
+    """
+    fields = _fields(data, {"id", "name", "color", "sprite", "traits", "post"}, {"card"}, "Staff member")
+    for key in ("id", "name", "color", "sprite", "post"):
+        if not isinstance(fields[key], str) or not fields[key]:
+            raise ValueError(f"Staff member {key} must be a nonempty string")
+    if not isinstance(fields["traits"], Mapping):
+        raise ValueError("Staff member traits must map names to numbers")
+    member = StaffMember(id=fields["id"], name=fields["name"], color=fields["color"], sprite=fields["sprite"],
+                         traits={name: number(value, name, 0, 1) for name, value in fields["traits"].items()},
+                         post=fields["post"])
+    if "card" in fields:
+        member["card"] = _matching_card(member, fields["card"])
+    return member
+
+
+def _matching_card(person: Mapping[str, Any], data: Any) -> Card:
     card = parse_card(data)
-    if (card["name"], card["sprite"], card["params"]) != (guest["name"], guest["sprite"], guest["traits"]):
-        raise ValueError(f"Guest {guest['id']!r} must have the name, sprite and params of card {card['id']!r}")
+    if (card["name"], card["sprite"], card["params"]) != (person["name"], person["sprite"], person["traits"]):
+        raise ValueError(f"{person['id']!r} must have the name, sprite and params of card {card['id']!r}")
     return card
 
 
-def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None) -> Scenario:
+def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None,
+                   staff_cards: Mapping[str, Card] | None = None) -> Scenario:
     """Validate a scenario read from outside the game.
 
     Args:
         data: Decoded scenario with `guests`, `arrival` need ranges (as in a room's `arrival`
             section), `closes_at` in game seconds, an optional integer `seed` and optional
-            starting `relationships` (see `ties.parse_ties`) and optional `news` (see `facts.parse_news`). A guest is either described
+            starting `relationships` (see `ties.parse_ties`), optional `news` (see `facts.parse_news`)
+            and optional `staff` (see `parse_staff_member`). A guest is either described
             inline with `traits`, or cast from a character card named by ID in `card`, with
-            the card's name and sprite.
+            the card's name and sprite; so is a staff member, from the staff cards.
         cards: Character cards by ID. Without them only the schedule is read: guests cast from
             a card come with no card and middling traits.
+        staff_cards: Cards of the staff by ID, kept apart from the guests' so that no staff member is
+            offered as a guest. Without them staff cast from a card come with no card and middling traits.
     Returns:
         The scenario, with guests in their listed order, each holding their own ties.
     Raises:
-        ValueError: A section is missing, unknown or malformed, there are no guests, guest IDs
-            repeat, a guest would arrive at or after closing time, a guest's card is unknown
-            or does not match them, or a relationship or news item is invalid.
+        ValueError: A section is missing, unknown or malformed, there are no guests, guest or staff
+            IDs repeat, a guest would arrive at or after closing time, a guest's or staff member's card
+            is unknown or does not match them, or a relationship or news item is invalid.
     """
-    fields = _fields(data, {"guests", "arrival", "closes_at"}, {"seed", "relationships", "news"}, "Scenario")
+    fields = _fields(data, {"guests", "arrival", "closes_at"}, {"seed", "relationships", "news", "staff"},
+                     "Scenario")
     closes_at = number(fields["closes_at"], "Closing time", 0, inf)
     seed = fields.get("seed")
     if seed is not None and type(seed) is not int:
         raise ValueError("Scenario seed must be an integer")
     guests = _guests(fields["guests"], closes_at, cards)
+    staff = _staff(fields.get("staff", []), guests, staff_cards)
     ties = parse_ties(fields.get("relationships", []), [item["id"] for item in guests])
     news = parse_news(fields.get("news", []), [item["id"] for item in guests])
     # `arrival` is a required field above, so its ranges are never None here.
     arrival = cast(dict[str, tuple[float, float]], arrival_ranges(fields))
     return Scenario(guests=_with_ties(guests, ties), arrival=arrival, closes_at=closes_at, seed=seed, ties=ties,
-                    news=news)
+                    news=news, staff=staff)
 
 
 def _guests(value: Any, closes_at: float, cards: Mapping[str, Card] | None) -> tuple[Guest, ...]:
@@ -142,6 +192,14 @@ def _guests(value: Any, closes_at: float, cards: Mapping[str, Card] | None) -> t
     if late:
         raise ValueError(f"Guests must arrive before closing time: {', '.join(late)}")
     return guests
+
+
+def _staff(value: Any, guests: Sequence[Guest], cards: Mapping[str, Card] | None) -> tuple[StaffMember, ...]:
+    if not isinstance(value, Sequence) or isinstance(value, str):
+        raise ValueError("Scenario staff must be a list")
+    staff = tuple(parse_staff_member(_cast(item, cards)) for item in value)
+    unique_ids([*guests, *staff], "guests and staff")
+    return staff
 
 
 def _cast(entry: Any, cards: Mapping[str, Card] | None) -> Any:
@@ -185,6 +243,7 @@ def open_evening(room: Mapping[str, Any], scenario: Scenario, seed: int) -> Worl
         raise ValueError("A scenario needs a door for its guests to come in by")
     world.update({"expected": _expected(scenario, seed), "closes_at": scenario.closes_at,
                   "news": [News(**item) for item in scenario.news]})
+    take_posts(world, scenario.staff)
     admit_arrivals(world)
     return world
 

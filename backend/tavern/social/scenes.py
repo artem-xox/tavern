@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any, NotRequired, TypedDict
 from tavern.hall.closing import inn_closed
 from tavern.hall.memory import record_event
 from tavern.hall.room import find_object
+from tavern.hall.staff import on_staff
 from tavern.hall.state import Actor, World
 from tavern.hall.validation import number
 
@@ -125,6 +126,30 @@ def _by_a_view(world: Mapping[str, Any], actor: Mapping[str, Any]) -> bool:
                if item["kind"] in ("fireplace", "window") for x, y in item["interaction_spots"])
 
 
+def bar_of(world: Mapping[str, Any], person: Mapping[str, Any]) -> str | None:
+    """Tell at which bar someone stands.
+
+    Args:
+        world: Current world.
+        person: Visitor.
+
+    Returns:
+        The ID of the bar a guest stands on a spot of, or whose staff cells its staff member stands on;
+        only those exact cells count, not the cells round them. None otherwise.
+    """
+    cell = [person["x"], person["y"]]
+    for item in world["map"]["objects"]:
+        if item["kind"] != "bar":
+            continue
+        if on_staff(person):
+            cells = item.get("staff_cells", []) if person["post"] == item["id"] else []
+        else:
+            cells = item["interaction_spots"]
+        if cell in cells:
+            return str(item["id"])
+    return None
+
+
 def side_by_side(world: Mapping[str, Any], actor: Mapping[str, Any], other: Mapping[str, Any]) -> bool:
     """Tell whether two standing visitors are close enough to talk.
 
@@ -135,7 +160,8 @@ def side_by_side(world: Mapping[str, Any], actor: Mapping[str, Any], other: Mapp
 
     Returns:
         True when neither sits, and they stand next to each other in the same line, or neither
-        walks and both stand by the fire or a window within reach of each other.
+        walks and both stand by the fire or a window within reach of each other, or both stand at
+        the same bar (a guest on one of its spots, its staff member on a staff cell), however far apart.
     """
     if actor["id"] == other["id"] or actor.get("seat_id") or other.get("seat_id"):
         return False
@@ -146,7 +172,10 @@ def side_by_side(world: Mapping[str, Any], actor: Mapping[str, Any], other: Mapp
         return mine[0] == theirs[0] and abs(mine[1] - theirs[1]) == 1
     if "walking" in (actor["status"], other["status"]):
         return False
-    near = max(abs(actor["x"] - other["x"]), abs(actor["y"] - other["y"])) <= world["rules"]["conversation"]["reach"]
+    at_bar = bar_of(world, actor)
+    if at_bar is not None and at_bar == bar_of(world, other):
+        return True
+    near =max(abs(actor["x"] - other["x"]), abs(actor["y"] - other["y"])) <= world["rules"]["conversation"]["reach"]
     return near and _by_a_view(world, actor) and _by_a_view(world, other)
 
 

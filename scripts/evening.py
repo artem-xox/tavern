@@ -14,10 +14,12 @@ from tavern.adapters import jev
 from tavern.adapters.claude import HAIKU_4_5, ClaudeError, ask_claude
 from tavern.adapters.probes import probes
 from tavern.evening.lockstep import Pace, evening_mode, run_evening
-from tavern.evening.metrics import attention_counts, conversation_counts, dice_metrics, evening_metrics, intention_counts, news_metrics, writer_stats
+from tavern.evening.metrics import (attention_counts, bar_metrics, conversation_counts, dice_metrics, evening_metrics,
+                                    intention_counts, news_metrics, writer_stats)
 from tavern.evening.recording import (Record, format_record, parse_records, record_calls, record_questions, replay_calls,
                               replay_questions)
 from tavern.evening.scenario import open_evening, parse_scenario
+from tavern.hall.staff import on_staff
 from tavern.mind.agents import Evaluators
 from tavern.mind.cards import parse_cards
 from tavern.mind.haiku_turns import claude_writer, writer_mode
@@ -46,6 +48,8 @@ def arguments(root: Path) -> argparse.ArgumentParser:
                         help="who comes tonight, when, and when the inn closes")
     parser.add_argument("--characters", type=Path, default=root / "data" / "characters",
                         help="character cards the scenario casts its guests from")
+    parser.add_argument("--staff", type=Path, default=root / "data" / "staff",
+                        help="cards the scenario casts its staff from")
     parser.add_argument("--mode", choices=("local", "live", "replay"),
                         help="default: live when TYPESAFE_API_KEY is in the env file, else local")
     parser.add_argument("--out", type=Path, default=root / "runs" / "evening-0")
@@ -257,7 +261,9 @@ def main(root: Path) -> None:
     room = json.loads((root / "data" / "tavern.json").read_text())
     try:
         cards = parse_cards([json.loads(path.read_text()) for path in sorted(args.characters.glob("*.json"))])
-        world = open_evening(room, parse_scenario(json.loads(args.scenario.read_text()), cards), args.seed)
+        staff_cards = parse_cards([json.loads(path.read_text()) for path in sorted(args.staff.glob("*.json"))])
+        world = open_evening(room, parse_scenario(json.loads(args.scenario.read_text()), cards, staff_cards),
+                             args.seed)
     except (OSError, ValueError) as error:
         parser.error(f"cannot open the evening: {error}")
     settings = config(values, mode)
@@ -278,6 +284,7 @@ def main(root: Path) -> None:
               "intentions": intention_counts(evening),
               "attention": attention_counts(evening), "conversation": conversation_counts(evening),
               "news": news_metrics(world), "dice": dice_metrics(evening.events),
+              "bar": bar_metrics(evening.events, [item["id"] for item in world["actors"] if on_staff(item)]),
               "writer": writer_stats(evening, calls, "turn", HAIKU_4_5)}
     (args.out / "events.jsonl").write_text("".join(json.dumps(event, sort_keys=True) + "\n" for event in evening.events))
     (args.out / "metrics.json").write_text(json.dumps(rounded(report), indent=2) + "\n")

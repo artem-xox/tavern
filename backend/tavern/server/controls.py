@@ -5,6 +5,7 @@ from copy import deepcopy
 from typing import Any
 
 from tavern.hall.room import object_cells
+from tavern.hall.staff import off_limits
 from tavern.hall.state import World
 from tavern.hall.validation import integer, number
 from tavern.hall.world import start_action
@@ -87,6 +88,8 @@ def _validate_block(world: World, permanent_walls: Sequence[Sequence[int]], cell
         raise ValueError("Cannot change the cell under a visitor")
     if any(tuple(cell) in object_cells(item) for item in world["map"]["objects"]):
         raise ValueError("Furniture cells cannot be changed")
+    if tuple(cell) in off_limits(world["map"], {}):
+        raise ValueError("Cells behind the bar cannot be changed")
 
 
 def forced_action(world: World, command: Mapping[str, Any]) -> tuple[World, str]:

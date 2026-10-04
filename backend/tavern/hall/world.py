@@ -7,6 +7,7 @@ from typing import Any
 from tavern.body.actions import action_error
 from tavern.body.activities import ACTIVITIES
 from tavern.body.attention import attend
+from tavern.body.bartending import tend_bar
 from tavern.body.dozing import nodding_off
 from tavern.body.drunkenness import wear_off
 from tavern.body.expression import update_expression
@@ -20,6 +21,7 @@ from tavern.hall.room import create_map
 from tavern.hall.routes import plan_route
 from tavern.hall.rules import default_rules
 from tavern.hall.sight import look_around, people_in_sight, visible_cells
+from tavern.hall.staff import check_staff_cells, on_staff
 from tavern.hall.state import World, find_actor
 from tavern.hall.validation import number, unique_ids
 from tavern.social.dice import settle_games
@@ -46,13 +48,14 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> World:
         ValueError: Layout, IDs, resources, arrival ranges, or actor values are invalid.
     """
     world_map = create_map(map_data)
+    check_staff_cells(world_map)
     unique_ids(map_data.get("actors", []), "actor")
     ranges, listed = arrival_ranges(map_data), map_data.get("actors", [])
     actors = [create_actor(item, world_map)
               for item in (listed if ranges is None else arriving(listed, ranges, seed))]
     if len({(item["x"], item["y"]) for item in actors}) != len(actors):
         raise ValueError("Actors cannot overlap at startup")
-    world = World(schema_version=8, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
+    world = World(schema_version=9, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
                   map=world_map, actors=actors, departed=[], expected=[], closes_at=None,
                   events=[], stimuli=[], next_stimulus_id=0, conversations=[], next_conversation_id=0,
                   invitations=[], news=[], rules=default_rules())
@@ -81,6 +84,9 @@ def start_action(world: World, actor_id: str, action: Mapping[str, Any]) -> dict
     actor = find_actor(world, actor_id)
     if actor is None:
         return {"accepted": False, "reason": "Unknown visitor"}
+    if on_staff(actor):
+        # Only the bar's own routine (`tavern.body.bartending`) moves staff, not a decision or an operator.
+        return {"accepted": False, "reason": f"{actor['name']} works behind the bar"}
     cutting = action.get("verb") == "cut_in_line"
     action, reason = cut_in(world, action)
     reason = reason or action_error(world, actor, action)
@@ -127,6 +133,7 @@ def step_world(world: World, dt: float) -> None:
     check_conversations(world)
     speak_turns(world)
     honor_invitations(world, start_action)
+    tend_bar(world)
     games = settle_games(world)
     for actor in games.done:
         complete_action(world, actor)

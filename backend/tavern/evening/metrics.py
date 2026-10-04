@@ -316,3 +316,29 @@ def dice_metrics(events: Sequence[Mapping[str, Any]]) -> DiceCounts:
     wins = Counter(event["actor_id"] for event in events if event["type"] == "dice_won")
     return {"games": sum(wins.values()), "abandoned": sum(event["type"] == "dice_abandoned" for event in events),
             "onlookers": sum(event["type"] == "dice_watched" for event in events), "wins": dict(wins)}
+
+
+class BarCounts(TypedDict):
+    """How the bar went: mugs the barkeep poured, conversations he opened, lines he spoke and news items
+    he told."""
+
+    served: int
+    opened: int
+    lines: int
+    news_told: int
+
+
+def bar_metrics(events: Sequence[Mapping[str, Any]], staff: Sequence[str]) -> BarCounts:
+    """Count what the barkeep did in an evening.
+
+    Args:
+        events: The complete event log: `served`, `conversation_started`, `turn` and `news_told`.
+        staff: IDs of the staff in the hall at the end (`tavern.hall.staff.guests` leaves them out); an
+            event counts for the bar when its actor is one of them.
+
+    Returns:
+        The counts. A conversation a guest opened with the barkeep is not one he opened.
+    """
+    done = Counter(event["type"] for event in events if event["actor_id"] in staff)
+    return {"served": done["served"], "opened": done["conversation_started"], "lines": done["turn"],
+            "news_told": done["news_told"]}

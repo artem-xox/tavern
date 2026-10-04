@@ -5,6 +5,7 @@ from typing import Any
 
 from tavern.hall.navigation import find_path, select_interaction_spot
 from tavern.hall.room import find_object, impassable_cells
+from tavern.hall.staff import off_limits
 from tavern.hall.state import Actor
 
 
@@ -42,7 +43,7 @@ def plan_route(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mappi
         target vanished or there is nothing to inspect; None when no spot is reachable.
     """
     world_map = world["map"]
-    obstacles = impassable_cells(world_map) + _other_reservations(world, actor)
+    obstacles = impassable_cells(world_map) + off_limits(world_map, actor) + _other_reservations(world, actor)
     start = (actor["x"], actor["y"])
     if action["verb"] == "inspect":
         return _inspection_plan(world, actor, obstacles)
@@ -105,7 +106,8 @@ def replan(world: Mapping[str, Any], actor: Actor) -> bool:
     if actor["_spot"] is None:
         return False
     world_map = world["map"]
-    obstacles = impassable_cells(world_map) + occupied_cells(world, actor) + _other_reservations(world, actor)
+    obstacles = (impassable_cells(world_map) + off_limits(world_map, actor) + occupied_cells(world, actor)
+                 + _other_reservations(world, actor))
     path = find_path((actor["x"], actor["y"]), actor["_spot"], world_map["width"], world_map["height"], obstacles)
     if path:
         actor["path"] = [list(cell) for cell in path[1:]]

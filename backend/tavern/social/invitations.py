@@ -13,6 +13,7 @@ from typing import Any, TypedDict
 from tavern.body.actions import action_error
 from tavern.hall.memory import record_event
 from tavern.hall.room import find_object
+from tavern.hall.staff import on_staff
 from tavern.hall.state import Actor, World
 from tavern.hall.validation import number
 from tavern.social.dice import PLAY, open_chairs
@@ -94,11 +95,15 @@ def offered_kinds(world: Mapping[str, Any], scene: Mapping[str, Any], speaker: M
 
     Returns:
         Kinds in `KINDS` order: `join_table` when their table has a free chair and someone in
-        the scene sits elsewhere; the others when they know darts, a tap with ale, or a door.
+        the scene sits elsewhere; the others when they know darts, a tap with ale, or a door. None
+        for staff, or when everyone else in the scene is staff.
     """
     if scene["invitation"] is not None:
         return []
     table, people = home_table(world, speaker), _people(world)
+    # Staff are at work behind the bar: they invite nobody, and nobody invites them away from it.
+    if on_staff(speaker) or all(on_staff(people[item]) for item in scene["participants"] if item != speaker["id"]):
+        return []
     outsiders = [people[item] for item in scene["participants"] if item != speaker["id"]
                  and home_table(world, people[item]) != table]
     offered = {"join_table": bool(outsiders) and free_chair(world, table, outsiders[0]) is not None,
