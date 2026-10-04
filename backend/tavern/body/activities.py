@@ -282,7 +282,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "naturally heads home. It is also right when the evening has gone wrong: the beer has run "
                       "out (the tap shows stock 0 when last seen) while they are still thirsty, someone took "
                       "their seat, someone offended them or they had a quarrel and their mood has soured (see the "
-                      "mood, opinions and what still rankles in the situation, and `self.visit.grievances`), "
+                      "mood, opinions and what still rankles in the situation), "
                       "or their needs keep going unmet. Leaving is a poor choice when they have just arrived, "
                       "still hold an undrunk mug, want a drink that is still available, or are enjoying good "
                       "company. Impatient guests walk out sooner when their mood sours; comfort-loving guests "

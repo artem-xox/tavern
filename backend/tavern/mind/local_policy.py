@@ -104,12 +104,9 @@ def _leave_utility(observation: Mapping[str, Any]) -> float:
 
 def _wrongs(observation: Mapping[str, Any]) -> float:
     # How wronged a visitor feels, in taken seats: their active thoughts' mood, where pleasant
-    # company offsets a slight. Observations built outside the world may carry no thoughts;
-    # then each listed grievance counts as one wrong. Without a clock every thought counts.
-    actor = observation["actor"]
-    if "thoughts" not in actor:
-        return float(len(actor.get("visit", {}).get("grievances", [])))
-    feeling = thought_mood(actor, observation.get("time", -math.inf))
+    # company offsets a slight. Observations built outside the world may carry no thoughts, which
+    # read as none. Without a clock every thought counts.
+    feeling = thought_mood(observation["actor"], observation.get("time", -math.inf))
     return max(0.0, -feeling) / -THOUGHTS["seat_taken"].mood
 
 

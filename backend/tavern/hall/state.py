@@ -32,7 +32,6 @@ class Visit(TypedDict):
 
     seconds: float
     beers: int
-    grievances: list[str]
     left_at: NotRequired[float]
 
 

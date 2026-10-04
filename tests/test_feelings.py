@@ -96,7 +96,7 @@ def test_thoughts_are_forgotten_once_they_expire() -> None:
     ada = actor(world, "ada")
     world["time"] = ada["thoughts"][0]["expires_at"]
     step_world(world, 0.1)
-    assert (ada["thoughts"], ada["visit"]["grievances"], opinion_of(ada, "bea", world["time"])) == ([], [], 0.0)
+    assert (ada["thoughts"], opinion_of(ada, "bea", world["time"])) == ([], 0.0)
 
 
 def look(world: dict[str, Any], actor_id: str = "ada") -> dict[str, Any]:
@@ -136,7 +136,7 @@ def view(thoughts: list[dict[str, Any]], time: float) -> dict[str, Any]:
     needs = {"thirst": 40, "fatigue": 40, "bladder": 40, "social": 10, "boredom": 10}
     own = {"id": "ada", "name": "Ada", "x": 5, "y": 5, "inventory": {"beer": 0}, "needs": needs,
            "traits": {"patience": 0.3, "comfort": 0.5, "curiosity": 0.5}, "favorite_seat_id": None,
-           "visit": {"seconds": 120.0, "beers": 0, "grievances": []}, "thoughts": thoughts, "relations": {}}
+           "visit": {"seconds": 120.0, "beers": 0}, "thoughts": thoughts, "relations": {}}
     door = {"id": "door", "kind": "door", "x": 5, "y": 9, "reserved_by": None}
     return {"actor": own, "objects": [door], "visitors": [], "memory": [], "time": time}
 

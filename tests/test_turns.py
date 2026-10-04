@@ -97,7 +97,7 @@ def view(**speaker: Any) -> dict[str, Any]:
                                     "time": 1.0}])
     me = {"id": "bea", "name": "Bea", "needs": {"thirst": 20, "fatigue": 20, "bladder": 20, "social": 70,
                                                "boredom": 20},
-          "traits": {"patience": 0.5}, "visit": {"seconds": 100.0, "beers": 0, "grievances": []}, "places": []}
+          "traits": {"patience": 0.5}, "visit": {"seconds": 100.0, "beers": 0}, "places": []}
     me.update(speaker)
     return {"conversation": {"id": "conversation-0", "topic": "the inn's beer", "turn": len(turns),
                              "participants": [{"id": "ada", "name": "Ada"}, {"id": "bea", "name": "Bea"}],
@@ -122,9 +122,9 @@ COMPLAINED = [{"speaker": "bea", "addressee": "ada", "line": "This ale is sour."
                  {"small_talk", "joke"}, id="content-guest-still-answers-once"),
     pytest.param({"needs": {"thirst": 20, "fatigue": 20, "bladder": 20, "social": 5, "boredom": 20},
                   "turns": SHARED}, {"leave_conversation"}, id="had-enough-company"),
-    pytest.param({"traits": {"patience": 0.0}, "visit": {"seconds": 900.0, "beers": 3, "grievances": []}},
+    pytest.param({"traits": {"patience": 0.0}, "visit": {"seconds": 900.0, "beers": 3}},
                  {"complain"}, id="tipsy-and-impatient-complains"),
-    pytest.param({"traits": {"patience": 0.0}, "visit": {"seconds": 900.0, "beers": 3, "grievances": []},
+    pytest.param({"traits": {"patience": 0.0}, "visit": {"seconds": 900.0, "beers": 3},
                   "turns": COMPLAINED}, {"small_talk", "joke"}, id="complains-only-once"),
     pytest.param({"places": [TAP]}, {"share_place"}, id="tells-where-places-are"),
     pytest.param({"places": [TAP, TAP], "turns": SHARED}, {"small_talk", "joke"}, id="duplicate-places-told-once"),

@@ -13,6 +13,7 @@ import pytest
 from tavern.mind.agents import Evaluators, build_candidates, build_seat_candidates, choose_action
 from tavern.adapters.jev import JevError, evaluate_actions, evaluate_seats
 from tavern.hall.world import create_world, observe_actor
+from tavern.social.thoughts import THOUGHTS
 
 
 def view(objects: list[dict[str, Any]] | None = None, needs: dict[str, float] | None = None,
@@ -22,7 +23,7 @@ def view(objects: list[dict[str, Any]] | None = None, needs: dict[str, float] | 
     own = {"id": "ada", "name": "Ada", "x": 5, "y": 5, "inventory": {"beer": 0},
            "needs": {**calm, **(needs or {})},
            "traits": {"patience": 0.5, "comfort": 0.5, "curiosity": 0.5},
-           "favorite_seat_id": None, "visit": {"seconds": 0.0, "beers": 0, "grievances": []}}
+           "favorite_seat_id": None, "visit": {"seconds": 0.0, "beers": 0}}
     return {"actor": {**own, **actor}, "objects": objects or [], "visitors": visitors or [], "memory": []}
 
 
@@ -58,9 +59,16 @@ def config(**fields: Any) -> dict[str, Any]:
     return {"typesafe_api_key": None, "model": "jev-latest", "timeout": 2.0, "temperature": 0.0, **fields}
 
 
-def visit(seconds: float, beers: int, grievances: list[str]) -> dict[str, Any]:
+def visit(seconds: float, beers: int) -> dict[str, Any]:
     """Describe what has happened to a visitor during this visit."""
-    return {"seconds": seconds, "beers": beers, "grievances": grievances}
+    return {"seconds": seconds, "beers": beers}
+
+
+def wrongs(count: int) -> list[dict[str, Any]]:
+    """Describe the thoughts of someone whose seat Bea took `count` times."""
+    rule = THOUGHTS["seat_taken"]
+    return [{"kind": "seat_taken", "about": "bea", "text": "Bea took my seat", "mood": rule.mood,
+             "opinion": rule.opinion, "expires_at": rule.seconds, "source_event": "Bea took Ada's seat"}] * count
 
 
 async def no_seat_judgement(observation: Any, candidates: Any, settings: Any) -> dict[str, float]:
@@ -142,9 +150,8 @@ def test_seat_choice_lists_free_table_chairs(seats: list[dict[str, Any]], expect
 
 @pytest.mark.parametrize("observation", [
     pytest.param(view(favorite_seat_id=42), id="malformed-own-seat"),
-    pytest.param(view(visit=visit(-1, 0, [])), id="negative-visit-time"),
-    pytest.param(view(visit={"seconds": 0, "beers": "two", "grievances": []}), id="malformed-beer-count"),
-    pytest.param(view(visit={"seconds": 0, "beers": 0, "grievances": "none"}), id="malformed-grievances"),
+    pytest.param(view(visit=visit(-1, 0)), id="negative-visit-time"),
+    pytest.param(view(visit={"seconds": 0, "beers": "two"}), id="malformed-beer-count"),
     pytest.param(view([seat("s1", reserved_by=5)]), id="malformed-seat-reservation"),
 ])
 def test_malformed_seating_state_fails_loudly(observation: dict[str, Any]) -> None:
@@ -233,19 +240,20 @@ def test_failed_seat_judgement_falls_back_visibly() -> None:
         "sit", "local", "Jev request timed out")
 
 
-@pytest.mark.parametrize("history, needs, patience, objects, leaves", [
-    pytest.param(visit(0, 0, []), {}, 0.5, [door()], False, id="newcomer-stays"),
-    pytest.param(visit(600, 3, []), {}, 0.5, [door()], True, id="content-regular-goes-home"),
-    pytest.param(visit(120, 0, ["Bea took my seat"]), {"thirst": 40, "fatigue": 40, "bladder": 40}, 0.9,
-                 [door()], False, id="single-grievance-patient-visitor-stays"),
-    pytest.param(visit(120, 0, ["Bea took my seat"] * 2), {"thirst": 40, "fatigue": 40, "bladder": 40}, 0.3,
-                 [door()], True, id="duplicate-grievances-walk-out"),
-    pytest.param(visit(120, 1, []), {"thirst": 90}, 0.5, [door(), tap(stock=0)], True,
+@pytest.mark.parametrize("history, thoughts, needs, patience, objects, leaves", [
+    pytest.param(visit(0, 0), wrongs(0), {}, 0.5, [door()], False, id="newcomer-stays"),
+    pytest.param(visit(600, 3), wrongs(0), {}, 0.5, [door()], True, id="content-regular-goes-home"),
+    pytest.param(visit(120, 0), wrongs(1), {"thirst": 40, "fatigue": 40, "bladder": 40}, 0.9,
+                 [door()], False, id="single-wrong-patient-visitor-stays"),
+    pytest.param(visit(120, 0), wrongs(2), {"thirst": 40, "fatigue": 40, "bladder": 40}, 0.3,
+                 [door()], True, id="duplicate-wrongs-walk-out"),
+    pytest.param(visit(120, 1), wrongs(0), {"thirst": 90}, 0.5, [door(), tap(stock=0)], True,
                  id="dry-tap-ends-the-evening"),
 ])
-def test_local_policy_decides_when_to_go_home(history: dict[str, Any], needs: dict[str, float], patience: float,
+def test_local_policy_decides_when_to_go_home(history: dict[str, Any], thoughts: list[dict[str, Any]],
+                                              needs: dict[str, float], patience: float,
                                               objects: list[dict[str, Any]], leaves: bool) -> None:
-    observation = view(objects, needs=needs, visit=history,
+    observation = view(objects, needs=needs, visit=history, thoughts=thoughts,
                        traits={"patience": patience, "comfort": 0.5, "curiosity": 0.5})
     result = asyncio.run(choose_action(observation, config(), Random(0)))
     assert (result["action"]["verb"] == "leave") == leaves

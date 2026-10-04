@@ -12,6 +12,7 @@ from tavern.server.api import create_app
 from tavern.server.runtime import TavernRuntime
 from tavern.adapters.persistence import load_world, save_world
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action, step_world
+from tavern.social.thoughts import rankling
 
 
 def table(table_id: str, x: int, y: int) -> list[dict[str, Any]]:
@@ -275,11 +276,11 @@ def test_first_seat_becomes_the_visitors_own_for_the_visit() -> None:
     assert (ada["seat_id"], ada["favorite_seat_id"]) == (None, "warm-west")
 
 
-@pytest.mark.parametrize("sitter, grievances", [
+@pytest.mark.parametrize("sitter, rankles", [
     pytest.param("ada", [], id="owner-returns-to-own-seat"),
     pytest.param("bea", ["Bea took my seat (warm · west)"], id="someone-else-takes-it"),
 ])
-def test_taking_someones_seat_aggrieves_its_owner(sitter: str, grievances: list[str]) -> None:
+def test_taking_someones_seat_aggrieves_its_owner(sitter: str, rankles: list[str]) -> None:
     world = create_world(inn())
     assert start_action(world, "ada", command("sit", "warm-west"))["accepted"]
     advance(world, 20)
@@ -288,8 +289,8 @@ def test_taking_someones_seat_aggrieves_its_owner(sitter: str, grievances: list[
     assert start_action(world, sitter, command("sit", "warm-west"))["accepted"]
     advance(world, 20)
     ada = visitor(world, "ada")
-    assert ada["visit"]["grievances"] == grievances
-    assert sum(event["type"] == "seat_taken" for event in ada["memory"]) == len(grievances)
+    assert rankling(ada, world["time"]) == rankles
+    assert sum(event["type"] == "seat_taken" for event in ada["memory"]) == len(rankles)
     assert visitor(world, sitter)["favorite_seat_id"] == "warm-west"
 
 
@@ -302,6 +303,7 @@ def test_visit_keeps_count_of_time_and_beers() -> None:
         advance(world, 4)
     assert ada["visit"]["beers"] == 2
     assert ada["visit"]["seconds"] == pytest.approx(world["time"])
+    assert set(ada["visit"]) == {"seconds", "beers"}  # what rankles is read from the thoughts, not kept here
 
 
 def dislike_each_other(world: dict[str, Any], opinion: float) -> None:
@@ -396,7 +398,6 @@ def test_evening_state_survives_save_and_load(tmp_path: Path) -> None:
     pytest.param(lambda world: world["actors"][0].update(favorite_seat_id="missing"), id="unknown-own-seat"),
     pytest.param(lambda world: world["actors"][0]["visit"].update(beers=-1), id="negative-beers"),
     pytest.param(lambda world: world["actors"][0].update(visit=[]), id="malformed-visit"),
-    pytest.param(lambda world: world["actors"][0]["visit"].update(grievances=[None]), id="malformed-grievance"),
 ])
 def test_corrupt_evening_state_is_rejected(tmp_path: Path, corrupt: Callable[[dict[str, Any]], Any]) -> None:
     world = evening()

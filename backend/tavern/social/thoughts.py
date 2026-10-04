@@ -96,7 +96,7 @@ def think(actor: Actor, kind: str, now: float, text: str, source_event: str,
     the feeling rather than deepening it without end.
 
     Args:
-        actor: Visitor with `thoughts`, `relations` and `visit`, updated in place.
+        actor: Visitor with `thoughts` and `relations`, updated in place.
         kind: One of `THOUGHTS`.
         now: Current game time.
         text: The thought in the visitor's own words, such as "Bea took my seat".
@@ -121,7 +121,6 @@ def think(actor: Actor, kind: str, now: float, text: str, source_event: str,
     actor["thoughts"].append(thought)
     if about is not None:
         _meet(actor, about, rule.acquaints)
-    _refresh_grievances(actor, now)
     return thought
 
 
@@ -174,15 +173,20 @@ def soften(actor: Actor, about_id: str, now: float) -> bool:
     if not grudges:
         return False
     grudges[-1].update({"mood": grudges[-1]["mood"] / 2, "opinion": grudges[-1]["opinion"] / 2})
-    _refresh_grievances(actor, now)
     return True
 
 
-def _refresh_grievances(actor: Actor, now: float) -> None:
-    # `visit.grievances` is a derived view kept for older readers (tests, saves, Jev's `self`):
-    # the texts of the latest five active thoughts that lower the mood.
-    actor["visit"]["grievances"] = [item["text"] for item in active_thoughts(actor["thoughts"], now)
-                                    if item["mood"] < 0][-5:]
+def rankling(actor: Mapping[str, Any], now: float) -> list[str]:
+    """List what still rankles a visitor.
+
+    Args:
+        actor: Visitor; one without `thoughts` has none.
+        now: Current game time.
+
+    Returns:
+        The texts of the latest five active thoughts that lower the mood, oldest first.
+    """
+    return [item["text"] for item in active_thoughts(actor.get("thoughts", []), now) if item["mood"] < 0][-5:]
 
 
 def active_thoughts(thoughts: Sequence[Thought], now: float) -> list[Thought]:
@@ -272,12 +276,10 @@ def forget_expired(world: Mapping[str, Any]) -> None:
     """Drop the thoughts that stopped counting from every visitor in the hall.
 
     Args:
-        world: World with the current `time`; visitors are updated in place, and their
-            `visit.grievances` view with them.
+        world: World with the current `time`; visitors are updated in place.
     """
     for actor in world["actors"]:
         actor["thoughts"] = active_thoughts(actor["thoughts"], world["time"])
-        _refresh_grievances(actor, world["time"])
 
 
 def seed_relations(pairs: Sequence[Mapping[str, Any]], names: Mapping[str, str]) -> dict[str, dict[str, Relation]]:
