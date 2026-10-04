@@ -74,9 +74,10 @@ and people offer activities; the choice layer scores the legal ones.
 
 - **Needs:** drink, use the WC, sit, warm up by the fire, doze at a table.
 - **Good:** introduce oneself, chat, join a table, buy someone a drink, toast, play darts
-  together, help someone up, leave together.
+  together, play dice (the winner drawn from traits, drink and chance), help someone up,
+  leave together.
 - **Bad:** insult, cut in line, shove, start a fight.
-- **Reactions:** glance, watch, cheer, intervene, back away, leave.
+- **Reactions:** glance, watch (a game of dice or a fight), cheer, intervene, back away, leave.
 
 Joint activities start as invitations: one guest proposes, the other accepts or declines,
 and the game validates. Later the same protocol carries persistent agreements.
