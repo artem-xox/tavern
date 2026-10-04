@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from tavern.body.expression import Emote, Gaze
     from tavern.body.hearing import Stimulus
     from tavern.mind.intentions import Intention
+    from tavern.social.heard import Heard
     from tavern.social.invitations import Errand
     from tavern.evening.scenario import ExpectedGuest
     from tavern.social.scenes import Conversation
@@ -77,6 +78,7 @@ class Actor(TypedDict):
     drunkenness: float
     knowledge: Knowledge
     memory: list[dict[str, Any]]
+    heard: "list[Heard]"
     decision: Decision
     facing: str | None
     gaze: "Gaze | None"
@@ -127,6 +129,7 @@ class ConversationRules(TypedDict):
     max_participants: int
     reach: int
     pressing: float
+    recall_lines: int
 
 
 class Rules(TypedDict):

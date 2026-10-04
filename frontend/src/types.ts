@@ -91,6 +91,8 @@ export interface Actor {
   path: Cell[];
   knowledge: { objects: Record<string, Record<string, unknown>> };
   memory: unknown[];
+  /** The lines this visitor spoke or heard tonight, oldest first, the newest 40 kept. */
+  heard: Heard[];
   decision: (DecisionStage & { seat?: DecisionStage; family?: FamilyStage }) | null;
   /** Where the server turns the visitor; null keeps the seat's, the task's, or the walking direction. */
   facing: Facing | null;
@@ -101,6 +103,16 @@ export interface Actor {
   interrupted_at: number | null;
   /** What the mind last made of the evening; null before the first one, and always offline. */
   intention: Intention | null;
+}
+
+/** A line a visitor spoke or heard; `speaker` is what the visitor called the speaker at that moment. */
+export interface Heard {
+  time: number;
+  scene_id: string;
+  speaker_id: string;
+  speaker: string;
+  line: string;
+  act: string;
 }
 
 /** A guest's thought and intention, the game time whose situation they answer, and what prompted them. */

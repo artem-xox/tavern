@@ -18,6 +18,7 @@ from tavern.mind.feelings import feelings
 from tavern.mind.portrait import portrait
 from tavern.mind.scripted import scripted_turn
 from tavern.social.conversation import ACTS, offered_acts
+from tavern.social.heard import earlier_lines, hear_line
 from tavern.social.invitations import offered_kinds
 from tavern.social.names import called, knows_name, looks
 from tavern.social.overhearing import overhear_turn
@@ -43,6 +44,7 @@ class TurnResult(TypedDict):
 TurnWriter = Callable[[Mapping[str, Any], Mapping[str, Any]], Coroutine[Any, Any, TurnResult]]
 
 _FIELDS = {"line", "act", "addressee", "topic"}
+EARLIER_LINES = 24  # Most lines of other scenes a turn writer is shown: enough to recall, cheap to send.
 
 
 def reading_time(line: str, rules: Mapping[str, Any]) -> float:
@@ -91,7 +93,8 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
         `conversation`: ID, topic, index of the turn being written, participants (see
         `_participants`), the latest eight turns and the pending `invitation`, if any;
         `speaker`: their ID, name, needs, traits, visit, the places they could tell about (tap,
-        WC, darts) and their `opinions` of the others; `acts`: the meaning of each act offered
+        WC, darts), their `opinions` of the others and `earlier`, what they said and heard in other
+        scenes tonight (`heard.earlier_lines`, the newest 24); `acts`: the meaning of each act offered
         now (`conversation.offered_acts`); `invitations`: the kinds an `invite` may name;
         `seed`: the evening's seed, for a writer's seeded choices. Also who they are and how they feel (see `_mind`).
 
@@ -145,6 +148,7 @@ def _mind(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str, A
             "portrait": portrait(speaker),
             "feelings": feelings({"actor": {**speaker, "drunkenness": 0.0}, "time": now}),
             "drunkenness": speaker["drunkenness"],
+            "earlier": earlier_lines(speaker, EARLIER_LINES, scene["id"]),
             "company": [{"id": other["id"], "name": other["name"], "opinion": opinion_of(speaker, other["id"], now),
                          "familiarity": familiarity_of(speaker, other["id"]),
                          "thoughts": [item["text"] for item in thoughts if item["about"] == other["id"]]}
@@ -273,6 +277,7 @@ def _speak(world: World, scene: Conversation, speaker_id: str, result: Mapping[s
     listener = people[result["addressee"]]["name"] if result["addressee"] else "everyone"
     log_event(world, speaker_id, "turn", f"{people[speaker_id]['name']} to {listener} ({result['act']}): {result['line']}")
     # Heard before the act takes effect, while the scene still holds everyone who spoke in it.
+    hear_line(world, scene, turn)
     overhear_turn(world, scene, turn)
     effect = ACTS[result["act"]].effect
     if effect:

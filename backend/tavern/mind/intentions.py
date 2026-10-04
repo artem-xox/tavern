@@ -22,7 +22,11 @@ from tavern.hall.world import observe_actor, observe_people
 from tavern.mind.briefing import brief
 from tavern.mind.cards import PARAMS, TEXT_FIELDS
 from tavern.mind.questions import Ask, Question
+from tavern.social.heard import earlier_lines
 from tavern.social.thoughts import THOUGHTS, active_thoughts
+
+
+RECALLED_LINES = 8  # Lines of tonight's talk a guest's mind is shown when it takes stock.
 
 
 class Trigger(TypedDict):
@@ -177,7 +181,8 @@ def intention_view(world: Mapping[str, Any], actor: Mapping[str, Any], trigger: 
 
     Returns:
         `actor_id`, `name`, `time`, `trigger`, `previous` intention (or None), `card` in words,
-        `situation` (the briefing paragraph, without the previous intention), active `thoughts`
+        `situation` (the briefing paragraph, without the previous intention), active `thoughts`,
+        `earlier` (the latest 8 lines they said or heard tonight, see `heard.earlier_lines`)
         and `drink` (drunkenness stage).
     """
     observation = {**observe_actor(world, actor["id"]), "people": observe_people(world, actor["id"])}
@@ -187,6 +192,7 @@ def intention_view(world: Mapping[str, Any], actor: Mapping[str, Any], trigger: 
             "previous": deepcopy(actor["intention"]), "card": _card(actor),
             "situation": brief(observation, [])["situation"],
             "thoughts": [item["text"] for item in active_thoughts(actor["thoughts"], world["time"])],
+            "earlier": earlier_lines(actor, RECALLED_LINES),
             "drink": drunk_stage(actor["drunkenness"]).name}
 
 
@@ -205,6 +211,12 @@ def _previous(view: Mapping[str, Any]) -> str:
         return "Their previous thought and intention: none yet."
     return (f"Their previous thought: \"{previous['thought']}\" Their previous intention: \"{previous['intention']}\" "
             f"(decided at {previous['written_at']:.0f} s, after: {previous['trigger']['text']}).")
+
+
+def _earlier(view: Mapping[str, Any]) -> list[str]:
+    # The latest lines they said or heard tonight, so their mind builds on talk it already had.
+    lines = [f"{line['speaker']}: \"{line['line']}\"" for scene in view["earlier"] for line in scene["lines"]]
+    return [f"What they said and heard lately, oldest first: {' / '.join(lines)}."] if lines else []
 
 
 def intention_question(prefix: str, view: Mapping[str, Any]) -> Question:
@@ -228,7 +240,7 @@ def intention_question(prefix: str, view: Mapping[str, Any]) -> Question:
         f"It is {view['time']:.0f} s into the evening. {view['name']} takes stock now.",
         f"What prompted it: {view['trigger']['text']}.", _previous(view),
         f"The situation as they see it: {view['situation']}",
-        f"Thoughts on their mind: {thoughts}.", f"Drink: they are {view['drink']}.",
+        f"Thoughts on their mind: {thoughts}.", *_earlier(view), f"Drink: they are {view['drink']}.",
         f"Write {view['name']}'s thought and intention."])
     return Question(system=[prefix, view["card"]], content=content, schema=_schema(), max_tokens=250)
 

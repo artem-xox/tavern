@@ -74,11 +74,10 @@ E16 measures this; E28 sets the budget.
 
 ## Status
 
-M1–M3, the refactor R0–R8 the model health markers (D13) and U1 (no labels in the hall) are done (2026-10-03). Next, in order:
+M1–M3, the refactor R0–R8, the model health markers (D13), U1 (no labels in the hall) and E18b
+(conversation memory) are done (2026-10-04). Next:
 
-1. **E18b, conversation memory.** Guests forget earlier conversations: they greet each
-   other again and repeat topics.
-2. **M4, news and conflict (E19–E22).** E19 replaces the news Haiku invents today.
+1. **M4, news and conflict (E19–E22).** E19 replaces the news Haiku invents today.
 
 The door at closing (D02) is parked in the tech-debt table and is not a task. The code now
 lives in packages (`backend/tavern/hall`, `body`, `social`, `mind`, `evening`, `adapters`,
@@ -531,7 +530,7 @@ live run whose service has no key, a refused key or no credit. Tried against the
 and with bogus keys both `auth`. Not done: a later top-up is noticed only by the next successful call,
 there is no periodic re-probe.
 
-- [ ] **E18b — Conversation memory.** Guests remember the lines they spoke and heard
+- [x] **E18b — Conversation memory.** Guests remember the lines they spoke and heard
   tonight, and the turn writer and the intention writer see them. In-evening only; memory
   between evenings stays in Stage 4.
   - *Shape (freeze before coding):* `actor["heard"]` is a list of
@@ -559,6 +558,19 @@ there is no periodic re-probe.
   - *Done:* in a live evening (seed 5), no pair greets each other as strangers in a
     second scene, and the cost per turn grows by at most $0.0005 (it is $0.0017 today).
     Record the before and after numbers here.
+  - *Built (2026-10-04):* `social/heard.py` owns the record, `earlier_lines` and `check_heard`
+    (not `memory.py`, which holds the room's event log); tests are in `tests/test_heard.py`. The
+    intention view's key is also `earlier` and its prompt line reads "What they said and heard
+    lately"; it includes the current scene, which that writer sees nowhere else. `turn_content`
+    reads `speaker.get("earlier") or []`, so a hand-made view without the field still renders. Saves
+    are `schema_version` 6 and `rules.conversation.recall_lines` is 40. Example 20 and style rule 14
+    teach the writer not to greet again.
+  - *Live check (seed 5, Jev + Haiku, 490 game s, 13 scenes, no fallbacks):* the pairs who met
+    again (Toren–Brida, Calder–Edda, Saye–Rurik) took up the thread ("Heard you talking about
+    fever south of here…") and none introduced themselves again. Cost per turn on the same seed
+    and day: $0.00211 on `main` (32 turns, 90.1% cache hits, ~470 fresh input tokens per call)
+    against $0.00241 with E18b (28 turns, 88.6%, ~588 fresh): +$0.00030, under the $0.0005 limit.
+    The $0.0017 above came from a longer evening, so it is not the baseline.
 
 ### M4 — News and conflict
 

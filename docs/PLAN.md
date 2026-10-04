@@ -16,8 +16,8 @@ react to noise, talk through Claude Haiku 4.5 with speech acts, pass on news, ge
 and sometimes shove or fight. The player only sets up the evening and watches.
 See [Stage 1 tasks](stages/1_EVENING.md).
 
-**Status (2026-10-03):** M1–M3 and the refactor R0–R8 are done. D13 (Jev and Claude health markers) is done. Next, in order: E18b (conversation
-memory), then M4 (news and conflict).
+**Status (2026-10-04):** M1–M3, the refactor R0–R8, D13 (Jev and Claude health markers), U1
+(no labels in the hall) and E18b (conversation memory) are done. Next: M4 (news and conflict).
 
 **Done when:** recorded live evenings meet the Stage 1 metrics, an observer can retell
 a story from at least one of them, and its chronicle cites only logged events.
