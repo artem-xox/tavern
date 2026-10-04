@@ -19,3 +19,15 @@ def test_action_stills_ship_with_browser_build() -> None:
             for pose in ("DrinkingSeated", "TalkingSeated"):
                 path = exported / character / pose / "rotations" / f"{direction}.png"
                 assert path.is_file(), f"Missing browser asset: {path}"
+
+
+def test_pouring_beer_still_is_bartender_only() -> None:
+    """Keep the bar-serving pose available only to the bartender asset folder."""
+    subprocess.run(["npm", "--prefix", "frontend", "run", "build"], cwd=ROOT, check=True, capture_output=True)
+    exported = ROOT / "frontend" / "dist" / "characters"
+    for direction in DIRECTIONS:
+        path = exported / "bartender" / "PouringBeer" / "rotations" / f"{direction}.png"
+        assert path.is_file(), f"Missing bartender asset: {path}"
+    for character in CHARACTERS:
+        if character != "bartender":
+            assert not (exported / character / "PouringBeer").exists()

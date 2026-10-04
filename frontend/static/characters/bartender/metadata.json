@@ -50,6 +50,11 @@
       "character": {"id": "4b692a20-da96-4fb4-9f7b-3df3e1b33356", "name": "Talking", "size": {"width": 68, "height": 68}, "directions": 8, "view": "low top-down"},
       "folder": "Talking",
       "frames": {"rotations": {"north": "Talking/rotations/north.png", "south": "Talking/rotations/south.png", "east": "Talking/rotations/east.png", "west": "Talking/rotations/west.png"}, "animations": {}}
+    },
+    {
+      "character": {"id": "92c6cbd9-9a35-4e10-89a5-77d907901f81", "name": "PouringBeer", "size": {"width": 68, "height": 68}, "directions": 8, "view": "low top-down"},
+      "folder": "PouringBeer",
+      "frames": {"rotations": {"north": "PouringBeer/rotations/north.png", "south": "PouringBeer/rotations/south.png", "east": "PouringBeer/rotations/east.png", "west": "PouringBeer/rotations/west.png"}, "animations": {}}
     }
   ],
   "export_version": "3.1",
