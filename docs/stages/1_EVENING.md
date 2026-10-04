@@ -760,8 +760,8 @@ which G0 extracts from the `Random(f"{seed}:{tick}:…")` pattern before the dic
   - *Tests:* parametrized by traits. Witnesses with high courage and strength
     intervene more; those with low courage back away or leave. A forced fight in a
     seeded evening draws at least two kinds of reaction.
-  - *Reuse:* `watch_fight` can stand on G4's `Activity.shared` and `Activity.game`, with the
-    fight in place of the game.
+  - *Reuse:* `watch_fight` can stand on `Activity.shared_target` (G4's `watch_dice` uses it) and
+    `Activity.game`, with the fight in place of the game.
 
 ### Dice — a game at the table (G0–G5)
 
@@ -1117,8 +1117,8 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
 
   ```
          x  0 1 2 3 4 5 6 7 8 9 10 11
-    y 0     # # # # # # # # # # #  #
-    y 1     # . S S S S T . . . .  .    S  staff cell (the barkeep's zone)   T  tap
+    y 0     # # # # # # # # # F F  F    F  the fireplace, built into the wall, across from the door
+    y 1     # . S S S S T . . f f  f    S  staff cell (the barkeep's zone)   T  tap   f  fireplace spot
     y 2     # . . B B B B . . . .  .    B  the Oak bar
     y 3     # . . b b b o . . . .  .    b  bar spot (B4: guests lean here)   o  the tap's spot (orders)
     y 4     W w . . . . . q q q q  q    q  the tap's line                    W w  window and its spot
@@ -1169,8 +1169,8 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
   user's approval.
 - **Shared with the dice tasks.** B0's `lifecycle.complete_action` is G2's first refactor:
   whichever task comes first builds it, and the other reuses it. B4 reuses
-  `Activity.shared_target`, which the D02 fix added for the door and which G4's `Activity.shared`
-  would duplicate. B3's timer condition may meet G2's `Activity.game` (see B3). Each block's save
+  `Activity.shared_target`, which the D02 fix added for the door and G4's `watch_dice` uses too.
+  B3's timer condition may meet G2's `Activity.game` (see B3). Each block's save
   bump takes the next free `schema_version`. The dice table at (10, 8) is far from the bar.
 
 - [ ] **B0 — One way to finish an action (refactor, no behavior change).** Take
@@ -1434,10 +1434,9 @@ After E19: dice (G0–G5) and the barkeep (B0–B6), both at the user's request 
 E20–E22. The two blocks may go in either order. G0 → G1 → G2 → G3 → G5 is strict; G4 needs only G2
 and may come before G3. B0 → B1 → B2 → B3 → B4 → B5 → B6 is strict. Whichever block comes second
 reuses what the first built: `lifecycle.complete_action` (G2's first refactor, B0) and the next
-free `schema_version`. B4, and G4 in place of its `Activity.shared`, reuse the door's
-`Activity.shared_target`. E21 then rolls through G0's `chance.roll`; E22's `watch_fight` can reuse
-G4's sharing and `Activity.game`, and its
-bystanders can later let the barkeep step in, since he already stands on the activity system.
+free `schema_version`. B4 reuses the door's `Activity.shared_target`, which G4 already uses. E21
+then rolls through G0's `chance.roll`; E22's `watch_fight` can reuse `Activity.shared_target` and
+`Activity.game`, and its bystanders can later let the barkeep step in, since he already stands on the activity system.
 
 ## Acceptance scenarios
 
