@@ -5,6 +5,7 @@ import math
 from typing import Any
 
 from tavern.mind.hall_view import in_use, line_place
+from tavern.social.hostility import urge
 from tavern.social.thoughts import THOUGHTS, thought_mood
 
 
@@ -52,6 +53,10 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
         "wait": max(0.0, 0.08 + 0.12 * traits.get("patience", 0.5) - 0.08 * max(thirst, fatigue, bladder)),
         "leave": _leave_utility(observation),
         "cut_in_line": 0.0,  # weighed against the wait in _score_lines
+        # Hostile acts are rare: even the hottest head scores them below a seat to rest in, and only the
+        # urge (temper loosened by drink) lifts them; a fight is likelier than a shove only through Jev.
+        "shove": 0.1 + 0.3 * min(1.0, urge(observation)),
+        "start_fight": 0.05 + 0.2 * min(1.0, urge(observation)),
     }
     scores = {action["id"]: utility[action["verb"]] for action in candidates}
     _score_seats(observation, candidates, scores)

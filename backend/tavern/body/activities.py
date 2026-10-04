@@ -28,6 +28,8 @@ class Activity:
         partner: Whether it targets another visitor instead of an object. Such a verb is a part in a
             conversation scene (`tavern.social.scenes`): the scene, not a timer, ends it.
         joins: Whether it joins the partner's scene instead of starting one with them.
+        confronts: Whether it turns on another visitor (`tavern.social.hostility`): no scene, no walking, and
+            the timer ends it. Like talking, it needs the target at the actor's table or beside them.
         duration: Seconds of interaction (nominal for a scene part), or None for a decision step
             that never runs in the world.
         family: The `FAMILIES` entry it is chosen under: a first decision picks the family, a
@@ -63,6 +65,7 @@ class Activity:
     target_kinds: tuple[str, ...] = ()
     partner: bool = False
     joins: bool = False
+    confronts: bool = False
     requires_item: str | None = None
     empty_target: str | None = None
     shared_target: bool = False
@@ -107,6 +110,24 @@ def _join_scene(world: World, actor: Actor, member: Actor | None) -> None:
     if member is None:
         raise ValueError("Joining a conversation needs a member to join")
     join_conversation(world, actor, member)
+
+
+def _confront(world: World, actor: Actor, victim: Actor | None, event: str, thought: str, act: str) -> None:
+    # Both remember it, and it is one sound; only the victim holds a grudge for now (E21 resolves the blow).
+    if victim is None:
+        raise ValueError("A hostile act needs someone to turn on")
+    message = f"{actor['name']} {act} {victim['name']}"
+    for member in (actor, victim):
+        record_event(world, member, event, message)
+    think(victim, thought, world["time"], f"{called(victim, actor)} {act} me", message, about=actor)
+
+
+def _shove(world: World, actor: Actor, victim: Actor | None) -> None:
+    _confront(world, actor, victim, "shove", "shoved", "shoved")
+
+
+def _start_fight(world: World, actor: Actor, victim: Actor | None) -> None:
+    _confront(world, actor, victim, "fight_started", "attacked", "attacked")
 
 
 def _go_home(world: World, actor: Actor, door: dict[str, Any] | None) -> None:
@@ -216,6 +237,23 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              what="walk over to the dice table {target} and watch the game being played there",
              guidance="A game of dice draws a crowd: watching eases boredom, and curious guests love to see who "
                       "wins. It means leaving their seat until the game ends."),
+    # Offered only to a guest with a grudge, a temper and, as drink loosens it, the nerve (`tavern.social.hostility`).
+    Activity(verb="shove", confronts=True, duration=1.0, effect=_shove, label="Shove", status="shoving",
+             doing="shoving someone", done="shoved someone", family="confront",
+             what="shove {target}, who sits at their table or stands beside them, hard enough that the whole room "
+                  "turns to look",
+             guidance="A rough act and a rare one, never a first answer: only a guest with a real grudge (someone "
+                      "who insulted them, quarreled with them, took their seat or cut in line, and whom they think "
+                      "ill of) and a short temper, more so with drink in them, would do it. Everyone hears it, the "
+                      "one shoved will not forget it, and it may lead to worse. Most guests, even angry ones, "
+                      "choose something else."),
+    Activity(verb="start_fight", confronts=True, duration=2.0, effect=_start_fight, label="Start a fight",
+             status="fighting", doing="starting a fight", done="started a fight", family="confront",
+             what="pick a fight with {target}, who sits at their table or stands beside them",
+             guidance="The rarest act of the evening: a fistfight with someone they think ill of after a recent "
+                      "wrong, which only a hot temper, usually helped by plenty of drink, brings a guest to. The "
+                      "whole room hears it, the one attacked will not forget it, and it can end in injury. Even "
+                      "an angry guest almost always chooses something else."),
     Activity(verb="use_toilet", target_kinds=("toilet",), duration=2.0, leaves_seat=True,
              needs=MappingProxyType({"bladder": -65}), label="Use the toilet", status="WC", pose="Bathroom",
              doing="heading to the WC", done="used the WC",
@@ -297,6 +335,7 @@ FAMILIES: Mapping[str, str] = MappingProxyType({
     "idling": "wait a moment",
     "going_home": "go home for the night",
     "cutting_in": "push to the front of a line instead of waiting",
+    "confront": "shove someone who wronged them, or start a fight",
 })
 
 

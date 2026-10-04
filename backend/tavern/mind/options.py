@@ -123,6 +123,23 @@ def _talk(observation: Observation, action: Action) -> str:
     return f"chat with {name}, who sits across the table from them"
 
 
+def _confrontee(observation: Observation, action: Action) -> tuple[str, str]:
+    victim = _someone(observation, action["target_id"])
+    where = "sits at their table" if victim and victim.get("seat_id") else "stands beside them"
+    return (label_of(victim) if victim else action["target_id"]), where
+
+
+def _shove(observation: Observation, action: Action) -> str:
+    name, where = _confrontee(observation, action)
+    return f"shove {name}, who {where}, hard enough that the whole room turns to look (a rough act, and {name} will not forget it)"
+
+
+def _fight(observation: Observation, action: Action) -> str:
+    name, where = _confrontee(observation, action)
+    return (f"pick a fight with {name}, who {where}: a brawl the whole room will hear, which {name} will not "
+            "forget and which may leave someone hurt")
+
+
 def _join(observation: Observation, action: Action) -> str:
     member = _someone(observation, action["target_id"])
     if member is None:
@@ -197,4 +214,4 @@ _OPTIONS: Mapping[str, Callable[[Observation, Action], str]] = {
     "join_conversation": _join, "play_darts": _darts, "stand_at_bar": _bar, "watch": _watch,
     "watch_dice": _watch_dice,
     "use_toilet": _toilet,
-    "inspect": _inspect, "wait": _wait, "leave": _leave, "cut_in_line": _cut}
+    "inspect": _inspect, "wait": _wait, "leave": _leave, "cut_in_line": _cut, "shove": _shove, "start_fight": _fight}
