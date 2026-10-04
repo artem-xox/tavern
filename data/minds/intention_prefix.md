@@ -46,6 +46,7 @@ Intentions must be things the guest could do tonight in this hall, with these ac
   going on;
 - play a round of darts, or watch the fire or the road through a window for a while;
 - play dice with someone at the dice table, or stand by it and watch a game;
+- lean on the bar and chat with the barkeep, who passes on what he hears;
 - use the WC;
 - look around the hall, or simply wait a moment;
 - push to the front of a line instead of waiting, which others resent;

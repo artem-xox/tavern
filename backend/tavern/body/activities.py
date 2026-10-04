@@ -183,6 +183,15 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              guidance="Joining company already talking eases the wish for company like a chat of their own and "
                       "is how a stranger gets to know people; it is poor manners to barge in on someone who "
                       "wronged them tonight."),
+    # Leaning on the bar is how a guest comes within reach of the barkeep: standing there they are side by side
+    # with him (`scenes.side_by_side`), and chat with him as with a neighbour.
+    Activity(verb="stand_at_bar", target_kinds=("bar",), shared_target=True, duration=12.0, leaves_seat=True,
+             needs=MappingProxyType({"boredom": -20, "social": -10}), label="Stand at the bar", status="at the bar",
+             interruptible=True, doing="leaning on the bar", done="stood at the bar", family="company",
+             what="walk over to the bar {target} and lean on it, where the barkeep chats with whoever stands there",
+             guidance="Leaning on the bar puts a guest within reach of the barkeep, who tends it all evening, "
+                      "passes on what he hears and answers a word or two; it eases boredom and the wish for "
+                      "company a little. It means leaving their seat for a while."),
     Activity(verb="play_darts", target_kinds=("darts",), duration=10.0, leaves_seat=True,
              needs=MappingProxyType({"boredom": -65}), label="Play darts", status="darts", pose="Darts", interruptible=True,
              sound=Sound("thud", 0.25, 10.0, "darts thudding into the board"),
@@ -281,7 +290,7 @@ FAMILIES: Mapping[str, str] = MappingProxyType({
     "refreshment": "get something to drink",
     "resting": "sit down for a rest",
     "seat_choice": "find a seat at a table, or move to another one",
-    "company": "chat with someone at their table or beside them, or join a conversation",
+    "company": "chat with someone at their table or beside them, join a conversation, or lean on the bar",
     "pastime": "pass the time",
     "wc": "use the WC",
     "exploring": "explore the room",

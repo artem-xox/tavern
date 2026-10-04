@@ -121,7 +121,7 @@ def _concrete_candidates(observation: Mapping[str, Any]) -> list[Action]:
             continue
         actions.extend(_line_options(observation, item, _action(verbs[item["kind"]], item["id"])))
     return [*actions, *_seat_wish(observation, objects), *_views(observation, objects), *_games(objects),
-            *talks, _action("inspect"), _action("wait")]
+            *_bar_stand(observation, actor, objects), *talks, _action("inspect"), _action("wait")]
 
 
 def _line_options(observation: Mapping[str, Any], item: Mapping[str, Any], action: Action) -> list[Action]:
@@ -165,6 +165,19 @@ def _games(objects: Sequence[Mapping[str, Any]]) -> list[Action]:
     # A game under way, as the visitor last saw it (two players seated), draws onlookers to its table.
     return [_action("watch_dice", item["id"]) for item in sorted(objects, key=lambda item: item["id"])
             if item["kind"] == "dice_table" and len((item.get("game") or {}).get("players", [])) == 2]
+
+
+def _bar_stand(observation: Mapping[str, Any], actor: Mapping[str, Any],
+               objects: Sequence[Mapping[str, Any]]) -> list[Action]:
+    # Leaning on a bar is worth offering while a barkeep is in sight to chat with, the guest does not
+    # already stand on one of its spots, and one of them has nobody on it.
+    people = observation.get("people", [])
+    if not any(person.get("post") for person in people):
+        return []
+    taken = {(person["x"], person["y"]) for person in people}
+    return [_action("stand_at_bar", item["id"]) for item in sorted(objects, key=lambda item: item["id"])
+            if item["kind"] == "bar" and [actor["x"], actor["y"]] not in item["interaction_spots"]
+            and any(tuple(spot) not in taken for spot in item["interaction_spots"])]
 
 
 def _free_seats(observation: Mapping[str, Any], objects: Sequence[Mapping[str, Any]]) -> list[Mapping[str, Any]]:

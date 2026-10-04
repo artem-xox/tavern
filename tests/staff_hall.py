@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from tavern.evening.scenario import open_evening, parse_scenario
-from tavern.hall.world import start_action, step_world
+from tavern.hall.world import observe_actor, observe_people, start_action, step_world
 from tavern.mind.cards import parse_cards
 
 ROOT = Path(__file__).parents[1]
@@ -25,7 +25,7 @@ def cards(folder: str) -> dict[str, Any]:
 def plan(*staff: dict[str, Any], guests: int = 2, **fields: Any) -> dict[str, Any]:
     """A scenario of inline guests arriving at the start and closing at 300 s, with the given staff."""
     people = [{"id": name, "name": name.capitalize(), "color": "#ccaa88", "sprite": "visitor",
-               "traits": {"patience": 0.5}, "arrives_at": 0} for name in ("ada", "bea", "cid")[:guests]]
+               "traits": {"patience": 0.5}, "arrives_at": 0} for name in ("ada", "bea", "cid", "dan", "eli")[:guests]]
     return {"guests": people, "arrival": {"needs": NEEDS}, "closes_at": 300, "staff": list(staff), **fields}
 
 
@@ -47,6 +47,11 @@ def hob_of(world: dict[str, Any]) -> dict[str, Any]:
 def place(world: dict[str, Any], actor_id: str, cell: tuple[int, int]) -> None:
     """Put a visitor on a cell, where the test wants them."""
     person(world, actor_id).update(x=cell[0], y=cell[1])
+
+
+def sees(world: dict[str, Any], actor_id: str) -> dict[str, Any]:
+    """A guest's observation as a decision gets it: their own state, the places they know, who is in sight."""
+    return {**observe_actor(world, actor_id), "people": observe_people(world, actor_id)}
 
 
 def order_beer(world: dict[str, Any], actor_id: str) -> None:

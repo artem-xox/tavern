@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { placeBubble } from "./bubble";
-import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawFireplace, drawRugs, drawStaffFloor, drawTable, drawTap, drawToilet, drawWindow, hearthFacing } from "./furniture";
+import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawFireplace, drawRugs, drawTable, drawTap, drawToilet, drawWindow, hearthFacing } from "./furniture";
 import { shippedPose, spriteOf, stills } from "./sprites";
 import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Mind, Turn, Verb, World, WorldObject } from "./types";
 
@@ -165,7 +165,6 @@ export class TavernScene extends Phaser.Scene {
     }
     this.drawRoomDetails(size);
     drawRugs(this.floor, world.map.objects, size);
-    drawStaffFloor(this.floor, world.map.objects, size);
     for (const [x, y] of blocked) this.drawWall(x * size, y * size, size);
     // Doors, windows and the fireplace sit inside the outer wall.
     for (const object of world.map.objects.filter((item: WorldObject): boolean => ["door", "window", "fireplace"].includes(item.kind))) {

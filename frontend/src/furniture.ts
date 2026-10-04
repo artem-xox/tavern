@@ -1,6 +1,6 @@
 /** Drawing of the hall's furniture and fittings, one function per object kind. */
 import Phaser from "phaser";
-import type { Cell, WorldObject } from "./types";
+import type { WorldObject } from "./types";
 
 /** Which way a fireplace opens: away from the outer wall it is built into. */
 export function hearthFacing(hearth: WorldObject, mapWidth: number): [number, number] {
@@ -158,17 +158,6 @@ function drawDie(g: Phaser.GameObjects.Graphics, x: number, y: number, pips: num
 }
 
 /** Lay a rug under every table and its chairs, kept clear of the walls. */
-/** Duckboards on the floor behind a bar, so the cells that only staff walk on read at a glance. */
-export function drawStaffFloor(floor: Phaser.GameObjects.Graphics, objects: WorldObject[], size: number): void {
-  for (const [x, y] of objects.flatMap((object: WorldObject): Cell[] => object.staff_cells ?? [])) {
-    floor.fillStyle(0x5a4331).fillRect(x * size, y * size, size, size);
-    for (let plank: number = 0; plank < 4; plank += 1) {
-      floor.lineStyle(1, 0x3b2b20, 0.8).lineBetween(x * size, (y + plank / 4) * size, (x + 1) * size, (y + plank / 4) * size);
-    }
-    floor.lineStyle(1, 0x7a5d44, 0.5).strokeRect(x * size + 1, y * size + 1, size - 2, size - 2);
-  }
-}
-
 export function drawRugs(floor: Phaser.GameObjects.Graphics, objects: WorldObject[], size: number): void {
   const palette: [number, number][] = [[0x8d463a, 0xd2a367], [0x526455, 0xabbd92], [0x4b5874, 0xa9b6cf], [0x7b5b30, 0xd9b26b]];
   objects.filter((object: WorldObject): boolean => object.kind === "table" || object.kind === "dice_table").forEach((table: WorldObject, index: number): void => {

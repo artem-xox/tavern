@@ -5,11 +5,12 @@ from typing import Any
 import pytest
 
 from tavern.evening.scenario import open_evening, parse_scenario
-from tavern.hall.world import observe_actor, observe_people, start_action
+from tavern.hall.world import start_action
 from tavern.mind.briefing import brief
 from tavern.mind.options import option_text
 from tavern.social.scenes import conversation_of, start_conversation
-from staff_hall import HOB, LAYOUT, TAKE_BEER, advance, events, hob_of, opened, order_beer, person, place, plan
+from staff_hall import (HOB, LAYOUT, TAKE_BEER, advance, events, hob_of, opened, order_beer, person, place, plan,
+                        sees)
 
 
 def beers(world: dict[str, Any], actor_id: str) -> int:
@@ -91,11 +92,6 @@ def test_a_guest_cannot_start_pouring() -> None:
     world = opened(HOB)
     result = start_action(world, "ada", {"id": "pour_beer", "verb": "pour_beer", "target_id": None})
     assert (result["accepted"], "staff" in result["reason"]) == (False, True)
-
-
-def sees(world: dict[str, Any], actor_id: str) -> dict[str, Any]:
-    """A guest's observation as a decision gets it: their own state, the places they know, who is in sight."""
-    return {**observe_actor(world, actor_id), "people": observe_people(world, actor_id)}
 
 
 def test_people_in_sight_carry_a_post_only_for_staff() -> None:

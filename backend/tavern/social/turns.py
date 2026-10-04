@@ -12,6 +12,7 @@ from copy import deepcopy
 from typing import Any, NotRequired, TypedDict
 
 from tavern.hall.memory import log_event
+from tavern.hall.staff import on_staff, post_of
 from tavern.hall.state import World
 from tavern.mind.cards import TEXT_FIELDS
 from tavern.mind.feelings import feelings
@@ -116,6 +117,8 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
                 {key: speaker[key] for key in ("needs", "traits", "visit")}), "places": places,
                          **_mind(world, scene, speaker)},
             "acts": offered_acts(world, scene, speaker), "seed": world["seed"]}
+    if on_staff(speaker):
+        view["speaker"]["on_duty"] = post_of(world["map"], speaker)["name"]
     _add_invitations(view, world, scene, speaker)
     return view
 
@@ -125,7 +128,9 @@ def _participants(world: Mapping[str, Any], scene: Conversation, speaker: Mappin
     # knows their name (`known`), see `tavern.social.names`.
     people = {item["id"]: item for item in world["actors"]}
     return [{"id": actor_id, "name": called(speaker, people[actor_id]),
-             "known": knows_name(speaker, people[actor_id]) or looks(people[actor_id]) is None}
+             "known": knows_name(speaker, people[actor_id]) or looks(people[actor_id]) is None,
+             # Only staff carry the flag: someone at work behind a bar, who invites and is invited by nobody.
+             **({"on_duty": True} if on_staff(people[actor_id]) else {})}
             for actor_id in scene["participants"]]
 
 
@@ -173,7 +178,8 @@ def check_turn(view: Mapping[str, Any], result: Any) -> TurnResult:
     Raises:
         ValueError: It is not exactly a line, act, addressee and topic (plus an invitation for
             an `invite`); the line or topic is empty or not text; the act is unknown or not
-            offered now; it addresses the speaker or someone not in the scene; or an `invite`
+            offered now; it addresses the speaker or someone not in the scene; an `invite` addresses
+            someone on duty behind a bar (`on_duty` in the view); or an `invite`
             addresses nobody or names a kind not offered.
     """
     if not isinstance(result, Mapping) or set(result) - _OPTIONAL != _FIELDS:
@@ -186,6 +192,9 @@ def check_turn(view: Mapping[str, Any], result: Any) -> TurnResult:
     others = {item["id"] for item in view["conversation"]["participants"]} - {view["speaker"]["id"]}
     if result["addressee"] is not None and result["addressee"] not in others:
         raise ValueError(f"{result['addressee']!r} is not someone else in the conversation")
+    on_duty = {item["id"] for item in view["conversation"]["participants"] if item.get("on_duty")}
+    if result["act"] == "invite" and result["addressee"] in on_duty:
+        raise ValueError(f"{result['addressee']!r} is on duty behind the bar and cannot be invited away")
     turn: TurnResult = {"line": result["line"], "act": result["act"], "addressee": result["addressee"],
                         "topic": result["topic"]}
     if result["act"] == "invite" or "invitation" in result:

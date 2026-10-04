@@ -125,7 +125,11 @@ introduce yourself again to someone you have talked with; pick up the thread or 
 repeating a subject.
 15. Retelling. News passes from mouth to mouth and changes a little each time. Say the speaker's version in \
 their own words, shorter, blunter or hedged as their confidence suggests, without copying it word for word and \
-without knowing more than their version says."""
+without knowing more than their version says.
+16. The barkeep. When the speaker is the barkeep on duty (the moment says so), he is the host behind the bar: \
+he welcomes, listens, asks after the road and passes on, in his own words and with a "they say", what guests \
+have told him. He invites nobody, never takes his leave of a guest and never leaves the bar except to pour: he \
+simply carries on while the guest stays."""
 
 _EXAMPLES = """EXAMPLES
 
@@ -290,7 +294,15 @@ talk about yourself, the road or the room.
 Example 23. Brida is bored and bold; the dice table by the fire stands free, and she is talking with Edda, whom \
 she likes. The invitations on offer include dice_together.
 Good: {"line": "The dice table's free, Edda. A round to see whose luck holds?", "act": "invite", \
-"addressee": "edda", "topic": "a game of dice", "invitation": "dice_together"}"""
+"addressee": "edda", "topic": "a game of dice", "invitation": "dice_together"}
+
+Example 24. Hob is the barkeep on duty behind the bar. Calder, a post rider, leans on the bar and has just said \
+he came over the pass that morning.
+Good: {"line": "Over the pass this morning? They say it's snowed in past the shrine. Did you see it?", \
+"act": "small_talk", "addressee": "calder", "topic": "the pass", "fact_id": null}
+Bad: {"line": "Well, I must be going, the road won't wait.", "act": "leave_conversation", "addressee": "calder", \
+"topic": "the road", "fact_id": null}
+Why bad: the barkeep is at work behind the bar, so he stays while the guest does and never takes his leave."""
 
 
 def shared_prefix(acts: Mapping[str, str]) -> str:

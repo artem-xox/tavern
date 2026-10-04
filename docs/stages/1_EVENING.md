@@ -1159,7 +1159,8 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
   them. Starting a pour takes him out of any conversation.
 - **The look.** Sprite `bartender`, with every pose the guests have plus `PouringBeer`. He faces
   `staff_facing` (south, toward the hall) unless a sound or a partner turns his head. The client
-  draws the staff cells as darker duckboards, with no captions (U1).
+  draws the staff cells as plain floor, exactly like the rest (the user's call, 2026-10-04), and no
+  captions (U1).
 - **Out of scope:** commands for the barkeep (Stage 2); prices and tips (Stage 3); breaking up
   fights (E22 may add it); drinks other than ale; the barkeep starting the evening with news (he
   learns it at the bar); pacing or wiping the bar while idle; a second staff member.
@@ -1196,16 +1197,15 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     `controls._validate_block` refuses staff cells: "Cells behind the bar cannot be changed".
   - *Data:* the bar in `data/tavern.json` gets the two fields above.
   - *Client:* in `types.ts`, `WorldObject` gains `staff_cells?: number[][]` and
-    `staff_facing?: Facing`. `furniture.ts` gets `drawStaffFloor`, which lays darker duckboards on
-    the staff cells; `scene.ts` makes one call to it where it draws the floor. `scene.ts` is at 387
-    lines: if it would pass 400, first move `drawRugs` to `furniture.ts` (D01) in its own commit.
+    `staff_facing?: Facing`. The cells are drawn as plain floor, like the rest of it (the user asked
+    for no tint), so nothing is drawn for them.
   - *Tests (`tests/test_staff.py`):* the repository bar has four staff cells, and (5, 1) is next to
     the tap. Error cases: staff cells on a table, on a blocked cell, on furniture, with a gap, on
     the tap's spot, on a queue spot, with no tap beside them, with a missing or unknown
     `staff_facing`, `staff_facing` without cells, cells that cut a place off. Behavior: a guest at
     (1, 1) routed to the tap's spot, and a guest sent to inspect, never step on a staff cell; an idle
     guest at (2, 2) is never yielded onto (2, 1); blocking a staff cell is refused.
-  - *Check:* `make check` and `make build`; `make run` and a screenshot (duckboards behind the bar,
+  - *Check:* `make check` and `make build`; `make run` and a screenshot (plain floor behind the bar,
     guests keep out); the offline evening (seed 5) against a fresh run on `main` (6.1 s stuck
     since the D02 fix).
   - *Built (2026-10-04):* `hall/staff.py` holds `check_staff_cells` and `off_limits(world_map, actor)`.
@@ -1217,10 +1217,10 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     a place off). `routes.plan_route` and `replan` (and with them the inspection plan),
     `lifecycle._yield_idle_occupant` and `controls._validate_block` ("Cells behind the bar cannot be
     changed") use `off_limits`. The repository bar has `staff_cells` (2, 1)…(5, 1) facing south; the client
-    types gained both fields and `furniture.drawStaffFloor` lays duckboards on the cells (`scene.ts` stays
-    at 371 lines, under 400, so no split was needed). 25 tests in `tests/test_staff.py`, including a 7×3
-    hall whose one corridor the cells would cut. The offline evening (seed 5) is byte-identical to `main`'s,
-    as it should be for floor alone; in the browser the duckboards show behind the bar.
+    types gained both fields, and the cells are drawn as plain floor (a first version tinted them with
+    duckboards; the user asked for none, so it was removed). 25 tests in `tests/test_staff.py`, including a
+    7×3 hall whose one corridor the cells would cut. The offline evening (seed 5) is byte-identical to
+    `main`'s, as it should be for floor alone.
 - [x] **B2 — The barkeep on duty.** He stands behind the bar; guests still pour their own.
   - *Scenario:* `first_evening.json` gets
     `"staff": [{"id": "hob", "name": "Hob", "color": "#c98f4a", "sprite": "bartender", "card": "hob", "post": "bar"}]`.
@@ -1361,7 +1361,7 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     news only one hop (it reached two without him; seeds 1, 3, 4 and 5 with him do, seed 4 with two
     items), so that parameter is now seed 4: seeds 1 and 4, same assertion. In the browser a forced
     `take_beer` shows Hob "interacting" behind the bar while Rurik waits at the tap.
-- [ ] **B4 — Leaning on the bar.** Guests stand at the counter and can talk with the barkeep.
+- [x] **B4 — Leaning on the bar.** Guests stand at the counter and can talk with the barkeep.
   - *Table:* reuse `Activity.shared_target` (added for the door in the D02 fix):
     `lifecycle.activate` never reserves such a target, and `routes.plan_route` already keeps the
     spots apart, so the bar's three spots are its capacity.
@@ -1413,6 +1413,22 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     - The scripted barkeep does not say goodbye first, and the nudge text is right.
   - *Check:* `make check` and `make build`; the offline evening (seed 5), where some guest leans on
     the bar and talks with Hob.
+  - *Built (2026-10-04):* `stand_at_bar` (family `company`, `shared_target`, 12 s) is a new `Activity`; the bar
+    in `data/tavern.json` has spots (3, 3), (4, 3), (5, 3). `scenes.side_by_side` is also true for two people
+    at the same bar (`_bar_of`: a guest on one of its spots, its staff member on a staff cell, exact cells
+    only), so a guest at the bar sees Hob as "beside them" and `talk` with him passes `actions._close_enough`.
+    `agents._bar_stand` offers it while a barkeep is in sight, the guest is not on a spot and one spot is
+    free (a closed inn offers only going home, as before); the local utility is as drafted, and the option
+    reads "walk … to the bar and lean on it, where Hob tends it", with "chat with Hob across the bar" for
+    the talk. For the writers: `turn_view` adds `speaker.on_duty` (the bar's name) and `on_duty: true` on a
+    barkeep among `participants`; `invitations.offered_kinds` is empty for him and when everyone else in the
+    scene is staff, `check_turn` refuses an `invite` to someone on duty, the scripted writer never has him
+    say goodbye, and `haiku_turns` swaps his need nudges for "You are the barkeep, on duty behind the Oak
+    bar: you stay while the guest does, and leave only to pour." and names him "Hob (the barkeep)" in the
+    scene. Prefix rule 16 and example 24 teach the model the barkeep; the intention prefix gains "lean on the
+    bar and chat with the barkeep". 20 tests in `tests/test_bar_chat.py`. Offline evening, seed 5: 4 stands
+    at the bar and 25 scene events with Hob (Toren to Hob at 103 s: "Room for one more, friend?"; they
+    introduce themselves; Hob tells where the ale is), 12 beers poured, 427 s, 0.0 s stuck.
 - [ ] **B5 — The barkeep greets.** He steps over to a guest at the bar and opens the talk.
   - *Routine:* `tend_bar` gets two more steps, after hand-over and pour. They apply to a staff
     member who is idle and in no scene, while the inn is open. The guest he looks to is the first,

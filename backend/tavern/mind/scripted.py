@@ -132,8 +132,9 @@ def _act(view: Mapping[str, Any], rng: Random) -> tuple[str, str]:
     if max(needs["thirst"], needs["fatigue"], needs["bladder"]) >= PRESSING:
         return "leave_conversation", "pressed"
     said = {turn["act"] for turn in scene["turns"] if turn["speaker"] == me["id"]}
-    # Even a guest with company enough answers once before taking their leave.
-    if needs["social"] < CONTENT and said - {"greet"}:
+    # Even a guest with company enough answers once before taking their leave. A barkeep on duty never
+    # does: his needs read as content (all at 0), but he stays while the guest does.
+    if needs["social"] < CONTENT and said - {"greet"} and not me.get("on_duty"):
         return "leave_conversation", "content"
     return _opening_up(view, said, rng) or _friendly(view, said, rng)
 

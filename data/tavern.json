@@ -283,7 +283,21 @@
           1
         ]
       ],
-      "staff_facing": "south"
+      "staff_facing": "south",
+      "interaction_spots": [
+        [
+          3,
+          3
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          5,
+          3
+        ]
+      ]
     },
     {
       "id": "tap",
