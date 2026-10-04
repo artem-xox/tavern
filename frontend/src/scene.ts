@@ -1,11 +1,17 @@
 import Phaser from "phaser";
-import { placeBubble } from "./bubble";
+import { LINGER_MS, chunkAt, lineMs, placeBubble, splitLine } from "./bubble";
 import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawFireplace, drawRugs, drawTable, drawTap, drawToilet, drawWindow, hearthFacing } from "./furniture";
 import { shippedPose, spriteOf, stills } from "./sprites";
 import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Mind, Turn, Verb, World, WorldObject } from "./types";
 
 /** Speech bubbles wrap at this many pixels and draw above every guest. */
-const BUBBLE_WRAP = 180;
+const BUBBLE_WRAP = 150;
+const BUBBLE_FILL = 0xf4e6c6;
+const BUBBLE_EDGE = 0x6b5640;
+/** Length and half-width of a bubble's pointer, and how far from a corner its tip stays. */
+const TAIL = 7;
+const TAIL_HALF = 6;
+const TAIL_INSET = 14;
 const BUBBLE_DEPTH = 1000;
 /** Even a sober guest fidgets a little; drink adds to it. */
 const IDLE_SWAY = 0.12;
@@ -27,8 +33,11 @@ interface ActorView {
   sprite: Phaser.GameObjects.Image;
   name: Phaser.GameObjects.Text;
   selection: Phaser.GameObjects.Arc;
-  mug: Phaser.GameObjects.Container;
-  speech: Phaser.GameObjects.Text;
+  speech: Phaser.GameObjects.Container;
+  speechBox: Phaser.GameObjects.Graphics;
+  speechText: Phaser.GameObjects.Text;
+  /** The line being told in pieces: when it began, and when it goes down (null while its scene lives). */
+  talk: { key: string; chunks: string[]; start: number; release: number | null } | null;
   emote: Phaser.GameObjects.Text;
   targetX: number;
   targetY: number;
@@ -115,11 +124,34 @@ export class TavernScene extends Phaser.Scene {
     this.drawHearthGlow(time);
   }
 
-  /** Keep a speech bubble over its speaker, inside the map and above the other guests. */
+  /** Show the piece of the line now due in a bubble over its speaker, inside the map and above the other guests. */
   private placeSpeech(view: ActorView): void {
-    if (!view.speech.visible) return;
-    const placement = placeBubble(view.container.x, view.container.y, view.speech.width, view.speech.height, this.scale);
-    view.speech.setOrigin(0.5, placement.originY).setPosition(placement.x, placement.y);
+    const now: number = this.time.now;
+    if (view.talk && view.talk.release !== null && now >= view.talk.release) view.talk = null;
+    view.speech.setVisible(view.talk !== null);
+    if (!view.talk) return;
+    const piece: string = view.talk.chunks[chunkAt(view.talk.chunks, now - view.talk.start)]!;
+    if (view.speechText.text !== piece) view.speechText.setText(piece);
+    const { width, height } = view.speechText;
+    const placement = placeBubble(view.container.x, view.container.y, width, height, this.scale);
+    view.speech.setPosition(placement.x, placement.y);
+    this.drawBubble(view, width, height, placement.originY, view.container.x - placement.x);
+  }
+
+  /** Draw the bubble's body around its text, with a pointer toward the speaker at `speakerDx` from its centre. */
+  private drawBubble(view: ActorView, width: number, height: number, originY: 0 | 1, speakerDx: number): void {
+    const top: number = originY === 1 ? -height : 0;
+    const down: number = originY === 1 ? 1 : -1;
+    const tailX: number = Math.min(Math.max(speakerDx, -width / 2 + TAIL_INSET), width / 2 - TAIL_INSET);
+    const baseY: number = originY === 1 ? top + height : top;
+    const box: Phaser.GameObjects.Graphics = view.speechBox.clear();
+    box.fillStyle(BUBBLE_FILL).fillRoundedRect(-width / 2, top, width, height, 9);
+    box.lineStyle(2, BUBBLE_EDGE).strokeRoundedRect(-width / 2, top, width, height, 9);
+    box.fillStyle(BUBBLE_FILL).fillRect(tailX - TAIL_HALF + 1, baseY - 1, 2 * TAIL_HALF - 2, 2);
+    box.fillTriangle(tailX - TAIL_HALF, baseY, tailX + TAIL_HALF, baseY, tailX, baseY + down * TAIL);
+    box.lineBetween(tailX - TAIL_HALF, baseY, tailX, baseY + down * TAIL);
+    box.lineBetween(tailX + TAIL_HALF, baseY, tailX, baseY + down * TAIL);
+    view.speechText.setY(top);
   }
 
   /** Let firelight flicker on the floor in front of each fireplace. */
@@ -237,14 +269,13 @@ export class TavernScene extends Phaser.Scene {
     const { name: character, sheet } = spriteOf(actor);
     const sprite: Phaser.GameObjects.Image = this.add.image(0, sheet.lift, `${character}-Idle-south`).setDisplaySize(sheet.size, sheet.size);
     const name: Phaser.GameObjects.Text = this.add.text(0, -53, actor.name, { fontFamily: "system-ui", fontSize: "11px", color: "#fff4dc", stroke: "#322b24", strokeThickness: 3 }).setOrigin(0.5);
-    const mugBody: Phaser.GameObjects.Rectangle = this.add.rectangle(0, 0, 7, 10, 0xd6a252);
-    const foam: Phaser.GameObjects.Ellipse = this.add.ellipse(0, -5, 8, 4, 0xffebc2);
-    const mug: Phaser.GameObjects.Container = this.add.container(12, 3, [mugBody, foam]);
     // Outside the container, so it can sit above every guest and be kept inside the map each frame.
-    const speech: Phaser.GameObjects.Text = this.add.text(0, 0, "", { fontFamily: "Georgia", fontSize: "12px", color: "#48392b", backgroundColor: "#f4e6c6", align: "center", lineSpacing: 3, padding: { x: 8, y: 5 }, wordWrap: { width: BUBBLE_WRAP, useAdvancedWrap: true } }).setOrigin(0.5, 1).setDepth(BUBBLE_DEPTH).setVisible(false);
+    const speechBox: Phaser.GameObjects.Graphics = this.add.graphics();
+    const speechText: Phaser.GameObjects.Text = this.add.text(0, 0, "", { fontFamily: "Georgia", fontSize: "11px", color: "#48392b", align: "center", lineSpacing: 2, padding: { x: 9, y: 6 }, wordWrap: { width: BUBBLE_WRAP, useAdvancedWrap: true } }).setOrigin(0.5, 0);
+    const speech: Phaser.GameObjects.Container = this.add.container(0, 0, [speechBox, speechText]).setDepth(BUBBLE_DEPTH).setVisible(false);
     const emote: Phaser.GameObjects.Text = this.add.text(17, -44, "", { fontFamily: "system-ui", fontSize: "12px", fontStyle: "bold", backgroundColor: "#f4e6c6", padding: { x: 4, y: 1 } }).setOrigin(0.5).setVisible(false);
-    const container: Phaser.GameObjects.Container = this.add.container(0, 0, [shadow, selection, sprite, name, mug, emote]);
-    return { container, sprite, name, selection, mug, speech, emote, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south", sway: 0 };
+    const container: Phaser.GameObjects.Container = this.add.container(0, 0, [shadow, selection, sprite, name, emote]);
+    return { container, sprite, name, selection, speech, speechBox, speechText, talk: null, emote, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south", sway: 0 };
   }
 
   private updateVisitor(view: ActorView, actor: Actor, size: number, reset: boolean): void {
@@ -270,15 +301,25 @@ export class TavernScene extends Phaser.Scene {
     view.targetY = y;
     view.name.setText(actor.name);
     view.sway = this.minds[actor.id]?.sway ?? 0;
-    // The bubble shows the scene's latest line over its speaker until the next one is spoken.
-    const scene: Conversation | undefined = this.world?.conversations.find((item: Conversation): boolean => item.participants.includes(actor.id));
-    const line: Turn | undefined = scene?.turns[scene.turns.length - 1];
-    const chatting: boolean = scene !== undefined;
-    view.mug.setVisible(actor.inventory.beer > 0 && pose !== "Drinking" && pose !== "DrinkingSeated" && pose !== "TakeBeer");
-    view.speech.setVisible(line?.speaker === actor.id);
-    view.speech.setText(line?.line ?? "");
+    this.tellLine(view, actor);
     this.showEmote(view, actor);
     view.container.setDepth(10 + y / 1000);
+  }
+
+  /** Tell the scene's latest line over its speaker in pieces, and keep the last piece up a while after the scene ends. */
+  private tellLine(view: ActorView, actor: Actor): void {
+    const scene: Conversation | undefined = this.world?.conversations.find((item: Conversation): boolean => item.participants.includes(actor.id));
+    const line: Turn | undefined = scene?.turns[scene.turns.length - 1];
+    const now: number = this.time.now;
+    if (line?.speaker === actor.id) {
+      const key: string = `${line.time}:${line.line}`;
+      if (view.talk?.key !== key) view.talk = { key, chunks: splitLine(line.line), start: now, release: null };
+      else view.talk.release = null;
+    } else if (scene !== undefined) {
+      view.talk = null;
+    } else if (view.talk && view.talk.release === null) {
+      view.talk.release = Math.max(now, view.talk.start + lineMs(view.talk.chunks)) + LINGER_MS;
+    }
   }
 
   private showEmote(view: ActorView, actor: Actor): void {
