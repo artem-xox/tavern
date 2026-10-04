@@ -7,6 +7,8 @@ import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Mind, Turn, Ve
 /** Speech bubbles wrap at this many pixels and draw above every guest. */
 const BUBBLE_WRAP = 180;
 const BUBBLE_DEPTH = 1000;
+/** Even a sober guest fidgets a little; drink adds to it. */
+const IDLE_SWAY = 0.12;
 
 /** Glyph and colour of each emote above a visitor's head. */
 const EMOTE_GLYPHS: Record<EmoteKind, [string, string]> = {
@@ -106,8 +108,8 @@ export class TavernScene extends Phaser.Scene {
     for (const view of this.visitors.values()) {
       view.container.x += (view.targetX - view.container.x) * blend;
       view.container.y += (view.targetY - view.container.y) * blend;
-      // Drunk guests sway; each at their own pace, so a table of drinkers does not rock in step.
-      view.sprite.setAngle(view.sway * 8 * Math.sin(time / 420 + view.cellX * 1.7 + view.cellY));
+      // Everyone fidgets and drunk guests sway more; each at their own pace, so a table of drinkers does not rock in step.
+      view.sprite.setAngle(Math.max(view.sway, IDLE_SWAY) * 8 * Math.sin(time / 420 + view.cellX * 1.7 + view.cellY));
       this.placeSpeech(view);
     }
     this.drawHearthGlow(time);
