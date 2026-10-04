@@ -780,7 +780,7 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
   `facing` and a `table_id` that must name a `dice_table`. A dice chair is not a `chair`: nobody
   owns it, it is never offered for `seating`, `sit` or `rest`, and playing never sets `seat_id`,
   so the seating, table-talk and dozing rules leave players alone. One dice table stands in the middle
-  of the hall, between the four tables, at (10, 8) (`data/tavern.json`, after the regular tables). It
+  of the hall, between the regular tables, at (10, 8) (`data/tavern.json`, after the regular tables). It
   first stood on the right and then at (9, 8); the user asked for the middle, then one cell further
   right. Existing tests that name its cells were edited for that (see G1's result):
 
