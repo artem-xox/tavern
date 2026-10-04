@@ -289,7 +289,7 @@ export class TavernScene extends Phaser.Scene {
     const texture: string = `${character}-${pose}-${view.direction}`;
     if (view.sprite.texture.key !== texture) view.sprite.setTexture(texture);
     view.sprite.setDisplaySize(sheet.size, sheet.size);
-    view.sprite.setY(sheet.lift + (pose === "Seated" || pose === "Bathroom" || pose === "DrinkingSeated" ? 3 : 0));
+    view.sprite.setY(sheet.lift + (pose === "Seated" || pose === "Bathroom" || pose === "DrinkingSeated" || pose === "TalkingSeated" ? 3 : 0));
     view.cellX = actor.x;
     view.cellY = actor.y;
     const x: number = (actor.x + 0.5) * size;
@@ -322,8 +322,12 @@ export class TavernScene extends Phaser.Scene {
   private actorPose(actor: Actor): string {
     if (actor.status === "walking") return "Walking";
     const pose: string | null | undefined = actor.action ? this.activities[actor.action.verb]?.pose : null;
-    if (actor.status === "interacting" && pose) return pose === "Drinking" && actor.seat_id ? "DrinkingSeated" : pose;
-    return actor.seat_id ? "Seated" : "Idle";
+    if (actor.status === "interacting" && pose) {
+      if (actor.seat_id && pose === "Drinking") return "DrinkingSeated";
+      return actor.seat_id && pose === "Talking" ? "TalkingSeated" : pose;
+    }
+    const chatting: boolean = this.world?.conversations.some((scene: Conversation): boolean => scene.participants.includes(actor.id)) ?? false;
+    return actor.seat_id ? chatting ? "TalkingSeated" : "Seated" : "Idle";
   }
 
   private facingTarget(actor: Actor, target: WorldObject, fallback: string): string {

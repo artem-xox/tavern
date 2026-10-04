@@ -225,6 +225,23 @@
         },
         "animations": {}
       }
+    },
+    {
+      "character": {
+        "id": "fae9587f-499b-4bd1-be5f-e15db1abbe82",
+        "name": "TalkingSeated",
+        "prompt": "Remain seated at a tavern table while chatting with an expressive hand gesture. Preserve identity, clothing, seated posture, and medieval pixel-art style.",
+        "size": {"width": 68, "height": 68},
+        "directions": 8,
+        "view": "low top-down"
+      },
+      "folder": "TalkingSeated",
+      "frames": {"rotations": {
+        "north": "TalkingSeated/rotations/north.png",
+        "south": "TalkingSeated/rotations/south.png",
+        "east": "TalkingSeated/rotations/east.png",
+        "west": "TalkingSeated/rotations/west.png"
+      }, "animations": {}}
     }
   ],
   "export_version": "3.1",
