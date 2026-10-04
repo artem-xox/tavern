@@ -172,7 +172,7 @@ def activate(world: World, actor: Actor, action: Mapping[str, Any],
                   "_spot": plan[0], "path": plan[1], "status": "walking" if plan[1] else "interacting",
                   "_remaining": world["rules"]["durations"][action["verb"]]})
     target = _target(world, action)
-    if target:
+    if target and not ACTIVITIES[action["verb"]].shared_target:
         target["reserved_by"] = actor["id"]
     record_event(world, actor, "action_started", f"{actor['name']} chose {action['verb']}")
     if not plan[1]:

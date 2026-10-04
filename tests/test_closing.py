@@ -24,10 +24,10 @@ def hall() -> dict[str, Any]:
     ]}
 
 
-def evening() -> dict[str, Any]:
-    """Open the hall for Ada and Bea, who arrive together; the inn closes after 60 seconds."""
+def evening(names: tuple[str, ...] = ("ada", "bea")) -> dict[str, Any]:
+    """Open the hall for guests who arrive together (Ada and Bea unless named); the inn closes after 60 seconds."""
     guests = [{"id": name, "name": name.title(), "color": "#a08060", "sprite": "visitor", "traits": {},
-               "arrives_at": 0} for name in ("ada", "bea")]
+               "arrives_at": 0} for name in names]
     return open_evening(hall(), parse_scenario(
         {"guests": guests, "arrival": {"needs": {}}, "closes_at": 60}), seed=1)
 
@@ -41,6 +41,11 @@ def advance(world: dict[str, Any], seconds: float) -> None:
     """Step the world in half-second ticks without decisions."""
     for _ in range(round(seconds / 0.5)):
         step_world(world, 0.5)
+
+
+def leave_by_door() -> dict[str, Any]:
+    """Build the command to go home through the door."""
+    return {"id": "leave", "verb": "leave", "target_id": "door"}
 
 
 def look(world: dict[str, Any], actor_id: str) -> dict[str, Any]:
@@ -61,16 +66,33 @@ def test_guests_see_when_the_inn_has_closed(build: Callable[[], dict[str, Any]],
     assert look(world, "ada")["closed"] is closed
 
 
-@pytest.mark.parametrize("door_busy, expected", [
+@pytest.mark.parametrize("other_leaving, expected", [
     pytest.param(False, ["leave:door"], id="door-free"),
-    pytest.param(True, ["wait"], id="door-busy-wait-a-turn"),
+    pytest.param(True, ["leave:door"], id="door-shared-with-another-leaver"),
 ])
-def test_after_closing_the_only_option_is_to_go_home(door_busy: bool, expected: list[str]) -> None:
+def test_after_closing_the_only_option_is_to_go_home(other_leaving: bool, expected: list[str]) -> None:
     world = evening()
     advance(world, 60)
-    if door_busy:
-        assert start_action(world, "bea", {"id": "leave", "verb": "leave", "target_id": "door"})["accepted"]
+    if other_leaving:
+        assert start_action(world, "bea", leave_by_door())["accepted"]
     assert [action["id"] for action in build_candidates(look(world, "ada"))] == expected
+
+
+def test_guests_leave_through_the_door_together() -> None:
+    world = evening()
+    advance(world, 60)
+    assert [start_action(world, name, leave_by_door())["accepted"] for name in ("ada", "bea")] == [True, True]
+    advance(world, 6)
+    assert sorted(actor["id"] for actor in world["departed"]) == ["ada", "bea"]
+
+
+def test_a_door_takes_as_many_leavers_at_once_as_it_has_spots() -> None:
+    world = evening(("ada", "bea", "cid"))
+    advance(world, 60)
+    accepted = [start_action(world, name, leave_by_door())["accepted"] for name in ("ada", "bea", "cid")]
+    assert accepted == [True, True, False]
+    advance(world, 6)
+    assert start_action(world, "cid", leave_by_door())["accepted"]
 
 
 def test_a_newcomer_goes_home_at_closing_however_little_they_want_to() -> None:

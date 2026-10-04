@@ -79,7 +79,8 @@ M1–M3, the refactor R0–R8, the model health markers (D13), U1 (no labels in 
 
 1. **M4, news and conflict (E20–E22).** E20 gives guests hostile options.
 
-The door at closing (D02) is parked in the tech-debt table and is not a task. The code now
+The door at closing (D02) is fixed: it takes as many leavers at once as it has spots (offline
+seed 5: the last guest left 6.6 s after closing, was 42.8 s; stuck time 27.1 s → 6.1 s). The code now
 lives in packages (`backend/tavern/hall`, `body`, `social`, `mind`, `evening`, `adapters`,
 `server`); the task texts below name modules by their old flat file names, so find one with
 `git ls-files | grep <name>.py`.
