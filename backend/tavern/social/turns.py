@@ -208,7 +208,7 @@ def _fact(view: Mapping[str, Any], result: Mapping[str, Any]) -> str:
     # Only news-telling names a fact, and one the speaker holds.
     if result["act"] != "share_news":
         raise ValueError("Only telling news names a fact")
-    if result.get("fact_id") not in {item["id"] for item in view["speaker"]["news"]}:
+    if result.get("fact_id") not in {item["id"] for item in view["speaker"].get("news") or []}:
         raise ValueError(f"Fact {result.get('fact_id')!r} is not news the speaker holds")
     return result["fact_id"]
 

@@ -11,6 +11,7 @@ from tavern.adapters.persistence import load_world, save_world
 from tavern.evening.scenario import open_evening, parse_scenario
 from tavern.hall.world import step_world
 from tavern.mind.haiku_turns import RejectedTurn, parse_turn, turn_question
+from tavern.mind.scripted import scripted_turn
 from tavern.social.turns import check_turn, turn_view
 from social_hall import actor, advance, scene_of, say, seated_talk
 
@@ -523,3 +524,113 @@ def test_a_guest_in_the_scene_is_not_counted_as_overhearing() -> None:
     world = talk_with_news("ada")
     tell(world)
     assert copy_of(world, "bea")["overheard"] is False
+
+
+def speak_scripted(world: dict[str, Any]) -> dict[str, Any]:
+    """Let the next speaker's scripted turn be written and spoken; return it."""
+    result = scripted_turn(view_of(world))
+    say(world, result["act"], result["line"], fact_id=result.get("fact_id"))
+    return result
+
+
+def after_a_greeting(*holders: str, seed: int = 4) -> dict[str, Any]:
+    """Ada has greeted Bea; the given guests hold the toll news; Bea speaks next."""
+    world = seated_talk(social=100.0, seed=seed)
+    for guest_id in holders:
+        hold(world, guest_id)
+    say(world, "greet", "Evening, Bea.")
+    return world
+
+
+def test_a_scripted_speaker_with_news_tells_it() -> None:
+    result = scripted_turn(view_of(after_a_greeting("bea")))
+    assert (result["act"], result["fact_id"], result["addressee"]) == ("share_news", "toll", "ada")
+
+
+def test_a_scripted_speaker_without_news_never_tells_any() -> None:
+    assert scripted_turn(view_of(after_a_greeting("ada")))["act"] != "share_news"
+
+
+def test_a_scripted_speaker_does_not_tell_back_what_was_just_told_in_the_scene() -> None:
+    world = after_a_greeting("bea")
+    speak_scripted(world)
+    assert scripted_turn(view_of(world))["act"] != "share_news"
+
+
+@pytest.mark.parametrize("told_as, heard_from, line", [
+    pytest.param("The toll is doubled.", None, "The toll is doubled.", id="first-holder-says-it-as-it-is"),
+    pytest.param("The toll is doubled.", "cid", "Heard from Cid: The toll is doubled.", id="names-the-teller"),
+    pytest.param("Heard from Edda: The toll is doubled.", "cid", "Heard from Cid: The toll is doubled.",
+                 id="prefixes-do-not-nest"),
+    pytest.param("x" * 300, "cid", ("Heard from Cid: " + "x" * 300)[:160], id="cut-to-160-characters"),
+    pytest.param("x" * 300, None, "x" * 160, id="first-holder-cut-to-160-characters"),
+])
+def test_the_scripted_line_retells_the_speakers_own_version(told_as: str, heard_from: str | None, line: str) -> None:
+    world = after_a_greeting()
+    hold(world, "bea", told_as=told_as, heard_from=heard_from, hops=0 if heard_from is None else 1)
+    assert scripted_turn(view_of(world))["line"] == line
+
+
+def test_scripted_speakers_choose_among_their_news_by_the_seeded_draw() -> None:
+    chosen = set()
+    for seed in range(1, 9):
+        world = after_a_greeting(seed=seed)
+        hold(world, "bea", "toll")
+        hold(world, "bea", "wolves")
+        first = scripted_turn(view_of(world))
+        assert first == scripted_turn(view_of(world))
+        chosen.add(first["fact_id"])
+    assert chosen == {"toll", "wolves"}
+
+
+@pytest.mark.parametrize("confidence, words", [
+    pytest.param(1.0, "you are sure of it", id="first-hand"),
+    pytest.param(0.9, "you are sure of it", id="from-a-friend"),
+    pytest.param(0.6, "you believe it", id="from-a-stranger"),
+    pytest.param(0.45, "a rumour you half believe", id="overheard-from-a-stranger"),
+])
+def test_the_writer_is_told_how_sure_the_speaker_is_in_words(confidence: float, words: str) -> None:
+    world = talk_with_news()
+    hold(world, "ada", confidence=confidence, heard_from="bea", hops=1)
+    content = turn_question(view_of(world))["content"]
+    assert words in content and "0.45" not in content and "0.6" not in content
+
+
+def test_the_writer_sees_each_copy_in_the_speakers_words_with_its_teller() -> None:
+    world = talk_with_news("ada")
+    hold(world, "ada", "wolves", "Wolves took a sheep.", heard_from="bea", hops=1, confidence=0.75)
+    content = turn_question(view_of(world))["content"]
+    assert [text in content for text in ('id "toll"', "The toll is doubled.", 'id "wolves"', "Wolves took a sheep.",
+                                         "heard from Bea")] == [True] * 5
+
+
+def test_the_writer_never_sees_the_original_text() -> None:
+    world = talk_with_news("ada")
+    world["news"][0]["text"] = "The ORIGINAL words."
+    assert "ORIGINAL" not in turn_question(view_of(world))["content"]
+
+
+def test_a_writer_with_no_news_is_told_it_has_none_to_tell() -> None:
+    assert "cannot use share_news" in turn_question(view_of(talk_with_news()))["content"]
+
+
+@pytest.mark.parametrize("holders, nudged", [
+    pytest.param([], False, id="no-news-no-nudge"),
+    pytest.param(["ada"], True, id="news-not-yet-told"),
+])
+def test_the_writer_is_nudged_to_tell_news_it_carries(holders: list[str], nudged: bool) -> None:
+    content = turn_question(view_of(talk_with_news(*holders)))["content"]
+    assert ("carries news" in content) is nudged
+
+
+def test_news_told_once_is_not_nudged_again() -> None:
+    world = talk_with_news("ada")
+    tell(world)
+    say(world, "small_talk")
+    assert "carries news" not in turn_question(view_of(world))["content"]
+
+
+def test_the_prefix_teaches_retelling_and_no_longer_allows_invented_news() -> None:
+    prefix = turn_question(view_of(talk_with_news()))["system"][0]
+    assert ("small personal news from the road is fine" in prefix, "fact_id" in prefix, "Example 22." in prefix) == (
+        False, True, True)
