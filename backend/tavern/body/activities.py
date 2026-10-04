@@ -37,6 +37,7 @@ class Activity:
         shared_target: Whether several visitors may use the target at once, so it is never reserved;
             each takes a spot of their own, and the spots are the target's capacity.
         leaves_seat: Whether starting it gives up the visitor's seat even without walking away.
+        game: Whether a game, not this timer, ends it (`tavern.social.dice`); `duration` is only nominal.
         needs: Changes to needs on completion, clamped to 0–100.
         effect: Further consequences on completion.
         on_arrival: Called when the visitor reaches the target, before the interaction runs.
@@ -63,6 +64,7 @@ class Activity:
     empty_target: str | None = None
     shared_target: bool = False
     leaves_seat: bool = False
+    game: bool = False
     needs: Mapping[str, float] = field(default_factory=lambda: MappingProxyType({}))
     effect: Effect | None = None
     on_arrival: Effect | None = None
@@ -175,6 +177,15 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              family="pastime",
              what="play a round of darts at {target}",
              guidance="A lively pastime for a bored guest; it means leaving their seat for a while."),
+    # Never a candidate: only an accepted `dice_together` invitation (or the debug panel) sends a guest to a
+    # dice chair. The game, not the timer, ends it.
+    Activity(verb="play_dice", target_kinds=("dice_chair",), duration=30.0, game=True, leaves_seat=True,
+             needs=MappingProxyType({"boredom": -70, "social": -20}), label="Play dice", status="dice",
+             pose="TalkingSeated", sound=Sound("dice", 0.25, 8.0, "dice rattling on a table"),
+             doing="playing dice", done="played dice", family="pastime",
+             what="sit at the dice table {target} for a game of dice they agreed to",
+             guidance="A seat at a game they agreed to: it eases boredom and the wish for company, and lasts until "
+                      "the dice are thrown."),
     Activity(verb="use_toilet", target_kinds=("toilet",), duration=2.0, leaves_seat=True,
              needs=MappingProxyType({"bladder": -65}), label="Use the toilet", status="WC", pose="Bathroom",
              doing="heading to the WC", done="used the WC",

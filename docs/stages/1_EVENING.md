@@ -884,7 +884,7 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
     the table stands on a green rug with its dice and two chairs, and the console is clean.
     The offline evening (seed 5) is byte-identical to `main`'s (16 scenes, stuck time unchanged):
     the table is in nobody's way, and nothing yet offers a guest the dice. No existing test changed.
-- [ ] **G2 — A game at the table.** Two guests seated at the dice table play one game, and the
+- [x] **G2 — A game at the table.** Two guests seated at the dice table play one game, and the
   formula above picks the winner.
   - *Refactor first (own commit):* take `lifecycle.complete_action(world, actor)` out of
     `_interact`: apply the effect and the needs, log `action_completed`, clear the action, look.
@@ -927,7 +927,8 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
     since `test_database.py` and `test_intention_saves.py` pin it). `parse_world` calls
     `dice.check_saved_games`: `game` is None or has exactly the three keys; one or two distinct
     players who are present and whose action is `play_dice` on that table's chairs; `ends_at`
-    is None exactly while one player waits; times lie between 0 and now, `since` ≤ `ends_at`.
+    is None exactly while one player waits; `since` lies between 0 and now, and `ends_at` (which
+    lies ahead) is at least `since`.
     `types.ts` gets `WorldObject.game?: DiceGame | null`.
   - *Client:* a guest interacting with a target that has a `facing` faces that way
     (`updateVisitor`: `target.facing ?? facingTarget(...)`), so players face each other. The
@@ -946,6 +947,26 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
   - *Check:* `make check` and `make build`. In `make run`, force `play_dice` for two guests from
     the debug panel and attach a screenshot: both seated in the talking pose facing each other,
     dice on the table, the hover showing the game, and the result in the event feed.
+  - *Result (2026-10-04):* `social/dice.py` holds the formula (`form`, `win_chance`, `winner`), the
+    per-tick `settle_games` and the save checks (`check_saved_games`, `check_dice_rules`);
+    `lifecycle.complete_action` was taken out of `_interact` first, in its own commit. `play_dice`
+    is in the `pastime` family and never a candidate; `Activity.game` stops the action's timer (it is
+    clamped at zero so a game still saves). `rules.dice` is as frozen above; thoughts
+    `won_at_dice` and `lost_at_dice`; `EVENT_SOUNDS["dice_won"]` is a 0.3 cheer. Saves are
+    `schema_version` 8, an approved bump: `test_database.py` and `test_intention_saves.py` pin 8
+    (the second test is renamed `test_new_worlds_are_version_8`), and nothing else changed.
+    `tests/test_dice.py` (52 tests): odds by cases, symmetry, out-of-range errors, 400-game rates
+    (cap case 72–88%, equal guests 43–57%), the game through `step_world` (starts when both sit,
+    nobody decides during it, one winner and one loser, thoughts, a lone player gives up, taking
+    one player away breaks it off, a second game follows), saves round-trip and 11 malformed
+    games, 8 malformed rules. `make check` (1,809 tests, mypy) passes, and the offline evening is
+    byte-identical to `main`'s. In the browser (debug panel, `play_dice` on both chairs): Edda and
+    Toren sit facing each other in the talking pose with the dice between them, the hover reads
+    "Dice table · available · Edda and Toren playing", and 25 s after the second sat the feed
+    shows "Toren beat Edda at dice" and both "completed play_dice"; Toren's thoughts list
+    "Beat the grey-haired woman smelling of sage at dice" (the looks, not the name: they are
+    strangers). `lifecycle.py` is now 393 lines, 7 below the limit: split it before the next
+    task that grows it.
 - [ ] **G3 — Agreeing to play.** The `dice_together` invitation sends both guests to the table.
   - *Refactor first (own commit, AGENTS.md "O"):* dice would be a third special case in
     `invitations._first_steps`, so first turn it into a table of one function per kind

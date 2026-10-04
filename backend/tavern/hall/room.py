@@ -141,6 +141,8 @@ def _validate_objects(world_map: dict[str, Any]) -> None:
         item.setdefault("interaction_spots", [])
         item.setdefault("name", item["id"])
         item.update(stock=item.get("stock", 0), reserved_by=None)
+        if item["kind"] == "dice_table":
+            item.setdefault("game", None)  # See `tavern.social.dice`.
         if type(item["stock"]) is not int or item["stock"] < 0:
             raise ValueError("Object stock must be a nonnegative integer")
     _validate_spots(world_map)

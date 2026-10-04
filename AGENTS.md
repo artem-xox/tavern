@@ -52,7 +52,7 @@ Functional core, imperative shell. Dependencies point inward only.
   - `body/` what executes an action: `activities.py` (the verb table), `actions`, `queues`,
     `hearing`, `attention`, `expression`, `drunkenness`, `dozing`.
   - `social/` guests among guests: `thoughts`, `ties`, `names`, `scenes`, `conversation`,
-    `social_acts`, `invitations`, `overhearing`, `turns`.
+    `social_acts`, `invitations`, `dice`, `overhearing`, `turns`.
   - `mind/` what a guest observes and decides: `briefing`, `options`, `hall_view`,
     `agents` (candidates and decisions), `local_policy`, `intentions`, `cards`,
     `haiku_turns`, the model ports (`questions`).

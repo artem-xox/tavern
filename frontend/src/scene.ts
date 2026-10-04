@@ -251,7 +251,7 @@ export class TavernScene extends Phaser.Scene {
     view.direction = actor.x > view.cellX ? "east" : actor.x < view.cellX ? "west" : actor.y > view.cellY ? "south" : actor.y < view.cellY ? "north" : view.direction;
     if (actor.status !== "walking") {
       // The server turns heads toward sounds and partners; otherwise the seat or the task decides.
-      view.direction = actor.facing ?? seat?.facing ?? (target && actor.status === "interacting" ? this.facingTarget(actor, target, view.direction) : view.direction);
+      view.direction = actor.facing ?? seat?.facing ?? (target && actor.status === "interacting" ? target.facing ?? this.facingTarget(actor, target, view.direction) : view.direction);
     }
     const { name: character, sheet } = spriteOf(actor);
     const pose: string = shippedPose(sheet, this.actorPose(actor));
@@ -363,7 +363,8 @@ export class TavernScene extends Phaser.Scene {
     const object: WorldObject | undefined = this.world.map.objects.find((item: WorldObject): boolean => x >= item.x && x < item.x + (item.width ?? 1) && y >= item.y && y < item.y + (item.height ?? 1));
     const owner: Actor | undefined = this.world.actors.find((actor: Actor): boolean => !!object && actor.favorite_seat_id === object.id);
     const stock: string = object?.kind === "tap" ? ` · ${object.stock ?? 0} left` : "";
-    const details: string = stock + (object?.appeal !== undefined ? ` · appeal ${object.appeal.toFixed(2)}${object.comforts?.length ? ` (${object.comforts.join(", ")})` : ""}` : "");
+    const players: string = object?.game ? ` · ${object.game.players.map((id: string): string => this.world?.actors.find((actor: Actor): boolean => actor.id === id)?.name ?? id).join(" and ")} playing` : "";
+    const details: string = stock + players + (object?.appeal !== undefined ? ` · appeal ${object.appeal.toFixed(2)}${object.comforts?.length ? ` (${object.comforts.join(", ")})` : ""}` : "");
     this.callbacks.hover(object ? `${object.name} · ${object.reserved_by ? "reserved" : "available"}${owner ? ` · ${owner.name}'s seat` : ""}${details} · cell ${x}, ${y}` : `${this.editing ? "Click to toggle obstacle" : "Click a visitor to inspect"} · cell ${x}, ${y}`);
   }
 }

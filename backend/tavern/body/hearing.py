@@ -66,6 +66,8 @@ EVENT_SOUNDS: Mapping[str, Sound] = MappingProxyType({
     "departure": Sound("door", 0.25, 20.0, "the front door"),
     "closing": Sound("closing_call", 1.0, 40.0, "the innkeeper's call"),
     "action_failed": Sound("grumble", 0.2, 4.0, "a muttered complaint"),
+    # Below the interrupt level: it turns heads without breaking off what anyone is doing.
+    "dice_won": Sound("cheer", 0.3, 12.0, "a whoop at the dice table"),
 })
 
 

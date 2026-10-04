@@ -143,6 +143,23 @@ class NewsRules(TypedDict):
     overheard: float
 
 
+class DiceRules(TypedDict):
+    """How a game of dice is won and how long it takes (see `tavern.social.dice`).
+
+    `skill` weighs the traits that make a player's form, `drink` how much of it drunkenness takes
+    away, `edge` how much a gap in form moves the odds off an even split, and `odds` bounds the first
+    player's chance. A game lasts `game_seconds` once two sit; one who sits alone gives up after
+    `wait_seconds`.
+    """
+
+    skill: dict[str, float]
+    drink: float
+    edge: float
+    odds: list[float]
+    game_seconds: float
+    wait_seconds: float
+
+
 class Rules(TypedDict):
     """The tunable rules of the world, kept in every save."""
 
@@ -161,6 +178,7 @@ class Rules(TypedDict):
     drunkenness: DrunkennessRules
     conversation: ConversationRules
     news: NewsRules
+    dice: DiceRules
 
 
 class HallMap(TypedDict):

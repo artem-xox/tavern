@@ -277,9 +277,12 @@ def _interact(world: World, actor: Actor, elapsed: float) -> None:
         _fail(world, actor, reason)
         return
     actor["_remaining"] -= elapsed
-    # A part in a conversation lasts as long as the scene does (see `finish_parts`).
+    # A part in a conversation lasts as long as the scene does (see `finish_parts`), and a game as long as
+    # the game does (`tavern.social.dice`); a game's timer stops at zero so the world still saves.
     action = actor["action"]
-    if action is not None and actor["_remaining"] <= 0 and not ACTIVITIES[action["verb"]].partner:
+    if action is not None and ACTIVITIES[action["verb"]].game:
+        actor["_remaining"] = max(0.0, actor["_remaining"])
+    elif action is not None and actor["_remaining"] <= 0 and not ACTIVITIES[action["verb"]].partner:
         complete_action(world, actor)
 
 
