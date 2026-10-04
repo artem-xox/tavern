@@ -56,7 +56,6 @@ next milestone before starting that milestone.
 | ID | Problem | Evidence | Resolution |
 |----|---------|----------|------------|
 | D01 | A client module over the ~400-line limit | `scene.ts` 397 (the backend is all under 376: `lifecycle.py` 375, `recording.py` 348, `scenes.py` 345) | Split `scene.ts` before E24 |
-| D02 | The door lets out one leaver at a time, so guests wait their turn after closing | 24–46 s stuck at closing in live seeds 5 and 1 (E15); `test_closing.py` specifies the current behavior | Not a problem yet. Revisit if acceptance scenario 1 or 5 fails in E28 |
 | D05 | Part of the world state still has no types | 80 `dict[str, Any]` remain: map objects, events, memories, `Activity` targets. Underscored progress fields (`_spot`, `_remaining`) are in saves | Type map objects and events when a task touches them (`World`, `Actor` exist since R2) |
 | D08 | Every save carries a copy of the rules | `state.Rules` in `world["rules"]`, written by `rules.default_rules()` | Taking rules out of saves changes the save format, so that waits for Stage 4 |
 | D09 | Model wiring is written twice, and the copy in the entry point is untested | `app.create_default_app` and `scripts/evening.py` (`evaluators`, `turn_writer`, `mind`) | After R5 |
