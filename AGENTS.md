@@ -54,7 +54,7 @@ Functional core, imperative shell. Dependencies point inward only.
   - `social/` guests among guests: `thoughts`, `ties`, `names`, `scenes`, `conversation`,
     `social_acts`, `invitations`, `errands`, `giving`, `dice`, `overhearing`, `turns`.
   - `mind/` what a guest observes and decides: `briefing`, `options`, `hall_view`,
-    `agents` (candidates and decisions), `local_policy`, `intentions`, `cards`,
+    `agents` (candidates and decisions), `local_policy`, `intentions`, `intention_prompt`, `cards`,
     `haiku_turns`, the model ports (`questions`).
   - `evening/` an evening as a whole: `scenario`, `decisions`, `mind_loop` (the requests in
     flight, with a `Courier` port), `lockstep` (headless runs), `metrics`, `recording`.

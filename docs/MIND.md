@@ -146,7 +146,7 @@ Separate who from where:
 | Goals achieved | Goals completed before they failed or expired | `goals` in `metrics.json` (step 2, done) |
 | Unrealizable goals | Goals the world cannot carry out | Zero by construction (step 2, done); the prose can still say anything |
 | Say and do | Promises followed by the matching action in time | `promises` in `metrics.json` (step 4; no live promises yet) |
-| Giving | Gifts taken by kind, gifts refused, and drink errands begun, done and failed: the gap between the 17 intentions to bring someone a drink and what the world did | `giving` in `metrics.json` (Giving H5, done: live seed 7 had 2 gifts and 5 errands, 2 done; the two later live evenings none; 1 of 33 intentions, then 0 and 0, asked for a drink for someone) |
+| Giving | Gifts taken by kind, gifts refused, and drink errands begun, done and failed: the gap between the 17 intentions to bring someone a drink and what the world did | `giving` in `metrics.json` (Giving H5, done: live seed 7 had 2 gifts and 5 errands, 2 done; the two later live evenings none; 1 of 33 intentions, then 0 and 0, asked for a drink for someone. With the goal kind `bring_drink` and a prefix that allows it (H6–H9): 1 of 31, 1 of 33 and 0 of 28 set the goal, 4 gifts in two evenings, one goal done in 13 s) |
 | Sameness | Guests holding the same goal template and target at once | Step 2 |
 | Stories | Matches of story patterns (a promise broken, a grudge acted on, news passed through three guests) | With E28 |
 
