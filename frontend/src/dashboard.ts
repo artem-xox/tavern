@@ -1,4 +1,4 @@
-import type { ActivityView, Actor, Command, Conversation, Intention, Mind, NewsCopy, ServiceHealth, Snapshot, Thought, Verb, World, WorldEvent, WorldObject } from "./types";
+import type { ActivityView, Actor, Command, Conversation, Intention, ItemView, Mind, NewsCopy, ServiceHealth, Snapshot, Thought, Verb, World, WorldEvent, WorldObject } from "./types";
 
 interface Handlers {
   command: (command: Command) => void;
@@ -25,6 +25,7 @@ function element<T extends HTMLElement>(root: HTMLElement, selector: string): T 
 export class Dashboard {
   private world: World | null = null;
   private activities: Record<Verb, ActivityView> = {};
+  private items: Record<string, ItemView> = {};
   private minds: Record<string, Mind> = {};
   private intentions = false;
   private verbSignature: string = "";
@@ -43,6 +44,7 @@ export class Dashboard {
   apply(snapshot: Snapshot): void {
     this.world = snapshot.state;
     this.activities = snapshot.activities;
+    this.items = snapshot.items;
     this.minds = snapshot.minds;
     this.intentions = snapshot.ai.intentions;
     const { state: world, ai } = snapshot;
@@ -217,7 +219,7 @@ export class Dashboard {
     inspector.innerHTML = `<div class="visitor-heading"><div class="avatar" style="--visitor:${this.actorColor(actor)}">${escape(actor.name.slice(0, 1))}</div><div><h2>${escape(actor.name)}</h2><span class="status-pill">${escape(this.activity(actor))}</span></div><span class="cell-location">${actor.x}, ${actor.y}</span></div>
       <div class="needs">${this.needs(actor)}</div>
       <div class="current-action"><span class="eyebrow">CURRENT ACTION</span><strong>${this.departed(actor) ? "Gone home" : actor.action ? escape(this.activities[actor.action.verb]?.label ?? actor.action.verb) : actor.seat_id ? "Settled at the table" : "Considering the next move"}</strong><span>${actor.visit.left_at !== undefined ? `Left at ${clock(actor.visit.left_at)}` : target ? escape(target.name) : partner ? `With ${escape(partner.name)}` : ""}${actor.path.length ? ` · ${actor.path.length} steps remaining` : ""}</span></div>
-      <div class="inventory-row"><span>Carrying</span><strong>${actor.inventory.beer} ${actor.inventory.beer === 1 ? "beer" : "beers"}</strong></div>
+      <div class="inventory-row"><span>Carrying</span><strong>${this.carrying(actor)}</strong></div>
       ${this.visit(actor)}
       ${this.intention(actor)}
       ${this.mind(actor)}
@@ -231,6 +233,13 @@ export class Dashboard {
   private needs(actor: Actor): string {
     const names: Record<string, string> = { thirst: "Thirst", fatigue: "Fatigue", bladder: "Bladder", social: "Company", boredom: "Boredom" };
     return Object.entries(actor.needs).map(([key, value]: [string, number]): string => `<div class="need"><div><span>${names[key]}</span><strong>${Math.round(value)}<small>/100</small></strong></div><meter min="0" max="100" value="${value}" aria-label="${names[key]} urgency" style="--level:${Math.min(100, Math.max(0, value))}%;--need-color:${value > 75 ? "#d7876e" : "#d9b676"}">${Math.round(value)}</meter></div>`).join("");
+  }
+
+  /** List what the guest carries, in the server's wording per kind; nothing when the hands are empty. */
+  private carrying(actor: Actor): string {
+    const carried: string[] = Object.entries(actor.inventory).filter(([, count]: [string, number]): boolean => count > 0)
+      .map(([kind, count]: [string, number]): string => count === 1 ? this.items[kind].one : `${count} ${this.items[kind].many}`);
+    return escape(carried.join(", ") || "nothing");
   }
 
   /** Summarize tonight's visit: time here, beers and own seat. */

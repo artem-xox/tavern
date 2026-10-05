@@ -8,6 +8,7 @@ from typing import Any, Mapping, cast
 from tavern.body.drunkenness import check_drunkenness
 from tavern.body.expression import check_saved_expression
 from tavern.body.hearing import check_saved_stimuli
+from tavern.body.items import check_inventory
 from tavern.body.queues import check_saved_lines
 from tavern.evening.scenario import check_saved_expected
 from tavern.hall.arrival import check_saved_visit
@@ -72,6 +73,7 @@ def _validate_actor_runtime(world: Mapping[str, Any]) -> None:
             raise ValueError("Invalid saved actor action")
         if not all(isinstance(actor.get(key), dict) for key in ("knowledge", "inventory", "decision")):
             raise ValueError("Incomplete saved actor state")
+        check_inventory(actor["inventory"])
         if not isinstance(actor.get("memory"), list):
             raise ValueError("Invalid saved memories")
         if not isinstance(actor.get("sprite"), str) or not actor["sprite"]:

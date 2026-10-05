@@ -4,6 +4,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 from tavern.body.activities import ACTIVITIES, FAMILIES
+from tavern.body.items import held_words
 from tavern.hall.room import SEAT_TABLES
 from tavern.mind.feelings import feelings
 from tavern.mind.goals import goal_words, serving
@@ -71,7 +72,8 @@ def _stay(observation: Observation) -> str:
 
 def _whereabouts(observation: Observation) -> str:
     actor = observation["actor"]
-    hands = "holding a full mug of ale" if actor["inventory"]["beer"] else "empty-handed"
+    held = held_words(actor["inventory"])
+    hands = f"holding {held}" if held else "empty-handed"
     seat = known_object(observation, actor.get("seat_id"))
     if seat:
         return f"They sit in their own seat, {label_of(seat)}, {hands}."

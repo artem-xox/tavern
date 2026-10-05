@@ -10,6 +10,7 @@ from typing import Any, Mapping, Protocol
 from tavern.adapters.jev import evaluate_actions, evaluate_seats
 from tavern.adapters.persistence import FileStore
 from tavern.body.activities import ACTIVITIES, client_activities
+from tavern.body.items import client_items
 from tavern.evening.decisions import log_control
 from tavern.evening.mind_loop import MindLoop, TaskCourier
 from tavern.evening.scenario import Scenario, open_evening
@@ -97,7 +98,7 @@ class TavernRuntime:
 
         Returns:
             Independent world copy, public evaluator configuration, how the client
-            names, shows, and targets each verb, and each visitor's inner state (`feelings.minds`).
+            names, shows, and targets each verb, how it words each kind of item, and each visitor's inner state (`feelings.minds`).
             `ai.writer` names who writes conversation lines; `ai.health` says how Jev and Claude are
             doing (`model_health`), when a board is watching them.
         """
@@ -107,7 +108,7 @@ class TavernRuntime:
             "mode": "jev" if configured else "local", "configured": configured,
             "model": self.ai_config["model"], "writer": self.writer_label, "intentions": self.intender is not None,
             **health,
-        }, "activities": client_activities(ACTIVITIES), "minds": minds(self.world)}
+        }, "activities": client_activities(ACTIVITIES), "items": client_items(), "minds": minds(self.world)}
 
     def _event(self, message: str) -> None:
         log_control(self.world, message)

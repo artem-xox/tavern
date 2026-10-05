@@ -5,6 +5,7 @@ import math
 from random import Random
 from typing import Any
 
+from tavern.body.items import check_inventory, empty_inventory
 from tavern.hall.memory import record_event
 from tavern.hall.room import impassable_cells
 from tavern.hall.routes import reserved_spots
@@ -20,14 +21,14 @@ def create_actor(data: Mapping[str, Any], world_map: Mapping[str, Any]) -> Actor
     """Build a fresh visitor record with an empty evening ahead.
 
     Args:
-        data: Actor definition with ID, cell, and optional name, color, sprite, needs, traits, beer,
+        data: Actor definition with ID, cell, and optional name, color, sprite, needs, traits, inventory,
             and the character card and ties of a scenario guest (validated by `scenario.parse_guest`).
             A visitor without a sprite of their own looks like the generic `visitor`.
         world_map: Validated map the visitor stands in.
     Returns:
         Serializable visitor state.
     Raises:
-        ValueError: The cell is blocked or sprite, needs, traits, or beer are invalid.
+        ValueError: The cell is blocked or sprite, needs, traits, or inventory are invalid.
     """
     x, y = position(data, world_map["width"], world_map["height"])
     if (x, y) in impassable_cells(world_map):
@@ -35,15 +36,14 @@ def create_actor(data: Mapping[str, Any], world_map: Mapping[str, Any]) -> Actor
     needs = {name: number(data.get("needs", {}).get(name, 30), name, 0, 100)
              for name in ("thirst", "fatigue", "bladder", "social", "boredom")}
     traits = {name: number(value, name, 0, 1) for name, value in data.get("traits", {}).items()}
-    beer, sprite = data.get("inventory", {}).get("beer", 0), data.get("sprite", "visitor")
-    if type(beer) is not int or beer < 0:
-        raise ValueError("Inventory beer must be a nonnegative integer")
+    inventory, sprite = {**empty_inventory(), **data.get("inventory", {})}, data.get("sprite", "visitor")
+    check_inventory(inventory)
     if not isinstance(sprite, str) or not sprite:
         raise ValueError("Actor sprite must be a nonempty string")
     return Actor(id=data["id"], name=data.get("name", data["id"]), color=data.get("color", "#d8ad68"),
                 sprite=sprite, post=data.get("post"), x=x, y=y, traits=traits, card=data.get("card"),
                 ties=list(data.get("ties", [])),
-                needs=needs, inventory={"beer": beer}, status="idle",
+                needs=needs, inventory=inventory, status="idle",
                 action=None, path=[], seat_id=None, favorite_seat_id=None,
                 visit={"seconds": 0.0, "beers": 0}, thoughts=[],
                 relations=_relations(data["id"], data.get("name", data["id"]), data.get("ties", [])),

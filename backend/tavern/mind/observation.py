@@ -4,6 +4,7 @@ import math
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from tavern.body.items import check_inventory
 from tavern.hall.room import OBJECT_KINDS
 from tavern.hall.validation import number
 
@@ -28,9 +29,7 @@ def own_actor(observation: Mapping[str, Any]) -> Mapping[str, Any]:
         number(needs.get(name), name, 0, 100)
     for name in ("social", "boredom"):
         number(needs.get(name, 0), name, 0, 100)
-    beer = inventory.get("beer")
-    if isinstance(beer, bool) or not isinstance(beer, int) or beer < 0:
-        raise ValueError("Own beer inventory must be a nonnegative integer")
+    check_inventory(inventory)
     for name in ("patience", "comfort", "curiosity"):
         number(traits.get(name, 0.5), name, 0, 1)
     _validate_visit(actor)
