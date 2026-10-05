@@ -66,6 +66,9 @@ once, which reads as “looking and thinking” while the choice and the mind re
 Models decide *what* and *why*; the game decides *whether* and *how*. Text alone never
 changes the world: only validated actions and speech acts have effects.
 
+Where this split falls short among guests who meet all evening, and the steps to change it,
+are in [MIND.md](MIND.md).
+
 ## Actions
 
 Activities are defined as data: roles (alone, pair, group), preconditions, steps and
