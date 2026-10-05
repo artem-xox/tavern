@@ -14,19 +14,11 @@ const TEXTURES: [string, string][] = [
   ["tavern-bar", "/tavern/props/bar.png"],
   ["tavern-table", "/tavern/props/table.png"],
   ["tavern-chair", "/tavern/props/chair.png"],
-  ["tavern-ale-cask", "/tavern/props/ale-cask.png"],
-  ["tavern-barrel", "/tavern/decor/barrel.png"],
   ["tavern-plant", "/tavern/decor/plant.png"],
   ["tavern-candle", "/tavern/decor/candle.png"],
-  ["tavern-rug-wine", "/tavern/rugs/rug-wine.png"],
-  ["tavern-rug-teal", "/tavern/rugs/rug-teal.png"],
-  ["tavern-rug-blue", "/tavern/rugs/rug-blue.png"],
-  ["tavern-rug-moss", "/tavern/rugs/rug-moss.png"],
-  ["tavern-rug-ochre", "/tavern/rugs/rug-ochre.png"],
+  ["tavern-rug-light-brown", "/tavern/rugs/rug-light-brown.png"],
   ["tavern-rug-green", "/tavern/rugs/rug-green.png"],
 ];
-
-const RUG_TEXTURES: string[] = ["tavern-rug-wine", "tavern-rug-teal", "tavern-rug-blue", "tavern-rug-ochre", "tavern-rug-moss"];
 
 export class RoomArt {
   private floorArt!: Phaser.GameObjects.TileSprite;
@@ -109,10 +101,9 @@ export class RoomArt {
 
   private drawFloor(world: World): void {
     const { tile_size: size, blocked } = world.map;
-    let ordinaryRug: number = 0;
     for (const table of world.map.objects.filter((object: WorldObject): boolean => object.kind === "table" || object.kind === "dice_table")) {
-      const texture: string = table.kind === "dice_table" ? "tavern-rug-green" : RUG_TEXTURES[ordinaryRug++ % RUG_TEXTURES.length]!;
-      this.addProp(texture, (table.x + 0.5) * size, (table.y + 0.5) * size, 112, 56, -1.6);
+      const texture: string = table.kind === "dice_table" ? "tavern-rug-green" : "tavern-rug-light-brown";
+      this.addProp(texture, (table.x + 0.5) * size, (table.y + 0.5) * size, 128, 64, -1.6);
     }
     for (const [x, y] of blocked) this.drawWall(x, y, size, "tavern-slate-wall");
     for (const object of world.map.objects.filter((item: WorldObject): boolean => ["window", "fireplace"].includes(item.kind))) {
@@ -124,8 +115,10 @@ export class RoomArt {
       }
     }
     for (const door of world.map.objects.filter((item: WorldObject): boolean => item.kind === "door")) {
-      const image: Phaser.GameObjects.Image = this.scene.add.image(door.x * size, door.y * size, "tavern-slate-door")
-        .setOrigin(0).setDisplaySize((door.width ?? 1) * size, (door.height ?? 1) * size);
+      const width: number = door.width ?? 1;
+      for (let dx: number = 0; dx < width; dx += 1) this.drawWall(door.x + dx, door.y, size, "tavern-slate-wall");
+      const image: Phaser.GameObjects.Image = this.scene.add.image((door.x + width / 2) * size, door.y * size, "tavern-slate-door")
+        .setOrigin(0.5, 0).setDisplaySize(width * size * 0.86, (door.height ?? 1) * size);
       this.wallArt.add(image);
     }
   }
@@ -146,9 +139,8 @@ export class RoomArt {
     const y: number = (object.y + 0.5) * size;
     if (object.kind === "fireplace") this.addProp("tavern-fireplace", (object.x + (object.width ?? 1) / 2) * size, y + 6, (object.width ?? 1) * size * 1.2, 64);
     if (object.kind === "bar") this.addProp("tavern-bar", (object.x + (object.width ?? 1) / 2) * size, y + 6, (object.width ?? 1) * size * 1.1, 82, 10 + (object.y + 0.9) * size / 1000);
-    if (object.kind === "tap") this.addProp("tavern-ale-cask", x, y, 36, 36);
     if (object.kind === "toilet") this.addProp("tavern-privy-bucket", x, y, 30, 30);
-    if (object.kind === "chair" || object.kind === "dice_chair") this.addProp("tavern-chair", x, y, 24, 28).setFlipX(object.facing === "west");
+    if (object.kind === "chair" || object.kind === "dice_chair") this.addProp("tavern-chair", x, y, 31, 36).setFlipX(object.facing === "west");
     if (object.kind === "table" || object.kind === "dice_table") this.addProp("tavern-table", x, y, 48, 32);
     if (object.kind === "dice_table") drawDice(this.details, object, size);
     if (object.kind === "darts") drawDarts(this.details, x, y);
@@ -156,10 +148,7 @@ export class RoomArt {
   }
 
   private drawDecor(world: World): void {
-    const { width, height, tile_size: size } = world.map;
-    for (const [x, y] of [[width - 2, 6], [width - 2, height - 4]]) {
-      if (this.isClearDecorCell(world, x, y)) this.addProp("tavern-barrel", (x + 0.5) * size, (y + 0.5) * size, 24, 28);
-    }
+    const { height, tile_size: size } = world.map;
     for (const [x, y] of [[1, 2], [1, height - 2], [13, height - 2]]) {
       if (this.isClearDecorCell(world, x, y)) this.addProp("tavern-plant", (x + 0.5) * size, (y + 0.5) * size, 24, 32);
     }
