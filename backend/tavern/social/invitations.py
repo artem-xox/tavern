@@ -8,7 +8,7 @@ lifecycle (`world.start_action`), so the usual rules decide whether each step is
 
 from collections.abc import Mapping, Sequence
 from types import MappingProxyType
-from typing import Any, TypedDict
+from typing import Any, NotRequired, TypedDict
 
 from tavern.hall.memory import record_event
 from tavern.hall.room import find_object
@@ -27,13 +27,15 @@ KINDS: Mapping[str, str] = MappingProxyType({
     "buy_drink": "have an ale on them",
     "leave_together": "walk home together",
 })
-# accepted: to be set in motion; fetching: the inviter pours the ale; following: the inviter has
-# set off for the door and the invitee follows once it is free.
-STAGES = ("accepted", "fetching", "following")
+# accepted: to be set in motion; fetching: the inviter pours the ale; carrying: the inviter walks back with
+# it to hand it over; following: the inviter has set off for the door and the invitee follows once it is free.
+STAGES = ("accepted", "fetching", "carrying", "following")
 
 # `from` is a Python keyword, hence the functional form.
 Invitation = TypedDict("Invitation", {"kind": str, "from": str, "to": str})
-Errand = TypedDict("Errand", {"kind": str, "from": str, "to": str, "stage": str, "held": int})
+# `held` is the mugs the inviter held when an errand began; `since` the game time carrying began.
+Errand = TypedDict("Errand", {"kind": str, "from": str, "to": str, "stage": str, "held": int,
+                              "since": NotRequired[float]})
 
 
 def _people(world: Mapping[str, Any]) -> dict[str, Actor]:
@@ -246,10 +248,15 @@ def check_invitations(world: Mapping[str, Any]) -> None:
     if not isinstance(errands, list):
         raise ValueError("Saved invitations must be a list")
     for item in errands:
-        if not isinstance(item, dict) or set(item) != set(Errand.__annotations__) or not _valid(item, guests) \
-                or item["stage"] not in STAGES or type(item["held"]) is not int:
+        if not isinstance(item, dict) or not Errand.__required_keys__ <= set(item) <= set(Errand.__annotations__) \
+                or not _valid(item, guests) or item["stage"] not in STAGES or type(item["held"]) is not int:
             raise ValueError(f"Invalid saved invitation {item!r}")
         number(item["held"], "Saved ale held", 0, float("inf"))
+        # Only an errand that is carrying has a start, and it cannot lie in the future.
+        if ("since" in item) != (item["stage"] == "carrying"):
+            raise ValueError(f"Saved invitation {item!r} must have a start exactly while it is carrying")
+        if "since" in item:
+            number(item["since"], "Saved carrying start", 0, world["time"])
 
 
 def _valid(item: Mapping[str, Any], guests: Sequence[str]) -> bool:

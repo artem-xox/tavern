@@ -9,9 +9,11 @@ from types import MappingProxyType
 from typing import Any
 
 from tavern.body.actions import action_error
+from tavern.body.items import ITEMS
 from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World
 from tavern.social.dice import PLAY, open_chairs
+from tavern.social.giving import formed_since
 from tavern.social.invitations import KINDS, Errand, free_chair, home_table, known_place
 from tavern.social.names import called
 from tavern.social.thoughts import think
@@ -48,6 +50,8 @@ def _step(world: World, errand: Errand, start: Start) -> bool:
     host, guest = people.get(errand["from"]), people.get(errand["to"])
     if errand["stage"] == "fetching":
         return _fetched(world, errand, host, guest)
+    if errand["stage"] == "carrying":
+        return _carry(world, errand, host, guest, start)
     if errand["stage"] == "following":
         return _follow(world, errand, guest, start)
     if host is None or guest is None:
@@ -119,11 +123,45 @@ def _fetched(world: World, errand: Errand, host: Actor | None,
     if (host["action"] or {}).get("verb") == "take_beer":
         return True
     if host["inventory"]["beer"] > errand["held"]:
-        host["inventory"]["beer"] -= 1
-        guest["inventory"]["beer"] += 1
-        message = f"{host['name']} bought {guest['name']} an ale"
-        record_event(world, guest, "treated", message)
-        think(guest, "treated", world["time"], f"{called(guest, host)} bought me an ale", message, about=host)
+        errand.update({"stage": "carrying", "since": world["time"]})
+        return True
+    return False
+
+
+def _carry(world: World, errand: Errand, host: Actor | None, guest: Actor | None, start: Start) -> bool:
+    # The host brings the mug to the invitee and hands it over; the hand-over, not the pouring, is the gift.
+    if host is None or guest is None:
+        return _failed(world, errand)
+    treat = ITEMS["beer"].received
+    # It ends once the invitee has taken it (a thought of being treated) or refused it (a rebuff to the host).
+    if formed_since(guest, host["id"], (treat,), errand["since"]) \
+            or formed_since(host, guest["id"], ("rebuffed",), errand["since"]):
+        return False
+    wait = world["rules"]["giving"]["carry_for"]
+    if host["inventory"]["beer"] <= errand["held"] or world["time"] - errand["since"] > wait:
+        return _failed(world, errand)
+    verb = (host["action"] or {}).get("verb")
+    if verb == "give":
+        return True
+    hand_over = {"id": f"give:beer:{guest['id']}", "verb": "give", "target_id": guest["id"], "item": "beer"}
+    if action_error(world, host, hand_over) is None:
+        start(world, host["id"], hand_over)
+    elif verb != "sit":
+        # Not near yet and not on the way: take a chair at the invitee's table, as an invitee is seated.
+        chair = free_chair(world, home_table(world, guest), host)
+        if chair:
+            start(world, host["id"], _command("sit", chair))
+    return True
+
+
+def _failed(world: World, errand: Errand) -> bool:
+    people = {item["id"]: item for item in [*world["actors"], *world["departed"]]}
+    host, guest = people[errand["from"]], people[errand["to"]]
+    # The one who is still in the hall tells it; with both gone nobody is left to remember it.
+    witness = next((item for item in (guest, host) if item in world["actors"]), None)
+    if witness is not None:
+        record_event(world, witness, "invitation_failed",
+                     f"{host['name']} and {guest['name']} could not {KINDS[errand['kind']]}")
     return False
 
 

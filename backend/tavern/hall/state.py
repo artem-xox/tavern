@@ -173,10 +173,12 @@ class BartendingRules(TypedDict):
 class GivingRules(TypedDict):
     """When a gift is taken and how often one is made (see `tavern.social.giving`): a receiver refuses
     it when their opinion of the giver is below `refuse_below`, and no gift is passed back to the giver,
-    nor the same kind given twice to one person, within `again_after` seconds."""
+    nor the same kind given twice to one person, within `again_after` seconds. A host who poured a mug for
+    someone has `carry_for` seconds to hand it over (see `tavern.social.errands`)."""
 
     refuse_below: float
     again_after: float
+    carry_for: float
 
 
 class Rules(TypedDict):

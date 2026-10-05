@@ -83,8 +83,10 @@ def test_two_guests_are_served_in_turn() -> None:
 
 def test_a_drink_bought_for_a_friend_is_still_delivered() -> None:
     world = opened(HOB)
+    # Ada now carries the mug to Bea's table, so Bea sits at one and the evening runs a little longer.
+    assert start_action(world, "bea", {"id": "sit:chair-1", "verb": "sit", "target_id": "chair-1"})["accepted"]
     world["invitations"].append({"kind": "buy_drink", "from": "ada", "to": "bea", "stage": "accepted", "held": 0})
-    advance(world, 25.0)
+    advance(world, 30.0)
     assert (beers(world, "ada"), beers(world, "bea"), stock(world)) == (0, 1, 23)
 
 
