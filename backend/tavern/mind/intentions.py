@@ -18,7 +18,7 @@ from typing import Any, NotRequired, TypedDict
 
 from tavern.body.drunkenness import drunk_stage
 from tavern.hall.memory import log_event
-from tavern.hall.staff import on_staff
+from tavern.hall.staff import on_staff, post_of
 from tavern.hall.state import World, find_actor
 from tavern.hall.world import observe_actor, observe_people
 from tavern.mind.briefing import brief
@@ -164,8 +164,7 @@ def intention_requests(world: Mapping[str, Any], pending: Container[str], next_a
     """
     requests = []
     for actor in world["actors"]:
-        # Staff keep no intentions: their routine is the bar's, not a plan of the evening.
-        if on_staff(actor) or actor["id"] in pending or world["time"] < next_allowed.get(actor["id"], 0.0):
+        if actor["id"] in pending or world["time"] < next_allowed.get(actor["id"], 0.0):
             continue
         trigger = intention_due(world, actor, rules)
         spent = rules.budget is not None and (made or {}).get(actor["id"], 0) >= rules.budget
@@ -201,7 +200,7 @@ def intention_view(world: Mapping[str, Any], actor: Mapping[str, Any], trigger: 
     Returns:
         `actor_id`, `name`, `time`, `trigger`, `previous` intention (or None), `card` in words,
         `situation` (the briefing paragraph, without the previous intention), active `thoughts`,
-        `others` (the guests in the hall as this guest calls them: ID to name, for a goal), `earlier`
+        `duty` (the bar they work at, or None for a guest), `others` (the guests in the hall as this guest calls them: ID to name, for a goal), `earlier`
         (the latest 8 lines they said or heard tonight, see `heard.earlier_lines`) and `drink`
         (drunkenness stage).
     """
@@ -211,6 +210,7 @@ def intention_view(world: Mapping[str, Any], actor: Mapping[str, Any], trigger: 
     return {"actor_id": actor["id"], "name": actor["name"], "time": world["time"], "trigger": dict(trigger),
             "previous": deepcopy(actor["intention"]), "card": _card(actor),
             "situation": brief(observation, [])["situation"],
+            "duty": post_of(world["map"], actor)["name"] if on_staff(actor) else None,
             "others": {item["id"]: called(actor, item) for item in world["actors"] if item["id"] != actor["id"]},
             "thoughts": [item["text"] for item in active_thoughts(actor["thoughts"], world["time"])],
             "earlier": earlier_lines(actor, RECALLED_LINES),
@@ -235,6 +235,16 @@ def _previous(view: Mapping[str, Any]) -> str:
                                    f"({goal['status']}).")
     return (f"Their previous thought: \"{previous['thought']}\" Their previous intention: \"{previous['intention']}\" "
             f"(decided at {previous['written_at']:.0f} s, after: {previous['trigger']['text']}).{aim}")
+
+
+def _duty(view: Mapping[str, Any]) -> list[str]:
+    # Someone at work stays at their post: their thought, intention and goal are about the work and the people
+    # who come to the bar, never games, money or leaving it.
+    if view["duty"] is None:
+        return []
+    return [f"{view['name']} is on duty behind the {view['duty']} all evening. What they want must be what a "
+            "barkeep wants: pouring, keeping the peace, hearing the news from those who lean on the bar. Never "
+            "games, wagers or money, and never leaving the bar."]
 
 
 def _others(view: Mapping[str, Any]) -> str:
@@ -271,7 +281,8 @@ def intention_question(prefix: str, view: Mapping[str, Any]) -> Question:
         f"It is {view['time']:.0f} s into the evening. {view['name']} takes stock now.",
         f"What prompted it: {view['trigger']['text']}.", _previous(view),
         f"The situation as they see it: {view['situation']}",
-        f"Thoughts on their mind: {thoughts}.", *_earlier(view), f"Drink: they are {view['drink']}.", _others(view),
+        f"Thoughts on their mind: {thoughts}.", *_earlier(view), f"Drink: they are {view['drink']}.", *_duty(view),
+        _others(view),
         f"Write {view['name']}'s thought, intention and goal."])
     return Question(system=[prefix, view["card"]], content=content, schema=_schema(), max_tokens=250)
 
@@ -322,26 +333,28 @@ def _is_goal(goal: Any) -> bool:
             and isinstance(goal["target"], str) and goal["status"] in STATUSES)
 
 
-def parse_stance(answer: Any, others: Mapping[str, str]) -> Written:
+def parse_stance(answer: Any, others: Mapping[str, str], on_duty: bool = False) -> Written:
     """Check what the mind answered at the boundary.
 
     Args:
         answer: Decoded answer: a thought, an intention, a goal kind (or "none") and its person's ID.
         others: Guests in the hall besides the one asking: ID to name (`intention_view`).
+        on_duty: Whether the one asking works behind a bar (`intention_view`'s `duty`).
 
     Returns:
         The thought, the intention and the goal they name, active, or none.
 
     Raises:
         ValueError: The answer is not exactly those four fields, a text is blank or over 400 characters, the
-            goal kind is not in `GOALS`, or its person is not in the hall (so it cannot be carried out).
+            goal kind is not in `GOALS` or not open to someone on duty, or its person is not in the hall (so it
+            cannot be carried out).
     """
     if not isinstance(answer, Mapping) or set(answer) != {"thought", "intention", "goal", "target"}:
         raise ValueError(f"An answer has exactly a thought, an intention, a goal and a target, not {answer!r}")
     kind = answer["goal"]
     if not isinstance(kind, str) or not (answer["target"] is None or isinstance(answer["target"], str)):
         raise ValueError(f"A goal is a kind and the ID of a guest, not {kind!r} and {answer['target']!r}")
-    goal = check_goal(None if kind == "none" else kind, answer["target"], others)
+    goal = check_goal(None if kind == "none" else kind, answer["target"], others, on_duty)
     return check_intention({"thought": answer["thought"], "intention": answer["intention"], "goal": goal})
 
 
@@ -357,7 +370,7 @@ def intention_writer(prefix: str, ask: Ask) -> Intender:
         or ValueError for an invalid answer.
     """
     async def write(view: Mapping[str, Any]) -> Written:
-        return parse_stance(await ask(intention_question(prefix, view)), view["others"])
+        return parse_stance(await ask(intention_question(prefix, view)), view["others"], view["duty"] is not None)
     return write
 
 

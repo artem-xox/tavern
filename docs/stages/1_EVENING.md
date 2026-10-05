@@ -83,7 +83,10 @@ barkeep (B0–B6) and E20 (hostile options), all 2026-10-04. Next:
 2. **The barkeep (B0–B6), done.** A barkeep keeps to four cells behind the bar, pours every mug,
    and chats with guests who lean on the counter.
 3. **M4, news and conflict (E20–E22).** E20 (hostile options) is done; E21 resolves fights next.
-4. **Giving (H0–H5),** added 2026-10-05. Guests hand each other what they carry, and fetch
+4. **The mind (MIND.md steps 0–5), done 2026-10-05.** Guests set typed goals, ask the mind within a budget,
+   may promise to come over, and the barkeep keeps to his duty. Worlds are saved as version 12; the next
+   `schema_version` is 13.
+5. **Giving (H0–H5),** added 2026-10-05. Guests hand each other what they carry, and fetch
    a drink for someone as one chosen errand.
 
 The door at closing (D02) is fixed: it takes as many leavers at once as it has spots (offline

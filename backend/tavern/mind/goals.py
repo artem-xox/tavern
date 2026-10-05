@@ -37,6 +37,7 @@ class GoalKind:
     Attributes:
         wording: How the briefing tells it; `{name}` stands for the person as the guest calls them.
         lasts: Game seconds before an unreached goal lapses.
+        on_duty: Whether someone at work behind a bar may set it: it keeps them at their post.
         serves: Whether an action (a concrete one: `id`, `verb`, `target_id`) brings the guest closer to it,
             read from their observation.
         reached: Whether the world shows it done: the guest, the goal's person, and the game time the
@@ -45,6 +46,7 @@ class GoalKind:
 
     wording: str
     lasts: float
+    on_duty: bool
     serves: Callable[[Observation, Mapping[str, Any], Goal], bool]
     reached: Callable[[Mapping[str, Any], Mapping[str, Any], Mapping[str, Any], float], bool]
 
@@ -89,8 +91,8 @@ def _sit_together(world: Mapping[str, Any], actor: Mapping[str, Any], other: Map
 
 
 GOALS: Mapping[str, GoalKind] = MappingProxyType({
-    "talk_to": GoalKind("talk with {name}", 240.0, _talks_to, _has_talked),
-    "sit_with": GoalKind("sit at the same table as {name}", 120.0, _sits_with, _sit_together),
+    "talk_to": GoalKind("talk with {name}", 240.0, True, _talks_to, _has_talked),
+    "sit_with": GoalKind("sit at the same table as {name}", 120.0, False, _sits_with, _sit_together),
 })
 
 
@@ -126,19 +128,21 @@ def goal_words(goal: Goal, name: str | None) -> str:
     return GOALS[goal["kind"]].wording.format(name=name)
 
 
-def check_goal(kind: str | None, target: str | None, others: Mapping[str, str]) -> Goal | None:
+def check_goal(kind: str | None, target: str | None, others: Mapping[str, str], on_duty: bool = False) -> Goal | None:
     """Check a goal the mind named.
 
     Args:
         kind: A kind of `GOALS`, or None for no goal.
         target: The guest it is about, by ID.
         others: Guests in the hall besides the one deciding: ID to name.
+        on_duty: Whether the one deciding works behind a bar, and so may set only goals that keep them there.
 
     Returns:
         An active goal, or None for none.
 
     Raises:
-        ValueError: The kind is not in `GOALS`, the person is not in the hall, or no goal names a person.
+        ValueError: The kind is not in `GOALS` or not open to someone on duty, the person is not in the hall, or no
+            goal names a person.
     """
     if kind is None:
         if target is not None:
@@ -146,6 +150,8 @@ def check_goal(kind: str | None, target: str | None, others: Mapping[str, str]) 
         return None
     if kind not in GOALS:
         raise ValueError(f"Unknown goal kind {kind!r}; choose one of {', '.join(GOALS)}")
+    if on_duty and not GOALS[kind].on_duty:
+        raise ValueError(f"Goal {kind!r} would take someone on duty from the bar")
     if target not in others:
         raise ValueError(f"Goal {kind!r} must be about a guest in the hall, not {target!r}")
     return Goal(kind=kind, target=target, status="active")

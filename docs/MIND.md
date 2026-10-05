@@ -151,8 +151,8 @@ Separate who from where:
 
 ## Steps
 
-Each step is small, test-first, and checked against the baseline of step 0. None is scheduled
-against M4 yet; [PLAN.md](PLAN.md) decides the order.
+Each step is small and checked against the baseline of step 0. Steps 0–5 were built on 2026-10-05
+(see PLAN.md for what is left over: D22, D23); step 6 is Stage 4.
 
 - [x] **0. Measure.** `evening/repetition.py` counts restated intentions and repeated lines;
   `scripts/evening.py` writes them as `repetition` in `metrics.json`. A text counts as the same
@@ -226,9 +226,20 @@ against M4 yet; [PLAN.md](PLAN.md) decides the order.
   a nudge is weaker than a goal the intention names. Options: let a goal `talk_to` or `sit_with` made in
   talk turn into a commitment by itself (no act), or promise other things (bring an ale, once Giving H3
   lands). Not done: promise kinds beyond `sit_with`.
-- [ ] **5. Practices and roles.** The evening as a practice; the barkeep gets a stance bound by
-  his duties. Check: D19 lines gone.
-- [ ] **6. Between evenings (Stage 4).** Each guest's evening is summarized into memories and
+- [x] **5. Practices and roles (first part: the barkeep's duty).** Staff now take stock like guests
+  (`intention_requests` no longer skips them), and `intention_view` carries `duty`, the bar they work at.
+  A question to someone on duty says he is at work and wants only what a barkeep wants (a section in the
+  intention prefix says the same); `GoalKind.on_duty` says which goals keep a man at his post, and
+  `parse_stance` refuses the others (`talk_to` is open to him, `sit_with` is not). His intention
+  reaches his lines by step 1. Test changed, named: `test_staff.py`'s five-minute barkeep test now
+  expects his mind to be asked (he still decides nothing and never leaves his cells). Result
+  (2026-10-05, live seed 7): Hob wrote 3 intentions after arrival ("stay at the bar and keep the ale
+  pouring"), none about games or money, and none of his 12 lines offers darts, a wager or a coin (D19's
+  examples). Still true: six of his lines open with the same "Evening. What'll it be?" formula, which
+  D19 also records. Not done: the evening as a social practice with roles as data (duties and norms per
+  role, a bouncer), which waits for Stage 2's second staff member; the barkeep's duty is a flag on goals
+  and a sentence in the prompt for now.
+- [ ] **6. Between evenings (Stage 4): not started on purpose.** Each guest's evening is summarized into memories and
   opinions that carry over, dropping what repeats, as Lyfe's summarize-and-forget does.
 
 Missing verbs found on the way go to their own tasks. The first is "buy someone a drink"

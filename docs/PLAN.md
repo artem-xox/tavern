@@ -17,10 +17,14 @@ queue, react to noise, talk through Claude Haiku 4.5 with speech acts, pass on n
 dice while others watch, get drunk, and sometimes shove or fight. The player only sets up
 the evening and watches. See [Stage 1 tasks](stages/1_EVENING.md).
 
-**Status (2026-10-04):** M1–M3, the refactor R0–R8, D13 (Jev and Claude health markers), U1
+**Status (2026-10-05):** M1–M3, the refactor R0–R8, D13 (Jev and Claude health markers), U1
 (no labels in the hall), E18b (conversation memory), E19 (facts and retelling), the dice game (G0–G5)
 the barkeep (B0–B6) and E20 of M4 (hostile options) are done. Next: E21 (fight resolution).
-
+The guest's mind was reworked in parallel, by [MIND.md](MIND.md) steps 0–5: the intention reaches
+speech, a guest sets a typed goal the world checks, asks the mind far less often (live seed 7: 56
+intentions became 26–33, goals reached 7 of 30 became 10 of 17), may promise to come over, and the
+barkeep keeps to his duty. Saved worlds are version 12. Step 6 (memory between evenings) waits for
+Stage 4; the giving ticket (H0–H5 in Stage 1) is next to be picked up.
 **Done when:** recorded live evenings meet the Stage 1 metrics, an observer can retell
 a story from at least one of them, and its chronicle cites only logged events.
 
@@ -68,5 +72,7 @@ next milestone before starting that milestone.
 | D16 | Some types cross an import cycle only for the checker | `TYPE_CHECKING` imports in `state.py`, `scripted.py`→`TurnResult`, `scenes.py`→`TurnResult` | Move `TurnResult` and the other cross-module records to the module that owns the concept when one gets a third user |
 | D17 | Haiku misuses `share_news`: it picks the act for lines that are no news, or invents words under a real `fact_id` | live evenings, seeds 5 and 1 (2026-10-04): "Need to know if the fever's crept this far up yet." and "Fever's in the river villages too, three weeks now." as `share_news` | Not checkable by a rule (it is a meaning). Tighten the act's text and examples, or have E28 count them |
 | D18 | Live turn fallbacks keep coming from two Haiku slips: an `invitation` on an `accept`, and a line over 160 characters | one of each in the two E19 live evenings (a fallback per evening) | Small task: accept (and drop) an invitation on `accept`/`decline`, or say so in the prefix; the length rule stays |
-| D19 | Haiku's barkeep forgets he is at work: he offers to play darts and a wager ("A silver penny a round, then."), and opens most chats with the same "Evening. …" formula | live evening, seed 5 (2026-10-04): lines at 220 s and 227 s to Edda, and 160 s, 67 s and 89 s | Not checkable by a rule. Say in rule 16 that the barkeep never offers games or money, or have E28 count them |
+| D19 | Haiku's barkeep opens most chats with the same \"Evening. …\" formula (MIND.md step 5 stopped the darts and wagers: none in the 12 lines of live seed 7, 2026-10-05) | live evening, seed 5 (2026-10-04): lines at 220 s and 227 s to Edda, and 160 s, 67 s and 89 s | Not checkable by a rule. Say in rule 16 that the barkeep never offers games or money, or have E28 count them |
 | D20 | A guest's save fails to load once their conversation has outlasted the talk's 8 s: a part in a scene is never clamped at zero, so `_remaining` goes negative and `check_saved_progress` rejects it | read in `lifecycle._interact` and shown by hand (`_remaining` of -3.0 gives "Invalid saved action timer"); not yet seen in a live autosave. A `game` and a `served` verb are clamped | Failing test first (save during a 12 s conversation), then clamp every held-open verb; a bug fix, in its own commit |
+| D22 | Haiku never uses the `promise` act, so MIND.md's say-and-do cannot be measured | live seeds 7, 5 and 1 (2026-10-05): offered in 108 of 223 lines, used 0, and "I'll sit by the fire if you'll have me" went out as `small_talk` | Let a `talk_to` or `sit_with` goal said aloud become a commitment without an act, or promise more kinds once giving (H3) lands; then count `promises` in `metrics.json` |
+| D23 | "A new fact on a topic" is not a reason to take stock: telling news logs no memory for the listener | `social/facts.tell` calls `log_event` for the speaker only; MIND.md step 3 | Record `news_heard` for the listener and add it to `intentions.SALIENT_EVENTS`; it changes recorded evenings, so replay-pinned tests move with it |
