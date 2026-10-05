@@ -26,7 +26,8 @@ from tavern.hall.state import World, find_actor
 from tavern.hall.validation import number, unique_ids
 from tavern.social.dice import settle_games
 from tavern.social.commitments import promises_of, settle_commitments
-from tavern.social.invitations import honor_invitations, invitations_of
+from tavern.social.errands import honor_invitations
+from tavern.social.invitations import invitations_of
 from tavern.social.scenes import check_conversations
 from tavern.social.thoughts import forget_expired
 from tavern.social.turns import speak_turns
