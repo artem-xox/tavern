@@ -187,7 +187,7 @@ def test_a_bar_without_staff_cells_has_no_post() -> None:
         open_evening(room(staff_cells=None, staff_facing=None), parse_scenario(plan(HOB)), seed=1)
 
 
-def test_over_five_minutes_the_barkeep_decides_nothing_wants_nothing_and_never_leaves_his_cells() -> None:
+def test_over_five_minutes_the_barkeep_decides_nothing_needs_nothing_and_never_leaves_his_cells() -> None:
     world = opened(HOB)
     asked, minded = set(), set()
     for _ in range(600):
@@ -196,7 +196,7 @@ def test_over_five_minutes_the_barkeep_decides_nothing_wants_nothing_and_never_l
         minded.update(actor_id for actor_id, _ in intention_requests(world, set(), {}, INTENTION_RULES))
     hob = hob_of(world)
     assert (("hob" in asked, "hob" in minded), set(hob["needs"].values()), [hob["x"], hob["y"]] in CELLS) == (
-        (False, False), {0.0}, True)
+        (False, True), {0.0}, True)
     assert {"ada", "bea"} <= asked
 
 

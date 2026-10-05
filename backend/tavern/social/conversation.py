@@ -11,7 +11,7 @@ from typing import Any
 
 from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World
-from tavern.social import facts, invitations, social_acts
+from tavern.social import commitments, facts, invitations, social_acts
 from tavern.social.names import called
 from tavern.social.scenes import Conversation, end_conversation
 from tavern.social.thoughts import active_thoughts, opinion_of, think
@@ -124,6 +124,10 @@ ACTS: Mapping[str, Act] = MappingProxyType({
                                       "game of dice at the dice table), buy_drink (the speaker "
                                       "fetches them an ale), leave_together (walk home together). It waits "
                                       "for the addressee's answer"),
+    "promise": Act(commitments.promise, "promise the addressee, someone with a table of their own, to come and sit "
+                                        "with them there soon; the game checks it, and the addressee thinks the better "
+                                        "of the speaker for a promise kept and the worse for one broken. Make it "
+                                        "only if the speaker means to do it, and say it plainly"),
     "accept": Act(invitations.accept, "accept the invitation waiting for the speaker; the game then sets "
                                       "both moving, which ends their part in the conversation"),
     "decline": Act(invitations.decline, "decline the invitation waiting for the speaker; nothing follows"),
@@ -144,7 +148,7 @@ def offered_acts(world: Mapping[str, Any], scene: Conversation, speaker: Mapping
         while someone present knows the speaker only by their looks; `insult` while the
         speaker thinks `DISLIKED` or less of someone present; `apologize` while someone holds
         a grudge against them; `invite` while an invitation kind is possible and none is
-        pending; `accept` and `decline` while an invitation waits for their answer; `share_news`
+        pending; `promise` while someone present has a table the speaker is not at and nothing is promised them; `accept` and `decline` while an invitation waits for their answer; `share_news`
         while they hold any news.
     """
     others = [item for item in _members(world, scene) if item["id"] != speaker["id"]]
@@ -156,6 +160,7 @@ def offered_acts(world: Mapping[str, Any], scene: Conversation, speaker: Mapping
                          for item in others for thought in active_thoughts(item["thoughts"], now)),
         "share_news": bool(speaker["knowledge"]["facts"]),
         "invite": bool(invitations.offered_kinds(world, scene, speaker)),
+        "promise": any(commitments.promisable(world, speaker, item) for item in others),
         "accept": asked, "decline": asked}
     return {name: act.meaning for name, act in ACTS.items() if situational.get(name, True)}
 

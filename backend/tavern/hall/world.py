@@ -25,6 +25,7 @@ from tavern.hall.staff import check_staff_cells, on_staff
 from tavern.hall.state import World, find_actor
 from tavern.hall.validation import number, unique_ids
 from tavern.social.dice import settle_games
+from tavern.social.commitments import promises_of, settle_commitments
 from tavern.social.invitations import honor_invitations, invitations_of
 from tavern.social.scenes import check_conversations
 from tavern.social.thoughts import forget_expired
@@ -55,10 +56,10 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> World:
               for item in (listed if ranges is None else arriving(listed, ranges, seed))]
     if len({(item["x"], item["y"]) for item in actors}) != len(actors):
         raise ValueError("Actors cannot overlap at startup")
-    world = World(schema_version=10, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
+    world = World(schema_version=12, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
                   map=world_map, actors=actors, departed=[], expected=[], closes_at=None,
                   events=[], stimuli=[], next_stimulus_id=0, conversations=[], next_conversation_id=0,
-                  invitations=[], news=[], rules=default_rules())
+                  commitments=[], invitations=[], news=[], rules=default_rules())
     check_lines(world)
     for actor in actors:
         look(world, actor)
@@ -133,6 +134,7 @@ def step_world(world: World, dt: float) -> None:
     check_conversations(world)
     speak_turns(world)
     honor_invitations(world, start_action)
+    settle_commitments(world)
     tend_bar(world)
     games = settle_games(world)
     for actor in games.done:
@@ -180,7 +182,7 @@ def observe_actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
     return {"actor": deepcopy(actor), "objects": deepcopy(list(actor["knowledge"]["objects"].values())),
             "visitors": _visible_visitors(world, actor),
             "memory": deepcopy(actor["memory"][-10:]), "visible_cells": visible, "time": world["time"],
-            "invitations": invitations_of(world, actor),
+            "invitations": invitations_of(world, actor), "promises": promises_of(world, actor_id),
             "map": {"width": world["map"]["width"], "height": world["map"]["height"]},
             "closed": inn_closed(world)}
 

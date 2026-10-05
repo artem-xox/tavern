@@ -24,6 +24,7 @@ from tavern.mind.intentions import check_saved_intention
 from tavern.social.dice import check_saved_games
 from tavern.social.facts import check_saved_news
 from tavern.social.heard import check_heard
+from tavern.social.commitments import check_commitments
 from tavern.social.invitations import KINDS, check_invitations
 from tavern.social.scenes import check_saved_scenes
 from tavern.social.thoughts import check_mind
@@ -183,7 +184,7 @@ def parse_world(encoded: str) -> World:
     """
     try:
         world = json.loads(encoded)
-        if not isinstance(world, dict) or world.get("schema_version") != 10:
+        if not isinstance(world, dict) or world.get("schema_version") != 12:
             raise ValueError("Unsupported snapshot version")
         json.dumps(world, allow_nan=False)
         _validate_clock(world)
@@ -199,6 +200,7 @@ def parse_world(encoded: str) -> World:
         check_saved_games(world)
         check_saved_scenes(world, KINDS)
         check_invitations(world)
+        check_commitments(world)
         if not isinstance(world.get("events"), list):
             raise ValueError("Invalid saved event log")
         return cast(World, world)  # Every part is validated above.

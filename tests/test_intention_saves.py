@@ -1,4 +1,4 @@
-"""Saved evenings keep each guest's intention (schema version 5) and refuse corrupt ones."""
+"""Saved evenings keep each guest's intention (schema version 12) and refuse corrupt ones."""
 
 from pathlib import Path
 from typing import Any, Callable
@@ -20,13 +20,13 @@ def minded() -> dict[str, Any]:
     """Ada has an intention written at 0 s; Bea has none yet."""
     world = create_world(hall())
     world["actors"][0]["intention"] = {"thought": "Warm in here.", "intention": "Find a seat by the fire.",
-                                       "written_at": 0.0, "trigger": {"kind": "arrival", "text": "Ada came in",
+                                       "goal": None, "written_at": 0.0, "trigger": {"kind": "arrival", "text": "Ada came in",
                                                                       "time": 0.0}}
     return world
 
 
-def test_new_worlds_are_version_10() -> None:
-    assert create_world(hall())["schema_version"] == 10
+def test_new_worlds_are_version_12() -> None:
+    assert create_world(hall())["schema_version"] == 12
 
 
 def test_intentions_survive_save_and_load(tmp_path: Path) -> None:

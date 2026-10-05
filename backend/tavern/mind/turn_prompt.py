@@ -120,6 +120,9 @@ the same word. Avoid stock phrases such as "Well met" or "Aye, indeed" more than
 words; contractions are fine and natural.
 13. Goals colour talk lightly. The speaker's goal tonight may steer what they bring up, such as a trader \
 fishing for buyers or a veteran looking for an old comrade, but the line must still fit the moment.
+Where the moment gives "What you mean to do", it is what the speaker is after right now: bring it up when it \
+concerns someone present, but never promise or offer what the intention does not say, and never invent \
+errands such as fetching drinks.
 14. Memory. "Earlier tonight" is what you already said and heard in other conversations. Do not greet or \
 introduce yourself again to someone you have talked with; pick up the thread or bring something new instead of \
 repeating a subject.
@@ -302,7 +305,16 @@ Good: {"line": "Over the pass this morning? They say it's snowed in past the shr
 "act": "small_talk", "addressee": "calder", "topic": "the pass", "fact_id": null}
 Bad: {"line": "Well, I must be going, the road won't wait.", "act": "leave_conversation", "addressee": "calder", \
 "topic": "the road", "fact_id": null}
-Why bad: the barkeep is at work behind the bar, so he stays while the guest does and never takes his leave."""
+Why bad: the barkeep is at work behind the bar, so he stays while the guest does and never takes his leave.
+
+Example 25. Edda stands talking with Brida at the bar; the moment says Edda means to join Brida at her table by \
+the fire, and the promise act is allowed.
+Good: {"line": "I'll bring my ale over to your fire in a moment, Brida. Keep me a chair.", "act": "promise", \
+"addressee": "brida", "topic": "the fire table", "fact_id": null}
+Bad: {"line": "I'll sit by the fire if you'll have me. Unless you've other plans.", "act": "small_talk", \
+"addressee": "brida", "topic": "the fire table", "fact_id": null}
+Why bad: the speaker is saying what they will do, so it is a promise the game can hold them to; as small talk it \
+binds nobody, and nobody can tell it was meant."""
 
 
 def shared_prefix(acts: Mapping[str, str]) -> str:

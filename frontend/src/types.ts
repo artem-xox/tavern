@@ -132,6 +132,8 @@ export interface Heard {
 export interface Intention {
   thought: string;
   intention: string;
+  /** What they set out to do (`talk_to` or `sit_with` a guest), and whether it is `active`, `done`, `failed` or `expired`; null for none. */
+  goal: { kind: string; target: string; status: string } | null;
   written_at: number;
   trigger: { kind: string; text: string; time: number };
 }
