@@ -35,3 +35,5 @@ def test_a_goal_to_bring_a_drink_is_served_by_the_choice_and_done_when_it_is_tak
     story = [(event["actor_id"], event["type"]) for event in result.events
              if event["type"] in ("goal_set", "fetch_begun", "fetch_done", "goal_done")]
     assert story[:4] == [("ada", "goal_set"), ("ada", "fetch_begun"), ("ada", "fetch_done"), ("ada", "goal_done")]
+    # The goal's events say which kind of goal they are about, so a count can tell them apart.
+    assert {event["goal"] for event in result.events if event["type"] in ("goal_set", "goal_done")} == {"bring_drink"}

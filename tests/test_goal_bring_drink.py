@@ -129,3 +129,14 @@ def test_a_goal_to_bring_a_drink_lifts_the_trip_above_a_chat_and_a_seat_in_the_l
 ])
 def test_how_hard_a_goal_pulls_the_options_that_serve_it(kind: str, act: dict[str, Any], pulled: float) -> None:
     assert goal_pull(view(minded(kind, "bea")), act) == pytest.approx(pulled)
+
+
+@pytest.mark.parametrize("prepare, time, events", [
+    pytest.param(lambda: treated(bring(), 5.0), 10.0, ["goal_done"], id="done"),
+    pytest.param(lambda: bring(), 180.0, ["goal_expired"], id="expired"),
+])
+def test_the_events_that_end_a_goal_name_its_kind(prepare: Any, time: float, events: list[str]) -> None:
+    world = prepare()
+    settled(world, time)
+    assert [(event["type"], event["goal"]) for event in world["events"] if event["type"].startswith("goal_")] == [
+        (kind, "bring_drink") for kind in events]

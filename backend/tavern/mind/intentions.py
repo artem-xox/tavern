@@ -341,7 +341,8 @@ def deliver_intention(world: World, actor_id: str, view: Mapping[str, Any],
                                        f"{written['intention']} (after: {view['trigger']['text']})")
     goal = written.get("goal")
     if goal is not None:
-        log_event(world, actor_id, "goal_set", f"{actor['name']} set out to {goal_words(goal, view['others'][goal['target']])}")
+        log_event(world, actor_id, "goal_set", f"{actor['name']} set out to {goal_words(goal, view['others'][goal['target']])}",
+                  goal=goal["kind"])
     return world["time"] + rules.min_gap
 
 

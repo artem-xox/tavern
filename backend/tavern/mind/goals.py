@@ -231,4 +231,4 @@ def settle_goals(world: World) -> None:
             continue
         name = called(actor, other) if other else goal["target"]
         record_event(world, actor, f"goal_{goal['status']}", f"{actor['name']}'s goal to {goal_words(goal, name)}: "
-                                                              f"{goal['status']}")
+                                                              f"{goal['status']}", goal=goal["kind"])
