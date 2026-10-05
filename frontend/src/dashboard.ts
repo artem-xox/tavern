@@ -137,7 +137,7 @@ export class Dashboard {
           <section class="events-card"><div class="section-heading"><h3>From the room</h3><span class="muted">Recent world events</span></div><ol id="events" class="event-list"><li class="empty">The evening has yet to begin.</li></ol></section>
         </div>
         <aside class="sidebar"><section class="inspector-card"><div class="section-heading"><h3>Inside a visitor's mind</h3><span class="small-tag">INSPECTOR</span></div><div id="inspector"><p class="empty">Select a visitor in the room.</p></div>
-          <div class="force-action"><label for="force-verb">Give this visitor an action</label><div class="force-row"><select id="force-verb" data-control></select><button id="force" data-control>Go →</button></div><select id="force-target" data-control aria-label="Action target"></select><p class="helper">The server checks the route, availability, and resources.</p></div>
+          <div class="force-action"><label for="force-verb">Give this visitor an action</label><div class="force-row"><select id="force-verb" data-control></select><button id="force" data-control>Go →</button></div><select id="force-target" data-control aria-label="Action target"></select><select id="force-item" data-control aria-label="Item to hand over" hidden></select><p class="helper">The server checks the route, availability, and resources.</p></div>
         </section><div class="ai-card"><span id="ai-mode" class="ai-badge">Local · offline policy</span> <span id="ai-writer" class="ai-badge">Scripted lines</span><p id="mode-caption">Waiting for the decision engine.</p></div></aside>
       </div><footer class="page-footer"><span>THE LAST INN <b>✦</b> AN AUTONOMOUS TAVERN</span><span>Observe → decide → walk → act</span></footer>`;
   }
@@ -313,12 +313,21 @@ export class Dashboard {
     const activity: ActivityView | undefined = this.activities[verb];
     const objects: WorldObject[] = this.world.map.objects.filter((object: WorldObject): boolean => activity?.target_kinds.includes(object.kind) ?? false);
     const targets: { id: string; name: string }[] = activity?.partner ? this.world.actors.filter((actor: Actor): boolean => actor.id !== this.selectedId) : objects;
-    const signature: string = JSON.stringify([verb, targets.map((object): string[] => [object.id, object.name])]);
+    const held: string[] = this.heldKinds();
+    const signature: string = JSON.stringify([verb, targets.map((object): string[] => [object.id, object.name]), held]);
     const select: HTMLSelectElement = element(this.root, "#force-target");
     select.hidden = !activity?.target_kinds.length && !activity?.partner;
+    element(this.root, "#force-item").hidden = !activity?.names_item;
     if (signature === this.targetSignature) return;
     this.targetSignature = signature;
     select.innerHTML = targets.map((object): string => `<option value="${escape(object.id)}">${escape(object.name)}</option>`).join("");
+    element(this.root, "#force-item").innerHTML = held.map((kind: string): string => `<option value="${escape(kind)}">${escape(this.items[kind].one)}</option>`).join("");
+  }
+
+  /** The kinds of item the selected visitor holds, which are the ones they can hand over. */
+  private heldKinds(): string[] {
+    const actor: Actor | undefined = this.world?.actors.find((visitor: Actor): boolean => visitor.id === this.selectedId);
+    return actor ? Object.keys(actor.inventory).filter((kind: string): boolean => actor.inventory[kind] > 0) : [];
   }
 
   private activity(actor: Actor): string {
@@ -353,7 +362,10 @@ export class Dashboard {
     const target: HTMLSelectElement = element(this.root, "#force-target");
     const target_id: string | null = target.hidden ? null : target.value;
     if (!target.hidden && !target_id) { this.showError("No target is available for this action."); return; }
-    this.handlers.command({ type: "force_action", actor_id: this.selectedId, action: { id: `${verb}:${target_id ?? "self"}`, verb, target_id } });
+    const itemSelect: HTMLSelectElement = element(this.root, "#force-item");
+    if (!itemSelect.hidden && !itemSelect.value) { this.showError("This visitor has nothing to hand over."); return; }
+    const item: { item: string } | Record<string, never> = itemSelect.hidden ? {} : { item: itemSelect.value };
+    this.handlers.command({ type: "force_action", actor_id: this.selectedId, action: { id: `${verb}:${"item" in item ? `${item.item}:` : ""}${target_id ?? "self"}`, verb, target_id, ...item } });
   }
 
   private updateControlAvailability(): void {

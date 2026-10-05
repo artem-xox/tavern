@@ -57,7 +57,10 @@ export interface ActivityView {
   status: string | null;
   pose: string | null;
   target_kinds: WorldObject["kind"][];
+  /** Whether it targets another visitor. */
   partner: boolean;
+  /** Present, and true, for a verb that also names an item from the visitor's hands. */
+  names_item?: boolean;
 }
 
 export interface DecisionStage {
@@ -75,6 +78,8 @@ export interface Action {
   id: string;
   verb: Verb;
   target_id: string | null;
+  /** The kind of item a verb such as `give` hands over; absent for the others. */
+  item?: string;
 }
 
 export interface Actor {

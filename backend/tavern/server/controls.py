@@ -97,7 +97,7 @@ def forced_action(world: World, command: Mapping[str, Any]) -> tuple[World, str]
 
     Args:
         world: Current world; it is not modified.
-        command: `actor_id` and `action` (`id`, `verb` and an optional `target_id`).
+        command: `actor_id` and `action` (`id`, `verb` and an optional `target_id` and `item`).
 
     Returns:
         The world with the action started, and the visitor's ID; the caller swaps it in.
@@ -115,6 +115,8 @@ def forced_action(world: World, command: Mapping[str, Any]) -> tuple[World, str]
         raise ValueError("Action id and verb must be strings")
     if action.get("target_id") is not None and not isinstance(action["target_id"], str):
         raise ValueError("Action target must be an object ID or null")
+    if action.get("item") is not None and not isinstance(action["item"], str):
+        raise ValueError("Action item must be an item kind or null")
     trial = deepcopy(world)
     result = start_action(trial, actor_id, action)
     if not result["accepted"]:

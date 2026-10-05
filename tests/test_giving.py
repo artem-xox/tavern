@@ -1,14 +1,18 @@
 """Handing an item to someone beside you: who may, whether it is taken, what both keep, and the saved world."""
 
+import asyncio
 import json
 from pathlib import Path
 from typing import Any
 
+import httpx
 import pytest
 
+from tavern.adapters.jev import evaluate_actions
 from tavern.adapters.persistence import parse_world
 from tavern.body.items import empty_inventory
 from tavern.hall.world import create_world, start_action
+from tavern.server.controls import forced_action
 from tavern.server.runtime import TavernRuntime
 from social_hall import actor, advance, command, hall
 from staff_hall import HOB, opened, person
@@ -232,3 +236,55 @@ def test_the_client_is_told_which_verbs_name_an_item_and_target_a_person(tmp_pat
                             tmp_path / "save.json", {"typesafe_api_key": None})
     assert runtime.snapshot()["activities"]["give"] == {
         "label": "Give", "status": "giving", "pose": None, "target_kinds": [], "partner": True, "names_item": True}
+
+
+def test_an_operator_can_force_a_gift() -> None:
+    world = seated()
+    hold(world, "ada", remedy=1)
+    trial, actor_id = forced_action(world, {"actor_id": "ada", "action": give("remedy")})
+    advance(trial, 2.0)
+    assert (actor_id, actor(trial, "bea")["inventory"]["remedy"], actor(world, "bea")["inventory"]["remedy"]) == (
+        "ada", 1, 0)
+
+
+@pytest.mark.parametrize("item, reason", [
+    pytest.param(3, "Action item must be an item kind or null", id="item-not-text"),
+    pytest.param("wine", "Unknown item 'wine'", id="unknown-kind"),
+    pytest.param(None, "Choose something to give", id="no-item"),
+])
+def test_a_forced_gift_the_world_refuses_is_reported(item: Any, reason: str) -> None:
+    world = seated()
+    hold(world, "ada", remedy=1)
+    with pytest.raises(ValueError, match=reason):
+        forced_action(world, {"actor_id": "ada", "action": give(item)})
+
+
+def asked_about(action: dict[str, Any]) -> str:
+    """The question Jev is asked to score an action, with no briefing to describe it."""
+    seen: list[str] = []
+
+    def answer(request: httpx.Request) -> httpx.Response:
+        seen.append(request.content.decode())
+        return httpx.Response(200, json={"answers": {action["id"]: {"type": "score", "score": 2}}})
+
+    async def run() -> None:
+        async with httpx.AsyncClient(transport=httpx.MockTransport(answer)) as client:
+            await evaluate_actions({"actor": {"id": "ada", "name": "Ada"}, "objects": []}, [action],
+                                   {"typesafe_api_key": "key", "model": "jev-latest", "timeout": 2.0,
+                                    "temperature": 0.0}, client)
+    asyncio.run(run())
+    return seen[0]
+
+
+def test_jev_is_told_what_is_being_given_and_to_whom() -> None:
+    assert "hand a herbal remedy to 'bea'" in asked_about(give("remedy"))
+
+
+@pytest.mark.parametrize("item", [
+    pytest.param(None, id="no-item"),
+    pytest.param("wine", id="unknown-kind"),
+    pytest.param(["remedy"], id="not-text"),
+])
+def test_jev_will_not_judge_a_gift_with_nothing_sensible_to_give(item: Any) -> None:
+    with pytest.raises(ValueError, match="cannot describe the item"):
+        asked_about(give(item))
