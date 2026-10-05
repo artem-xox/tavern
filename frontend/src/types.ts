@@ -45,13 +45,22 @@ export interface WorldObject {
   reach?: number;
 }
 
+/** How the server words one kind of item a visitor can carry. */
+export interface ItemView {
+  one: string;
+  many: string;
+}
+
 /** How the client names, shows, and targets one verb, as described by the server. */
 export interface ActivityView {
   label: string;
   status: string | null;
   pose: string | null;
   target_kinds: WorldObject["kind"][];
+  /** Whether it targets another visitor. */
   partner: boolean;
+  /** Present, and true, for a verb that also names an item from the visitor's hands. */
+  names_item?: boolean;
 }
 
 export interface DecisionStage {
@@ -69,6 +78,8 @@ export interface Action {
   id: string;
   verb: Verb;
   target_id: string | null;
+  /** The kind of item a verb such as `give` hands over; absent for the others. */
+  item?: string;
 }
 
 export interface Actor {
@@ -87,7 +98,8 @@ export interface Actor {
   /** Starting relationships, from this guest's side. */
   ties: Tie[];
   needs: { thirst: number; fatigue: number; bladder: number; social: number; boredom: number };
-  inventory: { beer: number };
+  /** Count per item kind (`Snapshot.items`), every kind present, zeros too. */
+  inventory: Record<string, number>;
   status: "idle" | "walking" | "interacting" | "waiting" | "queued";
   action: Action | null;
   seat_id: string | null;
@@ -353,6 +365,7 @@ export interface Snapshot {
   ai: { mode: Mode; configured?: boolean; model?: string; writer: Writer; intentions: boolean;
         health?: Record<Service, ServiceHealth> };
   activities: Record<Verb, ActivityView>;
+  items: Record<string, ItemView>;
   /** Inner state per visitor ID, the departed included. */
   minds: Record<string, Mind>;
 }

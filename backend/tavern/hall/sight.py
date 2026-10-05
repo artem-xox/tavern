@@ -5,6 +5,7 @@ from copy import deepcopy
 import math
 from typing import Any
 
+from tavern.body.items import ITEMS
 from tavern.hall.room import OBJECT_KINDS, find_object
 from tavern.hall.staff import on_staff, post_of
 from tavern.hall.state import Actor, find_actor
@@ -102,8 +103,8 @@ def people_in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[
     Returns:
         Public facts about each visible person (see `world.observe_people`): ID, name as the
         viewer calls them, cell, seat and table, whether they are free to talk, their
-        conversation, whether they stand beside the viewer, and their current verb and target name;
-        for staff also `post`, the name of the bar they work at.
+        conversation, whether they stand beside the viewer, their current verb and target name, and
+        what is in their hands (`holding`, counts of the kinds others can see); for staff also `post`, the name of the bar they work at.
     """
     walls = set(map(tuple, world["map"]["blocked"]))
     people = []
@@ -122,7 +123,9 @@ def people_in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[
                           available=scene is None and not pressed(world, visitor),
                           conversation=scene["id"] if scene else None,
                           beside=side_by_side(world, actor, visitor),
-                          doing=action.get("verb"), target=target["name"] if target else None)
+                          doing=action.get("verb"), target=target["name"] if target else None,
+                          holding={kind: visitor["inventory"][kind] for kind, item in ITEMS.items()
+                                   if item.visible and visitor["inventory"][kind]})
         if on_staff(visitor):
             # Only staff carry a post: the name of the bar they work at.
             people[-1]["post"] = post_of(world["map"], visitor)["name"]

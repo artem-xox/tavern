@@ -2,24 +2,23 @@
 
 An `invite` act leaves a pending `Invitation` in its scene (`scenes.Conversation.invitation`); it
 lapses when either guest leaves the scene. On `accept` it becomes an `Errand` in
-`world["invitations"]`, which `honor_invitations` sets in motion through the ordinary action
+`world["invitations"]`, which `errands.honor_invitations` sets in motion through the ordinary action
 lifecycle (`world.start_action`), so the usual rules decide whether each step is possible.
 """
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from types import MappingProxyType
-from typing import Any, TypedDict
+from typing import Any, NotRequired, TypedDict
 
-from tavern.body.actions import action_error
+from tavern.body.items import ITEMS
 from tavern.hall.memory import record_event
 from tavern.hall.room import find_object
 from tavern.hall.staff import on_staff
 from tavern.hall.state import Actor, World
 from tavern.hall.validation import number
-from tavern.social.dice import PLAY, open_chairs
+from tavern.social.dice import open_chairs
 from tavern.social.names import called
 from tavern.social.scenes import Conversation
-from tavern.social.thoughts import think
 
 # Each kind and how it is told: "{inviter} invited {invitee} to ...".
 KINDS: Mapping[str, str] = MappingProxyType({
@@ -29,24 +28,32 @@ KINDS: Mapping[str, str] = MappingProxyType({
     "buy_drink": "have an ale on them",
     "leave_together": "walk home together",
 })
-# accepted: to be set in motion; fetching: the inviter pours the ale; following: the inviter has
-# set off for the door and the invitee follows once it is free.
-STAGES = ("accepted", "fetching", "following")
+# accepted: to be set in motion; fetching: the inviter pours the ale; carrying: the inviter walks back with
+# it to hand it over; following: the inviter has set off for the door and the invitee follows once it is free.
+STAGES = ("accepted", "fetching", "carrying", "following")
 
 # `from` is a Python keyword, hence the functional form.
 Invitation = TypedDict("Invitation", {"kind": str, "from": str, "to": str})
-Errand = TypedDict("Errand", {"kind": str, "from": str, "to": str, "stage": str, "held": int})
-
-# Starts an action the way `world.start_action` does: world, visitor ID, action; returns acceptance.
-Start = Callable[[World, str, Mapping[str, Any]], Mapping[str, Any]]
+# `held` is the mugs the inviter held when an errand began; `since` the game time carrying began; `unasked`
+# marks an errand nobody invited (a guest bringing a drink of their own accord), which the other knows nothing of.
+Errand = TypedDict("Errand", {"kind": str, "from": str, "to": str, "stage": str, "held": int,
+                              "since": NotRequired[float], "unasked": NotRequired[bool]})
 
 
 def _people(world: Mapping[str, Any]) -> dict[str, Actor]:
     return {item["id"]: item for item in world["actors"]}
 
 
-def _known(actor: Mapping[str, Any], kind: str) -> str | None:
-    # The first place of a kind the visitor knows, by ID, so the choice is reproducible.
+def known_place(actor: Mapping[str, Any], kind: str) -> str | None:
+    """Pick the place of a kind a visitor knows, so that the choice is reproducible.
+
+    Args:
+        actor: Visitor with `knowledge`.
+        kind: Object kind such as `tap` (a tap must still have stock when last seen).
+
+    Returns:
+        The first such place by ID, or None.
+    """
     found = sorted(key for key, item in actor["knowledge"]["objects"].items() if item["kind"] == kind
                    and (kind != "tap" or item.get("stock", 0) > 0))
     return found[0] if found else None
@@ -107,15 +114,15 @@ def offered_kinds(world: Mapping[str, Any], scene: Mapping[str, Any], speaker: M
     outsiders = [people[item] for item in scene["participants"] if item != speaker["id"]
                  and home_table(world, people[item]) != table]
     offered = {"join_table": bool(outsiders) and free_chair(world, table, outsiders[0]) is not None,
-               "darts_together": _known(speaker, "darts") is not None,
+               "darts_together": known_place(speaker, "darts") is not None,
                "dice_together": _dice_table_free(world, speaker),
-               "buy_drink": _known(speaker, "tap") is not None,
-               "leave_together": _known(speaker, "door") is not None}
+               "buy_drink": known_place(speaker, "tap") is not None,
+               "leave_together": known_place(speaker, "door") is not None}
     return [kind for kind in KINDS if offered[kind]]
 
 
 def _dice_table_free(world: Mapping[str, Any], actor: Mapping[str, Any]) -> bool:
-    table = _known(actor, "dice_table")
+    table = known_place(actor, "dice_table")
     return table is not None and bool(open_chairs(world, table))
 
 
@@ -167,6 +174,49 @@ def accept(world: World, scene: Conversation, speaker: Actor,
                  f"{KINDS[invitation['kind']]} from {_people(world)[invitation['from']]['name']}")
 
 
+def begin_errand(world: World, host: Actor, guest: Actor, kind: str, unasked: bool = False) -> None:
+    """Send a guest on an errand for another that no invitation asked for.
+
+    Args:
+        world: World whose `invitations` receive the errand, to be set in motion by `errands.honor_invitations`.
+        host: Guest who goes.
+        guest: Guest it is for.
+        kind: One of `KINDS`.
+        unasked: Whether nobody invited it, so that the guest it is for does not know of it.
+    """
+    errand: Errand = {"kind": kind, "from": host["id"], "to": guest["id"], "stage": "accepted", "held": 0}
+    world["invitations"].append({**errand, "unasked": True} if unasked else errand)
+
+
+def errand_parties(world: Mapping[str, Any]) -> list[str]:
+    """List the guests who are on an errand or being served by one.
+
+    Args:
+        world: Current world.
+
+    Returns:
+        Sorted IDs of whoever an accepted invitation or an errand names, host or guest.
+    """
+    return sorted({who for errand in world["invitations"] for who in (errand["from"], errand["to"])})
+
+
+def fetch_error(world: Mapping[str, Any], host: Mapping[str, Any], guest: Mapping[str, Any]) -> str | None:
+    """Tell why a guest may not be sent to fetch another a drink, apart from where they stand.
+
+    Args:
+        world: Current world.
+        host: Guest who would go, who needs a hand free for the mug.
+        guest: Guest it is for.
+
+    Returns:
+        A human-readable refusal reason, or None.
+    """
+    if host["inventory"]["beer"] >= ITEMS["beer"].hands:
+        return f"{host['name']} has no free hand for another mug"
+    busy = errand_parties(world)
+    return next((f"{who['name']} is already on an errand" for who in (host, guest) if who["id"] in busy), None)
+
+
 def decline(world: World, scene: Conversation, speaker: Actor,
             addressee: Actor | None) -> None:
     """Decline the invitation pending for the speaker (the `decline` act); nothing else follows.
@@ -184,120 +234,6 @@ def decline(world: World, scene: Conversation, speaker: Actor,
                      f"{KINDS[invitation['kind']]} from {_people(world)[invitation['from']]['name']}")
 
 
-def honor_invitations(world: World, start: Start) -> None:
-    """Carry every accepted invitation one step further.
-
-    `join_table` seats the invitee on a free chair at the inviter's table; `darts_together` sends
-    both to the darts the inviter knows; `buy_drink` sends the inviter to pour an ale, which goes
-    to the invitee once poured (costing nothing until the economy exists); `leave_together` sends
-    the inviter home and the invitee after them once the door is free. A step the world refuses
-    ends the errand with an `invitation_failed` event.
-
-    Args:
-        world: World whose `invitations` and visitors are updated in place.
-        start: Starts an action through the ordinary lifecycle (`world.start_action`).
-    """
-    for errand in list(world["invitations"]):
-        if not _step(world, errand, start):
-            world["invitations"].remove(errand)
-
-
-def _step(world: World, errand: Errand, start: Start) -> bool:
-    # Returns whether the errand goes on.
-    people = _people(world)
-    host, guest = people.get(errand["from"]), people.get(errand["to"])
-    if errand["stage"] == "fetching":
-        return _fetched(world, errand, host, guest)
-    if errand["stage"] == "following":
-        return _follow(world, errand, guest, start)
-    if host is None or guest is None:
-        return False
-    steps = _first_steps(world, errand, host, guest)
-    if steps is None or not all(start(world, actor_id, action)["accepted"] for actor_id, action in steps):
-        record_event(world, guest, "invitation_failed",
-                     f"{host['name']} and {guest['name']} could not {KINDS[errand['kind']]}")
-        return False
-    if errand["kind"] == "buy_drink":
-        errand.update({"stage": "fetching", "held": host["inventory"]["beer"]})
-    elif errand["kind"] == "leave_together":
-        errand["stage"] = "following"
-    return errand["kind"] in ("buy_drink", "leave_together")
-
-
-def _command(verb: str, target: str | None) -> dict[str, Any]:
-    return {"id": f"{verb}:{target}", "verb": verb, "target_id": target}
-
-
-def _first_steps(world: Mapping[str, Any], errand: Errand, host: Mapping[str, Any],
-                 guest: Mapping[str, Any]) -> list[tuple[str, dict[str, Any]]] | None:
-    # Who starts what when the invitation is accepted, or None when it cannot be done.
-    return _FIRST_STEPS[errand["kind"]](world, host, guest)
-
-
-def _seat_guest(world: Mapping[str, Any], host: Mapping[str, Any],
-                guest: Mapping[str, Any]) -> list[tuple[str, dict[str, Any]]] | None:
-    chair = free_chair(world, home_table(world, host), guest)
-    return [(guest["id"], _command("sit", chair))] if chair else None
-
-
-def _both_play_darts(world: Mapping[str, Any], host: Mapping[str, Any],
-                     guest: Mapping[str, Any]) -> list[tuple[str, dict[str, Any]]] | None:
-    board = _known(host, "darts")
-    return None if board is None else [(who["id"], _command("play_darts", board)) for who in (host, guest)]
-
-
-def _both_play_dice(world: Mapping[str, Any], host: Mapping[str, Any],
-                    guest: Mapping[str, Any]) -> list[tuple[str, dict[str, Any]]] | None:
-    table = _known(host, "dice_table")
-    chairs = open_chairs(world, table) if table else []
-    return [(who["id"], _command(PLAY, chair)) for who, chair in zip((host, guest), chairs)] if chairs else None
-
-
-def _host_pours(world: Mapping[str, Any], host: Mapping[str, Any],
-                guest: Mapping[str, Any]) -> list[tuple[str, dict[str, Any]]] | None:
-    tap = _known(host, "tap")
-    return None if tap is None else [(host["id"], _command("take_beer", tap))]
-
-
-def _host_heads_home(world: Mapping[str, Any], host: Mapping[str, Any],
-                     guest: Mapping[str, Any]) -> list[tuple[str, dict[str, Any]]] | None:
-    door = _known(host, "door")
-    return None if door is None else [(host["id"], _command("leave", door))]
-
-
-# What accepting each kind sets in motion first: who starts which action, or None when it cannot be done.
-_FIRST_STEPS: Mapping[str, Callable[..., list[tuple[str, dict[str, Any]]] | None]] = MappingProxyType({
-    "join_table": _seat_guest, "darts_together": _both_play_darts, "dice_together": _both_play_dice,
-    "buy_drink": _host_pours,
-    "leave_together": _host_heads_home})
-
-
-def _fetched(world: World, errand: Errand, host: Actor | None,
-             guest: Actor | None) -> bool:
-    if host is None or guest is None:
-        return False
-    if (host["action"] or {}).get("verb") == "take_beer":
-        return True
-    if host["inventory"]["beer"] > errand["held"]:
-        host["inventory"]["beer"] -= 1
-        guest["inventory"]["beer"] += 1
-        message = f"{host['name']} bought {guest['name']} an ale"
-        record_event(world, guest, "treated", message)
-        think(guest, "treated", world["time"], f"{called(guest, host)} bought me an ale", message, about=host)
-    return False
-
-
-def _follow(world: World, errand: Errand, guest: Actor | None, start: Start) -> bool:
-    # The invitee waits for the door the inviter holds, then follows them out through it.
-    if guest is None or (guest["action"] or {}).get("verb") == "leave":
-        return False
-    host = next(item for item in [*world["actors"], *world["departed"]] if item["id"] == errand["from"])
-    door = _known(host, "door")
-    if action_error(world, guest, _command("leave", door)) is None:
-        start(world, guest["id"], _command("leave", door))
-    return True
-
-
 def invitations_of(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[dict[str, Any]]:
     """List the invitations a guest is part of, pending or under way, for their observation.
 
@@ -307,14 +243,18 @@ def invitations_of(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[d
 
     Returns:
         Per invitation: `kind`, `from`, `to`, `stage` ("pending" for one awaiting an answer) and
-        `with`, what the guest calls the other party (see `names.called`).
+        `with`, what the guest calls the other party (see `names.called`); `unasked` for an errand
+        nobody invited, which only the one who goes is told of.
     """
     people = {item["id"]: item for item in [*world["actors"], *world["departed"]]}
     pending = [{**item, "stage": "pending"} for item in (scene["invitation"] for scene in world["conversations"])
                if item is not None]
-    found = [item for item in [*pending, *world["invitations"]] if actor["id"] in (item["from"], item["to"])]
+    # Whoever an unasked errand is for knows nothing of it.
+    found = [item for item in [*pending, *world["invitations"]] if actor["id"] in (item["from"], item["to"])
+             and not (item.get("unasked") and item["to"] == actor["id"])]
     return [{"kind": item["kind"], "from": item["from"], "to": item["to"], "stage": item["stage"],
-             "with": called(actor, people[item["to"] if item["from"] == actor["id"] else item["from"]])}
+             "with": called(actor, people[item["to"] if item["from"] == actor["id"] else item["from"]]),
+             **({"unasked": True} if item.get("unasked") else {})}
             for item in found]
 
 
@@ -330,7 +270,9 @@ def invitation_note(observation: Mapping[str, Any]) -> str:
     me, notes = observation["actor"]["id"], []
     for item in observation.get("invitations", []):
         what, other = KINDS[item["kind"]], item["with"]
-        if item["stage"] == "pending":
+        if item.get("unasked"):
+            notes.append(f"They are fetching {other} an ale.")
+        elif item["stage"] == "pending":
             notes.append(f"They invited {other} to {what} and await an answer." if item["from"] == me
                          else f"{other} invited them to {what}; they have yet to answer.")
         else:
@@ -357,10 +299,17 @@ def check_invitations(world: Mapping[str, Any]) -> None:
     if not isinstance(errands, list):
         raise ValueError("Saved invitations must be a list")
     for item in errands:
-        if not isinstance(item, dict) or set(item) != set(Errand.__annotations__) or not _valid(item, guests) \
-                or item["stage"] not in STAGES or type(item["held"]) is not int:
+        if not isinstance(item, dict) or not Errand.__required_keys__ <= set(item) <= set(Errand.__annotations__) \
+                or not _valid(item, guests) or item["stage"] not in STAGES or type(item["held"]) is not int:
             raise ValueError(f"Invalid saved invitation {item!r}")
         number(item["held"], "Saved ale held", 0, float("inf"))
+        if "unasked" in item and type(item["unasked"]) is not bool:
+            raise ValueError(f"Saved invitation {item!r} must flag whether it was unasked with a boolean")
+        # Only an errand that is carrying has a start, and it cannot lie in the future.
+        if ("since" in item) != (item["stage"] == "carrying"):
+            raise ValueError(f"Saved invitation {item!r} must have a start exactly while it is carrying")
+        if "since" in item:
+            number(item["since"], "Saved carrying start", 0, world["time"])
 
 
 def _valid(item: Mapping[str, Any], guests: Sequence[str]) -> bool:

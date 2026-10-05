@@ -1,4 +1,4 @@
-import type { ActivityView, Actor, Command, Conversation, Intention, Mind, NewsCopy, ServiceHealth, Snapshot, Thought, Verb, World, WorldEvent, WorldObject } from "./types";
+import type { ActivityView, Actor, Command, Conversation, Intention, ItemView, Mind, NewsCopy, ServiceHealth, Snapshot, Thought, Verb, World, WorldEvent, WorldObject } from "./types";
 
 interface Handlers {
   command: (command: Command) => void;
@@ -25,6 +25,7 @@ function element<T extends HTMLElement>(root: HTMLElement, selector: string): T 
 export class Dashboard {
   private world: World | null = null;
   private activities: Record<Verb, ActivityView> = {};
+  private items: Record<string, ItemView> = {};
   private minds: Record<string, Mind> = {};
   private intentions = false;
   private verbSignature: string = "";
@@ -43,6 +44,7 @@ export class Dashboard {
   apply(snapshot: Snapshot): void {
     this.world = snapshot.state;
     this.activities = snapshot.activities;
+    this.items = snapshot.items;
     this.minds = snapshot.minds;
     this.intentions = snapshot.ai.intentions;
     const { state: world, ai } = snapshot;
@@ -135,7 +137,7 @@ export class Dashboard {
           <section class="events-card"><div class="section-heading"><h3>From the room</h3><span class="muted">Recent world events</span></div><ol id="events" class="event-list"><li class="empty">The evening has yet to begin.</li></ol></section>
         </div>
         <aside class="sidebar"><section class="inspector-card"><div class="section-heading"><h3>Inside a visitor's mind</h3><span class="small-tag">INSPECTOR</span></div><div id="inspector"><p class="empty">Select a visitor in the room.</p></div>
-          <div class="force-action"><label for="force-verb">Give this visitor an action</label><div class="force-row"><select id="force-verb" data-control></select><button id="force" data-control>Go →</button></div><select id="force-target" data-control aria-label="Action target"></select><p class="helper">The server checks the route, availability, and resources.</p></div>
+          <div class="force-action"><label for="force-verb">Give this visitor an action</label><div class="force-row"><select id="force-verb" data-control></select><button id="force" data-control>Go →</button></div><select id="force-target" data-control aria-label="Action target"></select><select id="force-item" data-control aria-label="Item to hand over" hidden></select><p class="helper">The server checks the route, availability, and resources.</p></div>
         </section><div class="ai-card"><span id="ai-mode" class="ai-badge">Local · offline policy</span> <span id="ai-writer" class="ai-badge">Scripted lines</span><p id="mode-caption">Waiting for the decision engine.</p></div></aside>
       </div><footer class="page-footer"><span>THE LAST INN <b>✦</b> AN AUTONOMOUS TAVERN</span><span>Observe → decide → walk → act</span></footer>`;
   }
@@ -217,7 +219,7 @@ export class Dashboard {
     inspector.innerHTML = `<div class="visitor-heading"><div class="avatar" style="--visitor:${this.actorColor(actor)}">${escape(actor.name.slice(0, 1))}</div><div><h2>${escape(actor.name)}</h2><span class="status-pill">${escape(this.activity(actor))}</span></div><span class="cell-location">${actor.x}, ${actor.y}</span></div>
       <div class="needs">${this.needs(actor)}</div>
       <div class="current-action"><span class="eyebrow">CURRENT ACTION</span><strong>${this.departed(actor) ? "Gone home" : actor.action ? escape(this.activities[actor.action.verb]?.label ?? actor.action.verb) : actor.seat_id ? "Settled at the table" : "Considering the next move"}</strong><span>${actor.visit.left_at !== undefined ? `Left at ${clock(actor.visit.left_at)}` : target ? escape(target.name) : partner ? `With ${escape(partner.name)}` : ""}${actor.path.length ? ` · ${actor.path.length} steps remaining` : ""}</span></div>
-      <div class="inventory-row"><span>Carrying</span><strong>${actor.inventory.beer} ${actor.inventory.beer === 1 ? "beer" : "beers"}</strong></div>
+      <div class="inventory-row"><span>Carrying</span><strong>${this.carrying(actor)}</strong></div>
       ${this.visit(actor)}
       ${this.intention(actor)}
       ${this.mind(actor)}
@@ -231,6 +233,13 @@ export class Dashboard {
   private needs(actor: Actor): string {
     const names: Record<string, string> = { thirst: "Thirst", fatigue: "Fatigue", bladder: "Bladder", social: "Company", boredom: "Boredom" };
     return Object.entries(actor.needs).map(([key, value]: [string, number]): string => `<div class="need"><div><span>${names[key]}</span><strong>${Math.round(value)}<small>/100</small></strong></div><meter min="0" max="100" value="${value}" aria-label="${names[key]} urgency" style="--level:${Math.min(100, Math.max(0, value))}%;--need-color:${value > 75 ? "#d7876e" : "#d9b676"}">${Math.round(value)}</meter></div>`).join("");
+  }
+
+  /** List what the guest carries, in the server's wording per kind; nothing when the hands are empty. */
+  private carrying(actor: Actor): string {
+    const carried: string[] = Object.entries(actor.inventory).filter(([, count]: [string, number]): boolean => count > 0)
+      .map(([kind, count]: [string, number]): string => count === 1 ? this.items[kind].one : `${count} ${this.items[kind].many}`);
+    return escape(carried.join(", ") || "nothing");
   }
 
   /** Summarize tonight's visit: time here, beers and own seat. */
@@ -304,12 +313,21 @@ export class Dashboard {
     const activity: ActivityView | undefined = this.activities[verb];
     const objects: WorldObject[] = this.world.map.objects.filter((object: WorldObject): boolean => activity?.target_kinds.includes(object.kind) ?? false);
     const targets: { id: string; name: string }[] = activity?.partner ? this.world.actors.filter((actor: Actor): boolean => actor.id !== this.selectedId) : objects;
-    const signature: string = JSON.stringify([verb, targets.map((object): string[] => [object.id, object.name])]);
+    const held: string[] = this.heldKinds();
+    const signature: string = JSON.stringify([verb, targets.map((object): string[] => [object.id, object.name]), held]);
     const select: HTMLSelectElement = element(this.root, "#force-target");
     select.hidden = !activity?.target_kinds.length && !activity?.partner;
+    element(this.root, "#force-item").hidden = !activity?.names_item;
     if (signature === this.targetSignature) return;
     this.targetSignature = signature;
     select.innerHTML = targets.map((object): string => `<option value="${escape(object.id)}">${escape(object.name)}</option>`).join("");
+    element(this.root, "#force-item").innerHTML = held.map((kind: string): string => `<option value="${escape(kind)}">${escape(this.items[kind].one)}</option>`).join("");
+  }
+
+  /** The kinds of item the selected visitor holds, which are the ones they can hand over. */
+  private heldKinds(): string[] {
+    const actor: Actor | undefined = this.world?.actors.find((visitor: Actor): boolean => visitor.id === this.selectedId);
+    return actor ? Object.keys(actor.inventory).filter((kind: string): boolean => actor.inventory[kind] > 0) : [];
   }
 
   private activity(actor: Actor): string {
@@ -344,7 +362,10 @@ export class Dashboard {
     const target: HTMLSelectElement = element(this.root, "#force-target");
     const target_id: string | null = target.hidden ? null : target.value;
     if (!target.hidden && !target_id) { this.showError("No target is available for this action."); return; }
-    this.handlers.command({ type: "force_action", actor_id: this.selectedId, action: { id: `${verb}:${target_id ?? "self"}`, verb, target_id } });
+    const itemSelect: HTMLSelectElement = element(this.root, "#force-item");
+    if (!itemSelect.hidden && !itemSelect.value) { this.showError("This visitor has nothing to hand over."); return; }
+    const item: { item: string } | Record<string, never> = itemSelect.hidden ? {} : { item: itemSelect.value };
+    this.handlers.command({ type: "force_action", actor_id: this.selectedId, action: { id: `${verb}:${"item" in item ? `${item.item}:` : ""}${target_id ?? "self"}`, verb, target_id, ...item } });
   }
 
   private updateControlAvailability(): void {

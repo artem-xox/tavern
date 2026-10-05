@@ -9,6 +9,8 @@ from tavern.body.drunkenness import drink_beer
 from tavern.body.hearing import Sound
 from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World
+from tavern.social.giving import hand_over
+from tavern.social.invitations import begin_errand
 from tavern.social.names import called
 from tavern.social.scenes import join_conversation, start_conversation
 from tavern.social.thoughts import think
@@ -28,8 +30,12 @@ class Activity:
         partner: Whether it targets another visitor instead of an object. Such a verb is a part in a
             conversation scene (`tavern.social.scenes`): the scene, not a timer, ends it.
         joins: Whether it joins the partner's scene instead of starting one with them.
-        confronts: Whether it turns on another visitor (`tavern.social.hostility`): no scene, no walking, and
-            the timer ends it. Like talking, it needs the target at the actor's table or beside them.
+        near_person: Whether it targets another visitor at the actor's table or beside them, as a chat does:
+            no scene, no walking, and the timer ends it. Shoving and fighting (`tavern.social.hostility`) are
+            such verbs.
+        names_item: Whether the action names an item from the actor's hands in `Action.item`, as giving does.
+        opens_errand: Whether it sends the actor off on an errand for the visitor it targets (see
+            `tavern.social.errands`); like giving, it needs that visitor near.
         duration: Seconds of interaction (nominal for a scene part), or None for a decision step
             that never runs in the world.
         family: The `FAMILIES` entry it is chosen under: a first decision picks the family, a
@@ -65,7 +71,9 @@ class Activity:
     target_kinds: tuple[str, ...] = ()
     partner: bool = False
     joins: bool = False
-    confronts: bool = False
+    near_person: bool = False
+    names_item: bool = False
+    opens_errand: bool = False
     requires_item: str | None = None
     empty_target: str | None = None
     shared_target: bool = False
@@ -120,6 +128,19 @@ def _confront(world: World, actor: Actor, victim: Actor | None, event: str, thou
     for member in (actor, victim):
         record_event(world, member, event, message)
     think(victim, thought, world["time"], f"{called(victim, actor)} {act} me", message, about=actor)
+
+
+def _give(world: World, actor: Actor, receiver: Actor | None) -> None:
+    action = actor["action"]
+    if receiver is None or action is None or action.get("item") is None:
+        raise ValueError("Giving needs someone to give to and an item to give")
+    hand_over(world, actor, receiver, action["item"])
+
+
+def _bring_drink(world: World, actor: Actor, receiver: Actor | None) -> None:
+    if receiver is None:
+        raise ValueError("Bringing a drink needs someone to bring it to")
+    begin_errand(world, actor, receiver, "buy_drink", unasked=True)
 
 
 def _shove(world: World, actor: Actor, victim: Actor | None) -> None:
@@ -238,7 +259,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              guidance="A game of dice draws a crowd: watching eases boredom, and curious guests love to see who "
                       "wins. It means leaving their seat until the game ends."),
     # Offered only to a guest with a grudge, a temper and, as drink loosens it, the nerve (`tavern.social.hostility`).
-    Activity(verb="shove", confronts=True, duration=1.0, effect=_shove, label="Shove", status="shoving",
+    Activity(verb="shove", near_person=True, duration=1.0, effect=_shove, label="Shove", status="shoving",
              doing="shoving someone", done="shoved someone", family="confront",
              what="shove {target}, who sits at their table or stands beside them, hard enough that the whole room "
                   "turns to look",
@@ -247,13 +268,26 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "ill of) and a short temper, more so with drink in them, would do it. Everyone hears it, the "
                       "one shoved will not forget it, and it may lead to worse. Most guests, even angry ones, "
                       "choose something else."),
-    Activity(verb="start_fight", confronts=True, duration=2.0, effect=_start_fight, label="Start a fight",
+    Activity(verb="start_fight", near_person=True, duration=2.0, effect=_start_fight, label="Start a fight",
              status="fighting", doing="starting a fight", done="started a fight", family="confront",
              what="pick a fight with {target}, who sits at their table or stands beside them",
              guidance="The rarest act of the evening: a fistfight with someone they think ill of after a recent "
                       "wrong, which only a hot temper, usually helped by plenty of drink, brings a guest to. The "
                       "whole room hears it, the one attacked will not forget it, and it can end in injury. Even "
                       "an angry guest almost always chooses something else."),
+    Activity(verb="give", near_person=True, names_item=True, duration=1.5, effect=_give, label="Give",
+             status="giving", doing="handing something over", done="gave something away", family="company",
+             what="hand {item} to {target}, who sits at their table or stands beside them",
+             guidance="A kindness between people who get on: a drink for a thirsty friend, a remedy for someone "
+                      "worried about sickness, a keepsake for someone they like. It costs the giver what they hand "
+                      "over, and someone who dislikes them may refuse it."),
+    Activity(verb="bring_drink", near_person=True, opens_errand=True, duration=0.5, effect=_bring_drink,
+             label="Bring a drink", status="fetching a drink", doing="going to fetch someone an ale",
+             done="went to fetch someone an ale", family="fetching",
+             what="fetch a mug of ale and bring it to {target}, who sits at their table or stands beside them",
+             guidance="A kindness for company whose hands are empty: it takes a trip to the tap and back, so it "
+                      "suits someone with nothing pressing of their own, and the one they bring it for may still "
+                      "refuse it."),
     Activity(verb="use_toilet", target_kinds=("toilet",), duration=2.0, leaves_seat=True,
              needs=MappingProxyType({"bladder": -65}), label="Use the toilet", status="WC", pose="Bathroom",
              doing="heading to the WC", done="used the WC",
@@ -328,13 +362,15 @@ FAMILIES: Mapping[str, str] = MappingProxyType({
     "refreshment": "get something to drink",
     "resting": "sit down for a rest",
     "seat_choice": "find a seat at a table, or move to another one",
-    "company": "chat with someone at their table or beside them, join a conversation, or lean on the bar",
+    "company": "chat with someone at their table or beside them, join a conversation, lean on the bar, or hand "
+               "someone something they carry",
     "pastime": "pass the time",
     "wc": "use the WC",
     "exploring": "explore the room",
     "idling": "wait a moment",
     "going_home": "go home for the night",
     "cutting_in": "push to the front of a line instead of waiting",
+    "fetching": "fetch someone at their table or beside them a drink from the tap",
     "confront": "shove someone who wronged them, or start a fight",
 })
 
@@ -346,8 +382,10 @@ def client_activities(activities: Mapping[str, Activity]) -> dict[str, dict[str,
         activities: Activity table.
     Returns:
         Per world verb: command label, status text, pose, target kinds, and whether it
-        targets another visitor. Decision steps such as `seating` are left out.
+        targets another visitor (`partner`), plus `names_item` for a verb that also names an item. Decision
+        steps such as `seating` are left out.
     """
     return {verb: {"label": activity.label, "status": activity.status, "pose": activity.pose,
-                   "target_kinds": list(activity.target_kinds), "partner": activity.partner}
+                   "target_kinds": list(activity.target_kinds), "partner": activity.partner or activity.near_person,
+                   **({"names_item": True} if activity.names_item else {})}
             for verb, activity in activities.items() if activity.duration is not None}

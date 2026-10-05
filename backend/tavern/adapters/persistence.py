@@ -6,8 +6,10 @@ from pathlib import Path
 from typing import Any, Mapping, cast
 
 from tavern.body.drunkenness import check_drunkenness
+from tavern.body.activities import ACTIVITIES
 from tavern.body.expression import check_saved_expression
 from tavern.body.hearing import check_saved_stimuli
+from tavern.body.items import ITEMS, check_inventory
 from tavern.body.queues import check_saved_lines
 from tavern.evening.scenario import check_saved_expected
 from tavern.hall.arrival import check_saved_visit
@@ -61,6 +63,13 @@ def _validate_clock(world: Mapping[str, Any]) -> None:
         raise ValueError("Invalid saved pause state")
 
 
+def _check_saved_item(action: Mapping[str, Any]) -> None:
+    # Only a verb that names an item carries one, and it must be a kind the game knows.
+    item = action.get("item")
+    if ACTIVITIES[action["verb"]].names_item != (item is not None) or (item is not None and item not in ITEMS):
+        raise ValueError("Invalid saved action item")
+
+
 def _validate_actor_runtime(world: Mapping[str, Any]) -> None:
     actor_ids = {actor["id"] for actor in world["actors"]}
     verbs = set(world["rules"]["durations"])
@@ -70,8 +79,11 @@ def _validate_actor_runtime(world: Mapping[str, Any]) -> None:
         action = actor.get("action")
         if action is not None and (not isinstance(action, dict) or action.get("verb") not in verbs):
             raise ValueError("Invalid saved actor action")
+        if action is not None:
+            _check_saved_item(action)
         if not all(isinstance(actor.get(key), dict) for key in ("knowledge", "inventory", "decision")):
             raise ValueError("Incomplete saved actor state")
+        check_inventory(actor["inventory"])
         if not isinstance(actor.get("memory"), list):
             raise ValueError("Invalid saved memories")
         if not isinstance(actor.get("sprite"), str) or not actor["sprite"]:
@@ -184,7 +196,7 @@ def parse_world(encoded: str) -> World:
     """
     try:
         world = json.loads(encoded)
-        if not isinstance(world, dict) or world.get("schema_version") != 12:
+        if not isinstance(world, dict) or world.get("schema_version") != 14:
             raise ValueError("Unsupported snapshot version")
         json.dumps(world, allow_nan=False)
         _validate_clock(world)

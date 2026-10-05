@@ -49,10 +49,10 @@ Functional core, imperative shell. Dependencies point inward only.
   - `hall/` the world and its state (`world.py` public API, `lifecycle.py` action state
     machine, `state.py` types, `rules.py`, `chance`, `room`, `routes`, `sight`, `staff`, `arrival`, `closing`,
     `memory` event log, `validation`).
-  - `body/` what executes an action: `activities.py` (the verb table), `actions`, `queues`,
-    `bartending`, `hearing`, `attention`, `expression`, `drunkenness`, `dozing`.
+  - `body/` what executes an action: `activities.py` (the verb table), `actions`, `items` (what a visitor
+    can carry), `queues`, `bartending`, `hearing`, `attention`, `expression`, `drunkenness`, `dozing`.
   - `social/` guests among guests: `thoughts`, `ties`, `names`, `scenes`, `conversation`,
-    `social_acts`, `invitations`, `dice`, `overhearing`, `turns`.
+    `social_acts`, `invitations`, `errands`, `giving`, `dice`, `overhearing`, `turns`.
   - `mind/` what a guest observes and decides: `briefing`, `options`, `hall_view`,
     `agents` (candidates and decisions), `local_policy`, `intentions`, `cards`,
     `haiku_turns`, the model ports (`questions`).

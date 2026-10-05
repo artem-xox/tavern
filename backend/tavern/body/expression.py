@@ -131,7 +131,9 @@ def _focus(world: Mapping[str, Any], actor: Mapping[str, Any]) -> Mapping[str, A
     # it look at each other and anyone else at the starter.
     scene = next((item for item in world["conversations"] if actor["id"] in item["participants"]), None)
     if scene is None:
-        return None
+        # Someone doing something to another visitor, such as handing them something, faces them.
+        target = (actor["action"] or {}).get("target_id")
+        return next((item for item in world["actors"] if item["id"] == target), None)
     people = {item["id"]: item for item in world["actors"]}
     members = scene["participants"]
     last = scene["turns"][-1] if scene["turns"] else {"speaker": members[0], "addressee": members[1]}

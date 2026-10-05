@@ -84,10 +84,9 @@ barkeep (B0–B6) and E20 (hostile options), all 2026-10-04. Next:
    and chats with guests who lean on the counter.
 3. **M4, news and conflict (E20–E22).** E20 (hostile options) is done; E21 resolves fights next.
 4. **The mind (MIND.md steps 0–5), done 2026-10-05.** Guests set typed goals, ask the mind within a budget,
-   may promise to come over, and the barkeep keeps to his duty. Worlds are saved as version 12; the next
-   `schema_version` is 13.
-5. **Giving (H0–H5),** added 2026-10-05. Guests hand each other what they carry, and fetch
-   a drink for someone as one chosen errand.
+   may promise to come over, and the barkeep keeps to his duty.
+5. **Giving (H0–H5), done 2026-10-05.** Guests hand each other what they carry, and fetch
+   a drink for someone as one chosen errand. Worlds are saved as version 14; the next `schema_version` is 15.
 
 The door at closing (D02) is fixed: it takes as many leavers at once as it has spots (offline
 seed 5: the last guest left 6.6 s after closing, was 42.8 s; stuck time 27.1 s → 6.1 s). The code now
@@ -1598,29 +1597,33 @@ Decisions for every H task (frozen 2026-10-05; change them here first if the cod
       kind: str       # inventory key, saved: "beer"
       one: str        # wording in events, briefings and the inspector: "a mug of ale"
       many: str       # "mugs of ale"
+      held: str | None  # how a briefing says someone holds one in a hand ("a full mug of ale"); None out of sight
       hands: int      # most a visitor can carry at once
-      visible: bool   # whether others see it in their hands (a mug yes, a remedy in a sleeve no)
       received: str   # the THOUGHTS kind the receiver keeps about the giver
+      # visible (property): whether others see it in the hands, i.e. `held is not None`
 
   ITEMS = {
-      "beer": Item("beer", "a mug of ale", "mugs of ale", hands=2, visible=True, received="treated"),
-      "remedy": Item("remedy", "a herbal remedy", "herbal remedies", hands=3, visible=False,
-                     received="cared_for"),
-      "keepsake": Item("keepsake", "a keepsake", "keepsakes", hands=3, visible=False, received="gifted"),
+      "beer": Item("beer", "a mug of ale", "mugs of ale", held="a full mug of ale", hands=2, received="treated"),
+      "remedy": Item("remedy", "a herbal remedy", "herbal remedies", held=None, hands=3, received="cared_for"),
+      "keepsake": Item("keepsake", "a keepsake", "keepsakes", held=None, hands=3, received="gifted"),
   }
   ```
 
+  (As built, `visible` is derived from `held`, so one field says both how a briefing words a mug in the
+  hand and that others can see it; the table is a read-only mapping.)
   Using an item is a verb's business: `drink` stays the only use, and a remedy or a keepsake can
   only be carried and given for now.
 - **Inventory** is `{kind: count}` with every kind in `ITEMS` present (zeros too) and counts from
   0 to `hands`. A saved world must have exactly that (schema bump in H1). The snapshot sends it as
-  is, and the item wording (`one`, `many`) reaches the client the way verbs do
-  (`activities.client_activities`). `types.ts` gets `inventory: Record<string, number>`, and the
-  inspector's "Carrying" row lists every nonzero kind.
+  is, and the item wording (`one`, `many`) reaches the client as `items`, beside `activities`
+  (`items.client_items`). `types.ts` gets `inventory: Record<string, number>`, and the
+  inspector's "Carrying" row lists every nonzero kind. A hand-made observation may list only what a guest
+  holds (a missing kind reads as zero); a saved world may not.
 - **Starting items come from the scenario.** A guest entry may carry `"carries": {"remedy": 2}`
   (kinds from `ITEMS`, counts within `hands`). In `first_evening.json`, Edda (a healer) carries two
   remedies and Toren (a pedlar) two keepsakes.
-- **One verb, `give`, in the `company` family,** so no first-stage request grows. The family text
+- **One verb, `give`, in the `company` family,** so no first-stage request grows (that was H2; `bring_drink`
+  is the exception, see H4). The family text
   becomes "chat with someone at their table or beside them, join a conversation, lean on the bar,
   or hand someone something they carry". The action names its item: `Action` gains
   `item: str | None` (None for every other verb), and its ID is `give:<item>:<receiver>`. Saved
@@ -1652,9 +1655,11 @@ Decisions for every H task (frozen 2026-10-05; change them here first if the cod
   `rules.giving.again_after` (120 s), nor give the same person the same kind twice in that time.
 - **New thoughts** (`ThoughtKind(mood, opinion, seconds, stack, reason)`):
   `cared_for` (4, 12, 300, 2, "gave them a remedy", acquaints), `gifted` (3, 10, 300, 2, "gave
-  them a keepsake", acquaints), `rebuffed` (−3, −8, 180, 2, "refused what they offered").
+  them a keepsake", acquaints), `rebuffed` (−3, −8, 180, 2, "refused what they offered"). Added in
+  H2: `generous` (1, 0, 300, 2, "accepted a gift from them"), which the giver keeps about the receiver,
+  so that a guest remembers having given and does not offer again at once.
 - **Fetching for someone is an errand.** The invitation `buy_drink` and the new choice
-  `bring_drink` (H4) run the same errand in `invitations.py`: the giver pours (or is served),
+  `bring_drink` (H4) run the same errand in `errands.py`: the giver pours (or is served),
   carries the mug over, and gives it. A new stage `carrying` follows `fetching`. Each tick: if the
   giver holds more mugs than when the errand began and the receiver is near, start `give`; else,
   unless already on the way, start `sit` on a free chair at the receiver's table
@@ -1665,7 +1670,12 @@ Decisions for every H task (frozen 2026-10-05; change them here first if the cod
 - **Out of scope:** coins and paying (Stage 3: `coin` joins `ITEMS` then); using a remedy or a
   keepsake; giving to staff; asking for something, stealing or taking back; witnesses judging a
   gift; a new speech act (the `buy_drink` invitation stays the path from talk); new art.
-- **Tests that change.** `test_invitations.py::test_a_bought_drink_ends_in_the_invitees_hand` and
+- **Tests that changed (built 2026-10-05).** `test_world.py::test_invalid_action_fails_without_mutating_inventory`
+  compares an untouched inventory with the empty inventory of every kind, not `{beer: 0}` (H1);
+  `test_database.py` and `test_intention_saves.py` pin the new `schema_version` (13 in H1, 14 in H3, the
+  latter test renamed to match); `test_bartending.py`'s friend-drink test seats Bea at a table and runs 30 s
+  instead of 25 (H3). No other test changed. As planned:
+  `test_invitations.py::test_a_bought_drink_ends_in_the_invitees_hand` and
   `test_bartending.py::test_a_drink_bought_for_a_friend_is_still_delivered` pin the instant
   hand-over. The outcome they check stays: the invitee ends with the ale, the host without it,
   and `treated` is kept. Their setup or game time may change in H3 because the host now walks
@@ -1674,7 +1684,7 @@ Decisions for every H task (frozen 2026-10-05; change them here first if the cod
   seed 7). If one fails, stop and report the seed and the failure. Do not change a seed or an
   assertion without the user's approval.
 
-- [ ] **H0 — Items and near-person verbs (refactor, no behavior change).**
+- [x] **H0 — Items and near-person verbs (refactor, no behavior change).**
   - *Items:* `body/items.py` with `ITEMS` holding only `beer`. Generic inventory code reads the
     table instead of naming beer: `observation.own_actor`, `arrival` (its `inventory` data), the
     saved-world check, the briefing's "holding a full mug of ale / empty-handed", and the
@@ -1684,7 +1694,12 @@ Decisions for every H task (frozen 2026-10-05; change them here first if the cod
     `start_fight` keep it, and hostility keeps its candidates through the `confront` family.
   - *Check:* `make check` unchanged; an offline evening (seed 5, `--writer scripted`) gives a
     byte-identical `events.jsonl` before and after (`cmp`).
-- [ ] **H1 — Hand over (`give`).**
+  - *Built (2026-10-05):* `body/items.py` (`ITEMS`, `empty_inventory`, `check_inventory`, `held_words`,
+    `client_items`); `own_actor`, `create_actor`, `parse_world`, the briefing and the inspector read it;
+    the snapshot carries `items`. `Activity.confronts` is `near_person`. `make check` and `cmp` on
+    seed 5: byte-identical. A hand-made observation may omit kinds, so the dozens of tests that build one
+    stayed as they were.
+- [x] **H1 — Hand over (`give`).**
   - `remedy` and `keepsake` join `ITEMS`; scenario `carries`; `Action.item`; the `give` verb with
     the receiver rules, the refusal, the three thoughts, and the `gave` and `gift_refused` events.
     The saved world, snapshot, `types.ts`, the inspector's "Carrying" row and the forced-action
@@ -1698,7 +1713,17 @@ Decisions for every H task (frozen 2026-10-05; change them here first if the cod
     inventories (a missing kind, a negative or over-`hands` count, an unknown kind) are rejected.
   - *Check:* in the running app, force Edda to give Brida a remedy: the heart emote, both
     inventories in the inspector, `cared_for` in Brida's thoughts.
-- [ ] **H2 — Choosing to give.**
+  - *Built (2026-10-05):* `social/giving.py` (`gift_error`, `hand_over`, `formed_since`) and the verb
+    `give` (`Activity.names_item`, `Action.item`, kept in a visitor's saved action only when a verb names one);
+    `rules.giving` (`refuse_below`, `again_after`); `carries` on a scenario guest (`items.parse_carries`);
+    saved worlds are version 13. The ping-pong rule reads the thoughts a gift leaves (a thought's expiry less
+    its length is when it formed), so it needs no new saved state. A near-person action turns its
+    visitor to face its target (`expression._focus`). `client_activities` calls a verb that targets
+    another visitor `partner` also for `near_person`, and adds `names_item` for `give`, so the debug panel
+    lists people and a held-item picker. Checked in the running app (2026-10-05): Edda, seated at a table
+    with Brida, gave her a remedy through the panel; Edda went from two remedies to one, Brida's inspector
+    read "Carrying a herbal remedy" with the thought "Edda gave me a herbal remedy" (+4, 292 s left).
+- [x] **H2 — Choosing to give.**
   - *Candidate* (`agents.py`): for each kind the guest holds and each near guest with a free hand
     who has not just given it to them. *Local utility* (`local_policy.py`): low on its own,
     raised by sociability and by opinion of the receiver; for beer, raised when the receiver's
@@ -1707,14 +1732,29 @@ Decisions for every H task (frozen 2026-10-05; change them here first if the cod
     items in each person's hands.
   - *Check:* offline seed 5 and a live seed 7 evening each show at least one `gave`, no
     ping-pong, and no stuck time added.
-- [ ] **H3 — Carry, don't teleport (`buy_drink`).** The errand's `carrying` stage as frozen
+  - *Built (2026-10-05):* `giving.gift_targets` (near, not staff, not visibly full-handed, no gift or
+    refusal between the two within `again_after`; stricter than `gift_error` because the giver cannot see
+    into the receiver's pockets: any kind to the same person counts), `local_policy._score_gifts`,
+    `options._give`, the briefing's "They are also carrying two herbal remedies", `holding` in
+    `observe_people`, and the rules of giving in the observation. A thirsty guest (thirst from 50) keeps
+    their own mug rather than offer it. Gifts joined the `company` family. `generous` is the thought a giver
+    keeps. No existing test changed in this task.
+- [x] **H3 — Carry, don't teleport (`buy_drink`).** The errand's `carrying` stage as frozen
   above; the two named tests change only as stated.
   - *Tests first:* the host walks from the tap to the invitee's table and gives there; the
     invitee leaves (fails); the invitee stands at the darts past `carry_for` (fails); the barkeep
     pours the host's mug (still delivered).
   - *Check:* in a live evening, the host walks back with the mug and the hand-over is logged as
     `gave`.
-- [ ] **H4 — Bring someone a drink (`bring_drink`), the compound choice.** A `company` verb with
+  - *Built (2026-10-05):* first the errands left `invitations.py` for `social/errands.py` (a refactor with a
+    byte-identical seed 5), then the `carrying` stage with `rules.giving.carry_for` and a `since` in the
+    errand while it carries (saved worlds are version 14). The hand-over is a `give`, started when the world
+    says the host may (`action_error`), so refusal, full hands and ping-pong all apply. It ends in
+    `fetch_done` when the invitee has taken the mug, in `fetch_failed` when the invitee refused it, left, was
+    not near within `carry_for`, or the host no longer held the mug (the last three also log
+    `invitation_failed`). `fetch_begun` ("Ada went to fetch Bea an ale") is logged when the pour is
+    accepted, for an invited drink as for a brought one.
+- [x] **H4 — Bring someone a drink (`bring_drink`), the compound choice.** A `company` verb with
   `near_person=True`, `duration=0.5` and an effect that opens a `buy_drink` errand from the
   chooser to the receiver (no invitation, so the receiver may still refuse at the hand-over). It
   is a candidate for a guest with a free hand who knows a stocked tap (or a tended bar), when a
@@ -1723,10 +1763,41 @@ Decisions for every H task (frozen 2026-10-05; change them here first if the cod
   ale".
   - *Check:* in live seeds 5 and 7, count the intentions to bring someone a drink (by hand, as in
     MIND.md step 0) against the `gave` events with beer. The gap should close.
-- [ ] **H5 — Measure and record.** `evening/metrics.py` (or a new module: `metrics.py` has 344 of its
+  - *Built (2026-10-05), with two changes to the plan:* `bring_drink` has a family of its own, **`fetching`**
+    ("fetch someone at their table or beside them a drink from the tap"), not `company`: with `talk` no
+    longer alone in `company`, `test_lockstep.py::test_partner_is_not_pulled_from_a_chat_by_a_late_answer`
+    chose `take_beer` and `test_briefing.py` lost its `talk:bea` option, and the user chose a family of
+    its own over editing either test. A first-stage request is one option wider while a drink could be
+    fetched. And "(or a tended bar)" is dropped: the errand's first step needs a known stocked tap whoever
+    pours, so that is the condition. Otherwise as planned: an unasked errand (`Errand.unasked`) that only the
+    one who goes is told of ("They are fetching Bea an ale"), `Activity.opens_errand`,
+    `invitations.begin_errand`, `fetch_error`, `errand_parties` (`on_errands` in the observation),
+    `giving.empty_handed_company`, and a utility lowered by a full bladder or weariness.
+- [x] **H5 — Measure and record.** `evening/metrics.py` (or a new module: `metrics.py` has 344 of its
   ~400 lines) reports `giving`: gifts per kind, refusals, and errands begun, done and failed.
   Run an offline evening, a live one and its replay (byte-identical), then append the results
   paragraph here and a line under MIND.md step 0's measures.
+  - *Built (2026-10-05):* `evening/giving_metrics.py` (`giving_counts`) reports `giving` in `metrics.json`:
+    `gifts` per kind in `ITEMS`, `refused`, and `errands` `{begun, done, failed}`. Both guests log a gift or a
+    refusal, so one counts once by its time and words; the errand counts come from `fetch_begun`,
+    `fetch_done` and `fetch_failed`.
+  - *Result (2026-10-05):* offline seed 5 (scripted): one gift, Edda's remedy to Brida at 286 s, no refusals,
+    no errands; stuck time 9.1 s (13.6 s before giving). **Live (Jev + Haiku) the guests rarely chose it.**
+    Seed 7, first run: 2 gifts (a mug each time), 5 drink errands: 2 done (Toren to Edda at 89 s, handed over
+    at 96.5 s; Edda to Brida at 336.6 s, handed over at 345.5 s), 3 failed; $0.33, stuck 23.2 s. The three
+    failures were the host's own decisions (the WC, the bar, a chat) replacing the errand's steps between the
+    pour and the hand-over, and Toren's own seat taken by Brida while Edda stood by the fire, so he had no
+    chair at her table. Two fixes followed, each with a test: a guest fetching a drink is not free to decide
+    (`errands.fetching_a_drink`, in `decisions.free_to_decide`), and the errand ends at once when the host
+    has no chair to take at the invitee's table. Seed 7 again: no gifts, no errands, $0.29, stuck 21.4 s;
+    seed 5: none, $0.24, stuck 24.1 s. The replay of the second seed 7 is byte-identical to its live run, also
+    on the final code. Why none: the options were put to Jev (in seed 7's two runs 26–27 requests held a gift and
+    29–32 a trip) but it rarely scored them above the rest, and only 1 of 33 intentions in seed 7's first run, none
+    in the 30 and 30 of the others, was to fetch someone a drink (step 0 counted 17 in five of seven
+    evenings). So the gap named in step 0 is not closed by the verbs alone; the next thing to try is making
+    the intention say it (a goal `bring_drink`, as `talk_to` and `sit_with` are goals) rather than weighing
+    the option. Not done: a way to walk beside an invitee who stands, so an errand can reach them without a
+    chair at their table.
 
 ### M5 — Presentation and acceptance
 

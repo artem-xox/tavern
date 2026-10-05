@@ -50,6 +50,13 @@ THOUGHTS: Mapping[str, ThoughtKind] = MappingProxyType({
     "promised": ThoughtKind(1.0, 4.0, 120.0, 1, "promised to come and sit with them", acquaints=True),
     "kept_word": ThoughtKind(2.0, 10.0, 300.0, 2, "kept their word to them", acquaints=True),
     "let_down": ThoughtKind(-3.0, -12.0, 300.0, 2, "broke their word to them", acquaints=True),
+    # Held by the receiver of a gift (`tavern.social.giving`), about the giver; `treated` is the one for a drink.
+    "cared_for": ThoughtKind(4.0, 12.0, 300.0, 2, "gave them a remedy", acquaints=True),
+    "gifted": ThoughtKind(3.0, 10.0, 300.0, 2, "gave them a keepsake", acquaints=True),
+    # Held by a giver, about the one who took what they gave: it is how they remember having given it.
+    "generous": ThoughtKind(1.0, 0.0, 300.0, 2, "accepted a gift from them"),
+    # Held by a giver whose gift was refused, about the one who refused it.
+    "rebuffed": ThoughtKind(-3.0, -8.0, 180.0, 2, "refused what they offered"),
     # Held by the victim of a hostile act (`tavern.body.activities`), about whoever did it.
     "shoved": ThoughtKind(-8.0, -25.0, 300.0, 3, "shoved them", acquaints=True),
     "attacked": ThoughtKind(-10.0, -35.0, 300.0, 3, "attacked them", acquaints=True),

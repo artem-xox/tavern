@@ -5,7 +5,7 @@ from copy import deepcopy
 import math
 from typing import Any
 
-from tavern.body.actions import action_error
+from tavern.body.actions import action_error, stored_action
 from tavern.body.activities import ACTIVITIES, Activity
 from tavern.body.hearing import sound_activity
 from tavern.body.queues import join_line, leave_line, line_full, line_of, stay_in_line, step_line
@@ -169,7 +169,7 @@ def activate(world: World, actor: Actor, action: Mapping[str, Any],
     if plan[1] or ACTIVITIES[action["verb"]].leaves_seat:
         actor["seat_id"] = None
     clear_action(world, actor)
-    actor.update({"action": {key: action.get(key) for key in ("id", "verb", "target_id")},
+    actor.update({"action": stored_action(action),
                   "_spot": plan[0], "path": plan[1], "status": "walking" if plan[1] else "interacting",
                   "_remaining": world["rules"]["durations"][action["verb"]]})
     target = _target(world, action)
@@ -266,7 +266,7 @@ def _apply_effect(world: World, actor: Actor) -> None:
     if action is None:
         raise ValueError(f"{actor['name']} has no action to finish")
     activity = ACTIVITIES[action["verb"]]
-    target = find_actor(world, action["target_id"]) if activity.partner or activity.confronts else _target(world, action)
+    target = find_actor(world, action["target_id"]) if activity.partner or activity.near_person else _target(world, action)
     if activity.effect:
         activity.effect(world, actor, target)
     for need, change in activity.needs.items():

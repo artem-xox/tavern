@@ -7,6 +7,7 @@ from typing import Any, TypedDict, cast
 import httpx
 
 from tavern.body.activities import ACTIVITIES, FAMILIES
+from tavern.body.items import ITEMS
 from tavern.mind.agents import EvaluatorError
 
 
@@ -63,7 +64,14 @@ def _activity(action: Mapping[str, Any]) -> tuple[str, str]:
     activity = ACTIVITIES.get(action["verb"])
     if activity is None:
         raise ValueError(f"Jev cannot describe the action verb {action['verb']!r}")
-    return activity.what.format(target=repr(action["target_id"])), activity.guidance
+    item = action.get("item")
+    if not activity.names_item:
+        words = ""
+    elif isinstance(item, str) and item in ITEMS:
+        words = ITEMS[item].one
+    else:
+        raise ValueError(f"Jev cannot describe the item {item!r} of action {action['id']!r}")
+    return activity.what.format(target=repr(action["target_id"]), item=words), activity.guidance
 
 
 def _family(option: Mapping[str, Any]) -> tuple[str, str]:

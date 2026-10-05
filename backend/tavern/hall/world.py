@@ -26,7 +26,8 @@ from tavern.hall.state import World, find_actor
 from tavern.hall.validation import number, unique_ids
 from tavern.social.dice import settle_games
 from tavern.social.commitments import promises_of, settle_commitments
-from tavern.social.invitations import honor_invitations, invitations_of
+from tavern.social.errands import honor_invitations
+from tavern.social.invitations import errand_parties, invitations_of
 from tavern.social.scenes import check_conversations
 from tavern.social.thoughts import forget_expired
 from tavern.social.turns import speak_turns
@@ -56,7 +57,7 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> World:
               for item in (listed if ranges is None else arriving(listed, ranges, seed))]
     if len({(item["x"], item["y"]) for item in actors}) != len(actors):
         raise ValueError("Actors cannot overlap at startup")
-    world = World(schema_version=12, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
+    world = World(schema_version=14, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
                   map=world_map, actors=actors, departed=[], expected=[], closes_at=None,
                   events=[], stimuli=[], next_stimulus_id=0, conversations=[], next_conversation_id=0,
                   commitments=[], invitations=[], news=[], rules=default_rules())
@@ -169,8 +170,8 @@ def observe_actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
 
     Returns:
         Own actor state, known object records, personal memories, map bounds, visible
-        cells, and whether the inn has closed. Unseen resource changes remain remembered
-        historical values.
+        cells, whether the inn has closed, the rules of giving, and who is on an errand (`on_errands`). Unseen resource changes remain
+        remembered historical values.
 
     Raises:
         ValueError: Visitor ID does not exist.
@@ -184,7 +185,8 @@ def observe_actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
             "memory": deepcopy(actor["memory"][-10:]), "visible_cells": visible, "time": world["time"],
             "invitations": invitations_of(world, actor), "promises": promises_of(world, actor_id),
             "map": {"width": world["map"]["width"], "height": world["map"]["height"]},
-            "closed": inn_closed(world)}
+            "closed": inn_closed(world), "giving": dict(world["rules"]["giving"]),
+            "on_errands": errand_parties(world)}
 
 
 def _visible_visitors(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[dict[str, Any]]:

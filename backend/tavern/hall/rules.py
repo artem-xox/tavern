@@ -59,7 +59,12 @@ def default_rules() -> Rules:
                      "odds": [0.2, 0.8], "game_seconds": 25.0, "wait_seconds": 30.0},
             # Bartending (`tavern.body.bartending`): a barkeep leaves a guest alone for this many seconds after
             # hearing them speak, so he is neither silent nor a bore at the bar.
-            "bartending": {"chat_gap": 60.0}}
+            "bartending": {"chat_gap": 60.0},
+            # Giving (`tavern.social.giving`): a receiver turns a gift down when their opinion of the giver is
+            # below refuse_below (a grudge, not mere dislike), and the same gift is not repeated, nor passed
+            # back, within again_after seconds, so two guests cannot hand a mug to and fro forever.
+            # A host who poured a mug for someone has carry_for seconds to hand it over before the errand lapses.
+            "giving": {"refuse_below": -20.0, "again_after": 120.0, "carry_for": 30.0}}
 
 
 def check_rules(world: Mapping[str, Any]) -> None:
@@ -99,6 +104,16 @@ def check_rules(world: Mapping[str, Any]) -> None:
     _validate_news_rules(rules.get("news"))
     check_dice_rules(rules.get("dice"))
     _validate_bartending_rules(rules.get("bartending"))
+    _validate_giving_rules(rules.get("giving"))
+
+
+def _validate_giving_rules(giving: Any) -> None:
+    if not isinstance(giving, dict) or set(giving) != {"refuse_below", "again_after", "carry_for"}:
+        raise ValueError("Invalid saved giving rules")
+    number(giving["refuse_below"], "Saved giving refusal threshold", -100, 100)
+    number(giving["again_after"], "Saved giving wait", 0, math.inf)
+    if not 0 < number(giving["carry_for"], "Saved giving carry time", 0, math.inf):
+        raise ValueError("A saved giving carry time must be positive")
 
 
 def _validate_bartending_rules(bartending: Any) -> None:
