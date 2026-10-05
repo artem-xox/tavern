@@ -146,6 +146,7 @@ Separate who from where:
 | Goals achieved | Goals completed before they failed or expired | `goals` in `metrics.json` (step 2, done) |
 | Unrealizable goals | Goals the world cannot carry out | Zero by construction (step 2, done); the prose can still say anything |
 | Say and do | Promises followed by the matching action in time | `promises` in `metrics.json` (step 4; no live promises yet) |
+| Giving | Gifts taken by kind, gifts refused, and drink errands begun, done and failed: the gap between the 17 intentions to bring someone a drink and what the world did | `giving` in `metrics.json` (Giving H5, done) |
 | Sameness | Guests holding the same goal template and target at once | Step 2 |
 | Stories | Matches of story patterns (a promise broken, a grudge acted on, news passed through three guests) | With E28 |
 
@@ -244,8 +245,8 @@ Each step is small and checked against the baseline of step 0. Steps 0–5 were 
 
 Missing verbs found on the way go to their own tasks. The first is "buy someone a drink"
 (DESIGN.md, Actions), which 17 intentions in five of the seven evenings asked for. It became
-[Giving (H0–H5)](stages/1_EVENING.md#giving--from-hand-to-hand-h0h5): anything a guest carries
-can be handed to another, and fetching a drink for someone is one chosen errand.
+[Giving (H0–H5)](stages/1_EVENING.md#giving--from-hand-to-hand-h0h5), built on 2026-10-05: anything a guest
+carries can be handed to another, and fetching a drink for someone is one chosen errand.
 
 ## Sources
 

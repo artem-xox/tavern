@@ -22,6 +22,20 @@ from tavern.social.thoughts import think
 Start = Callable[[World, str, Mapping[str, Any]], Mapping[str, Any]]
 
 
+def fetching_a_drink(world: Mapping[str, Any], actor_id: str) -> bool:
+    """Tell whether a guest is out fetching someone a drink.
+
+    Args:
+        world: Current world.
+        actor_id: Visitor.
+
+    Returns:
+        True from the choice or the accepted invitation until the errand ends in a gift or a failure: the guest
+        sees it through before deciding anything else, as the body carries it out.
+    """
+    return any(item["kind"] == "buy_drink" and item["from"] == actor_id for item in world["invitations"])
+
+
 def _people(world: Mapping[str, Any]) -> dict[str, Actor]:
     return {item["id"]: item for item in world["actors"]}
 

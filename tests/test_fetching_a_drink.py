@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 
 from tavern.adapters.persistence import parse_world
+from tavern.evening.decisions import free_to_decide
 from tavern.hall.rules import default_rules
 from tavern.hall.world import start_action
 from social_hall import actor, advance, command, know, say, seated_talk
@@ -175,3 +176,31 @@ def test_a_pour_that_never_happens_ends_the_errand_as_failed() -> None:
     advance_until(world, the_errand_ends)
     assert ([len(events(world, kind)) for kind in ("fetch_begun", "fetch_done", "fetch_failed", "invitation_failed")],
             actor(world, "bea")["inventory"]["beer"]) == ([1, 0, 1, 0], 0)
+
+
+def idle_pair() -> dict[str, Any]:
+    """Ada and Bea sit at the near table and are idle, so that only an errand can keep either from deciding."""
+    world = seated_talk(social=10.0)
+    advance(world, 20)
+    return world
+
+
+@pytest.mark.parametrize("kind, stage, expected", [
+    pytest.param("buy_drink", "accepted", {"ada": False, "bea": True}, id="a-drink-about-to-be-fetched"),
+    pytest.param("buy_drink", "fetching", {"ada": False, "bea": True}, id="a-drink-being-poured"),
+    pytest.param("buy_drink", "carrying", {"ada": False, "bea": True}, id="a-drink-being-carried"),
+    pytest.param("darts_together", "accepted", {"ada": True, "bea": True}, id="another-kind-of-errand"),
+])
+def test_the_one_who_fetches_a_drink_sees_it_through_before_deciding_anything_else(
+        kind: str, stage: str, expected: dict[str, bool]) -> None:
+    world = idle_pair()
+    errand = {"kind": kind, "from": "ada", "to": "bea", "stage": stage, "held": 0}
+    world["invitations"].append({**errand, "since": world["time"]} if stage == "carrying" else errand)
+    assert {name: free_to_decide(world, actor(world, name)) for name in ("ada", "bea")} == expected
+
+
+def test_a_host_is_free_to_decide_again_when_the_errand_is_over() -> None:
+    world = bought_for_bea()
+    advance_until(world, the_errand_ends)
+    advance(world, 3)
+    assert free_to_decide(world, actor(world, "ada"))
