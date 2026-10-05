@@ -87,6 +87,25 @@ def gift_targets(observation: Mapping[str, Any], kind: str) -> list[str]:
                   and not formed_since(actor, person["id"], (*RECEIVED, "generous", "rebuffed"), since))
 
 
+def empty_handed_company(observation: Mapping[str, Any]) -> list[str]:
+    """List the people near a guest who visibly hold no mug of ale and are free to be served one.
+
+    Args:
+        observation: The guest's observation, with `people` in sight and `on_errands`, the guests already
+            on an errand or being served by one.
+
+    Returns:
+        IDs, sorted, of those who sit at the guest's table or stand beside them, are not staff, hold no
+        mug in their hands, and are not on an errand. Without `on_errands` nobody can be called free.
+    """
+    busy, actor = observation.get("on_errands"), observation["actor"]
+    if busy is None:
+        return []
+    return sorted(person["id"] for person in observation.get("people", [])
+                  if person["id"] != actor["id"] and not person.get("post") and _near(observation, person)
+                  and not person.get("holding", {}).get("beer", 0) and person["id"] not in busy)
+
+
 def _near(observation: Mapping[str, Any], person: Mapping[str, Any]) -> bool:
     # The reach of a chat: the same table, or standing side by side (a second copy of `hostility._near`).
     seat = next((item for item in observation["objects"] if item["id"] == observation["actor"].get("seat_id")), None)

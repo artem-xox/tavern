@@ -12,7 +12,7 @@ from tavern.mind.hall_view import in_use, line_place
 from tavern.mind.local_policy import local_scores, local_seat_scores
 from tavern.mind.observation import known_objects, own_actor
 from tavern.mind.selection import bounded, drawable, read_temperature, select
-from tavern.social.giving import gift_targets
+from tavern.social.giving import empty_handed_company, gift_targets
 from tavern.social.hostility import HOSTILITY, hostile_targets
 
 
@@ -132,7 +132,7 @@ def _concrete_candidates(observation: Mapping[str, Any]) -> list[Action]:
         actions.extend(_line_options(observation, item, _action(verbs[item["kind"]], item["id"])))
     return [*actions, *_seat_wish(observation, objects), *_views(observation, objects), *_games(objects),
             *_bar_stand(observation, actor, objects), *talks, *_gifts(observation, actor),
-            _action("inspect"), _action("wait"),
+            *_fetches(observation, actor, objects), _action("inspect"), _action("wait"),
             *_hostile(observation)]
 
 
@@ -198,6 +198,16 @@ def _gifts(observation: Mapping[str, Any], actor: Mapping[str, Any]) -> list[Act
     thirsty = actor["needs"].get("thirst", 0) >= KEEPS_OWN_MUG
     return [_action("give", target, kind) for kind in ITEMS if actor["inventory"].get(kind)
             and not (kind == "beer" and thirsty) for target in gift_targets(observation, kind)]
+
+
+def _fetches(observation: Mapping[str, Any], actor: Mapping[str, Any],
+             objects: Sequence[Mapping[str, Any]]) -> list[Action]:
+    # A guest with a free hand who knows a tap that has ale may fetch a drink for company with empty hands,
+    # unless they are on an errand already.
+    free_hand = actor["inventory"].get("beer", 0) < ITEMS["beer"].hands
+    able = free_hand and actor["id"] not in observation.get("on_errands", [])
+    stocked = any(item["kind"] == "tap" and item.get("stock") for item in objects)
+    return [_action("bring_drink", target) for target in empty_handed_company(observation)] if able and stocked else []
 
 
 def _hostile(observation: Mapping[str, Any]) -> list[Action]:

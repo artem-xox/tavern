@@ -10,6 +10,7 @@ from collections.abc import Mapping, Sequence
 from types import MappingProxyType
 from typing import Any, NotRequired, TypedDict
 
+from tavern.body.items import ITEMS
 from tavern.hall.memory import record_event
 from tavern.hall.room import find_object
 from tavern.hall.staff import on_staff
@@ -33,9 +34,10 @@ STAGES = ("accepted", "fetching", "carrying", "following")
 
 # `from` is a Python keyword, hence the functional form.
 Invitation = TypedDict("Invitation", {"kind": str, "from": str, "to": str})
-# `held` is the mugs the inviter held when an errand began; `since` the game time carrying began.
+# `held` is the mugs the inviter held when an errand began; `since` the game time carrying began; `unasked`
+# marks an errand nobody invited (a guest bringing a drink of their own accord), which the other knows nothing of.
 Errand = TypedDict("Errand", {"kind": str, "from": str, "to": str, "stage": str, "held": int,
-                              "since": NotRequired[float]})
+                              "since": NotRequired[float], "unasked": NotRequired[bool]})
 
 
 def _people(world: Mapping[str, Any]) -> dict[str, Actor]:
@@ -172,6 +174,49 @@ def accept(world: World, scene: Conversation, speaker: Actor,
                  f"{KINDS[invitation['kind']]} from {_people(world)[invitation['from']]['name']}")
 
 
+def begin_errand(world: World, host: Actor, guest: Actor, kind: str, unasked: bool = False) -> None:
+    """Send a guest on an errand for another that no invitation asked for.
+
+    Args:
+        world: World whose `invitations` receive the errand, to be set in motion by `errands.honor_invitations`.
+        host: Guest who goes.
+        guest: Guest it is for.
+        kind: One of `KINDS`.
+        unasked: Whether nobody invited it, so that the guest it is for does not know of it.
+    """
+    errand: Errand = {"kind": kind, "from": host["id"], "to": guest["id"], "stage": "accepted", "held": 0}
+    world["invitations"].append({**errand, "unasked": True} if unasked else errand)
+
+
+def errand_parties(world: Mapping[str, Any]) -> list[str]:
+    """List the guests who are on an errand or being served by one.
+
+    Args:
+        world: Current world.
+
+    Returns:
+        Sorted IDs of whoever an accepted invitation or an errand names, host or guest.
+    """
+    return sorted({who for errand in world["invitations"] for who in (errand["from"], errand["to"])})
+
+
+def fetch_error(world: Mapping[str, Any], host: Mapping[str, Any], guest: Mapping[str, Any]) -> str | None:
+    """Tell why a guest may not be sent to fetch another a drink, apart from where they stand.
+
+    Args:
+        world: Current world.
+        host: Guest who would go, who needs a hand free for the mug.
+        guest: Guest it is for.
+
+    Returns:
+        A human-readable refusal reason, or None.
+    """
+    if host["inventory"]["beer"] >= ITEMS["beer"].hands:
+        return f"{host['name']} has no free hand for another mug"
+    busy = errand_parties(world)
+    return next((f"{who['name']} is already on an errand" for who in (host, guest) if who["id"] in busy), None)
+
+
 def decline(world: World, scene: Conversation, speaker: Actor,
             addressee: Actor | None) -> None:
     """Decline the invitation pending for the speaker (the `decline` act); nothing else follows.
@@ -198,14 +243,18 @@ def invitations_of(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[d
 
     Returns:
         Per invitation: `kind`, `from`, `to`, `stage` ("pending" for one awaiting an answer) and
-        `with`, what the guest calls the other party (see `names.called`).
+        `with`, what the guest calls the other party (see `names.called`); `unasked` for an errand
+        nobody invited, which only the one who goes is told of.
     """
     people = {item["id"]: item for item in [*world["actors"], *world["departed"]]}
     pending = [{**item, "stage": "pending"} for item in (scene["invitation"] for scene in world["conversations"])
                if item is not None]
-    found = [item for item in [*pending, *world["invitations"]] if actor["id"] in (item["from"], item["to"])]
+    # Whoever an unasked errand is for knows nothing of it.
+    found = [item for item in [*pending, *world["invitations"]] if actor["id"] in (item["from"], item["to"])
+             and not (item.get("unasked") and item["to"] == actor["id"])]
     return [{"kind": item["kind"], "from": item["from"], "to": item["to"], "stage": item["stage"],
-             "with": called(actor, people[item["to"] if item["from"] == actor["id"] else item["from"]])}
+             "with": called(actor, people[item["to"] if item["from"] == actor["id"] else item["from"]]),
+             **({"unasked": True} if item.get("unasked") else {})}
             for item in found]
 
 
@@ -221,7 +270,9 @@ def invitation_note(observation: Mapping[str, Any]) -> str:
     me, notes = observation["actor"]["id"], []
     for item in observation.get("invitations", []):
         what, other = KINDS[item["kind"]], item["with"]
-        if item["stage"] == "pending":
+        if item.get("unasked"):
+            notes.append(f"They are fetching {other} an ale.")
+        elif item["stage"] == "pending":
             notes.append(f"They invited {other} to {what} and await an answer." if item["from"] == me
                          else f"{other} invited them to {what}; they have yet to answer.")
         else:
@@ -252,6 +303,8 @@ def check_invitations(world: Mapping[str, Any]) -> None:
                 or not _valid(item, guests) or item["stage"] not in STAGES or type(item["held"]) is not int:
             raise ValueError(f"Invalid saved invitation {item!r}")
         number(item["held"], "Saved ale held", 0, float("inf"))
+        if "unasked" in item and type(item["unasked"]) is not bool:
+            raise ValueError(f"Saved invitation {item!r} must flag whether it was unasked with a boolean")
         # Only an errand that is carrying has a start, and it cannot lie in the future.
         if ("since" in item) != (item["stage"] == "carrying"):
             raise ValueError(f"Saved invitation {item!r} must have a start exactly while it is carrying")

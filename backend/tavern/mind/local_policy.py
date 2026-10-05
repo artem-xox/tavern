@@ -61,6 +61,7 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
         "leave": _leave_utility(observation),
         "cut_in_line": 0.0,  # weighed against the wait in _score_lines
         "give": 0.0,  # weighed gift by gift in _score_gifts
+        "bring_drink": 0.0,  # weighed with the gifts, as a trip for someone
         # Hostile acts are rare: even the hottest head scores them below a seat to rest in, and only the
         # urge (temper loosened by drink) lifts them; a fight is likelier than a shove only through Jev.
         "shove": 0.1 + 0.3 * min(1.0, urge(observation)),
@@ -78,15 +79,18 @@ def _score_gifts(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
                  scores: dict[str, float], company: float) -> None:
     # Handing something over is a small kindness, low in itself: warmer from a sociable guest and toward someone
     # they like. A mug is the better gift to hands that visibly hold none, and a thirsty guest keeps their own.
+    # Fetching one is a trip too, which a need of their own, a full bladder or weariness, outweighs.
     actor, people = observation["actor"], {item["id"]: item for item in observation.get("people", [])}
-    now = observation.get("time", -math.inf)
+    now, needs = observation.get("time", -math.inf), actor["needs"]
     for action in candidates:
-        if action["verb"] != "give":
+        if action["verb"] not in ("give", "bring_drink"):
             continue
         score = 0.1 + company + 0.25 * opinion_of(actor, action["target_id"], now) / 100
-        if action["item"] == "beer":
+        if action["verb"] == "bring_drink":
+            score -= 0.3 * max(needs["fatigue"], needs["bladder"]) / 100
+        elif action["item"] == "beer":
             empty = not people.get(action["target_id"], {}).get("holding", {}).get("beer", 0)
-            score += 0.15 * empty - 0.4 * actor["needs"]["thirst"] / 100
+            score += 0.15 * empty - 0.4 * needs["thirst"] / 100
         scores[action["id"]] = min(1.0, max(0.0, score))
 
 

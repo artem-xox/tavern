@@ -149,6 +149,14 @@ def _give(observation: Observation, action: Action) -> str:
             f"and {name} may refuse it if there is bad blood between them)")
 
 
+def _bring(observation: Observation, action: Action) -> str:
+    receiver = _someone(observation, action["target_id"])
+    name = label_of(receiver) if receiver else action["target_id"]
+    where = "sits at their table" if receiver and receiver.get("seat_id") else "stands beside them"
+    return (f"fetch a mug of ale from the tap and bring it to {name}, who {where} with nothing in their hands "
+            f"(it takes a trip, and {name} may refuse it if there is bad blood between them)")
+
+
 def _join(observation: Observation, action: Action) -> str:
     member = _someone(observation, action["target_id"])
     if member is None:
@@ -222,5 +230,5 @@ _OPTIONS: Mapping[str, Callable[[Observation, Action], str]] = {
     "take_beer": _pour, "drink": _drink, "rest": _rest, "seating": _seating, "sit": _sit, "talk": _talk,
     "join_conversation": _join, "play_darts": _darts, "stand_at_bar": _bar, "watch": _watch,
     "watch_dice": _watch_dice,
-    "use_toilet": _toilet, "give": _give,
+    "use_toilet": _toilet, "give": _give, "bring_drink": _bring,
     "inspect": _inspect, "wait": _wait, "leave": _leave, "cut_in_line": _cut, "shove": _shove, "start_fight": _fight}

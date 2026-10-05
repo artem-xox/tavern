@@ -10,6 +10,7 @@ from tavern.body.hearing import Sound
 from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World
 from tavern.social.giving import hand_over
+from tavern.social.invitations import begin_errand
 from tavern.social.names import called
 from tavern.social.scenes import join_conversation, start_conversation
 from tavern.social.thoughts import think
@@ -33,6 +34,8 @@ class Activity:
             no scene, no walking, and the timer ends it. Shoving and fighting (`tavern.social.hostility`) are
             such verbs.
         names_item: Whether the action names an item from the actor's hands in `Action.item`, as giving does.
+        opens_errand: Whether it sends the actor off on an errand for the visitor it targets (see
+            `tavern.social.errands`); like giving, it needs that visitor near.
         duration: Seconds of interaction (nominal for a scene part), or None for a decision step
             that never runs in the world.
         family: The `FAMILIES` entry it is chosen under: a first decision picks the family, a
@@ -70,6 +73,7 @@ class Activity:
     joins: bool = False
     near_person: bool = False
     names_item: bool = False
+    opens_errand: bool = False
     requires_item: str | None = None
     empty_target: str | None = None
     shared_target: bool = False
@@ -131,6 +135,13 @@ def _give(world: World, actor: Actor, receiver: Actor | None) -> None:
     if receiver is None or action is None or action.get("item") is None:
         raise ValueError("Giving needs someone to give to and an item to give")
     hand_over(world, actor, receiver, action["item"])
+
+
+def _bring_drink(world: World, actor: Actor, receiver: Actor | None) -> None:
+    if receiver is None:
+        raise ValueError("Bringing a drink needs someone to bring it to")
+    begin_errand(world, actor, receiver, "buy_drink", unasked=True)
+    record_event(world, actor, "fetch_begun", f"{actor['name']} went to fetch {receiver['name']} an ale")
 
 
 def _shove(world: World, actor: Actor, victim: Actor | None) -> None:
@@ -271,6 +282,13 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              guidance="A kindness between people who get on: a drink for a thirsty friend, a remedy for someone "
                       "worried about sickness, a keepsake for someone they like. It costs the giver what they hand "
                       "over, and someone who dislikes them may refuse it."),
+    Activity(verb="bring_drink", near_person=True, opens_errand=True, duration=0.5, effect=_bring_drink,
+             label="Bring a drink", status="fetching a drink", doing="going to fetch someone an ale",
+             done="went to fetch someone an ale", family="fetching",
+             what="fetch a mug of ale and bring it to {target}, who sits at their table or stands beside them",
+             guidance="A kindness for company whose hands are empty: it takes a trip to the tap and back, so it "
+                      "suits someone with nothing pressing of their own, and the one they bring it for may still "
+                      "refuse it."),
     Activity(verb="use_toilet", target_kinds=("toilet",), duration=2.0, leaves_seat=True,
              needs=MappingProxyType({"bladder": -65}), label="Use the toilet", status="WC", pose="Bathroom",
              doing="heading to the WC", done="used the WC",
@@ -353,6 +371,7 @@ FAMILIES: Mapping[str, str] = MappingProxyType({
     "idling": "wait a moment",
     "going_home": "go home for the night",
     "cutting_in": "push to the front of a line instead of waiting",
+    "fetching": "fetch someone at their table or beside them a drink from the tap",
     "confront": "shove someone who wronged them, or start a fight",
 })
 

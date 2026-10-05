@@ -8,6 +8,7 @@ from tavern.hall.room import find_object
 from tavern.hall.staff import on_staff
 from tavern.hall.state import find_actor
 from tavern.social.giving import gift_error
+from tavern.social.invitations import fetch_error
 from tavern.social.scenes import conversation_of, pressed, side_by_side, table_of
 
 
@@ -52,6 +53,8 @@ def action_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Map
         return "This action does not take an item"
     if activity.names_item:
         return _give_error(world, actor, action)
+    if activity.opens_errand:
+        return _fetch_error(world, actor, action)
     if activity.partner:
         return _talk_error(world, actor, action)
     if activity.near_person:
@@ -120,6 +123,16 @@ def _give_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapp
     if not _close_enough(world, actor, receiver):
         return "Visitors must sit at one table or stand side by side"
     return gift_error(world, actor, receiver, action.get("item"))
+
+
+def _fetch_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any]) -> str | None:
+    receiver = find_actor(world, action.get("target_id"))
+    if receiver is None or receiver["id"] == actor["id"]:
+        return "Choose another visitor to bring a drink to"
+    if on_staff(receiver):
+        return f"{receiver['name']} works behind the bar and needs no drink brought"
+    return fetch_error(world, actor, receiver) or (
+        None if _close_enough(world, actor, receiver) else "Visitors must sit at one table or stand side by side")
 
 
 def _join_error(world: Mapping[str, Any], actor: Mapping[str, Any], member: Mapping[str, Any],
