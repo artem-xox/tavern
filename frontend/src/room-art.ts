@@ -99,12 +99,12 @@ export class RoomArt {
   }
 
   private drawEdgeShade(width: number, height: number): void {
-    const edge: number = 80;
+    const edge: number = 42;
     this.shade.clear();
-    this.shade.fillGradientStyle(0x171216, 0x171216, 0x171216, 0x171216, 0.42, 0.42, 0, 0).fillRect(0, 0, width, edge);
-    this.shade.fillGradientStyle(0x171216, 0x171216, 0x171216, 0x171216, 0, 0, 0.38, 0.38).fillRect(0, height - edge, width, edge);
-    this.shade.fillGradientStyle(0x171216, 0x171216, 0x171216, 0x171216, 0.32, 0, 0.32, 0).fillRect(0, 0, edge, height);
-    this.shade.fillGradientStyle(0x171216, 0x171216, 0x171216, 0x171216, 0, 0.32, 0, 0.32).fillRect(width - edge, 0, edge, height);
+    this.shade.fillGradientStyle(0x171216, 0x171216, 0x171216, 0x171216, 0.2, 0.2, 0, 0).fillRect(0, 0, width, edge);
+    this.shade.fillGradientStyle(0x171216, 0x171216, 0x171216, 0x171216, 0, 0, 0.16, 0.16).fillRect(0, height - edge, width, edge);
+    this.shade.fillGradientStyle(0x171216, 0x171216, 0x171216, 0x171216, 0.14, 0, 0.14, 0).fillRect(0, 0, edge, height);
+    this.shade.fillGradientStyle(0x171216, 0x171216, 0x171216, 0x171216, 0, 0.14, 0, 0.14).fillRect(width - edge, 0, edge, height);
   }
 
   private drawFloor(world: World): void {
