@@ -345,7 +345,8 @@ FAMILIES: Mapping[str, str] = MappingProxyType({
     "refreshment": "get something to drink",
     "resting": "sit down for a rest",
     "seat_choice": "find a seat at a table, or move to another one",
-    "company": "chat with someone at their table or beside them, join a conversation, or lean on the bar",
+    "company": "chat with someone at their table or beside them, join a conversation, lean on the bar, or hand "
+               "someone something they carry",
     "pastime": "pass the time",
     "wc": "use the WC",
     "exploring": "explore the room",

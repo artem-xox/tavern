@@ -4,7 +4,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 from tavern.body.activities import ACTIVITIES, FAMILIES
-from tavern.body.items import held_words
+from tavern.body.items import carried_words, held_words
 from tavern.hall.room import SEAT_TABLES
 from tavern.mind.feelings import feelings
 from tavern.mind.goals import goal_words, serving
@@ -34,7 +34,7 @@ def brief(observation: Observation, candidates: Sequence[Mapping[str, Any]]) -> 
     Raises:
         ValueError: A candidate's verb or target cannot be described.
     """
-    parts = (_closing(observation), _stay(observation), _whereabouts(observation), _trigger(observation),
+    parts = (_closing(observation), _stay(observation), _whereabouts(observation), _carrying(observation), _trigger(observation),
              _own_seat(observation),
              _needs(observation), _temperament(observation), portrait(observation["actor"]),
              feelings(observation), invitation_note(observation), _intention(observation), _promises(observation),
@@ -85,6 +85,11 @@ def _whereabouts(observation: Observation) -> str:
     places = [item for item in observation["objects"] if item["kind"] not in SEAT_TABLES]
     near = min(places, key=lambda item: steps_to(observation, item), default=None)
     return f"They are standing{f' near {place_words(near)}' if near else ''}, {hands}."
+
+
+def _carrying(observation: Observation) -> str:
+    carried = carried_words(observation["actor"]["inventory"])
+    return f"They are also carrying {carried}." if carried else ""
 
 
 def _trigger(observation: Observation) -> str:

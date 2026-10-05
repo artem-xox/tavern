@@ -64,12 +64,12 @@ def test_a_gift_that_is_taken_moves_one_item_and_leaves_the_receiver_a_thought(
             kinds_about(world, "bea", "ada")) == expected
 
 
-def test_a_gift_costs_the_giver_nothing_but_the_item() -> None:
+def test_a_gift_leaves_the_giver_a_warm_thought_and_idle() -> None:
     world = seated()
     hold(world, "ada", remedy=1)
     handed(world, "ada", give("remedy"))
     assert (kinds_about(world, "ada", "bea"), actor(world, "ada")["status"], actor(world, "ada")["action"]) == (
-        [], "idle", None)
+        ["generous"], "idle", None)
 
 
 @pytest.mark.parametrize("who", [pytest.param("ada", id="giver"), pytest.param("bea", id="receiver")])
@@ -100,8 +100,8 @@ def test_the_giver_faces_the_receiver() -> None:
 @pytest.mark.parametrize("opinion, outcome", [
     pytest.param(-21.0, (1, 0, ["gift_refused"], ["rebuffed"]), id="just-below-the-threshold"),
     pytest.param(-100.0, (1, 0, ["gift_refused"], ["rebuffed"]), id="loathing"),
-    pytest.param(-20.0, (0, 1, ["gave"], []), id="at-the-threshold"),
-    pytest.param(0.0, (0, 1, ["gave"], []), id="strangers"),
+    pytest.param(-20.0, (0, 1, ["gave"], ["generous"]), id="at-the-threshold"),
+    pytest.param(0.0, (0, 1, ["gave"], ["generous"]), id="strangers"),
 ])
 def test_someone_who_thinks_ill_of_the_giver_may_refuse(opinion: float, outcome: tuple[int, int, list[str], list[str]]) -> None:
     world = seated()

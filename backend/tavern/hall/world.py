@@ -169,8 +169,8 @@ def observe_actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
 
     Returns:
         Own actor state, known object records, personal memories, map bounds, visible
-        cells, and whether the inn has closed. Unseen resource changes remain remembered
-        historical values.
+        cells, whether the inn has closed, and the rules of giving. Unseen resource changes remain
+        remembered historical values.
 
     Raises:
         ValueError: Visitor ID does not exist.
@@ -184,7 +184,7 @@ def observe_actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
             "memory": deepcopy(actor["memory"][-10:]), "visible_cells": visible, "time": world["time"],
             "invitations": invitations_of(world, actor), "promises": promises_of(world, actor_id),
             "map": {"width": world["map"]["width"], "height": world["map"]["height"]},
-            "closed": inn_closed(world)}
+            "closed": inn_closed(world), "giving": dict(world["rules"]["giving"])}
 
 
 def _visible_visitors(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[dict[str, Any]]:

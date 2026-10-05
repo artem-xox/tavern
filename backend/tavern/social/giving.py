@@ -35,18 +35,63 @@ def gift_error(world: Mapping[str, Any], giver: Mapping[str, Any], receiver: Map
     if receiver["inventory"][kind] >= item.hands:
         return f"{receiver['name']} has no free hand for {item.one}"
     window, now = world["rules"]["giving"]["again_after"], world["time"]
-    if _gifts_since(giver, receiver["id"], tuple(thing.received for thing in ITEMS.values()), now - window):
+    if formed_since(giver, receiver["id"], RECEIVED, now - window):
         return f"{receiver['name']} gave {giver['name']} something a moment ago"
-    if _gifts_since(receiver, giver["id"], (item.received,), now - window):
+    if formed_since(receiver, giver["id"], (item.received,), now - window):
         return f"{giver['name']} just gave {receiver['name']} {item.one}"
     return None
 
 
-def _gifts_since(holder: Mapping[str, Any], from_id: str, received: tuple[str, ...], since: float) -> bool:
-    # A gift is remembered as the thought it left, which lasts longer than the wait between gifts,
-    # so a thought's age (its expiry less how long it lasts) says when the gift was made.
-    return any(thought["about"] == from_id and thought["kind"] in received
+# What a guest keeps when someone gave them something, whatever it was.
+RECEIVED = tuple(item.received for item in ITEMS.values())
+
+
+def formed_since(holder: Mapping[str, Any], about_id: str, kinds: tuple[str, ...], since: float) -> bool:
+    """Tell whether a visitor formed a thought of these kinds about someone after a game time.
+
+    Args:
+        holder: Visitor with `thoughts`.
+        about_id: Person the thought is about.
+        kinds: The `THOUGHTS` kinds that count.
+        since: Game time; a thought formed at or before it does not count.
+
+    Returns:
+        True when one is held. A gift is remembered as the thoughts it left, which last longer than the wait
+        between gifts, so a thought's age (its expiry less how long it lasts) says when the gift was made.
+    """
+    return any(thought["about"] == about_id and thought["kind"] in kinds
                and thought["expires_at"] - THOUGHTS[thought["kind"]].seconds > since for thought in holder["thoughts"])
+
+
+def gift_targets(observation: Mapping[str, Any], kind: str) -> list[str]:
+    """List the people a guest could hand an item to, as far as they can tell.
+
+    Args:
+        observation: The guest's observation, with `people` in sight, `time` and the world's `giving` rules.
+            Without a clock or the rules no gift can be called recent, so nobody is a target.
+        kind: The `ITEMS` kind to give.
+
+    Returns:
+        IDs, sorted, of those who sit at the guest's table or stand beside them, are not staff, do not
+        visibly hold as many of the kind as their hands carry, and have not exchanged a gift or a
+        refusal with the guest within `again_after`. That is stricter than `gift_error`, which the guest
+        cannot see into: the guest remembers a gift of any kind to the same person, not only of this kind.
+    """
+    now, rules, actor = observation.get("time"), observation.get("giving"), observation["actor"]
+    if now is None or rules is None:
+        return []
+    since = now - rules["again_after"]
+    return sorted(person["id"] for person in observation.get("people", [])
+                  if person["id"] != actor["id"] and not person.get("post") and _near(observation, person)
+                  and person.get("holding", {}).get(kind, 0) < ITEMS[kind].hands
+                  and not formed_since(actor, person["id"], (*RECEIVED, "generous", "rebuffed"), since))
+
+
+def _near(observation: Mapping[str, Any], person: Mapping[str, Any]) -> bool:
+    # The reach of a chat: the same table, or standing side by side (a second copy of `hostility._near`).
+    seat = next((item for item in observation["objects"] if item["id"] == observation["actor"].get("seat_id")), None)
+    table = seat.get("table_id") if seat else None
+    return bool(person.get("beside")) or bool(table and person.get("seat_id") and person.get("table_id") == table)
 
 
 def hand_over(world: World, giver: Actor, receiver: Actor, kind: str) -> None:
@@ -72,4 +117,5 @@ def hand_over(world: World, giver: Actor, receiver: Actor, kind: str) -> None:
     for member in (giver, receiver):
         record_event(world, member, "gave", message)
     think(receiver, item.received, now, f"{called(receiver, giver)} gave me {item.one}", message, about=giver)
+    think(giver, "generous", now, f"I gave {called(giver, receiver)} {item.one}", message, about=receiver)
     show_emote(receiver, "affection", now + world["rules"]["emote_seconds"]["affection"])

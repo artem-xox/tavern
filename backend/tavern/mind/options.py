@@ -4,6 +4,7 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from tavern.body.activities import FAMILIES
+from tavern.body.items import ITEMS
 from tavern.mind.hall_view import (company_at, headcount, in_use, known_object, label_of, line_place, place_words,
                               steps_to, visible_visitor, walk_words)
 
@@ -140,6 +141,14 @@ def _fight(observation: Observation, action: Action) -> str:
             "forget and which may leave someone hurt")
 
 
+def _give(observation: Observation, action: Action) -> str:
+    receiver = _someone(observation, action["target_id"])
+    name = label_of(receiver) if receiver else action["target_id"]
+    where = "sits at their table" if receiver and receiver.get("seat_id") else "stands beside them"
+    return (f"hand {ITEMS[action['item']].one} they are carrying to {name}, who {where} (it is theirs to give up, "
+            f"and {name} may refuse it if there is bad blood between them)")
+
+
 def _join(observation: Observation, action: Action) -> str:
     member = _someone(observation, action["target_id"])
     if member is None:
@@ -213,5 +222,5 @@ _OPTIONS: Mapping[str, Callable[[Observation, Action], str]] = {
     "take_beer": _pour, "drink": _drink, "rest": _rest, "seating": _seating, "sit": _sit, "talk": _talk,
     "join_conversation": _join, "play_darts": _darts, "stand_at_bar": _bar, "watch": _watch,
     "watch_dice": _watch_dice,
-    "use_toilet": _toilet,
+    "use_toilet": _toilet, "give": _give,
     "inspect": _inspect, "wait": _wait, "leave": _leave, "cut_in_line": _cut, "shove": _shove, "start_fight": _fight}

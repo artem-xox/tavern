@@ -27,6 +27,11 @@ class Item:
     hands: int
     received: str
 
+    @property
+    def visible(self) -> bool:
+        """Whether others see it in the carrier's hands: a mug yes, a remedy in a sleeve no."""
+        return self.held is not None
+
 
 ITEMS: Mapping[str, Item] = MappingProxyType({
     "beer": Item("beer", "a mug of ale", "mugs of ale", held="a full mug of ale", hands=2, received="treated"),
@@ -101,3 +106,20 @@ def parse_carries(data: Any) -> dict[str, int]:
         if type(count) is not int or not 0 <= count <= ITEMS[kind].hands:
             raise ValueError(f"A guest's carried {kind} must be a whole number from 0 to {ITEMS[kind].hands}")
     return dict(data)
+
+
+_COUNT_WORDS = {2: "two", 3: "three"}
+
+
+def carried_words(inventory: Mapping[str, int]) -> str | None:
+    """Say what a visitor carries out of sight, counted, the way a briefing does.
+
+    Args:
+        inventory: Counts by item kind.
+    Returns:
+        The kinds that are not held in the hand, such as "two herbal remedies and a keepsake", or None
+        when there are none.
+    """
+    carried = [item.one if count == 1 else f"{_COUNT_WORDS.get(count, count)} {item.many}"
+               for kind, item in ITEMS.items() if not item.visible and (count := inventory.get(kind, 0))]
+    return " and ".join(carried) or None

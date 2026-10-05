@@ -7,7 +7,7 @@ from typing import Any
 from tavern.mind.goals import serving
 from tavern.mind.hall_view import in_use, line_place
 from tavern.social.hostility import urge
-from tavern.social.thoughts import THOUGHTS, thought_mood
+from tavern.social.thoughts import THOUGHTS, opinion_of, thought_mood
 
 
 # How far the most and least sociable guests drift from an ordinary one's taste for company.
@@ -60,6 +60,7 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
         "wait": max(0.0, 0.08 + 0.12 * traits.get("patience", 0.5) - 0.08 * max(thirst, fatigue, bladder)),
         "leave": _leave_utility(observation),
         "cut_in_line": 0.0,  # weighed against the wait in _score_lines
+        "give": 0.0,  # weighed gift by gift in _score_gifts
         # Hostile acts are rare: even the hottest head scores them below a seat to rest in, and only the
         # urge (temper loosened by drink) lifts them; a fight is likelier than a shove only through Jev.
         "shove": 0.1 + 0.3 * min(1.0, urge(observation)),
@@ -68,8 +69,25 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
     scores = {action["id"]: utility[action["verb"]] for action in candidates}
     _score_seats(observation, candidates, scores)
     _score_lines(observation, candidates, scores)
+    _score_gifts(observation, candidates, scores, company)
     _score_goal(observation, candidates, scores)
     return scores
+
+
+def _score_gifts(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
+                 scores: dict[str, float], company: float) -> None:
+    # Handing something over is a small kindness, low in itself: warmer from a sociable guest and toward someone
+    # they like. A mug is the better gift to hands that visibly hold none, and a thirsty guest keeps their own.
+    actor, people = observation["actor"], {item["id"]: item for item in observation.get("people", [])}
+    now = observation.get("time", -math.inf)
+    for action in candidates:
+        if action["verb"] != "give":
+            continue
+        score = 0.1 + company + 0.25 * opinion_of(actor, action["target_id"], now) / 100
+        if action["item"] == "beer":
+            empty = not people.get(action["target_id"], {}).get("holding", {}).get("beer", 0)
+            score += 0.15 * empty - 0.4 * actor["needs"]["thirst"] / 100
+        scores[action["id"]] = min(1.0, max(0.0, score))
 
 
 # What serving the guest's goal adds to an option's score: enough to tip a near tie, not to outweigh a pressing need.
