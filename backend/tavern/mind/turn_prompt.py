@@ -120,6 +120,9 @@ the same word. Avoid stock phrases such as "Well met" or "Aye, indeed" more than
 words; contractions are fine and natural.
 13. Goals colour talk lightly. The speaker's goal tonight may steer what they bring up, such as a trader \
 fishing for buyers or a veteran looking for an old comrade, but the line must still fit the moment.
+Where the moment gives "What you mean to do", it is what the speaker is after right now: bring it up when it \
+concerns someone present, but never promise or offer what the intention does not say, and never invent \
+errands such as fetching drinks.
 14. Memory. "Earlier tonight" is what you already said and heard in other conversations. Do not greet or \
 introduce yourself again to someone you have talked with; pick up the thread or bring something new instead of \
 repeating a subject.

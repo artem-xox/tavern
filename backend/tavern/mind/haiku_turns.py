@@ -126,11 +126,12 @@ def _self(me: Mapping[str, Any]) -> str:
     places = ", ".join(f"{item['name']} ({item['kind']})" for item in me["places"]) or \
         "none, so the speaker cannot use share_place"
     goal = me["card"]["goal"] if me["card"] else "to rest and pass a pleasant evening"
+    mean = f"\nWhat you mean to do: {me['intention']}" if me.get("intention") else ""
     return (f"THE SPEAKER\n\nYou are {me['name']} (id \"{me['id']}\").\nHow they feel: {me['feelings']}\n"
             f"Drink: {speech_instruction(me['drunkenness']) or 'You are sober.'} "
             f"Beers tonight: {me['visit']['beers']}.\n"
             f"Needs (0 calm, 100 desperate; 75 or more presses hard): {needs}.\n"
-            f"Places you know: {places}.\nYour goal tonight: {goal}")
+            f"Places you know: {places}.\nYour goal tonight: {goal}{mean}")
 
 
 def _news(me: Mapping[str, Any]) -> str:

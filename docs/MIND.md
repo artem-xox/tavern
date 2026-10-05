@@ -174,8 +174,13 @@ against M4 yet; [PLAN.md](PLAN.md) decides the order.
   Read by hand in seed 7: of three goals pursued over several intentions (Edda's question,
   Toren's talk, Brida's ale), none was achieved by closing, and one could not be. The offline
   evening (seed 5, scripted lines) repeats 5 of 38 lines.
-- [ ] **1. The intention reaches speech.** The line writer sees the current intention next to
-  the card's goal. Check: no more restated or repeated, and by hand, a goal raised in talk.
+- [x] **1. The intention reaches speech.** The line writer sees the current intention next to
+  the card's goal (`turn_view` gets `speaker.intention`; the moment says "What you mean to do";
+  rule 13 of the shared prefix says to raise it and never to offer what it does not say). Check: no
+  more restated or repeated, and by hand, a goal raised in talk. Result (2026-10-05, live seed 7,
+  replay byte-identical): restated 2, repeated 0 (baseline 5 and 1), 44 intentions, 41 lines, no
+  fallbacks. The evening took another course than the baseline's (a barkeep now pours), so only
+  the repeats are comparable; goals raised in talk are a by-hand check for step 2's measures.
 - [ ] **2. Stance and goal templates.** The stance replaces the free intention; a table of goal
   templates marks the options that serve a goal, for Jev and the local policy alike. This
   changes the saved world (a schema bump, approved for Stage 1). Check: goals achieved, no

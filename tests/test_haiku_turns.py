@@ -285,3 +285,19 @@ def test_writer_mode_uses_haiku_when_a_key_is_configured(requested: str | None, 
 def test_impossible_writer_mode_fails_loudly(requested: str) -> None:
     with pytest.raises(ValueError):
         writer_mode(requested, False)
+
+
+INTENT = {"thought": "Bea looks like she knows the pass.", "intention": "Ask Bea which guide to hire.",
+          "written_at": 5.0, "trigger": {"kind": "arrival", "text": "Ada has just come in", "time": 5.0}}
+
+
+@pytest.mark.parametrize("intention, expected, absent", [
+    pytest.param(None, [], ["What you mean to do"], id="no-intention-yet"),
+    pytest.param(INTENT, ["What you mean to do: Ask Bea which guide to hire."], [], id="intention-written"),
+])
+def test_the_speakers_current_intention_is_in_the_moment(intention: Any, expected: list[str],
+                                                         absent: list[str]) -> None:
+    world = scene_world()
+    people(world)["ada"]["intention"] = intention
+    content = turn_question(view_of(world))["content"]
+    assert ([text for text in expected if text not in content], [text for text in absent if text in content]) == ([], [])

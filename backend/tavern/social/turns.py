@@ -146,7 +146,7 @@ def _add_invitations(view: dict[str, Any], world: Mapping[str, Any], scene: Conv
 
 def _mind(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str, Any]) -> dict[str, Any]:
     # Who the speaker is and how they feel, for a model writer: `card` (the card's words, or None),
-    # `portrait`, `feelings` in words, `drunkenness` (0–1; kept out of `feelings`, so a writer
+    # `portrait`, `feelings` in words, their current `intention` (the mind's words, or None), `drunkenness` (0–1; kept out of `feelings`, so a writer
     # words it once), and `company`: their opinion of, familiarity with, and active thoughts
     # about each other participant, in order of joining.
     now, card = world["time"], speaker["card"]
@@ -157,6 +157,7 @@ def _mind(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str, A
             "portrait": portrait(speaker),
             "feelings": feelings({"actor": {**speaker, "drunkenness": 0.0}, "time": now}),
             "drunkenness": speaker["drunkenness"],
+            "intention": None if speaker["intention"] is None else speaker["intention"]["intention"],
             "earlier": earlier_lines(speaker, EARLIER_LINES, scene["id"]),
             "news": carried(world, speaker),
             "company": [{"id": other["id"], "name": other["name"], "opinion": opinion_of(speaker, other["id"], now),
