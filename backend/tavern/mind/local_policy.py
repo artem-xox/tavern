@@ -10,6 +10,10 @@ from tavern.social.hostility import urge
 from tavern.social.thoughts import THOUGHTS, thought_mood
 
 
+# How far the most and least sociable guests drift from an ordinary one's taste for company.
+SOCIABLE_PULL = 0.4
+
+
 def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]]) -> dict[str, float]:
     """Score concrete actions without a model, from the visitor's needs, traits and what they know.
 
@@ -30,18 +34,20 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
     seated_rest = 0.42 + 0.4 * fatigue + (0.15 if actor["inventory"]["beer"] else 0)
     # With their own seat free, choosing a seat again means moving to join company.
     moving = any(action["verb"] == "sit" for action in candidates)
+    # The sociable lean toward company and loners away; 0.5 is ordinary, and scores stay within 0–1.
+    company = SOCIABLE_PULL * (traits.get("sociability", 0.5) - 0.5)
     utility = {
         "drink": 0.9 * thirst + 0.1,
         "take_beer": max(0.0, 0.8 * thirst - 0.3 * bladder),
         "rest": fatigue * (0.85 + 0.15 * traits.get("comfort", 0.5)),
         "sit": seated_rest,
         "seating": 0.15 + 0.6 * actor["needs"].get("social", 0) / 100 if moving else seated_rest,
-        "talk": 0.4 + 0.6 * actor["needs"].get("social", 0) / 100,
+        "talk": min(1.0, max(0.0, 0.4 + 0.6 * actor["needs"].get("social", 0) / 100 + company)),
         # Joining company already talking is a little less natural than starting a chat.
-        "join_conversation": 0.35 + 0.6 * actor["needs"].get("social", 0) / 100,
+        "join_conversation": min(1.0, max(0.0, 0.35 + 0.6 * actor["needs"].get("social", 0) / 100 + company)),
         "play_darts": 0.15 + 0.65 * actor["needs"].get("boredom", 0) / 100,
         # A chat across the bar suits the sociable and curious, once nothing presses.
-        "stand_at_bar": max(0.0, 0.05 + 0.45 * actor["needs"].get("social", 0) / 100
+        "stand_at_bar": max(0.0, 0.05 + 0.45 * actor["needs"].get("social", 0) / 100 + company
                             + 0.15 * traits.get("curiosity", 0.5) - 0.25 * max(thirst, fatigue, bladder)),
         # A gentler pastime than darts that comfort-loving visitors favour, once nothing presses.
         "watch": ((0.05 + 0.45 * actor["needs"].get("boredom", 0) / 100 + 0.3 * traits.get("comfort", 0.5))
