@@ -22,8 +22,8 @@ the evening and watches. See [Stage 1 tasks](stages/1_EVENING.md).
 the barkeep (B0–B6) and E20 of M4 (hostile options) are done. Next: E21 (fight resolution).
 The guest's mind was reworked in parallel, by [MIND.md](MIND.md) steps 0–5: the intention reaches
 speech, a guest sets a typed goal the world checks, asks the mind far less often (live seed 7: 56
-intentions became 26–33, goals reached 7 of 30 became 10 of 17), may promise to come over, and the
-barkeep keeps to his duty. Saved worlds are version 12. Step 6 (memory between evenings) waits for
+intentions became 26–35, goals reached 7 of 30 became 8–10 of 16–17), may promise to come over, the
+barkeep keeps to his duty, and a guest whose best option Jev scores poorly pauses and asks the mind. Saved worlds are version 12. Step 6 (memory between evenings) waits for
 Stage 4; the giving ticket (H0–H5 in Stage 1) is next to be picked up.
 **Done when:** recorded live evenings meet the Stage 1 metrics, an observer can retell
 a story from at least one of them, and its chronicle cites only logged events.

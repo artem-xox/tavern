@@ -16,7 +16,7 @@ from tavern.adapters.probes import probes
 from tavern.evening.lockstep import Pace, evening_mode, run_evening
 from tavern.evening.metrics import (attention_counts, bar_metrics, conversation_counts, dice_metrics, evening_metrics,
                                     intention_counts, news_metrics, writer_stats)
-from tavern.evening.goal_metrics import goal_counts, promise_counts
+from tavern.evening.goal_metrics import goal_counts, promise_counts, unsure_count
 from tavern.evening.repetition import ALIKE, repetition_counts
 from tavern.evening.recording import (Record, format_record, parse_records, record_calls, record_questions, replay_calls,
                               replay_questions)
@@ -285,6 +285,7 @@ def main(root: Path) -> None:
               **evening_metrics(evening, calls, args.input_price, args.stuck_threshold, TARIFFS),
               "intentions": intention_counts(evening), "repetition": repetition_counts(evening.events, ALIKE),
               "goals": goal_counts(evening.events), "promises": promise_counts(evening.events),
+              "unsure": unsure_count(evening.events),
               "attention": attention_counts(evening), "conversation": conversation_counts(evening),
               "news": news_metrics(world), "dice": dice_metrics(evening.events),
               "bar": bar_metrics(evening.events, [item["id"] for item in world["actors"] if on_staff(item)]),

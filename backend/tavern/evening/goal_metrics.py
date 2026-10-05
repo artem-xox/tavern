@@ -1,4 +1,4 @@
-"""Goals and promises in an evening: how many guests set, reached, lost or let lapse, made, kept or broke."""
+"""Goals, promises and doubts in an evening: set, reached, lost or lapsed; made, kept or broken; unsure."""
 
 from collections import Counter
 from collections.abc import Mapping, Sequence
@@ -56,3 +56,18 @@ def promise_counts(events: Sequence[Mapping[str, Any]]) -> PromiseCounts:
     kinds = Counter(event["type"] for event in events)
     return {"made": kinds["promise_made"], "kept": kinds["promise_kept"], "broken": kinds["promise_broken"],
             "void": kinds["promise_void"]}
+
+
+def unsure_count(events: Sequence[Mapping[str, Any]]) -> int:
+    """Count the times a guest could not tell what to do.
+
+    Args:
+        events: The complete event log: `unsure` events.
+
+    Returns:
+        How many there are.
+
+    Raises:
+        KeyError: An event has no type.
+    """
+    return sum(event["type"] == "unsure" for event in events)

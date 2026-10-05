@@ -4,6 +4,8 @@ from collections.abc import Callable, Container, Mapping
 from typing import Any
 
 from tavern.body.queues import out_of_patience
+from tavern.hall.closing import inn_closed
+from tavern.hall.memory import record_event
 from tavern.hall.staff import on_staff
 from tavern.hall.state import Actor, Decision, World
 from tavern.hall.world import observe_actor, observe_people, start_action
@@ -65,6 +67,14 @@ def stale_requests(world: Mapping[str, Any], asked_at: Mapping[str, float]) -> l
             and actor["interrupted_at"] is not None and actor["interrupted_at"] > asked_at[actor["id"]]]
 
 
+# Below this score for its best option a Jev decision has no good one: in the live evenings recorded by 2026-10-05
+# the best option scored under 0.43 in 5% of 1,433 decisions and under 0.49 in 10%.
+UNSURE_BELOW = 0.45
+# After a doubt the guest is not paused again for this long: their mind is working on it, and a chain of pauses
+# would stand them idle (live seed 7: seven doubts of one guest in 140 s before this).
+UNSURE_COOLDOWN = 30.0
+
+
 def apply_decision(world: World, actor: Actor,
                    outcome: Callable[[], Mapping[str, Any]]) -> float:
     """Record a visitor's decision and start its action.
@@ -84,7 +94,11 @@ def apply_decision(world: World, actor: Actor,
         for stage in ("seat", "family"):
             if stage in decision:
                 actor["decision"][stage] = decision[stage]
-        result = start_action(world, actor["id"], decision["action"])
+        action = decision["action"]
+        if _unsure(world, actor, decision):
+            # Better a pause than a poor choice: the mind is asked, and the next decision follows its answer.
+            action = {"id": "wait", "verb": "wait", "target_id": None}
+        result = start_action(world, actor["id"], action)
         if not result["accepted"]:
             log_control(world, f"{actor['name']}: {result['reason']}")
     except Exception as error:
@@ -93,6 +107,24 @@ def apply_decision(world: World, actor: Actor,
     # A second's pause after every answer, applied or refused, keeps a refused visitor from
     # asking again on every tick.
     return world["time"] + 1.0
+
+
+def _unsure(world: World, actor: Actor, decision: Mapping[str, Any]) -> bool:
+    # A doubt is a real model's verdict: local scores are not calibrated, and a failed call has none. The seat
+    # stage is left out, since one chair is often as good as another. At closing time the guest goes home.
+    if decision["source"] != "jev" or decision["error"] is not None or inn_closed(world) \
+            or decision["action"]["verb"] == "wait":
+        return False
+    if any(item["type"] == "unsure" and world["time"] - item["time"] < UNSURE_COOLDOWN for item in actor["memory"]):
+        return False
+    stages = [decision["scores"], *(decision[key]["scores"] for key in ("family",) if key in decision
+                                    and decision[key]["source"] == "jev" and decision[key]["error"] is None)]
+    best = next((max(scores.values()) for scores in stages if scores and max(scores.values()) < UNSURE_BELOW), None)
+    if best is None:
+        return False
+    record_event(world, actor, "unsure", f"{actor['name']} could not tell what to do: the best option scored "
+                                         f"{best:.2f}")
+    return True
 
 
 def log_control(world: World, message: str) -> None:

@@ -199,7 +199,7 @@ Each step is small and checked against the baseline of step 0. Steps 0–5 were 
   sameness at arrival.
 - [x] **3. Take stock on surprise.** A scene's end alone no longer makes a guest take stock; a goal's end,
   a game's result, an interrupt or alert, closing time and a wrong done to them (`quarrel`, `seat_taken`,
-  `insulted`, `shoved`, `attacked`) do, and `INTENTION_RULES.budget` (4) caps the requests after arrival,
+  `insulted`, `shoved`, `attacked`) do, and `INTENTION_RULES.budget` (4; raised to 6 with the doubt below) caps the requests after arrival,
   arrival and closing excepted (`MindLoop.made` counts them). It also fixes D21: `SALIENT_THOUGHTS` named
   `insult`, a thought that does not exist, so an insult never made anyone take stock. Not done: "a new
   fact on a topic", because telling news logs no memory for the listener yet. Tests changed, named for
@@ -239,6 +239,17 @@ Each step is small and checked against the baseline of step 0. Steps 0–5 were 
   D19 also records. Not done: the evening as a social practice with roles as data (duties and norms per
   role, a bouncer), which waits for Stage 2's second staff member; the barkeep's duty is a flag on goals
   and a sentence in the prompt for now.
+- [x] **5b. A doubt asks the mind (added 2026-10-05 at the user's request).** Jev already gives calibrated
+  scores, so a decision whose best option scores under `UNSURE_BELOW` (0.45; the 5th percentile of 1,433
+  recorded decisions was 0.43 and the 10th 0.49) is a doubt: `apply_decision` starts `wait` instead of the
+  poor choice, remembers an `unsure` event, and that event is a trigger to take stock, within the budget
+  (now 6). Only a real Jev verdict counts (not local scores, not a failed call, not the seat stage, not
+  closing time), and `UNSURE_COOLDOWN` (30 s) stops a chain of pauses: the first live run paused one guest
+  seven times in 140 s. `metrics.json` gets `unsure`. Result (live, replay byte-identical): seed 7, 1 doubt,
+  35 intentions, 8 of 16 goals reached; seed 2, 6 doubts (one guest, 42–90 s apart, scoring 0.42–0.44,
+  so near the line), 36 intentions, 12 of 16 goals reached. Not measured: whether a doubt's intention
+  gives a better next choice than the poor one would have been; the threshold is a first guess to tune
+  against more evenings.
 - [ ] **6. Between evenings (Stage 4): not started on purpose.** Each guest's evening is summarized into memories and
   opinions that carry over, dropping what repeats, as Lyfe's summarize-and-forget does.
 

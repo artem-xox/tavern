@@ -3,7 +3,7 @@
 The mind layer writes, per guest, one first-person `thought` about how they read the situation and
 one `intention` for what they want to do next. Jev reads the intention in the briefing and weighs
 its options against it. A guest takes stock on arrival, after a salient event (an interrupt or an
-alert, a wrong done to them, a game's result, a goal's end, closing time) and every `interval` seconds, at
+alert, a wrong done to them, a game's result, a goal's end, a doubt about what to do, closing time) and every `interval` seconds, at
 most `budget` times after arrival.
 Runners ask asynchronously, like decisions: one request per guest at a time, at least `min_gap`
 seconds apart; a salient event after the request makes its answer stale (`stale_intentions`).
@@ -85,15 +85,17 @@ class IntentionRules:
 
 
 # Every three minutes of game time: twice or three times in a seven-minute evening.
-# Each guest's mind is asked at most four more times after arrival: the evening's turning points, not every scene.
-INTENTION_RULES = IntentionRules(interval=180.0, min_gap=3.0, budget=4)
+# Each guest's mind is asked at most six more times after arrival: the evening's turning points, not every scene,
+# and a few doubts.
+INTENTION_RULES = IntentionRules(interval=180.0, min_gap=3.0, budget=6)
 # Triggers the budget never withholds: a guest always plans on arriving and when the inn closes.
 UNMETERED = ("arrival", "closing")
 
 # Remembered events that make a guest take stock, by trigger kind.
 # A scene's end alone is not one: what a talk changed is told by a goal reached, a thought or a fact.
 SALIENT_EVENTS: Mapping[str, str] = MappingProxyType({
-    "interrupted": "interrupted", "alerted": "alerted", "dice_won": "dice", "dice_lost": "dice", "goal_done": "goal", "goal_failed": "goal", "goal_expired": "goal"})
+    "interrupted": "interrupted", "alerted": "alerted", "dice_won": "dice", "dice_lost": "dice", "goal_done": "goal", "goal_failed": "goal", "goal_expired": "goal",
+    "unsure": "unsure"})
 # Thought kinds that make a guest take stock: a wrong done to them.
 SALIENT_THOUGHTS = ("quarrel", "seat_taken", "insulted", "shoved", "attacked")
 _LONGEST = 400
