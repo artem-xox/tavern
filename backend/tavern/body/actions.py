@@ -35,7 +35,7 @@ def action_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Map
         return f"Only staff can {verb.replace('_', ' ')}"
     if activity.partner:
         return _talk_error(world, actor, action)
-    if activity.confronts:
+    if activity.near_person:
         return _confront_error(world, actor, action)
     if activity.requires_item and actor["inventory"][activity.requires_item] <= 0:
         return f"No {activity.requires_item} in inventory"

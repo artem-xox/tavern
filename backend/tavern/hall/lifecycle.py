@@ -266,7 +266,7 @@ def _apply_effect(world: World, actor: Actor) -> None:
     if action is None:
         raise ValueError(f"{actor['name']} has no action to finish")
     activity = ACTIVITIES[action["verb"]]
-    target = find_actor(world, action["target_id"]) if activity.partner or activity.confronts else _target(world, action)
+    target = find_actor(world, action["target_id"]) if activity.partner or activity.near_person else _target(world, action)
     if activity.effect:
         activity.effect(world, actor, target)
     for need, change in activity.needs.items():

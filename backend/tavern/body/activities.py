@@ -28,8 +28,9 @@ class Activity:
         partner: Whether it targets another visitor instead of an object. Such a verb is a part in a
             conversation scene (`tavern.social.scenes`): the scene, not a timer, ends it.
         joins: Whether it joins the partner's scene instead of starting one with them.
-        confronts: Whether it turns on another visitor (`tavern.social.hostility`): no scene, no walking, and
-            the timer ends it. Like talking, it needs the target at the actor's table or beside them.
+        near_person: Whether it targets another visitor at the actor's table or beside them, as a chat does:
+            no scene, no walking, and the timer ends it. Shoving and fighting (`tavern.social.hostility`) are
+            such verbs.
         duration: Seconds of interaction (nominal for a scene part), or None for a decision step
             that never runs in the world.
         family: The `FAMILIES` entry it is chosen under: a first decision picks the family, a
@@ -65,7 +66,7 @@ class Activity:
     target_kinds: tuple[str, ...] = ()
     partner: bool = False
     joins: bool = False
-    confronts: bool = False
+    near_person: bool = False
     requires_item: str | None = None
     empty_target: str | None = None
     shared_target: bool = False
@@ -238,7 +239,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              guidance="A game of dice draws a crowd: watching eases boredom, and curious guests love to see who "
                       "wins. It means leaving their seat until the game ends."),
     # Offered only to a guest with a grudge, a temper and, as drink loosens it, the nerve (`tavern.social.hostility`).
-    Activity(verb="shove", confronts=True, duration=1.0, effect=_shove, label="Shove", status="shoving",
+    Activity(verb="shove", near_person=True, duration=1.0, effect=_shove, label="Shove", status="shoving",
              doing="shoving someone", done="shoved someone", family="confront",
              what="shove {target}, who sits at their table or stands beside them, hard enough that the whole room "
                   "turns to look",
@@ -247,7 +248,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "ill of) and a short temper, more so with drink in them, would do it. Everyone hears it, the "
                       "one shoved will not forget it, and it may lead to worse. Most guests, even angry ones, "
                       "choose something else."),
-    Activity(verb="start_fight", confronts=True, duration=2.0, effect=_start_fight, label="Start a fight",
+    Activity(verb="start_fight", near_person=True, duration=2.0, effect=_start_fight, label="Start a fight",
              status="fighting", doing="starting a fight", done="started a fight", family="confront",
              what="pick a fight with {target}, who sits at their table or stands beside them",
              guidance="The rarest act of the evening: a fistfight with someone they think ill of after a recent "
