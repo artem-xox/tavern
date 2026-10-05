@@ -151,7 +151,7 @@ def test_the_question_puts_the_shared_prefix_then_the_card_then_the_moment() -> 
     assert [phrase in question["content"] for phrase in (
         "quarrel with Bea", "Stay for an ale.", "A quiet night.", "sober", "Needs")] == [True] * 5
     assert "Their intention" not in question["content"]
-    assert question["schema"]["required"] == ["thought", "intention"]
+    assert question["schema"]["required"] == ["thought", "intention", "goal", "target"]
 
 
 @pytest.mark.parametrize("prefix", [
@@ -202,7 +202,8 @@ def answer() -> dict[str, str]:
 def test_a_delivered_intention_is_kept_with_when_it_was_asked_and_why() -> None:
     world, view = ready()
     assert deliver_intention(world, "ada", view, answer, RULES) == 25.0
-    assert actor(world, "ada")["intention"] == {**answer(), "written_at": 20.0, "trigger": view["trigger"]}
+    assert actor(world, "ada")["intention"] == {**answer(), "goal": None, "written_at": 20.0,
+                                                 "trigger": view["trigger"]}
     assert world["events"][-1]["type"] == "intention" and "Drink up and go home." in world["events"][-1]["message"]
 
 
@@ -235,7 +236,7 @@ def test_the_writer_asks_the_port_and_checks_the_answer() -> None:
 
     async def ask(question: Any) -> dict[str, Any]:
         questions.append(question)
-        return answer()
+        return {**answer(), "goal": "none", "target": None}
     world = card_world()
     view = intention_view(world, actor(world, "ada"), intention_due(world, actor(world, "ada"), RULES))
     assert asyncio.run(intention_writer("SHARED PREFIX", ask)(view)) == answer()

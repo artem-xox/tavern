@@ -12,7 +12,7 @@ from dice_hall import advance, guest, happened, start, table_hall, who
 def intended(world: dict, actor_id: str) -> None:
     """Give a guest an intention written at the start of the evening."""
     who(world, actor_id)["intention"] = {
-        "thought": "Bored.", "intention": "Find a game.", "written_at": 0.0,
+        "thought": "Bored.", "intention": "Find a game.", "goal": None, "written_at": 0.0,
         "trigger": {"kind": "arrival", "text": "Just came in", "time": 0.0}}
 
 
@@ -42,6 +42,6 @@ def test_players_take_stock_after_the_result_and_bystanders_do_not(name: str, ki
 def test_a_save_holding_an_intention_written_after_a_game_loads_back() -> None:
     world = played()
     trigger = intention_due(world, who(world, "ada"), INTENTION_RULES)
-    who(world, "ada")["intention"] = {"thought": "Won.", "intention": "Celebrate.", "written_at": world["time"],
+    who(world, "ada")["intention"] = {"thought": "Won.", "intention": "Celebrate.", "goal": None, "written_at": world["time"],
                                       "trigger": trigger}
     assert parse_world(json.dumps(world)) == world

@@ -244,7 +244,7 @@ export class Dashboard {
   private intention(actor: Actor): string {
     const intention: Intention | null = actor.intention;
     const body: string = intention
-      ? `<p class="helper">“${escape(intention.thought)}”</p><p class="stage-heading">Intends</p><p>${escape(intention.intention)}</p><p class="helper">Decided ${Math.max(0, Math.round((this.world?.time ?? 0) - intention.written_at))} s ago, after: ${escape(intention.trigger.text)}</p>`
+      ? `<p class="helper">“${escape(intention.thought)}”</p><p class="stage-heading">Intends</p><p>${escape(intention.intention)}</p>${intention.goal ? `<p class="helper">Goal: ${escape(intention.goal.kind.replace("_", " "))} ${escape(this.world?.actors.find((item) => item.id === intention.goal?.target)?.name ?? intention.goal.target)} (${escape(intention.goal.status)})</p>` : ""}<p class="helper">Decided ${Math.max(0, Math.round((this.world?.time ?? 0) - intention.written_at))} s ago, after: ${escape(intention.trigger.text)}</p>`
       : `<p class="helper">${this.intentions ? "No intention written yet." : "Offline: no Claude key, so guests write no intentions."}</p>`;
     return `<details id="intention-detail" open><summary>Thought and intention</summary><div class="detail-body">${body}</div></details>`;
   }

@@ -59,7 +59,7 @@ def test_save_command_writes_to_the_store(tmp_path: Path) -> None:
         application.state.sessions.open("device-test").command({"type": "save"})
     assert [(world["schema_version"], session_id, slot)
             for kind, session_id, slot, world in log if kind == "write"] == [
-        (10, "device-test", "manual"), (10, "device-test", "auto"),
+        (11, "device-test", "manual"), (11, "device-test", "auto"),
     ]
 
 

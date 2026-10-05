@@ -6,6 +6,7 @@ from typing import Any
 from tavern.body.activities import ACTIVITIES, FAMILIES
 from tavern.hall.room import SEAT_TABLES
 from tavern.mind.feelings import feelings
+from tavern.mind.goals import goal_words, serving
 from tavern.mind.hall_view import company_at, headcount, in_use, known_object, label_of, line_place, place_words, steps_to, walk_words
 from tavern.mind.options import family_text, option_text
 from tavern.mind.portrait import portrait
@@ -38,8 +39,9 @@ def brief(observation: Observation, candidates: Sequence[Mapping[str, Any]]) -> 
              feelings(observation), invitation_note(observation), _intention(observation), _people(observation),
              _places(observation), _tables(observation), _recent(observation))
     return {"situation": " ".join(part for part in parts if part),
-            "options": {action["id"]: family_text(observation, action) if action["verb"] in FAMILIES
-                        else option_text(observation, action) for action in candidates}}
+            "options": {action["id"]: _marked(observation, action, family_text(observation, action)
+                                              if action["verb"] in FAMILIES else option_text(observation, action))
+                        for action in candidates}}
 
 
 def _name(observation: Observation) -> str:
@@ -147,6 +149,11 @@ def _person(observation: Observation, visitor: Mapping[str, Any]) -> str:
     return f"{label_of(visitor)} is {activity.doing if activity and activity.doing else 'standing about'}"
 
 
+def _marked(observation: Observation, action: Mapping[str, Any], text: str) -> str:
+    # An option that brings the guest closer to their goal says so, so a model need not match prose.
+    return f"{text} (this serves the goal they set themselves)" if serving(observation, action) else text
+
+
 def _intention(observation: Observation) -> str:
     # The mind's latest intention (see `intentions.py`); Jev weighs the options against it.
     intention = observation["actor"].get("intention")
@@ -154,8 +161,18 @@ def _intention(observation: Observation) -> str:
         return ""
     now = observation.get("time")
     when = "" if now is None else f"decided {_ago(now - intention['written_at'])}, "
+    goal = intention.get("goal")
+    aim = "" if goal is None or goal["status"] != "active" else f" Their goal: {goal_words(goal, _goal_person(observation, goal))}."
     return (f"Their own reading of things: \"{intention['thought']}\" Their intention: "
-            f"{intention['intention'].rstrip('.')} ({when}after: {intention['trigger']['text']}).")
+            f"{intention['intention'].rstrip('.')} ({when}after: {intention['trigger']['text']}).{aim}")
+
+
+def _goal_person(observation: Observation, goal: Mapping[str, Any]) -> str | None:
+    # The goal's person as the guest calls them, when they are in sight.
+    person = next((item for item in [*observation.get("visitors", []), *observation.get("people", [])]
+                   if item["id"] == goal["target"]), None)
+    return label_of(person) if person else "that guest"
+
 
 
 def _people(observation: Observation) -> str:

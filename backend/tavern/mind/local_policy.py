@@ -4,6 +4,7 @@ from collections.abc import Mapping, Sequence
 import math
 from typing import Any
 
+from tavern.mind.goals import serving
 from tavern.mind.hall_view import in_use, line_place
 from tavern.social.hostility import urge
 from tavern.social.thoughts import THOUGHTS, thought_mood
@@ -61,7 +62,19 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
     scores = {action["id"]: utility[action["verb"]] for action in candidates}
     _score_seats(observation, candidates, scores)
     _score_lines(observation, candidates, scores)
+    _score_goal(observation, candidates, scores)
     return scores
+
+
+# What serving the guest's goal adds to an option's score: enough to tip a near tie, not to outweigh a pressing need.
+GOAL_BONUS = 0.3
+
+
+def _score_goal(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
+                scores: dict[str, float]) -> None:
+    for action in candidates:
+        if serving(observation, action):
+            scores[action["id"]] = min(1.0, scores[action["id"]] + GOAL_BONUS)
 
 
 def _score_lines(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
@@ -126,6 +139,7 @@ def local_seat_scores(observation: Mapping[str, Any], candidates: Sequence[Mappi
     scores = {action["id"]: 0.3 + objects[action["target_id"]].get("appeal", 0.0) * (0.2 + 0.4 * comfort)
               for action in candidates}
     _score_seats(observation, candidates, scores)
+    _score_goal(observation, candidates, scores)
     return scores
 
 

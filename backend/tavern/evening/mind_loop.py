@@ -13,6 +13,7 @@ from typing import Any, Protocol
 
 from tavern.evening.decisions import apply_decision, decision_requests, free_to_decide, stale_requests
 from tavern.hall.state import World, find_actor
+from tavern.mind.goals import settle_goals
 from tavern.mind.intentions import IntentionRules, Intender, deliver_intention, intention_requests, stale_intentions
 from tavern.social.turns import TurnResult, claim_turns, deliver_turn
 
@@ -186,6 +187,8 @@ class MindLoop:
             self.writing[(scene_id, turn)] = self.courier.send(self.write(view), world["time"])
 
     def _take_stock(self, world: World, intender: Intender) -> None:
+        # Goals the world has decided end first, so a goal's end is what the next request is about.
+        settle_goals(world)
         # Overtaken requests are dropped, finished ones kept, then new ones asked.
         for actor_id in stale_intentions(world, {key: asked for key, (_, asked, _) in self.intending.items()}):
             self.courier.cancel(self.intending.pop(actor_id)[0])

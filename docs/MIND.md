@@ -143,8 +143,8 @@ Separate who from where:
 | `repetition.restated` | Intentions that repeat the guest's previous one almost word for word: a wasted call or a stuck plan | Step 0 (done) |
 | `repetition.repeated` | Lines a speaker has already said tonight | Step 0 (done) |
 | Intentions per guest | How often the slow layer runs: `intentions.written` / `guests` | Already logged |
-| Goals achieved | Goals completed before they failed or expired | Exact from step 2; by hand until then |
-| Unrealizable intentions | Intentions no option can serve | Zero by construction from step 2; by hand until then |
+| Goals achieved | Goals completed before they failed or expired | `goals` in `metrics.json` (step 2, done) |
+| Unrealizable goals | Goals the world cannot carry out | Zero by construction (step 2, done); the prose can still say anything |
 | Say and do | Promises followed by the matching action in time | Step 4 |
 | Sameness | Guests holding the same goal template and target at once | Step 2 |
 | Stories | Matches of story patterns (a promise broken, a grudge acted on, news passed through three guests) | With E28 |
@@ -181,10 +181,22 @@ against M4 yet; [PLAN.md](PLAN.md) decides the order.
   replay byte-identical): restated 2, repeated 0 (baseline 5 and 1), 44 intentions, 41 lines, no
   fallbacks. The evening took another course than the baseline's (a barkeep now pours), so only
   the repeats are comparable; goals raised in talk are a by-hand check for step 2's measures.
-- [ ] **2. Stance and goal templates.** The stance replaces the free intention; a table of goal
-  templates marks the options that serve a goal, for Jev and the local policy alike. This
-  changes the saved world (a schema bump, approved for Stage 1). Check: goals achieved, no
-  unrealizable intentions, less sameness at arrival.
+- [x] **2. Stance and goal templates.** The mind answers with a thought, an intention in words and a
+  typed goal (`mind/goals.py`: `GOALS` holds `talk_to` and `sit_with`, each with the options that serve
+  it, how it is reached and how long it lasts). The goal's kind and guest are checked at the boundary
+  (`intentions.parse_stance`), so an unrealizable goal is refused. Options that serve the goal are
+  marked for Jev (briefing) and score `GOAL_BONUS` higher in the local policy; `settle_goals` ends each
+  goal once as `done` (`talk_to`: a line heard from them since; `sit_with`: one table), `failed` (they
+  left) or `expired`, and logs it; a goal's end is a trigger to take stock. Saved worlds are version 11
+  (approved bump), and the inspector shows the goal. New `goals` in `metrics.json`: set, done, failed,
+  expired. Tests named for the change: `test_database.py` (version), `test_intention_saves.py`,
+  `test_dice_intentions.py` and `test_intentions.py` (the intention carries a `goal`, the answer has
+  four fields). Result (2026-10-05, live seed 7, replay byte-identical; offline seed 5 sets no goals):
+  30 goals set, 7 done, 0 failed, 1 expired, 56 intentions (44 in step 1), restated 2, repeated 0. Most
+  goals ended replaced by a newer intention: Brida set out to sit with Edda seven times between 41 s
+  and 151 s, once for each scene's end, which is what step 3 changes. Not done here: `avoid` and other
+  kinds (the table takes them as entries), the unrealizable-intention count for the prose itself, and
+  sameness at arrival.
 - [ ] **3. Take stock on surprise.** Triggers are a goal's end, a strong thought, a new fact on
   a topic, arrival and closing, under a budget per guest; a scene's end alone no longer counts.
   Check: fewer intentions per guest, and goals achieved no lower.

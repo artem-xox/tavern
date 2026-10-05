@@ -51,7 +51,9 @@ def _visitor_view() -> str:
         "before going home once the evening has given them what they came for, or has gone sour. Restless "
         "wandering without a reason is unnatural, and so is ignoring a pressing need. When the situation states "
         "their intention, weigh each option against their intention: what serves it is natural, what goes against "
-        "it needs a reason, but an urgent need or something that just happened still comes first."
+        "it needs a reason, but an urgent need or something that just happened still comes first. An option "
+        "marked as serving their goal moves them toward what they set out to do tonight; prefer it unless a need "
+        "presses or something just happened."
     )
 
 
