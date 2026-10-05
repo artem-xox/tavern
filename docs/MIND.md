@@ -191,7 +191,9 @@ against M4 yet; [PLAN.md](PLAN.md) decides the order.
   opinions that carry over, dropping what repeats, as Lyfe's summarize-and-forget does.
 
 Missing verbs found on the way go to their own tasks. The first is "buy someone a drink"
-(DESIGN.md, Actions), which 17 intentions in five of the seven evenings asked for.
+(DESIGN.md, Actions), which 17 intentions in five of the seven evenings asked for. It became
+[Giving (H0–H5)](stages/1_EVENING.md#giving--from-hand-to-hand-h0h5): anything a guest carries
+can be handed to another, and fetching a drink for someone is one chosen errand.
 
 ## Sources
 
