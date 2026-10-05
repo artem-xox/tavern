@@ -1,6 +1,6 @@
 /** Static room surfaces, fittings and furniture rendered from the server map. */
 import Phaser from "phaser";
-import { drawDarts, drawDice, drawRugs, hearthFacing } from "./furniture";
+import { drawDarts, drawDice, hearthFacing } from "./furniture";
 import type { World, WorldObject } from "./types";
 
 const TEXTURES: [string, string][] = [
@@ -18,13 +18,21 @@ const TEXTURES: [string, string][] = [
   ["tavern-barrel", "/tavern/decor/barrel.png"],
   ["tavern-plant", "/tavern/decor/plant.png"],
   ["tavern-candle", "/tavern/decor/candle.png"],
+  ["tavern-rug-wine", "/tavern/rugs/rug-wine.png"],
+  ["tavern-rug-teal", "/tavern/rugs/rug-teal.png"],
+  ["tavern-rug-blue", "/tavern/rugs/rug-blue.png"],
+  ["tavern-rug-moss", "/tavern/rugs/rug-moss.png"],
+  ["tavern-rug-ochre", "/tavern/rugs/rug-ochre.png"],
+  ["tavern-rug-green", "/tavern/rugs/rug-green.png"],
 ];
 
+const RUG_TEXTURES: string[] = ["tavern-rug-wine", "tavern-rug-teal", "tavern-rug-blue", "tavern-rug-ochre", "tavern-rug-moss"];
+
 export class RoomArt {
-  private floorArt!: Phaser.GameObjects.Image;
+  private floorArt!: Phaser.GameObjects.TileSprite;
   private privyArt!: Phaser.GameObjects.Image;
-  private floor!: Phaser.GameObjects.Graphics;
   private wallArt!: Phaser.GameObjects.Container;
+  private shade!: Phaser.GameObjects.Graphics;
   private glow!: Phaser.GameObjects.Graphics;
   private details!: Phaser.GameObjects.Graphics;
   private props: Phaser.GameObjects.Image[] = [];
@@ -39,10 +47,10 @@ export class RoomArt {
 
   create(): void {
     for (const [key] of TEXTURES) this.scene.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
-    this.floorArt = this.scene.add.image(0, 0, "tavern-oak-floor").setOrigin(0).setDepth(-2);
+    this.floorArt = this.scene.add.tileSprite(0, 0, 1, 1, "tavern-oak-floor").setOrigin(0).setDepth(-2).setTileScale(2);
     this.privyArt = this.scene.add.image(0, 0, "tavern-privy-stone").setOrigin(0).setDepth(-1.5);
-    this.floor = this.scene.add.graphics().setDepth(-1);
     this.wallArt = this.scene.add.container(0, 0).setDepth(0);
+    this.shade = this.scene.add.graphics().setDepth(0.25);
     this.glow = this.scene.add.graphics().setDepth(0.5);
     this.details = this.scene.add.graphics().setDepth(2);
   }
@@ -54,11 +62,11 @@ export class RoomArt {
     this.mapSignature = signature;
     const { width, height, tile_size: size } = world.map;
     this.scene.scale.resize(width * size, height * size);
-    this.floorArt.setDisplaySize(width * size, height * size);
+    this.floorArt.setSize(width * size, height * size);
     const toilet: WorldObject | undefined = world.map.objects.find((object: WorldObject): boolean => object.kind === "toilet");
     this.privyArt.setVisible(Boolean(toilet));
     if (toilet) this.privyArt.setPosition((toilet.x - 1) * size, (toilet.y - 1) * size).setDisplaySize(3 * size, 3 * size);
-    this.floor.clear();
+    this.drawEdgeShade(width * size, height * size);
     this.wallArt.removeAll(true);
     this.details.clear();
     for (const prop of this.props) prop.destroy();
@@ -77,16 +85,35 @@ export class RoomArt {
       const [dx, dy]: [number, number] = hearthFacing(hearth, width);
       const x: number = (hearth.x + (hearth.width ?? 1) / 2 + dx * 0.9) * size;
       const y: number = (hearth.y + (hearth.height ?? 1) / 2 + dy * 0.9) * size;
-      for (let ring: number = 5; ring > 0; ring -= 1) {
-        this.glow.fillStyle(0xf5a347, 0.045 * flicker).fillCircle(x, y, ring * size * 0.62 * flicker);
-      }
+      this.drawWarmGlow(x, y, size * 3.1, 0.045, flicker);
     }
+    for (const table of this.world.map.objects.filter((object: WorldObject): boolean => object.kind === "table")) {
+      this.drawWarmGlow((table.x + 0.3) * size, (table.y + 0.3) * size, size * 1.45, 0.024, flicker);
+    }
+  }
+
+  private drawWarmGlow(x: number, y: number, radius: number, alpha: number, flicker: number): void {
+    for (let ring: number = 5; ring > 0; ring -= 1) {
+      this.glow.fillStyle(0xf5a347, alpha * flicker).fillCircle(x, y, ring * radius / 5 * flicker);
+    }
+  }
+
+  private drawEdgeShade(width: number, height: number): void {
+    const edge: number = 80;
+    this.shade.clear();
+    this.shade.fillGradientStyle(0x171216, 0x171216, 0x171216, 0x171216, 0.42, 0.42, 0, 0).fillRect(0, 0, width, edge);
+    this.shade.fillGradientStyle(0x171216, 0x171216, 0x171216, 0x171216, 0, 0, 0.38, 0.38).fillRect(0, height - edge, width, edge);
+    this.shade.fillGradientStyle(0x171216, 0x171216, 0x171216, 0x171216, 0.32, 0, 0.32, 0).fillRect(0, 0, edge, height);
+    this.shade.fillGradientStyle(0x171216, 0x171216, 0x171216, 0x171216, 0, 0.32, 0, 0.32).fillRect(width - edge, 0, edge, height);
   }
 
   private drawFloor(world: World): void {
     const { tile_size: size, blocked } = world.map;
-    this.floor.fillStyle(0xddd1aa, 0.35).fillRect(2.3 * size, 8.2 * size, 3, size * 0.6);
-    drawRugs(this.floor, world.map.objects, size);
+    let ordinaryRug: number = 0;
+    for (const table of world.map.objects.filter((object: WorldObject): boolean => object.kind === "table" || object.kind === "dice_table")) {
+      const texture: string = table.kind === "dice_table" ? "tavern-rug-green" : RUG_TEXTURES[ordinaryRug++ % RUG_TEXTURES.length]!;
+      this.addProp(texture, (table.x + 0.5) * size, (table.y + 0.5) * size, 112, 56, -1.6);
+    }
     for (const [x, y] of blocked) this.drawWall(x, y, size, "tavern-slate-wall");
     for (const object of world.map.objects.filter((item: WorldObject): boolean => ["window", "fireplace"].includes(item.kind))) {
       for (let dy: number = 0; dy < (object.height ?? 1); dy += 1) {
@@ -121,8 +148,8 @@ export class RoomArt {
     if (object.kind === "bar") this.addProp("tavern-bar", (object.x + (object.width ?? 1) / 2) * size, y + 6, (object.width ?? 1) * size * 1.1, 82, 10 + (object.y + 0.9) * size / 1000);
     if (object.kind === "tap") this.addProp("tavern-ale-cask", x, y, 36, 36);
     if (object.kind === "toilet") this.addProp("tavern-privy-bucket", x, y, 30, 30);
-    if (object.kind === "chair" || object.kind === "dice_chair") this.addProp("tavern-chair", x, y, 37, 37).setFlipX(object.facing === "west");
-    if (object.kind === "table" || object.kind === "dice_table") this.addProp("tavern-table", x, y, 42, 42);
+    if (object.kind === "chair" || object.kind === "dice_chair") this.addProp("tavern-chair", x, y, 24, 28).setFlipX(object.facing === "west");
+    if (object.kind === "table" || object.kind === "dice_table") this.addProp("tavern-table", x, y, 48, 32);
     if (object.kind === "dice_table") drawDice(this.details, object, size);
     if (object.kind === "darts") drawDarts(this.details, x, y);
     if (object.reserved_by) this.details.lineStyle(2, 0xe6c88d, 0.75).strokeCircle(x, y, 15);
@@ -130,14 +157,20 @@ export class RoomArt {
 
   private drawDecor(world: World): void {
     const { width, height, tile_size: size } = world.map;
-    for (const [x, y] of [[width - 1.55, 7.6], [width - 1.55, height - 2.2]]) {
-      this.addProp("tavern-barrel", x * size, y * size, 31, 31);
+    for (const [x, y] of [[width - 2, 6], [width - 2, height - 4]]) {
+      if (this.isClearDecorCell(world, x, y)) this.addProp("tavern-barrel", (x + 0.5) * size, (y + 0.5) * size, 24, 28);
     }
-    for (const [x, y] of [[1.55, 1.9], [width - 1.6, 4.7], [1.5, height - 1.7]]) {
-      this.addProp("tavern-plant", x * size, y * size, 30, 30);
+    for (const [x, y] of [[1, 2], [1, height - 2], [13, height - 2]]) {
+      if (this.isClearDecorCell(world, x, y)) this.addProp("tavern-plant", (x + 0.5) * size, (y + 0.5) * size, 24, 32);
     }
     for (const table of world.map.objects.filter((object: WorldObject): boolean => object.kind === "table")) {
-      this.addProp("tavern-candle", (table.x + 0.23) * size, (table.y + 0.24) * size, 16, 16, 3);
+      this.addProp("tavern-candle", (table.x + 0.23) * size, (table.y + 0.24) * size, 16, 20, 3);
     }
+  }
+
+  private isClearDecorCell(world: World, x: number, y: number): boolean {
+    if (world.map.blocked.some(([blockedX, blockedY]: [number, number]): boolean => blockedX === x && blockedY === y)) return false;
+    return !world.map.objects.some((object: WorldObject): boolean =>
+      x >= object.x && x < object.x + (object.width ?? 1) && y >= object.y && y < object.y + (object.height ?? 1));
   }
 }

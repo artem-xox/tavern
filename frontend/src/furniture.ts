@@ -35,26 +35,6 @@ function drawDie(g: Phaser.GameObjects.Graphics, x: number, y: number, pips: num
   }
 }
 
-/** Lay a rug under every table and its chairs, kept clear of the walls. */
-export function drawRugs(floor: Phaser.GameObjects.Graphics, objects: WorldObject[], size: number): void {
-  const colors: [number, number][] = [[0x38544f, 0x8a9d79], [0x713b35, 0xbb7760], [0x354b69, 0x8999ac], [0x746035, 0xb09a60]];
-  let ordinaryIndex: number = 0;
-  objects.filter((object: WorldObject): boolean => object.kind === "table" || object.kind === "dice_table").forEach((table: WorldObject): void => {
-    const [fill, trim] = table.kind === "dice_table" ? [0x2f5a3e, 0x9cc79a] : colors[ordinaryIndex++ % colors.length]!;
-    const x: number = (table.x - 1.2) * size;
-    const y: number = (table.y - 0.3) * size;
-    const width: number = ((table.width ?? 1) + 2.4) * size;
-    const height: number = ((table.height ?? 1) + 0.6) * size;
-    floor.fillStyle(0x2b211b, 0.35).fillRoundedRect(x - 2, y + 3, width + 4, height, 7);
-    floor.fillStyle(fill).fillRoundedRect(x, y, width, height, 6);
-    floor.lineStyle(2, trim, 0.55).strokeRoundedRect(x + 4, y + 4, width - 8, height - 8, 4);
-    for (let col: number = 0; col < 6; col += 1) {
-      const cx: number = x + (col + 0.5) * width / 6;
-      floor.lineStyle(1, trim, 0.2).strokePoints([{ x: cx, y: y + height / 2 - 6 }, { x: cx + 6, y: y + height / 2 }, { x: cx, y: y + height / 2 + 6 }, { x: cx - 6, y: y + height / 2 }], true);
-    }
-  });
-}
-
 export function drawDarts(g: Phaser.GameObjects.Graphics, x: number, y: number): void {
   g.fillStyle(0x3b2b22).fillRoundedRect(x - 15, y - 16, 30, 33, 4);
   g.fillStyle(0xb69769).fillCircle(x, y, 13);
