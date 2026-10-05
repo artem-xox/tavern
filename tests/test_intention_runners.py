@@ -110,7 +110,8 @@ def test_a_quarrel_changes_the_targets_intention_and_then_their_choice() -> None
 def test_lockstep_asks_on_arrival_and_after_the_quarrel_one_latency_before_delivery() -> None:
     events, asked, _world = evening(intend=True)
     bea = [(round(time, 1), kind) for time, actor_id, kind in asked if actor_id == "bea"]
-    assert bea[0] == (0.1, "arrival") and bea[1][1] == "quarrel"
+    # The quarrel also leaves Bea insulted (D21: that thought now counts), and the later of the two names the trigger.
+    assert bea[0] == (0.1, "arrival") and bea[1][1] in ("quarrel", "insulted")
     delivered = next(event for event in events if event["type"] == "intention" and event["actor_id"] == "bea")
     assert round(delivered["time"], 1) == 1.1
 

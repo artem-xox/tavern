@@ -197,9 +197,17 @@ against M4 yet; [PLAN.md](PLAN.md) decides the order.
   and 151 s, once for each scene's end, which is what step 3 changes. Not done here: `avoid` and other
   kinds (the table takes them as entries), the unrealizable-intention count for the prose itself, and
   sameness at arrival.
-- [ ] **3. Take stock on surprise.** Triggers are a goal's end, a strong thought, a new fact on
-  a topic, arrival and closing, under a budget per guest; a scene's end alone no longer counts.
-  Check: fewer intentions per guest, and goals achieved no lower.
+- [x] **3. Take stock on surprise.** A scene's end alone no longer makes a guest take stock; a goal's end,
+  a game's result, an interrupt or alert, closing time and a wrong done to them (`quarrel`, `seat_taken`,
+  `insulted`, `shoved`, `attacked`) do, and `INTENTION_RULES.budget` (4) caps the requests after arrival,
+  arrival and closing excepted (`MindLoop.made` counts them). It also fixes D21: `SALIENT_THOUGHTS` named
+  `insult`, a thought that does not exist, so an insult never made anyone take stock. Not done: "a new
+  fact on a topic", because telling news logs no memory for the listener yet. Tests changed, named for
+  the change: `test_intentions.py` (three triggers: a scene's end alone is no trigger) and
+  `test_intention_runners.py` (a quarrel's later thought, `insulted`, names the trigger). Result
+  (2026-10-05, live, replay byte-identical): seed 7 wrote 29 intentions (56 in step 2), 4.8 a guest,
+  set 17 goals and reached 10, 2 expired, restated 0, repeated 1, intentions $0.07 (was $0.14); seed 2
+  wrote 26, set 6, reached 5.
 - [ ] **4. Commitments.** A promise in talk becomes a commitment; an unkept one gives a
   thought. Check: say and do.
 - [ ] **5. Practices and roles.** The evening as a practice; the barkeep gets a stance bound by

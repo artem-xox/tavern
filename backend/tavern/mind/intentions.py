@@ -3,7 +3,8 @@
 The mind layer writes, per guest, one first-person `thought` about how they read the situation and
 one `intention` for what they want to do next. Jev reads the intention in the briefing and weighs
 its options against it. A guest takes stock on arrival, after a salient event (an interrupt or an
-alert, a quarrel, insult or taken seat, a scene ending, closing time) and every `interval` seconds.
+alert, a wrong done to them, a game's result, a goal's end, closing time) and every `interval` seconds, at
+most `budget` times after arrival.
 Runners ask asynchronously, like decisions: one request per guest at a time, at least `min_gap`
 seconds apart; a salient event after the request makes its answer stale (`stale_intentions`).
 """
@@ -66,28 +67,35 @@ class IntentionRules:
 
     `interval`: without salient events, a guest takes stock again this long after the last time;
     a failed request also waits this long before it is asked again. `min_gap`: least time between
-    two requests of one guest, so a burst of events costs one call.
+    two requests of one guest, so a burst of events costs one call. `budget`: most requests per guest
+    after arrival, apart from closing time, or None for no limit.
     """
 
     interval: float
     min_gap: float
+    budget: int | None = None
 
     def __post_init__(self) -> None:
         if not 0 < self.interval < math.inf:
             raise ValueError(f"Intention interval must be a positive number of seconds, not {self.interval!r}")
         if not 0 <= self.min_gap < math.inf:
             raise ValueError(f"Intention gap must be a nonnegative number of seconds, not {self.min_gap!r}")
+        if self.budget is not None and (isinstance(self.budget, bool) or self.budget < 0):
+            raise ValueError(f"Intention budget must be a nonnegative number of requests or None, not {self.budget!r}")
 
 
 # Every three minutes of game time: twice or three times in a seven-minute evening.
-INTENTION_RULES = IntentionRules(interval=180.0, min_gap=3.0)
+# Each guest's mind is asked at most four more times after arrival: the evening's turning points, not every scene.
+INTENTION_RULES = IntentionRules(interval=180.0, min_gap=3.0, budget=4)
+# Triggers the budget never withholds: a guest always plans on arriving and when the inn closes.
+UNMETERED = ("arrival", "closing")
 
 # Remembered events that make a guest take stock, by trigger kind.
+# A scene's end alone is not one: what a talk changed is told by a goal reached, a thought or a fact.
 SALIENT_EVENTS: Mapping[str, str] = MappingProxyType({
-    "interrupted": "interrupted", "alerted": "alerted", "conversation": "scene_end", "left_conversation": "scene_end",
-    "dice_won": "dice", "dice_lost": "dice", "goal_done": "goal", "goal_failed": "goal", "goal_expired": "goal"})
-# Thought kinds that make a guest take stock; `insult` counts once a speech act gives that thought.
-SALIENT_THOUGHTS = ("quarrel", "seat_taken", "insult")
+    "interrupted": "interrupted", "alerted": "alerted", "dice_won": "dice", "dice_lost": "dice", "goal_done": "goal", "goal_failed": "goal", "goal_expired": "goal"})
+# Thought kinds that make a guest take stock: a wrong done to them.
+SALIENT_THOUGHTS = ("quarrel", "seat_taken", "insulted", "shoved", "attacked")
 _LONGEST = 400
 
 # Writes a guest's thought and intention from their view (see `intention_view`); raises on failure.
@@ -140,14 +148,16 @@ def intention_due(world: Mapping[str, Any], actor: Mapping[str, Any], rules: Int
 
 
 def intention_requests(world: Mapping[str, Any], pending: Container[str], next_allowed: Mapping[str, float],
-                       rules: IntentionRules) -> list[tuple[str, dict[str, Any]]]:
+                       rules: IntentionRules, made: Mapping[str, int] | None = None) -> list[tuple[str, dict[str, Any]]]:
     """List the guests whose mind should be asked now, with what it is shown.
 
     Args:
         world: Current world; building a view refreshes the guest's knowledge, as decisions do.
         pending: Guests already waiting for an answer: one request per guest at a time.
         next_allowed: Earliest game time each guest may be asked again; absent means at once.
-        rules: Interval rule.
+        rules: Interval rule and budget.
+        made: Requests already answered per guest apart from `UNMETERED` ones; a guest who has made
+            `rules.budget` of them is asked only at an unmetered trigger. None counts none.
 
     Returns:
         (actor ID, view) pairs in actor order.
@@ -158,7 +168,8 @@ def intention_requests(world: Mapping[str, Any], pending: Container[str], next_a
         if on_staff(actor) or actor["id"] in pending or world["time"] < next_allowed.get(actor["id"], 0.0):
             continue
         trigger = intention_due(world, actor, rules)
-        if trigger is not None:
+        spent = rules.budget is not None and (made or {}).get(actor["id"], 0) >= rules.budget
+        if trigger is not None and not (spent and trigger["kind"] not in UNMETERED):
             requests.append((actor["id"], intention_view(world, actor, trigger)))
     return requests
 

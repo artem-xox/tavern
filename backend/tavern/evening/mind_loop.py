@@ -14,7 +14,8 @@ from typing import Any, Protocol
 from tavern.evening.decisions import apply_decision, decision_requests, free_to_decide, stale_requests
 from tavern.hall.state import World, find_actor
 from tavern.mind.goals import settle_goals
-from tavern.mind.intentions import IntentionRules, Intender, deliver_intention, intention_requests, stale_intentions
+from tavern.mind.intentions import (UNMETERED, IntentionRules, Intender, deliver_intention, intention_requests,
+                                    stale_intentions)
 from tavern.social.turns import TurnResult, claim_turns, deliver_turn
 
 # One answer in flight. What it is belongs to the courier: a task live, a stored coroutine in lockstep.
@@ -101,6 +102,7 @@ class MindLoop:
         self.writing: dict[tuple[str, int], Ticket] = {}
         self.intending: dict[str, tuple[Ticket, float, dict[str, Any]]] = {}
         self.next_intention: dict[str, float] = {}
+        self.made: dict[str, int] = {}
 
     def tick(self, world: World) -> list[tuple[str, Ticket]]:
         """Play one tick of requests against a world that has just stepped.
@@ -134,7 +136,7 @@ class MindLoop:
         for ticket in self._tickets():
             self.courier.cancel(ticket)
         for requests in (self.pending, self.writing, self.intending, self.next_intention, self.asked_at,
-                         self.revisions, self.next_decision):
+                         self.revisions, self.next_decision, self.made):
             requests.clear()
 
     async def close(self) -> None:
@@ -197,5 +199,7 @@ class MindLoop:
                 del self.intending[actor_id]
                 self.next_intention[actor_id] = deliver_intention(
                     world, actor_id, view, self.courier.outcome(ticket), self.rules)
-        for actor_id, view in intention_requests(world, self.intending, self.next_intention, self.rules):
+                if view["trigger"]["kind"] not in UNMETERED:
+                    self.made[actor_id] = self.made.get(actor_id, 0) + 1
+        for actor_id, view in intention_requests(world, self.intending, self.next_intention, self.rules, self.made):
             self.intending[actor_id] = (self.courier.send(intender(view), world["time"]), world["time"], view)
