@@ -26,6 +26,7 @@ from tavern.mind.cards import PARAMS, TEXT_FIELDS
 from tavern.mind.goals import GOALS, STATUSES, Goal, check_goal, goal_words
 from tavern.mind.intention_prompt import intention_question
 from tavern.mind.questions import Ask
+from tavern.social.giving import drink_targets
 from tavern.social.heard import earlier_lines
 from tavern.social.names import called
 from tavern.social.thoughts import THOUGHTS, active_thoughts
@@ -201,7 +202,8 @@ def intention_view(world: Mapping[str, Any], actor: Mapping[str, Any], trigger: 
     Returns:
         `actor_id`, `name`, `time`, `trigger`, `previous` intention (or None), `card` in words,
         `situation` (the briefing paragraph, without the previous intention), active `thoughts`,
-        `duty` (the bar they work at, or None for a guest), `others` (the guests in the hall as this guest calls them: ID to name, for a goal), `earlier`
+        `duty` (the bar they work at, or None for a guest), `others` (the guests in the hall as this guest calls them: ID to name, for a goal),
+        `fetchable` (those among them they could bring a drink, see `giving.drink_targets`), `earlier`
         (the latest 8 lines they said or heard tonight, see `heard.earlier_lines`) and `drink`
         (drunkenness stage).
     """
@@ -213,6 +215,8 @@ def intention_view(world: Mapping[str, Any], actor: Mapping[str, Any], trigger: 
             "situation": brief(observation, [])["situation"],
             "duty": post_of(world["map"], actor)["name"] if on_staff(actor) else None,
             "others": {item["id"]: called(actor, item) for item in world["actors"] if item["id"] != actor["id"]},
+            "fetchable": {item["id"]: item["name"] for item in observation["people"]
+                          if item["id"] in drink_targets(observation)},
             "thoughts": [item["text"] for item in active_thoughts(actor["thoughts"], world["time"])],
             "earlier": earlier_lines(actor, RECALLED_LINES),
             "drink": drunk_stage(actor["drunkenness"]).name}

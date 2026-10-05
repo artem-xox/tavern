@@ -35,6 +35,12 @@ def _others(view: Mapping[str, Any]) -> str:
                         for kind in GOALS) + ".")
 
 
+def _fetchable(view: Mapping[str, Any]) -> list[str]:
+    # Whom a drink could be brought to, when the guest could do it: the occasion for a goal to bring one.
+    people = "; ".join(f"{name} (id \"{key}\")" for key, name in view["fetchable"].items())
+    return [f"Company they could bring a mug of ale, with a hand free and a tap they know: {people}."] if people else []
+
+
 def _earlier(view: Mapping[str, Any]) -> list[str]:
     # The latest lines they said or heard tonight, so their mind builds on talk it already had.
     lines = [f"{line['speaker']}: \"{line['line']}\"" for scene in view["earlier"] for line in scene["lines"]]
@@ -63,7 +69,7 @@ def intention_question(prefix: str, view: Mapping[str, Any]) -> Question:
         f"What prompted it: {view['trigger']['text']}.", _previous(view),
         f"The situation as they see it: {view['situation']}",
         f"Thoughts on their mind: {thoughts}.", *_earlier(view), f"Drink: they are {view['drink']}.", *_duty(view),
-        _others(view),
+        _others(view), *_fetchable(view),
         f"Write {view['name']}'s thought, intention and goal."])
     return Question(system=[prefix, view["card"]], content=content, schema=_schema(), max_tokens=250)
 
