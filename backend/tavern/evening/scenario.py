@@ -63,8 +63,8 @@ class Scenario:
     `ties` are the starting relationships between guests, in listed order: what later
     systems seed opinions and familiarity from. `news` is what the evening's guests start
     out knowing (see `facts`). `staff` work the evening and are at their posts before the first guest
-    comes in. Guests due at opening come in at random moments of the first `opening_window` seconds,
-    in a random order, instead of all at once.
+    comes in. Guests due at opening come in one by one in a random order, evenly from the first to the
+    last second of `opening_window`, instead of all at once.
     """
 
     guests: tuple[Guest, ...]
@@ -74,7 +74,7 @@ class Scenario:
     ties: tuple[Tie, ...] = ()
     news: tuple[News, ...] = ()
     staff: tuple[StaffMember, ...] = ()
-    opening_window: float = 0.0
+    opening_window: tuple[float, float] | None = None
 
 
 def _fields(data: Any, required: set[str], optional: set[str], label: str) -> Mapping[str, Any]:
@@ -155,7 +155,7 @@ def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None,
     Args:
         data: Decoded scenario with `guests`, `arrival` need ranges (as in a room's `arrival`
             section), `closes_at` in game seconds, an optional integer `seed`, an optional `opening_window`
-            in game seconds (0 by default) and optional
+            [first, last] in game seconds (none by default) and optional
             starting `relationships` (see `ties.parse_ties`), optional `news` (see `facts.parse_news`)
             and optional `staff` (see `parse_staff_member`). A guest is either described
             inline with `traits`, or cast from a character card named by ID in `card`, with
@@ -167,8 +167,8 @@ def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None,
     Returns:
         The scenario, with guests in their listed order, each holding their own ties.
     Raises:
-        ValueError: A section is missing, unknown or malformed, the opening window does not end before
-            closing time, there are no guests, guest or staff
+        ValueError: A section is missing, unknown or malformed, the opening window is no [first, last] pair
+            ending before closing time, there are no guests, guest or staff
             IDs repeat, a guest would arrive at or after closing time, a guest's or staff member's card
             is unknown or does not match them, or a relationship or news item is invalid.
     """
@@ -178,9 +178,7 @@ def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None,
     seed = fields.get("seed")
     if seed is not None and type(seed) is not int:
         raise ValueError("Scenario seed must be an integer")
-    window = number(fields.get("opening_window", 0), "Opening window", 0, inf)
-    if window >= closes_at:
-        raise ValueError("The opening window must end before closing time")
+    window = _opening_window(fields.get("opening_window"), closes_at)
     guests = _guests(fields["guests"], closes_at, cards)
     staff = _staff(fields.get("staff", []), guests, staff_cards)
     ties = parse_ties(fields.get("relationships", []), [item["id"] for item in guests])
@@ -189,6 +187,17 @@ def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None,
     arrival = cast(dict[str, tuple[float, float]], arrival_ranges(fields))
     return Scenario(guests=_with_ties(guests, ties), arrival=arrival, closes_at=closes_at, seed=seed, ties=ties,
                     news=news, staff=staff, opening_window=window)
+
+
+def _opening_window(value: Any, closes_at: float) -> tuple[float, float] | None:
+    if value is None:
+        return None
+    if not isinstance(value, Sequence) or isinstance(value, str) or len(value) != 2:
+        raise ValueError("The opening window must be [first, last] in game seconds")
+    first, last = (number(item, "Opening window", 0, inf) for item in value)
+    if first > last or last >= closes_at:
+        raise ValueError("The opening window must run forward and end before closing time")
+    return first, last
 
 
 def _guests(value: Any, closes_at: float, cards: Mapping[str, Card] | None) -> tuple[Guest, ...]:
@@ -260,12 +269,14 @@ def _expected(scenario: Scenario, seed: int) -> list[ExpectedGuest]:
     # Tonight's needs are drawn at opening, in listed order, so the evening replays from its seed.
     # Sorting is stable: guests due at the same moment keep their listed order at the door.
     drawn = [cast(ExpectedGuest, deepcopy(item)) for item in arriving(scenario.guests, scenario.arrival, seed)]
-    # Guests due at opening are spread over the window by a stream of their own, so the needs above
-    # stay as they were; with no window they keep their time of 0.
-    rng = Random(f"{seed}:opening")
-    for item in drawn:
-        if item["arrives_at"] == 0 and scenario.opening_window:
-            item["arrives_at"] = rng.uniform(0, scenario.opening_window)
+    # Guests due at opening take the window's moments, evenly spaced, in an order drawn by a stream of
+    # their own so the needs above stay as they were; with no window they keep their time of 0.
+    opening = [item for item in drawn if item["arrives_at"] == 0]
+    if scenario.opening_window and opening:
+        first, last = scenario.opening_window
+        Random(f"{seed}:opening").shuffle(opening)
+        for place, item in enumerate(opening):
+            item["arrives_at"] = first + (last - first) * place / max(len(opening) - 1, 1)
     return sorted(drawn, key=lambda item: item["arrives_at"])
 
 

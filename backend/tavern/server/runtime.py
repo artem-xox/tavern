@@ -13,6 +13,7 @@ from tavern.body.activities import ACTIVITIES, client_activities
 from tavern.evening.decisions import log_control
 from tavern.evening.mind_loop import MindLoop, TaskCourier
 from tavern.evening.scenario import Scenario, open_evening
+from tavern.hall.staff import guests
 from tavern.hall.state import World
 from tavern.hall.world import create_world, step_world
 from tavern.mind import agents
@@ -53,6 +54,10 @@ class Store(Protocol):
 
     def save(self, world: World, slot: str) -> None:
         """Replace the world in a slot."""
+
+
+def _anyone_to_come(world: Mapping[str, Any]) -> bool:
+    return bool(guests(world) or world["expected"])
 
 
 class TavernRuntime:
@@ -119,6 +124,10 @@ class TavernRuntime:
             dt: Real seconds since the previous simulation tick.
         """
         step_world(self.world, dt)
+        if not self.world["paused"] and self.world["closes_at"] is not None and not _anyone_to_come(self.world):
+            # Staff stay at their bars all night, so only guests, present or expected, keep an evening going.
+            self.world["paused"] = True
+            self._event("The last guest has left: the evening is over")
         if not self.world["paused"]:
             self.mind.tick(self.world)
 
