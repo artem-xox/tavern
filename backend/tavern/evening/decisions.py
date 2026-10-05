@@ -67,9 +67,10 @@ def stale_requests(world: Mapping[str, Any], asked_at: Mapping[str, float]) -> l
             and actor["interrupted_at"] is not None and actor["interrupted_at"] > asked_at[actor["id"]]]
 
 
-# Below this score for its best option a Jev decision has no good one: in the live evenings recorded by 2026-10-05
-# the best option scored under 0.43 in 5% of 1,433 decisions and under 0.49 in 10%.
-UNSURE_BELOW = 0.45
+# Below this score for its best option a Jev decision has no good one: in five live evenings (876 decisions,
+# 2026-10-05) the best option scored under 0.35 in 2.5%, under 0.40 in 4.2% (about 7 an evening) and under 0.45 in
+# 7.6%. The doubts between 0.40 and 0.45 were borderline and doubled the pauses, so the line is 0.40.
+UNSURE_BELOW = 0.40
 # After a doubt the guest is not paused again for this long: their mind is working on it, and a chain of pauses
 # would stand them idle (live seed 7: seven doubts of one guest in 140 s before this).
 UNSURE_COOLDOWN = 30.0

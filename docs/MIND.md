@@ -240,8 +240,7 @@ Each step is small and checked against the baseline of step 0. Steps 0–5 were 
   role, a bouncer), which waits for Stage 2's second staff member; the barkeep's duty is a flag on goals
   and a sentence in the prompt for now.
 - [x] **5b. A doubt asks the mind (added 2026-10-05 at the user's request).** Jev already gives calibrated
-  scores, so a decision whose best option scores under `UNSURE_BELOW` (0.45; the 5th percentile of 1,433
-  recorded decisions was 0.43 and the 10th 0.49) is a doubt: `apply_decision` starts `wait` instead of the
+  scores, so a decision whose best option scores under `UNSURE_BELOW` (0.40; see the tuning below) is a doubt: `apply_decision` starts `wait` instead of the
   poor choice, remembers an `unsure` event, and that event is a trigger to take stock, within the budget
   (now 6). Only a real Jev verdict counts (not local scores, not a failed call, not the seat stage, not
   closing time), and `UNSURE_COOLDOWN` (30 s) stops a chain of pauses: the first live run paused one guest
@@ -250,6 +249,22 @@ Each step is small and checked against the baseline of step 0. Steps 0–5 were 
   so near the line), 36 intentions, 12 of 16 goals reached. Not measured: whether a doubt's intention
   gives a better next choice than the poor one would have been; the threshold is a first guess to tune
   against more evenings.
+  **Tuning (2026-10-05, after the rebase onto the new characters and entry order):** the same five seeds
+  (1, 3, 4, 5, 6) played live with the line at 0, 0.35 and 0.45:
+
+  | `UNSURE_BELOW` | doubts | intentions | goals reached | waits | stuck s | cost |
+  |---|---|---|---|---|---|---|
+  | 0 (off) | 0 | 183 | 64 of 82 (78%) | 39 | 161 | $1.46 |
+  | 0.35 | 4 | 181 | 43 of 81 (53%) | 52 | 137 | $1.45 |
+  | 0.45 | 32 | 189 | 45 of 85 (53%) | 92 | 141 | $1.51 |
+
+  The score distribution (876 decisions, five evenings) puts 2.5% of best scores under 0.35, 4.2% under
+  0.40 and 7.6% under 0.45. The runs cannot tell the thresholds apart: 4 doubts at 0.35 cannot explain
+  a drop of 25 points in goals reached, so evening-to-evening noise (per seed from 0.23 to 0.88) is larger
+  than any effect of the doubt, and intentions barely moved because the budget, not the doubt, limits them.
+  So 0.40 is a choice by shape, not a measured optimum: it keeps the clear lows (scores 0.30 to 0.39) and
+  drops the borderline ones, which doubled the pauses. To measure the doubt itself, log the score of a
+  guest's next decision after each one, and compare it to the doubt's score.
 - [ ] **6. Between evenings (Stage 4): not started on purpose.** Each guest's evening is summarized into memories and
   opinions that carry over, dropping what repeats, as Lyfe's summarize-and-forget does.
 
