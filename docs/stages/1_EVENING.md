@@ -1777,6 +1777,27 @@ Decisions for every H task (frozen 2026-10-05; change them here first if the cod
   ~400 lines) reports `giving`: gifts per kind, refusals, and errands begun, done and failed.
   Run an offline evening, a live one and its replay (byte-identical), then append the results
   paragraph here and a line under MIND.md step 0's measures.
+  - *Built (2026-10-05):* `evening/giving_metrics.py` (`giving_counts`) reports `giving` in `metrics.json`:
+    `gifts` per kind in `ITEMS`, `refused`, and `errands` `{begun, done, failed}`. Both guests log a gift or a
+    refusal, so one counts once by its time and words; the errand counts come from `fetch_begun`,
+    `fetch_done` and `fetch_failed`.
+  - *Result (2026-10-05):* offline seed 5 (scripted): one gift, Edda's remedy to Brida at 286 s, no refusals,
+    no errands; stuck time 9.1 s (13.6 s before giving). **Live (Jev + Haiku) the guests rarely chose it.**
+    Seed 7, first run: 2 gifts (a mug each time), 5 drink errands: 2 done (Toren to Edda at 89 s, handed over
+    at 96.5 s; Edda to Brida at 336.6 s, handed over at 345.5 s), 3 failed; $0.33, stuck 23.2 s. The three
+    failures were the host's own decisions (the WC, the bar, a chat) replacing the errand's steps between the
+    pour and the hand-over, and Toren's own seat taken by Brida while Edda stood by the fire, so he had no
+    chair at her table. Two fixes followed, each with a test: a guest fetching a drink is not free to decide
+    (`errands.fetching_a_drink`, in `decisions.free_to_decide`), and the errand ends at once when the host
+    has no chair to take at the invitee's table. Seed 7 again: no gifts, no errands, $0.29, stuck 21.4 s;
+    seed 5: none, $0.24, stuck 24.1 s. The replay of the second seed 7 is byte-identical to its live run, also
+    on the final code. Why none: the options were put to Jev (in seed 7's two runs 26–27 requests held a gift and
+    29–32 a trip) but it rarely scored them above the rest, and only 1 of 33 intentions in seed 7's first run, none
+    in the 30 and 30 of the others, was to fetch someone a drink (step 0 counted 17 in five of seven
+    evenings). So the gap named in step 0 is not closed by the verbs alone; the next thing to try is making
+    the intention say it (a goal `bring_drink`, as `talk_to` and `sit_with` are goals) rather than weighing
+    the option. Not done: a way to walk beside an invitee who stands, so an errand can reach them without a
+    chair at their table.
 
 ### M5 — Presentation and acceptance
 
