@@ -164,10 +164,11 @@ def _carry(world: World, errand: Errand, host: Actor | None, guest: Actor | None
     if action_error(world, host, hand_over) is None:
         start(world, host["id"], hand_over)
     elif verb != "sit":
-        # Not near yet and not on the way: take a chair at the invitee's table, as an invitee is seated.
+        # Not near yet and not on the way: take a chair at the invitee's table, as an invitee is seated. With
+        # none to be had there is no way to get near, so the errand ends and the host keeps the mug.
         chair = free_chair(world, home_table(world, guest), host)
-        if chair:
-            start(world, host["id"], _command("sit", chair))
+        if not (chair and start(world, host["id"], _command("sit", chair))["accepted"]):
+            return _failed(world, errand)
     return True
 
 
