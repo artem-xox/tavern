@@ -63,6 +63,7 @@ def _step(world: World, errand: Errand, start: Start) -> bool:
         return False
     if errand["kind"] == "buy_drink":
         errand.update({"stage": "fetching", "held": host["inventory"]["beer"]})
+        record_event(world, host, "fetch_begun", f"{host['name']} went to fetch {guest['name']} an ale")
     elif errand["kind"] == "leave_together":
         errand["stage"] = "following"
     return errand["kind"] in ("buy_drink", "leave_together")
@@ -119,23 +120,25 @@ _FIRST_STEPS: Mapping[str, Callable[..., list[tuple[str, dict[str, Any]]] | None
 def _fetched(world: World, errand: Errand, host: Actor | None,
              guest: Actor | None) -> bool:
     if host is None or guest is None:
-        return False
+        return _failed(world, errand)
     if (host["action"] or {}).get("verb") == "take_beer":
         return True
     if host["inventory"]["beer"] > errand["held"]:
         errand.update({"stage": "carrying", "since": world["time"]})
         return True
-    return False
+    return _failed(world, errand, told=False)
 
 
 def _carry(world: World, errand: Errand, host: Actor | None, guest: Actor | None, start: Start) -> bool:
     # The host brings the mug to the invitee and hands it over; the hand-over, not the pouring, is the gift.
     if host is None or guest is None:
         return _failed(world, errand)
-    treat = ITEMS["beer"].received
     # It ends once the invitee has taken it (a thought of being treated) or refused it (a rebuff to the host).
-    if formed_since(guest, host["id"], (treat,), errand["since"]) \
-            or formed_since(host, guest["id"], ("rebuffed",), errand["since"]):
+    if formed_since(guest, host["id"], (ITEMS["beer"].received,), errand["since"]):
+        record_event(world, host, "fetch_done", f"{host['name']} brought {guest['name']} an ale")
+        return False
+    if formed_since(host, guest["id"], ("rebuffed",), errand["since"]):
+        record_event(world, host, "fetch_failed", f"{guest['name']} would not take the ale {host['name']} fetched")
         return False
     wait = world["rules"]["giving"]["carry_for"]
     if host["inventory"]["beer"] <= errand["held"] or world["time"] - errand["since"] > wait:
@@ -154,14 +157,17 @@ def _carry(world: World, errand: Errand, host: Actor | None, guest: Actor | None
     return True
 
 
-def _failed(world: World, errand: Errand) -> bool:
+def _failed(world: World, errand: Errand, told: bool = True) -> bool:
+    # A drink errand that had set out ends as `fetch_failed`; `told` adds the invitation's own failure.
     people = {item["id"]: item for item in [*world["actors"], *world["departed"]]}
     host, guest = people[errand["from"]], people[errand["to"]]
     # The one who is still in the hall tells it; with both gone nobody is left to remember it.
-    witness = next((item for item in (guest, host) if item in world["actors"]), None)
+    witness = next((item for item in (host, guest) if item in world["actors"]), None)
     if witness is not None:
-        record_event(world, witness, "invitation_failed",
-                     f"{host['name']} and {guest['name']} could not {KINDS[errand['kind']]}")
+        if told:
+            record_event(world, witness, "invitation_failed",
+                         f"{host['name']} and {guest['name']} could not {KINDS[errand['kind']]}")
+        record_event(world, witness, "fetch_failed", f"{host['name']} could not bring {guest['name']} an ale")
     return False
 
 

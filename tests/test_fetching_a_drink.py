@@ -51,6 +51,8 @@ def test_the_host_walks_back_with_the_mug_and_hands_it_over_at_the_table() -> No
     advance_until(world, lambda world: holds_a_mug(world, "bea"))
     assert (actor(world, "ada")["inventory"]["beer"], events(world, "gave")[:1]) == (0, ["Ada gave Bea a mug of ale"])
     advance_until(world, the_errand_ends)
+    assert [events(world, kind) for kind in ("fetch_begun", "fetch_done", "fetch_failed")] == [
+        ["Ada went to fetch Bea an ale"], ["Ada brought Bea an ale"], []]
 
 
 def test_a_drink_that_is_carried_is_still_a_treat() -> None:
@@ -97,6 +99,7 @@ def test_an_errand_that_cannot_hand_the_mug_over_fails_and_the_host_keeps_it(cha
     advance_until(world, the_errand_ends, limit=60.0)
     assert (len(events(world, "invitation_failed")), actor(world, "ada")["inventory"]["beer"], events(world, "gave")) == (
         1, 1, [])
+    assert [events(world, kind) for kind in ("fetch_done", "fetch_failed")] == [[], ["Ada could not bring Bea an ale"]]
 
 
 def test_an_invitee_who_thinks_ill_of_the_host_may_still_refuse_the_mug() -> None:
@@ -106,6 +109,8 @@ def test_an_invitee_who_thinks_ill_of_the_host_may_still_refuse_the_mug() -> Non
     advance_until(world, the_errand_ends, limit=60.0)
     assert (events(world, "gift_refused")[:1], events(world, "invitation_failed"), actor(world, "ada")["inventory"]["beer"],
             actor(world, "bea")["inventory"]["beer"]) == (["Bea would not take a mug of ale from Ada"], [], 1, 0)
+    assert [events(world, kind) for kind in ("fetch_done", "fetch_failed")] == [
+        [], ["Bea would not take the ale Ada fetched"]]
 
 
 def test_a_host_who_no_longer_holds_the_mug_ends_the_errand_in_failure() -> None:
@@ -113,7 +118,8 @@ def test_a_host_who_no_longer_holds_the_mug_ends_the_errand_in_failure() -> None
     advance_until(world, holds_a_mug)
     actor(world, "ada")["inventory"]["beer"] = 0  # drunk or spilt on the way
     advance_until(world, the_errand_ends)
-    assert (len(events(world, "invitation_failed")), actor(world, "bea")["inventory"]["beer"]) == (1, 0)
+    assert (len(events(world, "invitation_failed")), len(events(world, "fetch_failed")),
+            actor(world, "bea")["inventory"]["beer"]) == (1, 1, 0)
 
 
 def test_the_wait_for_the_invitee_is_the_rules_carry_for() -> None:
@@ -158,3 +164,14 @@ def damaged(damage: Callable[[dict[str, Any]], Any]) -> str:
 def test_a_damaged_errand_or_rule_in_a_save_is_rejected(damage: Callable[[dict[str, Any]], Any]) -> None:
     with pytest.raises(ValueError, match="Could not load the world"):
         parse_world(damaged(damage))
+
+
+def test_a_pour_that_never_happens_ends_the_errand_as_failed() -> None:
+    world = seated_talk()
+    know(world, "ada", "tap")
+    say(world, "invite", "Shall we?", invitation="buy_drink")
+    say(world, "accept", "Gladly.")
+    next(item for item in world["map"]["objects"] if item["id"] == "tap")["stock"] = 0
+    advance_until(world, the_errand_ends)
+    assert ([len(events(world, kind)) for kind in ("fetch_begun", "fetch_done", "fetch_failed", "invitation_failed")],
+            actor(world, "bea")["inventory"]["beer"]) == ([1, 0, 1, 0], 0)

@@ -141,7 +141,6 @@ def _bring_drink(world: World, actor: Actor, receiver: Actor | None) -> None:
     if receiver is None:
         raise ValueError("Bringing a drink needs someone to bring it to")
     begin_errand(world, actor, receiver, "buy_drink", unasked=True)
-    record_event(world, actor, "fetch_begun", f"{actor['name']} went to fetch {receiver['name']} an ale")
 
 
 def _shove(world: World, actor: Actor, victim: Actor | None) -> None:
