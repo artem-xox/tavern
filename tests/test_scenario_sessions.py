@@ -1,5 +1,6 @@
 """Scenario evenings in saves and sessions: version 2 saves, refused old saves, reset and seeds."""
 
+import asyncio
 from copy import deepcopy
 import json
 from pathlib import Path
@@ -157,3 +158,16 @@ def test_server_refuses_a_malformed_scenario_file(tmp_path: Path, content: str) 
     with pytest.raises(ValueError):
         create_app(tmp_path / "map.json", tmp_path / "saves", {}, run_loop=False,
                    scenario_path=tmp_path / "scenario.json")
+
+
+def test_evening_ends_when_the_last_guest_has_left(tmp_path: Path) -> None:
+    async def evening() -> tuple[bool, bool, str]:
+        runtime = TavernRuntime(hall(), tmp_path / "save.json", {"typesafe_api_key": None}, scenario=plan(0))
+        runtime.world["paused"] = False
+        runtime.advance(0.1)
+        still_open = runtime.world["paused"]
+        runtime.world["departed"].append(runtime.world["actors"].pop())
+        runtime.advance(0.1)
+        return still_open, runtime.world["paused"], runtime.world["events"][-1]["message"]
+
+    assert asyncio.run(evening()) == (False, True, "The last guest has left: the evening is over")
