@@ -14,8 +14,10 @@ def test_default_app_casts_the_first_evening_from_presets() -> None:
     world = create_default_app().state.sessions.open("device-cards-test").world
     present = [item for item in world["actors"] if item["post"] is None]
     guests = [*present, *world["expected"]]
-    assert [item["card"]["id"] for item in guests] == ["edda", "rurik", "toren", "brida", "calder", "saye"]
-    assert [item["name"] for item in present[1]["ties"]] == ["Toren"]
+    # The guests due at opening come in at random over the first minute, so the order is not fixed.
+    assert sorted(item["card"]["id"] for item in guests) == ["brida", "calder", "edda", "rurik", "saye", "toren"]
+    rurik = next(item for item in guests if item["card"]["id"] == "rurik")
+    assert [item["name"] for item in rurik["ties"]] == ["Toren"]
     # The barkeep is cast from the staff cards, which the guests' presets do not include.
     assert [item["card"]["id"] for item in world["actors"] if item["post"] is not None] == ["hob"]
 
