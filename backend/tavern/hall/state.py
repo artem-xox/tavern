@@ -170,6 +170,15 @@ class BartendingRules(TypedDict):
     chat_gap: float
 
 
+class GivingRules(TypedDict):
+    """When a gift is taken and how often one is made (see `tavern.social.giving`): a receiver refuses
+    it when their opinion of the giver is below `refuse_below`, and no gift is passed back to the giver,
+    nor the same kind given twice to one person, within `again_after` seconds."""
+
+    refuse_below: float
+    again_after: float
+
+
 class Rules(TypedDict):
     """The tunable rules of the world, kept in every save."""
 
@@ -188,6 +197,7 @@ class Rules(TypedDict):
     news: NewsRules
     dice: DiceRules
     bartending: BartendingRules
+    giving: GivingRules
 
 
 class HallMap(TypedDict):

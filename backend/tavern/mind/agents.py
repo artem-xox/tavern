@@ -3,7 +3,7 @@
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
 from random import Random
-from typing import Any, TypedDict
+from typing import Any, NotRequired, TypedDict
 
 from tavern.mind.briefing import brief
 from tavern.mind.families import family_scores, group_families
@@ -31,6 +31,8 @@ class Action(TypedDict):
     id: str
     verb: str
     target_id: str | None
+    # The item from the actor's hands that a verb such as `give` names; absent for the others.
+    item: NotRequired[str]
 
 
 # Scores each candidate 0–1 from the evaluator view, the candidates and the AI config;

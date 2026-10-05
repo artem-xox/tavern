@@ -9,6 +9,7 @@ from tavern.body.drunkenness import drink_beer
 from tavern.body.hearing import Sound
 from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World
+from tavern.social.giving import hand_over
 from tavern.social.names import called
 from tavern.social.scenes import join_conversation, start_conversation
 from tavern.social.thoughts import think
@@ -31,6 +32,7 @@ class Activity:
         near_person: Whether it targets another visitor at the actor's table or beside them, as a chat does:
             no scene, no walking, and the timer ends it. Shoving and fighting (`tavern.social.hostility`) are
             such verbs.
+        names_item: Whether the action names an item from the actor's hands in `Action.item`, as giving does.
         duration: Seconds of interaction (nominal for a scene part), or None for a decision step
             that never runs in the world.
         family: The `FAMILIES` entry it is chosen under: a first decision picks the family, a
@@ -67,6 +69,7 @@ class Activity:
     partner: bool = False
     joins: bool = False
     near_person: bool = False
+    names_item: bool = False
     requires_item: str | None = None
     empty_target: str | None = None
     shared_target: bool = False
@@ -121,6 +124,13 @@ def _confront(world: World, actor: Actor, victim: Actor | None, event: str, thou
     for member in (actor, victim):
         record_event(world, member, event, message)
     think(victim, thought, world["time"], f"{called(victim, actor)} {act} me", message, about=actor)
+
+
+def _give(world: World, actor: Actor, receiver: Actor | None) -> None:
+    action = actor["action"]
+    if receiver is None or action is None or action.get("item") is None:
+        raise ValueError("Giving needs someone to give to and an item to give")
+    hand_over(world, actor, receiver, action["item"])
 
 
 def _shove(world: World, actor: Actor, victim: Actor | None) -> None:
@@ -255,6 +265,12 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "wrong, which only a hot temper, usually helped by plenty of drink, brings a guest to. The "
                       "whole room hears it, the one attacked will not forget it, and it can end in injury. Even "
                       "an angry guest almost always chooses something else."),
+    Activity(verb="give", near_person=True, names_item=True, duration=1.5, effect=_give, label="Give",
+             status="giving", doing="handing something over", done="gave something away", family="company",
+             what="hand {item} to {target}, who sits at their table or stands beside them",
+             guidance="A kindness between people who get on: a drink for a thirsty friend, a remedy for someone "
+                      "worried about sickness, a keepsake for someone they like. It costs the giver what they hand "
+                      "over, and someone who dislikes them may refuse it."),
     Activity(verb="use_toilet", target_kinds=("toilet",), duration=2.0, leaves_seat=True,
              needs=MappingProxyType({"bladder": -65}), label="Use the toilet", status="WC", pose="Bathroom",
              doing="heading to the WC", done="used the WC",
@@ -347,8 +363,10 @@ def client_activities(activities: Mapping[str, Activity]) -> dict[str, dict[str,
         activities: Activity table.
     Returns:
         Per world verb: command label, status text, pose, target kinds, and whether it
-        targets another visitor. Decision steps such as `seating` are left out.
+        targets another visitor (`partner`), plus `names_item` for a verb that also names an item. Decision
+        steps such as `seating` are left out.
     """
     return {verb: {"label": activity.label, "status": activity.status, "pose": activity.pose,
-                   "target_kinds": list(activity.target_kinds), "partner": activity.partner}
+                   "target_kinds": list(activity.target_kinds), "partner": activity.partner or activity.near_person,
+                   **({"names_item": True} if activity.names_item else {})}
             for verb, activity in activities.items() if activity.duration is not None}
