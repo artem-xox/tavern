@@ -83,6 +83,8 @@ barkeep (B0–B6) and E20 (hostile options), all 2026-10-04. Next:
 2. **The barkeep (B0–B6), done.** A barkeep keeps to four cells behind the bar, pours every mug,
    and chats with guests who lean on the counter.
 3. **M4, news and conflict (E20–E22).** E20 (hostile options) is done; E21 resolves fights next.
+4. **Giving (H0–H5),** added 2026-10-05. Guests hand each other what they carry, and fetch
+   a drink for someone as one chosen errand.
 
 The door at closing (D02) is fixed: it takes as many leavers at once as it has spots (offline
 seed 5: the last guest left 6.6 s after closing, was 42.8 s; stuck time 27.1 s → 6.1 s). The code now
@@ -1570,6 +1572,159 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     tomorrow, aye. The manor kitchen won't run itself, and the margrave's been abed with fever". Slips
     that D19 records: Hob proposes darts and a "silver penny a round" as if he could leave the bar.
 
+### Giving — from hand to hand (H0–H5)
+
+Added 2026-10-05 at the user's request. Any guest can hand anything they carry to another guest:
+a mug of ale, a herbal remedy or a keepsake now, and coins once the economy exists (Stage 3). Step 0
+of [MIND.md](../MIND.md) found the need: in five of seven recorded live evenings, 17 intentions ask to
+bring someone a drink, and no activity can. `buy_drink` exists only as an invitation, and its ale
+jumps from the tap into the invitee's hand. Giving is also the first compound action a guest can
+choose: fetch an ale, carry it over, hand it on. The guest chooses it once, the body carries it
+out, and it ends in success or a named failure, as an option does in Lyfe Agents. For the central
+test, a gift is a small story with a cause, a witness and a feeling (a remedy for the worried, an
+ale refused by someone who holds a grudge).
+
+Decisions for every H task (frozen 2026-10-05; change them here first if the code disagrees):
+
+- **Items are a table.** `body/items.py` holds `ITEMS: Mapping[str, Item]`, one frozen dataclass
+  per kind, the way `ACTIVITIES` holds verbs. Rules key off the kind, never off a guest:
+
+  ```python
+  @dataclass(frozen=True)
+  class Item:
+      kind: str       # inventory key, saved: "beer"
+      one: str        # wording in events, briefings and the inspector: "a mug of ale"
+      many: str       # "mugs of ale"
+      hands: int      # most a visitor can carry at once
+      visible: bool   # whether others see it in their hands (a mug yes, a remedy in a sleeve no)
+      received: str   # the THOUGHTS kind the receiver keeps about the giver
+
+  ITEMS = {
+      "beer": Item("beer", "a mug of ale", "mugs of ale", hands=2, visible=True, received="treated"),
+      "remedy": Item("remedy", "a herbal remedy", "herbal remedies", hands=3, visible=False,
+                     received="cared_for"),
+      "keepsake": Item("keepsake", "a keepsake", "keepsakes", hands=3, visible=False, received="gifted"),
+  }
+  ```
+
+  Using an item is a verb's business: `drink` stays the only use, and a remedy or a keepsake can
+  only be carried and given for now.
+- **Inventory** is `{kind: count}` with every kind in `ITEMS` present (zeros too) and counts from
+  0 to `hands`. A saved world must have exactly that (schema bump in H1). The snapshot sends it as
+  is, and the item wording (`one`, `many`) reaches the client the way verbs do
+  (`activities.client_activities`). `types.ts` gets `inventory: Record<string, number>`, and the
+  inspector's "Carrying" row lists every nonzero kind.
+- **Starting items come from the scenario.** A guest entry may carry `"carries": {"remedy": 2}`
+  (kinds from `ITEMS`, counts within `hands`). In `first_evening.json`, Edda (a healer) carries two
+  remedies and Toren (a pedlar) two keepsakes.
+- **One verb, `give`, in the `company` family,** so no first-stage request grows. The family text
+  becomes "chat with someone at their table or beside them, join a conversation, lean on the bar,
+  or hand someone something they carry". The action names its item: `Action` gains
+  `item: str | None` (None for every other verb), and its ID is `give:<item>:<receiver>`. Saved
+  actions, decisions, the forced-action command and `types.ts` carry it. Jev's `_activity` fills
+  `{item}` with the item's `one`.
+
+  ```python
+  Activity(verb="give", near_person=True, duration=1.5, effect=_give, family="company", label="Give",
+           status="giving", doing="handing something over", done="gave something away",
+           what="hand {item} to {target}, who sits at their table or stands beside them",
+           guidance="A kindness between people who get on: a drink for a thirsty friend, a remedy for "
+                    "someone worried about sickness, a keepsake for someone they like. It costs the giver "
+                    "what they hand over, and someone who dislikes them may refuse it.")
+  ```
+
+- **Like a shove, giving needs no walk.** The receiver must sit at the giver's table or stand
+  beside them, within the reach of a chat
+  (`actions._close_enough`). Only a guest may receive (staff take tips with the
+  economy), never the giver, and only with a free hand for that kind (count < `hands`).
+- **The receiver may refuse.** They accept unless their opinion of the giver is below
+  `rules.giving.refuse_below` (−20). On a refusal the item stays with the giver, both log
+  `gift_refused` ("Rurik would not take Toren's keepsake"), and the giver keeps a `rebuffed`
+  thought about the receiver. A rule decides it, not a model.
+- **A gift that is taken** moves one item. Both log `gave` ("Edda gave Brida a herbal remedy"),
+  and the receiver keeps the item's `received` thought about the giver (it acquaints them, as
+  `treated` does). The receiver shows the heart emote and the giver faces the receiver. No new
+  pose or art.
+- **No gift ping-pong.** A guest may not give an item back to whoever gave it to them within
+  `rules.giving.again_after` (120 s), nor give the same person the same kind twice in that time.
+- **New thoughts** (`ThoughtKind(mood, opinion, seconds, stack, reason)`):
+  `cared_for` (4, 12, 300, 2, "gave them a remedy", acquaints), `gifted` (3, 10, 300, 2, "gave
+  them a keepsake", acquaints), `rebuffed` (−3, −8, 180, 2, "refused what they offered").
+- **Fetching for someone is an errand.** The invitation `buy_drink` and the new choice
+  `bring_drink` (H4) run the same errand in `invitations.py`: the giver pours (or is served),
+  carries the mug over, and gives it. A new stage `carrying` follows `fetching`. Each tick: if the
+  giver holds more mugs than when the errand began and the receiver is near, start `give`; else,
+  unless already on the way, start `sit` on a free chair at the receiver's table
+  (`invitations.free_chair`, `home_table`), as `join_table` seats an invitee. The errand fails
+  with `invitation_failed` when the receiver leaves, when nobody is near after
+  `rules.giving.carry_for` (30 s, for example the receiver stands at the darts), or when the
+  giver no longer holds the mug. The ale no longer jumps into the invitee's hand.
+- **Out of scope:** coins and paying (Stage 3: `coin` joins `ITEMS` then); using a remedy or a
+  keepsake; giving to staff; asking for something, stealing or taking back; witnesses judging a
+  gift; a new speech act (the `buy_drink` invitation stays the path from talk); new art.
+- **Tests that change.** `test_invitations.py::test_a_bought_drink_ends_in_the_invitees_hand` and
+  `test_bartending.py::test_a_drink_bought_for_a_friend_is_still_delivered` pin the instant
+  hand-over. The outcome they check stays: the invitee ends with the ale, the host without it,
+  and `treated` is kept. Their setup or game time may change in H3 because the host now walks
+  back; name both in that commit. `test_database.py` pins `schema_version` (H1). H2 and H4 add
+  candidates, so whole evenings play differently (`test_first_evening.py`, the news-spread test on
+  seed 7). If one fails, stop and report the seed and the failure. Do not change a seed or an
+  assertion without the user's approval.
+
+- [ ] **H0 — Items and near-person verbs (refactor, no behavior change).**
+  - *Items:* `body/items.py` with `ITEMS` holding only `beer`. Generic inventory code reads the
+    table instead of naming beer: `observation.own_actor`, `arrival` (its `inventory` data), the
+    saved-world check, the briefing's "holding a full mug of ale / empty-handed", and the
+    inspector. Beer verbs (`take_beer`, `drink`, `pour_beer`) keep naming beer.
+  - *Near-person verbs:* `Activity.confronts` becomes `near_person` (targets someone near: no
+    scene, no walk, the timer ends it). `lifecycle` and `actions` branch on it; `shove` and
+    `start_fight` keep it, and hostility keeps its candidates through the `confront` family.
+  - *Check:* `make check` unchanged; an offline evening (seed 5, `--writer scripted`) gives a
+    byte-identical `events.jsonl` before and after (`cmp`).
+- [ ] **H1 — Hand over (`give`).**
+  - `remedy` and `keepsake` join `ITEMS`; scenario `carries`; `Action.item`; the `give` verb with
+    the receiver rules, the refusal, the three thoughts, and the `gave` and `gift_refused` events.
+    The saved world, snapshot, `types.ts`, the inspector's "Carrying" row and the forced-action
+    command follow. `give` is not yet a candidate: only the debug panel's forced action starts it,
+    as with `doze`.
+  - *Tests first* (`tests/test_giving.py`): one parametrized block for taken gifts (each kind; a
+    receiver who already holds one; the last item), one for refusals (opinion just below and at
+    the threshold), and one `pytest.raises` block for refused actions (receiver not near, self,
+    staff, nothing to give, full hands, an unknown kind, an `item` on a verb that takes none,
+    giving back within `again_after`). Saves: a world with a remedy in hand reloads; malformed
+    inventories (a missing kind, a negative or over-`hands` count, an unknown kind) are rejected.
+  - *Check:* in the running app, force Edda to give Brida a remedy: the heart emote, both
+    inventories in the inspector, `cared_for` in Brida's thoughts.
+- [ ] **H2 — Choosing to give.**
+  - *Candidate* (`agents.py`): for each kind the guest holds and each near guest with a free hand
+    who has not just given it to them. *Local utility* (`local_policy.py`): low on its own,
+    raised by sociability and by opinion of the receiver; for beer, raised when the receiver's
+    hands are visibly empty. *Option sentence* (`options.py`). The briefing says what the guest
+    carries ("carrying two herbal remedies"), and `observe_people` gains `holding`, the visible
+    items in each person's hands.
+  - *Check:* offline seed 5 and a live seed 7 evening each show at least one `gave`, no
+    ping-pong, and no stuck time added.
+- [ ] **H3 — Carry, don't teleport (`buy_drink`).** The errand's `carrying` stage as frozen
+  above; the two named tests change only as stated.
+  - *Tests first:* the host walks from the tap to the invitee's table and gives there; the
+    invitee leaves (fails); the invitee stands at the darts past `carry_for` (fails); the barkeep
+    pours the host's mug (still delivered).
+  - *Check:* in a live evening, the host walks back with the mug and the hand-over is logged as
+    `gave`.
+- [ ] **H4 — Bring someone a drink (`bring_drink`), the compound choice.** A `company` verb with
+  `near_person=True`, `duration=0.5` and an effect that opens a `buy_drink` errand from the
+  chooser to the receiver (no invitation, so the receiver may still refuse at the hand-over). It
+  is a candidate for a guest with a free hand who knows a stocked tap (or a tended bar), when a
+  guest at their table visibly holds no beer and neither is in an errand already. Local utility,
+  option sentence and Jev's wording as for any verb. The event reads "Brida went to fetch Edda an
+  ale".
+  - *Check:* in live seeds 5 and 7, count the intentions to bring someone a drink (by hand, as in
+    MIND.md step 0) against the `gave` events with beer. The gap should close.
+- [ ] **H5 — Measure and record.** `evening/metrics.py` (or a new module: `metrics.py` has 344 of its
+  ~400 lines) reports `giving`: gifts per kind, refusals, and errands begun, done and failed.
+  Run an offline evening, a live one and its replay (byte-identical), then append the results
+  paragraph here and a line under MIND.md step 0's measures.
+
 ### M5 — Presentation and acceptance
 
 - [ ] **E23 — New poses.** Generate fight stance, punch, shove, hit, knocked out,
@@ -1609,6 +1764,12 @@ reuses what the first built: `lifecycle.complete_action` (G2's first refactor, B
 free `schema_version`. B4 reuses the door's `Activity.shared_target`, which G4 already uses. E21
 then rolls through G0's `chance.roll`; E22's `watch_fight` can reuse `Activity.shared_target` and
 `Activity.game`, and its bystanders can later let the barkeep step in, since he already stands on the activity system.
+
+Giving (H0–H5) was added 2026-10-05 at the user's request. H0 → H1 first; then H2 and H3 in
+either order (H3 needs only H1); H4 needs both; H5 comes last. It touches `activities.py`,
+`actions.py`, `lifecycle.py` and `invitations.py`, as E21 does, so do not run the two at once.
+Whether it comes before or after E21 is the user's call. H0's `near_person` is what E21's blows
+would build on.
 
 ## Acceptance scenarios
 
