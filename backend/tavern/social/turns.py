@@ -146,7 +146,7 @@ def _add_invitations(view: dict[str, Any], world: Mapping[str, Any], scene: Conv
 
 def _mind(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str, Any]) -> dict[str, Any]:
     # Who the speaker is and how they feel, for a model writer: `card` (the card's words, or None),
-    # `portrait`, `feelings` in words, their current `intention` (the mind's words, or None), `drunkenness` (0–1; kept out of `feelings`, so a writer
+    # `portrait`, `feelings` in words, their current `intention` (the mind's words, or None), `aims_at` (whom their active goal is about, or None), `drunkenness` (0–1; kept out of `feelings`, so a writer
     # words it once), and `company`: their opinion of, familiarity with, and active thoughts
     # about each other participant, in order of joining.
     now, card = world["time"], speaker["card"]
@@ -158,12 +158,19 @@ def _mind(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str, A
             "feelings": feelings({"actor": {**speaker, "drunkenness": 0.0}, "time": now}),
             "drunkenness": speaker["drunkenness"],
             "intention": None if speaker["intention"] is None else speaker["intention"]["intention"],
+            "aims_at": _aims_at(speaker),
             "earlier": earlier_lines(speaker, EARLIER_LINES, scene["id"]),
             "news": carried(world, speaker),
             "company": [{"id": other["id"], "name": other["name"], "opinion": opinion_of(speaker, other["id"], now),
                          "familiarity": familiarity_of(speaker, other["id"]),
                          "thoughts": [item["text"] for item in thoughts if item["about"] == other["id"]]}
                         for other in others]}
+
+
+def _aims_at(speaker: Mapping[str, Any]) -> str | None:
+    # The guest the speaker's active goal is about, or None.
+    goal = speaker["intention"]["goal"] if speaker["intention"] is not None else None
+    return goal["target"] if goal is not None and goal["status"] == "active" else None
 
 
 def check_turn(view: Mapping[str, Any], result: Any) -> TurnResult:
@@ -181,7 +188,7 @@ def check_turn(view: Mapping[str, Any], result: Any) -> TurnResult:
             an `invite`); the line or topic is empty or not text; the act is unknown or not
             offered now; it addresses the speaker or someone not in the scene; an `invite` addresses
             someone on duty behind a bar (`on_duty` in the view); or an `invite`
-            addresses nobody or names a kind not offered.
+            addresses nobody or names a kind not offered; a `promise` addresses nobody.
     """
     if not isinstance(result, Mapping) or set(result) - _OPTIONAL != _FIELDS:
         raise ValueError(f"A turn has exactly the fields {sorted(_FIELDS)}, not {result!r}")
@@ -196,6 +203,8 @@ def check_turn(view: Mapping[str, Any], result: Any) -> TurnResult:
     on_duty = {item["id"] for item in view["conversation"]["participants"] if item.get("on_duty")}
     if result["act"] == "invite" and result["addressee"] in on_duty:
         raise ValueError(f"{result['addressee']!r} is on duty behind the bar and cannot be invited away")
+    if result["act"] == "promise" and result["addressee"] is None:
+        raise ValueError("A promise is made to someone in particular")
     turn: TurnResult = {"line": result["line"], "act": result["act"], "addressee": result["addressee"],
                         "topic": result["topic"]}
     if result["act"] == "invite" or "invitation" in result:

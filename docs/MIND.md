@@ -145,7 +145,7 @@ Separate who from where:
 | Intentions per guest | How often the slow layer runs: `intentions.written` / `guests` | Already logged |
 | Goals achieved | Goals completed before they failed or expired | `goals` in `metrics.json` (step 2, done) |
 | Unrealizable goals | Goals the world cannot carry out | Zero by construction (step 2, done); the prose can still say anything |
-| Say and do | Promises followed by the matching action in time | Step 4 |
+| Say and do | Promises followed by the matching action in time | `promises` in `metrics.json` (step 4; no live promises yet) |
 | Sameness | Guests holding the same goal template and target at once | Step 2 |
 | Stories | Matches of story patterns (a promise broken, a grudge acted on, news passed through three guests) | With E28 |
 
@@ -208,8 +208,24 @@ against M4 yet; [PLAN.md](PLAN.md) decides the order.
   (2026-10-05, live, replay byte-identical): seed 7 wrote 29 intentions (56 in step 2), 4.8 a guest,
   set 17 goals and reached 10, 2 expired, restated 0, repeated 1, intentions $0.07 (was $0.14); seed 2
   wrote 26, set 6, reached 5.
-- [ ] **4. Commitments.** A promise in talk becomes a commitment; an unkept one gives a
-  thought. Check: say and do.
+- [x] **4. Commitments.** A new speech act, `promise`, leaves a `Commitment` in `world["commitments"]`
+  (`social/commitments.py`): the speaker will come and sit with the addressee, whose own table it
+  is, within 90 s. It is offered while the addressee has a table the speaker is not at and nothing is
+  promised them. The world decides the rest: the commitment is `kept` once both sit at one table, `broken`
+  when it falls due or the promiser has gone, `void` when the one promised has gone; the one promised
+  keeps `promised`, then `kept_word` or `let_down` about the promiser. What serves a goal serves a
+  promise (marked for Jev, `GOAL_BONUS` in the local policy), and the briefing says what the guest
+  promised. The turn writer is nudged to use the act when the speaker's active goal is about someone in the
+  scene, and the shared prefix has an example. Saved worlds are version 12 (approved bump);
+  `metrics.json` gets `promises`: made, kept, broken, void. Tests changed for the version: `test_database.py`,
+  `test_intention_saves.py`. **Result (2026-10-05): the mechanism works in tests, but live Haiku used it
+  zero times.** Three live evenings (seeds 7, 5, 1; seed 7's replay byte-identical) offered `promise` in
+  108 of 223 lines, the nudge fired twice in seed 7, and the model chose `small_talk` for a line like
+  "I'll sit by the fire if you'll have me". So "say and do" cannot be measured yet. Two causes to try
+  next: the act's occasion is narrow (talk happens at one table, so a promise to join another is rare), and
+  a nudge is weaker than a goal the intention names. Options: let a goal `talk_to` or `sit_with` made in
+  talk turn into a commitment by itself (no act), or promise other things (bring an ale, once Giving H3
+  lands). Not done: promise kinds beyond `sit_with`.
 - [ ] **5. Practices and roles.** The evening as a practice; the barkeep gets a stance bound by
   his duties. Check: D19 lines gone.
 - [ ] **6. Between evenings (Stage 4).** Each guest's evening is summarized into memories and

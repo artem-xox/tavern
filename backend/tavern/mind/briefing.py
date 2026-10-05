@@ -36,7 +36,8 @@ def brief(observation: Observation, candidates: Sequence[Mapping[str, Any]]) -> 
     parts = (_closing(observation), _stay(observation), _whereabouts(observation), _trigger(observation),
              _own_seat(observation),
              _needs(observation), _temperament(observation), portrait(observation["actor"]),
-             feelings(observation), invitation_note(observation), _intention(observation), _people(observation),
+             feelings(observation), invitation_note(observation), _intention(observation), _promises(observation),
+             _people(observation),
              _places(observation), _tables(observation), _recent(observation))
     return {"situation": " ".join(part for part in parts if part),
             "options": {action["id"]: _marked(observation, action, family_text(observation, action)
@@ -147,6 +148,13 @@ def _person(observation: Observation, visitor: Mapping[str, Any]) -> str:
     if visitor.get("post"):
         return f"{label_of(visitor)}, the barkeep, is {activity.doing if activity and activity.doing else 'tending the bar'}"
     return f"{label_of(visitor)} is {activity.doing if activity and activity.doing else 'standing about'}"
+
+
+def _promises(observation: Observation) -> str:
+    # What the guest promised in talk and has not yet kept: the game will note whether they did.
+    names = [label_of(person) for item in observation.get("promises", [])
+             for person in [*observation.get("visitors", []), *observation.get("people", [])] if person["id"] == item["target"]]
+    return "".join(f"They promised {name} to come and sit with them, and have not yet. " for name in dict.fromkeys(names)).strip()
 
 
 def _marked(observation: Observation, action: Mapping[str, Any], text: str) -> str:

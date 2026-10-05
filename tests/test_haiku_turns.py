@@ -11,7 +11,7 @@ from tavern.social.conversation import ACTS
 from tavern.mind.haiku_turns import RejectedTurn, claude_writer, parse_turn, turn_question, writer_mode
 from tavern.mind.questions import Question
 from tavern.evening.recording import Record, record_questions, replay_questions
-from tavern.social.scenes import conversation_of
+from tavern.social.scenes import conversation_of, start_conversation
 from tavern.mind.scripted import scripted_turn
 from tavern.social.thoughts import think
 from tavern.social.turns import claim_turns, deliver_turn, turn_view
@@ -288,7 +288,7 @@ def test_impossible_writer_mode_fails_loudly(requested: str) -> None:
 
 
 INTENT = {"thought": "Bea looks like she knows the pass.", "intention": "Ask Bea which guide to hire.",
-          "written_at": 5.0, "trigger": {"kind": "arrival", "text": "Ada has just come in", "time": 5.0}}
+          "goal": None, "written_at": 5.0, "trigger": {"kind": "arrival", "text": "Ada has just come in", "time": 5.0}}
 
 
 @pytest.mark.parametrize("intention, expected, absent", [
@@ -301,3 +301,28 @@ def test_the_speakers_current_intention_is_in_the_moment(intention: Any, expecte
     people(world)["ada"]["intention"] = intention
     content = turn_question(view_of(world))["content"]
     assert ([text for text in expected if text not in content], [text for text in absent if text in content]) == ([], [])
+
+
+def sat_apart_world(goal: Any) -> dict[str, Any]:
+    """Ada has an intention with the goal; Bea sits at the table, Ada stands."""
+    world = create_world({"width": 10, "height": 5, "blocked": [], "objects": [
+        {"id": "table", "kind": "table", "name": "Table", "x": 3, "y": 2, "width": 2, "height": 1},
+        chair("west", 2, 2), chair("east", 5, 2)],
+        "actors": [{"id": "ada", "name": "Ada", "x": 5, "y": 4, "card": ADA},
+                   {"id": "bea", "name": "Bea", "x": 6, "y": 4, "card": BEA}]}, 3)
+    people(world)["bea"]["favorite_seat_id"] = "east"
+    people(world)["ada"]["intention"] = {**INTENT, "goal": goal}
+    start_conversation(world, people(world)["ada"], people(world)["bea"])
+    return world
+
+
+@pytest.mark.parametrize("goal, nudged", [
+    pytest.param({"kind": "sit_with", "target": "bea", "status": "active"}, True, id="means-to-sit-with-them"),
+    pytest.param({"kind": "talk_to", "target": "bea", "status": "active"}, True, id="means-to-talk-to-them"),
+    pytest.param({"kind": "sit_with", "target": "bea", "status": "done"}, False, id="goal-already-done"),
+    pytest.param(None, False, id="no-goal"),
+])
+def test_a_speaker_who_means_to_join_someone_is_nudged_to_promise_it(goal: Any, nudged: bool) -> None:
+    world = sat_apart_world(goal)
+    content = turn_question(turn_view(world, conversation_of(world, "ada")))["content"]
+    assert ("promise act" in content.split("THE MOMENT")[-1]) is nudged

@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from tavern.mind.intentions import Intention
     from tavern.social.facts import Fact, News
     from tavern.social.heard import Heard
+    from tavern.social.commitments import Commitment
     from tavern.social.invitations import Errand
     from tavern.evening.scenario import ExpectedGuest
     from tavern.social.scenes import Conversation
@@ -218,6 +219,7 @@ class World(TypedDict):
     next_stimulus_id: int
     conversations: "list[Conversation]"
     next_conversation_id: int
+    commitments: "list[Commitment]"
     invitations: "list[Errand]"
     news: "list[News]"
     rules: Rules

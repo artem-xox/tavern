@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 
-from tavern.evening.goal_metrics import goal_counts
+from tavern.evening.goal_metrics import goal_counts, promise_counts
 
 
 def event(kind: str) -> dict[str, Any]:
@@ -27,3 +27,20 @@ def test_goals_are_counted(events: list[dict[str, Any]], expected: dict[str, int
 def test_malformed_event_fails_loudly() -> None:
     with pytest.raises(KeyError):
         goal_counts([{"time": 1.0, "message": "no type"}])
+
+
+@pytest.mark.parametrize("events, expected", [
+    pytest.param([], {"made": 0, "kept": 0, "broken": 0, "void": 0}, id="empty"),
+    pytest.param([event("promise_made")], {"made": 1, "kept": 0, "broken": 0, "void": 0}, id="single"),
+    pytest.param([event("promise_made"), event("promise_made"), event("promise_kept"), event("promise_kept")],
+                 {"made": 2, "kept": 2, "broken": 0, "void": 0}, id="duplicates"),
+    pytest.param([event("promise_broken"), event("turn"), event("promise_void")],
+                 {"made": 0, "kept": 0, "broken": 1, "void": 1}, id="mixed-with-other-events"),
+])
+def test_promises_are_counted(events: list[dict[str, Any]], expected: dict[str, int]) -> None:
+    assert promise_counts(events) == expected
+
+
+def test_a_promise_event_without_a_type_fails_loudly() -> None:
+    with pytest.raises(KeyError):
+        promise_counts([{"time": 1.0, "message": "no type"}])

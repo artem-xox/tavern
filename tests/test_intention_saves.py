@@ -1,4 +1,4 @@
-"""Saved evenings keep each guest's intention (schema version 11) and refuse corrupt ones."""
+"""Saved evenings keep each guest's intention (schema version 12) and refuse corrupt ones."""
 
 from pathlib import Path
 from typing import Any, Callable
@@ -25,8 +25,8 @@ def minded() -> dict[str, Any]:
     return world
 
 
-def test_new_worlds_are_version_11() -> None:
-    assert create_world(hall())["schema_version"] == 11
+def test_new_worlds_are_version_12() -> None:
+    assert create_world(hall())["schema_version"] == 12
 
 
 def test_intentions_survive_save_and_load(tmp_path: Path) -> None:

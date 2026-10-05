@@ -102,15 +102,15 @@ def serving(observation: Observation, action: Mapping[str, Any]) -> bool:
         action: A concrete action, or a family option holding `members`.
 
     Returns:
-        True when the guest has an active goal and the action, or any member of the family, serves it.
+        True when the action, or any member of the family, serves the guest's active goal or a promise they
+        made and have not yet kept (`observation["promises"]`, see `commitments.promises_of`).
     """
     intention = observation["actor"].get("intention")
     goal = intention.get("goal") if intention else None
-    if goal is None or goal["status"] != "active":
-        return False
+    aims = [item for item in [goal, *observation.get("promises", [])] if item is not None and item["status"] == "active"]
     if "members" in action:
         return any(serving(observation, member) for member in action["members"])
-    return GOALS[goal["kind"]].serves(observation, action, goal)
+    return any(GOALS[item["kind"]].serves(observation, action, item) for item in aims)
 
 
 def goal_words(goal: Goal, name: str | None) -> str:
