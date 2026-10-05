@@ -11,9 +11,11 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any, TypedDict
 
+from tavern.body.items import ITEMS
 from tavern.hall.memory import record_event
 from tavern.hall.state import World, find_actor
 from tavern.mind.hall_view import Observation, known_object
+from tavern.social.giving import formed_since
 from tavern.social.names import called
 
 # active: being pursued; done: the world shows it was reached; failed: it can no longer be reached
@@ -90,9 +92,22 @@ def _sit_together(world: Mapping[str, Any], actor: Mapping[str, Any], other: Map
     return table is not None and table == chairs.get(other.get("seat_id"))
 
 
+def _brings_a_drink(observation: Observation, action: Mapping[str, Any], goal: Goal) -> bool:
+    # Fetching the drink or handing over a mug serves it; so does getting near, as for sitting with someone.
+    if action["verb"] == "bring_drink" or (action["verb"] == "give" and action.get("item") == "beer"):
+        return action["target_id"] == goal["target"]
+    return _sits_with(observation, action, goal)
+
+
+def _was_treated(world: Mapping[str, Any], actor: Mapping[str, Any], other: Mapping[str, Any], since: float) -> bool:
+    # The other took a mug from the guest after the goal was set, which they remember as being treated.
+    return formed_since(other, actor["id"], (ITEMS["beer"].received,), since)
+
+
 GOALS: Mapping[str, GoalKind] = MappingProxyType({
     "talk_to": GoalKind("talk with {name}", 240.0, True, _talks_to, _has_talked),
     "sit_with": GoalKind("sit at the same table as {name}", 120.0, False, _sits_with, _sit_together),
+    "bring_drink": GoalKind("bring {name} a drink", 180.0, False, _brings_a_drink, _was_treated),
 })
 
 
