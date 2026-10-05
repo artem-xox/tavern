@@ -1,163 +1,221 @@
-# Tavern pixel art redesign plan
+# Tavern room art plan
 
-## Goal and boundaries
+## Target and constraints
 
-Make the existing room read as a lived-in medieval border inn: worn oak, dark timber,
-limewashed plaster, rough stone, amber firelight, and a few muted red and green textiles.
-Use the same low top-down perspective and pixel density as the PixelLab characters.
-The first pass uses still images. Keep the 20 × 14 map, 32 px cells, object IDs,
-interaction spots, collision, and NPC behavior in `data/tavern.json`.
+Use [the supplied room reference](references/tavern-room.png) as the visual target:
+dark slate block perimeter, long warm-brown floorboards, amber pools of light,
+the hearth centered on the north wall, a crowded bar in the northwest, a pale
+stone privy in the northeast, five small colored table rugs, and restrained
+plants, banners, barrels and wall lights. The reference is art direction, not
+an image to place behind the game or a source of gameplay rules. It has no
+written instructions. Match its composition, contrast and material language;
+keep the existing cast and the current activity locations.
 
-Success is a readable 640 × 448 room where the characters look like they belong,
-each activity has an obvious place, wall/floor tiles join cleanly, and players can still
-see and select NPCs and navigate between all four tables, the bar, darts, and privy.
+The game canvas is **20 × 14 cells at 32 px = 640 × 448**. The supplied image is
+1489 × 1056, so its pixels cannot be treated as a 1:1 game tileset. Use native
+32 px art and review it beside the shipped 68 px characters. Do not enlarge a
+small image and call it a native 32 px tile. Preserve `data/tavern.json`'s
+object IDs, coordinates, blocked cells, seats, interaction spots and routes.
+The current map already has the reference's five table groups: four ordinary
+tables and a central dice table. It also already places the hearth at (9, 0),
+bar at (3, 2), privy at (17, 2), darts at (1, 8), three west windows and south
+door at (10, 13). No world or save-format change is needed for the art pass.
 
-## What is there now
+The first milestone is a believable room at normal game zoom with the current
+evening playing through it. Do not add new interactive furniture, character
+poses or an animation pipeline until that is working.
 
-`frontend/src/scene.ts` paints the floor, rugs, walls, windows, entrance, fireplace,
-counter, ale tap, tables, chairs, dartboard, and toilet with Phaser Graphics. The
-character stills are already pixel art. The current room has four repeated table/seat
-groups, a north counter, a northeast WC enclosure, an east hearth, a west dartboard,
-three west windows, and a south entrance.
+The [Codex style pilot](references/tavern-style-pilot-codex.png) is a mood and
+composition sample made from the reference on 2026-10-04. It is 1374 × 1145,
+not a tile atlas or a seamless 32 px game asset. Do not place it in the game.
 
-```text
-    north
-    ####################
-    #.....A........#...#   A ale tap, B bar, P privy
-    #..BBBB........#.P.#   F fireplace, D darts, E entrance
-    #..................#   T table, c chair, w window
-    w..............#####   # blocked wall, . floor
-    #..................F
-    w..cTc........cTc..F
-    #..................#
-    #..................#
-    #.D................#
-    #..................#
-    w..cTc........cTc..#
-    #..................#
-    ##########E#########
-```
+## Who makes what
 
-The south door at (10, 13) and west windows at (0, 4), (0, 6), and (0, 11) sit
-in wall cells. The fireplace spans (19, 5–6). The privy is at (17, 2), reached
-through the opening at (15, 3). Art can extend into an adjacent cell visually,
-but its collision and interaction point stay at the current coordinates.
+| Work | Best route | Reason |
+| --- | --- | --- |
+| Composition, palette, native-size mockup, tile cleanup, color variants, Phaser layering and light | Codex in this repo | Exact dimensions, seams, anchors and interactions need deterministic edits and a running-game check. PixelLab's `pixelart_workbench` can help with exact pixel cleanup without a new AI generation. |
+| Seamless floor and connected slate walls | PixelLab `create_building_kit`, after a cheap sample | Its building mode makes floor, wall joins and doorways as one vocabulary. Generate at 32 px, square top-down, one-tile walls; inspect every connection. If its plank direction or walls fail, draw/repair these few pieces directly. |
+| Large focal props: hearth, bar, privy, dartboard, table, chair | PixelLab `create_map_object` or transparent `create_image_pixflux`, directed by Codex | These have distinctive silhouettes and benefit from generation. Export individual transparent PNGs and correct outlines/anchors by hand. For a coherent style, give `create_map_object` a crop of the approved room when its 192 px inpaint limit fits. |
+| Tiny repeated details: dice, mugs, candle flame, bottle shapes, rug recolors, glow and vignette | Codex pixel editing and Phaser | A generator adds needless variation and cost to 5–12 px marks or effects. Keep tabletop details on separate layers when game state may change. |
+| Full-room concept image | Already supplied | A second concept image would not produce the exact separable assets the game needs. PixelLab's Tier 1 map limit is below 640 × 448, and a flattened room would break editable walls and actor depth. |
 
-## Art direction and generation order
+I can run the connected PixelLab tools, inspect the returned native dimensions,
+export the approved art and integrate it; there is no need to switch manually
+between this chat and PixelLab unless visual selection in its editor is easier.
+**Do not spend PixelLab generations during planning.** On 2026-10-04 the account
+had 409 of 2,000 generations left, resetting 2026-11-02. Check the live balance
+and the quoted cost immediately before a generation batch. The building kit is
+currently documented at about 20–25 generations. Approve the cheap composition
+pilot first.
 
-1. **Approve one room corner first.** Generate a 32 px oak floor sample, a matching
-   wall sample, and one 32 px table or chair. Composite them with the existing
-   veteran sprite at actual game scale. Reject a set if its camera angle, outline,
-   contrast, or implied pixel size makes the character look pasted on. This is the
-   cheap style check before generating the full set.
-2. **Build the room shell.** Preferred PixelLab tool: `create_building_kit` with
-   `square_topdown`, 32 px tiles, one-tile walls, floor described as scuffed oak
-   planks and walls as lime plaster with dark oak beams and a stone foot. Use the
-   same palette and camera language as the approved corner. Map its floor,
-   straight wall, corner, end, and doorway tiles onto the existing blocked-cell
-   layout. The privy floor can use a small stone variation; it does not need an
-   entire second architectural kit.
-3. **Generate transparent props against that shell.** Use PixelLab
-   `create_map_object` for each distinct prop, or `create_image_pixflux` with
-   `no_background` for a small pilot. Keep one consistent `low top-down`,
-   `basic shading`, selective/dark outline recipe. Supply an approved sample as
-   style context where a tool supports it; otherwise use the same written palette
-   and correct mismatches manually. Export individual PNGs with transparent
-   margins trimmed and a documented placement anchor.
-4. **Add restrained set dressing.** Make one small floor rug pattern, a barrel or
-   crate stack behind the bar, and table-top mugs/candle details. Reuse and flip
-   these sparingly. Do this only after the architecture and interactive props
-   look coherent. Keep walking lanes visually open.
+### Generation budget
 
-### Prompt recipe
+The estimate assumes **one 32 px building kit** at 20–25 generations and
+**17–20 individual transparent image attempts** for the reusable focal props
+and decorations. Floor/rug variants, tiny marks and lighting are made with
+pixel edits or code. The Codex style pilot above used no PixelLab generations.
 
-Use this shared clause in each prompt: “medieval border inn interior, low top-down
-game view, 32 px tile scale, hand-placed pixel clusters, warm worn oak and dark
-umber outlines, amber highlights, muted moss green and oxblood accents, basic
-shading, readable silhouette, no letters, no UI, no modern fixtures.” Then name
-**one** object and its orientation. For example: “a square scarred oak tavern table,
-seen from low top-down, plain tabletop with two tankards; transparent background.”
-For the privy: “a timber enclosed medieval privy seat with a dark round opening,”
-not a porcelain toilet. Review every output at 1× and inside the running room;
-regenerate or touch up any blurry edges or perspective mismatch.
+- **Everything usable on the first try:** about **37–45 PixelLab generations**.
+- **Every asset needs five attempts total:** about **185–225 generations**.
+- **Every asset needs ten attempts total:** about **370–450 generations**;
+  this can exceed the 409 remaining on 2026-10-04. These are scenario
+  estimates, not a quote: `create_map_object` and other modes may have a
+  different charge. Verify each tool's quoted cost and balance before use.
 
-## Asset list and placement
+The building kit dominates retry risk: five attempts alone cost 100–125,
+ten cost 200–250. Stop after two failed kits and repair the tile pieces
+directly instead of automatically rerolling the whole kit.
 
-Save approved source PNGs under `frontend/static/tavern/`, with architecture
-tiles in `tiles/`, props in `props/`, and textiles in `decor/`. Keep a short
-manifest recording the PixelLab tool, prompt, seed/job ID, native dimensions,
-and game anchor for each accepted image. Dimensions below are native pixel
-targets, not a request to scale a smaller image up.
+## Asset inventory, in production order
 
-- **Shell:** 32 × 32 repeating oak floor plus a few quiet variants; 32 × 32
-  connectable timber/plaster wall pieces and doorway; 32 × 32 stone privy floor.
-  Replaces `drawFloor`, `drawWall`, and `drawRoomDetails`.
-- **Counter:** 128 × 32 four-cell oak bar at (3, 2), with its front facing south;
-  32 × 32 cask/ale tap at (6, 1). Replaces `drawBar` and `drawTap`.
-- **Seating:** one 32 × 32 table used four times; east- and west-facing
-  32 × 32 stools or chairs used eight times; two 128 × 64 subdued rug variants
-  beneath the groups. Replaces `drawTable`, `drawChair`, and `drawRugs`.
-  Seat sprites must leave the seated character's body visible.
-- **Wall features:** 32 × 32 leaded timber window used three times; 32 × 32
-  heavy plank entrance door; 32 × 64 stone hearth with dark firebox and logs.
-  Replaces `drawWindow`, `drawDoor`, and the static part of `drawFireplace`.
-- **Activities:** 32 × 32 timber-backed dartboard at (2, 9), with a small floor
-  throw mark at (3, 9); 32 × 32 privy seat at (17, 2), with a timber screen or
-  latch cue at the enclosure entry. Replaces `drawDarts` and `drawToilet`.
-  These two props should be easy to recognize at normal zoom.
-- **Small dressing:** optional barrel/crate and tabletop detail sprites, reused
-  rather than unique art for every table. They must not obscure destinations,
-  path lines, or characters.
+Native sizes below are targets for the exported canvas, not guarantees from a
+generator. Trim transparent edges where appropriate and record each placement
+anchor. `frontend/static/tavern/` will hold approved `tiles/`, `props/` and
+`decor/` PNGs. One reusable sprite may be placed or recolored many times.
 
-Do not generate a single flattened 640 × 448 image. A whole-map image would be
-hard to reconcile with movable obstacles, selection, actor depth, and the exact
-collision layout. PixelLab's map tool also limits free-tier canvas area below
-this room's size.
+### 1. Room shell — required
 
-## How to replace the renderer
+- **Oak floor:** one 32 × 32 seamless plank tile plus two quiet variants.
+  Floorboards run left to right as in the reference; vary seams and scuffs
+  without checkerboarding. Use code/manual cleanup if a generated sample does
+  not tile cleanly.
+- **Slate perimeter:** one matched 32 px building kit for horizontal and
+  vertical runs, inside/outside corners and doorway ends. Dark charcoal/slate
+  with warm edge light. The north wall needs openings for the hearth and bar
+  shelf; the privy partition uses the same wall language.
+- **Privy floor:** one or two 32 × 32 pale grey stone tiles, restricted to the
+  existing 3 × 3 northeast area. Its brighter value makes the WC readable.
+- **Windows and entry:** one 32 × 32 amber-lit west window reused three times;
+  one 32 × 32 south plank door. Build wall joins around both, not over them.
 
-1. Load the approved PNGs in `TavernScene.preload`. Place floor tiles first, rugs
-   next, wall tiles and wall features next, then furniture, NPCs, labels, and route
-   overlays. Keep the current firelight as a separate overlay for now.
-2. Use `world.map.blocked` and the fixed wall-feature cells to choose wall
-   joins/corners. `world.map.objects` remains the source for prop position,
-   facing, and interaction. If obstacle editing changes blocked cells, rebuild
-   affected wall visuals from the new map snapshot.
-3. Give furnishings explicit pixel anchors and depth by their bottom edge. The
-   counter, table fronts, and chairs can overlap feet, while a seated sprite must
-   appear in front of its seat back. Do not flatten props into the floor.
-4. Turn on nearest-neighbor texture filtering and integer pixel alignment for
-   the room art. Check how Phaser's `Scale.FIT` behaves at browser sizes that
-   produce a fractional scale; the final canvas should stay crisp.
-5. Keep interaction feedback, but show appeal and stock labels on hover or
-   selection instead of permanently covering the new art. Retain an accessible
-   indication of the same information in the dashboard.
+### 2. Interactive anchors — required
 
-## Gates for implementation
+- **Hearth:** one 96 × 32 or 96 × 64 north-facing stone fireplace with a dark
+  firebox and separate static flame/log layer, centered on `fireplace` at
+  (9, 0), width 3. Let its facade overlap the adjacent floor visually without
+  changing blocked cells. Keep the existing procedural flickering glow.
+- **Bar:** one 128 × 32 south-facing oak counter for `bar` at (3, 2), width 4,
+  plus a 32 × 32 tap/cask on the north wall at (6, 1). Add a narrow back shelf
+  as a separate non-interactive layer. Hob's 68 px sprite stays behind the bar;
+  check that his feet and hands are visible.
+- **Tables and seating:** one 32 × 32 wood table, one 32 × 32 chair with an
+  east/west mirrored placement, and one same-size dice-table top or a separate
+  pair of dice. Reuse for four ordinary tables, eight chairs, the central dice
+  table and two dice chairs. Keep the seat front and back in separable layers
+  so seated actors are legible.
+- **Privy and darts:** one 32 × 32 pale stone/ceramic basin with dark opening
+  and a wooden pail in the existing WC cell; one 32 × 32 wall-mounted dartboard
+  at (1, 8). The board's throw line is a small floor mark drawn locally.
 
-1. **Style gate:** one floor/wall/table composite beside Edda, Rurik, and Toren at
-   native scale. Verify perspective, palette, seams, and readability before
-   generating the rest.
-2. **Shell gate:** new floor and walls in the live scene, including south door,
-   west windows, privy doorway, and east hearth; compare a 640 × 448 screenshot
-   with the current map to check every cell and opening.
-3. **Prop gate:** replace one table group and the bar, verify actor overlap and
-   seating, then reuse the accepted sprites for the other groups and add the
-   darts/privy/hearth pieces.
-4. **Play gate:** in a restarted evening, verify walking to each interaction,
-   sitting, playing darts, using the privy, object hover/click targets, obstacle
-   editing, route visibility, and the scene at desktop and narrow widths.
+### 3. Distinctive dressing — after the room reads well
 
-## PixelLab access and generation budget
+- **Five rugs:** one 96 × 64 border/fringe design, adapted to the table groups
+  in muted red, teal, green, blue and ochre. Use palette variants rather than
+  five unrelated generations. Check each edge against walking cells.
+- **Wall and corner details:** one torch/sconce reused at four to six positions;
+  one hanging banner reused in two colors; one framed painting; one planter
+  sprite reused and flipped; one barrel and one crate. Use the reference's
+  density but keep the central travel lanes open and avoid decorating directly
+  over a click or interaction spot.
+- **Table and bar details:** mugs, bottles, a small candle and plant. Make these
+  separate overlays so they can be hidden, moved or toned down if they obscure
+  hands, speech bubbles or the dice game.
 
-PixelLab's [Create tiles (Pro)](https://www.pixellab.ai/docs/tools/create-tiles-pro)
-documentation lists the building kit at 20–25 generations and requires Tier 1.
-Its [standard tileset](https://www.pixellab.ai/docs/tools/create-tileset) is
-cheaper (usually 3–4 generations) but is designed for **terrain transitions**,
-not the room's wall/door construction. On 2026-10-02, the connected account
-was upgraded to Tier 1 and `get_balance` reported 2,000 generations for the
-current cycle. The building kit is therefore available to test, although the
-one-corner style pilot should still precede its 20–25-generation run. Check
-the live balance and preserve room for props and retries. Do not spend credits
-on a terrain tileset as a substitute for interior architecture. No room art
-was generated in this planning pass.
+The same artwork may serve multiple locations. This is roughly **one building
+kit, 10–12 distinct focal props, and a handful of deterministic variations**, not
+one generation for every visible copy. Do not generate a new bartender: Hob and
+the six guests already ship with four cardinal 68 px views. If a character is
+revisited, follow `CHARACTER_ART_PIPELINE.md` and ship only N/S/E/W.
+
+## PixelLab brief
+
+Use the reference as a style guide after reducing it to the actual pixel grid
+or a small palette/crop, rather than passing its 1489 px upscale blindly as a
+native sprite. Base prompt: “border inn interior, low top-down pixel art, native
+32 px tile scale, dark slate blocks, long worn oak planks, deep umber shadows,
+warm amber candle/fire light, muted wine red, teal and moss green textiles,
+readable hand-placed pixel clusters, selective dark outline, simple shading,
+no lettering, no UI.” Add exactly one object, its view and its target canvas
+size to each prop request. Keep the 68 px cast beside every review.
+
+Record the tool, prompt, seed/job ID, actual exported dimensions, palette,
+transparent bounds and bottom-center/edge anchor for each accepted result.
+Check PNG dimensions after the job finishes; the earlier standard character
+route accepted 68 px in the request but returned 96 px in its export.
+
+## Codex floor and wall trial (2026-10-04)
+
+The first in-game material trial uses Codex ImageGen, with the supplied room
+reference as a style guide. `frontend/static/tavern/tiles/oak-floor.png` and
+`slate-wall.png` are both 1254 × 1254 source images. The renderer scales the
+floor across the 20 × 14 room and places one copy of the stone image in each
+blocked cell. This keeps the server map and obstacle editing intact, but these
+are visual prototypes rather than native, seamless 32 px tile exports.
+
+The next pass reduced the floor boards to roughly two-thirds their original
+size and added matching `slate-window.png` and `slate-door.png` wall art.
+The current `slate-door.png` is a three-cell-wide, two-leaf entrance centered
+across from the fireplace. Its map footprint spans cells (9–11, 13), and the
+three existing interaction spots remain in front of it.
+
+The next in-game pass added pale stone
+floor and a wooden bucket in the privy, and replaced the procedural hearth,
+bar, tap, tables and chairs with separate transparent PNGs. A barrel, plant and
+candle PNG are reused as small overlays; the table rugs have muted colors drawn
+in Phaser. `room-art.ts` owns these static layers and rebuilds them from the
+server map when obstacles change. No PixelLab credits were used.
+
+The window tile was later corrected to exactly one cell, matching every other
+slate wall cell. Its amber glass and wooden frame are larger *within* the tile.
+The oak floor source was lightened to honey brown, and the bar source and its
+display height were increased so the counter has a deeper top and taller front.
+
+ImageGen supplied the new sources in `tiles/privy-stone.png`, `props/` and
+`decor/`. All props have alpha; the stone floor is opaque. The transparent
+sources are 1254 px square except the wide fireplace and bar (about 2160 ×
+725 px). They are scaled down in Phaser with nearest-neighbor filtering, so
+they remain prototype art rather than final native-resolution sprites.
+The image prompts used the existing oak and slate materials as style context:
+top-down chunky pixel art, warm brown timber, charcoal stone, amber light,
+muted colors, transparent background for each isolated object, no text or
+characters. Each output named exactly one object: privy stone, wooden privy
+bucket, fireplace, bar, table, chair, ale cask, barrel, plant, or candle.
+
+## Delivery slices and checks
+
+1. **Style pilot:** make a 32 px floor sample, a wall/corner sample, a table
+   and one rug in a 6 × 5-cell mockup with Edda and Hob at native size.
+   Compare side by side with the supplied image: plank direction, darkest
+   values, pixel density, warm light and actor contrast. Only this pilot may
+   authorize the building kit and prop batch.
+2. **Shell in game:** replace the floor, perimeter, privy floor, windows, door
+   and north hearth. At 640 × 448 inspect every wall seam and entrance.
+   Verify dynamic obstacle editing still redraws the wall and the existing
+   fireplace, window and entrance interactions are reachable.
+3. **Furniture in game:** integrate bar, one full table/seat/rug group and the
+   dice table; verify Hob behind the bar, seated poses, depth, clicks, hover,
+   and dice visibility. Then reuse approved assets for the other groups,
+   darts and privy.
+4. **Dressing and play:** add the small decor and final lighting only after
+   the working room is clear. Run an evening and manually inspect walking to
+   every activity, sitting, the WC, darts, dice, actor selection, speech bubbles,
+   obstacle editing and desktop/narrow browser widths. Run `make check` and
+   `make build` for the frontend change.
+
+Do not flatten the room into one picture. `TavernScene.preload()` can load the
+approved PNGs; keep floor/rugs below actors, wall features and furniture at
+appropriate bottom-edge depths, and speech/UI above them. `world.map.objects`
+remains authoritative for interactive placement. Preserve nearest-neighbor
+filtering and integer alignment, and inspect Phaser's fractional `Scale.FIT`
+sizes for blur. Split `scene.ts` before growing it past the project's ~400-line
+limit. The current Graphics art remains a fallback until its replacement slice
+has passed the play check.
+
+## Sources for tool choice
+
+- [PixelLab Create tiles (Pro)](https://www.pixellab.ai/docs/tools/create-tiles-pro):
+  building kit contents, 32 px recommendation, subscription and cost.
+- [PixelLab Create map](https://www.pixellab.ai/docs/tools/create-map): Tier 1
+  canvas limit, one reason not to generate the whole playable room.
+- [PixelLab API](https://www.pixellab.ai/pixellab-api): map objects and
+  transparent image generation.

@@ -29,6 +29,13 @@ def test_the_fireplace_is_in_the_north_wall_straight_across_from_the_door() -> N
     assert (fireplace["y"], middle(fireplace)) == (0, middle(door))
 
 
+def test_double_door_fills_three_south_wall_cells_opposite_the_fireplace() -> None:
+    world = create_world(LAYOUT)
+    fireplace, door = only("fireplace"), only("door")
+    assert (door["x"], door.get("width", 1), middle(door)) == (fireplace["x"], 3, middle(fireplace))
+    assert all([x, door["y"]] not in world["map"]["blocked"] for x in range(door["x"], door["x"] + 3))
+
+
 def test_the_darts_hang_on_the_west_wall_on_the_dice_tables_row() -> None:
     darts, dice = only("darts"), only("dice_table")
     assert (darts["x"], darts["y"]) == (1, dice["y"])
