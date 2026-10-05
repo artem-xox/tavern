@@ -6,7 +6,8 @@ from typing import Any
 import pytest
 
 from tavern.adapters.persistence import load_world, save_world
-from tavern.mind.goals import check_goal, goal_words, serving
+from tavern.mind.goals import check_goal, goal_pull, goal_words, serving
+from tavern.mind.local_policy import GOAL_BONUS, local_scores
 from tavern.social.thoughts import think
 from test_goals import OTHERS, action, minded, settled, view
 
@@ -42,6 +43,19 @@ def bring(**fields: Any) -> dict[str, Any]:
 ])
 def test_an_option_serves_the_goal_of_bringing_a_drink_or_not(act: dict[str, Any], expected: bool) -> None:
     assert serving(view(bring()), act) is expected
+
+
+@pytest.mark.parametrize("sat, act, expected", [
+    pytest.param(("bea:w1", "ada:w2"), action("bring_drink", "bea"), True, id="at-their-table-bringing-the-drink"),
+    pytest.param(("bea:w1", "ada:w2"), give("beer", "bea"), True, id="at-their-table-handing-over-a-mug"),
+    pytest.param(("bea:w1", "ada:w2"), action("sit", "w2"), False, id="staying-in-their-seat-is-no-help"),
+    pytest.param(("bea:w1", "ada:w2"), action("seating", None), False, id="no-need-to-look-for-a-seat"),
+    pytest.param(("bea:w1", "ada:e1"), action("sit", "w2"), True, id="at-another-table-sitting-where-they-sit"),
+])
+def test_getting_near_serves_the_goal_only_while_the_guest_is_not_near(sat: tuple[str, ...], act: dict[str, Any],
+                                                                      expected: bool) -> None:
+    world = minded("bring_drink", "bea", sat=sat)
+    assert serving(view(world), act) is expected
 
 
 def test_a_finished_goal_of_bringing_a_drink_serves_nothing() -> None:
@@ -91,3 +105,27 @@ def test_a_goal_of_bringing_a_drink_survives_save_and_load(tmp_path: Path) -> No
     world = bring()
     save_world(world, tmp_path / "evening.json")
     assert load_world(tmp_path / "evening.json") == world
+
+
+def scores_of(world: dict[str, Any]) -> dict[str, float]:
+    """Ada's local scores for bringing Bea a drink, chatting with her, and staying in her seat at Bea's table."""
+    candidates = [action("bring_drink", "bea"), action("talk", "bea"), action("sit", "w2")]
+    return local_scores(view(world), candidates)
+
+
+def test_a_goal_to_bring_a_drink_lifts_the_trip_above_a_chat_and_a_seat_in_the_local_policy() -> None:
+    sat = ("bea:w1", "ada:w2")
+    aimless, aiming = scores_of(minded("bring_drink", "bea", status="done", sat=sat)), scores_of(
+        minded("bring_drink", "bea", sat=sat))
+    assert (aimless["bring_drink:bea"] < aimless["talk:bea"], aiming["bring_drink:bea"] > aiming["talk:bea"],
+            aiming["bring_drink:bea"] > aiming["sit:w2"]) == (True, True, True)
+
+
+@pytest.mark.parametrize("kind, act, pulled", [
+    pytest.param("talk_to", action("talk", "bea"), GOAL_BONUS, id="an-ordinary-goal-pulls-by-the-usual-bonus"),
+    pytest.param("sit_with", action("sit", "w2"), GOAL_BONUS, id="sitting-with-someone-too"),
+    pytest.param("bring_drink", action("bring_drink", "bea"), 0.8, id="a-drink-pulls-harder-as-it-is-low-on-its-own"),
+    pytest.param("bring_drink", action("talk", "bea"), 0.0, id="what-does-not-serve-is-not-pulled"),
+])
+def test_how_hard_a_goal_pulls_the_options_that_serve_it(kind: str, act: dict[str, Any], pulled: float) -> None:
+    assert goal_pull(view(minded(kind, "bea")), act) == pytest.approx(pulled)

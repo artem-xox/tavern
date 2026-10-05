@@ -4,7 +4,7 @@ from collections.abc import Mapping, Sequence
 import math
 from typing import Any
 
-from tavern.mind.goals import serving
+from tavern.mind.goals import GOAL_PULL, goal_pull
 from tavern.mind.hall_view import in_use, line_place
 from tavern.social.hostility import urge
 from tavern.social.thoughts import THOUGHTS, opinion_of, thought_mood
@@ -94,15 +94,14 @@ def _score_gifts(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
         scores[action["id"]] = min(1.0, max(0.0, score))
 
 
-# What serving the guest's goal adds to an option's score: enough to tip a near tie, not to outweigh a pressing need.
-GOAL_BONUS = 0.3
+# What serving the guest's goal usually adds to an option's score (see `goals.GoalKind.pull`).
+GOAL_BONUS = GOAL_PULL
 
 
 def _score_goal(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
                 scores: dict[str, float]) -> None:
     for action in candidates:
-        if serving(observation, action):
-            scores[action["id"]] = min(1.0, scores[action["id"]] + GOAL_BONUS)
+        scores[action["id"]] = min(1.0, scores[action["id"]] + goal_pull(observation, action))
 
 
 def _score_lines(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
