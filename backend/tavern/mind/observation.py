@@ -4,7 +4,7 @@ import math
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from tavern.body.items import check_inventory
+from tavern.body.items import check_inventory, empty_inventory
 from tavern.hall.room import OBJECT_KINDS
 from tavern.hall.validation import number
 
@@ -29,7 +29,8 @@ def own_actor(observation: Mapping[str, Any]) -> Mapping[str, Any]:
         number(needs.get(name), name, 0, 100)
     for name in ("social", "boredom"):
         number(needs.get(name, 0), name, 0, 100)
-    check_inventory(inventory)
+    # An observation built outside the world may list only what the visitor holds, as it may omit the visit.
+    check_inventory({**empty_inventory(), **inventory})
     for name in ("patience", "comfort", "curiosity"):
         number(traits.get(name, 0.5), name, 0, 1)
     _validate_visit(actor)

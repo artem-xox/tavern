@@ -14,17 +14,24 @@ class Item:
         kind: Inventory key, saved with the world.
         one: Wording for a single one in events and the inspector.
         many: Wording for several.
-        held: How a briefing says someone holds one.
+        held: How a briefing says someone holds one in their hand, or None for something carried out
+            of sight (a remedy in a sleeve).
+        hands: Most a visitor can carry at once.
+        received: The `THOUGHTS` kind a receiver keeps about whoever gave it to them.
     """
 
     kind: str
     one: str
     many: str
-    held: str
+    held: str | None
+    hands: int
+    received: str
 
 
 ITEMS: Mapping[str, Item] = MappingProxyType({
-    "beer": Item("beer", "a mug of ale", "mugs of ale", held="a full mug of ale"),
+    "beer": Item("beer", "a mug of ale", "mugs of ale", held="a full mug of ale", hands=2, received="treated"),
+    "remedy": Item("remedy", "a herbal remedy", "herbal remedies", held=None, hands=3, received="cared_for"),
+    "keepsake": Item("keepsake", "a keepsake", "keepsakes", held=None, hands=3, received="gifted"),
 })
 
 
@@ -38,17 +45,17 @@ def empty_inventory() -> dict[str, int]:
 
 
 def check_inventory(inventory: Mapping[str, Any]) -> None:
-    """Refuse an inventory that is not exactly one nonnegative whole count per kind.
+    """Refuse an inventory that is not exactly one whole count per kind, from 0 to what a visitor can carry.
 
     Args:
         inventory: Counts by item kind, as built, saved or observed.
     Raises:
-        ValueError: A kind is missing, a count is not a nonnegative integer, or a kind is unknown.
+        ValueError: A kind is missing, a count is not an integer from 0 to the kind's `hands`, or a kind is unknown.
     """
-    for kind in ITEMS:
+    for kind, item in ITEMS.items():
         count = inventory.get(kind)
-        if type(count) is not int or count < 0:
-            raise ValueError(f"Inventory {kind} must be a nonnegative integer")
+        if type(count) is not int or not 0 <= count <= item.hands:
+            raise ValueError(f"Inventory {kind} must be a whole number from 0 to {item.hands}")
     unknown = sorted(set(inventory) - set(ITEMS))
     if unknown:
         raise ValueError(f"Unknown inventory kind {unknown[0]!r}")
@@ -60,10 +67,10 @@ def held_words(inventory: Mapping[str, int]) -> str | None:
     Args:
         inventory: Counts by item kind.
     Returns:
-        The kinds held, joined by "and", or None when the hands are empty. A count is not said yet:
-        two mugs read as one.
+        What is in the hands, joined by "and", or None when they are empty (or all that is carried is out of
+        sight). A count is not said yet: two mugs read as one.
     """
-    held = [item.held for kind, item in ITEMS.items() if inventory[kind]]
+    held = [item.held for kind, item in ITEMS.items() if inventory.get(kind) and item.held]
     return " and ".join(held) or None
 
 
@@ -74,3 +81,23 @@ def client_items() -> dict[str, dict[str, str]]:
         Per kind: the wording for one and for several.
     """
     return {kind: {"one": item.one, "many": item.many} for kind, item in ITEMS.items()}
+
+
+def parse_carries(data: Any) -> dict[str, int]:
+    """Validate what a scenario guest carries in with them.
+
+    Args:
+        data: Counts by item kind, from 0 to the kind's `hands`; kinds left out are zero.
+    Returns:
+        The counts as given.
+    Raises:
+        ValueError: It is not a mapping, names an unknown kind, or holds a count out of range.
+    """
+    if not isinstance(data, Mapping):
+        raise ValueError("A guest's carries must map item kinds to counts")
+    for kind, count in data.items():
+        if kind not in ITEMS:
+            raise ValueError(f"A guest cannot carry unknown item {kind!r}")
+        if type(count) is not int or not 0 <= count <= ITEMS[kind].hands:
+            raise ValueError(f"A guest's carried {kind} must be a whole number from 0 to {ITEMS[kind].hands}")
+    return dict(data)

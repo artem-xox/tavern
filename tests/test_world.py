@@ -7,6 +7,7 @@ from typing import Any
 
 import pytest
 
+from tavern.body.items import empty_inventory
 from tavern.hall.world import create_world, observe_actor, start_action, step_world
 
 
@@ -165,7 +166,7 @@ def test_blocked_spot_fails_visibly_without_effect() -> None:
 def test_invalid_action_fails_without_mutating_inventory(verb: str, target: str | None) -> None:
     world = create_world(room())
     assert not start_action(world, "ada", action(verb, target))["accepted"]
-    assert world["actors"][0]["inventory"] == {"beer": 0}
+    assert world["actors"][0]["inventory"] == empty_inventory()
 
 
 def test_individual_observation_does_not_leak_unknown_resources_or_private_state() -> None:

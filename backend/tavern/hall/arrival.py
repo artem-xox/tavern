@@ -114,7 +114,7 @@ def admit_arrivals(world: World) -> None:
         if cell is None:
             return
         guest = world["expected"].pop(0)
-        actor = create_actor({**guest, "x": cell[0], "y": cell[1]}, world["map"])
+        actor = create_actor({**guest, "x": cell[0], "y": cell[1], "inventory": guest.get("carries", {})}, world["map"])
         actor["knowledge"]["facts"] = starting_facts(world["news"], actor["id"], world["time"])
         world["actors"].append(actor)
         record_event(world, actor, "arrival", f"{actor['name']} came in")

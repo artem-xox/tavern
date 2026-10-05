@@ -8,6 +8,7 @@ import math
 from random import Random
 from typing import Any, NotRequired, TypedDict, cast
 
+from tavern.body.items import parse_carries
 from tavern.hall.arrival import admit_arrivals, arrival_ranges, arriving, take_posts
 from tavern.hall.state import World
 from tavern.hall.validation import number, unique_ids
@@ -21,7 +22,8 @@ class Guest(TypedDict):
     """A guest the scenario expects tonight; `arrives_at` is in game seconds after opening.
 
     A guest cast from a character card carries the `card`, and their `traits` are its params.
-    A guest with starting relationships carries them as `ties`, from their own side.
+    A guest with starting relationships carries them as `ties`, from their own side, and one who comes
+    in with something in hand or pocket lists it as `carries`.
     """
 
     id: str
@@ -32,6 +34,7 @@ class Guest(TypedDict):
     arrives_at: float
     card: NotRequired[Card]
     ties: NotRequired[list[OwnTie]]
+    carries: NotRequired[dict[str, int]]
 
 
 class StaffMember(TypedDict):
@@ -92,14 +95,15 @@ def parse_guest(data: Any) -> Guest:
     Args:
         data: Guest record with exactly `id`, `name`, `color`, `sprite`, `traits` (names to
             0–1 values) and `arrives_at` (game seconds, at least 0), and optionally the `card`
-            the guest is cast from and their `ties` (see `ties.own_ties`).
+            the guest is cast from, their `ties` (see `ties.own_ties`) and what they `carries` in
+            (see `items.parse_carries`).
     Returns:
         The guest, with numbers as floats.
     Raises:
         ValueError: A field is missing, unknown, or malformed, or the guest's name, sprite or
             traits differ from their card's.
     """
-    fields = _fields(data, {"id", "name", "color", "sprite", "traits", "arrives_at"}, {"card", "ties"}, "Guest")
+    fields = _fields(data, {"id", "name", "color", "sprite", "traits", "arrives_at"}, {"card", "ties", "carries"}, "Guest")
     for key in ("id", "name", "color", "sprite"):
         if not isinstance(fields[key], str) or not fields[key]:
             raise ValueError(f"Guest {key} must be a nonempty string")
@@ -112,6 +116,8 @@ def parse_guest(data: Any) -> Guest:
         guest["card"] = _matching_card(guest, fields["card"])
     if "ties" in fields:
         guest["ties"] = parse_own_ties(fields["ties"])
+    if "carries" in fields:
+        guest["carries"] = parse_carries(fields["carries"])
     return guest
 
 
