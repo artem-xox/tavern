@@ -240,6 +240,8 @@ export interface WorldEvent {
   actor_id: string | null;
   type: string;
   message: string;
+  /** The kind of goal a goal event is about (`goal_set`, `goal_done`, `goal_failed`, `goal_expired`). */
+  goal?: string;
 }
 
 /** A sound in the hall waiting for the listeners' attention at the end of the tick. */

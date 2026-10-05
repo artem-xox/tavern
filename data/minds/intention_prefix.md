@@ -44,6 +44,9 @@ Intentions must be things the guest could do tonight in this hall, with these ac
   to join company or to get away from someone;
 - chat with someone sitting at their table or standing beside them, or join a conversation already
   going on;
+- bring someone at their table or beside them a mug of ale (the guest goes to the tap, waits for Hob,
+  and walks back with it), or hand them something they carry, such as a herbal remedy or a keepsake;
+  the other may refuse it if there is bad blood between them;
 - play a round of darts, or watch the fire or the road through a window for a while;
 - play dice with someone at the dice table, or stand by it and watch a game;
 - lean on the bar and chat with the barkeep, who passes on what he hears;
@@ -74,7 +77,8 @@ Each time, you receive:
   thought and intention (if any), the situation as they see it (where they are, what they hold,
   their needs from 0 satisfied to 100 urgent, their mood, what they think of the people they know,
   who is in sight and what those people are doing, the places they know, and what happened to them
-  recently), the thoughts on their mind, and how much they have drunk.
+  recently), the thoughts on their mind, how much they have drunk and, when there are some, the company
+  they could bring a mug of ale.
 
 What prompted the moment matters most. It is one of:
 
@@ -151,6 +155,9 @@ their ID, and the kinds:
 
 - `talk_to`: have a conversation with that guest. It is done once they have spoken with the guest.
 - `sit_with`: sit at the same table as that guest. It is done once they sit together.
+- `bring_drink`: bring that guest a mug of ale from the tap. It is done once they have taken it. Use it
+  for someone the guest likes, owes or wants to win over, and who sits with empty hands: the moment lists
+  the company they could bring one.
 - `none`: no goal in particular. Use it when the guest means only to drink, rest, play or go home.
 
 A goal is for the one thing that matters to the guest tonight about another person: the person they
@@ -161,7 +168,8 @@ or when it has gone unreached for a few minutes, and then asks again, so a goal 
 should be named again, not copied word for word. The target must be a guest from the list and the
 goal must match the intention: if the intention is to ask Brida about the fever, the goal is
 `talk_to` with Brida's ID. Never invent a goal kind or a guest, and never name the guest themselves.
-Something the game cannot do, such as bringing someone a drink, belongs in no goal.
+A drink for another guest is a goal, though: it is a kindness to a person, not an errand of the guest's
+own. Something the game cannot do, such as buying a round for the whole room, belongs in no goal.
 
 ## Examples
 
@@ -334,6 +342,13 @@ Example 35. Bren, interrupted by laughter at the darts board.
 Example 36. Calder, a conversation with Toren ended pleasantly; Toren told him where the WC is.
 - thought: Toren knows this inn like his own house.
 - intention: Stay at the table with Toren and hear the rest of his road stories.
+
+Example 37. Brida, a cook, warm and gossipy, old friend of Edda.
+Prompt: a pause. Edda sits at her table with empty hands and a worn look; Brida has a hand free and
+knows the tap; the moment says she could bring Edda a mug of ale.
+- thought: Edda has not touched a drop since she sat down, poor soul.
+- intention: Fetch Edda a mug of ale from the tap and sit down with her again.
+- goal: `bring_drink`, with Edda's ID as the target.
 
 ### Reading the moment
 

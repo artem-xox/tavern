@@ -5,6 +5,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any, TypedDict
 
 from tavern.body.items import ITEMS
+from tavern.evening.goal_metrics import GoalCounts, goal_counts
 
 
 class ErrandCounts(TypedDict):
@@ -16,11 +17,12 @@ class ErrandCounts(TypedDict):
 
 
 class GivingCounts(TypedDict):
-    """How giving went: gifts taken by kind of item, gifts refused, and drink errands."""
+    """How giving went: gifts taken by kind of item, gifts refused, drink errands, and the goals of bringing a drink."""
 
     gifts: dict[str, int]
     refused: int
     errands: ErrandCounts
+    goals: GoalCounts
 
 
 def giving_counts(events: Sequence[Mapping[str, Any]]) -> GivingCounts:
@@ -28,11 +30,12 @@ def giving_counts(events: Sequence[Mapping[str, Any]]) -> GivingCounts:
 
     Args:
         events: The complete event log: `gave` and `gift_refused` (both guests log each, so a gift counts once
-            by its time and words), `fetch_begun`, `fetch_done` and `fetch_failed`.
+            by its time and words), `fetch_begun`, `fetch_done` and `fetch_failed`, and the goal events that name
+            the goal `bring_drink`.
 
     Returns:
-        Gifts per kind in `ITEMS`, zeros too; refusals; and the errands. An errand still under way at the end
-        is begun but neither done nor failed.
+        Gifts per kind in `ITEMS`, zeros too; refusals; the errands, where one still under way at the end is
+        begun but neither done nor failed; and the goals of bringing a drink, set, done, failed and expired.
 
     Raises:
         KeyError: An event has no type, or a gift or refusal no time or words.
@@ -44,7 +47,8 @@ def giving_counts(events: Sequence[Mapping[str, Any]]) -> GivingCounts:
     errands = Counter(event["type"] for event in events)
     return {"gifts": {kind: kinds[kind] for kind in ITEMS}, "refused": len(refused),
             "errands": {"begun": errands["fetch_begun"], "done": errands["fetch_done"],
-                        "failed": errands["fetch_failed"]}}
+                        "failed": errands["fetch_failed"]},
+            "goals": goal_counts([event for event in events if event.get("goal") == "bring_drink"])}
 
 
 def _kind_of(message: str) -> str:

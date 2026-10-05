@@ -106,6 +106,25 @@ def empty_handed_company(observation: Mapping[str, Any]) -> list[str]:
                   and not person.get("holding", {}).get("beer", 0) and person["id"] not in busy)
 
 
+def drink_targets(observation: Mapping[str, Any]) -> list[str]:
+    """List the people a guest could fetch a drink for, as far as they can tell.
+
+    Args:
+        observation: The guest's observation, with their `inventory`, the `objects` they know, `people` in
+            sight and `on_errands` (see `empty_handed_company`).
+
+    Returns:
+        `empty_handed_company`, when the guest has a hand free, is not on an errand and knows a tap that had
+        ale when last seen; otherwise nobody.
+    """
+    actor = observation["actor"]
+    free_hand = actor["inventory"].get("beer", 0) < ITEMS["beer"].hands
+    stocked = any(item["kind"] == "tap" and item.get("stock") for item in observation["objects"])
+    if not (free_hand and stocked) or actor["id"] in observation.get("on_errands", []):
+        return []
+    return empty_handed_company(observation)
+
+
 def _near(observation: Mapping[str, Any], person: Mapping[str, Any]) -> bool:
     # The reach of a chat: the same table, or standing side by side (a second copy of `hostility._near`).
     seat = next((item for item in observation["objects"] if item["id"] == observation["actor"].get("seat_id")), None)

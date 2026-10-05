@@ -1799,6 +1799,46 @@ Decisions for every H task (frozen 2026-10-05; change them here first if the cod
     the option. Not done: a way to walk beside an invitee who stands, so an errand can reach them without a
     chair at their table.
 
+### The goal of bringing a drink (H6–H9)
+
+Added 2026-10-05, after the Giving results: live Haiku asked to fetch someone a drink in 1 of 33, 0 of 30 and
+0 of 30 intentions. The cause was in the shared prefix (`data/minds/intention_prefix.md`), which told the mind
+that bringing someone a drink "belongs in no goal" and left it off the list of what a guest can do. The goal
+kind is the step MIND.md names for this (a goal, as `talk_to` and `sit_with` are); promise kinds beyond
+`sit_with` and a way to walk beside an invitee who stands stay out of scope.
+
+- [x] **H6 — The goal kind `bring_drink`.** `goals.GOALS` gains `bring_drink` ("bring {name} a drink", 180 s, not
+  open to someone on duty). Fetching the drink or giving them a mug serves it; so does getting near
+  (`_sits_with`), but only while the guest is not near yet (`_near`). It is done once the other has the thought of
+  being treated by the guest, formed after the goal was set (`giving.formed_since`), so an invited drink, a
+  brought one and a handed mug all count; failed when they leave; expired after 180 s. Nothing new is saved.
+- [x] **H7 — The mind is shown the occasion, and told it can.** H7a moved the question's text out of
+  `intentions.py` (past its size) into `mind/intention_prompt.py`, with the same prompts. H7b: `intention_view`
+  carries `fetchable` (the company the guest could bring a drink, `giving.drink_targets`, now shared with the
+  `bring_drink` candidates), the question names them, and the prefix lists bringing a drink or handing
+  something over among what a guest can do, explains `bring_drink` and gives Example 37.
+- [x] **H8 — The whole chain without a network.** A headless evening with a fake mind (`test_drink_goal_evening.py`)
+  showed the goal set and then ignored: getting near served the goal when the guest already sat at the other's
+  table, so staying seated was boosted, and a drink scores too low for the usual +0.3 to lift it above a chat.
+  Fixed by the `_near` condition above and by `GoalKind.pull` (`goals.goal_pull`): 0.8 for `bring_drink`, the usual
+  `GOAL_PULL` (0.3, `local_policy.GOAL_BONUS`) for the rest. The evening now runs `goal_set`, `fetch_begun`,
+  `fetch_done`, `goal_done`.
+- [x] **H9 — Measure and record.** Goal events carry `goal`, the kind (`record_event` and `log_event` take further
+  fields); `giving` in `metrics.json` gains `goals` (`set`, `done`, `failed`, `expired`) for `bring_drink`.
+  - *Result (2026-10-05, live, Jev + Haiku; seed 7's replay byte-identical):* the goal appeared, but rarely.
+    Seed 7: 1 of 31 intentions had it (Brida for Edda, at 328 s), 3 gifts (2 remedies, 1 mug), errands 2 (1 done,
+    1 failed at 420 s as the inn closed), $0.27, stuck 20.3 s. Seed 5: 1 of 33 (Brida for Edda at 149 s, a mug
+    brought at 162 s: `goal_done`, 13 s from setting to done), 1 mug, errands 2 (1 done, 1 failed at 424 s, closing),
+    $0.22, stuck 24.4 s. Seed 1: 0 of 28, no gifts, $0.21, stuck 20.1 s. Before: 1 of 33, 0 of 30, 0 of 30, and the
+    second and third evenings gave nothing. So the verbs plus the goal moved the live count from 1 intention of 93
+    to 2 of 92 and brought gifts back (4 gifts in two evenings), but the model still seldom sets out to fetch a
+    drink; most of what moves a guest to give is the choice itself. Both failed errands came at closing time, when
+    guests are going home. Next to try, if it matters: a nudge when the moment's company has empty hands and the
+    guest likes them (a goal the model is asked about, not only listed), or accept that a kindness is occasional.
+- *Tests changed:* none of the existing ones. The new files are `test_goal_bring_drink.py`,
+  `test_drink_goal_prompt.py` and `test_drink_goal_evening.py`; `test_giving_metrics.py` (new in Giving) gained
+  `goals`.
+
 ### M5 — Presentation and acceptance
 
 - [ ] **E23 — New poses.** Generate fight stance, punch, shove, hit, knocked out,

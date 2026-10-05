@@ -7,9 +7,9 @@ import pytest
 from tavern.evening.giving_metrics import giving_counts
 
 
-def event(kind: str, message: str = "x", actor_id: str = "ada", time: float = 1.0) -> dict[str, Any]:
+def event(kind: str, message: str = "x", actor_id: str = "ada", time: float = 1.0, **data: Any) -> dict[str, Any]:
     """A logged event."""
-    return {"time": time, "actor_id": actor_id, "type": kind, "message": message}
+    return {"time": time, "actor_id": actor_id, "type": kind, "message": message, **data}
 
 
 def gift(message: str, time: float = 1.0) -> list[dict[str, Any]]:
@@ -20,7 +20,7 @@ def gift(message: str, time: float = 1.0) -> list[dict[str, Any]]:
 def nothing(**counts: Any) -> dict[str, Any]:
     """The counts of an evening without any giving, with some fields changed."""
     base = {"gifts": {"beer": 0, "remedy": 0, "keepsake": 0}, "refused": 0,
-            "errands": {"begun": 0, "done": 0, "failed": 0}}
+            "errands": {"begun": 0, "done": 0, "failed": 0}, "goals": {"set": 0, "done": 0, "failed": 0, "expired": 0}}
     return {**base, **counts}
 
 
@@ -41,6 +41,10 @@ def nothing(**counts: Any) -> dict[str, Any]:
                  id="a-refusal-is-logged-twice-and-counted-once"),
     pytest.param([event("fetch_begun"), event("fetch_begun"), event("fetch_done"), event("fetch_failed")],
                  nothing(errands={"begun": 2, "done": 1, "failed": 1}), id="errands"),
+    pytest.param([event("goal_set", goal="bring_drink"), event("goal_set", goal="talk_to"),
+                  event("goal_done", goal="bring_drink"), event("goal_expired", goal="bring_drink"),
+                  event("goal_failed", goal="bring_drink"), event("goal_done")],
+                 nothing(goals={"set": 1, "done": 1, "failed": 1, "expired": 1}), id="goals-of-bringing-a-drink"),
     pytest.param([event("turn"), *gift("Ada gave Bea a mug of ale"), event("quarrel")],
                  nothing(gifts={"beer": 1, "remedy": 0, "keepsake": 0}), id="mixed-with-other-events"),
 ])

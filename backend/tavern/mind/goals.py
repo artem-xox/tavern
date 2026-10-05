@@ -11,14 +11,19 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any, TypedDict
 
+from tavern.body.items import ITEMS
 from tavern.hall.memory import record_event
 from tavern.hall.state import World, find_actor
 from tavern.mind.hall_view import Observation, known_object
+from tavern.social.giving import formed_since
 from tavern.social.names import called
 
 # active: being pursued; done: the world shows it was reached; failed: it can no longer be reached
 # (its person left); expired: it was not reached within its time.
 STATUSES = ("active", "done", "failed", "expired")
+
+# What serving a goal adds to an option's score: enough to tip a near tie, not to outweigh a pressing need.
+GOAL_PULL = 0.3
 
 
 class Goal(TypedDict):
@@ -42,6 +47,8 @@ class GoalKind:
             read from their observation.
         reached: Whether the world shows it done: the guest, the goal's person, and the game time the
             goal was written at.
+        pull: What serving it adds to an option's local score (`goal_pull`): enough to tip a near tie, more for a
+            kind whose options are low on their own.
     """
 
     wording: str
@@ -49,6 +56,7 @@ class GoalKind:
     on_duty: bool
     serves: Callable[[Observation, Mapping[str, Any], Goal], bool]
     reached: Callable[[Mapping[str, Any], Mapping[str, Any], Mapping[str, Any], float], bool]
+    pull: float = GOAL_PULL
 
 
 def _table_of(observation: Observation, person_id: str | None) -> str | None:
@@ -90,9 +98,33 @@ def _sit_together(world: Mapping[str, Any], actor: Mapping[str, Any], other: Map
     return table is not None and table == chairs.get(other.get("seat_id"))
 
 
+def _near(observation: Observation, person_id: str | None) -> bool:
+    # Whether the guest is already within the reach of a chat of someone in sight: one table, or side by side.
+    seat = known_object(observation, observation["actor"].get("seat_id"))
+    table = seat.get("table_id") if seat else None
+    return any(person["id"] == person_id and (person.get("beside") or (
+        table is not None and person.get("seat_id") and person.get("table_id") == table))
+               for person in [*observation.get("visitors", []), *observation.get("people", [])])
+
+
+def _brings_a_drink(observation: Observation, action: Mapping[str, Any], goal: Goal) -> bool:
+    # Fetching the drink or handing over a mug serves it; so does getting near, as for sitting with someone,
+    # but only while the guest is not near yet: staying in a seat at their table helps nothing.
+    if action["verb"] == "bring_drink" or (action["verb"] == "give" and action.get("item") == "beer"):
+        return action["target_id"] == goal["target"]
+    return not _near(observation, goal["target"]) and _sits_with(observation, action, goal)
+
+
+def _was_treated(world: Mapping[str, Any], actor: Mapping[str, Any], other: Mapping[str, Any], since: float) -> bool:
+    # The other took a mug from the guest after the goal was set, which they remember as being treated.
+    return formed_since(other, actor["id"], (ITEMS["beer"].received,), since)
+
+
 GOALS: Mapping[str, GoalKind] = MappingProxyType({
     "talk_to": GoalKind("talk with {name}", 240.0, True, _talks_to, _has_talked),
     "sit_with": GoalKind("sit at the same table as {name}", 120.0, False, _sits_with, _sit_together),
+    # A kindness scores low on its own, so a goal to do it pulls hard enough to beat a chat or a seat.
+    "bring_drink": GoalKind("bring {name} a drink", 180.0, False, _brings_a_drink, _was_treated, pull=0.8),
 })
 
 
@@ -113,6 +145,23 @@ def serving(observation: Observation, action: Mapping[str, Any]) -> bool:
     if "members" in action:
         return any(serving(observation, member) for member in action["members"])
     return any(GOALS[item["kind"]].serves(observation, action, item) for item in aims)
+
+
+def goal_pull(observation: Observation, action: Mapping[str, Any]) -> float:
+    """Tell how hard a guest's active goal, or a promise they made, pulls an option toward being chosen.
+
+    Args:
+        observation: The guest's observation (see `serving`).
+        action: A concrete action.
+
+    Returns:
+        The largest `GoalKind.pull` among the goals and promises the action serves, or 0.0 when it serves none.
+    """
+    intention = observation["actor"].get("intention")
+    goal = intention.get("goal") if intention else None
+    aims = [item for item in [goal, *observation.get("promises", [])] if item is not None and item["status"] == "active"]
+    return max((GOALS[item["kind"]].pull for item in aims if GOALS[item["kind"]].serves(observation, action, item)),
+               default=0.0)
 
 
 def goal_words(goal: Goal, name: str | None) -> str:
@@ -182,4 +231,4 @@ def settle_goals(world: World) -> None:
             continue
         name = called(actor, other) if other else goal["target"]
         record_event(world, actor, f"goal_{goal['status']}", f"{actor['name']}'s goal to {goal_words(goal, name)}: "
-                                                              f"{goal['status']}")
+                                                              f"{goal['status']}", goal=goal["kind"])
