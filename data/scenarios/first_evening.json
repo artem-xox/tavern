@@ -1,5 +1,6 @@
 {
   "closes_at": 420,
+  "opening_window": 60,
   "arrival": {
     "needs": {
       "thirst": [55, 90],

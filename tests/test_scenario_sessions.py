@@ -141,8 +141,8 @@ def test_restart_opens_a_new_evening_from_the_scenario(tmp_path: Path) -> None:
 def test_default_app_opens_the_repository_scenario() -> None:
     world = create_default_app().state.sessions.open("device-scenario-test").world
     guests = [*world["actors"], *world["expected"]]
-    # Hob the barkeep is at his bar before the three guests due at opening come in.
-    assert (len(world["actors"]), len(world["expected"])) == (4, 3)
+    # Hob the barkeep is at his bar before the guests come in, the first ones over the opening minute.
+    assert (len(world["actors"]), len(world["expected"])) == (1, 6)
     assert {item["sprite"] for item in guests} == {"edda", "rurik", "toren", "cook", "courier", "visitor",
                                                    "bartender"}
 
