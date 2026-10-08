@@ -63,6 +63,7 @@ class Activity:
         guidance: When the evaluator should consider it natural.
         interruptible: Whether a loud enough stimulus stops it; otherwise the visitor finishes first.
         asleep: Whether the visitor sleeps while doing it: others see a sleeper, and only a loud sound wakes them.
+        seated: Whether it can only be done from a seat at a table.
         sound: What others hear when the interaction begins, or None for a silent activity.
     """
 
@@ -95,6 +96,7 @@ class Activity:
     done: str | None = None
     interruptible: bool = False
     asleep: bool = False
+    seated: bool = False
     sound: Sound | None = None
 
 
@@ -326,8 +328,9 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "`self.visit.seconds`), drunk their fill (two or three beers in `self.visit.beers`) and "
                       "their needs are mostly low, or when their company has gone home and the evening has run "
                       "its course; after a long evening and several beers, a guest left alone in the inn "
-                      "naturally heads home. It is also right when the evening has gone wrong: the beer has run "
-                      "out (the tap shows stock 0 when last seen) while they are still thirsty, someone took "
+                      "naturally heads home. Deep tiredness late in the evening is a reason to go home to bed, "
+                      "unless they would rather sleep it off in their seat. It is also right when the evening has "
+                      "gone wrong: the beer has run out (the tap shows stock 0 when last seen) while they are still thirsty, someone took "
                       "their seat, someone offended them or they had a quarrel and their mood has soured (see the "
                       "mood, opinions and what still rankles in the situation), "
                       "or their needs keep going unmet. Leaving is a poor choice when they have just arrived, "
@@ -344,14 +347,17 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "pleasure that eases boredom more gently than darts. Comfort-loving guests especially "
                       "enjoy the warmth of the fire, curious ones the view outside. It means leaving their seat "
                       "for a while."),
-    # Involuntary: the world starts it for a wasted guest at their table (`dozing.nodding_off`);
-    # it is never a candidate, and a loud enough sound wakes them.
-    Activity(verb="doze", fatigue_per_second=-0.75, duration=40.0, label="Doze off",
-             status="dozing", pose="Seated", interruptible=True, asleep=True,
-             on_arrival=_fall_asleep, effect=_wake_up, doing="dozing at the table",
-             done="dozed off at the table", family="resting",
-             what="doze off where they sit",
-             guidance="Nobody chooses it: a wasted guest nods off at the table and wakes after a while."),
+    # A wasted guest at their table nods off by themselves (`dozing.nodding_off`); a tired one may also choose it.
+    # Either way a loud enough sound wakes them (`dozing.waking_sound`) and a quiet one does not.
+    Activity(verb="doze", fatigue_per_second=-0.75, duration=40.0, label="Sleep at the table", status="asleep",
+             pose="Seated", interruptible=True, asleep=True, seated=True, on_arrival=_fall_asleep, effect=_wake_up,
+             doing="asleep at the table", done="slept at the table", family="resting",
+             what="put their head down and sleep a while right here in their seat (it restores some energy; nobody "
+                  "at an inn minds a sleeper, and a loud noise will wake them)",
+             guidance="Tiredness is the reason, and drink makes it likelier: a tired guest who has had a few "
+                      "drinks naturally dozes off at the table, and the others let them be. A sober, content "
+                      "guest who is tired late in the evening usually goes home to bed instead. It is pointless "
+                      "when they are not tired."),
     # A decision step, not a world action: a second evaluation picks the chair to `sit` on.
     Activity(verb="seating", duration=None,
              family="seat_choice",
@@ -374,7 +380,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
 # and the second only the ways to fulfil the chosen one.
 FAMILIES: Mapping[str, str] = MappingProxyType({
     "refreshment": "get something to drink",
-    "resting": "sit down for a rest",
+    "resting": "sit down for a rest, or sleep a while where they sit",
     "seat_choice": "find a seat at a table, or move to another one",
     "company": "chat with someone at their table or beside them, join a conversation, lean on the bar, or hand "
                "someone something they carry",

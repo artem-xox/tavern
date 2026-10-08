@@ -31,7 +31,8 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
     missing_relief = max(thirst if not {"drink", "take_beer"} & verbs else 0,
                          fatigue if not {"rest", "sit", "seating"} & verbs else 0,
                          bladder if "use_toilet" not in verbs else 0)
-    seated_rest = 0.42 + 0.4 * fatigue + (0.15 if actor["inventory"]["beer"] else 0)
+    # Sitting no longer eases tiredness (only sleep does), so weariness barely weighs here.
+    seated_rest = 0.42 + 0.15 * fatigue + (0.15 if actor["inventory"]["beer"] else 0)
     # With their own seat free, choosing a seat again means moving to join company.
     moving = any(action["verb"] == "sit" for action in candidates)
     # The sociable lean toward company and loners away; 0.5 is ordinary, and scores stay within 0–1.
@@ -56,6 +57,8 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
         "watch_dice": max(0.0, 0.1 + 0.5 * actor["needs"].get("boredom", 0) / 100 + 0.25 * traits.get("curiosity", 0.5)
                           - 0.3 * max(thirst, fatigue, bladder)),
         "use_toilet": bladder,
+        # Sleep suits a guest who is tired, and more so one who has drunk: they sleep it off where they sit.
+        "doze": min(1.0, max(0.0, 2.2 * (fatigue - 0.6)) + 0.45 * actor.get("drunkenness", 0.0)),
         "inspect": 0.08 + 0.12 * traits.get("curiosity", 0.5) + 0.4 * missing_relief,
         "wait": max(0.0, 0.08 + 0.12 * traits.get("patience", 0.5) - 0.08 * max(thirst, fatigue, bladder)),
         "leave": _leave_utility(observation),
@@ -140,7 +143,10 @@ def _leave_utility(observation: Mapping[str, Any]) -> float:
     run_dry = bool(taps) and not any(item.get("stock") for item in taps) and not actor["inventory"]["beer"]
     upset = min(1.0, 0.35 * _wrongs(observation) * (1.5 - patience)
                 + (needs["thirst"] / 100 if run_dry else 0.0))
-    return 0.05 + 0.75 * max(content, upset * min(1.0, seconds / 60))
+    # A tired guest who has stayed a while means to go home to bed, less so one who has drunk: they sleep it off.
+    weary = (min(1.0, max(0.0, (needs["fatigue"] / 100 - 0.6) / 0.3)) * (1 - 0.6 * actor.get("drunkenness", 0.0))
+             * min(1.0, seconds / 180))
+    return 0.05 + 0.75 * max(content, weary, upset * min(1.0, seconds / 60))
 
 
 def _wrongs(observation: Mapping[str, Any]) -> float:

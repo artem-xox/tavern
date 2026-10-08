@@ -50,6 +50,8 @@ def action_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Map
     activity = ACTIVITIES[verb]
     if activity.staff_only and not on_staff(actor):
         return f"Only staff can {verb.replace('_', ' ')}"
+    if activity.seated and not actor.get("seat_id"):
+        return "This needs a seat at a table"
     if action.get("item") is not None and not activity.names_item:
         return "This action does not take an item"
     if activity.names_item:
