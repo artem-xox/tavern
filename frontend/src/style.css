@@ -116,7 +116,11 @@ button.primary { border-color: #b69a5e; background: #4a4a2c; color: #f4dfae; fon
 .need.warn .pip.on { background: var(--warn); }
 .need.good .pip.on { background: var(--good); }
 .need .word { font-size: var(--t-label); color: var(--muted); min-width: 56px; text-align: right; }
-.carried { color: var(--text); font-size: var(--t-body); }
+.slots { display: flex; gap: 8px; }
+.slot { position: relative; width: 48px; height: 48px; border-radius: 6px; background: var(--sunken); border: 1px solid var(--border); display: grid; place-items: center; }
+.slot.empty { opacity: .45; }
+.slot svg { width: 32px; height: 32px; }
+.slot .count { position: absolute; right: 3px; bottom: 1px; font-size: var(--t-label); font-weight: 700; color: var(--gold-2); text-shadow: 0 1px 0 #000; }
 .meta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; font-size: var(--t-small); color: var(--text-2); }
 .meta b { color: var(--gold-2); font-weight: 500; }
 .feel { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
