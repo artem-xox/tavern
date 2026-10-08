@@ -87,6 +87,8 @@ barkeep (B0–B6) and E20 (hostile options), all 2026-10-04. Next:
    may promise to come over, and the barkeep keeps to his duty.
 5. **Giving (H0–H5), done 2026-10-05.** Guests hand each other what they carry, and fetch
    a drink for someone as one chosen errand. Worlds are saved as version 14; the next `schema_version` is 15.
+6. **Sleep (Z0–Z6), planned 2026-10-08.** Activities spend energy, only a nap at the table restores
+   it, and a tired guest goes home or, more so when drunk, sleeps in their seat until a loud noise wakes them.
 
 The door at closing (D02) is fixed: it takes as many leavers at once as it has spots (offline
 seed 5: the last guest left 6.6 s after closing, was 42.8 s; stuck time 27.1 s → 6.1 s). The code now
@@ -2173,6 +2175,212 @@ matters on the phone.
   - *Check:* a snapshot's size and the iPhone timeline before and after, plus `make check` and `make
     build`.
 
+### Sleep — energy and a nap at the table (Z0–Z6)
+
+Added 2026-10-08 at the user's request. Guests get tired over the evening, and a tired guest
+either goes home or, more so when drunk, falls asleep at the table. The others let a sleeper be,
+and a loud noise always wakes them.
+
+What exists already (read 2026-10-08):
+
+- The `fatigue` need (0–100 urgency) is shown in the inspector as **Energy**. It rises by
+  `need_rates.fatigue` (0.12 per second), and `sit` takes 65 off every 14 s, so a guest who sits
+  down is never tired for long. Nothing else tires anyone.
+- `doze` (E13, `body/dozing.py`) is involuntary: a wasted guest in their seat nods off for 30 s
+  (`doze_per_second`), shows the `sleep` emote (the Zzz) and wakes on the timer or on a sound that
+  passes `attention.interrupt`. It takes 30 off `fatigue` on completion only. It is never a
+  candidate, and guests rarely get wasted (E13: "nobody dozes" on live seed 5).
+- A dozing guest still counts as `available` in `sight.people_in_sight`, so a tablemate may start a
+  conversation with them, give them something or shove them. The briefing then calls the sleeper "in
+  a hurry".
+- The client draws `doze` with the `Seated` pose. `shippedPose` falls back to `Idle` (standing) for
+  any pose a sprite lacks.
+
+Decisions for every Z task (frozen 2026-10-08; change them here first if the code disagrees):
+
+- **Energy stays the `fatigue` need.** No rename: saves, the local policy, Jev's briefing
+  ("tiredness") and Haiku keep it. The inspector already shows it as Energy.
+- **Activities tire.** `Activity.fatigue_per_second: float = 0.0` is the fatigue a guest gains per
+  second while they walk to it or do it (status `walking` or `interacting`). A negative value
+  restores. Walking is charged at the rate of the action it walks for: the way to one's own seat
+  costs nothing, the way to the darts costs as much as the darts. Staff never tire, as with
+  `need_rates`. Starting values:
+
+  | verb | per second | about per use |
+  |------|-----------:|---------------|
+  | `take_beer` | 0.5 | 2 with the walk |
+  | `drink` | 0.4 | 1.2 per mug ("a little") |
+  | `talk`, `join_conversation` | 0.1 | 3 for a 30 s scene |
+  | `stand_at_bar` | 0.15 | 2 |
+  | `play_darts` | 0.8 | 8 per round |
+  | `play_dice` | 0.15 | 4 |
+  | `watch_dice`, `watch` | 0.1 | 1–2.5 |
+  | `use_toilet`, `inspect`, `give`, `bring_drink`, `leave` | 0.5 | 1–2 |
+  | `shove` | 3.0 | 3 |
+  | `start_fight` | 5.0 | 10 |
+  | `sit`, `rest`, `wait`, `seating`, `cut_in_line`, `pour_beer` | 0 | — |
+  | `doze` | −0.75 | −30 per 40 s nap |
+
+- **Only sleep restores.** `sit` and `rest` lose their `fatigue` relief (`needs` empty). `doze` loses
+  its −30 on completion and restores 0.75 per second instead, for 40 s (`durations.doze` 30 → 40), so a
+  nap cut short still restores what was slept. The user asked for exactly this ("spent by every
+  action, a little restored by sleep"): it is what makes a guest tired enough to choose.
+- **The hour grows late.** `need_rates.fatigue` 0.12 → 0.05 (about +20 over a 420 s evening). The
+  arrival range of `fatigue` drops from [40, 80] to [20, 55] in `data/scenarios/first_evening.json`
+  and `data/tavern.json`, because tiredness now stays. `tests/staff_hall.py` keeps its own copy.
+- **Asleep is a property of the activity.** `Activity.asleep: bool = False`; only `doze` sets it.
+  `dozing.asleep(actor) -> bool` reads it. Every rule asks that function, never `verb == "doze"`.
+- **One verb, two ways in.** The verb stays `doze`, because saved actions name it. The world still
+  starts it for a wasted guest (`nodding_off`), now never once the inn has closed. A guest may also
+  choose it, in the `resting` family, so no first-stage request grows. Both ways use the same pose,
+  emote and events. New wording: label "Sleep at the table", status "asleep", doing "asleep at the
+  table", done "slept at the table". `FAMILIES["resting"]` becomes "sit down for a rest, or sleep a
+  while where they sit".
+- **Who may sleep:** a guest in their own seat at a table (`seat_id`), in no conversation and no
+  line, while the inn is open, and not party to an errand (`observation["on_errands"]`). Only as a
+  candidate, also: `fatigue` ≥ 60 (`SLEEPY` in `agents.py`, beside `KEEPS_OWN_MUG`).
+  `actions.action_error` refuses `doze` without a table seat: "Sleeping needs a seat at a table".
+- **The others let a sleeper be.** `people_in_sight` gains `asleep: bool`, and a sleeper is not
+  `available`. `talk`, `give`, `bring_drink`, `shove` and `start_fight` aimed at a sleeper are
+  refused ("Toren is asleep") and never offered (`_social_candidates` already reads `available`;
+  `gift_targets`, `empty_handed_company` and `hostile_targets` skip sleepers). The briefing reads
+  "Toren sits across the table from them, asleep", never "in a hurry". A mug carried to a sleeper
+  (`errands._carry`) is not forced on them: the sleeper sleeps on, the host keeps the mug, and the
+  errand ends as it does for a receiver who cannot be reached. Both shared prefixes
+  (`turn_prompt.shared_prefix` and `data/minds/intention_prefix.md`) get one paragraph: a guest
+  asleep at a table is an ordinary sight late at an inn; nobody mocks, scolds or wakes them on
+  purpose; at most they lower their voice, smile, or say a kind word about them. The prefixes stay
+  byte-identical across calls and above 4,096 tokens.
+- **A loud sound always wakes; a quiet one never does.** A sleeper wakes from any sound whose
+  loudness at its source is at least `attention.interrupt` (a quarrel, a scuffle, a brawl, the
+  closing call) and that reaches them at all (heard loudness above 0: walls damp a sound but do not
+  stop it), whatever their curiosity, friends or the salience. A quieter sound (a chat, darts, the
+  door, dice, a cheer, a grumble) does nothing to a sleeper: no glance and no gaze. No new rule.
+- **Events.** `dozed_off`, "Toren fell asleep at the table", from `doze`'s `on_arrival`, so both ways
+  in log it once (`nodding_off` stops logging its own). `woke_up`, "Toren woke up at the table", from
+  `doze`'s `effect` when the timer ends it. `woken`, "Toren woke with a start at a loud quarrel near
+  the bar: <cause>", replaces `interrupted` for a sleeper. `woken` joins `intentions.SALIENT_EVENTS`,
+  so a guest takes stock on waking. No intention is due while a guest is asleep.
+- **The fork is in the scores.** The local policy and Jev both weigh it; nothing forces a choice.
+  Tired and drunk leans to `doze`; tired, sober and having stayed a while leans to `leave`; tired on
+  arrival still sits down first. `doze`'s `guidance` and `leave`'s say so in words (Z4).
+- **The pose is `SleepingSeated`**, drawn by the user: `frontend/static/characters/<sprite>/
+  SleepingSeated/rotations/{north,south,east,west}.png` at 68 px for the six guest sprites (`edda`,
+  `rurik`, `toren`, `cook`, `courier`, `visitor`), plus a state in each `metadata.json`. The bartender
+  needs none: staff never sleep. Until a sprite has it, the client draws `Seated`, never `Idle`.
+- **Saves and snapshot.** No `schema_version` bump is expected: the new fields are in the activity
+  table, not in the world. If one turns out to be needed, it is 15 (approved for Stage 1). The snapshot
+  changes only through `activities` (the pose), which the client already reads.
+- **Out of scope:** sleeping anywhere but a table seat (lodging comes after Stage 4), waking someone
+  on purpose, snoring as a sound, a grudge against whoever woke them, other needs pausing during
+  sleep, and staff sleeping.
+- **Tests that change.** `test_world.py::test_completed_actions_relieve_corresponding_need[rest-at-chair]`
+  says resting relieves fatigue. Under the user's rule it no longer does, so Z1 drops that one case,
+  and `test_energy.py` pins that a nap restores fatigue instead. Name it in the commit. Z1 and Z4 make
+  whole evenings play differently (`test_first_evening.py`, the news-spread test on seed 7, the
+  lockstep tests). If one fails, stop and report the seed and the failure. Do not change a seed or an
+  assertion without the user's approval.
+
+Order: Z0 → Z1 → Z2 → Z3 → Z4 → Z6. Z5 can go any time after Z0, once the art is in. Each task is its
+own branch (`claude/stage1-z<n>`) and PR.
+
+- [ ] **Z0 — Asleep is a property of the activity (refactor, no behavior change).**
+  - *Build:* `Activity.asleep: bool = False` with a docstring line; `doze` sets it.
+    `dozing.asleep(actor) -> bool` (True when the actor's current action is an `asleep` activity).
+    `expression.update_expression` and `dozing._can_doze` call it instead of comparing the verb.
+  - *Tests:* `test_dozing.py` (new): `asleep` for no action, a `sit`, a `doze`, parametrized.
+  - *Check:* `make check`; an offline evening (seed 5, `--writer scripted`) gives a byte-identical
+    `events.jsonl` before and after (`cmp`).
+
+- [ ] **Z1 — Energy: activities tire, only sleep restores.**
+  - *Build:* `Activity.fatigue_per_second` and the table values above. A new `body/energy.py`
+    ("How activities tire a visitor and sleep restores them") with `tire(world, elapsed)`: for every
+    guest (not staff) whose action is walking or interacting, add the action's rate times `elapsed`
+    to `fatigue`, clamped to 0–100. `step_world` calls it once a tick, beside `wear_off`. `sit` and
+    `rest` lose their `needs`; `doze` loses `needs` and gets −0.75 and 40 s. `need_rates.fatigue`
+    0.05; the arrival ranges [20, 55].
+  - *Tests (`test_energy.py`, the spec):* parametrized by verb, one guest doing it for a fixed `dt`:
+    darts tire more than a drink, a drink tires a little (> 0), `sit` and `wait` add only the passive
+    rate, walking to the tap tires at `take_beer`'s rate, a nap lowers fatigue, a nap cut short
+    after half its time restores about half, fatigue never leaves 0–100, staff never tire. Plus
+    `rest` and `sit` no longer relieve fatigue on completion (the changed case above).
+  - *Check:* `make check`. Offline evening seed 5 before and after: print each departed guest's
+    `fatigue` at departure (a scratch script, not committed) and put both lists in the results.
+
+- [ ] **Z2 — The others let a sleeper be.**
+  - *Build:* `asleep` in `people_in_sight`, and `available` False for a sleeper. A sleeper target
+    refused in `actions._talk_error`, `_give_error`, `_fetch_error` and `_confront_error` ("{name} is
+    asleep"). `gift_targets`, `empty_handed_company` and `hostile_targets` skip sleepers. The
+    briefing's `_person` says ", asleep" for a seated sleeper. The errand to a sleeper ends without
+    waking them. The paragraph in both shared prefixes.
+  - *Tests:* parametrized by verb: each of the five aimed at a sleeper is refused with the reason,
+    and at the same guest awake is accepted. Candidates: a sleeping tablemate yields no `talk`,
+    `give`, `bring_drink` or hostile option. The briefing wording. A mug carried to a sleeper: the
+    sleeper sleeps on, the host keeps the mug, the errand ends.
+  - *Check:* `make check`; offline evening seed 5. If no guest sleeps there yet, force one in a
+    scratch run (`doze_per_second` 1000 and one wasted guest) and quote the briefing line.
+
+- [ ] **Z3 — Falling asleep and waking.**
+  - *Build:* `dozing.wakes(world, stimulus, sleeper) -> bool` (the rule above). `attention.attend`
+    asks it for a sleeper instead of the salience thresholds: a wake stops the nap, shows the alert
+    and turns their gaze, and logs `woken`; anything else is ignored. `doze` gets `on_arrival`
+    (`dozed_off`) and `effect` (`woke_up`). `nodding_off` stops logging, and stops once the inn is
+    closed. `woken` in `SALIENT_EVENTS`; `intention_due` returns None for a sleeper.
+  - *Tests (`test_dozing.py`, `test_attention.py`):* parametrized by sound: a quarrel across the
+    hall wakes, a quarrel behind a wall wakes, the closing call wakes, a chat at the same table, darts
+    and the door do not and draw no glance; an incurious and a curious sleeper wake alike. The three
+    events and their messages, each logged once for both ways in. No nodding off after closing. No
+    intention due while asleep; one due after `woken`.
+  - *Check:* `make check`; a scratch run where Ada naps and Bea and Cal quarrel: quote `woken`.
+
+- [ ] **Z4 — The fork: sleep at the table or go home.**
+  - *Build:* the `doze` candidate in `agents.py` (the conditions above, `SLEEPY = 60`); the
+    precondition in `actions.action_error`; the new wording and `FAMILIES["resting"]`; an option
+    sentence in `options.py` ("put their head down on the table and sleep a while, right here in
+    their seat (it restores some energy; nobody at an inn minds, and a loud noise will wake them)").
+    `doze`'s `guidance`: tiredness is the reason, drink makes it likelier, a sober and content guest
+    usually heads home instead, and it is pointless when they are not tired. `leave`'s `guidance`
+    gains: deep tiredness late in the evening is a reason to go home to bed. Local policy: `doze`
+    about `min(1, max(0, 2.2·(fatigue − 0.6)) + 0.45·drunkenness)`. `_leave_utility` gains a
+    `weary` term, about `clamp((fatigue − 0.6) / 0.3) · (1 − 0.6·drunkenness) · min(1, seconds / 180)`,
+    taken in the `max` beside `content` and `upset`. Sitting no longer cures tiredness, so
+    `seated_rest`'s fatigue weight drops from 0.4 to 0.15. The formulas are starting points: the tests
+    below are the spec.
+  - *Tests:* candidates, parametrized: seated and tired → `doze` offered; rested (fatigue 30), standing,
+    in a line, on an errand, or after closing → not; a hand-started `doze` without a table seat is
+    refused. Local scores, parametrized on one seated guest 300 s in with 3 beers: tired (85) and
+    wasted (0.8) → `doze` above `leave` and `sit`; tired (90) and sober → `leave` above `doze`; tired
+    (70) 20 s after arriving → `sit` above `leave` and `doze`. The option sentence and the family text.
+    Run `test_jev.py`: if it pins the activity list or the prompt, the new wording changes it there,
+    and that test change is named in the commit.
+  - *Check:* `make check`; offline seeds 1, 5 and 7: count naps and guests who went home with
+    fatigue ≥ 60, and quote one of each from `events.jsonl`.
+
+- [ ] **Z5 — The sleeping pose (needs the user's art).**
+  - *Build:* `doze`'s `pose` becomes `SleepingSeated`. `sprites.ts`: the six guest sheets list
+    `SleepingSeated` (the bartender's does not); `shippedPose` falls back to `Seated` for a missing
+    seated pose (one whose name ends in `Seated`) and to `Idle` otherwise. `scene.ts`: `LOW_POSES`
+    includes it. `docs/CHARACTER_ART_PIPELINE.md` gains `doze` → **SleepingSeated**.
+  - *Tests:* `frontend/tests/sprites.test.ts` (node:test): the fallback, parametrized (shipped pose,
+    missing seated pose, missing standing pose). `tests/test_character_action_assets.py`: a new test
+    that `SleepingSeated` ships in four views for the six guest sprites.
+  - *Check:* `make check` and `make build`. In `make run`, force a nap from the debug panel (or a
+    scratch save) and post a screenshot at game scale and a 2× crop: the sleeper is seated with the
+    Zzz above, at each of the four seat facings in the hall.
+
+- [ ] **Z6 — Measure the fork and tune it.**
+  - *Build:* `metrics.sleep_metrics(events, departed)` beside `dice_metrics`: naps (and by whom), how
+    many ended in `woken` and by which sound kind, and each guest's `fatigue` at departure. It goes into
+    `metrics.json`.
+  - *Tests:* `test_sleep_metrics.py`, parametrized on hand-built event lists: none, one nap, a nap
+    cut by a quarrel, one guest napping twice.
+  - *Check:* offline seeds 1, 5 and 7 (`--writer scripted`), then a live seed 5 and its replay (`cmp`).
+    Targets: a nap in at least two of the three offline evenings; a guest going home with fatigue ≥ 60
+    in at least two; every guest gone by closing as before; stuck time no worse than before Z1. Tune
+    only the numbers frozen above (rates, `SLEEPY`, the formulas' weights, arrival ranges), write the
+    final values back into these decisions, and record the results paragraph with one story moment
+    from the log (someone nodding off and being woken by a quarrel, or heading home bone-tired).
+
 ## Order
 
 M1 comes first: E01 is a refactor under the existing tests, and E02–E03 make every later
@@ -2204,6 +2412,10 @@ The UI pass (U2–U11) was added 2026-10-08 at the user's request. It is fronten
 beside any backend task. Only U9's `mood_words` touches `mind/feelings.py`, and only U11 touches the
 snapshot. Its internal order is at the head of its block. U3 and U4 come first, because the app cannot
 be used on a phone until they land.
+
+Sleep (Z0–Z6) was added 2026-10-08 at the user's request. Its internal order is at the head of its block.
+It touches `activities.py`, `actions.py`, `attention.py` and `local_policy.py`, as E21 does, so do not run
+the two at once. Z5 is the only frontend task and waits for the user's `SleepingSeated` art.
 
 ## Acceptance scenarios
 
