@@ -192,6 +192,8 @@ export interface Thought {
 /** A visitor's inner state as the server derives it for the inspector. */
 export interface Mind {
   mood: number;
+  /** The server's words for the mood, to follow "They are": "in an even mood". */
+  mood_words: string;
   /** Active thoughts, oldest first. */
   thoughts: Thought[];
   /** Base opinion plus active thoughts, −100…100, per person they have a relation with. */

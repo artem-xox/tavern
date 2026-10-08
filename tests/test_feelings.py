@@ -11,6 +11,7 @@ import pytest
 from tavern.mind.agents import choose_action
 from tavern.server.runtime import TavernRuntime
 from tavern.mind.briefing import brief
+from tavern.mind.feelings import mood_words
 from tavern.hall.memory import record_event
 from tavern.adapters.persistence import load_world, save_world
 from tavern.social.thoughts import THOUGHTS, familiarity_of, opinion_of, think
@@ -168,6 +169,33 @@ def test_the_inspector_lists_thoughts_and_opinions(tmp_path: Path) -> None:
     assert ([item["text"] for item in mind["thoughts"]], mind["opinions"], mind["mood"]) == (
         ["Bea took my seat"], [{"id": "bea", "name": "Bea", "opinion": THOUGHTS["seat_taken"].opinion,
                                 "familiarity": "stranger"}], THOUGHTS["seat_taken"].mood)
+
+
+@pytest.mark.parametrize("seat_taken_thoughts, words", [
+    pytest.param(0, "in an even mood", id="no-thoughts-even"),
+    pytest.param(1, "in a sour mood", id="a-taken-seat-sours"),
+])
+def test_the_inspector_words_the_mood(tmp_path: Path, seat_taken_thoughts: int, words: str) -> None:
+    runtime = TavernRuntime(table_room(), tmp_path / "save.json", {"typesafe_api_key": None})
+    ada, bea = runtime.world["actors"]
+    for _ in range(seat_taken_thoughts):
+        think(ada, "seat_taken", 0.0, "Bea took my seat", "Bea took Ada's seat", about=bea)
+    assert runtime.snapshot()["minds"]["ada"].get("mood_words") == words
+
+
+@pytest.mark.parametrize("value, words", [
+    pytest.param(8.0, "in high spirits", id="eight-is-high-spirits"),
+    pytest.param(7.9, "in a good mood", id="just-under-eight-is-good"),
+    pytest.param(3.0, "in a good mood", id="three-is-good"),
+    pytest.param(2.9, "in an even mood", id="just-under-three-is-even"),
+    pytest.param(0.0, "in an even mood", id="zero-is-even"),
+    pytest.param(-2.9, "in an even mood", id="just-above-minus-three-is-even"),
+    pytest.param(-3.0, "in a sour mood", id="minus-three-is-sour"),
+    pytest.param(-9.9, "in a sour mood", id="just-above-minus-ten-is-sour"),
+    pytest.param(-10.0, "in a foul mood", id="minus-ten-is-foul"),
+])
+def test_mood_words_change_at_their_thresholds(value: float, words: str) -> None:
+    assert mood_words(value) == words
 
 
 def open_hall() -> dict[str, Any]:
