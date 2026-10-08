@@ -1,5 +1,6 @@
 /** Drawing of the hall's furniture and fittings, one function per object kind. */
 import Phaser from "phaser";
+import { BUCKET_PALETTE, bucketRows } from "./bucket";
 import type { WorldObject } from "./types";
 
 /**
@@ -52,18 +53,17 @@ export function drawTap(g: Phaser.GameObjects.Graphics, x: number, y: number): v
   g.fillRect(x - 2, y + 5, 9, 4);
 }
 
-/** The privy: a wooden bucket, hooped with iron, seen from above in the middle of the stone floor. */
+/** The privy: a stave bucket with iron hoops and a bail (`bucket.ts`), standing in the middle of the stone floor. */
 export function drawToilet(g: Phaser.GameObjects.Graphics, x: number, y: number): void {
-  // Body: staves between two hoops, a base ellipse under them, and the rim and the dark mouth on top.
-  g.fillStyle(0x5a3b24).fillEllipse(x, y + 9, 22, 9);
-  g.fillStyle(0x7d5534).fillRect(x - 11, y - 1, 22, 10);
-  for (const stave of [-7, -3.5, 0, 3.5, 7]) g.lineStyle(1, 0x4a2f1c, 0.8).lineBetween(x + stave, y - 1, x + stave, y + 9);
-  for (const hoop of [y + 1, y + 7]) g.fillStyle(0x3b3a38).fillRect(x - 11, hoop, 22, 2);
-  g.fillStyle(0x7d5534).fillEllipse(x, y + 9, 22, 8);
-  g.fillStyle(0xb48959).fillEllipse(x, y - 1, 24, 12);
-  g.fillStyle(0x4a2f1c).fillEllipse(x, y - 1, 18, 8);
-  g.fillStyle(0x1f150e).fillEllipse(x, y, 15, 6);
-  g.lineStyle(1, 0xe6c187, 0.55).strokeEllipse(x, y - 1, 24, 12);
+  const rows: string[] = bucketRows();
+  const left: number = Math.round(x - rows[0]!.length / 2);
+  const top: number = Math.round(y - rows.length / 2 - 1);
+  rows.forEach((row: string, line: number): void => {
+    // One rectangle per run of the same key, not per pixel.
+    for (const run of row.matchAll(/([^.])\1*/g)) {
+      g.fillStyle(BUCKET_PALETTE[run[1]!]!).fillRect(left + run.index, top + line, run[0].length, 1);
+    }
+  });
 }
 
 export function drawChair(g: Phaser.GameObjects.Graphics, x: number, y: number, facing: WorldObject["facing"]): void {
