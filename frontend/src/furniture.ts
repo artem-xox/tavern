@@ -52,11 +52,16 @@ export function drawTap(g: Phaser.GameObjects.Graphics, x: number, y: number): v
   g.fillRect(x - 2, y + 5, 9, 4);
 }
 
+/** The privy: a squat tub in the chairs' woods, standing in the middle of the stone floor: two tones of plank, dark bands, a pale rim and a lug on each side. */
 export function drawToilet(g: Phaser.GameObjects.Graphics, x: number, y: number): void {
-  g.fillStyle(0xa1aea0).fillRoundedRect(x - 10, y - 13, 20, 9, 3);
-  g.fillStyle(0xe3e6cd).fillEllipse(x, y + 3, 21, 25);
-  g.fillStyle(0x52685d).fillEllipse(x, y + 1, 12, 15);
-  g.lineStyle(2, 0xf2eed9).strokeEllipse(x, y + 1, 15, 18);
+  g.fillStyle(0x4d3425).fillRoundedRect(x - 13, y - 8, 26, 24, 6);
+  g.fillStyle(0xa2774d).fillRoundedRect(x - 11, y - 5, 22, 19, 4);
+  g.fillStyle(0xc09867).fillRoundedRect(x - 9, y - 3, 5, 15, 2);
+  g.fillStyle(0x905b3d).fillRoundedRect(x + 4, y - 3, 5, 15, 2);
+  for (const band of [y + 2, y + 9]) g.lineStyle(3, 0x4d3425).lineBetween(x - 11, band, x + 11, band);
+  g.fillStyle(0x4d3425).fillRoundedRect(x - 16, y - 2, 4, 7, 1).fillRoundedRect(x + 12, y - 2, 4, 7, 1);
+  g.fillStyle(0xc09867).fillEllipse(x, y - 7, 25, 11);
+  g.fillStyle(0x33251d).fillEllipse(x, y - 7, 17, 6);
 }
 
 export function drawChair(g: Phaser.GameObjects.Graphics, x: number, y: number, facing: WorldObject["facing"]): void {
@@ -86,13 +91,20 @@ export function drawBar(g: Phaser.GameObjects.Graphics, object: WorldObject, siz
   drawMug(g, x + width - 19, y + 10);
 }
 
-/** The bare tabletop: shadow, rim, planks and inlay. */
+/** How far a table's top stands above the floor in the picture, so a guest asleep on it has something to rest on. */
+const TABLE_LIFT: number = 6;
+
+/** The table: its shadow on the floor, the plank side that gives it height, then the raised top with rim, planks and inlay. */
 function drawTableTop(g: Phaser.GameObjects.Graphics, object: WorldObject, size: number): void {
   const x: number = object.x * size;
-  const y: number = object.y * size;
+  const y: number = object.y * size - TABLE_LIFT;
   const width: number = (object.width ?? 1) * size;
   const height: number = (object.height ?? 1) * size;
-  g.fillStyle(0x33251d, 0.5).fillRoundedRect(x - 2, y + 5, width + 4, height, 8);
+  g.fillStyle(0x33251d, 0.5).fillRoundedRect(x - 2, y + TABLE_LIFT + 5, width + 4, height, 8);
+  // The side below the top, darkest at the bottom edge, with a shadowed band under the rim.
+  g.fillStyle(0x3a281d).fillRoundedRect(x - 1, y + 4, width + 2, height + TABLE_LIFT, 6);
+  g.fillStyle(0x6a4631).fillRoundedRect(x + 1, y + height - 2, width - 2, TABLE_LIFT + 1, 3);
+  g.fillStyle(0x2c1d14, 0.55).fillRect(x + 2, y + height + 1, width - 4, 2);
   g.fillStyle(0x58392a).fillRoundedRect(x - 2, y - 2, width + 4, height + 4, 6);
   g.fillStyle(0xb48959).fillRoundedRect(x + 1, y + 1, width - 2, height - 2, 5);
   for (let row: number = 12; row < height; row += 14) {
@@ -109,7 +121,7 @@ export function drawTable(g: Phaser.GameObjects.Graphics, object: WorldObject, s
 export function drawDiceTable(g: Phaser.GameObjects.Graphics, object: WorldObject, size: number): void {
   drawTableTop(g, object, size);
   const cx: number = (object.x + (object.width ?? 1) / 2) * size;
-  const cy: number = (object.y + (object.height ?? 1) / 2) * size;
+  const cy: number = (object.y + (object.height ?? 1) / 2) * size - TABLE_LIFT;
   drawDie(g, cx - 5, cy + 2, 3, -0.25);
   drawDie(g, cx + 6, cy - 3, 5, 0.35);
 }
