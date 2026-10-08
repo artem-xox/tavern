@@ -25,6 +25,8 @@ speech, a guest sets a typed goal the world checks, asks the mind far less often
 intentions became 26–33, goals reached 7 of 30 became 10 of 17), may promise to come over, and the
 barkeep keeps to his duty. Giving added the things a guest carries (a mug, a remedy, a keepsake), a `give`
 verb, a mug carried over rather than teleported, and a guest bringing someone a drink of their own accord.
+Sleep (Z0–Z6) followed: activities tire a guest, only a nap restores energy, and a tired guest goes home or sleeps in
+their seat until a loud noise wakes them.
 Saved worlds are version 14. Step 6 (memory between evenings) waits for Stage 4.
 **Done when:** recorded live evenings meet the Stage 1 metrics, an observer can retell
 a story from at least one of them, and its chronicle cites only logged events.
