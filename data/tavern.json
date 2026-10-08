@@ -444,7 +444,7 @@
       "name": "Window",
       "x": 0,
       "y": 4,
-      "appeal": 0.2,
+      "appeal": 0.0,
       "reach": 5,
       "interaction_spots": [
         [
@@ -459,7 +459,7 @@
       "name": "Window",
       "x": 0,
       "y": 6,
-      "appeal": 0.2,
+      "appeal": 0.0,
       "reach": 5,
       "interaction_spots": [
         [
@@ -474,7 +474,7 @@
       "name": "Window",
       "x": 0,
       "y": 11,
-      "appeal": 0.2,
+      "appeal": 0.0,
       "reach": 5,
       "interaction_spots": [
         [

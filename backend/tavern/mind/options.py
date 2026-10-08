@@ -6,7 +6,7 @@ from typing import Any
 from tavern.body.activities import FAMILIES
 from tavern.body.items import ITEMS
 from tavern.mind.hall_view import (company_at, headcount, in_use, known_object, label_of, line_place, place_words,
-                              steps_to, visible_visitor, walk_words)
+                              setting_words, steps_to, visible_visitor, walk_words)
 
 Observation = Mapping[str, Any]
 Action = Mapping[str, Any]
@@ -82,9 +82,9 @@ def _rest(observation: Observation, action: Action) -> str:
 
 def _seat_note(observation: Observation, chair: Mapping[str, Any]) -> str:
     table = known_object(observation, chair.get("table_id"))
-    comforts = " and ".join(chair.get("comforts", [])) or "no special comfort"
-    return (f"{label_of(table) if table else label_of(chair)} (appeal {chair.get('appeal', 0.0):.1f}, {comforts}; "
-            f"{company_at(observation, chair.get('table_id'))}; {walk_words(steps_to(observation, chair))} away)")
+    details = [setting_words(chair), company_at(observation, chair.get("table_id")),
+               f"{walk_words(steps_to(observation, chair))} away"]
+    return f"{label_of(table) if table else label_of(chair)} ({'; '.join(part for part in details if part)})"
 
 
 def _seating(observation: Observation, action: Action) -> str:

@@ -476,11 +476,11 @@ def test_demo_inn_has_five_identical_two_seat_tables() -> None:
     assert sides == [[(-1, 0), (1, 0)]] * 5
 
 
-def test_demo_tables_are_ranked_by_their_surroundings() -> None:
+def test_only_the_hearth_table_of_the_demo_inn_is_appealing() -> None:
     objects = create_world(demo())["map"]["objects"]
     appeal = {item["name"]: item["appeal"] for item in objects if item["kind"] == "table"}
-    assert appeal["Hearth table"] > appeal["Window table"] > appeal["Corner table"]
-    assert len(set(appeal.values())) == 4
+    assert appeal == {"Hearth table": 0.5, "Window table": 0.0, "Garden table": 0.0, "Corner table": 0.0,
+                      "East table": 0.0}
 
 
 def test_demo_evening_begins_with_everyone_inside_the_door() -> None:

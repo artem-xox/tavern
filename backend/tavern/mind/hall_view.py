@@ -153,3 +153,17 @@ def company_at(observation: Observation, table_id: Any) -> str:
     names = [label_of(item) for item in observation.get("visitors", [])
              if item.get("seat_id") and item.get("table_id") == table_id]
     return f"{' and '.join(names)} sitting there" if names else "nobody else there"
+
+
+def setting_words(item: Mapping[str, Any]) -> str:
+    """Say what a table or chair sits next to, as a guest would notice it.
+
+    Args:
+        item: Known table or chair record, with the `comforts` the map rated it by.
+
+    Returns:
+        "by the fire", "by the fire and a window", ..., or "" for a plain spot.
+    """
+    nouns = {"fireplace": "the fire", "window": "a window"}
+    near = [nouns[kind] for kind in item.get("comforts", []) if kind in nouns]
+    return f"by {' and '.join(near)}" if near else ""

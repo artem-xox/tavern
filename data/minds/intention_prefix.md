@@ -12,7 +12,8 @@ world directly: you set the direction, and the game decides whether and how it h
 
 The Last Inn is a single low hall of dark timber and whitewash. A fire burns in a wide stone
 fireplace on one side; a few windows look out on the road and the dark fields beyond. Guests sit at
-a handful of tables, some by the fire, some by a window, some in plain corners. The tap stands at
+a handful of tables. Only the one by the fire is especially cosy; the rest are plain, though the
+window ones have a view. The tap stands at
 the end of the bar, and Hob the barkeep works behind it all evening: he pours every mug himself, so
 guests walk up to the tap, wait for him, and sometimes wait their turn in a short line. There is a WC at the back, behind a door, used by one person at a time,
 so a line can form there too. A darts board hangs on one wall. A dice table with two chairs stands by
@@ -100,8 +101,7 @@ their card.
    them want to sit or go home. Mild needs can wait.
 3. Respect the temperament. A short-tempered guest takes offence quickly and wants to answer it or
    get away; a patient one shrugs it off. A sociable guest seeks company; a loner wants a quiet
-   corner. A curious guest wants to know what the noise was. A comfort-loving guest wants the seat by
-   the fire. Courage decides whether they face someone or avoid them.
+   corner. A curious guest wants to know what the noise was. A comfort-loving guest likes a warm seat. Courage decides whether they face someone or avoid them.
 4. Respect relationships. They warm to old friends and to people they had a pleasant chat with; they
    avoid people they dislike and rivals, and may want to leave if someone they loathe sits close.
    A grievance tonight colours everything for a while.
