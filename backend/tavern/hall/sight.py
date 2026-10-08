@@ -11,7 +11,7 @@ from tavern.hall.staff import on_staff, post_of
 from tavern.hall.state import Actor, find_actor
 from tavern.hall.validation import saved_cell
 from tavern.social.names import called
-from tavern.social.scenes import conversation_of, pressed, side_by_side
+from tavern.social.scenes import conversation_of, pressed, within_reach
 
 
 def line_visible(origin: tuple[int, int], target: tuple[int, int], blocked: set[tuple[int, int]]) -> bool:
@@ -103,7 +103,7 @@ def people_in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[
     Returns:
         Public facts about each visible person (see `world.observe_people`): ID, name as the
         viewer calls them, cell, seat and table, whether they are free to talk, their
-        conversation, whether they stand beside the viewer, their current verb and target name, and
+        conversation, whether they are within reach of the viewer (at one table or side by side), their current verb and target name, and
         what is in their hands (`holding`, counts of the kinds others can see); for staff also `post`, the name of the bar they work at.
     """
     walls = set(map(tuple, world["map"]["blocked"]))
@@ -122,7 +122,7 @@ def people_in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[
         people[-1].update(table_id=seat.get("table_id") if seat else None,
                           available=scene is None and not pressed(world, visitor),
                           conversation=scene["id"] if scene else None,
-                          beside=side_by_side(world, actor, visitor),
+                          beside=within_reach(world, actor, visitor),
                           doing=action.get("verb"), target=target["name"] if target else None,
                           holding={kind: visitor["inventory"][kind] for kind, item in ITEMS.items()
                                    if item.visible and visitor["inventory"][kind]})

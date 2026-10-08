@@ -114,6 +114,14 @@ def _someone(observation: Observation, visitor_id: Any) -> Mapping[str, Any] | N
                 None) or visible_visitor(observation, visitor_id)
 
 
+def _placed(observation: Observation, person: Mapping[str, Any] | None) -> str:
+    # Where someone within reach is, from the viewer's own spot. A guest standing by their table reaches
+    # those seated at it; to anyone else a stander is simply beside them.
+    if person and person.get("seat_id"):
+        return "sits at their table" if observation["actor"].get("seat_id") else "sits at the table they stand by"
+    return "stands beside them"
+
+
 def _talk(observation: Observation, action: Action) -> str:
     partner = _someone(observation, action["target_id"])
     name = label_of(partner) if partner else action["target_id"]
@@ -121,13 +129,14 @@ def _talk(observation: Observation, action: Action) -> str:
         return f"chat with {name} across the bar"
     if partner and not partner.get("seat_id"):
         return f"start a conversation with {name}, who stands beside them"
-    return f"chat with {name}, who sits across the table from them"
+    if observation["actor"].get("seat_id"):
+        return f"chat with {name}, who sits across the table from them"
+    return f"chat with {name}, who sits at the table they stand by"
 
 
 def _confrontee(observation: Observation, action: Action) -> tuple[str, str]:
     victim = _someone(observation, action["target_id"])
-    where = "sits at their table" if victim and victim.get("seat_id") else "stands beside them"
-    return (label_of(victim) if victim else action["target_id"]), where
+    return (label_of(victim) if victim else action["target_id"]), _placed(observation, victim)
 
 
 def _shove(observation: Observation, action: Action) -> str:
@@ -144,7 +153,7 @@ def _fight(observation: Observation, action: Action) -> str:
 def _give(observation: Observation, action: Action) -> str:
     receiver = _someone(observation, action["target_id"])
     name = label_of(receiver) if receiver else action["target_id"]
-    where = "sits at their table" if receiver and receiver.get("seat_id") else "stands beside them"
+    where = _placed(observation, receiver)
     return (f"hand {ITEMS[action['item']].one} they are carrying to {name}, who {where} (it is theirs to give up, "
             f"and {name} may refuse it if there is bad blood between them)")
 
@@ -152,7 +161,7 @@ def _give(observation: Observation, action: Action) -> str:
 def _bring(observation: Observation, action: Action) -> str:
     receiver = _someone(observation, action["target_id"])
     name = label_of(receiver) if receiver else action["target_id"]
-    where = "sits at their table" if receiver and receiver.get("seat_id") else "stands beside them"
+    where = _placed(observation, receiver)
     return (f"fetch a mug of ale from the tap and bring it to {name}, who {where} with nothing in their hands "
             f"(it takes a trip, and {name} may refuse it if there is bad blood between them)")
 
@@ -163,7 +172,8 @@ def _join(observation: Observation, action: Action) -> str:
         raise ValueError(f"Cannot describe joining an unseen visitor {action['target_id']!r}")
     company = observation.get("people") or observation.get("visitors", [])
     names = [label_of(item) for item in company if item.get("conversation") == member.get("conversation")]
-    where = "at their table" if member.get("seat_id") else "beside them"
+    where = ("at their table" if observation["actor"].get("seat_id") else "at the table they stand by") \
+        if member.get("seat_id") else "beside them"
     return f"join the conversation {' and '.join(names) or label_of(member)} are having {where}"
 
 

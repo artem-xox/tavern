@@ -488,7 +488,13 @@
       "kind": "table",
       "name": "Hearth table",
       "x": 10,
-      "y": 5
+      "y": 5,
+      "interaction_spots": [
+        [
+          10,
+          6
+        ]
+      ]
     },
     {
       "id": "chair-1",
@@ -527,7 +533,17 @@
       "kind": "table",
       "name": "Window table",
       "x": 4,
-      "y": 6
+      "y": 6,
+      "interaction_spots": [
+        [
+          4,
+          5
+        ],
+        [
+          4,
+          7
+        ]
+      ]
     },
     {
       "id": "chair-3",
@@ -566,7 +582,17 @@
       "kind": "table",
       "name": "Garden table",
       "x": 4,
-      "y": 11
+      "y": 11,
+      "interaction_spots": [
+        [
+          4,
+          10
+        ],
+        [
+          4,
+          12
+        ]
+      ]
     },
     {
       "id": "chair-5",
@@ -605,7 +631,17 @@
       "kind": "table",
       "name": "Corner table",
       "x": 15,
-      "y": 11
+      "y": 11,
+      "interaction_spots": [
+        [
+          15,
+          10
+        ],
+        [
+          15,
+          12
+        ]
+      ]
     },
     {
       "id": "chair-7",
@@ -644,7 +680,17 @@
       "kind": "table",
       "name": "East table",
       "x": 15,
-      "y": 6
+      "y": 6,
+      "interaction_spots": [
+        [
+          15,
+          5
+        ],
+        [
+          15,
+          7
+        ]
+      ]
     },
     {
       "id": "chair-9",

@@ -9,7 +9,7 @@ from tavern.hall.staff import on_staff
 from tavern.hall.state import find_actor
 from tavern.social.giving import gift_error
 from tavern.social.invitations import fetch_error
-from tavern.social.scenes import conversation_of, pressed, side_by_side, table_of, within_reach
+from tavern.social.scenes import at_table, conversation_of, pressed, side_by_side, within_reach
 
 
 def stored_action(action: Mapping[str, Any]) -> dict[str, Any]:
@@ -142,5 +142,5 @@ def _join_error(world: Mapping[str, Any], actor: Mapping[str, Any], member: Mapp
     if len(scene["participants"]) >= world["rules"]["conversation"]["max_participants"]:
         return "The conversation is full"
     if scene["table_id"] is not None:
-        return None if table_of(world, actor) == scene["table_id"] else "Join a conversation at your own table"
+        return None if at_table(world, actor) == scene["table_id"] else "Join a conversation at your own table"
     return None if side_by_side(world, actor, member) else "Stand beside someone in the conversation to join it"
