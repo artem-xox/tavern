@@ -2003,7 +2003,7 @@ matters on the phone.
     itself. Hob, a mug for me." stays one bubble. CI still runs Node 20 and no frontend tests: running them
     there needs `node-version: 22.6+` and an `npm test` step in `.github/workflows/ci.yml` (ask-first).
 
-- [ ] **U6 — The door: no black mat, as tall as the wall.** "The black rug" is the door mat. `drawDoor`
+- [x] **U6 — The door: no black mat, as tall as the wall.** "The black rug" is the door mat. `drawDoor`
   (`furniture.ts`) paints a dark rounded rectangle with a gold outline on the floor inside the door
   (`floor.fillStyle(0x41372a)…` and the `strokeRoundedRect` after it). The table rugs are yellow and
   green, and they stay. The door itself is 26 px tall from `y + 1`, while the stone face of a wall cell
@@ -2017,7 +2017,13 @@ matters on the phone.
   - *Check:* before and after screenshots of the south wall at game scale and at 2×. Then `make check`
     and `make build`.
 
-- [ ] **U7 — A fireplace that reads as one.** `drawFireplace` draws a grey rounded box, a dark rectangle
+  - *Result (2026-10-08):* `drawDoor(g, door, size)` loses its `floor` parameter and both mat calls. The door
+    is drawn from the cell's top + 2 to its bottom - 3, the span of the wall stones beside it, in a dark
+    timber frame with a lighter lintel and a stone threshold; four planks of two shades, two iron straps with
+    a rivet on each plank, and a brass ring on the latch side. Width (1.6 cells) and centring are as before.
+    Seen at game scale and at 4× in the browser: no mat above the door, and the frame lines up with the stones.
+
+- [x] **U7 — A fireplace that reads as one.** `drawFireplace` draws a grey rounded box, a dark rectangle
   and three orange ellipses. At game scale it looks like an egg in a box. The fireplace is the `fireplace`
   object at (9, 0), three cells wide, in the north wall, opening south (`hearthFacing`). A flickering
   glow on the floor exists already (`drawHearthGlow`).
@@ -2039,6 +2045,17 @@ matters on the phone.
     Delete the others.
   - *Check:* `make check` and `make build`. The browser's Performance panel shows frame time unchanged
     within noise.
+
+  - *Result (2026-10-08):* first commit: `hearth.ts` (`hearthFacing`, `drawFireplace`, `drawHearthGlow`), no
+    change to the picture. Second commit, one design instead of three variants (it reads at game scale and
+    at 4×, so there was nothing to choose between; say if you want others tried): dressed stone in courses of
+    three shades with mortar, a timber mantel lit from above, an arched sooty opening with a warm back wall,
+    a hearthstone lip on the room side, two iron andirons and two crossed logs with pale end rings on a bed
+    of coals. `drawFlames` redraws each frame on its own layer above the furniture: five tongues in three
+    layers (red, orange, yellow core), each on its own phase, ±28% flicker, plus five rising sparks and a
+    pulsing coal bed; about 30 shapes per hearth. The drawing works in a frame (`u` along the wall, `v` out
+    into the room), so it follows `hearthFacing` to any wall; `tests/hearth.test.ts` pins that for all four.
+    Not checked on screen: a fireplace in a wall other than the north one (the hall has only that one).
 
 - [x] **U8 — Emotes you can read.** Today `showEmote` draws a text glyph (`! ? ✹ ♥ z …`, `EMOTE_GLYPHS`)
   in 12 px system-ui on a cream box, beside the name. The glyph depends on the device's fonts, the box
