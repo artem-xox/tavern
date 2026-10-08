@@ -8,7 +8,7 @@ from tavern.body.actions import action_error
 from tavern.body.activities import ACTIVITIES
 from tavern.body.attention import attend
 from tavern.body.bartending import tend_bar
-from tavern.body.dozing import nodding_off
+from tavern.body.dozing import nodding_off, show_sleep
 from tavern.body.drunkenness import wear_off
 from tavern.body.expression import update_expression
 from tavern.body.queues import check_lines, cut_in, line_of, must_wait
@@ -149,6 +149,7 @@ def step_world(world: World, dt: float) -> None:
         activate(world, actor, {"id": "doze", "verb": "doze", "target_id": None}, (None, []))
     finish_parts(world)
     update_expression(world)
+    show_sleep(world)
 
 
 def _see_off(world: World) -> None:

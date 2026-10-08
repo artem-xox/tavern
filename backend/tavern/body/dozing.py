@@ -6,6 +6,7 @@ from typing import Any
 
 from tavern.body.activities import ACTIVITIES
 from tavern.body.drunkenness import drunk_stage
+from tavern.body.expression import show_emote
 from tavern.hall.chance import roll
 from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World
@@ -37,7 +38,31 @@ def nodding_off(world: World, elapsed: float) -> list[Actor]:
     return dozers
 
 
+def asleep(actor: Mapping[str, Any]) -> bool:
+    """Tell whether a visitor is asleep.
+
+    Args:
+        actor: Visitor.
+
+    Returns:
+        True while their action is one that sleeps (`Activity.asleep`).
+    """
+    action = actor["action"]
+    return action is not None and ACTIVITIES[action["verb"]].asleep
+
+
+def show_sleep(world: World) -> None:
+    """Show the sleep emote above every sleeper who has no other emote.
+
+    Args:
+        world: World whose sleepers are updated in place; a livelier emote is never hidden.
+    """
+    for actor in world["actors"]:
+        if asleep(actor) and not actor["emote"]:
+            show_emote(actor, "sleep", world["time"] + world["rules"]["emote_seconds"]["sleep"])
+
+
 def _can_doze(world: Mapping[str, Any], actor: Mapping[str, Any]) -> bool:
     action = actor["action"]
-    busy = action is not None and (action["verb"] == "doze" or not ACTIVITIES[action["verb"]].interruptible)
+    busy = asleep(actor) or (action is not None and not ACTIVITIES[action["verb"]].interruptible)
     return bool(actor.get("seat_id")) and not busy and conversation_of(world, actor["id"]) is None

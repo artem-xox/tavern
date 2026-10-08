@@ -60,6 +60,7 @@ class Activity:
         what: Wording for the evaluator; `{target}` stands for the quoted target ID.
         guidance: When the evaluator should consider it natural.
         interruptible: Whether a loud enough stimulus stops it; otherwise the visitor finishes first.
+        asleep: Whether the visitor sleeps while doing it: others see a sleeper, and only a loud sound wakes them.
         sound: What others hear when the interaction begins, or None for a silent activity.
     """
 
@@ -90,6 +91,7 @@ class Activity:
     doing: str | None = None
     done: str | None = None
     interruptible: bool = False
+    asleep: bool = False
     sound: Sound | None = None
 
 
@@ -334,7 +336,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
     # Involuntary: the world starts it for a wasted guest at their table (`dozing.nodding_off`);
     # it is never a candidate, and a loud enough sound wakes them.
     Activity(verb="doze", duration=30.0, needs=MappingProxyType({"fatigue": -30}), label="Doze off",
-             status="dozing", pose="Seated", interruptible=True, doing="dozing at the table",
+             status="dozing", pose="Seated", interruptible=True, asleep=True, doing="dozing at the table",
              done="dozed off at the table", family="resting",
              what="doze off where they sit",
              guidance="Nobody chooses it: a wasted guest nods off at the table and wakes after a while."),
