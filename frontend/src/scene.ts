@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { drawFloor } from "./floor";
-import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawFireplace, drawTable, drawTap, drawToilet, drawWindow, hearthFacing } from "./furniture";
+import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawTable, drawTap, drawToilet, drawWindow } from "./furniture";
+import { drawFireplace, drawFlames, drawHearthGlow } from "./hearth";
 import { mapParts, type MapParts } from "./mapview";
 import { Speech } from "./speech";
 import { shippedPose, spriteOf, stills } from "./sprites";
@@ -49,6 +50,8 @@ export class TavernScene extends Phaser.Scene {
   private floor!: Phaser.GameObjects.Graphics;
   private hearthGlow!: Phaser.GameObjects.Graphics;
   private furniture!: Phaser.GameObjects.Graphics;
+  /** Flames and sparks, above the furniture and redrawn every frame. */
+  private flames!: Phaser.GameObjects.Graphics;
   private route!: Phaser.GameObjects.Graphics;
   private readonly visitors: Map<string, ActorView> = new Map();
   /** The fingerprints of the map as drawn; empty before the first snapshot, so everything draws once. */
@@ -72,6 +75,7 @@ export class TavernScene extends Phaser.Scene {
     this.floor = this.add.graphics();
     this.hearthGlow = this.add.graphics();
     this.furniture = this.add.graphics();
+    this.flames = this.add.graphics();
     this.route = this.add.graphics();
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer): void => this.click(pointer));
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer): void => this.hover(pointer));
@@ -115,23 +119,10 @@ export class TavernScene extends Phaser.Scene {
       view.sprite.setAngle(Math.max(view.sway, IDLE_SWAY) * 8 * Math.sin(time / 420 + view.cellX * 1.7 + view.cellY));
       view.speech.place(view.container.x, view.container.y, this.time.now, this.scale);
     }
-    this.drawHearthGlow(time);
-  }
-
-  /** Let firelight flicker on the floor in front of each fireplace. */
-  private drawHearthGlow(time: number): void {
-    this.hearthGlow.clear();
-    if (!this.world) return;
-    const size: number = this.world.map.tile_size;
-    const flicker: number = 0.82 + 0.1 * Math.sin(time / 170) + 0.08 * Math.sin(time / 53);
-    for (const hearth of this.world.map.objects.filter((object: WorldObject): boolean => object.kind === "fireplace")) {
-      // Light spills into the room on the side the fireplace opens to.
-      const [dx, dy]: [number, number] = hearthFacing(hearth, this.world.map.width);
-      const x: number = (hearth.x + (hearth.width ?? 1) / 2 + dx * 0.9) * size;
-      const y: number = (hearth.y + (hearth.height ?? 1) / 2 + dy * 0.9) * size;
-      for (let ring: number = 5; ring > 0; ring -= 1) {
-        this.hearthGlow.fillStyle(0xf5a347, 0.045 * flicker).fillCircle(x, y, ring * size * 0.62 * flicker);
-      }
+    if (this.world) {
+      const { objects, width, tile_size: size } = this.world.map;
+      drawHearthGlow(this.hearthGlow, objects, width, size, time);
+      drawFlames(this.flames, objects, width, size, time);
     }
   }
 
