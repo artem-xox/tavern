@@ -2077,7 +2077,7 @@ matters on the phone.
     because Node needs them between pure modules; AGENTS.md says so. Seen: all six at once on a local
     override of the snapshot (nothing committed), on wood, a rug and by a wall; no cream box.
 
-- [ ] **U9 — Inspector: what matters first, readable type.** Needs U3. The target is the mockup's card,
+- [x] **U9 — Inspector: what matters first, readable type.** Needs U3. The target is the mockup's card,
   except the inventory, which is U10.
   - *Backend, test first:* each `minds` entry gains `mood_words`, the server's wording of the mood.
     `feelings._mood_words` becomes public as `mood_words`, so the client does not copy its
@@ -2103,6 +2103,23 @@ matters on the phone.
     unstyled `<p>` that renders at 16 px bold, gets a style.
   - *Check:* `make check` (the new backend test) and `make build`. Post screenshots beside the mockup:
     a guest who carries things, one who carries nothing, a departed guest, and the 375 px mobile width.
+
+  - *Result (2026-10-08):* backend: `feelings.mood_words` is public and every `Mind` carries `mood_words`
+    (`types.ts` too); tests for the nine thresholds and for the snapshot, the snapshot one shown red first.
+    Frontend: `mindview.ts` (`needPips`, `needWord`, `needTone`, `mergeThoughts`, `opinionBar`; 24 cases, red
+    against a stub first) and a rewritten `inspector.ts`: the guest's own sprite as a portrait (south Idle,
+    pixelated), the name, the status and two chips (mood words, drink stage); then "Now" (action, place, the
+    thought as a serif quote, Intends, a goal chip); Needs as five pips of satisfaction (Thirst, Bladder, Energy,
+    Company, Fun; red at one pip or none, amber at two, green above; no numbers, the urgency is the tooltip);
+    Carrying (still words; U10 makes slots) with time here, ales and own seat; Feelings with identical thoughts
+    merged ("×2") and no timers; People with a bar from the middle and the familiarity word; News (topic and
+    quote). Closed by default: Character, Why this decision?, What they know, Recent memories, and Debug, which is
+    a static `<details>` in the layout holding the raw urgencies, drunkenness %, path, the intention's trigger,
+    thought timers, news chains and the forced-action form (same ids and handlers). `style.css`: the sidebar uses
+    only 11, 12, 13, 15 and 24 px (measured in the browser: exactly those five sizes), serif only for the name
+    and the guest's own words; the unstyled "Intends" paragraph that rendered at 16 px bold is styled. Seen at
+    desktop width and at 375 px (no overflow). Not done: the rest of the page (header, controls, events) still
+    uses 8–10 px text; the ticket only covers the sidebar.
 
 - [ ] **U10 — Carrying as an inventory.** Needs U8 (`pixels.ts`) and U9.
   - *Slots:* one slot for each kind in `snapshot.items`, in that order. A carried kind shows its icon at
