@@ -133,3 +133,15 @@ def test_failures_carry_a_status_and_a_missing_credit_reads_as_payment_required(
     with pytest.raises(ClaudeError) as raised:
         ask(reply(body, status))
     assert raised.value.status == expected
+
+
+@pytest.mark.parametrize("message, expected", [
+    pytest.param("model: claude-haiku-9-9", "Claude HTTP 404: model: claude-haiku-9-9", id="short-message-kept"),
+    pytest.param("x" * 500, "Claude HTTP 404: " + "x" * 200, id="long-message-cut"),
+    pytest.param("", "Claude HTTP 404", id="no-message"),
+])
+def test_an_http_failure_says_what_the_api_said_cut_short(message: str, expected: str) -> None:
+    body = {"type": "error", "error": {"type": "not_found_error", "message": message}}
+    with pytest.raises(ClaudeError) as raised:
+        ask(reply(body, 404))
+    assert str(raised.value) == expected

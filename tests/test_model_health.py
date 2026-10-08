@@ -97,3 +97,25 @@ def test_banner_and_blocking_only_count_the_services_in_use(statuses: dict[str, 
                                                             text: str, stopped: list[str]) -> None:
     health = {name: {"status": status, "reason": ""} for name, status in statuses.items()}
     assert (banner(health, used), blocking(health, used)) == (text, stopped)
+
+
+def test_a_degraded_reason_names_the_last_error() -> None:
+    board = HealthBoard({"jev": True, "claude": True})
+    for _ in range(3):
+        board.record("claude", ClaudeError("Claude HTTP 404: model: claude-haiku-9-9", 404))
+    assert board.snapshot()["claude"] == {
+        "status": "degraded",
+        "reason": "3 of the last 3 calls failed; last: Claude HTTP 404: model: claude-haiku-9-9"}
+
+
+@pytest.mark.parametrize("raised, logged", [
+    pytest.param(ClaudeError("Claude HTTP 404: no model", 404), ["claude failed (degraded): Claude HTTP 404: no model"],
+                 id="failure-logged"),
+    pytest.param(ClaudeError("Claude account has no credit", 402),
+                 ["claude failed (no_credit): Claude account has no credit"], id="classification-logged"),
+    pytest.param(None, [], id="success-silent"),
+])
+def test_a_failed_call_is_logged_with_its_service_and_class(raised: Exception | None, logged: list[str]) -> None:
+    lines: list[str] = []
+    HealthBoard({"jev": True, "claude": True}, log=lines.append).record("claude", raised)
+    assert lines == logged

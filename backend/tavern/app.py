@@ -1,5 +1,6 @@
 """Launch wiring: reads the environment, builds the concrete adapters and creates the default server."""
 
+import logging
 import os
 from collections.abc import Mapping, Sequence
 from datetime import datetime
@@ -41,7 +42,8 @@ def create_default_app() -> FastAPI:
               "model": os.environ.get("TYPESAFE_MODEL", "jev-latest"),
               "timeout": float(os.environ.get("AI_TIMEOUT", "8")),
               "temperature": float(os.environ.get("AI_TEMPERATURE", "0.25"))}
-    board = HealthBoard({"jev": bool(config["typesafe_api_key"]), "claude": bool(os.environ.get("ANTHROPIC_API_KEY"))})
+    board = HealthBoard({"jev": bool(config["typesafe_api_key"]), "claude": bool(os.environ.get("ANTHROPIC_API_KEY"))},
+                        log=logging.getLogger("tavern.health").warning)
     # Traces spend LangSmith quota, so only an explicit switch turns them on; one server run is one evening.
     tracer = (open_tracer(os.environ, f"live {datetime.now():%Y-%m-%d %H:%M:%S}")
               if os.environ.get("TAVERN_TRACE") == "true" else None)
