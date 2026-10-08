@@ -38,8 +38,10 @@ Test first for everything with a Python seam: core, adapters (with fakes), HTTP.
 5. Bug fix: first a failing test that reproduces it, then the fix.
 6. Keep refactors and behavior changes in separate commits.
 
-`frontend/` has no unit-test runner. Keep logic out of it; verify with `make check`,
-`make build`, and by running the app.
+`frontend/` keeps logic out of Phaser and the DOM. A pure module (`bubble.ts`, `pixels.ts`) is tested
+in `frontend/tests/<module>.test.ts` with `node:test` (Node 24 runs `.ts` directly: import `../src/<module>.ts`
+with the extension, and keep the module free of extensionless imports). Run `npm --prefix frontend test`
+(`make check` does). Verify the rest with `make check`, `make build`, and by running the app.
 
 ## Architecture
 
