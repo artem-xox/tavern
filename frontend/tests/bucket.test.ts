@@ -1,4 +1,4 @@
-/** The privy's bucket: a pixel map of a stave bucket, hooped with iron, with an iron bail and one tall stave. */
+/** The privy's bucket: a pixel map of a stave bucket, hooped with iron, with a small iron bail. */
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { BUCKET_PALETTE, bucketRows } from "../src/bucket.ts";
@@ -21,10 +21,9 @@ test("bucketRows: every key used has a colour, the outline included", () => {
 
 test("bucketRows: a dark mouth, iron hoops on the staves, an iron handle and a lighter rim are all there", () => {
   assert.ok(count("i") > 20, "mouth");
-  assert.ok(bands("s") >= 6, "two hoops, each some rows tall");
+  assert.ok(bands("d") >= 4, "two hoops, each with a shadowed row");
   assert.ok(count("S") > 15 && count("d") > 15, "hoops lit above and shadowed below");
   assert.ok(count("r") > 10, "rim");
-  assert.ok(count("w") > 3, "the tall stave");
 });
 
 test("bucketRows: the left of the body is lit and the right is in shade", () => {
