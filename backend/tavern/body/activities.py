@@ -161,6 +161,14 @@ def _go_home(world: World, actor: Actor, door: dict[str, Any] | None) -> None:
     actor["visit"]["left_at"] = world["time"]
 
 
+def _fall_asleep(world: World, actor: Actor, target: Any) -> None:
+    record_event(world, actor, "dozed_off", f"{actor['name']} fell asleep at the table")
+
+
+def _wake_up(world: World, actor: Actor, target: Any) -> None:
+    record_event(world, actor, "woke_up", f"{actor['name']} woke up at the table")
+
+
 def _settle(world: World, actor: Actor, seat: dict[str, Any] | None) -> None:
     # The chair a visitor sits down on becomes their own; taking someone else's own seat wrongs them.
     if seat is None:
@@ -339,7 +347,8 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
     # Involuntary: the world starts it for a wasted guest at their table (`dozing.nodding_off`);
     # it is never a candidate, and a loud enough sound wakes them.
     Activity(verb="doze", fatigue_per_second=-0.75, duration=40.0, label="Doze off",
-             status="dozing", pose="Seated", interruptible=True, asleep=True, doing="dozing at the table",
+             status="dozing", pose="Seated", interruptible=True, asleep=True,
+             on_arrival=_fall_asleep, effect=_wake_up, doing="dozing at the table",
              done="dozed off at the table", family="resting",
              what="doze off where they sit",
              guidance="Nobody chooses it: a wasted guest nods off at the table and wakes after a while."),

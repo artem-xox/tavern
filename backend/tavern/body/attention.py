@@ -4,6 +4,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 from tavern.body.activities import ACTIVITIES
+from tavern.body.dozing import asleep, waking_sound
 from tavern.body.expression import look_at, show_emote
 from tavern.body.hearing import Stimulus, salience
 from tavern.hall.memory import record_event
@@ -21,6 +22,7 @@ def attend(world: World) -> list[Actor]:
     `glance_seconds` unless already looking at something; above it they turn to it for `turn_seconds`, show an alert, and either
     break off an interruptible activity (or, when idle, drop a pending decision: see
     `interrupted_at`) or, busy with something they finish first, just remember hearing it.
+    A sleeper (`dozing.asleep`) ignores every sound below the interrupt level and wakes to every one above it.
     Such a sound also takes them out of any conversation scene, so the scene loses a member or
     ends; their part in it (`talk`, `join_conversation`) breaks off although no timer could.
 
@@ -34,6 +36,13 @@ def attend(world: World) -> list[Actor]:
     stimuli, world["stimuli"] = world["stimuli"], []
     rules, stops = world["rules"]["attention"], []
     for actor in world["actors"]:
+        if asleep(actor):
+            # Only a loud sound reaches a sleeper, and it always wakes them (see `dozing.waking_sound`).
+            loud = waking_sound(world, stimuli, actor)
+            if loud is not None:
+                _wake(world, actor, loud)
+                stops.append(actor)
+            continue
         friends = friends_of(actor)
         heard = [(salience(world, stimulus, actor, friends), stimulus) for stimulus in stimuli]
         level, stimulus = max(heard, key=lambda item: item[0], default=(0.0, None))
@@ -62,6 +71,15 @@ def _alert(world: World, actor: Actor, stimulus: Stimulus) -> bool:
     turned = "broke off and turned" if action else "turned"
     record_event(world, actor, "interrupted", f"{actor['name']} {turned} toward {heard}: {stimulus['cause']}")
     return action is not None
+
+
+def _wake(world: World, actor: Actor, stimulus: Stimulus) -> None:
+    now = world["time"]
+    look_at(actor, stimulus["cell"], now + world["rules"]["attention"]["turn_seconds"], stimulus["id"])
+    show_emote(actor, "alert", now + world["rules"]["emote_seconds"]["alert"])
+    heard = f"{stimulus['noun']} {_landmark(world['map'], stimulus['cell'])}"
+    actor["interrupted_at"] = now
+    record_event(world, actor, "woken", f"{actor['name']} woke with a start at {heard}: {stimulus['cause']}")
 
 
 def _landmark(world_map: Mapping[str, Any], cell: Sequence[int]) -> str:
