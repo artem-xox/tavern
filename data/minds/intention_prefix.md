@@ -43,8 +43,8 @@ Intentions must be things the guest could do tonight in this hall, with these ac
   drink it in their seat or standing;
 - find a seat at a table, sit in their own seat, rest there, or move to another table, for instance
   to join company or to get away from someone;
-- chat with someone sitting at their table or standing beside them, or join a conversation already
-  going on;
+- chat with someone sitting at their table or standing beside them, walk over to someone sitting at
+  another table and talk with them standing beside it, or join a conversation already going on;
 - play a round of darts, or watch the fire or the road through a window for a while;
 - play dice with someone at the dice table, or stand by it and watch a game;
 - lean on the bar and chat with the barkeep, who passes on what he hears;

@@ -14,7 +14,7 @@ from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World
 from tavern.social.dice import PLAY, open_chairs
 from tavern.social.giving import formed_since
-from tavern.social.invitations import KINDS, Errand, free_chair, home_table, known_place
+from tavern.social.invitations import KINDS, Errand, free_chair, free_table, home_table, known_place, open_chairs_at
 from tavern.social.names import called
 from tavern.social.thoughts import think
 
@@ -43,7 +43,8 @@ def _people(world: Mapping[str, Any]) -> dict[str, Actor]:
 def honor_invitations(world: World, start: Start) -> None:
     """Carry every accepted invitation one step further.
 
-    `join_table` seats the invitee on a free chair at the inviter's table; `darts_together` sends
+    `join_table` seats the invitee on a free chair at the inviter's table and `move_together` seats both at a
+    free table (`invitations.free_table`), each lasting while they walk to their chairs; `darts_together` sends
     both to the darts the inviter knows; `buy_drink` sends the inviter to pour an ale, which goes
     to the invitee once poured (costing nothing until the economy exists); `leave_together` sends
     the inviter home and the invitee after them once the door is free. A step the world refuses
@@ -68,6 +69,8 @@ def _step(world: World, errand: Errand, start: Start) -> bool:
         return _carry(world, errand, host, guest, start)
     if errand["stage"] == "following":
         return _follow(world, errand, guest, start)
+    if errand["stage"] == "seating":
+        return _seating(world, errand)
     if host is None or guest is None:
         return False
     steps = _first_steps(world, errand, host, guest)
@@ -80,7 +83,9 @@ def _step(world: World, errand: Errand, start: Start) -> bool:
         record_event(world, host, "fetch_begun", f"{host['name']} went to fetch {guest['name']} an ale")
     elif errand["kind"] == "leave_together":
         errand["stage"] = "following"
-    return errand["kind"] in ("buy_drink", "leave_together")
+    elif errand["kind"] in _SEATS:
+        errand.update({"stage": "seating", "table": _table_of_chair(world, steps[0][1]["target_id"])})
+    return errand["kind"] in ("buy_drink", "leave_together", *_SEATS)
 
 
 def _command(verb: str, target: str | None) -> dict[str, Any]:
@@ -97,6 +102,13 @@ def _seat_guest(world: Mapping[str, Any], host: Mapping[str, Any],
                 guest: Mapping[str, Any]) -> list[tuple[str, dict[str, Any]]] | None:
     chair = free_chair(world, home_table(world, host), guest)
     return [(guest["id"], _command("sit", chair))] if chair else None
+
+
+def _move_together(world: Mapping[str, Any], host: Mapping[str, Any],
+                   guest: Mapping[str, Any]) -> list[tuple[str, dict[str, Any]]] | None:
+    table = free_table(world, host, guest)
+    chairs = open_chairs_at(world, table, (host, guest)) if table else []
+    return [(who["id"], _command("sit", chair)) for who, chair in zip((host, guest), chairs)] if chairs else None
 
 
 def _both_play_darts(world: Mapping[str, Any], host: Mapping[str, Any],
@@ -126,9 +138,33 @@ def _host_heads_home(world: Mapping[str, Any], host: Mapping[str, Any],
 
 # What accepting each kind sets in motion first: who starts which action, or None when it cannot be done.
 _FIRST_STEPS: Mapping[str, Callable[..., list[tuple[str, dict[str, Any]]] | None]] = MappingProxyType({
-    "join_table": _seat_guest, "darts_together": _both_play_darts, "dice_together": _both_play_dice,
+    "join_table": _seat_guest, "move_together": _move_together, "darts_together": _both_play_darts,
+    "dice_together": _both_play_dice,
     "buy_drink": _host_pours,
     "leave_together": _host_heads_home})
+
+
+# The errands that go on while the guests walk to their chairs, and whom each sends: the invitee alone to the
+# inviter's table, both to a table of their own.
+_SEATS: Mapping[str, tuple[str, ...]] = MappingProxyType({"join_table": ("to",), "move_together": ("from", "to")})
+
+
+def _table_of_chair(world: Mapping[str, Any], chair_id: str) -> str:
+    return str(next(item["table_id"] for item in world["map"]["objects"] if item["id"] == chair_id))
+
+
+def _seating(world: Mapping[str, Any], errand: Errand) -> bool:
+    # It goes on while someone it sent is still on the way to a chair at its table; seated, or turned to something
+    # else, they are no longer its business.
+    people, chairs = _people(world), {item["id"] for item in world["map"]["objects"]
+                                      if item.get("table_id") == errand["table"]}
+    sent = {"from": errand["from"], "to": errand["to"]}
+    for who in (sent[side] for side in _SEATS[errand["kind"]]):
+        action = people[who]["action"] if who in people else None
+        if action and action["verb"] == "sit" and action["target_id"] in chairs \
+                and people[who]["seat_id"] != action["target_id"]:
+            return True
+    return False
 
 
 def _fetched(world: World, errand: Errand, host: Actor | None,
