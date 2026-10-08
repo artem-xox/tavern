@@ -30,13 +30,13 @@ export function drawFloor(floor: Phaser.GameObjects.Graphics, world: World): voi
 }
 
 function drawRoomDetails(floor: Phaser.GameObjects.Graphics, size: number): void {
-  // The privy's floor: light flagstones, darker than plaster, each its own shade, laid with offset joints and a few chips.
+  // The privy's floor: grey flagstones, each its own shade, laid with offset joints and a few chips.
   for (let x: number = 16; x < 19; x += 1) {
     for (let y: number = 1; y < 4; y += 1) {
-      floor.fillStyle([0xb3a993, 0xaba18b, 0xb9af9a][(x * 2 + y) % 3]!).fillRect(x * size, y * size, size, size);
-      floor.lineStyle(1, 0x7a705e, 0.6).strokeRect(x * size, y * size, size, size);
-      floor.lineStyle(1, 0xcfc6b2, 0.45).lineBetween(x * size + 2, y * size + 2, (x + 1) * size - 3, y * size + 2);
-      floor.fillStyle(0x7a705e, 0.45).fillRect((x + 0.3 + 0.1 * ((x + y) % 3)) * size, (y + 0.65) * size, 3, 2);
+      floor.fillStyle([0x9d937f, 0x958b77, 0xa39985][(x * 2 + y) % 3]!).fillRect(x * size, y * size, size, size);
+      floor.lineStyle(1, 0x625a49, 0.65).strokeRect(x * size, y * size, size, size);
+      floor.lineStyle(1, 0xb7ae9a, 0.4).lineBetween(x * size + 2, y * size + 2, (x + 1) * size - 3, y * size + 2);
+      floor.fillStyle(0x625a49, 0.45).fillRect((x + 0.3 + 0.1 * ((x + y) % 3)) * size, (y + 0.65) * size, 3, 2);
     }
   }
   floor.fillStyle(0xddd1aa, 0.35).fillRect(2.3 * size, 8.2 * size, 3, size * 0.6);

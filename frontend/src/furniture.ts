@@ -1,6 +1,5 @@
 /** Drawing of the hall's furniture and fittings, one function per object kind. */
 import Phaser from "phaser";
-import { BUCKET_PALETTE, bucketRows } from "./bucket";
 import type { WorldObject } from "./types";
 
 /**
@@ -53,17 +52,16 @@ export function drawTap(g: Phaser.GameObjects.Graphics, x: number, y: number): v
   g.fillRect(x - 2, y + 5, 9, 4);
 }
 
-/** The privy: a stave bucket with iron hoops and a bail (`bucket.ts`), standing in the middle of the stone floor. */
+/** The privy: a squat tub in the chairs' woods, standing in the middle of the stone floor: two tones of plank, dark bands, a pale rim and a lug on each side. */
 export function drawToilet(g: Phaser.GameObjects.Graphics, x: number, y: number): void {
-  const rows: string[] = bucketRows();
-  const left: number = Math.round(x - rows[0]!.length / 2);
-  const top: number = Math.round(y - rows.length / 2 - 1);
-  rows.forEach((row: string, line: number): void => {
-    // One rectangle per run of the same key, not per pixel.
-    for (const run of row.matchAll(/([^.])\1*/g)) {
-      g.fillStyle(BUCKET_PALETTE[run[1]!]!).fillRect(left + run.index, top + line, run[0].length, 1);
-    }
-  });
+  g.fillStyle(0x4d3425).fillRoundedRect(x - 13, y - 8, 26, 24, 6);
+  g.fillStyle(0xa2774d).fillRoundedRect(x - 11, y - 5, 22, 19, 4);
+  g.fillStyle(0xc09867).fillRoundedRect(x - 9, y - 3, 5, 15, 2);
+  g.fillStyle(0x905b3d).fillRoundedRect(x + 4, y - 3, 5, 15, 2);
+  for (const band of [y + 2, y + 9]) g.lineStyle(3, 0x4d3425).lineBetween(x - 11, band, x + 11, band);
+  g.fillStyle(0x4d3425).fillRoundedRect(x - 16, y - 2, 4, 7, 1).fillRoundedRect(x + 12, y - 2, 4, 7, 1);
+  g.fillStyle(0xc09867).fillEllipse(x, y - 7, 25, 11);
+  g.fillStyle(0x33251d).fillEllipse(x, y - 7, 17, 6);
 }
 
 export function drawChair(g: Phaser.GameObjects.Graphics, x: number, y: number, facing: WorldObject["facing"]): void {
