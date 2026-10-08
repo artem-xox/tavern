@@ -1931,7 +1931,7 @@ matters on the phone.
     running evening show no blinking. Fix each confirmed cause in its own commit. In the result
     paragraph, say which suspects were confirmed and which were not.
 
-- [ ] **U5 — Speech bubbles break at sentences.** Today `splitLine` (`bubble.ts`) cuts a line every 10 words
+- [x] **U5 — Speech bubbles break at sentences.** Today `splitLine` (`bubble.ts`) cuts a line every 10 words
   wherever the words fall (see the measurements above).
   - *Rule:* a piece ends only at a sentence end: `.`, `!`, `?`, `…` or `...`, optionally followed by a
     closing quote or bracket, then whitespace or the end of the line. Whole sentences share a piece
@@ -1947,8 +1947,8 @@ matters on the phone.
   - *Cases:* `"Evening. What'll it be?"` → one piece. `"Aye"` → `["Aye"]`. `""` → `[]`.
     `"Well... I suppose so."` → one piece. The margrave line above → `["The margrave has been abed with
     a fever for a week,…", "…and the manor kitchen is told to send up nothing but broth.", "Evening."]`,
-    or "Evening." joined to the second piece if it fits. Three sentences of 50 characters each → two
-    pieces of whole sentences.
+    or "Evening." joined to the second piece if it fits. Three sentences of 40 characters each → two
+    pieces of whole sentences (two share a piece, 81 characters; a third would make 122).
   - *Test runner first, in its own commit:* `frontend/tests/` holds `*.test.ts` files that use
     `node:test` and `node:assert/strict` and import from `../src/<module>.ts` with the extension. The
     folder sits outside `tsconfig`'s `include`, so `tsc` needs no `@types/node`. `frontend/package.json`
@@ -1961,6 +1961,14 @@ matters on the phone.
     test per row, plus a table of `chunkMs` cases. Show it failing against today's `splitLine`, then
     make it pass. After that, watch a live evening: no bubble ends mid-sentence without "…". Then
     `make check` and `make build`.
+
+  - *Result (2026-10-08):* `frontend/tests/bubble.test.ts` (28 cases; `npm --prefix frontend test`, part of
+    `make check`) pins placement, `chunkMs`, `chunkAt` and `splitLine`. `splitLine` now groups whole
+    sentences up to `MAX_PIECE_CHARS` = 90, and cuts a longer one into even parts at a clause (comma,
+    semicolon, colon, dash; a 15-character bonus), at least two words on each side, with "…" at the breaks;
+    `chunkMs` does not count them. Seen live: "Dry as a biscuit in here, and that ale's not going to pour
+    itself. Hob, a mug for me." stays one bubble. CI still runs Node 20 and no frontend tests: running them
+    there needs `node-version: 22.6+` and an `npm test` step in `.github/workflows/ci.yml` (ask-first).
 
 - [ ] **U6 — The door: no black mat, as tall as the wall.** "The black rug" is the door mat. `drawDoor`
   (`furniture.ts`) paints a dark rounded rectangle with a gold outline on the floor inside the door
