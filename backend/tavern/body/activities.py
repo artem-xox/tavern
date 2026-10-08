@@ -276,8 +276,8 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "whole room hears it, the one attacked will not forget it, and it can end in injury. Even "
                       "an angry guest almost always chooses something else."),
     Activity(verb="give", near_person=True, names_item=True, duration=1.5, effect=_give, label="Give",
-             status="giving", doing="handing something over", done="gave something away", family="company",
-             what="hand {item} to {target}, who sits at their table or stands beside them",
+             status="giving", pose="Giving", doing="handing something over", done="gave something away",
+             family="company", what="hand {item} to {target}, who sits at their table or stands beside them",
              guidance="A kindness between people who get on: a drink for a thirsty friend, a remedy for someone "
                       "worried about sickness, a keepsake for someone they like. It costs the giver what they hand "
                       "over, and someone who dislikes them may refuse it."),

@@ -97,6 +97,31 @@ def test_the_giver_faces_the_receiver() -> None:
     assert actor(world, "ada")["facing"] == "east"  # Bea sits to Ada's east
 
 
+def cid_talks_to_ada() -> dict[str, Any]:
+    """Ada sits at the head of the near table, Bea to her east and Cid to her west, and Cid talks to Ada."""
+    world = create_world(hall(), 4)
+    for actor_id, seat in (("ada", "n"), ("bea", "e"), ("cid", "w")):
+        assert start_action(world, actor_id, command("sit", seat))["accepted"]
+    advance(world, 3)  # Cid walks up from the far table
+    assert start_action(world, "cid", command("talk", "ada"))["accepted"]
+    advance(world, 0.5)
+    return world
+
+
+@pytest.mark.parametrize("prepare, giver, receiver, watched, expected", [
+    pytest.param(seated, "ada", "bea", "bea", "west", id="receiver-faces-the-giver"),
+    pytest.param(cid_talks_to_ada, "ada", "bea", "ada", "east", id="giver-turns-from-the-chat"),
+    pytest.param(cid_talks_to_ada, "bea", "ada", "ada", "east", id="receiver-turns-from-the-chat"),
+])
+def test_a_hand_over_turns_both_to_each_other(prepare: Any, giver: str, receiver: str, watched: str,
+                                               expected: str) -> None:
+    world = prepare()
+    hold(world, giver, remedy=1)
+    assert start_action(world, giver, give("remedy", receiver))["accepted"]
+    advance(world, 0.5)
+    assert actor(world, watched)["facing"] == expected
+
+
 @pytest.mark.parametrize("opinion, outcome", [
     pytest.param(-21.0, (1, 0, ["gift_refused"], ["rebuffed"]), id="just-below-the-threshold"),
     pytest.param(-100.0, (1, 0, ["gift_refused"], ["rebuffed"]), id="loathing"),
@@ -235,7 +260,7 @@ def test_the_client_is_told_which_verbs_name_an_item_and_target_a_person(tmp_pat
                              "actors": [{"id": "ada", "name": "Ada", "x": 1, "y": 1}]},
                             tmp_path / "save.json", {"typesafe_api_key": None})
     assert runtime.snapshot()["activities"]["give"] == {
-        "label": "Give", "status": "giving", "pose": None, "target_kinds": [], "partner": True, "names_item": True}
+        "label": "Give", "status": "giving", "pose": "Giving", "target_kinds": [], "partner": True, "names_item": True}
 
 
 def test_an_operator_can_force_a_gift() -> None:
