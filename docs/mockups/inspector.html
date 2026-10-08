@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inspector mockup</title>
+<!-- Design reference for U9 (inspector) and U8 (emotes) in docs/stages/1_EVENING.md. Static: the data is Edda's
+     from a live evening, hard-coded. The pixel maps in the script are the source the tasks port. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+:root {
+  --bg: #121c19; --surface: #1c2822; --raised: #233128; --sunken: #17211d; --border: #344037;
+  --text: #e6e6d6; --text-2: #b9c0aa; --muted: #8f9b8e; --gold: #d9b676; --gold-2: #e8cf9c;
+  --good: #9cc07f; --warn: #d9a05b; --bad: #d7876e;
+  /* One type scale for the whole sidebar: nothing under 11 px. */
+  --t-label: 11px; --t-small: 12px; --t-body: 13px; --t-lead: 15px; --t-name: 24px;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: radial-gradient(ellipse at 35% 0%, #26342a 0, #121c19 70%); color: var(--text);
+  font: 400 var(--t-body)/1.5 "DM Sans", system-ui, sans-serif; min-height: 100vh; }
+.page { display: flex; gap: 40px; align-items: flex-start; justify-content: center; padding: 32px 16px; flex-wrap: wrap; }
+h1, h2, h3, p { margin: 0; }
+
+/* ---------- the inspector card ---------- */
+.card { width: 350px; max-width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px; box-shadow: 0 10px 30px #09100b40; }
+.card-title { display: flex; justify-content: space-between; align-items: center; padding-bottom: 14px;
+  border-bottom: 1px solid var(--border); margin-bottom: 18px; }
+.card-title h3 { font-size: var(--t-body); font-weight: 600; }
+.tag { font-size: 10px; letter-spacing: 1px; color: #b4b796; border: 1px solid #4b5342; padding: 3px 6px; border-radius: 4px; }
+
+.who { display: flex; gap: 14px; align-items: center; margin-bottom: 18px; }
+.portrait { width: 64px; height: 64px; flex-shrink: 0; border-radius: 32px 32px 8px 8px; border: 1px solid var(--visitor);
+  background: radial-gradient(circle at 50% 70%, #3a4a37, #26332a); overflow: hidden; display: grid; place-items: center; }
+.portrait img { width: 96px; height: 96px; image-rendering: pixelated; margin-top: 18px; }
+.who h2 { font: 400 var(--t-name)/1.1 "Libre Baskerville", Georgia, serif; }
+.who .doing { color: var(--text-2); font-size: var(--t-small); margin-top: 4px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.chip { font-size: var(--t-label); padding: 2px 8px; border-radius: 10px; background: var(--raised); color: var(--text-2); border: 1px solid var(--border); }
+.chip.mood-even { color: var(--gold-2); }
+.chip b { font-weight: 600; }
+
+.section { padding: 16px 0; border-top: 1px solid var(--border); }
+.eyebrow { font-size: var(--t-label); letter-spacing: 1.4px; text-transform: uppercase; color: #aaa98b; margin-bottom: 10px;
+  display: flex; justify-content: space-between; }
+.eyebrow span:last-child { letter-spacing: 0; text-transform: none; color: var(--muted); }
+
+/* now: action + mind */
+.now { background: var(--raised); border-left: 2px solid var(--gold); border-radius: 0 8px 8px 0; padding: 12px 14px; margin-bottom: 18px; }
+.now .action { font-size: var(--t-lead); font-weight: 500; color: #efe3c6; }
+.now .where { font-size: var(--t-small); color: var(--muted); }
+.thought { font: italic 400 var(--t-body)/1.6 "Libre Baskerville", Georgia, serif; color: #cfc6ad; margin: 12px 0 10px; }
+.intends { font-size: var(--t-body); color: var(--text); }
+.intends b { font-weight: 600; color: var(--gold-2); }
+.goal { display: inline-block; margin-top: 8px; font-size: var(--t-label); color: var(--good); border: 1px solid #4f6a45; border-radius: 10px; padding: 1px 8px; }
+
+/* needs: satisfaction, five pips, full is good */
+.needs { display: grid; grid-template-columns: 1fr; gap: 7px; }
+.need { display: grid; grid-template-columns: 74px 1fr auto; align-items: center; gap: 10px; font-size: var(--t-small); }
+.need .label { color: var(--text-2); }
+.need.low .label { color: var(--bad); font-weight: 600; }
+.pips { display: flex; gap: 3px; }
+.pip { width: 18px; height: 8px; border-radius: 2px; background: #2b3a2e; box-shadow: inset 0 0 0 1px #3a4a3c; }
+.pip.on { box-shadow: none; }
+.lvl-1 .pip.on { background: var(--bad); } .lvl-2 .pip.on { background: var(--warn); }
+.lvl-3 .pip.on, .lvl-4 .pip.on, .lvl-5 .pip.on { background: var(--good); }
+.need .word { font-size: var(--t-label); color: var(--muted); min-width: 52px; text-align: right; }
+
+/* inventory */
+.slots { display: flex; gap: 8px; }
+.slot { position: relative; width: 48px; height: 48px; border-radius: 6px; background: var(--sunken); border: 1px solid var(--border);
+  display: grid; place-items: center; }
+.slot.empty { opacity: .45; }
+.slot svg { width: 32px; height: 32px; image-rendering: pixelated; }
+.slot .count { position: absolute; right: 3px; bottom: 1px; font-size: var(--t-label); font-weight: 700; color: var(--gold-2); text-shadow: 0 1px 0 #000; }
+.meta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; font-size: var(--t-small); color: var(--text-2); }
+.meta b { color: var(--gold-2); font-weight: 500; }
+
+/* feelings */
+.feel { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.feel li { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 6px 10px; border-radius: 0 6px 6px 0; font-size: var(--t-small); }
+.feel li.good { background: #26321f; border-left: 2px solid #8fae6b; color: #d3e2bd; }
+.feel li.bad { background: #36261f; border-left: 2px solid #b0624c; color: #ecc3b0; }
+.feel li strong { font-weight: 600; }
+.feel li small { color: var(--muted); font-size: var(--t-label); margin-left: 4px; }
+
+/* people */
+.person { display: grid; grid-template-columns: 1fr 96px; gap: 10px; align-items: center; padding: 5px 0; font-size: var(--t-small); }
+.person .rel { display: block; color: var(--muted); font-size: var(--t-label); }
+.opinion { position: relative; height: 8px; background: #2b3a2e; border-radius: 4px; }
+.opinion::before { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: #5b6a58; }
+.opinion i { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
+
+/* news */
+.news-topic { font-size: var(--t-small); font-weight: 600; color: var(--text); }
+.news-quote { font: italic 400 var(--t-small)/1.6 "Libre Baskerville", Georgia, serif; color: var(--text-2); margin-top: 4px; }
+
+/* secondary: all collapsed */
+details { border-top: 1px solid var(--border); }
+summary { cursor: pointer; list-style: none; padding: 12px 0; font-size: var(--t-small); color: var(--text-2); display: flex; justify-content: space-between; }
+summary::-webkit-details-marker { display: none; }
+summary span:first-child::before { content: "›"; display: inline-block; width: 14px; color: var(--muted); transition: transform .15s; }
+details[open] summary span:first-child::before { transform: rotate(90deg); }
+summary span:last-child { color: var(--muted); font-size: var(--t-label); }
+.detail-body { padding: 0 0 12px 14px; font-size: var(--t-small); color: var(--text-2); }
+.row { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; }
+.row span:last-child { color: var(--gold-2); }
+.traits { display: flex; flex-wrap: wrap; gap: 5px; }
+.traits span { font-size: var(--t-label); padding: 3px 7px; background: var(--raised); border-radius: 4px; }
+
+/* ---------- design sheet beside it ---------- */
+.sheet { width: 420px; max-width: 100%; display: grid; gap: 22px; }
+.sheet h3 { font: 400 18px "Libre Baskerville", Georgia, serif; margin-bottom: 8px; }
+.sheet p, .sheet li { font-size: var(--t-small); color: var(--text-2); line-height: 1.6; }
+.sheet ul { margin: 6px 0 0; padding-left: 18px; }
+.floor { display: flex; gap: 18px; flex-wrap: wrap; padding: 18px; border-radius: 8px;
+  background: repeating-linear-gradient(0deg, #896649 0 31px, #382f26 31px 32px), #896649; }
+.icon-cell { display: grid; justify-items: center; gap: 6px; font-size: var(--t-label); color: #fff4dc; text-shadow: 0 1px 2px #000; }
+.icon-cell svg { image-rendering: pixelated; }
+.icon-cell.dim { opacity: .5; }
+.items-sheet { display: flex; gap: 14px; flex-wrap: wrap; }
+.items-sheet .icon-cell { color: var(--text-2); text-shadow: none; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <aside class="card" style="--visitor:#e8a86b">
+    <div class="card-title"><h3>Inside a visitor's mind</h3><span class="tag">INSPECTOR</span></div>
+
+    <div class="who">
+      <div class="portrait"><img alt="" src="data:image/png;base64,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"></div>
+      <div>
+        <h2>Edda</h2>
+        <p class="doing">Seated at the Hearth table</p>
+        <div class="chips"><span class="chip mood-even" title="mood −2">In an even mood</span><span class="chip" title="drunkenness 8%">Sober</span></div>
+      </div>
+    </div>
+
+    <div class="now">
+      <p class="action">Sit at a table</p>
+      <p class="where">Hearth table · east chair</p>
+      <p class="thought">“That young woman in the button coat has my seat by the fire, and Brida is sitting there with her, so I'm left standing at the tap with my feet aching.”</p>
+      <p class="intends"><b>Intends</b> to get a fresh ale from the bartender, then go to Brida at the Hearth table and sit beside her to find out about the fever.</p>
+      <span class="goal">Goal · sit with Brida</span>
+    </div>
+
+    <div class="section">
+      <p class="eyebrow"><span>Needs</span><span>full is fine</span></p>
+      <div class="needs" id="needs"></div>
+    </div>
+
+    <div class="section">
+      <p class="eyebrow"><span>Carrying</span><span></span></p>
+      <div class="slots" id="slots"></div>
+      <div class="meta"><span>Here <b>5:55</b></span><span>Ales <b>1</b></span><span>Own seat <b>Hearth table · east</b></span></div>
+    </div>
+
+    <div class="section">
+      <p class="eyebrow"><span>Feelings</span><span>mood −2</span></p>
+      <ul class="feel">
+        <li class="good"><span>Chatted with Brida about the inn's ale<small>×2</small></span><strong>+6</strong></li>
+        <li class="bad"><span>The young woman with a coat full of buttons took my seat</span><strong>−6</strong></li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <p class="eyebrow"><span>People</span><span></span></p>
+      <div class="person"><span>Brida<span class="rel">friend</span></span><div class="opinion"><i style="left:50%;width:31%;background:var(--good)"></i></div></div>
+      <div class="person"><span>the young woman with a coat full of buttons<span class="rel">stranger</span></span><div class="opinion"><i style="right:50%;width:7.5%;background:var(--bad)"></i></div></div>
+    </div>
+
+    <div class="section">
+      <p class="eyebrow"><span>News</span><span></span></p>
+      <p class="news-topic">The margrave's fever</p>
+      <p class="news-quote">“The margrave has been abed with a fever for a week, and the manor kitchen is told to send up nothing but broth.”</p>
+    </div>
+
+    <details><summary><span>Character</span><span>9 traits</span></summary><div class="detail-body"><div class="traits">
+      <span>temper 0.55</span><span>comfort 0.7</span><span>courage 0.6</span><span>brawling 0.1</span><span>patience 0.3</span>
+      <span>strength 0.3</span><span>curiosity 0.5</span><span>tolerance 0.4</span><span>sociability 0.65</span></div></div></details>
+    <details><summary><span>Why this decision?</span><span>LOCAL</span></summary><div class="detail-body">
+      <p>Decided 36 s ago, after: the young woman with a coat full of buttons took my seat (Hearth table · west).</p>
+      <div class="row"><span>sit at a table</span><span>0.82</span></div><div class="row"><span>order a beer</span><span>0.64</span></div></div></details>
+    <details><summary><span>What they know</span><span>25</span></summary><div class="detail-body">
+      <div class="row"><span>Oak bar</span><span>bar</span></div><div class="row"><span>House ale</span><span>21 beers observed</span></div></div></details>
+    <details><summary><span>Recent memories</span><span>6</span></summary><div class="detail-body"><p>Brida said the fever reached the river villages.</p></div></details>
+    <details><summary><span>Debug</span><span>cell 11, 5</span></summary><div class="detail-body">
+      <div class="row"><span>Needs as urgency</span><span>thirst 66 · bladder 4 · fatigue 1 · social 4 · boredom 86</span></div>
+      <div class="row"><span>Drunkenness</span><span>8%</span></div>
+      <div class="row"><span>Thought timers</span><span>52 s · 80 s · 264 s</span></div>
+      <div class="row"><span>News chain</span><span>Edda ← start · 100%</span></div>
+      <p style="margin-top:8px">Give this visitor an action: the existing select, target and Go → button live here.</p></div></details>
+  </aside>
+
+  <section class="sheet">
+    <div>
+      <h3>What changes</h3>
+      <ul>
+        <li>Needs read as satisfaction: a full bar is a content guest. Five pips, no numbers; the exact urgency is in the tooltip and under Debug.</li>
+        <li>Carrying is an inventory: one slot per item kind, a pixel icon and a count. The server's wording is the tooltip.</li>
+        <li>One type scale (11 / 12 / 13 / 15 / 24 px). Serif only for the name and the guest's own words.</li>
+        <li>The story first: what they do, think and intend; then needs, hands, feelings, people, news.</li>
+        <li>Everything for debugging sits in collapsed sections at the bottom, closed by default.</li>
+        <li>Identical thoughts merge with a count (“×2”, the moods summed).</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Item icons</h3>
+      <p>16 × 16 pixel maps drawn at 2×. Coins arrive with the economy (Stage 3); the bundle is the fallback for a kind with no icon.</p>
+      <div class="items-sheet" id="item-sheet" style="margin-top:12px"></div>
+    </div>
+    <div>
+      <h3>Emotes over the head</h3>
+      <p>No cream box: a dark outline keeps each one readable on wood, stone or a rug. 12 × 12 at 2×, drawn on the floor below at game scale.</p>
+      <div class="floor" id="emote-sheet" style="margin-top:12px"></div>
+      <ul>
+        <li>Pop in (scale 0 → 1.2 → 1 over 200 ms), then bob 1 px.</li>
+        <li>Sleep: the two z's drift up and fade in a loop. Waiting: the dots light one after another.</li>
+        <li>Hovering a guest names the emote in the hint line: “Edda · angry”.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script>
+// Pixel maps in Phaser's `textures.generate` format: one string per row, "." transparent, any other character a
+// palette key. `outlined` adds a 1 px dark outline around the filled pixels, as the game should.
+const ITEMS = {
+  beer: { name: "a mug of ale", palette: { 1: "#fbf1d9", 2: "#e2cfa3", 3: "#c88a3a", 4: "#e8b45f", 5: "#7a5230", 6: "#a8743f" }, rows: [
+    "................", "....1..11.......", "...11111111.....", "..1111112111....", "...2222222.1....",
+    "...4333333......", "...5555555......", "...4333333.66...", "...4333333..6...", "...4333333..6...",
+    "...4333333.66...", "...5555555......", "...4333333......", "................", "................", "................"] },
+  remedy: { name: "a herbal remedy", palette: { 1: "#8a5a2b", 2: "#b07a44", 3: "#d8eee6", 4: "#9cc7b8", 5: "#4f9a5a", 6: "#7cc46e", 7: "#2f6b3a" }, rows: [
+    "................", "................", ".......21.......", ".......11.......", ".......34.......",
+    "......3444......", ".....344444.....", "....36666666....", "....36555555....", "....65555557....",
+    "....65555557....", ".....555577.....", "......5777......", "................", "................", "................"] },
+  keepsake: { name: "a keepsake", palette: { 1: "#e6c25c", 2: "#fff0b0", 3: "#a87a26", 4: "#c2457a", 5: "#f29bc0", 6: "#c9a64a" }, rows: [
+    "................", ".....666666.....", "....6......6....", "...6........6...", "...6........6...",
+    "....6......6....", ".....6....6.....", "......6..6......", ".......11.......", "......2111......",
+    ".....211111.....", "....21154113....", "....21144113....", ".....111113.....", "......1333......", "................"] },
+  coins: { name: "coins (Stage 3)", palette: { 1: "#e6c25c", 2: "#fff0b0", 3: "#a87a26" }, rows: [
+    "................", "................", "......2222......", "....22111111....", "...2111111113...",
+    "...2113333113...", "..211311113113..", "..211311113113..", "..111311113113..", "..111311113113..",
+    "...1113333113...", "...1111111133...", "....11111333....", "......3333......", "................", "................"] },
+  bundle: { name: "anything else", palette: { 1: "#b08a5a", 2: "#d9b98a", 3: "#7a5a36", 4: "#c0392b" }, rows: [
+    "................", "................", "......2..1......", ".......44.......", "......1441......",
+    ".....211113.....", "....22111113....", "....21111113....", "....21111113....", "....11111133....",
+    ".....111333.....", "................", "................", "................", "................", "................"] },
+};
+const EMOTES = {
+  alert: { palette: { 2: "#e5483a", 3: "#ff9a7a" }, rows: [
+    "............", "....3222....", "....2222....", "....2222....", ".....22.....", ".....22.....",
+    "............", ".....22.....", ".....22.....", "............", "............", "............"] },
+  confused: { palette: { 2: "#4a8fd0", 3: "#9cd0ff" }, rows: [
+    "............", "...322222...", "..22....22..", "..22....22..", "........22..", "......222...",
+    ".....22.....", "............", ".....22.....", ".....22.....", "............", "............"] },
+  angry: { palette: { 2: "#e04a3a" }, rows: [
+    "............", "...2....2...", "...2....2...", ".222....222.", "............", "............",
+    "............", ".222....222.", "...2....2...", "...2....2...", "............", "............"] },
+  affection: { palette: { 2: "#e0507f", 3: "#ffb0cc" }, rows: [
+    "............", "............", "..222..222..", ".2332222222.", ".2322222222.", ".2222222222.",
+    "..22222222..", "...222222...", "....2222....", ".....22.....", "............", "............"] },
+  sleep: { palette: { 2: "#a9bfe8" }, rows: [
+    "............", ".....22222..", "........2...", ".......2....", "......2.....", ".....22222..",
+    "............", "..222.......", "....2.......", "...2........", "..222.......", "............"] },
+  waiting: { palette: { 2: "#efdcae" }, rows: [
+    "..............", "..............", "..............", "..............", "..............", ".22...22...22.",
+    ".22...22...22.", "..............", "..............", "..............", "..............", ".............."] },
+};
+const OUTLINE = "#1b120d";
+
+function outlined(rows) {
+  const height = rows.length, width = Math.max(...rows.map((row) => row.length));
+  const filled = (x, y) => y >= 0 && y < height && x >= 0 && x < width && (rows[y][x] ?? ".") !== ".";
+  return rows.map((row, y) => Array.from({ length: width }, (_, x) => {
+    if (filled(x, y)) return row[x];
+    const near = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => filled(x + dx, y + dy));
+    return near ? "0" : ".";
+  }).join(""));
+}
+
+function pixelSvg({ rows, palette }, scale) {
+  const map = outlined(rows), colors = { 0: OUTLINE, ...palette };
+  const rects = map.flatMap((row, y) => [...row].map((key, x) => key === "." ? "" : `<rect x="${x}" y="${y}" width="1" height="1" fill="${colors[key]}"/>`)).join("");
+  return `<svg viewBox="0 0 ${map[0].length} ${map.length}" width="${map[0].length * scale}" height="${map.length * scale}" shape-rendering="crispEdges">${rects}</svg>`;
+}
+
+// Needs arrive as urgency (0 calm … 100 urgent); the panel shows satisfaction in five pips.
+const NEEDS = [["Thirst", "thirst", 66], ["Bladder", "bladder", 4], ["Energy", "fatigue", 1], ["Company", "social", 4], ["Fun", "boredom", 86]];
+const WORDS = ["desperate", "very low", "low", "fine", "good", "full"];
+document.getElementById("needs").innerHTML = NEEDS.map(([label, key, urgency]) => {
+  const pips = Math.round((100 - urgency) / 20);
+  return `<div class="need lvl-${Math.max(pips, 1)} ${pips <= 1 ? "low" : ""}" title="${key}: urgency ${urgency}/100">
+    <span class="label">${label}</span><span class="pips">${Array.from({ length: 5 }, (_, i) => `<i class="pip ${i < pips ? "on" : ""}"></i>`).join("")}</span><span class="word">${WORDS[pips]}</span></div>`;
+}).join("");
+
+const carried = { beer: 1, remedy: 2, keepsake: 0 };
+document.getElementById("slots").innerHTML = Object.entries(carried).map(([kind, count]) => count > 0
+  ? `<div class="slot" title="${count === 1 ? ITEMS[kind].name : `${count} × ${ITEMS[kind].name}`}">${pixelSvg(ITEMS[kind], 2)}${count > 1 ? `<span class="count">${count}</span>` : ""}</div>`
+  : `<div class="slot empty" title="no ${kind}"></div>`).join("");
+
+document.getElementById("item-sheet").innerHTML = Object.entries(ITEMS).map(([kind, icon]) =>
+  `<div class="icon-cell ${kind === "coins" ? "dim" : ""}"><div class="slot">${pixelSvg(icon, 2)}</div>${kind}</div>`).join("");
+document.getElementById("emote-sheet").innerHTML = Object.entries(EMOTES).map(([kind, icon]) =>
+  `<div class="icon-cell">${pixelSvg(icon, 3)}${kind}</div>`).join("");
+</script>
+</body>
+</html>
