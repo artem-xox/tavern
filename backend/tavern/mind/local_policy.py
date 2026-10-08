@@ -58,7 +58,7 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
                           - 0.3 * max(thirst, fatigue, bladder)),
         "use_toilet": bladder,
         # Sleep suits a guest who is tired, and more so one who has drunk: they sleep it off where they sit.
-        "doze": min(1.0, max(0.0, 2.2 * (fatigue - 0.6)) + 0.45 * actor.get("drunkenness", 0.0)),
+        "doze": min(1.0, max(0.0, 2.2 * (fatigue - 0.6)) + 0.9 * actor.get("drunkenness", 0.0)),
         "inspect": 0.08 + 0.12 * traits.get("curiosity", 0.5) + 0.4 * missing_relief,
         "wait": max(0.0, 0.08 + 0.12 * traits.get("patience", 0.5) - 0.08 * max(thirst, fatigue, bladder)),
         "leave": _leave_utility(observation),

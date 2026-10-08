@@ -4,7 +4,7 @@
   "arrival": {
     "needs": {
       "thirst": [55, 90],
-      "fatigue": [20, 55],
+      "fatigue": [25, 55],
       "bladder": [0, 25],
       "social": [15, 65],
       "boredom": [5, 35]
