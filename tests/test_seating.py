@@ -11,6 +11,7 @@ import httpx
 import pytest
 
 from tavern.mind.agents import Evaluators, build_candidates, build_seat_candidates, choose_action
+from tavern.mind.local_policy import local_seat_scores
 from tavern.adapters.jev import JevError, evaluate_actions, evaluate_seats
 from tavern.hall.world import create_world, observe_actor
 from tavern.social.thoughts import THOUGHTS
@@ -410,3 +411,33 @@ def test_questions_quote_the_briefing_and_name_the_guest(evaluate: Callable[...,
 def test_unknown_verb_cannot_be_described_to_jev() -> None:
     with pytest.raises(ValueError):
         request_body([{"id": "fly", "verb": "fly", "target_id": None}])
+
+
+def held_table(table_id: str) -> dict[str, Any]:
+    """Describe a table Bea holds."""
+    return {"id": table_id, "kind": "table", "x": 5, "y": 3, "reserved_by": None, "hosts": [{"id": "bea", "name": "Bea"}]}
+
+
+def seat_scores(objects: list[dict[str, Any]], **actor: Any) -> dict[str, float]:
+    """Score every chair in the list for a lonely Ada, who is wondering where to sit."""
+    objects = [*objects, seat("bea-chair", table_id="table-held", reserved_by="bea")]
+    observation = view(objects, needs={"social": 90}, visitors=[company("bea-chair", "table-held")], **actor)
+    return local_seat_scores(observation, build_seat_candidates(observation))
+
+
+def own_seat_of_bea() -> dict[str, Any]:
+    """A chair Bea, who is away, calls her own."""
+    return seat("owned", table_id="table-owned", owner={"id": "bea", "name": "Bea"})
+
+
+def test_a_chair_at_a_free_table_beats_a_strangers_table_and_a_strangers_own_chair() -> None:
+    scores = seat_scores([seat("free"), seat("held", table_id="table-held"), held_table("table-held"),
+                          own_seat_of_bea(), held_table("table-owned")])
+    assert scores["sit:free"] > scores["sit:held"] > scores["sit:owned"]
+
+
+def test_company_they_like_draws_them_to_a_held_table() -> None:
+    friend = {"bea": {"name": "Bea", "opinion": 40.0, "familiarity": "friend"}}
+    scores = seat_scores([seat("free"), seat("held", table_id="table-held"), held_table("table-held")],
+                         relations=friend)
+    assert scores["sit:held"] > scores["sit:free"]

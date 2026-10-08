@@ -7,6 +7,7 @@ from typing import Any
 from tavern.mind.goals import serving
 from tavern.mind.hall_view import in_use, line_place, steps_to
 from tavern.social.hostility import urge
+from tavern.social.tables import liked
 from tavern.social.thoughts import THOUGHTS, opinion_of, thought_mood
 
 
@@ -189,9 +190,15 @@ def local_seat_scores(observation: Mapping[str, Any], candidates: Sequence[Mappi
     return scores
 
 
+# What sitting where one is not welcome costs a seat's score: at a table others hold, whose hosts the guest does not
+# like, or in a chair that is somebody's own, which is worse.
+UNINVITED = 0.25
+SOMEONES_OWN = 0.5
+
+
 def _score_seats(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
                  scores: dict[str, float]) -> None:
-    actor = observation["actor"]
+    actor, now = observation["actor"], observation.get("time", -math.inf)
     company = {item.get("table_id") for item in observation.get("visitors", []) if item.get("seat_id")}
     objects = {item["id"]: item for item in observation["objects"]}
     for action in candidates:
@@ -200,6 +207,11 @@ def _score_seats(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
         seat = objects[action["target_id"]]
         distance = abs(actor.get("x", 0) - seat.get("x", 0)) + abs(actor.get("y", 0) - seat.get("y", 0))
         scores[action["id"]] -= min(0.18, distance * 0.015)
-        if seat.get("table_id") in company:
+        hosts = objects.get(seat.get("table_id"), {}).get("hosts", [])
+        if seat.get("owner"):
+            scores[action["id"]] -= SOMEONES_OWN
+        elif hosts and not any(liked(actor, host["id"], now) for host in hosts):
+            scores[action["id"]] -= UNINVITED
+        elif seat.get("table_id") in company:
             scores[action["id"]] += 0.22 * actor["needs"].get("social", 0) / 100
-        scores[action["id"]] = min(1.0, scores[action["id"]])
+        scores[action["id"]] = min(1.0, max(0.0, scores[action["id"]]))
