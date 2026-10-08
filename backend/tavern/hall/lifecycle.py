@@ -94,7 +94,10 @@ def finish_parts(world: World) -> None:
     """
     for actor in world["actors"]:
         action = actor["action"]
-        if action and ACTIVITIES[action["verb"]].partner and conversation_of(world, actor["id"]) is None:
+        # Whoever is still walking over to join one (`Activity.approaches`) has no scene yet.
+        walking_over = action and ACTIVITIES[action["verb"]].approaches and actor["status"] != "interacting"
+        if action and not walking_over and ACTIVITIES[action["verb"]].partner and conversation_of(
+                world, actor["id"]) is None:
             record_event(world, actor, "action_completed", f"{actor['name']} completed {action['verb']}")
             clear_action(world, actor)
 

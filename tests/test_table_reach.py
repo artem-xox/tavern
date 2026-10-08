@@ -25,7 +25,7 @@ def room(seated: dict[str, str] | None = None, standing: dict[str, tuple[int, in
 
 def walking_past(world: dict[str, Any]) -> None:
     """Ada is on her way somewhere."""
-    actor(world, "ada")["status"] = "walking"
+    actor(world, "ada").update(status="walking", path=[[3, 4]])
 
 
 @pytest.mark.parametrize("seated, standing, prepare, expected", [

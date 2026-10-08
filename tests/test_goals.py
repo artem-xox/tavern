@@ -64,7 +64,9 @@ def view(world: dict[str, Any]) -> dict[str, Any]:
     pytest.param("talk_to", "bea", "active", action("talk", "bea"), True, id="talk-to-the-person"),
     pytest.param("talk_to", "bea", "active", action("join_conversation", "bea"), True, id="join-the-person"),
     pytest.param("talk_to", "bea", "active", action("talk", "cy"), False, id="talk-to-someone-else"),
-    pytest.param("talk_to", "bea", "active", action("sit", "w2"), True, id="sit-at-their-table"),
+    pytest.param("talk_to", "bea", "active", action("approach", "bea"), True, id="walk-over-to-the-person"),
+    pytest.param("talk_to", "bea", "active", action("approach", "cy"), False, id="walk-over-to-someone-else"),
+    pytest.param("talk_to", "bea", "active", action("sit", "w2"), False, id="sit-at-their-table-uninvited"),
     pytest.param("talk_to", "bea", "active", action("sit", "e1"), False, id="sit-at-another-table"),
     pytest.param("talk_to", "bea", "done", action("talk", "bea"), False, id="a-done-goal-serves-nothing"),
     pytest.param("sit_with", "cy", "active", action("sit", "e1"), True, id="sit-with-at-their-table"),
@@ -89,13 +91,13 @@ def test_a_guest_without_a_goal_is_served_by_nothing() -> None:
 
 
 def test_the_briefing_marks_the_options_that_serve_the_goal() -> None:
-    observation = view(minded())
+    observation = view(minded("sit_with"))
     options = brief(observation, build_candidates(observation))["options"]
     assert [key for key, text in options.items() if "serves the goal" in text] == ["seating"]
 
 
 def test_the_local_policy_adds_a_bonus_to_options_that_serve_the_goal() -> None:
-    world = minded()
+    world = minded("sit_with")
     observation = view(world)
     sat = action("sit", "w2")
     without = {**observation, "actor": {**observation["actor"], "intention": None}}

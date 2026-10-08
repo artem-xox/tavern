@@ -95,7 +95,8 @@ def start_action(world: World, actor_id: str, action: Mapping[str, Any]) -> dict
     if reason:
         notice_target(world, actor, action)
         return reject(world, actor, reason)
-    if ACTIVITIES[action["verb"]].partner and line_of(world, actor_id) is not None:
+    activity = ACTIVITIES[action["verb"]]
+    if activity.partner and not activity.approaches and line_of(world, actor_id) is not None:
         return talk_in_line(world, actor, action)
     if must_wait(world, actor, action):
         return line_up(world, actor, action, cutting)

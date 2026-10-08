@@ -9,7 +9,7 @@ from tavern.hall.staff import on_staff
 from tavern.hall.state import find_actor
 from tavern.social.giving import gift_error
 from tavern.social.invitations import fetch_error
-from tavern.social.scenes import at_table, conversation_of, pressed, side_by_side, within_reach
+from tavern.social.scenes import at_table, conversation_of, pressed, side_by_side, table_of, within_reach
 
 
 def stored_action(action: Mapping[str, Any]) -> dict[str, Any]:
@@ -55,6 +55,8 @@ def action_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Map
         return _give_error(world, actor, action)
     if activity.opens_errand:
         return _fetch_error(world, actor, action)
+    if activity.approaches:
+        return _approach_error(world, actor, action)
     if activity.partner:
         return _talk_error(world, actor, action)
     if activity.near_person:
@@ -101,6 +103,29 @@ def _talk_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapp
     if pressed(world, partner):
         return f"{partner['name']} has something more pressing to see to"
     return None if within_reach(world, actor, partner) else "Visitors must sit at one table or stand side by side"
+
+
+def _approach_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any]) -> str | None:
+    partner = find_actor(world, action.get("target_id"))
+    if partner is None or partner["id"] == actor["id"]:
+        return "Choose another visitor to walk over to"
+    if on_staff(partner):
+        return f"{partner['name']} works behind the bar"
+    current = actor.get("action")
+    underway = current is not None and current.get("id") == action["id"]
+    if underway and conversation_of(world, actor["id"]) is not None:
+        return None  # Carrying on with their part for as long as the scene lasts.
+    if conversation_of(world, actor["id"]) is not None:
+        return "Visitor is already in a conversation"
+    if not underway and (table_of(world, partner) is None or at_table(world, actor) == table_of(world, partner)):
+        return "Walk over to a visitor who sits at another table"
+    if underway and not within_reach(world, actor, partner):
+        return f"{partner['name']} is no longer at that table"
+    scene = conversation_of(world, partner["id"])
+    if scene is not None:
+        full = len(scene["participants"]) >= world["rules"]["conversation"]["max_participants"]
+        return "The conversation is full" if full else None
+    return f"{partner['name']} has something more pressing to see to" if pressed(world, partner) else None
 
 
 def _confront_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any]) -> str | None:

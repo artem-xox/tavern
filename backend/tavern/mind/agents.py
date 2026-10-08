@@ -2,6 +2,7 @@
 
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
+import math
 from random import Random
 from typing import Any, NotRequired, TypedDict
 
@@ -14,6 +15,7 @@ from tavern.mind.observation import known_objects, own_actor
 from tavern.mind.selection import bounded, drawable, read_temperature, select
 from tavern.social.giving import empty_handed_company, gift_targets
 from tavern.social.hostility import HOSTILITY, hostile_targets
+from tavern.social.tables import liked
 
 
 # The thirst (0–100) from which a guest keeps their own mug of ale: a mild thirst (under the briefing's 50) gives way.
@@ -230,7 +232,10 @@ def _seat_wish(observation: Mapping[str, Any], objects: Sequence[Mapping[str, An
     own = next((item for item in free if item["id"] == actor.get("favorite_seat_id")), None)
     if own is None:
         return [_action("seating")] if free else []
-    company = {item.get("table_id") for item in visitors if item.get("seat_id")} - {own["table_id"]}
+    # Only company they like is worth moving to: a stranger's table is not theirs to sit at (walk over instead).
+    now = observation.get("time", -math.inf)
+    company = {item.get("table_id") for item in visitors if item.get("seat_id")
+               and liked(actor, item["id"], now)} - {own["table_id"]}
     joinable = any(item["table_id"] in company for item in free)
     return [_action("sit", own["id"]), *([_action("seating")] if joinable else [])]
 
@@ -255,23 +260,40 @@ def _social_candidates(observation: Mapping[str, Any], actor: Mapping[str, Any],
                        objects: Sequence[Mapping[str, Any]]) -> list[Action]:
     # Seated tablemates, or anyone standing beside them (`people`, when observed): talk to whoever
     # is free, or join a conversation already going, once per scene through its first member seen.
+    # Anyone seated at another table can be walked over to.
     visitors, people = observation.get("visitors", []), observation.get("people", [])
     if not isinstance(visitors, list) or not isinstance(people, list):
         raise ValueError("Visible visitors must be a list")
     seat = next((item for item in objects if item["id"] == actor.get("seat_id")), None)
     table = seat.get("table_id") if seat else None
     options: dict[str, Action] = {}
+    walks: dict[str, Action] = {}
+    # Company they like at a table with a free chair is joined by sitting down (`_seat_wish`), not by a walk over.
+    now, open_tables = observation.get("time", -math.inf), {item["table_id"] for item in _free_seats(observation, objects)}
+    # Somewhere to stand at that table: a walk over is pointless while every spot has someone on it.
+    taken = {(person["x"], person["y"]) for person in [*visitors, *people] if isinstance(person, Mapping)
+             and "x" in person and "y" in person}
+    standing_room = {item["id"]: not item.get("interaction_spots")
+                     or any(tuple(spot) not in taken for spot in item["interaction_spots"])
+                     for item in objects if item["kind"] == "table"}
     for visitor in [*visitors, *people]:
         if not isinstance(visitor, Mapping) or not isinstance(visitor.get("id"), str) or not visitor["id"]:
             raise ValueError("Visible visitors must have nonempty IDs")
         near = (table and visitor.get("seat_id") and visitor.get("table_id") == table) or visitor.get("beside")
-        if not near or visitor["id"] == actor["id"]:
+        if visitor["id"] == actor["id"]:
+            continue
+        if not near:
+            # Someone seated at another table: walk over for a word, one way in for each table.
+            if visitor.get("seat_id") and visitor.get("table_id") and (visitor.get("available") or visitor.get("conversation")) \
+                    and standing_room.get(visitor["table_id"], True) \
+                    and not (liked(actor, visitor["id"], now) and visitor["table_id"] in open_tables):
+                walks.setdefault(visitor["table_id"], _action("approach", visitor["id"]))
             continue
         if visitor.get("available"):
             options.setdefault(visitor["id"], _action("talk", visitor["id"]))
         elif visitor.get("conversation"):
             options.setdefault(visitor["conversation"], _action("join_conversation", visitor["id"]))
-    return list(options.values())
+    return [*options.values(), *walks.values()]
 
 
 async def choose_action(

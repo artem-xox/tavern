@@ -107,13 +107,13 @@ def at_table(world: Mapping[str, Any], actor: Mapping[str, Any]) -> str | None:
         actor: Visitor.
 
     Returns:
-        The table ID of their seat, else of the table on one of whose spots they stand without walking
+        The table ID of their seat, else of the table on one of whose spots they stand, having arrived
         (the place to stand and talk with those seated there), else None.
     """
     if actor.get("seat_id"):
         return table_of(world, actor)
-    if actor["status"] == "walking":
-        return None
+    if actor["path"]:
+        return None  # Still on the way: passing a spot is not standing at it.
     cell = [actor["x"], actor["y"]]
     return next((str(item["id"]) for item in world["map"]["objects"]
                  if item["kind"] == "table" and cell in item["interaction_spots"]), None)

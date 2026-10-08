@@ -12,7 +12,7 @@ from tavern.hall.state import Actor, World
 from tavern.social.giving import hand_over
 from tavern.social.invitations import begin_errand
 from tavern.social.names import called
-from tavern.social.scenes import join_conversation, start_conversation
+from tavern.social.scenes import conversation_of, join_conversation, start_conversation
 from tavern.social.thoughts import think
 
 # An effect receives the world, the visitor, and the target: an object, a partner, or None.
@@ -30,6 +30,8 @@ class Activity:
         partner: Whether it targets another visitor instead of an object. Such a verb is a part in a
             conversation scene (`tavern.social.scenes`): the scene, not a timer, ends it.
         joins: Whether it joins the partner's scene instead of starting one with them.
+        approaches: Whether the part walks first, to a spot at the table the partner sits at, and then joins the
+            partner's scene or starts one with them (`tavern.social.scenes`).
         near_person: Whether it targets another visitor at the actor's table or beside them, as a chat does:
             no scene, no walking, and the timer ends it. Shoving and fighting (`tavern.social.hostility`) are
             such verbs.
@@ -71,6 +73,7 @@ class Activity:
     target_kinds: tuple[str, ...] = ()
     partner: bool = False
     joins: bool = False
+    approaches: bool = False
     near_person: bool = False
     names_item: bool = False
     opens_errand: bool = False
@@ -118,6 +121,15 @@ def _join_scene(world: World, actor: Actor, member: Actor | None) -> None:
     if member is None:
         raise ValueError("Joining a conversation needs a member to join")
     join_conversation(world, actor, member)
+
+
+def _approach_scene(world: World, actor: Actor, partner: Actor | None) -> None:
+    if partner is None:
+        raise ValueError("Walking over for a word needs a partner")
+    if conversation_of(world, partner["id"]) is None:
+        start_conversation(world, actor, partner)
+    else:
+        join_conversation(world, actor, partner)
 
 
 def _confront(world: World, actor: Actor, victim: Actor | None, event: str, thought: str, act: str) -> None:
@@ -217,6 +229,15 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "ends in a quarrel, leaving both in a sour mood and thinking less of each other. Right after "
                       "a chat, with their wish for company satisfied, a quiet sip or a rest is more natural "
                       "than yet another chat."),
+    Activity(verb="approach", partner=True, approaches=True, duration=8.0, on_arrival=_approach_scene,
+             label="Walk over for a word", status="chatting", pose="Talking",
+             sound=Sound("chat", 0.25, 6.0, "a conversation"), doing="walking over for a word",
+             done="went over for a word",
+             family="company",
+             what="walk over to the table where {target} sits and talk with them, standing beside it",
+             guidance="The polite way to seek out someone sitting at another table: nobody's chair is taken. It "
+                      "eases the wish for company like any chat, and standing there they may suggest moving to a "
+                      "free table together, a game or an ale. Pointless with someone they dislike."),
     Activity(verb="join_conversation", partner=True, joins=True, duration=8.0, on_arrival=_join_scene,
              label="Join a conversation", status="chatting", pose="Talking", doing="joining a conversation",
              done="joined a conversation",
@@ -362,8 +383,8 @@ FAMILIES: Mapping[str, str] = MappingProxyType({
     "refreshment": "get something to drink",
     "resting": "sit down for a rest",
     "seat_choice": "find a seat at a table, or move to another one",
-    "company": "chat with someone at their table or beside them, join a conversation, lean on the bar, or hand "
-               "someone something they carry",
+    "company": "chat with someone at their table or beside them, walk over to someone at another table, join a "
+               "conversation, lean on the bar, or hand someone something they carry",
     "pastime": "pass the time",
     "wc": "use the WC",
     "exploring": "explore the room",

@@ -5,7 +5,7 @@ import math
 from typing import Any
 
 from tavern.mind.goals import serving
-from tavern.mind.hall_view import in_use, line_place
+from tavern.mind.hall_view import in_use, line_place, steps_to
 from tavern.social.hostility import urge
 from tavern.social.thoughts import THOUGHTS, opinion_of, thought_mood
 
@@ -43,6 +43,8 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
         "sit": seated_rest,
         "seating": 0.15 + 0.6 * actor["needs"].get("social", 0) / 100 if moving else seated_rest,
         "talk": min(1.0, max(0.0, 0.4 + 0.6 * actor["needs"].get("social", 0) / 100 + company)),
+        # A walk over to another table is a little less natural than a chat within reach (see `_score_approaches`).
+        "approach": min(1.0, max(0.0, 0.3 + 0.6 * actor["needs"].get("social", 0) / 100 + company)),
         # Joining company already talking is a little less natural than starting a chat.
         "join_conversation": min(1.0, max(0.0, 0.35 + 0.6 * actor["needs"].get("social", 0) / 100 + company)),
         "play_darts": 0.15 + 0.65 * actor["needs"].get("boredom", 0) / 100,
@@ -71,6 +73,7 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
     _score_seats(observation, candidates, scores)
     _score_lines(observation, candidates, scores)
     _score_gifts(observation, candidates, scores, company)
+    _score_approaches(observation, candidates, scores)
     _score_goal(observation, candidates, scores)
     return scores
 
@@ -91,6 +94,21 @@ def _score_gifts(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
         elif action["item"] == "beer":
             empty = not people.get(action["target_id"], {}).get("holding", {}).get("beer", 0)
             score += 0.15 * empty - 0.4 * needs["thirst"] / 100
+        scores[action["id"]] = min(1.0, max(0.0, score))
+
+
+def _score_approaches(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
+                      scores: dict[str, float]) -> None:
+    # The walk costs a little, a long one more; company they like draws and company they dislike repels.
+    actor, now = observation["actor"], observation.get("time", -math.inf)
+    people = {item["id"]: item for item in [*observation.get("visitors", []), *observation.get("people", [])]}
+    objects = {item["id"]: item for item in observation["objects"]}
+    for action in candidates:
+        if action["verb"] != "approach":
+            continue
+        table = objects.get(people.get(action["target_id"], {}).get("table_id"))
+        walk = steps_to(observation, table) if table else 0
+        score = scores[action["id"]] - min(0.15, 0.01 * walk) + 0.25 * opinion_of(actor, action["target_id"], now) / 100
         scores[action["id"]] = min(1.0, max(0.0, score))
 
 

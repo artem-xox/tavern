@@ -3,10 +3,11 @@
 from collections.abc import Mapping
 from typing import Any
 
+from tavern.body.activities import ACTIVITIES
 from tavern.hall.navigation import find_path, select_interaction_spot
 from tavern.hall.room import find_object, impassable_cells
 from tavern.hall.staff import off_limits
-from tavern.hall.state import Actor
+from tavern.hall.state import Actor, find_actor
 
 
 def reserved_spots(world: Mapping[str, Any], actor_id: str) -> list[tuple[int, int]]:
@@ -47,10 +48,28 @@ def plan_route(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mappi
     start = (actor["x"], actor["y"])
     if action["verb"] == "inspect":
         return _inspection_plan(world, actor, obstacles)
+    if ACTIVITIES[action["verb"]].approaches:
+        return _approach_plan(world, actor, action, obstacles)
     target = find_object(world_map, action.get("target_id"))
     if target is None:
         return None, []
     selected = select_interaction_spot(start, target["interaction_spots"], world_map["width"], world_map["height"], obstacles)
+    return ([*selected[0]], [list(cell) for cell in selected[1][1:]]) if selected else None
+
+
+def _approach_plan(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any],
+                   obstacles: list[tuple[int, int]]) -> tuple[list[int] | None, list[list[int]]] | None:
+    # A spot at the table the partner sits at that nobody stands on; the nearest by walking distance.
+    world_map = world["map"]
+    partner = find_actor(world, action.get("target_id"))
+    seat = find_object(world_map, partner.get("seat_id")) if partner else None
+    table = find_object(world_map, seat.get("table_id")) if seat else None
+    if table is None:
+        return None, []
+    standing = set(occupied_cells(world, actor))
+    spots = [spot for spot in table["interaction_spots"] if tuple(spot) not in standing]
+    selected = select_interaction_spot((actor["x"], actor["y"]), spots, world_map["width"], world_map["height"],
+                                       obstacles)
     return ([*selected[0]], [list(cell) for cell in selected[1][1:]]) if selected else None
 
 

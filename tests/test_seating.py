@@ -32,6 +32,9 @@ def company(seat_id: str, table_id: str) -> dict[str, Any]:
     return {"id": "bea", "name": "Bea", "x": 5, "y": 3, "seat_id": seat_id, "table_id": table_id, "available": True}
 
 
+FRIEND = {"bea": {"name": "Bea", "opinion": 40.0, "familiarity": "friend"}}
+
+
 def seat(seat_id: str, appeal: float = 0.0, **fields: Any) -> dict[str, Any]:
     """Describe a known chair at its own table."""
     return {"id": seat_id, "kind": "chair", "x": 5, "y": 3, "table_id": f"table-{seat_id}",
@@ -124,16 +127,39 @@ def test_seats_are_one_seating_choice_until_a_visitor_owns_one(
 ])
 def test_seated_visitor_may_move_only_to_join_company(seats: list[dict[str, Any]], visitors: list[dict[str, Any]],
                                                       expected: list[str]) -> None:
-    candidates = build_candidates(view(seats, visitors=visitors, favorite_seat_id="own"))
+    candidates = build_candidates(view(seats, visitors=visitors, favorite_seat_id="own", relations=FRIEND))
     assert [action["id"] for action in candidates if action["verb"] in ("seating", "sit")] == expected
+
+
+@pytest.mark.parametrize("relations", [
+    pytest.param({}, id="a-stranger"),
+    pytest.param({"bea": {"name": "Bea", "opinion": 9.0, "familiarity": "acquaintance"}}, id="an-acquaintance"),
+    pytest.param({"bea": {"name": "Bea", "opinion": -30.0, "familiarity": "acquaintance"}}, id="someone-disliked"),
+])
+def test_seated_visitor_does_not_move_to_a_table_of_company_they_do_not_like(relations: dict[str, Any]) -> None:
+    seats = [seat("own", table_id="alone"), seat("free", table_id="shared"),
+             seat("busy", table_id="shared", reserved_by="bea")]
+    candidates = build_candidates(view(seats, visitors=[company("busy", "shared")], favorite_seat_id="own",
+                                       relations=relations))
+    assert [action["id"] for action in candidates if action["verb"] in ("seating", "sit")] == ["sit:own"]
 
 
 def test_lonely_visitor_moves_to_sit_with_company() -> None:
     seats = [seat("own", table_id="alone"), seat("free", table_id="shared"),
              seat("busy", table_id="shared", reserved_by="bea")]
-    observation = view(seats, needs={"social": 90}, visitors=[company("busy", "shared")], favorite_seat_id="own")
+    observation = view(seats, needs={"social": 90}, visitors=[company("busy", "shared")], favorite_seat_id="own",
+                       relations=FRIEND)
     result = asyncio.run(choose_action(observation, config(), Random(0)))
     assert (max(result["scores"], key=result["scores"].get), result["action"]["id"]) == ("seating", "sit:free")
+
+
+def test_lonely_visitor_walks_over_to_company_they_do_not_know() -> None:
+    seats = [seat("own", table_id="alone"), seat("free", table_id="shared"),
+             seat("busy", table_id="shared", reserved_by="bea")]
+    observation = view(seats, needs={"social": 90}, visitors=[company("busy", "shared")], favorite_seat_id="own")
+    result = asyncio.run(choose_action(observation, config(), Random(0)))
+    assert (max(result["scores"], key=result["scores"].get), result["action"]["id"]) == (
+        "approach:bea", "approach:bea")
 
 
 @pytest.mark.parametrize("seats, expected", [

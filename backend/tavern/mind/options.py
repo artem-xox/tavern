@@ -134,6 +134,16 @@ def _talk(observation: Observation, action: Action) -> str:
     return f"chat with {name}, who sits at the table they stand by"
 
 
+def _approach(observation: Observation, action: Action) -> str:
+    partner = _someone(observation, action["target_id"])
+    name = label_of(partner) if partner else action["target_id"]
+    table = known_object(observation, partner.get("table_id")) if partner else None
+    if table is None:
+        return f"walk over to {name}'s table and talk with them, standing beside it"
+    return (f"walk {walk_words(steps_to(observation, table))} over to the {label_of(table)} and talk with {name}, "
+            f"standing beside it ({company_at(observation, table['id'])})")
+
+
 def _confrontee(observation: Observation, action: Action) -> tuple[str, str]:
     victim = _someone(observation, action["target_id"])
     return (label_of(victim) if victim else action["target_id"]), _placed(observation, victim)
@@ -238,7 +248,7 @@ def family_text(observation: Observation, option: Action) -> str:
 # Each verb's option sentence; a new verb needs an entry here (and one in `activities.ACTIVITIES`).
 _OPTIONS: Mapping[str, Callable[[Observation, Action], str]] = {
     "take_beer": _pour, "drink": _drink, "rest": _rest, "seating": _seating, "sit": _sit, "talk": _talk,
-    "join_conversation": _join, "play_darts": _darts, "stand_at_bar": _bar, "watch": _watch,
+    "approach": _approach, "join_conversation": _join, "play_darts": _darts, "stand_at_bar": _bar, "watch": _watch,
     "watch_dice": _watch_dice,
     "use_toilet": _toilet, "give": _give, "bring_drink": _bring,
     "inspect": _inspect, "wait": _wait, "leave": _leave, "cut_in_line": _cut, "shove": _shove, "start_fight": _fight}
