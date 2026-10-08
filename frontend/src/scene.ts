@@ -141,7 +141,7 @@ export class TavernScene extends Phaser.Scene {
   private drawObject(object: WorldObject, size: number): void {
     const x: number = (object.x + 0.5) * size;
     const y: number = (object.y + 0.5) * size;
-    if (object.kind === "door") { drawDoor(this.furniture, this.floor, object, size); return; }
+    if (object.kind === "door") { drawDoor(this.furniture, object, size); return; }
     if (object.kind === "window") { drawWindow(this.furniture, object, size); return; }
     if (object.kind === "fireplace") { drawFireplace(this.furniture, object, size, this.world!.map.width); return; }
     this.furniture.fillStyle(0x1e1914, 0.32);

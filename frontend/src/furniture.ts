@@ -2,16 +2,35 @@
 import Phaser from "phaser";
 import type { WorldObject } from "./types";
 
-export function drawDoor(g: Phaser.GameObjects.Graphics, floor: Phaser.GameObjects.Graphics, door: WorldObject, size: number): void {
-  const x: number = (door.x - 0.3) * size;
-  const y: number = door.y * size;
-  floor.fillStyle(0x41372a).fillRoundedRect((door.x - 1) * size, (door.y - 1.2) * size, 3 * size, size * 0.7, 3);
-  floor.lineStyle(1, 0xb29762, 0.6).strokeRoundedRect((door.x - 0.85) * size, (door.y - 1.1) * size, 2.7 * size, size * 0.5, 2);
-  g.fillStyle(0x634835).fillRoundedRect(x, y + 1, 1.6 * size, 26, 3);
-  for (let plank: number = 1; plank < 4; plank += 1) {
-    g.lineStyle(1, 0xc0a16d, 0.5).lineBetween(x + plank * 0.4 * size, y + 5, x + plank * 0.4 * size, y + 25);
+/**
+ * The entrance: a plank door in a timber frame, as tall as the wall stones beside it (`floor.ts`'s `drawWall`
+ * draws a stone from 2 px below its cell's top to 3 px above its bottom).
+ */
+export function drawDoor(g: Phaser.GameObjects.Graphics, door: WorldObject, size: number): void {
+  const width: number = 1.6 * size;
+  const left: number = (door.x + 0.5) * size - width / 2;
+  const top: number = door.y * size + 2;
+  const height: number = size - 5;
+  const planks: number = 4;
+  const plank: number = width / planks;
+  // Timber frame, a lintel in lighter wood, and a stone threshold.
+  g.fillStyle(0x2a2018).fillRoundedRect(left - 3, top, width + 6, height, 3);
+  g.fillStyle(0x4a3827).fillRect(left - 3, top, width + 6, 3);
+  g.fillStyle(0x8d8378).fillRect(left, top + height - 3, width, 3);
+  // Planks, each its own shade, with a dark seam between and a pale top edge.
+  for (let index: number = 0; index < planks; index += 1) {
+    g.fillStyle(index % 2 ? 0x5c3f2c : 0x6e4e37).fillRect(left + index * plank, top + 3, plank, height - 6);
+    g.fillStyle(0x2a2018).fillRect(left + index * plank, top + 3, 1, height - 6);
+    g.fillStyle(0xa27a52, 0.7).fillRect(left + index * plank + 1, top + 3, plank - 1, 1);
   }
-  g.fillStyle(0xe2c27a).fillCircle(x + 1.6 * size - 9, y + 15, 2);
+  // Two iron straps with a rivet on each plank, and a brass ring on the latch side.
+  for (const strap of [top + 7, top + height - 11]) {
+    g.fillStyle(0x3b3a38).fillRect(left, strap, width, 3);
+    for (let index: number = 0; index < planks; index += 1) g.fillStyle(0x9a9588).fillRect(left + index * plank + plank / 2 - 1, strap + 1, 2, 1);
+  }
+  g.fillStyle(0x1b130e).fillCircle(left + width - 8, top + height / 2 + 1, 4);
+  g.fillStyle(0xe2c27a).fillCircle(left + width - 8, top + height / 2 + 1, 3);
+  g.fillStyle(0x6e4e37).fillCircle(left + width - 8, top + height / 2 + 1, 1.2);
 }
 
 export function drawWindow(g: Phaser.GameObjects.Graphics, pane: WorldObject, size: number): void {
