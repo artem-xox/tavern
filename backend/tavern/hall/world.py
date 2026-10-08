@@ -10,6 +10,7 @@ from tavern.body.attention import attend
 from tavern.body.bartending import tend_bar
 from tavern.body.dozing import nodding_off, show_sleep
 from tavern.body.drunkenness import wear_off
+from tavern.body.energy import tire
 from tavern.body.expression import update_expression
 from tavern.body.queues import check_lines, cut_in, line_of, must_wait
 from tavern.hall.arrival import admit_arrivals, arrival_ranges, arriving, create_actor
@@ -145,6 +146,7 @@ def step_world(world: World, dt: float) -> None:
     for actor in attend(world):
         clear_action(world, actor)
     wear_off(world, elapsed)
+    tire(world, elapsed)
     for actor in nodding_off(world, elapsed):
         activate(world, actor, {"id": "doze", "verb": "doze", "target_id": None}, (None, []))
     finish_parts(world)
