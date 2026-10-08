@@ -56,6 +56,27 @@ def test_default_factory_does_not_use_unenabled_database(monkeypatch: pytest.Mon
     assert app.state.sessions.database_url is None
 
 
+@pytest.mark.parametrize("switch", [
+    pytest.param(None, id="unset"),
+    pytest.param("", id="empty"),
+    pytest.param("1", id="not-the-word-true"),
+])
+def test_default_factory_traces_nothing_unless_switched_on(monkeypatch: pytest.MonkeyPatch, switch: str | None) -> None:
+    monkeypatch.delenv("LANGSMITH_API_KEY", raising=False)
+    if switch is None:
+        monkeypatch.delenv("TAVERN_TRACE", raising=False)
+    else:
+        monkeypatch.setenv("TAVERN_TRACE", switch)
+    assert create_default_app().state.sessions is not None
+
+
+def test_default_factory_refuses_tracing_without_a_langsmith_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TAVERN_TRACE", "true")
+    monkeypatch.delenv("LANGSMITH_API_KEY", raising=False)
+    with pytest.raises(ValueError, match="LANGSMITH_API_KEY"):
+        create_default_app()
+
+
 @pytest.mark.parametrize("command,field,expected", [
     pytest.param({"type": "pause", "paused": True}, "paused", True, id="pause"),
     pytest.param({"type": "speed", "value": 2}, "speed", 2, id="speed"),

@@ -1,7 +1,7 @@
 """Asynchronous TypeSafe Score evaluation at a strict, secret-safe boundary."""
 
 import math
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any, TypedDict, cast
 
 import httpx
@@ -118,10 +118,24 @@ def _seat_question(action: Mapping[str, Any], observation: Mapping[str, Any]) ->
         "staying is natural unless company elsewhere draws them.")}
 
 
-def _request_body(
-    observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]], model: str,
-    question: Callable[[Mapping[str, Any], Mapping[str, Any]], dict[str, Any]],
+def request_body(
+    observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]], model: str, seats: bool = False,
 ) -> dict[str, Any]:
+    """Lay out the scoring request Jev receives; the API key travels in a header, never here.
+
+    Args:
+        observation: Private agent view, never an authoritative world snapshot.
+        candidates: Candidate actions, each asked about once.
+        model: Jev model name.
+        seats: Ask the seat question of `sit` candidates instead of the action question.
+
+    Returns:
+        The JSON body: the model, the observation and candidates as state, one question per candidate.
+
+    Raises:
+        ValueError: A candidate's verb or item cannot be described, or a seat candidate is not `sit`.
+    """
+    question = _seat_question if seats else _action_question
     return {"model": model, "state": {"observation": dict(observation), "actions": list(candidates)},
             "questions": {action["id"]: question(action, observation) for action in candidates}}
 
@@ -194,7 +208,7 @@ async def evaluate_actions(
         ValueError: Candidates, their verbs or configuration are malformed.
         JevError: Transport, HTTP, JSON or typed-score validation fails.
     """
-    return (await _evaluate(observation, candidates, config, client, _action_question))[0]
+    return (await _evaluate(observation, candidates, config, client, False))[0]
 
 
 async def evaluate_seats(
@@ -216,7 +230,7 @@ async def evaluate_seats(
         ValueError: Candidates are not `sit` actions or configuration is malformed.
         JevError: Transport, HTTP, JSON or typed-score validation fails.
     """
-    return (await _evaluate(observation, candidates, config, client, _seat_question))[0]
+    return (await _evaluate(observation, candidates, config, client, True))[0]
 
 
 async def evaluate_actions_metered(
@@ -238,7 +252,7 @@ async def evaluate_actions_metered(
         ValueError: Candidates, their verbs or configuration are malformed.
         JevError: Transport, HTTP, JSON, typed-score or usage validation fails.
     """
-    scores, payload = await _evaluate(observation, candidates, config, client, _action_question)
+    scores, payload = await _evaluate(observation, candidates, config, client, False)
     return scores, _read_usage(payload)
 
 
@@ -261,7 +275,7 @@ async def evaluate_seats_metered(
         ValueError: Candidates are not `sit` actions or configuration is malformed.
         JevError: Transport, HTTP, JSON, typed-score or usage validation fails.
     """
-    scores, payload = await _evaluate(observation, candidates, config, client, _seat_question)
+    scores, payload = await _evaluate(observation, candidates, config, client, True)
     return scores, _read_usage(payload)
 
 
@@ -279,11 +293,11 @@ def _read_usage(payload: Mapping[str, Any]) -> Usage | None:
 
 async def _evaluate(
     observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]], config: Mapping[str, Any],
-    client: httpx.AsyncClient | None, question: Callable[[Mapping[str, Any], Mapping[str, Any]], dict[str, Any]],
+    client: httpx.AsyncClient | None, seats: bool,
 ) -> tuple[dict[str, float], Any]:
     ids = _candidate_ids(candidates)
     key, model, timeout = _configuration(config)
-    body = _request_body(observation, candidates, model, question)
+    body = request_body(observation, candidates, model, seats)
     if client is None:
         async with httpx.AsyncClient() as owned_client:
             payload = await _post_scores(owned_client, body, key, timeout)
