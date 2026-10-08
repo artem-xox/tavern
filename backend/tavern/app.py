@@ -70,7 +70,7 @@ def _claude_port(key: str | None, board: HealthBoard, tracer: Tracer | None) -> 
     # The key stays on the server; without one the card compiler runs offline.
     if not key:
         return None
-    model = "claude-haiku-4-5"
+    model = "claude-haiku-5-5"
     config = {"anthropic_api_key": key, "model": model, "timeout": 30.0, "retries": 1}
 
     async def metered(question: Question) -> tuple[dict[str, Any], Mapping[str, Any]]:
