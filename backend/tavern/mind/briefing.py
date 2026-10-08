@@ -146,9 +146,9 @@ def _person(observation: Observation, visitor: Mapping[str, Any]) -> str:
         table = known_object(observation, visitor.get("table_id"))
         where = ("across the table from them" if _shares_table(observation, visitor)
                  else f"at the {label_of(table)}" if table else "at a table")
-        # Someone unavailable who is not talking is visibly in a hurry (see `scenes.pressed`).
-        busy = (", busy talking" if visitor.get("conversation") else "" if visitor.get("available", True)
-                else ", in a hurry")
+        # Someone unavailable who is not talking or asleep is visibly in a hurry (see `scenes.pressed`).
+        busy = (", asleep" if visitor.get("asleep") else ", busy talking" if visitor.get("conversation")
+                else "" if visitor.get("available", True) else ", in a hurry")
         return f"{label_of(visitor)} sits {where}{busy}"
     doing = visitor.get("doing")
     activity = ACTIVITIES.get(doing) if isinstance(doing, str) else None

@@ -253,6 +253,7 @@ export class Dashboard {
     if (actor.status === "queued") return talking ? "chatting in line" : "in line";
     if (actor.action?.verb === "play_darts") return "playing darts";
     if (actor.action?.verb === "watch") return "admiring the view";
+    if (actor.action?.verb === "doze") return "asleep";
     if (actor.seat_id) return actor.action?.verb === "drink" ? "sipping ale" : "seated";
     return actor.status;
   }

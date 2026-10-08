@@ -25,7 +25,7 @@ class Emote(TypedDict):
     until: float
 
 
-# Sleep shows while a guest dozes (E13); nothing shows affection yet.
+# Sleep shows while a guest dozes (`tavern.body.dozing.show_sleep`); nothing shows affection yet.
 EMOTES = ("alert", "confused", "angry", "affection", "sleep", "waiting")
 
 EVENT_EMOTES: Mapping[str, str] = MappingProxyType({
@@ -93,7 +93,7 @@ def emote_event(world: Mapping[str, Any], actor: Actor, kind: str) -> None:
 
 
 def update_expression(world: Mapping[str, Any]) -> None:
-    """Expire gazes and emotes, show long waits and dozing, and face each visitor where they look.
+    """Expire gazes and emotes, show long waits, and face each visitor where they look.
 
     Args:
         world: World whose visitors are updated in place.
@@ -104,11 +104,9 @@ def update_expression(world: Mapping[str, Any]) -> None:
             actor["gaze"] = None
         if actor["emote"] and actor["emote"]["until"] <= now:
             actor["emote"] = None
-        # A wait shows only once it is long, and never hides a livelier emote; nor does sleep.
+        # A wait shows only once it is long, and never hides a livelier emote.
         if actor["status"] == "waiting" and actor["_blocked_for"] >= rules["long_wait"] and not actor["emote"]:
             show_emote(actor, "waiting", now + rules["emote_seconds"]["waiting"])
-        if actor["action"] and actor["action"]["verb"] == "doze" and not actor["emote"]:
-            show_emote(actor, "sleep", now + rules["emote_seconds"]["sleep"])
         actor["facing"] = _facing(world, actor)
 
 
