@@ -1,5 +1,6 @@
 import { clock } from "./clock";
-import { escape } from "./html";
+import { html, render } from "lit-html";
+import { repeat } from "lit-html/directives/repeat.js";
 import { renderInspector } from "./inspector";
 import type { ActivityView, Actor, Command, Conversation, ItemView, Mind, ServiceHealth, Snapshot, Verb, World, WorldEvent, WorldObject } from "./types";
 
@@ -32,6 +33,7 @@ export class Dashboard {
   constructor(private readonly root: HTMLElement, private readonly handlers: Handlers) {
     this.root.innerHTML = this.layout();
     this.bindControls();
+    this.renderEvents([]);
   }
 
   /** Update the inspector and simulation controls from an authoritative snapshot. */
@@ -128,9 +130,9 @@ export class Dashboard {
             <p id="edit-hint" class="helper">Refill adds 10 servings. Obstacle mode toggles a clicked cell.</p>
             <div class="controls-row persistence"><button id="save" data-control>Save</button><button id="load" data-control>Load</button><span class="muted">The server keeps your saved world.</span></div>
           </section>
-          <section class="events-card"><div class="section-heading"><h3>From the room</h3><span class="muted">Recent world events</span></div><ol id="events" class="event-list"><li class="empty">The evening has yet to begin.</li></ol></section>
+          <section class="events-card"><div class="section-heading"><h3>From the room</h3><span class="muted">Recent world events</span></div><ol id="events" class="event-list"></ol></section>
         </div>
-        <aside class="sidebar"><section class="inspector-card"><div class="section-heading"><h3>Inside a visitor's mind</h3><span class="small-tag">INSPECTOR</span></div><div id="inspector"><p class="empty">Select a visitor in the room.</p></div>
+        <aside class="sidebar"><section class="inspector-card"><div class="section-heading"><h3>Inside a visitor's mind</h3><span class="small-tag">INSPECTOR</span></div><p id="inspector-empty" class="empty">Select a visitor in the room.</p><div id="inspector"></div>
           <div class="force-action"><label for="force-verb">Give this visitor an action</label><div class="force-row"><select id="force-verb" data-control></select><button id="force" data-control>Go →</button></div><select id="force-target" data-control aria-label="Action target"></select><select id="force-item" data-control aria-label="Item to hand over" hidden></select><p class="helper">The server checks the route, availability, and resources.</p></div>
         </section><div class="ai-card"><span id="ai-mode" class="ai-badge">Local · offline policy</span> <span id="ai-writer" class="ai-badge">Scripted lines</span><p id="mode-caption">Waiting for the decision engine.</p></div></aside>
       </div><footer class="page-footer"><span>THE LAST INN <b>✦</b> AN AUTONOMOUS TAVERN</span><span>Observe → decide → walk → act</span></footer>`;
@@ -160,12 +162,13 @@ export class Dashboard {
     this.verbSignature = signature;
     const select: HTMLSelectElement = element(this.root, "#force-verb");
     const chosen: string = select.value;
-    select.innerHTML = Object.entries(this.activities).map(([verb, activity]: [string, ActivityView]): string => `<option value="${escape(verb)}">${escape(activity.label)}</option>`).join("");
+    render(html`${Object.entries(this.activities).map(([verb, activity]: [string, ActivityView]) => html`<option value=${verb}>${activity.label}</option>`)}`, select);
     if (chosen in this.activities) select.value = chosen;
   }
 
   private renderRoster(world: World): void {
-    element(this.root, "#roster").innerHTML = [...world.actors, ...world.departed].map((actor: Actor): string => `<button class="visitor-chip ${actor.id === this.selectedId ? "selected" : ""} ${this.departed(actor) ? "departed" : ""}" data-actor="${escape(actor.id)}" aria-pressed="${actor.id === this.selectedId}"><span class="visitor-dot" style="background:${this.actorColor(actor)}"></span>${escape(actor.name)}<span class="visitor-status">${escape(this.activity(actor))}</span></button>`).join("");
+    // Keyed by guest, so a chip keeps its element (and a tap that is under way) when the roster reorders.
+    render(html`${repeat([...world.actors, ...world.departed], (actor: Actor): string => actor.id, (actor: Actor) => html`<button class="visitor-chip ${actor.id === this.selectedId ? "selected" : ""} ${this.departed(actor) ? "departed" : ""}" data-actor=${actor.id} aria-pressed=${actor.id === this.selectedId}><span class="visitor-dot" style="background:${this.actorColor(actor)}"></span>${actor.name}<span class="visitor-status">${this.activity(actor)}</span></button>`)}`, element(this.root, "#roster"));
     element(this.root, "#loading").hidden = true;
   }
 
@@ -204,6 +207,7 @@ export class Dashboard {
   private renderInspector(): void {
     const actor: Actor | undefined = [...this.world?.actors ?? [], ...this.world?.departed ?? []].find((item: Actor): boolean => item.id === this.selectedId);
     if (!actor || !this.world) return;
+    element(this.root, "#inspector-empty").hidden = true;
     renderInspector(element(this.root, "#inspector"), actor, {
       world: this.world, activities: this.activities, items: this.items, minds: this.minds, intentions: this.intentions,
       departed: this.departed(actor), status: this.activity(actor), color: this.actorColor(actor),
@@ -211,7 +215,7 @@ export class Dashboard {
   }
 
   private renderEvents(events: WorldEvent[]): void {
-    element(this.root, "#events").innerHTML = events.length ? events.slice(-8).reverse().map((event: WorldEvent): string => `<li><time>${clock(event.time)}</time><span>${escape(event.message)}</span></li>`).join("") : '<li class="empty">No events yet. Let the visitors settle in.</li>';
+    render(events.length ? html`${events.slice(-8).reverse().map((event: WorldEvent) => html`<li><time>${clock(event.time)}</time><span>${event.message}</span></li>`)}` : html`<li class="empty">No events yet. Let the visitors settle in.</li>`, element(this.root, "#events"));
   }
 
   private updateTargets(): void {
@@ -227,8 +231,8 @@ export class Dashboard {
     element(this.root, "#force-item").hidden = !activity?.names_item;
     if (signature === this.targetSignature) return;
     this.targetSignature = signature;
-    select.innerHTML = targets.map((object): string => `<option value="${escape(object.id)}">${escape(object.name)}</option>`).join("");
-    element(this.root, "#force-item").innerHTML = held.map((kind: string): string => `<option value="${escape(kind)}">${escape(this.items[kind].one)}</option>`).join("");
+    render(html`${targets.map((object) => html`<option value=${object.id}>${object.name}</option>`)}`, select);
+    render(html`${held.map((kind: string) => html`<option value=${kind}>${this.items[kind].one}</option>`)}`, element(this.root, "#force-item"));
   }
 
   /** The kinds of item the selected visitor holds, which are the ones they can hand over. */

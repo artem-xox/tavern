@@ -1875,7 +1875,7 @@ matters on the phone.
     bubbles still sit over their speaker, stay inside the map and split as before. Remove the D01 row
     from [PLAN.md](../PLAN.md#tech-debt) in the same commit.
 
-- [ ] **U3 — The sidebar keeps its elements between snapshots (sections that fold, chips that
+- [x] **U3 — The sidebar keeps its elements between snapshots (sections that fold, chips that
   select).** *Cause:* a click is a press and a release on the same element. A snapshot arrives every
   100 ms and replaces the inspector's `<details>` and the roster's chips (`renderInspector`,
   `renderRoster` and `renderEvents` set `innerHTML`). When the replacement lands between press and
@@ -1903,6 +1903,18 @@ matters on the phone.
     guest selected. Before the fix this is about 50 (one per snapshot); it must now be 0:
     `let n = 0; new MutationObserver((r) => { n += r.filter((m) => [...m.removedNodes].some((x) => x.nodeName === "DETAILS")).length; }).observe(document.querySelector("#inspector"), { childList: true, subtree: true }); setTimeout(() => console.log(n), 5000);`
     Then `make check` and `make build`.
+
+  - *Result (2026-10-08):* `inspector.ts` (first commit: moved out of `dashboard.ts`, 376 → 283 lines; `clock.ts`
+    holds the clock). Second commit: the inspector, the roster (`repeat`, keyed by guest), the events and the
+    action selects render with `lit-html` 3.3.3 (approved), so `escape()` and `html.ts` are gone; the placeholder
+    "Select a visitor" is a sibling of `#inspector`, because Lit appends to a container rather than clearing
+    it. Every section starts closed, and one with nothing to show (no mind yet) keeps its `<details>`, so its
+    state survives. Measured in the browser, same guest selected: `<details>` replaced in 3 s: 28 before, 0 after;
+    20 real clicks on "Why this decision?" toggled it 20 times, alternating; a section opened for one guest is
+    still open after choosing another; the roster's chips are the same elements two seconds later.
+    Not measured: a press held for 300 ms, which the tool cannot do (the elements no longer change under it).
+    Found on the way: a reload during an evening starts a new one with "Invalid saved action timer", which is
+    D20.
 
 - [ ] **U4 — iPhone Safari: taps that land and a screen that holds still.** The user's report: no button
   can be pressed, and the screen seems to blink nonstop. Needs U2 and U3. The suspects, most likely

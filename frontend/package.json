@@ -9,6 +9,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
+    "lit-html": "^3.3.3",
     "phaser": "^3.90.0"
   },
   "devDependencies": {
