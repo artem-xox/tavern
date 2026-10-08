@@ -2674,15 +2674,18 @@ Decisions for every T task (frozen 2026-10-08; change them here first if the cod
   `within_reach`, `invitations.free_table` and the `seating` stage, `rules.manners` (see above). Saved worlds are
   version 15. A guest likes someone (friend, or opinion of at least 10) is the test for sitting with them: `seating`
   is re-offered only for liked company, and `approach` is not offered to liked company at a table with a free chair.
-  Offline, ten seeds (0–9), `main` against this branch: `seat_taken` 25 → 5, `table_intruded` 0 → 9, `approach` 0 → 107,
-  conversations 315 → 399, stuck seconds per evening 16.4 → 18.2, every guest gone at closing in all ten. A first
-  version gave the hearth table two more standing spots; it cut stuck time but halved the barkeep's chats in three
-  evenings of ten (and failed `test_barkeep_evening` on seed 1), so it was dropped. Live seed 5 (Jev + Haiku, 433 game
-  s, 444 s wall, about $0.32 over 216 Jev calls and 61 turns, no failures): 10 `approach`, one accepted `move_together`
-  (Brida and Edda at 82.7 s), two `table_intruded` (Saye at Calder's tables, at 258 s and 377 s), no apology, stuck time
-  21 s over six guests. Replay `cmp` byte-identical. No live run on `main` for comparison was paid for. Saye did not
-  apologize in either case; the apology exists and is offered whenever a host holds a grudge, but Haiku did not choose it.
-  Calder did not speak to Saye after either intrusion (no line or decision within 15 s), which is T8's trigger for a follow-up in which the world opens a scene from the host.
+  Offline, ten seeds (0–9), `origin/main` (with sleep) against this branch: `seat_taken` 25 → 0, `table_intruded` 0 → 6,
+  `approach` 0 → 33, two apologies, conversations 315 → 297, stuck seconds per evening 16.4 → 16.8, every guest gone at
+  closing in all ten, and the barkeep chatting in 10 evenings of 10 (7 on main). Two first versions were dropped on
+  these numbers: giving the hearth table two more standing spots halved the barkeep's chats, and an `approach` that
+  scored as high as a chat crowded `stand_at_bar` out of the company family once sleep was in (4 evenings of 10, and
+  `test_barkeep_evening` seed 4 failed), so it now scores 0.2 lower. Live seed 5 (Jev + Haiku, 436 game s, 328 s wall,
+  $0.28 over 307 calls, no failed call, 2 turn fallbacks): 6 `approach`, no seat taken, no intrusion, no
+  `move_together` and no apology; the barkeep chatted 9 times. The replay's `events.jsonl` is byte-identical. An
+  earlier live run of the first version (not kept as the final) showed one accepted `move_together` (Brida and Edda) and
+  two intrusions by Saye at Calder's tables, after which Calder did not speak to Saye within 15 s: that is T8's trigger
+  for a follow-up in which the world opens a scene from the host, not built here. Haiku chose `move_together` once in two
+  live evenings and `apologize` never, so E28 should count both.
 
 ## Order
 
