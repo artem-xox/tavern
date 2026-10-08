@@ -20,6 +20,8 @@ from tavern.social.tables import liked
 
 # The thirst (0–100) from which a guest keeps their own mug of ale: a mild thirst (under the briefing's 50) gives way.
 KEEPS_OWN_MUG = 50
+# The tiredness (0–100) from which a guest in their seat may choose to sleep there.
+SLEEPY = 60
 
 
 class EvaluatorError(RuntimeError):
@@ -109,7 +111,7 @@ def _concrete_candidates(observation: Mapping[str, Any]) -> list[Action]:
         Stable, unique action dictionaries. Inspection and waiting are always offered.
         Table chairs appear as one `seating` wish until the visitor owns a seat; their
         own free seat appears as `sit`, with `seating` again only while company they could
-        join is in sight. Leaving needs a known door; a door is shared (see
+        join is in sight. A tired guest in their seat (`SLEEPY`) may also `doze` there. Leaving needs a known door; a door is shared (see
         `Activity.shared_target`), so it is never busy. Once the inn has closed, going home is
         the only option, or waiting a turn when no door is known.
 
@@ -134,7 +136,7 @@ def _concrete_candidates(observation: Mapping[str, Any]) -> list[Action]:
         actions.extend(_line_options(observation, item, _action(verbs[item["kind"]], item["id"])))
     return [*actions, *_seat_wish(observation, objects), *_views(observation, objects), *_games(objects),
             *_bar_stand(observation, actor, objects), *talks, *_gifts(observation, actor),
-            *_fetches(observation, actor, objects), _action("inspect"), _action("wait"),
+            *_fetches(observation, actor, objects), *_nap(observation, actor), _action("inspect"), _action("wait"),
             *_hostile(observation)]
 
 
@@ -210,6 +212,12 @@ def _fetches(observation: Mapping[str, Any], actor: Mapping[str, Any],
     able = free_hand and actor["id"] not in observation.get("on_errands", [])
     stocked = any(item["kind"] == "tap" and item.get("stock") for item in objects)
     return [_action("bring_drink", target) for target in empty_handed_company(observation)] if able and stocked else []
+
+
+def _nap(observation: Mapping[str, Any], actor: Mapping[str, Any]) -> list[Action]:
+    # A tired guest in their seat may sleep there, unless they are out on an errand for someone.
+    sleepy = actor["needs"]["fatigue"] >= SLEEPY and actor["id"] not in observation.get("on_errands", [])
+    return [_action("doze")] if sleepy and actor.get("seat_id") else []
 
 
 def _hostile(observation: Mapping[str, Any]) -> list[Action]:

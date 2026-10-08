@@ -124,6 +124,11 @@ def _sit(observation: Observation, action: Action) -> str:
     return f"take the chair {label_of(chair)}: {_seat_note(observation, chair)}"
 
 
+def _doze(observation: Observation, action: Action) -> str:
+    return ("put their head down on the table and sleep a while, right here in their seat (it restores some energy; "
+            "nobody at an inn minds, and a loud noise will wake them)")
+
+
 def _someone(observation: Observation, visitor_id: Any) -> Mapping[str, Any] | None:
     # Everyone in sight when observed (`people`), else only seated company.
     return next((item for item in observation.get("people", []) if item["id"] == visitor_id),
@@ -263,7 +268,7 @@ def family_text(observation: Observation, option: Action) -> str:
 
 # Each verb's option sentence; a new verb needs an entry here (and one in `activities.ACTIVITIES`).
 _OPTIONS: Mapping[str, Callable[[Observation, Action], str]] = {
-    "take_beer": _pour, "drink": _drink, "rest": _rest, "seating": _seating, "sit": _sit, "talk": _talk,
+    "take_beer": _pour, "drink": _drink, "rest": _rest, "seating": _seating, "sit": _sit, "doze": _doze, "talk": _talk,
     "approach": _approach, "join_conversation": _join, "play_darts": _darts, "stand_at_bar": _bar, "watch": _watch,
     "watch_dice": _watch_dice,
     "use_toilet": _toilet, "give": _give, "bring_drink": _bring,

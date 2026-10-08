@@ -318,6 +318,42 @@ def dice_metrics(events: Sequence[Mapping[str, Any]]) -> DiceCounts:
             "onlookers": sum(event["type"] == "dice_watched" for event in events), "wins": dict(wins)}
 
 
+class SleepCounts(TypedDict):
+    """How the sleep went: naps begun and per guest, naps that ran their course (`woke_up`), naps cut short by
+    a loud sound (`woken`), each departed guest's tiredness as they left, and how many chose to go home tired."""
+
+    naps: int
+    napped: dict[str, int]
+    slept_out: int
+    woken: int
+    fatigue_at_departure: dict[str, float]
+    tired_home: int
+
+
+def sleep_metrics(events: Sequence[Mapping[str, Any]], departed: Sequence[Mapping[str, Any]],
+                  closes_at: float | None, tired: float = 60.0) -> SleepCounts:
+    """Count the sleep in an evening.
+
+    Args:
+        events: The complete event log: `dozed_off`, `woke_up` and `woken`.
+        departed: The guests who went home, with their `needs` as they left and `visit.left_at`.
+        closes_at: Closing time; a guest who left at or after it was sent home, so did not choose to go tired.
+            None for an evening that never closes.
+        tired: Tiredness (0–100) from which a guest counts as having gone home tired; the sleep candidate's
+            threshold (`tavern.mind.agents.SLEEPY`) by default.
+
+    Returns:
+        The counts, with naps per guest ID in order of the first nap.
+    """
+    napped = Counter(event["actor_id"] for event in events if event["type"] == "dozed_off")
+    fatigue = {guest["id"]: guest["needs"]["fatigue"] for guest in departed}
+    return {"naps": sum(napped.values()), "napped": dict(napped),
+            "slept_out": sum(event["type"] == "woke_up" for event in events),
+            "woken": sum(event["type"] == "woken" for event in events), "fatigue_at_departure": fatigue,
+            "tired_home": sum(guest["needs"]["fatigue"] >= tired
+                              and (closes_at is None or guest["visit"]["left_at"] < closes_at) for guest in departed)}
+
+
 class BarCounts(TypedDict):
     """How the bar went: mugs the barkeep poured, conversations he opened, lines he spoke and news items
     he told."""

@@ -19,7 +19,7 @@ def default_rules() -> Rules:
         per game second, distances in cells.
     """
     return {"move_seconds": 0.35, "blocked_timeout": 3.0, "vision_radius": 5,
-            "need_rates": {"thirst": 0.18, "fatigue": 0.12, "bladder": 0.10,
+            "need_rates": {"thirst": 0.18, "fatigue": 0.05, "bladder": 0.10,
                            "social": 0.18, "boredom": 0.25},
             "durations": {verb: activity.duration for verb, activity in ACTIVITIES.items()
                           if activity.duration is not None},

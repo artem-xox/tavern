@@ -96,7 +96,6 @@ def test_beer_effect_requires_arrival_and_happens_once() -> None:
 
 @pytest.mark.parametrize("verb, target, need", [
     pytest.param("drink", None, "thirst", id="drink-own-beer"),
-    pytest.param("rest", "chair", "fatigue", id="rest-at-chair"),
     pytest.param("use_toilet", "toilet", "bladder", id="toilet-at-spot"),
 ])
 def test_completed_actions_relieve_corresponding_need(verb: str, target: str | None, need: str) -> None:

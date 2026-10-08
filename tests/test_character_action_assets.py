@@ -42,3 +42,13 @@ def test_giving_and_receiving_stills_ship_for_every_character() -> None:
             for pose in ("Giving", "GivingSeated", "Receiving", "ReceivingSeated"):
                 path = exported / character / pose / "rotations" / f"{direction}.png"
                 assert path.is_file(), f"Missing browser asset: {path}"
+
+
+def test_sleeping_stills_ship_for_every_character() -> None:
+    """Check the nap at the table, seated and asleep, ships in four views for every character folder."""
+    subprocess.run(["npm", "--prefix", "frontend", "run", "build"], cwd=ROOT, check=True, capture_output=True)
+    exported = ROOT / "frontend" / "dist" / "characters"
+    for character in CHARACTERS:
+        for direction in DIRECTIONS:
+            path = exported / character / "SleepingSeated" / "rotations" / f"{direction}.png"
+            assert path.is_file(), f"Missing browser asset: {path}"

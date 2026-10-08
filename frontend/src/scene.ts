@@ -11,7 +11,7 @@ import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Mind, Verb, Wo
 /** The seated version of a standing pose, for a visitor who does it from their seat. */
 const SEATED_POSES: Readonly<Record<string, string>> = { Drinking: "DrinkingSeated", Talking: "TalkingSeated", Giving: "GivingSeated", Receiving: "ReceivingSeated" };
 /** Poses drawn low on the cell, as a seated figure sits. */
-const LOW_POSES: readonly string[] = ["Seated", "Bathroom", ...Object.values(SEATED_POSES)];
+const LOW_POSES: readonly string[] = ["Seated", "SleepingSeated", "Bathroom", ...Object.values(SEATED_POSES)];
 /** Even a sober guest fidgets a little; drink adds to it. */
 const IDLE_SWAY = 0.12;
 

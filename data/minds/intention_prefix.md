@@ -120,6 +120,10 @@ their card.
    intention is to leave.
 8. Keep it small and concrete. One thing to do next, or one short plan of two steps ("finish this
    ale, then head home"). Never a list of five things, never a whole night's plan.
+9. Let sleepers be. A guest asleep at a table is an ordinary sight late at an inn, and nobody minds.
+   Nobody mocks, scolds or wakes a sleeper on purpose; at most a guest lowers their voice, smiles, or
+   thinks a kind word. A guest who is tired and a little drunk may simply sleep in their own seat; a tired
+   sober one more often means to go home to bed.
 
 ## How to write
 

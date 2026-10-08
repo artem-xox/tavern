@@ -9,6 +9,7 @@ from types import MappingProxyType
 from typing import Any
 
 from tavern.body.actions import action_error
+from tavern.body.dozing import asleep
 from tavern.body.items import ITEMS
 from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World
@@ -191,7 +192,8 @@ def _carry(world: World, errand: Errand, host: Actor | None, guest: Actor | None
         record_event(world, host, "fetch_failed", f"{guest['name']} would not take the ale {host['name']} fetched")
         return False
     wait = world["rules"]["giving"]["carry_for"]
-    if host["inventory"]["beer"] <= errand["held"] or world["time"] - errand["since"] > wait:
+    # A sleeper is not woken for a mug: the host keeps it, as when the invitee cannot be reached.
+    if host["inventory"]["beer"] <= errand["held"] or world["time"] - errand["since"] > wait or asleep(guest):
         return _failed(world, errand)
     verb = (host["action"] or {}).get("verb")
     if verb == "give":

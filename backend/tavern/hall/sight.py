@@ -5,6 +5,7 @@ from copy import deepcopy
 import math
 from typing import Any
 
+from tavern.body.dozing import asleep
 from tavern.body.items import ITEMS
 from tavern.hall.room import OBJECT_KINDS, find_object
 from tavern.hall.staff import on_staff, post_of
@@ -102,8 +103,9 @@ def people_in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[
 
     Returns:
         Public facts about each visible person (see `world.observe_people`): ID, name as the
-        viewer calls them, cell, seat and table, whether they are free to talk, their
-        conversation, whether they are within reach of the viewer (at one table or side by side), their current verb and target name, and
+        viewer calls them, cell, seat and table, whether they are free to talk (not a sleeper), whether
+        they are asleep, their conversation, whether they are within reach of the viewer (at one table or side by
+        side), their current verb and target name, and
         what is in their hands (`holding`, counts of the kinds others can see); for staff also `post`, the name of the bar they work at.
     """
     walls = set(map(tuple, world["map"]["blocked"]))
@@ -119,8 +121,9 @@ def people_in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[
         # A stranger is known by their looks until the viewer learns their name.
         people.append({**{key: visitor[key] for key in ("id", "x", "y", "seat_id")}, "name": called(actor, visitor)})
         scene = conversation_of(world, visitor["id"])
+        sleeping = asleep(visitor)
         people[-1].update(table_id=seat.get("table_id") if seat else None,
-                          available=scene is None and not pressed(world, visitor),
+                          available=scene is None and not sleeping and not pressed(world, visitor), asleep=sleeping,
                           conversation=scene["id"] if scene else None,
                           beside=within_reach(world, actor, visitor),
                           doing=action.get("verb"), target=target["name"] if target else None,

@@ -57,7 +57,7 @@ def hostile_targets(observation: Mapping[str, Any], verb: str) -> list[str]:
         verb: `shove` or `start_fight`.
 
     Returns:
-        IDs of those who sit at the guest's table or stand beside them, are not staff, are thought
+        IDs of those who sit at the guest's table or stand beside them, are not staff, are awake, are thought
         ill of (see `HOSTILITY.opinion`), gave a recent cause (`HOSTILE_CAUSES`), and the guest's
         urge reaches the verb's threshold; sorted.
 
@@ -70,8 +70,8 @@ def hostile_targets(observation: Mapping[str, Any], verb: str) -> list[str]:
     if now is None or urge(observation) < HOSTILITY.urge[verb]:
         return []
     return sorted({person["id"] for person in observation.get("people", [])
-                   if person["id"] != actor["id"] and not person.get("post") and _near(observation, person)
-                   and opinion_of(actor, person["id"], now) <= HOSTILITY.opinion
+                   if person["id"] != actor["id"] and not person.get("post") and not person.get("asleep")
+                   and _near(observation, person) and opinion_of(actor, person["id"], now) <= HOSTILITY.opinion
                    and _caused(actor, person["id"], now)})
 
 

@@ -16,6 +16,7 @@ import math
 from types import MappingProxyType
 from typing import Any, NotRequired, TypedDict
 
+from tavern.body.dozing import asleep
 from tavern.body.drunkenness import drunk_stage
 from tavern.hall.memory import log_event
 from tavern.hall.staff import on_staff, post_of
@@ -93,7 +94,7 @@ UNMETERED = ("arrival", "closing")
 # Remembered events that make a guest take stock, by trigger kind.
 # A scene's end alone is not one: what a talk changed is told by a goal reached, a thought or a fact.
 SALIENT_EVENTS: Mapping[str, str] = MappingProxyType({
-    "interrupted": "interrupted", "alerted": "alerted", "dice_won": "dice", "dice_lost": "dice", "goal_done": "goal", "goal_failed": "goal", "goal_expired": "goal"})
+    "interrupted": "interrupted", "woken": "woken", "alerted": "alerted", "dice_won": "dice", "dice_lost": "dice", "goal_done": "goal", "goal_failed": "goal", "goal_expired": "goal"})
 # Thought kinds that make a guest take stock: a wrong done to them.
 SALIENT_THOUGHTS = ("quarrel", "seat_taken", "table_intruded", "insulted", "shoved", "attacked")
 _LONGEST = 400
@@ -133,10 +134,12 @@ def intention_due(world: Mapping[str, Any], actor: Mapping[str, Any], rules: Int
         rules: Interval rule.
 
     Returns:
-        `arrival` for a guest without an intention; else the newest salient event since their
+        None for a guest asleep; else `arrival` for a guest without an intention; else the newest salient event since their
         intention was asked; else `interval` once `rules.interval` has passed; else None.
     """
     now, current = world["time"], actor["intention"]
+    if asleep(actor):
+        return None
     if current is None:
         return Trigger(kind="arrival", text=f"{actor['name']} has just come in", time=now)
     salient = latest_trigger(world, actor, current["written_at"])
