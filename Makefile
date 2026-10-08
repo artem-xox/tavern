@@ -37,6 +37,7 @@ test:
 check: test
 	.venv/bin/mypy
 	npm --prefix frontend run check
+	npm --prefix frontend test
 
 build:
 	npm --prefix frontend run build
