@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { drawFloor } from "./floor";
 import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawFireplace, drawTable, drawTap, drawToilet, drawWindow, hearthFacing } from "./furniture";
+import { mapParts, type MapParts } from "./mapview";
 import { Speech } from "./speech";
 import { shippedPose, spriteOf, stills } from "./sprites";
 import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Mind, Verb, World, WorldObject } from "./types";
@@ -50,7 +51,8 @@ export class TavernScene extends Phaser.Scene {
   private furniture!: Phaser.GameObjects.Graphics;
   private route!: Phaser.GameObjects.Graphics;
   private readonly visitors: Map<string, ActorView> = new Map();
-  private mapSignature: string = "";
+  /** The fingerprints of the map as drawn; empty before the first snapshot, so everything draws once. */
+  private drawn: MapParts = { size: "", floor: "", furniture: "" };
   private selectedId: string | null = null;
   private editing: boolean = false;
   private ready: boolean = false;
@@ -134,13 +136,15 @@ export class TavernScene extends Phaser.Scene {
   }
 
   private renderMap(world: World): void {
-    const signature: string = JSON.stringify(world.map);
-    if (signature === this.mapSignature) return;
-    this.mapSignature = signature;
-    this.scale.resize(world.map.width * world.map.tile_size, world.map.height * world.map.tile_size);
-    drawFloor(this.floor, world);
-    this.furniture.clear();
-    for (const object of world.map.objects) this.drawObject(object, world.map.tile_size);
+    const parts: MapParts = mapParts(world.map);
+    // Resizing reallocates the canvas buffer, even to the same size, so only a new size resizes it.
+    if (parts.size !== this.drawn.size) this.scale.resize(world.map.width * world.map.tile_size, world.map.height * world.map.tile_size);
+    if (parts.floor !== this.drawn.floor) drawFloor(this.floor, world);
+    if (parts.furniture !== this.drawn.furniture) {
+      this.furniture.clear();
+      for (const object of world.map.objects) this.drawObject(object, world.map.tile_size);
+    }
+    this.drawn = parts;
   }
 
   private drawObject(object: WorldObject, size: number): void {

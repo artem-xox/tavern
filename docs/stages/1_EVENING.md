@@ -1939,6 +1939,19 @@ matters on the phone.
     running evening show no blinking. Fix each confirmed cause in its own commit. In the result
     paragraph, say which suspects were confirmed and which were not.
 
+  - *Built, not yet confirmed on a phone (2026-10-08):* the Mac has no full Xcode, so the iOS Simulator
+    tool cannot attach; the checks below ran in the built-in browser (desktop, and a 375 px mobile emulation).
+    Suspect 1 is fixed by U3. Suspect 2 is **confirmed**: in a 60 s evening the canvas buffer was written 23
+    times (`canvas.width = …`, about every 2.6 s) at an unchanged size; now 0. `frontend/src/mapview.ts`
+    (`mapParts`, 11 cases in `tests/mapview.test.ts`, red first) fingerprints the size, the floor and the
+    furniture separately, and `renderMap` resizes and redraws a part only when its fingerprint changes, so the
+    tap's stock, queues and dice games (which draw nothing) no longer touch the canvas. Suspect 4: hover
+    rules sit inside `@media (hover: hover)`; buttons, summaries and selects get `touch-action: manipulation`
+    and no tap highlight. In the 375 px emulation `(hover: hover)` is false, the controls report
+    `manipulation`, and nothing overflows. Not checked: suspect 3 (snapshot cost on a phone's main thread) and
+    suspect 5 (the toolbar's resize event), because they need the real device or the Simulator. The box stays
+    unticked until the user confirms on the iPhone; if it still blinks, do U11 and capture a Safari timeline.
+
 - [x] **U5 — Speech bubbles break at sentences.** Today `splitLine` (`bubble.ts`) cuts a line every 10 words
   wherever the words fall (see the measurements above).
   - *Rule:* a piece ends only at a sentence end: `.`, `!`, `?`, `…` or `...`, optionally followed by a
