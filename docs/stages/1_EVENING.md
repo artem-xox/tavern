@@ -2138,7 +2138,7 @@ matters on the phone.
     desktop width and at 375 px (no overflow). Not done: the rest of the page (header, controls, events) still
     uses 8–10 px text; the ticket only covers the sidebar.
 
-- [ ] **U10 — Carrying as an inventory.** Needs U8 (`pixels.ts`) and U9.
+- [x] **U10 — Carrying as an inventory.** Needs U8 (`pixels.ts`) and U9.
   - *Slots:* one slot for each kind in `snapshot.items`, in that order. A carried kind shows its icon at
     2× and a count when it is above 1. A kind not carried is a dim, empty slot. The tooltip is the
     server's wording (`items[kind].one` or `many`).
@@ -2150,6 +2150,16 @@ matters on the phone.
   - *Under the slots:* one line for time here, ales tonight, and their own seat (today's "Tonight" and
     "Own seat" rows).
   - *Check:* force a `give` so a guest holds two remedies, then post a screenshot. Then `make build`.
+
+  - *Result (2026-10-08):* `icons.ts` holds the 16×16 maps for `beer`, `remedy` and `keepsake`, and the tied
+    bundle for any other kind; `iconPixels(kind)` rings the map with the outline (`pixels.ts`) and returns the
+    coloured cells (7 tests, red against a stub first). The inspector draws one slot per kind in
+    `snapshot.items`, in the server's order: a carried kind is an inline SVG, one `<rect>` per pixel with
+    `crispEdges`, plus a count above one; an unheld kind is a dim empty slot; the tooltip and `aria-label` are
+    the server's wording ("2 herbal remedies", "no mugs of ale"). The old "Carrying" sentence is gone; the
+    line under the slots keeps time here, ales and own seat. Seen live: Edda with two remedies shows the
+    flask with "2". Not seen live: the beer and keepsake icons on a guest (the code path is the same, and the
+    mockup shows all three). Coins wait for the economy: their map is in `docs/mockups/inspector.html`.
 
 - [ ] **U11 — Lighter snapshots (only if U4 shows they matter).** The snapshot is 182 KiB, 10 times a
   second, per open page. The client never reads `heard` (22 KiB) or `card` (7 KiB). It shows only the

@@ -1,6 +1,7 @@
 /** The inspector panel: one visitor's story first, then what lies behind it, drawn into its container. */
-import { html, render, type TemplateResult } from "lit-html";
+import { html, render, svg, type TemplateResult } from "lit-html";
 import { clock } from "./clock";
+import { iconPixels } from "./icons";
 import { mergeThoughts, NEED_PIPS, needPips, needTone, needWord, opinionBar, type MergedThought } from "./mindview";
 import { spriteOf } from "./sprites";
 import type { ActivityView, Actor, ItemView, Mind, NewsCopy, Verb, World, WorldObject } from "./types";
@@ -38,7 +39,7 @@ export function renderInspector(inspector: HTMLElement, actor: Actor, ctx: Inspe
   const mind: Mind | undefined = ctx.minds[actor.id];
   render(html`${header(actor, ctx, mind)}${now(actor, ctx)}
     <div class="insp-section"><p class="eyebrow"><span>Needs</span><span>full is fine</span></p>${needs(actor)}</div>
-    <div class="insp-section"><p class="eyebrow"><span>Carrying</span><span></span></p><p class="carried">${carrying(actor, ctx)}</p>${visit(actor, ctx)}</div>
+    <div class="insp-section"><p class="eyebrow"><span>Carrying</span><span></span></p>${slots(actor, ctx)}${visit(actor, ctx)}</div>
     ${mind ? feelings(mind) : ""}${mind ? people(mind) : ""}${mind ? news(mind) : ""}
     <details id="traits-detail"><summary><span>Character</span><span>${Object.keys(actor.traits).length} traits</span></summary><div class="detail-body"><div class="traits">${Object.entries(actor.traits).map(([key, value]: [string, unknown]) => html`<span>${key.replaceAll("_", " ")} ${value}</span>`)}</div></div></details>
     <details id="decision-detail"><summary><span>Why this decision?</span><span>${actor.decision?.source === "jev" ? "JEV" : "LOCAL"}</span></summary><div class="detail-body">${scoreList(actor.decision?.scores)}${actor.decision?.error ? html`<p class="decision-error">Fallback: ${actor.decision.error}</p>` : ""}${seatChoice(actor)}</div></details>
@@ -94,11 +95,23 @@ function needs(actor: Actor): TemplateResult {
   })}</div>`;
 }
 
-/** List what the guest carries, in the server's wording per kind; nothing when the hands are empty. */
-function carrying(actor: Actor, ctx: InspectorContext): string {
-  const carried: string[] = Object.entries(actor.inventory).filter(([, count]: [string, number]): boolean => count > 0)
-    .map(([kind, count]: [string, number]): string => count === 1 ? ctx.items[kind].one : `${count} ${ctx.items[kind].many}`);
-  return carried.join(", ") || "nothing";
+/**
+ * What the guest carries as an inventory: one slot per item kind the server knows, in its order. A carried kind
+ * shows its picture and, above one, a count; the others are dim and empty. The tooltip is the server's wording.
+ */
+function slots(actor: Actor, ctx: InspectorContext): TemplateResult {
+  return html`<div class="slots" role="list">${Object.entries(ctx.items).map(([kind, words]: [string, ItemView]) => {
+    const count: number = actor.inventory[kind] ?? 0;
+    if (count === 0) return html`<div class="slot empty" role="listitem" title="no ${words.many}" aria-label="no ${words.many}"></div>`;
+    const label: string = count === 1 ? words.one : `${count} ${words.many}`;
+    return html`<div class="slot" role="listitem" title="${label}" aria-label="${label}">${icon(kind)}${count > 1 ? html`<span class="count">${count}</span>` : ""}</div>`;
+  })}</div>`;
+}
+
+/** An item's picture as an SVG of one square per pixel, kept crisp at any size. */
+function icon(kind: string): TemplateResult {
+  const { size, pixels } = iconPixels(kind);
+  return html`<svg viewBox="0 0 ${size} ${size}" width="32" height="32" shape-rendering="crispEdges" aria-hidden="true">${pixels.map((pixel) => svg`<rect x="${pixel.x}" y="${pixel.y}" width="1" height="1" fill="${pixel.color}"/>`)}</svg>`;
 }
 
 /** Summarize tonight's visit: time here, beers and own seat. */
