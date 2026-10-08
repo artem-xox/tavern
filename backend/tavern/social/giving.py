@@ -72,7 +72,7 @@ def gift_targets(observation: Mapping[str, Any], kind: str) -> list[str]:
         kind: The `ITEMS` kind to give.
 
     Returns:
-        IDs, sorted, of those who sit at the guest's table or stand beside them, are not staff, do not
+        IDs, sorted, of those who sit at the guest's table or stand beside them, are not staff, are awake, do not
         visibly hold as many of the kind as their hands carry, and have not exchanged a gift or a
         refusal with the guest within `again_after`. That is stricter than `gift_error`, which the guest
         cannot see into: the guest remembers a gift of any kind to the same person, not only of this kind.
@@ -82,8 +82,8 @@ def gift_targets(observation: Mapping[str, Any], kind: str) -> list[str]:
         return []
     since = now - rules["again_after"]
     return sorted(person["id"] for person in observation.get("people", [])
-                  if person["id"] != actor["id"] and not person.get("post") and _near(observation, person)
-                  and person.get("holding", {}).get(kind, 0) < ITEMS[kind].hands
+                  if person["id"] != actor["id"] and not person.get("post") and not person.get("asleep")
+                  and _near(observation, person) and person.get("holding", {}).get(kind, 0) < ITEMS[kind].hands
                   and not formed_since(actor, person["id"], (*RECEIVED, "generous", "rebuffed"), since))
 
 
@@ -95,14 +95,15 @@ def empty_handed_company(observation: Mapping[str, Any]) -> list[str]:
             on an errand or being served by one.
 
     Returns:
-        IDs, sorted, of those who sit at the guest's table or stand beside them, are not staff, hold no
+        IDs, sorted, of those who sit at the guest's table or stand beside them, are not staff, are awake, hold no
         mug in their hands, and are not on an errand. Without `on_errands` nobody can be called free.
     """
     busy, actor = observation.get("on_errands"), observation["actor"]
     if busy is None:
         return []
     return sorted(person["id"] for person in observation.get("people", [])
-                  if person["id"] != actor["id"] and not person.get("post") and _near(observation, person)
+                  if person["id"] != actor["id"] and not person.get("post") and not person.get("asleep")
+                  and _near(observation, person)
                   and not person.get("holding", {}).get("beer", 0) and person["id"] not in busy)
 
 

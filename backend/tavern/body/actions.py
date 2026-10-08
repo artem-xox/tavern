@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from tavern.body.activities import ACTIVITIES
+from tavern.body.dozing import asleep
 from tavern.hall.room import find_object
 from tavern.hall.staff import on_staff
 from tavern.hall.state import find_actor
@@ -83,10 +84,16 @@ def _target_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Ma
     return None
 
 
+def _asleep(sleeper: Mapping[str, Any]) -> str:
+    return f"{sleeper['name']} is asleep"
+
+
 def _talk_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any]) -> str | None:
     partner = find_actor(world, action.get("target_id"))
     if partner is None or partner["id"] == actor["id"]:
         return "Choose another visitor to talk to"
+    if asleep(partner):
+        return _asleep(partner)
     if conversation_of(world, actor["id"]) is not None:
         # Someone already talking carries on with their part for as long as their scene lasts.
         current = actor.get("action")
@@ -111,6 +118,8 @@ def _confront_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: 
         return "Choose another visitor to confront"
     if on_staff(victim):
         return f"{victim['name']} works behind the bar and is not to be fought"
+    if asleep(victim):
+        return _asleep(victim)
     return None if _close_enough(world, actor, victim) else "Visitors must sit at one table or stand side by side"
 
 
@@ -120,6 +129,8 @@ def _give_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapp
         return "Choose another visitor to give to"
     if on_staff(receiver):
         return f"{receiver['name']} works behind the bar and takes no gifts"
+    if asleep(receiver):
+        return _asleep(receiver)
     if not _close_enough(world, actor, receiver):
         return "Visitors must sit at one table or stand side by side"
     return gift_error(world, actor, receiver, action.get("item"))
@@ -131,6 +142,8 @@ def _fetch_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Map
         return "Choose another visitor to bring a drink to"
     if on_staff(receiver):
         return f"{receiver['name']} works behind the bar and needs no drink brought"
+    if asleep(receiver):
+        return _asleep(receiver)
     return fetch_error(world, actor, receiver) or (
         None if _close_enough(world, actor, receiver) else "Visitors must sit at one table or stand side by side")
 

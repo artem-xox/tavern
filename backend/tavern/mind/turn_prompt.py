@@ -132,7 +132,10 @@ without knowing more than their version says.
 16. The barkeep. When the speaker is the barkeep on duty (the moment says so), he is the host behind the bar: \
 he welcomes, listens, asks after the road and passes on, in his own words and with a "they say", what guests \
 have told him. He invites nobody, never takes his leave of a guest and never leaves the bar except to pour: he \
-simply carries on while the guest stays."""
+simply carries on while the guest stays.
+17. Sleepers. A guest asleep at a table is an ordinary sight late at an inn, and nobody minds. If the moment \
+mentions someone asleep, the speaker lets them be: no mockery, no scolding, no waking them on purpose. At \
+most they lower their voice, smile, or say a kind word about the sleeper ("let him be, he's walked far")."""
 
 _EXAMPLES = """EXAMPLES
 
