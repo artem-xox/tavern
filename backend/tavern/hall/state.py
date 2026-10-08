@@ -170,6 +170,13 @@ class BartendingRules(TypedDict):
     chat_gap: float
 
 
+class MannersRules(TypedDict):
+    """Whether the hall's tables are taken seriously (see `tavern.social.tables`): with `table_intrusion`, sitting
+    down at a table others hold without being welcome upsets them."""
+
+    table_intrusion: bool
+
+
 class GivingRules(TypedDict):
     """When a gift is taken and how often one is made (see `tavern.social.giving`): a receiver refuses
     it when their opinion of the giver is below `refuse_below`, and no gift is passed back to the giver,
@@ -200,6 +207,7 @@ class Rules(TypedDict):
     dice: DiceRules
     bartending: BartendingRules
     giving: GivingRules
+    manners: MannersRules
 
 
 class HallMap(TypedDict):

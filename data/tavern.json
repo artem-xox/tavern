@@ -2,6 +2,7 @@
   "width": 20,
   "height": 14,
   "tile_size": 32,
+  "table_manners": true,
   "blocked": [
     [
       0,

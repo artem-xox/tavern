@@ -40,7 +40,8 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> World:
     Args:
         map_data: Flat room definition with geometry, objects, and initial actors. An optional
             `arrival` section maps needs to [low, high] ranges: visitors then arrive with needs
-            drawn from them and look around the hall as they come in.
+            drawn from them and look around the hall as they come in. An optional `table_manners` (true or
+            false, default false) asks guests to mind whose table is whose (`rules.manners`).
         seed: Saved deterministic seed of the evening's arrivals and decision policy.
 
     Returns:
@@ -58,10 +59,15 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> World:
               for item in (listed if ranges is None else arriving(listed, ranges, seed))]
     if len({(item["x"], item["y"]) for item in actors}) != len(actors):
         raise ValueError("Actors cannot overlap at startup")
+    rules = default_rules()
+    manners = map_data.get("table_manners", False)
+    if type(manners) is not bool:
+        raise ValueError(f"The layout's table_manners must be true or false, not {manners!r}")
+    rules["manners"]["table_intrusion"] = manners
     world = World(schema_version=15, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
                   map=world_map, actors=actors, departed=[], expected=[], closes_at=None,
                   events=[], stimuli=[], next_stimulus_id=0, conversations=[], next_conversation_id=0,
-                  commitments=[], invitations=[], news=[], rules=default_rules())
+                  commitments=[], invitations=[], news=[], rules=rules)
     check_lines(world)
     for actor in actors:
         look(world, actor)

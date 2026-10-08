@@ -64,7 +64,10 @@ def default_rules() -> Rules:
             # below refuse_below (a grudge, not mere dislike), and the same gift is not repeated, nor passed
             # back, within again_after seconds, so two guests cannot hand a mug to and fro forever.
             # A host who poured a mug for someone has carry_for seconds to hand it over before the errand lapses.
-            "giving": {"refuse_below": -20.0, "again_after": 120.0, "carry_for": 30.0}}
+            "giving": {"refuse_below": -20.0, "again_after": 120.0, "carry_for": 30.0},
+            # Manners (`tavern.social.tables`): a hall asks for table manners in its layout (`table_manners`), so
+            # that one without tables to speak of, or a test, can do without them.
+            "manners": {"table_intrusion": False}}
 
 
 def check_rules(world: Mapping[str, Any]) -> None:
@@ -105,6 +108,12 @@ def check_rules(world: Mapping[str, Any]) -> None:
     check_dice_rules(rules.get("dice"))
     _validate_bartending_rules(rules.get("bartending"))
     _validate_giving_rules(rules.get("giving"))
+    _validate_manners_rules(rules.get("manners"))
+
+
+def _validate_manners_rules(manners: Any) -> None:
+    if not isinstance(manners, dict) or set(manners) != {"table_intrusion"} or type(manners["table_intrusion"]) is not bool:
+        raise ValueError("Invalid saved manners rules")
 
 
 def _validate_giving_rules(giving: Any) -> None:

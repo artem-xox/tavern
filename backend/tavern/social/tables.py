@@ -3,12 +3,14 @@
 from collections.abc import Mapping, MutableSequence
 from typing import Any
 
+from tavern.hall.memory import record_event
+from tavern.hall.room import find_object
 from tavern.hall.staff import on_staff
-from tavern.hall.state import Actor
+from tavern.hall.state import Actor, World
 from tavern.social.invitations import home_table
 from tavern.social.names import called
 from tavern.social.social_acts import LIKED
-from tavern.social.thoughts import familiarity_of, opinion_of
+from tavern.social.thoughts import familiarity_of, opinion_of, think
 
 
 def liked(actor: Mapping[str, Any], other_id: str, now: float) -> bool:
@@ -81,3 +83,28 @@ def mark_ownership(world: Mapping[str, Any], viewer: Mapping[str, Any],
         elif item["kind"] == "table":
             hosts = [] if item["id"] == own_table else table_hosts(world, item["id"], viewer)
             item["hosts"] = [{"id": who["id"], "name": called(viewer, who)} for who in hosts]
+
+
+def intrude(world: World, newcomer: Actor, chair: Mapping[str, Any]) -> None:
+    """Let the hosts of a table take it ill that somebody sat down there without being welcome.
+
+    Args:
+        world: World whose events and the hosts' thoughts are updated in place.
+        newcomer: Visitor who is sitting down on the chair (before it becomes their own seat).
+        chair: The chair. Nothing happens in a hall without table manners (`rules.manners`), when the newcomer already calls a chair at its table theirs, or for a
+            host whose own seat it is (that wrong is `seat_taken`).
+    """
+    if not world["rules"]["manners"]["table_intrusion"]:
+        return
+    own = find_object(world["map"], newcomer["favorite_seat_id"])
+    if own is not None and own.get("table_id") == chair["table_id"]:
+        return
+    table = find_object(world["map"], chair["table_id"])
+    for host in table_hosts(world, chair["table_id"], newcomer):
+        if host["favorite_seat_id"] == chair["id"] or welcome(world, host, newcomer):
+            continue
+        message = f"{newcomer['name']} sat down at {host['name']}'s table uninvited ({table['name'] if table else 'a table'})"
+        record_event(world, host, "table_intruded", message)
+        record_event(world, newcomer, "sat_uninvited", message)
+        think(host, "table_intruded", world["time"], f"{called(host, newcomer)} sat down at my table uninvited",
+              message, about=newcomer)

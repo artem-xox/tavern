@@ -1,15 +1,22 @@
 """Whose table is whose, and who is welcome at it."""
 
 from collections.abc import Callable
+import json
+from pathlib import Path
 from typing import Any
 
 import pytest
 
+from tavern.adapters.persistence import load_world, save_world
+from tavern.hall.memory import record_event
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action
 from tavern.mind.agents import build_candidates
 from tavern.mind.briefing import brief
+from tavern.mind.intentions import SALIENT_THOUGHTS
 from tavern.mind.options import option_text
+from tavern.social.hostility import HOSTILE_CAUSES
 from tavern.social.tables import liked, table_hosts, welcome
+from tavern.social.thoughts import THOUGHTS, opinion_of
 from social_hall import actor, advance, command, know, spotted_hall
 
 
@@ -38,7 +45,7 @@ def test_a_guest_likes_someone_they_think_well_of_or_count_a_friend(actor: dict[
 def hall_of(**seats: str) -> dict[str, Any]:
     """Seat the named guests (Ada, Bea, Cid, Dan) on the given chairs of `spotted_hall`, let them settle and let
     everyone know both tables and their chairs."""
-    world = create_world(spotted_hall(), 4)
+    world = create_world({**spotted_hall(), "table_manners": True}, 4)
     for name, chair in seats.items():
         assert start_action(world, name, command("sit", chair))["accepted"]
     advance(world, 10)
@@ -190,3 +197,119 @@ def test_a_chair_is_told_with_whose_it_is(prepare: Callable[[dict[str, Any]], No
         prepare(world)
     text = option_text(look_from(world, "ada"), {"id": f"sit:{chair}", "verb": "sit", "target_id": chair})
     assert [phrase in text for phrase in present + absent] == [True] * len(present) + [False] * len(absent)
+
+
+def sit_down(world: dict[str, Any], who: str, chair: str) -> None:
+    """A guest takes a chair and settles."""
+    assert start_action(world, who, command("sit", chair))["accepted"]
+    advance(world, 10)
+
+
+def upset(world: dict[str, Any], newcomer: str) -> list[str]:
+    """The guests who took it ill that a guest sat down at their table."""
+    name = actor(world, newcomer)["name"]
+    return [item["id"] for item in world["actors"] if any(
+        e["type"] == "table_intruded" and e["message"].startswith(name) for e in item["memory"])]
+
+
+def ada_calls_far_east_hers(world: dict[str, Any]) -> None:
+    """The far table's east chair is Ada's own seat, though she sits elsewhere."""
+    actor(world, "ada").update(favorite_seat_id="fe")
+
+
+def cid_owns_far_west(world: dict[str, Any]) -> None:
+    """Cid is away, but the far table's west chair is his own."""
+    actor(world, "cid").update(seat_id=None, favorite_seat_id="fw", x=9, y=7)
+
+
+def bea_is_a_friend_of_cid(world: dict[str, Any]) -> None:
+    """Bea counts Cid a friend."""
+    actor(world, "bea")["relations"]["cid"] = {"name": "Cid", "opinion": 0.0, "familiarity": "friend"}
+
+
+@pytest.mark.parametrize("seats, prepare, newcomer, chair, expected", [
+    pytest.param({"cid": "fw"}, None, "ada", "fe", ["cid"], id="a-stranger-sits-down-at-a-hosted-table"),
+    pytest.param({"cid": "fw"}, friend, "ada", "fe", [], id="a-friend"),
+    pytest.param({"cid": "fw"}, fond(10.0), "ada", "fe", [], id="someone-liked"),
+    pytest.param({"cid": "fw"}, promised, "ada", "fe", [], id="a-promise-kept"),
+    pytest.param({"cid": "fw"}, invited("cid", "ada"), "ada", "fe", [], id="asked-over"),
+    pytest.param({"cid": "fw"}, ada_calls_far_east_hers, "ada", "fe", [], id="returning-to-ones-own-seat"),
+    pytest.param({}, None, "ada", "fe", [], id="an-empty-table"),
+    pytest.param({}, cid_owns_far_west, "ada", "fw", [], id="the-owners-own-chair-is-a-wrong-of-its-own"),
+    pytest.param({"bea": "e", "dan": "n"}, bea_is_a_friend_of_cid, "cid", "w", ["dan"],
+                id="only-the-hosts-who-do-not-welcome-them"),
+])
+def test_sitting_down_at_a_table_uninvited_upsets_its_hosts(
+        seats: dict[str, str], prepare: Callable[[dict[str, Any]], None] | None, newcomer: str, chair: str,
+        expected: list[str]) -> None:
+    world = hall_of(**seats)
+    if prepare:
+        prepare(world)
+    sit_down(world, newcomer, chair)
+    assert upset(world, newcomer) == expected
+    assert sum(e["type"] == "sat_uninvited" and e["message"].startswith(actor(world, newcomer)["name"])
+               for e in actor(world, newcomer)["memory"]) == len(expected)
+
+
+def test_an_intrusion_is_told_remembered_and_felt() -> None:
+    world = hall_of(cid="fw")
+    sit_down(world, "ada", "fe")
+    cid, ada = actor(world, "cid"), actor(world, "ada")
+    told = "Ada sat down at Cid's table uninvited (Far table)"
+    assert [e["message"] for e in cid["memory"] if e["type"] == "table_intruded"] == [told]
+    assert [e["message"] for e in ada["memory"] if e["type"] == "sat_uninvited"] == [told]
+    assert opinion_of(cid, "ada", world["time"]) == pytest.approx(THOUGHTS["table_intruded"].opinion)
+    assert opinion_of(ada, "cid", world["time"]) == 0.0
+
+
+def test_the_host_shows_it_and_nobody_is_called_a_fighter_for_it() -> None:
+    world = hall_of(cid="fw")
+    sit_down(world, "ada", "fe")
+    assert "table_intruded" in SALIENT_THOUGHTS and "table_intruded" not in HOSTILE_CAUSES
+    record_event(world, actor(world, "cid"), "table_intruded", "x")
+    assert actor(world, "cid")["emote"]["kind"] == "angry"
+
+
+def test_an_intrusion_survives_save_and_load(tmp_path: Path) -> None:
+    world = hall_of(cid="fw")
+    sit_down(world, "ada", "fe")
+    save_world(world, tmp_path / "save.json")
+    loaded = load_world(tmp_path / "save.json")
+    assert [t["kind"] for t in actor(loaded, "cid")["thoughts"]] == ["table_intruded"]
+
+
+def test_the_shipped_inn_keeps_table_manners() -> None:
+    layout = json.loads((Path(__file__).parents[1] / "data" / "tavern.json").read_text())
+    assert create_world(layout)["rules"]["manners"] == {"table_intrusion": True}
+
+
+def test_a_hall_that_does_not_ask_for_table_manners_has_none() -> None:
+    world = create_world(spotted_hall(), 4)
+    assert_cid_first = start_action(world, "cid", command("sit", "fw"))["accepted"]
+    advance(world, 10)
+    sit_down(world, "ada", "fe")
+    assert (world["rules"]["manners"], assert_cid_first, upset(world, "ada")) == ({"table_intrusion": False}, True, [])
+
+
+@pytest.mark.parametrize("setting", [
+    pytest.param("yes", id="a-word"),
+    pytest.param(1, id="a-number"),
+    pytest.param(None, id="null"),
+])
+def test_table_manners_are_on_or_off(setting: Any) -> None:
+    with pytest.raises(ValueError, match="table_manners"):
+        create_world({**spotted_hall(), "table_manners": setting}, 4)
+
+
+@pytest.mark.parametrize("corrupt", [
+    pytest.param(lambda rules: rules.pop("manners"), id="missing"),
+    pytest.param(lambda rules: rules.update(manners={}), id="empty"),
+    pytest.param(lambda rules: rules.update(manners={"table_intrusion": "yes"}), id="not-a-boolean"),
+    pytest.param(lambda rules: rules.update(manners={"table_intrusion": True, "grace": 1}), id="unknown-rule"),
+])
+def test_corrupt_manners_are_rejected_on_load(tmp_path: Path, corrupt: Callable[[dict[str, Any]], Any]) -> None:
+    world = hall_of()
+    corrupt(world["rules"])
+    save_world(world, tmp_path / "save.json")
+    with pytest.raises(ValueError):
+        load_world(tmp_path / "save.json")

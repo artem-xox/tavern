@@ -95,7 +95,7 @@ UNMETERED = ("arrival", "closing")
 SALIENT_EVENTS: Mapping[str, str] = MappingProxyType({
     "interrupted": "interrupted", "alerted": "alerted", "dice_won": "dice", "dice_lost": "dice", "goal_done": "goal", "goal_failed": "goal", "goal_expired": "goal"})
 # Thought kinds that make a guest take stock: a wrong done to them.
-SALIENT_THOUGHTS = ("quarrel", "seat_taken", "insulted", "shoved", "attacked")
+SALIENT_THOUGHTS = ("quarrel", "seat_taken", "table_intruded", "insulted", "shoved", "attacked")
 _LONGEST = 400
 
 # Writes a guest's thought and intention from their view (see `intention_view`); raises on failure.

@@ -13,6 +13,7 @@ from tavern.social.giving import hand_over
 from tavern.social.invitations import begin_errand
 from tavern.social.names import called
 from tavern.social.scenes import conversation_of, join_conversation, start_conversation
+from tavern.social.tables import intrude
 from tavern.social.thoughts import think
 
 # An effect receives the world, the visitor, and the target: an object, a partner, or None.
@@ -169,7 +170,8 @@ def _go_home(world: World, actor: Actor, door: dict[str, Any] | None) -> None:
 
 
 def _settle(world: World, actor: Actor, seat: dict[str, Any] | None) -> None:
-    # The chair a visitor sits down on becomes their own; taking someone else's own seat wrongs them.
+    # The chair a visitor sits down on becomes their own; taking someone else's own seat wrongs them, and sitting down
+    # at a table others hold without being welcome there upsets its hosts.
     if seat is None:
         raise ValueError("Settling down needs a seat")
     if actor["seat_id"] != seat["id"]:
@@ -179,6 +181,8 @@ def _settle(world: World, actor: Actor, seat: dict[str, Any] | None) -> None:
                 record_event(world, owner, "seat_taken", message)
                 think(owner, "seat_taken", world["time"], f"{called(owner, actor)} took my seat ({seat['name']})",
                       message, about=actor)
+    if actor["seat_id"] != seat["id"]:
+        intrude(world, actor, seat)
     actor.update({"seat_id": seat["id"], "favorite_seat_id": seat["id"]})
 
 
