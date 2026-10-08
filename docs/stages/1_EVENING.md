@@ -1818,6 +1818,264 @@ Decisions for every H task (frozen 2026-10-05; change them here first if the cod
 - [ ] **E28 — Acceptance.** Run the scenarios below; record cost, latency, and
   metrics; set the per-evening budget. Done: results are written to this file.
 
+### UI pass — bugs and readability (U2–U11)
+
+Added 2026-10-08 at the user's request, from six complaints with screenshots: bubbles cut
+mid-sentence, a black mat at the door and a fireplace that does not read as one, buttons that do
+not respond on an iPhone, inspector sections that will not fold on desktop, emotes on a white
+box that say nothing, and an inspector that is hard to read. The design reference for U8–U10 is
+[docs/mockups/inspector.html](../mockups/inspector.html): open it in a browser.
+
+What was measured before writing these tasks (2026-10-08, offline evening, seed 5, by script; nothing
+was changed):
+
+- The server sends a full snapshot every 0.1 s (`server/api.py`, `_send_snapshots(..., 0.1)`). It
+  weighs 104–186 KiB of JSON (19 KiB gzipped). Of 182 KiB at 250 s, the actors take 133: `knowledge`
+  67, `heard` 22, `memory` 19, `card` 7. The client never reads `heard` or `card`.
+- `Dashboard.apply` rebuilds `#roster`, `#inspector` and `#events` through `innerHTML` on every snapshot.
+- `world.map` changed 106 times in a 600 s evening (28 in the first 100 s): reservations, queues, the
+  tap's stock and dice games all live in it. Each change makes `TavernScene.renderMap` call
+  `this.scale.resize(...)` and redraw the whole floor. Phaser's `ScaleManager.resize` sets
+  `canvas.width` and `canvas.height` every time, even to the same size, which clears and reallocates the
+  drawing buffer.
+- `splitLine("The margrave has been abed with a fever for a week, and the manor kitchen is told to send
+  up nothing but broth. Evening.")` returns `["The margrave has been abed with a fever", "for a week,
+  and the manor kitchen is", "told to send up nothing but broth. Evening."]`.
+
+Decisions for every U task (frozen 2026-10-08; change them here first if the code disagrees):
+
+- **Frontend only**, except U9 (one wording field in `minds`) and U11 (the snapshot's shape).
+  Every snapshot change updates `runtime.snapshot()` and `types.ts` together.
+- **No PixelLab credits and no image files.** Art is drawn in code: Phaser `Graphics`, or pixel maps
+  turned into textures with `this.textures.generate(key, { data, pixelWidth, palette })`. A pixel map
+  is an array of equal-length strings: `.` is transparent, and any other character is a palette key.
+- **Approved by the user on 2026-10-08:** `lit-html` as a frontend dependency (U3), and `node --test`
+  for pure frontend logic (U5 sets it up). Node 24 runs `.ts` files directly, so the test runner adds
+  no dependency. Any other new npm dependency still needs the user's yes.
+- **Seen, not assumed.** Every visual task posts before and after screenshots at game scale, plus a 2×
+  crop of the detail, from `make run` in the built-in browser. "Done" is still `make check` plus `make
+  build`, with the output pasted.
+- **Files under ~400 lines.** If a task would push one over, split it first, in its own commit.
+
+Order: U2 and U3 first, in parallel, because they touch different files. Then U4, which needs both.
+U5 can go any time, since it only touches `bubble.ts`. U6 → U7 → U8 come after U2. U9 → U10 come
+after U3, and U10 also needs U8's `pixels.ts`. U11 only runs if U4 finds that the snapshot's size
+matters on the phone.
+
+- [ ] **U2 — Split `scene.ts` (D01; refactor, no behavior change).** `scene.ts` has 405 lines, over the
+  limit, and U4–U8 all draw in it.
+  - *Move, without editing the logic:* `drawFloor`, `drawRoomDetails` and `drawWall` go to a new
+    `frontend/src/floor.ts` as exported functions that take the `Graphics` and the map, as
+    `furniture.ts` does. The Phaser side of speech bubbles goes to a new `frontend/src/speech.ts`:
+    the `BUBBLE_*` and `TAIL*` constants, building the bubble's container, box and text (now inside
+    `createVisitor`), `tellLine`, `placeSpeech` and `drawBubble`. `bubble.ts` stays pure: placement
+    and pacing, no Phaser.
+  - *Check:* `make check` and `make build`. Run `make run`, then compare the opening room (paused,
+    tick 0) before and after at the same window size. Start the evening and watch one conversation:
+    bubbles still sit over their speaker, stay inside the map and split as before. Remove the D01 row
+    from [PLAN.md](../PLAN.md#tech-debt) in the same commit.
+
+- [ ] **U3 — The sidebar keeps its elements between snapshots (sections that fold, chips that
+  select).** *Cause:* a click is a press and a release on the same element. A snapshot arrives every
+  100 ms and replaces the inspector's `<details>` and the roster's chips (`renderInspector`,
+  `renderRoster` and `renderEvents` set `innerHTML`). When the replacement lands between press and
+  release, the browser fires no click. So "Why this decision?" and "What they know" fold only
+  sometimes, and choosing a guest in the roster is just as unreliable. The buttons that are never
+  re-rendered (Pause, Refill, Save) always work.
+  - *First commit (refactor):* move the inspector out of `dashboard.ts` (376 lines) into a new
+    `frontend/src/inspector.ts`. That means `renderInspector` and the helpers only it uses (`needs`,
+    `carrying`, `visit`, `intention`, `mind`, `seatChoice`, `scoreList`, `knowledge`, `memories`). No
+    behavior change.
+  - *Second commit (the fix, with `lit-html`, approved 2026-10-08):* every clickable element is created
+    once and kept. Snapshots only change what is inside it. Run `npm --prefix frontend install lit-html`
+    and commit the lock file. Render the roster, the inspector and the events with
+    `render(html\`…\`, container)`. Lit keeps the nodes and updates only the bindings that changed. It
+    never touches a `<details>`'s `open` unless that is bound, so the `openDetails` bookkeeping goes
+    away. Lit escapes what it interpolates, so these templates stop calling `escape()`. Model text
+    (thoughts, intentions) then cannot reach the page as HTML by mistake. Delete `escape()` if nothing
+    else uses it.
+  - *Folded by default:* every inspector section starts closed (drop the `open` attributes). A section
+    the user opened or closed stays that way through snapshots and when another guest is selected, so
+    two guests' decisions can be compared. A page reload closes them all again.
+  - *Check:* run an evening at 1× in the built-in browser. Click each summary 10 times: 10 of 10
+    toggle. Click roster chips 10 times: 10 of 10 select. Press a summary and hold it for 300 ms before
+    releasing: it still toggles. In the console, count the replaced sections over 5 s with the same
+    guest selected. Before the fix this is about 50 (one per snapshot); it must now be 0:
+    `let n = 0; new MutationObserver((r) => { n += r.filter((m) => [...m.removedNodes].some((x) => x.nodeName === "DETAILS")).length; }).observe(document.querySelector("#inspector"), { childList: true, subtree: true }); setTimeout(() => console.log(n), 5000);`
+    Then `make check` and `make build`.
+
+- [ ] **U4 — iPhone Safari: taps that land and a screen that holds still.** The user's report: no button
+  can be pressed, and the screen seems to blink nonstop. Needs U2 and U3. The suspects, most likely
+  first:
+  1. *Replaced elements (U3).* A tap lasts longer than a click, and iOS cancels a tap whose element was
+     removed. Re-test after U3 before anything else.
+  2. *Canvas reallocation.* `renderMap` keys its redraw on `JSON.stringify(world.map)`, which changes
+     every few seconds (see the measurements above). Each change resizes the canvas, and on iOS Safari a
+     reallocated canvas can show one blank frame. That is the likely blink. *Fix:* call
+     `scale.resize` only when `width`, `height` or `tile_size` change. Redraw the floor only when what
+     it draws changes (`blocked`, and the kind, cells and size of the objects). Redraw the furniture when
+     its own inputs change (the same, plus `reserved_by`).
+  3. *Snapshot weight.* About 1–2 MB/s of JSON parsed on the phone's main thread. Measure it (next
+     bullet). If it costs frames, do U11.
+  4. *Touch details.* `button:hover` sticks after a tap on iOS: put the hover rules inside `@media
+     (hover: hover)`. Add `touch-action: manipulation` to buttons, chips and summaries.
+  5. *Viewport.* When the toolbar collapses on scroll, iOS fires `resize`, and Phaser's FIT mode then
+     refreshes the canvas. Only confirm whether this happens; fix it only if the timeline shows it.
+  - *Reproduce:* run `make run`, then open Safari in the iOS Simulator at `http://127.0.0.1:5173` (the
+    Simulator shares the Mac's localhost). Attach the Mac's Safari Web Inspector (Develop → Simulator)
+    to record a Timeline (JS time per snapshot, layout and paint) and the WebSocket frame sizes, and
+    check whether `permessage-deflate` was negotiated. The Simulator draws with the Mac's GPU, so a blink
+    may not show there. Then ask the user to check on the real iPhone, against the deployed build or
+    through a temporary `--host` on the LAN (do not commit a change to `vite.config.ts`).
+  - *Done when:* on the user's iPhone every control responds to the first tap, and two minutes of a
+    running evening show no blinking. Fix each confirmed cause in its own commit. In the result
+    paragraph, say which suspects were confirmed and which were not.
+
+- [ ] **U5 — Speech bubbles break at sentences.** Today `splitLine` (`bubble.ts`) cuts a line every 10 words
+  wherever the words fall (see the measurements above).
+  - *Rule:* a piece ends only at a sentence end: `.`, `!`, `?`, `…` or `...`, optionally followed by a
+    closing quote or bracket, then whitespace or the end of the line. Whole sentences share a piece
+    while it stays within `MAX_PIECE_CHARS`. Start at 90 characters, about three lines of the 150 px
+    wrap at 11 px Georgia, and tune that constant by eye, not the rule. Only a sentence longer than the
+    limit is cut, into parts of balanced length at word boundaries, preferring a break right after a
+    comma, semicolon or dash near the cut. Every part but the last ends with "…" and every part but the
+    first starts with "…". Never cut inside a word or leave a one-word tail. A line without punctuation
+    is one sentence, and an empty line gives no pieces.
+  - *Timing:* `chunkMs` counts a piece without the added ellipses, and `MIN_CHUNK_MS` stays. Fewer,
+    fuller pieces than today help, since the server holds a line only `max(min_gap, chars / 15)` game
+    seconds. Reading pace at 2× and 4× speed lags behind the server; that is older and out of scope.
+  - *Cases:* `"Evening. What'll it be?"` → one piece. `"Aye"` → `["Aye"]`. `""` → `[]`.
+    `"Well... I suppose so."` → one piece. The margrave line above → `["The margrave has been abed with
+    a fever for a week,…", "…and the manor kitchen is told to send up nothing but broth.", "Evening."]`,
+    or "Evening." joined to the second piece if it fits. Three sentences of 50 characters each → two
+    pieces of whole sentences.
+  - *Test runner first, in its own commit:* `frontend/tests/` holds `*.test.ts` files that use
+    `node:test` and `node:assert/strict` and import from `../src/<module>.ts` with the extension. The
+    folder sits outside `tsconfig`'s `include`, so `tsc` needs no `@types/node`. `frontend/package.json`
+    gets `"test": "node --test 'tests/**/*.test.ts'"`. Pass the glob: `node --test tests/` treats the
+    folder as a file and fails. `make check` runs `npm --prefix frontend test`. In AGENTS.md, replace
+    "`frontend/` has no unit-test runner" with how to test a pure frontend module this way. CI does
+    not run `make check` (see D14), and changing `.github/` is ask-first: ask the user in the PR, and
+    add a tech-debt row if they say no.
+  - *Then red, then green:* `frontend/tests/bubble.test.ts` holds the cases above as a table, one named
+    test per row, plus a table of `chunkMs` cases. Show it failing against today's `splitLine`, then
+    make it pass. After that, watch a live evening: no bubble ends mid-sentence without "…". Then
+    `make check` and `make build`.
+
+- [ ] **U6 — The door: no black mat, as tall as the wall.** "The black rug" is the door mat. `drawDoor`
+  (`furniture.ts`) paints a dark rounded rectangle with a gold outline on the floor inside the door
+  (`floor.fillStyle(0x41372a)…` and the `strokeRoundedRect` after it). The table rugs are yellow and
+  green, and they stay. The door itself is 26 px tall from `y + 1`, while the stone face of a wall cell
+  runs from `y + 2` to `y + size - 3` (`drawWall`).
+  - *Do:* delete both mat calls and the `floor` parameter, which becomes unused, along with its
+    argument at the call site. Line the door's top and bottom up with the wall stones beside it in the
+    same row, and give it a dark frame on both sides so it reads as set into the wall. Keep its width
+    (1.6 cells, centred on the door cell), its planks and its handle, scaled to the new height. If the
+    door looks right only when it covers the whole cell, including the wall's dark base, do that and
+    say why.
+  - *Check:* before and after screenshots of the south wall at game scale and at 2×. Then `make check`
+    and `make build`.
+
+- [ ] **U7 — A fireplace that reads as one.** `drawFireplace` draws a grey rounded box, a dark rectangle
+  and three orange ellipses. At game scale it looks like an egg in a box. The fireplace is the `fireplace`
+  object at (9, 0), three cells wide, in the north wall, opening south (`hearthFacing`). A flickering
+  glow on the floor exists already (`drawHearthGlow`).
+  - *First commit (refactor):* `hearthFacing`, `drawFireplace` and `drawHearthGlow` move to a new
+    `frontend/src/hearth.ts`.
+  - *Then experiment:* draw two or three variants in Phaser `Graphics`, combining what makes a hearth
+    readable from above:
+    - a stone surround made of separate stones (irregular blocks, mortar lines, lighter top edges),
+      wider than the opening, with a dark timber mantel on the wall side;
+    - a deep, soot-black firebox;
+    - two or three crossed logs with lighter end rings;
+    - flames as three to five teardrop tongues, red through orange to yellow, each with its own phase,
+      their height flickering by about ±20%, redrawn every frame on their own layer, as `hearthGlow` is;
+    - optionally, embers rising and fading, and a hearthstone on the floor cell in front with andirons
+      or a poker.
+    The drawing reads only the object's cells and `hearthFacing`, so a fireplace on any wall works. The
+    per-frame cost stays small: one clear and a few dozen shapes per hearth.
+  - *Choose:* show the user each variant at game scale with a 2× crop, and ask which one to keep.
+    Delete the others.
+  - *Check:* `make check` and `make build`. The browser's Performance panel shows frame time unchanged
+    within noise.
+
+- [ ] **U8 — Emotes you can read.** Today `showEmote` draws a text glyph (`! ? ✹ ♥ z …`, `EMOTE_GLYPHS`)
+  in 12 px system-ui on a cream box, beside the name. The glyph depends on the device's fonts, the box
+  covers the art, and nothing says what an emote means. The new look is in the mockup's "Emotes over the
+  head".
+  - *Pixels:* a new `frontend/src/pixels.ts` (pure, no Phaser) holds the pixel-map type and
+    `outlined(rows)`: a transparent pixel next to a filled one (four neighbors) becomes outline key `0`.
+    U10 reuses it.
+  - *Emotes:* a new `frontend/src/emotes.ts` holds the six maps (copied from the mockup's `EMOTES`),
+    with `#1b120d` as the outline color. At the scene's `create`, it builds one texture per kind with
+    `textures.generate(…, { pixelWidth: 2 })` and nearest filtering. An `Image` replaces the text. It is
+    centred above the head and above the name, without covering it, and draws below speech bubbles.
+  - *Motion:* when an emote appears or changes kind, it pops in (scale 0 → 1.2 → 1 over about 200 ms),
+    then bobs by 1 px. On `sleep`, the z's rise and fade in a loop. On `waiting`, the dots light one
+    after another (two or three frames each).
+  - *Meaning:* while the pointer is over a guest, the hover line names the emote, for example "Edda ·
+    angry". The words come from a frontend `Record<EmoteKind, string>`: startled, confused, angry, fond,
+    dozing, waiting.
+  - *Delete:* `EMOTE_GLYPHS` and the text object.
+  - *Check:* the emotes come from `show_emote` calls in `attention.py` (alert, from a loud sound),
+    `expression.py` (confused when an action fails, angry over a quarrel or a taken seat, waiting after
+    a long wait, sleep while dozing) and `giving.py` (affection). Show at least four live: the debug
+    panel can force `give` and `doze`. For all six, set an emote in `applySnapshot` with a local hack
+    that is not committed. Post screenshots on the wood floor, on a rug and against a wall. Then `make
+    check` and `make build`.
+
+- [ ] **U9 — Inspector: what matters first, readable type.** Needs U3. The target is the mockup's card,
+  except the inventory, which is U10.
+  - *Backend, test first:* each `minds` entry gains `mood_words`, the server's wording of the mood.
+    `feelings._mood_words` becomes public as `mood_words`, so the client does not copy its
+    thresholds. Test `minds()` in `tests/test_feelings.py` with one parametrized block over the
+    boundaries (8, 3, just above −3, −3, −10). `types.ts` gains `Mind.mood_words` in the same commit.
+  - *Order:* first the header (the guest's south Idle still as a pixelated portrait, the name, what
+    they are doing, and two chips: mood words and drink stage). Next comes "Now": the action and its
+    place, the thought as a quote in serif italic, "Intends" in body text, and the goal as a chip.
+    Then Needs, Carrying, Feelings, People and News. Last come the collapsed sections, closed by
+    default: Character (traits), Why this decision?, What they know, Recent memories, and Debug.
+  - *Needs as satisfaction:* show `Math.round((100 - urgency) / 20)` of five pips, so a full bar means
+    a content guest. The labels are Thirst, Bladder, Energy (fatigue), Company (social) and Fun
+    (boredom). Zero or one pip is red, two amber, three to five green, with the words desperate, very
+    low, low, fine, good, full. Show no numbers. The exact urgency goes in the `title` and in Debug.
+  - *Feelings:* thoughts with the same text merge into one row with "×n" and the summed mood. The
+    seconds left move to Debug.
+  - *People:* each opinion gets a bar from −100 to +100 with the familiarity word under the name.
+  - *News:* the topic and the told-as quote. The chain and the confidence move to Debug.
+  - *Debug:* the cell, raw needs, drunkenness %, thought timers, news chains, and the "Give this
+    visitor an action" form, moved in with the same ids and handlers.
+  - *Type:* `style.css` gets tokens for 11, 12, 13, 15 and 24 px, and nothing in the sidebar goes under
+    11 px. Serif is only for the name and the guest's own words. Today's "Intends" paragraph, an
+    unstyled `<p>` that renders at 16 px bold, gets a style.
+  - *Check:* `make check` (the new backend test) and `make build`. Post screenshots beside the mockup:
+    a guest who carries things, one who carries nothing, a departed guest, and the 375 px mobile width.
+
+- [ ] **U10 — Carrying as an inventory.** Needs U8 (`pixels.ts`) and U9.
+  - *Slots:* one slot for each kind in `snapshot.items`, in that order. A carried kind shows its icon at
+    2× and a count when it is above 1. A kind not carried is a dim, empty slot. The tooltip is the
+    server's wording (`items[kind].one` or `many`).
+  - *Icons:* a new `frontend/src/icons.ts` holds the mockup's 16×16 maps for `beer`, `remedy` and
+    `keepsake`, plus `bundle` as the fallback for a kind without a map. The icons are inline SVG built
+    from `outlined` maps, one `<rect>` per pixel with `shape-rendering="crispEdges"`. Coins wait for the
+    economy (Stage 3), and their map is in the mockup ready for it. Icons are keyed by item kind,
+    never by guest.
+  - *Under the slots:* one line for time here, ales tonight, and their own seat (today's "Tonight" and
+    "Own seat" rows).
+  - *Check:* force a `give` so a guest holds two remedies, then post a screenshot. Then `make build`.
+
+- [ ] **U11 — Lighter snapshots (only if U4 shows they matter).** The snapshot is 182 KiB, 10 times a
+  second, per open page. The client never reads `heard` (22 KiB) or `card` (7 KiB). It shows only the
+  last 8 events and only the selected guest's `knowledge.objects` and last 6 memories.
+  - *Options, in order:* (a) confirm `permessage-deflate` on the wire, which gives about 19 KiB per
+    snapshot; (b) send 4 or 5 snapshots a second instead of 10 (the scene already interpolates
+    movement), then check that walking still looks smooth; (c) build the client's actor view from the
+    fields the client reads, so `heard`, `card` and `knowledge.facts` stay on the server. Option (c)
+    changes the snapshot: `runtime.snapshot()` and `types.ts` change together, test first in the
+    runtime's snapshot test. The saved world does not change.
+  - *Check:* a snapshot's size and the iPhone timeline before and after, plus `make check` and `make
+    build`.
+
 ## Order
 
 M1 comes first: E01 is a refactor under the existing tests, and E02–E03 make every later
@@ -1844,6 +2102,11 @@ either order (H3 needs only H1); H4 needs both; H5 comes last. It touches `activ
 `actions.py`, `lifecycle.py` and `invitations.py`, as E21 does, so do not run the two at once.
 Whether it comes before or after E21 is the user's call. H0's `near_person` is what E21's blows
 would build on.
+
+The UI pass (U2–U11) was added 2026-10-08 at the user's request. It is frontend work and can run
+beside any backend task. Only U9's `mood_words` touches `mind/feelings.py`, and only U11 touches the
+snapshot. Its internal order is at the head of its block. U3 and U4 come first, because the app cannot
+be used on a phone until they land.
 
 ## Acceptance scenarios
 
