@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { chunkAt, placeBubble, splitLine } from "./bubble";
-import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawFireplace, drawRugs, drawTable, drawTap, drawToilet, drawWindow, hearthFacing } from "./furniture";
+import { RoomArt } from "./room-art";
 import { shippedPose, spriteOf, stills } from "./sprites";
 import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Mind, Turn, Verb, World, WorldObject } from "./types";
 
@@ -53,32 +53,29 @@ export class TavernScene extends Phaser.Scene {
   private world: World | null = null;
   private activities: Record<Verb, ActivityView> = {};
   private minds: Record<string, Mind> = {};
-  private floor!: Phaser.GameObjects.Graphics;
-  private hearthGlow!: Phaser.GameObjects.Graphics;
-  private furniture!: Phaser.GameObjects.Graphics;
+  private readonly roomArt: RoomArt;
   private route!: Phaser.GameObjects.Graphics;
   private readonly visitors: Map<string, ActorView> = new Map();
-  private mapSignature: string = "";
   private selectedId: string | null = null;
   private editing: boolean = false;
   private ready: boolean = false;
 
   constructor(private readonly callbacks: SceneCallbacks) {
     super("tavern");
+    this.roomArt = new RoomArt(this);
   }
 
   /** Load four cardinal stills for every shipped pose of every character sprite. */
   preload(): void {
     for (const still of stills()) this.load.image(still.key, still.url);
+    this.roomArt.preload();
   }
 
   /** Create rendering layers and map pointer events to server cell coordinates. */
   create(): void {
     for (const still of stills()) this.textures.get(still.key).setFilter(Phaser.Textures.FilterMode.NEAREST);
-    this.floor = this.add.graphics();
-    this.hearthGlow = this.add.graphics();
-    this.furniture = this.add.graphics();
-    this.route = this.add.graphics();
+    this.roomArt.create();
+    this.route = this.add.graphics().setDepth(5);
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer): void => this.click(pointer));
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer): void => this.hover(pointer));
     this.ready = true;
@@ -121,7 +118,7 @@ export class TavernScene extends Phaser.Scene {
       view.sprite.setAngle(Math.max(view.sway, IDLE_SWAY) * 8 * Math.sin(time / 420 + view.cellX * 1.7 + view.cellY));
       this.placeSpeech(view);
     }
-    this.drawHearthGlow(time);
+    this.roomArt.update(time);
   }
 
   /** Show the piece of the line now due in a bubble over its speaker, inside the map and above the other guests. */
@@ -153,101 +150,8 @@ export class TavernScene extends Phaser.Scene {
     view.speechText.setY(top);
   }
 
-  /** Let firelight flicker on the floor in front of each fireplace. */
-  private drawHearthGlow(time: number): void {
-    this.hearthGlow.clear();
-    if (!this.world) return;
-    const size: number = this.world.map.tile_size;
-    const flicker: number = 0.82 + 0.1 * Math.sin(time / 170) + 0.08 * Math.sin(time / 53);
-    for (const hearth of this.world.map.objects.filter((object: WorldObject): boolean => object.kind === "fireplace")) {
-      // Light spills into the room on the side the fireplace opens to.
-      const [dx, dy]: [number, number] = hearthFacing(hearth, this.world.map.width);
-      const x: number = (hearth.x + (hearth.width ?? 1) / 2 + dx * 0.9) * size;
-      const y: number = (hearth.y + (hearth.height ?? 1) / 2 + dy * 0.9) * size;
-      for (let ring: number = 5; ring > 0; ring -= 1) {
-        this.hearthGlow.fillStyle(0xf5a347, 0.045 * flicker).fillCircle(x, y, ring * size * 0.62 * flicker);
-      }
-    }
-  }
-
   private renderMap(world: World): void {
-    const signature: string = JSON.stringify(world.map);
-    if (signature === this.mapSignature) return;
-    this.mapSignature = signature;
-    this.scale.resize(world.map.width * world.map.tile_size, world.map.height * world.map.tile_size);
-    this.drawFloor(world);
-    this.furniture.clear();
-    for (const object of world.map.objects) this.drawObject(object, world.map.tile_size);
-  }
-
-  private drawFloor(world: World): void {
-    const { width, height, tile_size: size, blocked } = world.map;
-    this.floor.clear();
-    for (let y: number = 0; y < height; y += 1) {
-      for (let x: number = 0; x < width; x += 1) {
-        this.floor.fillStyle([0x896649, 0x936e4d, 0x8d694a][(x + y * 3) % 3]!);
-        this.floor.fillRect(x * size, y * size, size, size);
-        this.floor.lineStyle(1, 0x382f26, 0.23);
-        this.floor.lineBetween(x * size, (y + 1) * size, (x + 1) * size, (y + 1) * size);
-        this.floor.lineBetween((x + (y % 2 ? 0.5 : 0)) * size, y * size, (x + (y % 2 ? 0.5 : 0)) * size, (y + 1) * size);
-        this.floor.lineStyle(1, 0xe2b887, 0.09);
-        this.floor.lineBetween(x * size + 3, y * size + 10, (x + 1) * size - 3, y * size + 10);
-      }
-    }
-    this.drawRoomDetails(size);
-    drawRugs(this.floor, world.map.objects, size);
-    for (const [x, y] of blocked) this.drawWall(x * size, y * size, size);
-    // Doors, windows and the fireplace sit inside the outer wall.
-    for (const object of world.map.objects.filter((item: WorldObject): boolean => ["door", "window", "fireplace"].includes(item.kind))) {
-      for (let dy: number = 0; dy < (object.height ?? 1); dy += 1) {
-        for (let dx: number = 0; dx < (object.width ?? 1); dx += 1) this.drawWall((object.x + dx) * size, (object.y + dy) * size, size);
-      }
-    }
-  }
-
-  private drawRoomDetails(size: number): void {
-    this.floor.fillStyle(0xb9afa0).fillRect(16 * size, size, 3 * size, 3 * size);
-    for (let x: number = 16; x < 19; x += 1) {
-      for (let y: number = 1; y < 4; y += 1) {
-        this.floor.lineStyle(1, 0x777e72, 0.4).strokeRect(x * size, y * size, size, size);
-        this.floor.fillStyle(0x667568, 0.25).fillRect((x + 0.45) * size, (y + 0.45) * size, 4, 4);
-      }
-    }
-    this.floor.fillStyle(0xddd1aa, 0.35).fillRect(2.3 * size, 8.2 * size, 3, size * 0.6);
-    for (const [x, y] of [[2, 2], [10, 2]]) {
-      for (let radius: number = 3; radius > 0; radius -= 1) {
-        this.floor.fillStyle(0xf5ce82, 0.025).fillCircle((x! + 0.5) * size, (y! + 0.5) * size, radius * size);
-      }
-    }
-  }
-
-  private drawWall(x: number, y: number, size: number): void {
-    this.floor.fillStyle(0x332d29);
-    this.floor.fillRect(x, y, size, size);
-    this.floor.fillStyle(0x555048);
-    this.floor.fillRoundedRect(x + 2, y + 2, size - 4, size - 5, 3);
-    this.floor.lineStyle(2, 0x756b5b, 0.55);
-    this.floor.lineBetween(x + 4, y + 3, x + size - 5, y + 3);
-    this.floor.lineStyle(1, 0x292724, 0.5);
-    this.floor.lineBetween(x + size / 2, y + 4, x + size / 2, y + size - 4);
-  }
-
-  private drawObject(object: WorldObject, size: number): void {
-    const x: number = (object.x + 0.5) * size;
-    const y: number = (object.y + 0.5) * size;
-    if (object.kind === "door") { drawDoor(this.furniture, this.floor, object, size); return; }
-    if (object.kind === "window") { drawWindow(this.furniture, object, size); return; }
-    if (object.kind === "fireplace") { drawFireplace(this.furniture, object, size, this.world!.map.width); return; }
-    this.furniture.fillStyle(0x1e1914, 0.32);
-    this.furniture.fillEllipse(x + ((object.width ?? 1) - 1) * size / 2, y + 10, size * (object.width ?? 1) * 0.9, 12);
-    if (object.kind === "tap") drawTap(this.furniture, x, y);
-    if (object.kind === "toilet") drawToilet(this.furniture, x, y);
-    if (object.kind === "chair" || object.kind === "dice_chair") drawChair(this.furniture, x, y, object.facing);
-    if (object.kind === "bar") drawBar(this.furniture, object, size);
-    if (object.kind === "table") { drawTable(this.furniture, object, size); }
-    if (object.kind === "dice_table") drawDiceTable(this.furniture, object, size);
-    if (object.kind === "darts") drawDarts(this.furniture, x, y);
-    if (object.reserved_by) this.furniture.lineStyle(2, 0xe6c88d, 0.75).strokeCircle(x, y, 15);
+    this.roomArt.render(world);
   }
 
   private syncVisitors(world: World, reset: boolean): void {
