@@ -113,11 +113,14 @@ def update_expression(world: Mapping[str, Any]) -> None:
 
 
 def _facing(world: Mapping[str, Any], actor: Mapping[str, Any]) -> str | None:
-    # A sound turns heads before a conversation does; walkers face their steps and the rest keep
-    # their seat's or their task's facing, which the client knows (None).
+    # A brief hand-over holds both eyes, then a sound turns heads before a conversation does; walkers
+    # face their steps and the rest keep their seat's or their task's facing, which the client knows (None).
     if actor["status"] == "walking":
         return None
     origin = (actor["x"], actor["y"])
+    party = _hand_over_party(world, actor)
+    if party:
+        return facing_toward(origin, (party["x"], party["y"]))
     if actor["gaze"]:
         return facing_toward(origin, actor["gaze"]["cell"])
     partner = _focus(world, actor)
@@ -141,6 +144,16 @@ def _focus(world: Mapping[str, Any], actor: Mapping[str, Any]) -> Mapping[str, A
         return people.get(last["speaker"])
     after = members[(members.index(actor["id"]) + 1) % len(members)]
     return people.get(last["addressee"] if last["addressee"] in members else after)
+
+
+def _hand_over_party(world: Mapping[str, Any], actor: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    # Only an action that hands something over names an item (`Action.item`); the giver looks at the
+    # receiver, and the receiver at whoever is holding something out to them.
+    action = actor["action"] or {}
+    if action.get("item"):
+        return next((item for item in world["actors"] if item["id"] == action["target_id"]), None)
+    return next((item for item in world["actors"] if item["status"] == "interacting"
+                 and (item["action"] or {}).get("item") and item["action"]["target_id"] == actor["id"]), None)
 
 
 def check_saved_expression(actor: Mapping[str, Any], world: Mapping[str, Any]) -> None:
