@@ -28,6 +28,6 @@ def probes(jev: Mapping[str, Any], claude_key: str | None) -> dict[str, Callable
         question = Question(system=["Answer with a JSON object."], content='Reply with {"ok": true}.',
                             schema={"type": "object", "properties": {"ok": {"type": "boolean"}},
                                     "required": ["ok"], "additionalProperties": False}, max_tokens=20)
-        config = {"anthropic_api_key": claude_key, "model": "claude-haiku-4-5", "timeout": 30.0, "retries": 0}
+        config = {"anthropic_api_key": claude_key, "model": "claude-haiku-5-5", "timeout": 30.0, "retries": 0}
         return await ask_claude(question, config)
     return {"jev": ask_jev, "claude": ask_claude_once}

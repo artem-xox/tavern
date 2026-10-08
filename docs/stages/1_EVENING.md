@@ -10,8 +10,8 @@ story an observer can retell, with every cause visible in the event log.
   the news; during it they watch and inspect. Debug controls stay, in a debug panel.
 - **Scope:** one evening in the existing hall, four to six guests and one barkeep (B0–B6),
   closing time ends it. No other staff, prices, agreements, or memory between evenings yet.
-- **Models:** Jev scores activities (choice layer); Claude Haiku 4.5
-  (`claude-haiku-4-5`) writes conversation turns, intentions, card extraction, and the
+- **Models:** Jev scores activities (choice layer); Claude Haiku 5.5
+  (`claude-haiku-5-5`) writes conversation turns, intentions, card extraction, and the
   chronicle (mind layer) through structured outputs. Without keys, the labeled local
   policy and scripted lines run instead.
 - **Violence:** shoves, fights, and knockouts with 5–10 new poses. Outcomes come from
