@@ -40,7 +40,7 @@ Test first for everything with a Python seam: core, adapters (with fakes), HTTP.
 
 `frontend/` keeps logic out of Phaser and the DOM. A pure module (`bubble.ts`, `pixels.ts`) is tested
 in `frontend/tests/<module>.test.ts` with `node:test` (Node 24 runs `.ts` directly: import `../src/<module>.ts`
-with the extension, and keep the module free of extensionless imports). Run `npm --prefix frontend test`
+with the extension, and a pure module that imports another one writes `.ts` there too; `tsconfig` allows it). Run `npm --prefix frontend test`
 (`make check` does). Verify the rest with `make check`, `make build`, and by running the app.
 
 ## Architecture

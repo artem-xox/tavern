@@ -2057,7 +2057,7 @@ matters on the phone.
     into the room), so it follows `hearthFacing` to any wall; `tests/hearth.test.ts` pins that for all four.
     Not checked on screen: a fireplace in a wall other than the north one (the hall has only that one).
 
-- [ ] **U8 — Emotes you can read.** Today `showEmote` draws a text glyph (`! ? ✹ ♥ z …`, `EMOTE_GLYPHS`)
+- [x] **U8 — Emotes you can read.** Today `showEmote` draws a text glyph (`! ? ✹ ♥ z …`, `EMOTE_GLYPHS`)
   in 12 px system-ui on a cream box, beside the name. The glyph depends on the device's fonts, the box
   covers the art, and nothing says what an emote means. The new look is in the mockup's "Emotes over the
   head".
@@ -2082,7 +2082,19 @@ matters on the phone.
     that is not committed. Post screenshots on the wood floor, on a rug and against a wall. Then `make
     check` and `make build`.
 
-- [ ] **U9 — Inspector: what matters first, readable type.** Needs U3. The target is the mockup's card,
+  - *Result (2026-10-08):* `pixels.ts` (`outlined`: pads by one pixel and rings the art with key `0`; refuses ragged
+    maps and maps that use `0`) and `emotes.ts` (six 12×12 maps, `emoteFrames`, `emotePalette`, `emoteFrame`,
+    `emoteMotion`, `EMOTE_WORDS`), with 21 tests (`pixels.test.ts`, `emotes.test.ts`), shown red against stubs
+    first. The scene makes one nearest-filtered texture per picture at 2× (`textures.generate`), shows an
+    `Image` centred above the name, pops it in (0 → 1.2 → 1 over 200 ms) and bobs it by one pixel; a sleeper's
+    z's drift up eight pixels and fade in a 2 s loop, and the waiting dots light one after another (three
+    frames, 350 ms each). Near the top edge the emote is kept inside the map. Hovering a guest with an emote
+    names it in the hint line ("Edda · confused"; "startled", "confused", "angry", "fond", "dozing",
+    "waiting"). `EMOTE_GLYPHS` and the text object are gone. `tsconfig` now allows `.ts` extensions in imports,
+    because Node needs them between pure modules; AGENTS.md says so. Seen: all six at once on a local
+    override of the snapshot (nothing committed), on wood, a rug and by a wall; no cream box.
+
+- [x] **U9 — Inspector: what matters first, readable type.** Needs U3. The target is the mockup's card,
   except the inventory, which is U10.
   - *Backend, test first:* each `minds` entry gains `mood_words`, the server's wording of the mood.
     `feelings._mood_words` becomes public as `mood_words`, so the client does not copy its
@@ -2108,6 +2120,23 @@ matters on the phone.
     unstyled `<p>` that renders at 16 px bold, gets a style.
   - *Check:* `make check` (the new backend test) and `make build`. Post screenshots beside the mockup:
     a guest who carries things, one who carries nothing, a departed guest, and the 375 px mobile width.
+
+  - *Result (2026-10-08):* backend: `feelings.mood_words` is public and every `Mind` carries `mood_words`
+    (`types.ts` too); tests for the nine thresholds and for the snapshot, the snapshot one shown red first.
+    Frontend: `mindview.ts` (`needPips`, `needWord`, `needTone`, `mergeThoughts`, `opinionBar`; 24 cases, red
+    against a stub first) and a rewritten `inspector.ts`: the guest's own sprite as a portrait (south Idle,
+    pixelated), the name, the status and two chips (mood words, drink stage); then "Now" (action, place, the
+    thought as a serif quote, Intends, a goal chip); Needs as five pips of satisfaction (Thirst, Bladder, Energy,
+    Company, Fun; red at one pip or none, amber at two, green above; no numbers, the urgency is the tooltip);
+    Carrying (still words; U10 makes slots) with time here, ales and own seat; Feelings with identical thoughts
+    merged ("×2") and no timers; People with a bar from the middle and the familiarity word; News (topic and
+    quote). Closed by default: Character, Why this decision?, What they know, Recent memories, and Debug, which is
+    a static `<details>` in the layout holding the raw urgencies, drunkenness %, path, the intention's trigger,
+    thought timers, news chains and the forced-action form (same ids and handlers). `style.css`: the sidebar uses
+    only 11, 12, 13, 15 and 24 px (measured in the browser: exactly those five sizes), serif only for the name
+    and the guest's own words; the unstyled "Intends" paragraph that rendered at 16 px bold is styled. Seen at
+    desktop width and at 375 px (no overflow). Not done: the rest of the page (header, controls, events) still
+    uses 8–10 px text; the ticket only covers the sidebar.
 
 - [ ] **U10 — Carrying as an inventory.** Needs U8 (`pixels.ts`) and U9.
   - *Slots:* one slot for each kind in `snapshot.items`, in that order. A carried kind shows its icon at

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { EMOTE_KINDS, EMOTE_WORDS, emoteFrame, emoteFrames, emoteMotion, emotePalette } from "./emotes";
 import { drawFloor } from "./floor";
 import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawTable, drawTap, drawToilet, drawWindow } from "./furniture";
 import { drawFireplace, drawFlames, drawHearthGlow } from "./hearth";
@@ -14,11 +15,8 @@ const LOW_POSES: readonly string[] = ["Seated", "Bathroom", ...Object.values(SEA
 /** Even a sober guest fidgets a little; drink adds to it. */
 const IDLE_SWAY = 0.12;
 
-/** Glyph and colour of each emote above a visitor's head. */
-const EMOTE_GLYPHS: Record<EmoteKind, [string, string]> = {
-  alert: ["!", "#c0392b"], confused: ["?", "#2e6f9e"], angry: ["✹", "#b03a2e"],
-  affection: ["♥", "#c2457a"], sleep: ["z", "#5b6c8f"], waiting: ["…", "#6b5a45"],
-};
+/** Where an emote floats, in the guest's own coordinates: centred above their name. */
+const EMOTE_Y = -72;
 
 interface SceneCallbacks {
   select: (actorId: string) => void;
@@ -32,7 +30,10 @@ interface ActorView {
   name: Phaser.GameObjects.Text;
   selection: Phaser.GameObjects.Arc;
   speech: Speech;
-  emote: Phaser.GameObjects.Text;
+  emote: Phaser.GameObjects.Image;
+  /** The kind of emote showing and when it appeared, for its pop-in; null when none. */
+  emoteKind: EmoteKind | null;
+  emoteSince: number;
   targetX: number;
   targetY: number;
   cellX: number;
@@ -72,6 +73,7 @@ export class TavernScene extends Phaser.Scene {
   /** Create rendering layers and map pointer events to server cell coordinates. */
   create(): void {
     for (const still of stills()) this.textures.get(still.key).setFilter(Phaser.Textures.FilterMode.NEAREST);
+    this.makeEmoteTextures();
     this.floor = this.add.graphics();
     this.hearthGlow = this.add.graphics();
     this.furniture = this.add.graphics();
@@ -117,6 +119,7 @@ export class TavernScene extends Phaser.Scene {
       view.container.y += (view.targetY - view.container.y) * blend;
       // Everyone fidgets and drunk guests sway more; each at their own pace, so a table of drinkers does not rock in step.
       view.sprite.setAngle(Math.max(view.sway, IDLE_SWAY) * 8 * Math.sin(time / 420 + view.cellX * 1.7 + view.cellY));
+      this.animateEmote(view, time);
       view.speech.place(view.container.x, view.container.y, this.time.now, this.scale);
     }
     if (this.world) {
@@ -175,9 +178,9 @@ export class TavernScene extends Phaser.Scene {
     const sprite: Phaser.GameObjects.Image = this.add.image(0, sheet.lift, `${character}-Idle-south`).setDisplaySize(sheet.size, sheet.size);
     const name: Phaser.GameObjects.Text = this.add.text(0, -53, actor.name, { fontFamily: "system-ui", fontSize: "11px", color: "#fff4dc", stroke: "#322b24", strokeThickness: 3 }).setOrigin(0.5);
     const speech: Speech = new Speech(this);
-    const emote: Phaser.GameObjects.Text = this.add.text(17, -44, "", { fontFamily: "system-ui", fontSize: "12px", fontStyle: "bold", backgroundColor: "#f4e6c6", padding: { x: 4, y: 1 } }).setOrigin(0.5).setVisible(false);
+    const emote: Phaser.GameObjects.Image = this.add.image(0, EMOTE_Y, "emote-alert-0").setVisible(false);
     const container: Phaser.GameObjects.Container = this.add.container(0, 0, [shadow, selection, sprite, name, emote]);
-    return { container, sprite, name, selection, speech, emote, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south", sway: 0 };
+    return { container, sprite, name, selection, speech, emote, emoteKind: null, emoteSince: 0, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south", sway: 0 };
   }
 
   private updateVisitor(view: ActorView, actor: Actor, size: number, reset: boolean): void {
@@ -210,9 +213,27 @@ export class TavernScene extends Phaser.Scene {
 
   private showEmote(view: ActorView, actor: Actor): void {
     view.emote.setVisible(actor.emote !== null);
-    if (actor.emote === null) return;
-    const [glyph, color] = EMOTE_GLYPHS[actor.emote.kind];
-    view.emote.setText(glyph).setColor(color);
+    if (actor.emote === null) { view.emoteKind = null; return; }
+    if (view.emoteKind !== actor.emote.kind) { view.emoteKind = actor.emote.kind; view.emoteSince = this.time.now; }
+  }
+
+  /** Pop the emote in, bob it, and step its frames; kept inside the map's top edge. */
+  private animateEmote(view: ActorView, time: number): void {
+    if (view.emoteKind === null) return;
+    const motion = emoteMotion(view.emoteKind, time - view.emoteSince, time);
+    view.emote.setTexture(`emote-${view.emoteKind}-${emoteFrame(view.emoteKind, time)}`).setScale(motion.scale).setAlpha(motion.alpha)
+      .setY(Math.max(EMOTE_Y - motion.lift, 16 - view.container.y));
+  }
+
+  /** One nearest-filtered texture per emote picture, drawn from its pixel map at twice its size. */
+  private makeEmoteTextures(): void {
+    for (const kind of EMOTE_KINDS) {
+      emoteFrames(kind).forEach((rows: string[], frame: number): void => {
+        const key: string = `emote-${kind}-${frame}`;
+        this.textures.generate(key, { data: rows, pixelWidth: 2, palette: emotePalette(kind) as Phaser.Types.Create.Palette });
+        this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
+      });
+    }
   }
 
   private actorPose(actor: Actor): string {
@@ -286,6 +307,12 @@ export class TavernScene extends Phaser.Scene {
 
   private hover(pointer: Phaser.Input.Pointer): void {
     if (!this.world) return;
+    for (const view of this.visitors.values()) {
+      if (view.emoteKind !== null && Math.hypot(pointer.x - view.container.x, pointer.y - view.container.y) <= this.world.map.tile_size * 0.65) {
+        this.callbacks.hover(`${view.name.text} · ${EMOTE_WORDS[view.emoteKind]}`);
+        return;
+      }
+    }
     const x: number = Math.floor(pointer.x / this.world.map.tile_size);
     const y: number = Math.floor(pointer.y / this.world.map.tile_size);
     const object: WorldObject | undefined = this.world.map.objects.find((item: WorldObject): boolean => x >= item.x && x < item.x + (item.width ?? 1) && y >= item.y && y < item.y + (item.height ?? 1));

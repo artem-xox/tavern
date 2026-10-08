@@ -1,7 +1,7 @@
 import { clock } from "./clock";
 import { html, render } from "lit-html";
 import { repeat } from "lit-html/directives/repeat.js";
-import { renderInspector } from "./inspector";
+import { renderDebug, renderInspector } from "./inspector";
 import type { ActivityView, Actor, Command, Conversation, ItemView, Mind, ServiceHealth, Snapshot, Verb, World, WorldEvent, WorldObject } from "./types";
 
 interface Handlers {
@@ -133,7 +133,8 @@ export class Dashboard {
           <section class="events-card"><div class="section-heading"><h3>From the room</h3><span class="muted">Recent world events</span></div><ol id="events" class="event-list"></ol></section>
         </div>
         <aside class="sidebar"><section class="inspector-card"><div class="section-heading"><h3>Inside a visitor's mind</h3><span class="small-tag">INSPECTOR</span></div><p id="inspector-empty" class="empty">Select a visitor in the room.</p><div id="inspector"></div>
-          <div class="force-action"><label for="force-verb">Give this visitor an action</label><div class="force-row"><select id="force-verb" data-control></select><button id="force" data-control>Go →</button></div><select id="force-target" data-control aria-label="Action target"></select><select id="force-item" data-control aria-label="Item to hand over" hidden></select><p class="helper">The server checks the route, availability, and resources.</p></div>
+          <details id="debug-detail"><summary><span>Debug</span><span id="debug-cell"></span></summary><div class="detail-body"><div id="debug-readout"></div>
+          <div class="force-action"><label for="force-verb">Give this visitor an action</label><div class="force-row"><select id="force-verb" data-control></select><button id="force" data-control>Go →</button></div><select id="force-target" data-control aria-label="Action target"></select><select id="force-item" data-control aria-label="Item to hand over" hidden></select><p class="helper">The server checks the route, availability, and resources.</p></div></div></details>
         </section><div class="ai-card"><span id="ai-mode" class="ai-badge">Local · offline policy</span> <span id="ai-writer" class="ai-badge">Scripted lines</span><p id="mode-caption">Waiting for the decision engine.</p></div></aside>
       </div><footer class="page-footer"><span>THE LAST INN <b>✦</b> AN AUTONOMOUS TAVERN</span><span>Observe → decide → walk → act</span></footer>`;
   }
@@ -208,10 +209,13 @@ export class Dashboard {
     const actor: Actor | undefined = [...this.world?.actors ?? [], ...this.world?.departed ?? []].find((item: Actor): boolean => item.id === this.selectedId);
     if (!actor || !this.world) return;
     element(this.root, "#inspector-empty").hidden = true;
-    renderInspector(element(this.root, "#inspector"), actor, {
+    const context = {
       world: this.world, activities: this.activities, items: this.items, minds: this.minds, intentions: this.intentions,
       departed: this.departed(actor), status: this.activity(actor), color: this.actorColor(actor),
-    });
+    };
+    renderInspector(element(this.root, "#inspector"), actor, context);
+    renderDebug(element(this.root, "#debug-readout"), actor, context);
+    element(this.root, "#debug-cell").textContent = `cell ${actor.x}, ${actor.y}`;
   }
 
   private renderEvents(events: WorldEvent[]): void {
