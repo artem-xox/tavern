@@ -39,6 +39,9 @@ making a unique image for actions that look the same.
   and `leave` before departure can use Idle. Walking is a single still until
   animation is deliberately added.
 - `wait` → **Idle**. Idle also covers thinking and standing between actions.
+- `doze` → **SleepingSeated**, head down on the table in the guest's own seat, shipped for all seven
+  sprites (the bartender never sleeps, but ships it so every sheet lists the same poses). A sprite
+  without it is drawn **Seated**, never standing.
 
 The `seating` candidate in `backend/tavern/agents.py` chooses a seat; it is
 not an additional action verb or pose. “Walking” is an actor status rather

@@ -11,7 +11,7 @@ export interface SpriteSheet {
 }
 
 const DIRECTIONS: readonly string[] = ["north", "south", "east", "west"];
-const ALL_POSES: readonly string[] = ["Idle", "Seated", "Darts", "Bathroom", "Drinking", "DrinkingSeated", "TalkingSeated", "TakeBeer", "Walking", "Talking", "Giving", "GivingSeated", "Receiving", "ReceivingSeated"];
+const ALL_POSES: readonly string[] = ["Idle", "Seated", "Darts", "Bathroom", "Drinking", "DrinkingSeated", "TalkingSeated", "TakeBeer", "Walking", "Talking", "Giving", "GivingSeated", "Receiving", "ReceivingSeated", "SleepingSeated"];
 
 /** Character stills shipped under /characters; an unknown guest looks like Saye. */
 const SPRITES: Readonly<Record<string, SpriteSheet>> = {
@@ -36,7 +36,11 @@ export function spriteOf(actor: Actor): { name: string; sheet: SpriteSheet } {
   return { name, sheet: SPRITES[name]! };
 }
 
-/** The pose to draw: the wanted one when the sprite ships it, otherwise Idle rather than a missing image. */
+/**
+ * The pose to draw: the wanted one when the sprite ships it. A seated pose it lacks falls back to Seated, so a
+ * guest stays in their chair; anything else to Idle rather than a missing image.
+ */
 export function shippedPose(sheet: SpriteSheet, wanted: string): string {
-  return sheet.poses.includes(wanted) ? wanted : "Idle";
+  if (sheet.poses.includes(wanted)) return wanted;
+  return wanted.endsWith("Seated") && sheet.poses.includes("Seated") ? "Seated" : "Idle";
 }
