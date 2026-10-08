@@ -15,6 +15,9 @@ from tavern.mind.questions import Question
 HAIKU_4_5 = Tariff(input=1.0, output=5.0, cache_read=0.10, cache_write=1.25)
 # The API allows at most four cache breakpoints per request; every system block takes one.
 _MAX_BREAKPOINTS = 4
+# How much of the API's own error message an HTTP failure carries: enough to name the cause (an unknown
+# model, a rejected field), short enough for a log line and the health banner.
+_DETAIL_LENGTH = 200
 
 
 class ClaudeError(RuntimeError):
@@ -73,6 +76,14 @@ def _request(question: Question, model: str) -> dict[str, Any]:
             "output_config": {"format": {"type": "json_schema", "schema": question["schema"]}}}
 
 
+def _api_message(error: anthropic.APIStatusError) -> str:
+    # The API's own words, from the error body; the SDK's `message` wraps them in the whole body.
+    body = error.body
+    inner = body.get("error") if isinstance(body, dict) else None
+    text = inner.get("message") if isinstance(inner, dict) else None
+    return text.strip()[:_DETAIL_LENGTH] if isinstance(text, str) else ""
+
+
 async def _send(client: anthropic.AsyncAnthropic, request: Mapping[str, Any]) -> Any:
     try:
         return await client.messages.create(**request)
@@ -81,7 +92,9 @@ async def _send(client: anthropic.AsyncAnthropic, request: Mapping[str, Any]) ->
     except anthropic.APIStatusError as error:
         if error.status_code == 400 and "credit balance" in str(error.message).lower():
             raise ClaudeError("Claude account has no credit", 402) from error
-        raise ClaudeError(f"Claude HTTP {error.status_code}", error.status_code) from error
+        detail = _api_message(error)
+        raise ClaudeError(f"Claude HTTP {error.status_code}" + (f": {detail}" if detail else ""),
+                          error.status_code) from error
     except anthropic.APIConnectionError as error:
         raise ClaudeError("Claude connection failed") from error
 

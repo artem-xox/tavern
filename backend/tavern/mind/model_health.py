@@ -70,13 +70,15 @@ def judge(recent: Sequence[str | None]) -> Health:
 class HealthBoard:
     """The health of each service, kept from the calls made to it and from probes."""
 
-    def __init__(self, keyed: Mapping[str, bool]) -> None:
+    def __init__(self, keyed: Mapping[str, bool], log: Callable[[str], None] = lambda line: None) -> None:
         """Create a board.
 
         Args:
             keyed: Per service in `SERVICES`, whether its key reached the environment. One without
                 stays `no_key` whatever is recorded.
+            log: Receives one line per failed call, so a failure leaves a trace beyond the banner.
         """
+        self._log = log
         self._keyed = dict(keyed)
         self._recent: dict[str, deque[str | None]] = {name: deque(maxlen=WINDOW) for name in SERVICES}
         self._last_error: dict[str, str] = {}
@@ -88,9 +90,13 @@ class HealthBoard:
             service: One of `SERVICES`.
             error: What the call raised, or None when it worked.
         """
-        self._recent[service].append(None if error is None else classify(error))
-        if error is not None:
-            self._last_error[service] = str(error)
+        if error is None:
+            self._recent[service].append(None)
+            return
+        status = classify(error)
+        self._recent[service].append(status)
+        self._last_error[service] = str(error)
+        self._log(f"{service} failed ({status}): {error}")
 
     async def probe(self, service: str, call: Callable[[], Awaitable[object]]) -> Health:
         """Make one cheap call to a service and record how it went.
@@ -127,8 +133,11 @@ class HealthBoard:
                 report[name] = {"status": "no_key", "reason": "No key in the environment"}
                 continue
             health = judge(list(self._recent[name]))
-            if health["status"] not in ("ok", "checking") and not health["reason"]:
-                health["reason"] = self._last_error.get(name, "")
+            last = self._last_error.get(name, "")
+            if health["status"] == "degraded" and last:
+                health["reason"] += f"; last: {last}"
+            elif health["status"] not in ("ok", "checking") and not health["reason"]:
+                health["reason"] = last
             report[name] = health
         return report
 
