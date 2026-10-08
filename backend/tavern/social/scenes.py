@@ -179,6 +179,21 @@ def side_by_side(world: Mapping[str, Any], actor: Mapping[str, Any], other: Mapp
     return near and _by_a_view(world, actor) and _by_a_view(world, other)
 
 
+def within_reach(world: Mapping[str, Any], actor: Mapping[str, Any], other: Mapping[str, Any]) -> bool:
+    """Tell whether two visitors are close enough to chat, hand something over or come to blows.
+
+    Args:
+        world: Current world.
+        actor: One visitor.
+        other: The other visitor.
+
+    Returns:
+        True when they sit at one table, or stand side by side (see `side_by_side`).
+    """
+    table = table_of(world, actor)
+    return (table is not None and table == table_of(world, other)) or side_by_side(world, actor, other)
+
+
 def start_conversation(world: World, actor: Actor, partner: Mapping[str, Any]) -> Conversation:
     """Open a scene between a visitor and a partner free to talk.
 
