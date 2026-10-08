@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" shape-rendering="crispEdges">
+  <title>Ale mug</title>
+  <rect width="64" height="64" rx="12" fill="#1d2b22"/>
+  <path d="M41 23h9v3h4v18h-4v4h-9v-6h7V29h-7z" fill="#d0a35f"/>
+  <path d="M13 20h32v31h-4v4H17v-4h-4z" fill="#8c572e"/>
+  <path d="M17 25h24v25h-4v2H21v-2h-4z" fill="#d08d3e"/>
+  <path d="M20 27h5v21h-5zM35 27h4v20h-4z" fill="#eeb763"/>
+  <path d="M13 19h5v-5h6v3h5v-6h8v5h5v-3h5v6h3v8h-5v3H17v-3h-4z" fill="#f3dfaa"/>
+  <path d="M18 22h6v3h-6zM33 20h7v3h-7z" fill="#fff0c7"/>
+  <path d="M15 52h31v4H15z" fill="#674b30"/>
+</svg>
