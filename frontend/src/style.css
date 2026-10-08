@@ -86,8 +86,9 @@ button.primary { border-color: #b69a5e; background: #4a4a2c; color: #f4dfae; fon
 .small-tag { font-size: var(--t-label); letter-spacing: 1px; color: #b4b796; border: 1px solid #4b5342; padding: 3px 6px; border-radius: 4px; }
 .inspector-card .empty { font-size: var(--t-body); }
 .who { display: flex; gap: 14px; align-items: center; margin-bottom: 18px; }
-.portrait { width: 64px; height: 64px; flex-shrink: 0; border-radius: 32px 32px 8px 8px; border: 1px solid var(--visitor); background: radial-gradient(circle at 50% 70%, #3a4a37, #26332a); overflow: hidden; display: grid; place-items: center; }
-.portrait img { width: 96px; height: 96px; image-rendering: pixelated; margin-top: 18px; }
+.portrait { width: 64px; height: 64px; flex-shrink: 0; border-radius: 32px 32px 8px 8px; border: 1px solid var(--visitor); background: radial-gradient(circle at 50% 70%, #3a4a37, #26332a); overflow: hidden; position: relative; }
+/* The sprite is 68 px with the head at the top middle: 128 px wide, shifted so the head sits in the middle of the arch. */
+.portrait img { position: absolute; left: -32px; top: -2px; width: 128px; height: 128px; image-rendering: pixelated; }
 .who h2 { font-size: var(--t-name); line-height: 1.1; }
 .doing { color: var(--text-2); font-size: var(--t-small); margin-top: 4px; }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
