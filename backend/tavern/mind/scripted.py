@@ -32,7 +32,8 @@ PLACE_LINES: Mapping[str, str] = MappingProxyType({
     "tap": "The ale's at the tap, by the bar.", "toilet": "The WC is past the tables.",
     "darts": "There's a darts board here."})
 INVITE_LINES: Mapping[str, str] = MappingProxyType({
-    "join_table": "Come sit at my table, {name}.", "darts_together": "Fancy a round of darts?",
+    "join_table": "Come sit at my table, {name}.", "move_together": "Shall we find a table of our own, {name}?",
+    "darts_together": "Fancy a round of darts?",
     "dice_together": "Care for a game of dice, {name}?",
     "buy_drink": "Let me buy you an ale.", "leave_together": "Shall we walk home together?"})
 
@@ -180,13 +181,15 @@ def _disliked(view: Mapping[str, Any]) -> bool:
 
 def _invitation(view: Mapping[str, Any]) -> str | None:
     # What the speaker would like company for, among the kinds on offer: walking home after a long
-    # stay, dice when bored and bold, darts when merely bored, a table when lonely, else an ale for the other. Views written for
+    # stay, dice when bored and bold, darts when merely bored, a table (theirs, or one of their own) when lonely, else an
+    # ale for the other. Views written for
     # scenes before invitations existed offer none.
     offered, me = view.get("invitations", []), view["speaker"]
     wishes = [("leave_together", me["visit"]["seconds"] >= LONG_STAY),
               ("dice_together", me["needs"]["boredom"] >= BORED and me["traits"].get("courage", 0.5) >= BOLD),
               ("darts_together", me["needs"]["boredom"] >= BORED),
-              ("join_table", me["needs"]["social"] >= 50), ("buy_drink", True)]
+              ("join_table", me["needs"]["social"] >= 50), ("move_together", me["needs"]["social"] >= 50),
+              ("buy_drink", True)]
     return next((kind for kind, wished in wishes if wished and kind in offered), None)
 
 
@@ -194,7 +197,7 @@ def _answer(kind: str, me: Mapping[str, Any]) -> str:
     # An ale is always welcome; the rest are accepted when the invitee wants what they offer.
     needs = me["needs"]
     wanted = {"buy_drink": True, "darts_together": needs["boredom"] >= 30, "dice_together": needs["boredom"] >= 30,
-              "join_table": needs["social"] >= CONTENT,
+              "join_table": needs["social"] >= CONTENT, "move_together": needs["social"] >= CONTENT,
               "leave_together": me["visit"]["seconds"] >= LONG_STAY}
     return "accept" if wanted[kind] else "decline"
 

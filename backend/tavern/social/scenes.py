@@ -1,7 +1,7 @@
 """Conversation scenes: who talks together, who may join, and when someone leaves or the scene ends.
 
-A scene lives in `world["conversations"]`. It is held at a table (`table_id`) by seated tablemates, or
-standing (`table_id` None) by guests side by side in a line or by a view. Members keep their own
+A scene lives in `world["conversations"]`. It is held at a table (`table_id`) by guests seated at it or
+standing by it, or standing (`table_id` None) by guests side by side in a line or by a view. Members keep their own
 actions: whoever started or joined it holds `talk` or `join_conversation`, which the scene, not a
 timer, ends. When the next turn is spoken is `tavern.social.turns`' business; what an act does is
 `tavern.social.conversation`'s.
@@ -99,6 +99,26 @@ def table_of(world: Mapping[str, Any], actor: Mapping[str, Any]) -> str | None:
     return seat.get("table_id") if seat else None
 
 
+def at_table(world: Mapping[str, Any], actor: Mapping[str, Any]) -> str | None:
+    """Tell at which table a visitor is, seated or standing by it.
+
+    Args:
+        world: Current world.
+        actor: Visitor.
+
+    Returns:
+        The table ID of their seat, else of the table on one of whose spots they stand, having arrived
+        (the place to stand and talk with those seated there), else None.
+    """
+    if actor.get("seat_id"):
+        return table_of(world, actor)
+    if actor["path"]:
+        return None  # Still on the way: passing a spot is not standing at it.
+    cell = [actor["x"], actor["y"]]
+    return next((str(item["id"]) for item in world["map"]["objects"]
+                 if item["kind"] == "table" and cell in item["interaction_spots"]), None)
+
+
 def pressed(world: Mapping[str, Any], actor: Mapping[str, Any]) -> bool:
     """Tell whether a need presses on a visitor too hard for a new conversation.
 
@@ -179,6 +199,22 @@ def side_by_side(world: Mapping[str, Any], actor: Mapping[str, Any], other: Mapp
     return near and _by_a_view(world, actor) and _by_a_view(world, other)
 
 
+def within_reach(world: Mapping[str, Any], actor: Mapping[str, Any], other: Mapping[str, Any]) -> bool:
+    """Tell whether two visitors are close enough to chat, hand something over or come to blows.
+
+    Args:
+        world: Current world.
+        actor: One visitor.
+        other: The other visitor.
+
+    Returns:
+        True when they are at one table, seated or standing by it (see `at_table`), or stand side by side
+        (see `side_by_side`).
+    """
+    table = at_table(world, actor)
+    return (table is not None and table == at_table(world, other)) or side_by_side(world, actor, other)
+
+
 def start_conversation(world: World, actor: Actor, partner: Mapping[str, Any]) -> Conversation:
     """Open a scene between a visitor and a partner free to talk.
 
@@ -193,7 +229,7 @@ def start_conversation(world: World, actor: Actor, partner: Mapping[str, Any]) -
     count = sum(item["type"] == "conversation" for item in actor["memory"])
     scene: Conversation = {
         "id": f"conversation-{world['next_conversation_id']}", "participants": [actor["id"], partner["id"]],
-        "table_id": table_of(world, actor), "topic": TOPICS[count % len(TOPICS)], "turns": [],
+        "table_id": at_table(world, actor), "topic": TOPICS[count % len(TOPICS)], "turns": [],
         "started_at": world["time"], "next_turn_at": world["time"] + world["rules"]["conversation"]["opening"],
         "writing": None, "written": None, "invitation": None}
     world["next_conversation_id"] += 1
@@ -316,7 +352,7 @@ def _drop_departed(world: World, scene: Conversation) -> None:
 
 def _still_there(world: Mapping[str, Any], scene: Conversation, actor: Mapping[str, Any]) -> bool:
     if scene["table_id"] is not None:
-        return table_of(world, actor) == scene["table_id"]
+        return at_table(world, actor) == scene["table_id"]
     people = {item["id"]: item for item in world["actors"]}
     return any(side_by_side(world, actor, people[other]) for other in scene["participants"]
                if other != actor["id"] and other in people)

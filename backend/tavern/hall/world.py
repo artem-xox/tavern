@@ -29,6 +29,7 @@ from tavern.social.dice import settle_games
 from tavern.social.commitments import promises_of, settle_commitments
 from tavern.social.errands import honor_invitations
 from tavern.social.invitations import errand_parties, invitations_of
+from tavern.social.tables import mark_ownership
 from tavern.social.scenes import check_conversations
 from tavern.social.thoughts import forget_expired
 from tavern.social.turns import speak_turns
@@ -40,7 +41,8 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> World:
     Args:
         map_data: Flat room definition with geometry, objects, and initial actors. An optional
             `arrival` section maps needs to [low, high] ranges: visitors then arrive with needs
-            drawn from them and look around the hall as they come in.
+            drawn from them and look around the hall as they come in. An optional `table_manners` (true or
+            false, default false) asks guests to mind whose table is whose (`rules.manners`).
         seed: Saved deterministic seed of the evening's arrivals and decision policy.
 
     Returns:
@@ -58,10 +60,15 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> World:
               for item in (listed if ranges is None else arriving(listed, ranges, seed))]
     if len({(item["x"], item["y"]) for item in actors}) != len(actors):
         raise ValueError("Actors cannot overlap at startup")
-    world = World(schema_version=14, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
+    rules = default_rules()
+    manners = map_data.get("table_manners", False)
+    if type(manners) is not bool:
+        raise ValueError(f"The layout's table_manners must be true or false, not {manners!r}")
+    rules["manners"]["table_intrusion"] = manners
+    world = World(schema_version=15, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
                   map=world_map, actors=actors, departed=[], expected=[], closes_at=None,
                   events=[], stimuli=[], next_stimulus_id=0, conversations=[], next_conversation_id=0,
-                  commitments=[], invitations=[], news=[], rules=default_rules())
+                  commitments=[], invitations=[], news=[], rules=rules)
     check_lines(world)
     for actor in actors:
         look(world, actor)
@@ -96,7 +103,8 @@ def start_action(world: World, actor_id: str, action: Mapping[str, Any]) -> dict
     if reason:
         notice_target(world, actor, action)
         return reject(world, actor, reason)
-    if ACTIVITIES[action["verb"]].partner and line_of(world, actor_id) is not None:
+    activity = ACTIVITIES[action["verb"]]
+    if activity.partner and not activity.approaches and line_of(world, actor_id) is not None:
         return talk_in_line(world, actor, action)
     if must_wait(world, actor, action):
         return line_up(world, actor, action, cutting)
@@ -172,7 +180,7 @@ def observe_actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
         actor_id: Visitor making the observation.
 
     Returns:
-        Own actor state, known object records, personal memories, map bounds, visible
+        Own actor state, known object records (chairs marked with whose seat they are, tables with whose table), personal memories, map bounds, visible
         cells, whether the inn has closed, the rules of giving, and who is on an errand (`on_errands`). Unseen resource changes remain
         remembered historical values.
 
@@ -183,7 +191,9 @@ def observe_actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
     if actor is None:
         raise ValueError("Unknown visitor")
     visible = look(world, actor)
-    return {"actor": deepcopy(actor), "objects": deepcopy(list(actor["knowledge"]["objects"].values())),
+    objects = deepcopy(list(actor["knowledge"]["objects"].values()))
+    mark_ownership(world, actor, objects)
+    return {"actor": deepcopy(actor), "objects": objects,
             "visitors": _visible_visitors(world, actor),
             "memory": deepcopy(actor["memory"][-10:]), "visible_cells": visible, "time": world["time"],
             "invitations": invitations_of(world, actor), "promises": promises_of(world, actor_id),

@@ -113,7 +113,7 @@ ACTS: Mapping[str, Act] = MappingProxyType({
                            "a quarrel that ends the conversation"),
     "apologize": Act(social_acts.apologize, "apologize to the addressee (everyone, if nobody in particular) "
                                             "for a wrong; it halves the latest grudge each holds against the "
-                                            "speaker"),
+                                            "speaker and warms them a little to the speaker"),
     "agree": Act(social_acts.agree, "agree with the addressee (or whoever spoke last); they think a little "
                                     "better of the speaker"),
     "disagree": Act(social_acts.disagree, "disagree with the addressee (or whoever spoke last); they think a "
@@ -122,7 +122,8 @@ ACTS: Mapping[str, Act] = MappingProxyType({
                                       "offered `invitation` kinds: join_table (come and sit at the speaker's "
                                       "table), darts_together (play darts together), dice_together (play a "
                                       "game of dice at the dice table), buy_drink (the speaker "
-                                      "fetches them an ale), leave_together (walk home together). It waits "
+                                      "fetches them an ale), leave_together (walk home together), move_together "
+                                      "(move to a free table of their own together). It waits "
                                       "for the addressee's answer"),
     "promise": Act(commitments.promise, "promise the addressee, someone with a table of their own, to come and sit "
                                         "with them there soon; the game checks it, and the addressee thinks the better "

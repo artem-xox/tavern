@@ -60,10 +60,8 @@ def _table_of(observation: Observation, person_id: str | None) -> str | None:
 
 
 def _talks_to(observation: Observation, action: Mapping[str, Any], goal: Goal) -> bool:
-    if action["verb"] in ("talk", "join_conversation"):
-        return action["target_id"] == goal["target"]
-    # Taking a chair at their table puts them within reach of a chat.
-    return _sits_with(observation, action, goal)
+    # Walking over to someone at another table is the way to a word with them; a chair at their table is not.
+    return action["verb"] in ("talk", "join_conversation", "approach") and action["target_id"] == goal["target"]
 
 
 def _sits_with(observation: Observation, action: Mapping[str, Any], goal: Goal) -> bool:

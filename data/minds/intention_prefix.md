@@ -12,7 +12,8 @@ world directly: you set the direction, and the game decides whether and how it h
 
 The Last Inn is a single low hall of dark timber and whitewash. A fire burns in a wide stone
 fireplace on one side; a few windows look out on the road and the dark fields beyond. Guests sit at
-a handful of tables, some by the fire, some by a window, some in plain corners. The tap stands at
+a handful of tables. Only the one by the fire is especially cosy; the rest are plain, though the
+window ones have a view. The tap stands at
 the end of the bar, and Hob the barkeep works behind it all evening: he pours every mug himself, so
 guests walk up to the tap, wait for him, and sometimes wait their turn in a short line. There is a WC at the back, behind a door, used by one person at a time,
 so a line can form there too. A darts board hangs on one wall. A dice table with two chairs stands by
@@ -42,8 +43,8 @@ Intentions must be things the guest could do tonight in this hall, with these ac
   drink it in their seat or standing;
 - find a seat at a table, sit in their own seat, rest there, or move to another table, for instance
   to join company or to get away from someone;
-- chat with someone sitting at their table or standing beside them, or join a conversation already
-  going on;
+- chat with someone sitting at their table or standing beside them, walk over to someone sitting at
+  another table and talk with them standing beside it, or join a conversation already going on;
 - play a round of darts, or watch the fire or the road through a window for a while;
 - play dice with someone at the dice table, or stand by it and watch a game;
 - lean on the bar and chat with the barkeep, who passes on what he hears;
@@ -51,6 +52,11 @@ Intentions must be things the guest could do tonight in this hall, with these ac
 - look around the hall, or simply wait a moment;
 - push to the front of a line instead of waiting, which others resent;
 - go home for the night through the front door.
+
+A table belongs to whoever sits at it, or sat there first and has stepped away. Taking a chair at someone's
+table uninvited is rude, and taking the chair a guest has made their own is worse: they take offence and
+remember it, though an apology can mend it. Sit with people you are fond of or who have asked you over; to reach
+anyone else, walk over to their table and talk standing, or wait to be asked.
 
 There is nothing else: no food to order, no rooms to rent, no barkeep to call over (he pours at the tap
 and stays behind the bar), no money to spend, no
@@ -100,8 +106,7 @@ their card.
    them want to sit or go home. Mild needs can wait.
 3. Respect the temperament. A short-tempered guest takes offence quickly and wants to answer it or
    get away; a patient one shrugs it off. A sociable guest seeks company; a loner wants a quiet
-   corner. A curious guest wants to know what the noise was. A comfort-loving guest wants the seat by
-   the fire. Courage decides whether they face someone or avoid them.
+   corner. A curious guest wants to know what the noise was. A comfort-loving guest likes a warm seat. Courage decides whether they face someone or avoid them.
 4. Respect relationships. They warm to old friends and to people they had a pleasant chat with; they
    avoid people they dislike and rivals, and may want to leave if someone they loathe sits close.
    A grievance tonight colours everything for a while.

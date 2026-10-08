@@ -11,6 +11,7 @@ import httpx
 import pytest
 
 from tavern.mind.agents import Evaluators, build_candidates, build_seat_candidates, choose_action
+from tavern.mind.local_policy import local_seat_scores
 from tavern.adapters.jev import JevError, evaluate_actions, evaluate_seats
 from tavern.hall.world import create_world, observe_actor
 from tavern.social.thoughts import THOUGHTS
@@ -30,6 +31,9 @@ def view(objects: list[dict[str, Any]] | None = None, needs: dict[str, float] | 
 def company(seat_id: str, table_id: str) -> dict[str, Any]:
     """Describe Bea, seen seated at a table."""
     return {"id": "bea", "name": "Bea", "x": 5, "y": 3, "seat_id": seat_id, "table_id": table_id, "available": True}
+
+
+FRIEND = {"bea": {"name": "Bea", "opinion": 40.0, "familiarity": "friend"}}
 
 
 def seat(seat_id: str, appeal: float = 0.0, **fields: Any) -> dict[str, Any]:
@@ -124,16 +128,39 @@ def test_seats_are_one_seating_choice_until_a_visitor_owns_one(
 ])
 def test_seated_visitor_may_move_only_to_join_company(seats: list[dict[str, Any]], visitors: list[dict[str, Any]],
                                                       expected: list[str]) -> None:
-    candidates = build_candidates(view(seats, visitors=visitors, favorite_seat_id="own"))
+    candidates = build_candidates(view(seats, visitors=visitors, favorite_seat_id="own", relations=FRIEND))
     assert [action["id"] for action in candidates if action["verb"] in ("seating", "sit")] == expected
+
+
+@pytest.mark.parametrize("relations", [
+    pytest.param({}, id="a-stranger"),
+    pytest.param({"bea": {"name": "Bea", "opinion": 9.0, "familiarity": "acquaintance"}}, id="an-acquaintance"),
+    pytest.param({"bea": {"name": "Bea", "opinion": -30.0, "familiarity": "acquaintance"}}, id="someone-disliked"),
+])
+def test_seated_visitor_does_not_move_to_a_table_of_company_they_do_not_like(relations: dict[str, Any]) -> None:
+    seats = [seat("own", table_id="alone"), seat("free", table_id="shared"),
+             seat("busy", table_id="shared", reserved_by="bea")]
+    candidates = build_candidates(view(seats, visitors=[company("busy", "shared")], favorite_seat_id="own",
+                                       relations=relations))
+    assert [action["id"] for action in candidates if action["verb"] in ("seating", "sit")] == ["sit:own"]
 
 
 def test_lonely_visitor_moves_to_sit_with_company() -> None:
     seats = [seat("own", table_id="alone"), seat("free", table_id="shared"),
              seat("busy", table_id="shared", reserved_by="bea")]
-    observation = view(seats, needs={"social": 90}, visitors=[company("busy", "shared")], favorite_seat_id="own")
+    observation = view(seats, needs={"social": 90}, visitors=[company("busy", "shared")], favorite_seat_id="own",
+                       relations=FRIEND)
     result = asyncio.run(choose_action(observation, config(), Random(0)))
     assert (max(result["scores"], key=result["scores"].get), result["action"]["id"]) == ("seating", "sit:free")
+
+
+def test_lonely_visitor_walks_over_to_company_they_do_not_know() -> None:
+    seats = [seat("own", table_id="alone"), seat("free", table_id="shared"),
+             seat("busy", table_id="shared", reserved_by="bea")]
+    observation = view(seats, needs={"social": 90}, visitors=[company("busy", "shared")], favorite_seat_id="own")
+    result = asyncio.run(choose_action(observation, config(), Random(0)))
+    assert (max(result["scores"], key=result["scores"].get), result["action"]["id"]) == (
+        "approach:bea", "approach:bea")
 
 
 @pytest.mark.parametrize("seats, expected", [
@@ -384,3 +411,33 @@ def test_questions_quote_the_briefing_and_name_the_guest(evaluate: Callable[...,
 def test_unknown_verb_cannot_be_described_to_jev() -> None:
     with pytest.raises(ValueError):
         request_body([{"id": "fly", "verb": "fly", "target_id": None}])
+
+
+def held_table(table_id: str) -> dict[str, Any]:
+    """Describe a table Bea holds."""
+    return {"id": table_id, "kind": "table", "x": 5, "y": 3, "reserved_by": None, "hosts": [{"id": "bea", "name": "Bea"}]}
+
+
+def seat_scores(objects: list[dict[str, Any]], **actor: Any) -> dict[str, float]:
+    """Score every chair in the list for a lonely Ada, who is wondering where to sit."""
+    objects = [*objects, seat("bea-chair", table_id="table-held", reserved_by="bea")]
+    observation = view(objects, needs={"social": 90}, visitors=[company("bea-chair", "table-held")], **actor)
+    return local_seat_scores(observation, build_seat_candidates(observation))
+
+
+def own_seat_of_bea() -> dict[str, Any]:
+    """A chair Bea, who is away, calls her own."""
+    return seat("owned", table_id="table-owned", owner={"id": "bea", "name": "Bea"})
+
+
+def test_a_chair_at_a_free_table_beats_a_strangers_table_and_a_strangers_own_chair() -> None:
+    scores = seat_scores([seat("free"), seat("held", table_id="table-held"), held_table("table-held"),
+                          own_seat_of_bea(), held_table("table-owned")])
+    assert scores["sit:free"] > scores["sit:held"] > scores["sit:owned"]
+
+
+def test_company_they_like_draws_them_to_a_held_table() -> None:
+    friend = {"bea": {"name": "Bea", "opinion": 40.0, "familiarity": "friend"}}
+    scores = seat_scores([seat("free"), seat("held", table_id="table-held"), held_table("table-held")],
+                         relations=friend)
+    assert scores["sit:held"] > scores["sit:free"]

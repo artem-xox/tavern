@@ -69,6 +69,7 @@ def settled() -> dict[str, Any]:
     pytest.param(newcomer, "take_beer:tap", "7 servings", id="tap-stock-when-last-seen"),
     pytest.param(newcomer, "leave:door", "go home", id="leaving-means-going-home"),
     pytest.param(newcomer, "seating", "Hearth table", id="seating-names-the-free-tables"),
+    pytest.param(newcomer, "situation", "Hearth table (by the fire", id="the-fire-table-is-named-by-its-fire"),
     pytest.param(settled, "situation", "holding a full mug", id="mug-in-hand"),
     pytest.param(settled, "situation", "Hearth table · west", id="own-seat-by-name"),
     pytest.param(settled, "situation", "Quarreled with Bea", id="a-slight-still-rankles"),
@@ -80,6 +81,22 @@ def test_briefing_puts_the_situation_into_words(scene: Callable[[], dict[str, An
     observation = scene()
     briefing = brief(observation, build_candidates(observation))
     assert phrase in (briefing["situation"] if field == "situation" else briefing["options"][field])
+
+
+@pytest.mark.parametrize("field", [
+    pytest.param("situation", id="tables-in-the-situation"),
+    pytest.param("seating", id="tables-in-the-seating-option"),
+])
+def test_briefing_gives_no_appeal_numbers(field: str) -> None:
+    observation = newcomer()
+    briefing = brief(observation, build_candidates(observation))
+    assert "appeal" not in (briefing["situation"] if field == "situation" else briefing["options"][field])
+
+
+def test_briefing_lists_the_tables_nearest_first() -> None:
+    observation = newcomer()
+    situation = brief(observation, build_candidates(observation))["situation"]
+    assert situation.index("Plain table") < situation.index("Hearth table")
 
 
 @pytest.mark.parametrize("candidates, expected", [

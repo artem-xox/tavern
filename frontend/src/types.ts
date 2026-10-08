@@ -274,7 +274,8 @@ export interface Turn {
   fact_id?: string;
 }
 
-export type InvitationKind = "join_table" | "darts_together" | "dice_together" | "buy_drink" | "leave_together";
+export type InvitationKind = "join_table" | "darts_together" | "dice_together" | "buy_drink" | "leave_together"
+  | "move_together";
 
 /** An invitation waiting in a scene for the invitee's answer. */
 export interface Invitation {
@@ -285,7 +286,7 @@ export interface Invitation {
 
 /** An accepted invitation the world is carrying out. */
 export interface Errand extends Invitation {
-  stage: "accepted" | "fetching" | "following";
+  stage: "accepted" | "fetching" | "carrying" | "following" | "seating";
   /** Ale the inviter held before fetching one for the invitee. */
   held: number;
 }

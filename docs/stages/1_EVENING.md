@@ -86,10 +86,13 @@ barkeep (B0–B6) and E20 (hostile options), all 2026-10-04. Next:
 4. **The mind (MIND.md steps 0–5), done 2026-10-05.** Guests set typed goals, ask the mind within a budget,
    may promise to come over, and the barkeep keeps to his duty.
 5. **Giving (H0–H5), done 2026-10-05.** Guests hand each other what they carry, and fetch
-   a drink for someone as one chosen errand. Worlds are saved as version 14; the next `schema_version` is 15.
+   a drink for someone as one chosen errand. Worlds were saved as version 14; tables and manners (T3) made it 15,
+   so the next `schema_version` is 16.
 6. **Sleep (Z0–Z6), built 2026-10-08.** Activities spend energy, only a nap at the table restores
    it, and a tired guest goes home or, more so when drunk, sleeps in their seat until a loud noise wakes them.
-   The saved world did not change (still version 14). The live evening and its replay are still to run.
+   The saved world did not change (still version 14 then). The live evening and its replay are still to run.
+7. **Tables and manners (T0–T8), built 2026-10-08.** Guests walk over to another table to talk, agree to move to a
+   free table together, and upset the hosts of a table they sit down at uninvited; an apology mends it.
 
 The door at closing (D02) is fixed: it takes as many leavers at once as it has spots (offline
 seed 5: the last guest left 6.6 s after closing, was 42.8 s; stuck time 27.1 s → 6.1 s). The code now
@@ -2447,6 +2450,243 @@ own branch (`claude/stage1-z<n>`) and PR.
     and a live run costs about $1. Run `make evening SEED=5 OUT=runs/z6-live` and then
     `MODE=replay CALLS=runs/z6-live/calls.jsonl`, and `cmp` the two `events.jsonl` files.
 
+### Tables and manners (T0–T8)
+
+Added 2026-10-08 at the user's request. Guests keep taking chairs at other guests' tables, for two
+reasons. Appeal pulls them to the window tables as well as to the hearth, and a guest who wants a word
+with someone seated has one way to reach them: take a chair at their table (`goals._talks_to` counts
+`sit` there, and `agents._seat_wish` re-offers `seating` to any seated guest who sees company at a table
+with a free chair). Nothing tells them the table is someone's, and only taking someone's own chair
+(`seat_taken`) has a consequence. The fix has three parts:
+
+1. **Talk across the table edge.** A guest may walk over to someone seated at another table and talk to
+   them standing beside it. Standing and seated guests share a real scene: they may agree to move to a
+   free table together, play darts or dice, or have an ale, through the invitations that exist.
+2. **Manners at the table.** Guests see whose table is whose. Sitting down at someone's table uninvited is
+   rude: the host resents it, the log tells it, and an apology mends it.
+3. **Appeal only by the fire.** Only the hearth table is rated, and prompts mention comfort in passing.
+
+Decisions for every T task (frozen 2026-10-08; change them here first if the code disagrees):
+
+- **Standing spots.** Each `table` in `data/tavern.json` gets `interaction_spots`: the cells where a guest
+  stands to talk with those seated. They are the cells north and south of each 1×1 table, except (10, 4),
+  which is a spot of the tap: Hearth `[[10, 6]]`, Window `[[4, 5], [4, 7]]`, Garden `[[4, 10], [4, 12]]`,
+  Corner `[[15, 10], [15, 12]]`, East `[[15, 5], [15, 7]]`. `room._validate_spots` already checks that they
+  are walkable. They are content, so test halls add their own (`social_hall.spotted_hall`). A guest counts as
+  standing at one only once arrived (`path` empty), not while passing it.
+- **At a table** (`scenes.at_table(world, actor) -> str | None`): the table a guest sits at, or the table
+  on one of whose spots they stand while not walking. **Within reach** (`scenes.within_reach(world, a, b)`,
+  which replaces the private `actions._close_enough`): both are at the same table, or they stand side by side
+  (`side_by_side`, unchanged). Talk, join, give, bring a drink, shove and fight all read it. A scene held at a
+  table keeps a stander as a member (`_still_there`, `_join_error` read `at_table`), and `people_in_sight`'s
+  `beside` becomes `within_reach`.
+- **One new verb, `approach`, in the `company` family,** so no first-stage request grows. The family text
+  becomes "chat with someone at their table or beside them, walk over to someone at another table, join a
+  conversation, lean on the bar, or hand someone something they carry".
+
+  ```python
+  Activity(verb="approach", partner=True, approaches=True, duration=8.0, on_arrival=_approach_scene,
+           label="Walk over for a word", status="chatting", pose="Talking",
+           sound=Sound("chat", 0.25, 6.0, "a conversation"), doing="walking over for a word",
+           done="went over for a word", family="company",
+           what="walk over to {target}'s table and talk with them, standing beside it",
+           guidance="The polite way to seek out someone seated at another table: nobody's chair is taken. It "
+                    "eases the wish for company like any chat, and standing there they may suggest moving to a "
+                    "free table together, a game, or an ale. Pointless with someone who dislikes them.")
+  ```
+
+  `Activity.approaches` (new flag): the part walks first. Its target is a guest who sits at a table that is
+  not the actor's own, and the route goes to a free spot of that table (`routes.plan_route` resolves the
+  partner's table when the target is a person). On arrival it joins the partner's scene if they are in one,
+  else starts one (`scenes.start_conversation`, `join_conversation`). Like `talk`, the scene, not the timer,
+  ends it. Refusals: the target is self, staff, or not seated at a table; the actor is in a scene already; the
+  partner's scene is full; the partner is `pressed` and in no scene; no free spot (no route). On arrival the
+  lifecycle checks the action again, so a partner who left their table meanwhile turns the approach away.
+- **A new invitation kind, `move_together`** ("move to a free table together"). It is offered when someone
+  else in the scene is not staff and a free table exists for the two. A free table is one that is home to
+  neither of them (`invitations.home_table`) and has two chairs that nobody else sits on, reserves, or calls
+  their own seat. Accepting sends both to `sit` there. Of several free tables, the nearest to the inviter
+  wins (Manhattan distance to the table cell), and ties go to map order, so the choice is reproducible. Say
+  this in a comment.
+- **An errand stays until the seats are taken.** `join_table` and `move_together` errands get a new stage,
+  `seating`, after their `sit` commands start, with `table: str` (the table they go to). The errand ends,
+  with no event, once every guest it sent sits at that table, or once none of them still has a `sit` toward
+  it. This is how the world knows they were invited (see `welcome`). The saved `Errand` gains `table` exactly
+  while it is `seating`, and `check_invitations` checks it. Saved worlds become version 15.
+- **Hosts and welcome** (`social/tables.py`, new: "Whose table is whose, who is welcome at it, and what
+  sitting down uninvited does").
+  - `table_hosts(world, table_id, newcomer)`: guests in the hall, not staff and not the newcomer, who sit at
+    that table or whose own seat (`favorite_seat_id`) is one of its chairs.
+  - `welcome(world, host, guest)`: the host counts the guest a friend, or thinks at least
+    `social_acts.LIKED` of them, or the guest holds an open `sit_with` commitment to the host (a promise to
+    come over), or a `seating` errand from the host to the guest, or between the two, is going to that
+    table.
+  - `intrude(world, newcomer, chair)`, called from `activities._settle`. For each host of the chair's table
+    who does not welcome the newcomer, the host keeps a `table_intruded` thought about the newcomer and
+    records `table_intruded`, and the newcomer records `sat_uninvited`. Both events carry the same message:
+    "Edda sat down at Bea's table uninvited (Window table)". No intrusion happens when the newcomer returns
+    to their own seat, already calls a chair at that table theirs, or takes the host's own chair (then
+    `seat_taken` fires, as now, and is the stronger wrong).
+- **New thoughts.** `table_intruded` (−3, −10, 240, 2, "sat down at their table uninvited"), not
+  `acquaints`. `apologized` (1, 6, 300, 1, "apologized to them", `acquaints`). `table_intruded` joins
+  `intentions.SALIENT_THOUGHTS` (the host takes stock) and `expression.EVENT_EMOTES` (angry, for the host's
+  event only). It is **not** a `hostility.HOSTILE_CAUSES`: rudeness is no reason for a shove.
+- **An apology mends.** `social_acts.apologize` keeps halving the latest grudge (`soften`). A listener whose
+  grudge it softened also keeps `apologized` about the speaker, and both record `apologized` ("Edda
+  apologized to Bea"). An apology with no unsoftened grudge changes nothing and logs nothing, so a second
+  apology for the same wrong does nothing. The act's meaning in `conversation.ACTS` says it "warms them a
+  little".
+- **Table manners are a rule of the hall (added while building T6).** Many tests seat strangers at one table
+  and assert on thoughts and opinions, so the penalty is `rules.manners.table_intrusion`, set from the layout's
+  `table_manners` (true in `data/tavern.json`, false by default). It also lets an evening be run with and without
+  manners on the same code.
+- **Whose table the mind sees.** `world.observe_actor` marks known chairs and tables with what anyone
+  in the hall can see (a coat on the chair, a mug on the table). A chair that is another guest's own
+  seat gets `owner`, `{id, name}` with the name the viewer calls them by (`names.called`), else None. A table
+  gets `hosts`, a list of the same records in `table_hosts` order (none for the viewer's own table). `observation.known_objects` accepts both. The briefing, the
+  option sentences and the seat rubric read them. Rules never do: the world decides intrusion from its
+  own state.
+- **Appeal.** Windows keep `appeal` and `reach` (the map check requires them) at `appeal: 0.0`, so only
+  the hearth table is rated (0.5). Prompts drop the number. A table note says "by the fire" or nothing,
+  and the briefing lists tables nearest first, not by appeal. The seat rubric keeps one short clause on
+  appeal and comfort, after manners and company.
+- **Out of scope:** approaching someone who stands (side by side covers it); a three-way move (an
+  invitation is between two guests); tables with more than two chairs; the host ordering the newcomer
+  away; any new pose or art.
+- **Tests expected to change.** The user asked for these behaviors to change (2026-10-08). Name the test and
+  the reason in the commit:
+  - `test_evening.py::test_demo_tables_are_ranked_by_their_surroundings` (T0): only the hearth table is rated.
+  - `test_goals.py`, case `sit-at-their-table` (T2): `talk_to` is now served by `approach`, not by taking a chair
+    at their table. Add an `approach-the-person` case beside it.
+  - `test_goals.py`, `test_the_briefing_marks_the_options_that_serve_the_goal` and
+    `test_the_local_policy_adds_a_bonus_to_options_that_serve_the_goal` (T2): they used a `talk_to` goal to
+    show a goal marking `seating` and `sit`; they now use `sit_with`, which still does.
+  - `test_seating.py::test_seated_visitor_may_move_only_to_join_company`, cases `single-companion-to-join` and
+    `duplicate-companion-sighting`, and `test_lonely_visitor_moves_to_sit_with_company` (T2/T5): a seated guest
+    moves only to join someone they like. Keep the cases, make the companion liked, and add stranger cases
+    that expect `["sit:own"]`.
+  - `test_speech_acts.py`, the apology case and `test_a_repeated_apology_softens_only_once_per_grudge` (T7): the
+    listener also keeps the warm `apologized` thought.
+  - `test_database.py` and `test_intention_saves.py` pin `schema_version` (T3: 15).
+
+  Any other failing test is a surprise: stop and report it. T1, T2, T3 and T5 change whole evenings
+  (`test_first_evening.py`, the news-spread test on seed 7). If one of them fails, report the seed and the
+  failure. Do not change a seed or an assertion without the user's approval.
+
+- [x] **T0 — Appeal only by the fire.**
+  - Data: windows' `appeal` 0.0. Prompts: `briefing._table_note`/`_tables` (no number, nearest first),
+    `options._seat_note` (no number), `jev._seat_question` (manners and company first, one clause on appeal;
+    keep the word "appeal", which `test_seat_questions_have_their_own_rubric_about_appeal_and_company` pins),
+    `data/minds/intention_prefix.md` ("one table by the fire, the rest plain"; tone down the comfort-lover line).
+    `local_policy.local_seat_scores` is unchanged: with one rated table it already does the right thing.
+  - *Tests first:* the changed demo-ranking test (Hearth 0.5, the other four 0.0); a briefing case showing
+    "by the fire" and no "appeal 0." in the table notes.
+  - *Check:* `make check`; offline seed 5: count `sit` on each table before and after.
+- [x] **T1 — Reach at a table (refactor, then behavior).**
+  - Refactor first, no behavior change: move `actions._close_enough` to `scenes.within_reach` (public). Check
+    that offline seed 5 gives a byte-identical `events.jsonl` (`cmp`).
+  - Then: table standing spots in the data, `scenes.at_table`, scenes and reach as decided, and
+    `people_in_sight.beside` read as `within_reach`. Option wording in `options._talk` and `_confrontee` gets
+    two new cases: "who sits at the table they stand by" and "who stands by their table".
+  - *Tests first* (`tests/test_scenes.py`, `tests/test_social.py`): `within_reach` cases (seated with stander
+    on a spot; stander walking past a spot; stander one cell off; two standers on one table's spots; different
+    tables), a talk between a seated and a standing guest that runs two turns, and the stander leaving the spot
+    ends their part. A `pytest.raises` block for a map whose table spot is not walkable.
+  - *Check:* in the running app, force a guest onto a table spot and force `talk` to the one seated there.
+- [x] **T2 — Walk over for a word (`approach`).**
+  - The verb as decided: `Activity.approaches`, the route to the partner's table, arrival opens or joins the
+    scene. Candidate (`agents._social_candidates`): every seated guest in sight at another table, not
+    staff, available or in a scene that is not full. Local utility (`local_policy`): like `talk`, scaled by
+    the wish for company and the opinion of them, minus a little for the walk. Option sentence
+    (`options._approach`): "walk N steps over to Bea's table and talk with her standing beside it (she sits
+    with Cy)". `goals._talks_to` counts `approach` to the person, not `sit` at their table. The prefix's
+    list of things a guest can do gains the verb. Follow `git show 51c7ee5` (`bring_drink`) for every place a
+    verb touches.
+  - *Tests first:* new `tests/test_approach.py`, with one parametrized block for accepted approaches (a free
+    partner, a partner talking with a tablemate, so the scene grows to three) and one `pytest.raises` block
+    for refusals (self, staff, a standing partner, a partner at the actor's own table, a full scene, both
+    spots taken, a partner who leaves before arrival). Also candidates and option text cases.
+  - *Check:* offline seed 5 shows at least one `approach` that leads to two or more turns, and no stuck time
+    added.
+- [x] **T3 — Move to a free table together (`move_together`).**
+  - `invitations.free_table`, the kind, `offered_kinds`, `errands` first steps (`sit` for both), the
+    `seating` stage with `table` (also for `join_table`), save check and `schema_version` 15. Wording:
+    `conversation.ACTS["invite"]`, `turn_prompt` (the act list and one example), and the scripted writer
+    (`scripted._invitation` offers it before `join_table` when the speaker stands and is lonely; `_answer`
+    accepts it on the same terms as `join_table`).
+  - *Tests first* (`tests/test_invitations.py`): an accepted `move_together` seats both at the nearest free
+    table; a tie goes to map order; it is not offered when every other table is someone's; the `seating`
+    stage ends once both sit and ends when one turns to something else. Saves: a `seating` errand reloads;
+    `table` on another stage, or a missing `table`, is rejected.
+  - *Check:* an offline evening where an approach ends in an accepted `move_together`, or a test-built
+    world showing it if seed 5 has none.
+- [x] **T4 — Whose table (what the mind sees).**
+  - `social/tables.py` with `table_hosts` and `welcome` (no `intrude` yet), the `owner` and `hosts` marks
+    in `observe_actor`, and the prompts:
+    - Briefing table notes: "Window table (Bea's table, she sits there; one free chair)", "(Bea's table, she is
+      away)", "(a free table)". When any table has hosts, add one sentence: "A table someone has made theirs is
+      theirs: sitting down there uninvited may upset them. Walk over and talk to them, or wait to be asked."
+    - `options._sit` and `_seat_note`: "take Bea's own seat while she is away (it would wrong her)" or "a free
+      chair at Bea's table, uninvited".
+    - The seat rubric gains the manners sentence. `ACTIVITIES["seating"].guidance` says that moving is for a
+      free table or someone they like, and that to join strangers they walk over and talk.
+    - The intention prefix gets one manners line in the same words.
+  - *Tests first:* `tests/test_tables.py` (`table_hosts`: empty table, seated host, absent owner, staff
+    excluded, newcomer excluded; `welcome`: friend, liked, stranger, promise, `seating` errand), and briefing
+    and option text cases.
+  - *Check:* print a briefing from offline seed 5 at 120 s and read the table lines.
+- [x] **T5 — Choosing a seat with manners.**
+  - `agents._seat_wish`: a seated guest is re-offered `seating` when their own seat was taken, when someone
+    they like (friend, or opinion at least `LIKED`) sits at a table with a free chair, or when an active goal
+    or promise is `sit_with`. Strangers' company is reached by `approach`. `local_policy._score_seats`: a
+    chair that is someone's own seat −0.5; a chair at a hosted table that does not welcome them −0.25, with no
+    company bonus there.
+  - *Tests first:* the changed `test_seating.py` cases (above) and new ones (stranger: no `seating`; liked:
+    `seating`; a `sit_with` goal: `seating`), plus local seat scores (free table > stranger's table > someone's
+    own chair).
+  - *Check:* offline seed 5: `seat_taken` count before and after (expect fewer), and no guest left
+    seatless for long (stuck seconds in `metrics.json`).
+- [x] **T6 — Sitting down uninvited.**
+  - `tables.intrude` from `_settle`, the `table_intruded` thought, both events, the emote, salience, and
+    `metrics.json` counting `table_intrusions` (`metrics._occurrences`).
+  - *Tests first* (`tests/test_tables.py`): one parametrized block on who resents a newcomer (stranger at a
+    hosted table: the host; a friend; a liked guest; an invited `join_table` guest; both parties of a
+    `move_together`; returning to their own seat; taking the host's own chair: `seat_taken` only; an
+    empty table: nobody). Saves: a `table_intruded` thought reloads.
+  - *Check:* in the running app, force a stranger onto the free chair at a hosted table: the host shows
+    angry, and the inspector shows the thought and the log line.
+- [x] **T7 — An apology that mends.**
+  - `social_acts.apologize` as decided, `metrics.json` counting `apologies`, the act meaning.
+  - *Tests first* (`tests/test_speech_acts.py`): after `table_intruded`, an apology turns the host's opinion of
+    the newcomer from −10 to +1 (−5 softened, +6 `apologized`); a second apology in the same evening only
+    softens; an apology with no grudge changes nothing and logs nothing.
+- [x] **T8 — Measure.**
+  - Offline seed 5 and live seeds 5 and 7, before (`main`) and after: `seat_taken`, `table_intrusions`,
+    `approach` scenes, accepted `move_together`, `apologies`, stuck seconds, cost. Replay the live run
+    and `cmp` the events (step 8 of "Working on a task"). Record a moment from the log in which an
+    approach ends in a move or a game, and one with an intrusion and its apology, if any.
+  - *If hosts rarely react* (no line or decision within 15 s of `table_intruded`), propose a follow-up in
+    which the world opens a scene from the host to the newcomer, so that the next line is the host's. Do
+    not build it in T8.
+
+- *Built and measured (2026-10-08).* Modules: `social/tables.py` (`liked`, `table_hosts`, `welcome`, `mark_ownership`,
+  `intrude`), `evening/manner_metrics.py` (`manners` in `metrics.json`), `Activity.approaches`, `scenes.at_table` and
+  `within_reach`, `invitations.free_table` and the `seating` stage, `rules.manners` (see above). Saved worlds are
+  version 15. A guest likes someone (friend, or opinion of at least 10) is the test for sitting with them: `seating`
+  is re-offered only for liked company, and `approach` is not offered to liked company at a table with a free chair.
+  Offline, ten seeds (0–9), `origin/main` (with sleep) against this branch: `seat_taken` 25 → 0, `table_intruded` 0 → 6,
+  `approach` 0 → 33, two apologies, conversations 315 → 297, stuck seconds per evening 16.4 → 16.8, every guest gone at
+  closing in all ten, and the barkeep chatting in 10 evenings of 10 (7 on main). Two first versions were dropped on
+  these numbers: giving the hearth table two more standing spots halved the barkeep's chats, and an `approach` that
+  scored as high as a chat crowded `stand_at_bar` out of the company family once sleep was in (4 evenings of 10, and
+  `test_barkeep_evening` seed 4 failed), so it now scores 0.2 lower. Live seed 5 (Jev + Haiku, 436 game s, 328 s wall,
+  $0.28 over 307 calls, no failed call, 2 turn fallbacks): 6 `approach`, no seat taken, no intrusion, no
+  `move_together` and no apology; the barkeep chatted 9 times. The replay's `events.jsonl` is byte-identical. An
+  earlier live run of the first version (not kept as the final) showed one accepted `move_together` (Brida and Edda) and
+  two intrusions by Saye at Calder's tables, after which Calder did not speak to Saye within 15 s: that is T8's trigger
+  for a follow-up in which the world opens a scene from the host, not built here. Haiku chose `move_together` once in two
+  live evenings and `apologize` never, so E28 should count both.
+
 ## Order
 
 M1 comes first: E01 is a refactor under the existing tests, and E02–E03 make every later
@@ -2482,6 +2722,13 @@ be used on a phone until they land.
 Sleep (Z0–Z6) was added 2026-10-08 at the user's request. Its internal order is at the head of its block.
 It touches `activities.py`, `actions.py`, `attention.py` and `local_policy.py`, as E21 does, so do not run
 the two at once. Z5 is the only frontend task and waits for the user's `SleepingSeated` art.
+
+Tables and manners (T0–T8) was added 2026-10-08 at the user's request. T0 can go first or run beside
+T1–T3, since only its data change touches what they touch. T1 → T2 → T3 is strict. T4 needs T0 (both
+edit the briefing's table notes) and T3 (`welcome` reads the `seating` errand). T5 and T6 need T4. T7
+needs only T6. T8 comes last. It touches `actions.py`, `scenes.py`, `invitations.py` and `errands.py`,
+as E21 does, so do not run the two at once. One task per branch (`claude/stage1-t<n>`), as for every
+task.
 
 ## Acceptance scenarios
 

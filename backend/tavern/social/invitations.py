@@ -27,17 +27,21 @@ KINDS: Mapping[str, str] = MappingProxyType({
     "dice_together": "play a game of dice",
     "buy_drink": "have an ale on them",
     "leave_together": "walk home together",
+    "move_together": "move to a free table together",
 })
 # accepted: to be set in motion; fetching: the inviter pours the ale; carrying: the inviter walks back with
-# it to hand it over; following: the inviter has set off for the door and the invitee follows once it is free.
-STAGES = ("accepted", "fetching", "carrying", "following")
+# it to hand it over; following: the inviter has set off for the door and the invitee follows once it is free;
+# seating: those sent are on their way to chairs at a table (`table`) and the errand lasts until they sit.
+STAGES = ("accepted", "fetching", "carrying", "following", "seating")
 
 # `from` is a Python keyword, hence the functional form.
 Invitation = TypedDict("Invitation", {"kind": str, "from": str, "to": str})
 # `held` is the mugs the inviter held when an errand began; `since` the game time carrying began; `unasked`
-# marks an errand nobody invited (a guest bringing a drink of their own accord), which the other knows nothing of.
+# marks an errand nobody invited (a guest bringing a drink of their own accord), which the other knows nothing of;
+# `table` is the table a `seating` errand goes to.
 Errand = TypedDict("Errand", {"kind": str, "from": str, "to": str, "stage": str, "held": int,
-                              "since": NotRequired[float], "unasked": NotRequired[bool]})
+                              "since": NotRequired[float], "unasked": NotRequired[bool],
+                              "table": NotRequired[str]})
 
 
 def _people(world: Mapping[str, Any]) -> dict[str, Actor]:
@@ -92,6 +96,44 @@ def free_chair(world: Mapping[str, Any], table_id: str | None, guest: Mapping[st
                  and item["reserved_by"] in (None, guest["id"])), None)
 
 
+def open_chairs_at(world: Mapping[str, Any], table_id: str, guests: Sequence[Mapping[str, Any]]) -> list[str]:
+    """List the chairs at a table that the given guests may take together without wronging anyone.
+
+    Args:
+        world: Current world.
+        table_id: Table.
+        guests: Visitors who would sit.
+
+    Returns:
+        Chairs in map order that nobody sits on, reserves or calls their own seat (except the guests).
+    """
+    ours = {item["id"] for item in guests}
+    taken = {item["seat_id"] for item in world["actors"]} | {
+        item["favorite_seat_id"] for item in world["actors"] if item["id"] not in ours}
+    return [item["id"] for item in world["map"]["objects"] if item["kind"] == "chair"
+            and item.get("table_id") == table_id and item["id"] not in taken
+            and item["reserved_by"] in (None, *ours)]
+
+
+def free_table(world: Mapping[str, Any], host: Mapping[str, Any], guest: Mapping[str, Any]) -> str | None:
+    """Find a table two guests may move to together.
+
+    Args:
+        world: Current world.
+        host: Guest who invites, whose position decides which table is nearest.
+        guest: Guest invited.
+
+    Returns:
+        The table that is home to neither and has two chairs they may take (see `open_chairs_at`); of several,
+        the nearest to the host by cells (Manhattan distance to the table), and a tie goes to the one first in
+        map order so that the choice is reproducible. None when there is no such table.
+    """
+    homes = {home_table(world, host), home_table(world, guest)}
+    tables = [item for item in world["map"]["objects"] if item["kind"] == "table" and item["id"] not in homes]
+    tables.sort(key=lambda item: abs(item["x"] - host["x"]) + abs(item["y"] - host["y"]))
+    return next((item["id"] for item in tables if len(open_chairs_at(world, item["id"], (host, guest))) >= 2), None)
+
+
 def offered_kinds(world: Mapping[str, Any], scene: Mapping[str, Any], speaker: Mapping[str, Any]) -> list[str]:
     """List the invitations a guest could make in their scene now.
 
@@ -102,7 +144,8 @@ def offered_kinds(world: Mapping[str, Any], scene: Mapping[str, Any], speaker: M
 
     Returns:
         Kinds in `KINDS` order: `join_table` when their table has a free chair and someone in
-        the scene sits elsewhere; the others when they know darts, a tap with ale, or a door. None
+        the scene sits elsewhere; `move_together` when a free table exists for them and someone in the scene
+        (see `free_table`); the others when they know darts, a tap with ale, or a door. None
         for staff, or when everyone else in the scene is staff.
     """
     if scene["invitation"] is not None:
@@ -113,11 +156,14 @@ def offered_kinds(world: Mapping[str, Any], scene: Mapping[str, Any], speaker: M
         return []
     outsiders = [people[item] for item in scene["participants"] if item != speaker["id"]
                  and home_table(world, people[item]) != table]
+    company = [item for item in people.values() if item["id"] in scene["participants"] and item["id"] != speaker["id"]
+               and not on_staff(item)]
     offered = {"join_table": bool(outsiders) and free_chair(world, table, outsiders[0]) is not None,
                "darts_together": known_place(speaker, "darts") is not None,
                "dice_together": _dice_table_free(world, speaker),
                "buy_drink": known_place(speaker, "tap") is not None,
-               "leave_together": known_place(speaker, "door") is not None}
+               "leave_together": known_place(speaker, "door") is not None,
+               "move_together": any(free_table(world, speaker, item) is not None for item in company)}
     return [kind for kind in KINDS if offered[kind]]
 
 
@@ -305,6 +351,11 @@ def check_invitations(world: Mapping[str, Any]) -> None:
         number(item["held"], "Saved ale held", 0, float("inf"))
         if "unasked" in item and type(item["unasked"]) is not bool:
             raise ValueError(f"Saved invitation {item!r} must flag whether it was unasked with a boolean")
+        # Only an errand on its way to chairs names the table it goes to.
+        if ("table" in item) != (item["stage"] == "seating") or (
+                "table" in item and item["table"] not in {obj["id"] for obj in world["map"]["objects"]
+                                                          if obj["kind"] == "table"}):
+            raise ValueError(f"Saved invitation {item!r} must name a table exactly while it is seating")
         # Only an errand that is carrying has a start, and it cannot lie in the future.
         if ("since" in item) != (item["stage"] == "carrying"):
             raise ValueError(f"Saved invitation {item!r} must have a start exactly while it is carrying")

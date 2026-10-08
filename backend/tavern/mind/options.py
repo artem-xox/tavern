@@ -1,12 +1,14 @@
 """The sentence for each option a visitor may take, told from their own view."""
 
 from collections.abc import Callable, Mapping
+import math
 from typing import Any
 
 from tavern.body.activities import FAMILIES
 from tavern.body.items import ITEMS
-from tavern.mind.hall_view import (company_at, headcount, in_use, known_object, label_of, line_place, place_words,
-                              steps_to, visible_visitor, walk_words)
+from tavern.social.tables import liked
+from tavern.mind.hall_view import (company_at, headcount, hosts_words, in_use, known_object, label_of, line_place,
+                                   place_words, setting_words, steps_to, visible_visitor, walk_words)
 
 Observation = Mapping[str, Any]
 Action = Mapping[str, Any]
@@ -82,9 +84,18 @@ def _rest(observation: Observation, action: Action) -> str:
 
 def _seat_note(observation: Observation, chair: Mapping[str, Any]) -> str:
     table = known_object(observation, chair.get("table_id"))
-    comforts = " and ".join(chair.get("comforts", [])) or "no special comfort"
-    return (f"{label_of(table) if table else label_of(chair)} (appeal {chair.get('appeal', 0.0):.1f}, {comforts}; "
-            f"{company_at(observation, chair.get('table_id'))}; {walk_words(steps_to(observation, chair))} away)")
+    details = [setting_words(chair), hosts_words(observation, chair.get("table_id")), _welcome(observation, table),
+               company_at(observation, chair.get("table_id")), f"{walk_words(steps_to(observation, chair))} away"]
+    return f"{label_of(table) if table else label_of(chair)} ({'; '.join(part for part in details if part)})"
+
+
+def _welcome(observation: Observation, table: Mapping[str, Any] | None) -> str:
+    # Whether the table's hosts would be glad of them, as far as the visitor can tell: if they like one of them.
+    hosts = table.get("hosts", []) if table else []
+    if not hosts:
+        return ""
+    fond = next((item for item in hosts if liked(observation["actor"], item["id"], observation.get("time", -math.inf))), None)
+    return f"they get on with {fond['name']}" if fond else "they would be sitting down there uninvited"
 
 
 def _seating(observation: Observation, action: Action) -> str:
@@ -94,7 +105,8 @@ def _seating(observation: Observation, action: Action) -> str:
     tables = {item["table_id"]: _seat_note(observation, item) for item in free}
     choice = "; ".join(tables.values()) or "none"
     if actor.get("favorite_seat_id"):
-        return f"leave their own seat for a free chair at another table, for instance to join company (free: {choice})"
+        return (f"leave their own seat for a free chair at another table, for instance to join company they like or to "
+                f"take a table nobody holds (free: {choice})")
     return f"look for a seat and sit down (tables with a free chair: {choice})"
 
 
@@ -105,6 +117,10 @@ def _sit(observation: Observation, action: Action) -> str:
         return f"stay in their seat, {label_of(chair)}, a while longer to rest, sip and chat ({company})"
     if chair["id"] == actor.get("favorite_seat_id"):
         return f"walk {walk_words(steps_to(observation, chair))} back to their own seat, {label_of(chair)}, and sit down ({company})"
+    owner = chair.get("owner")
+    if owner:
+        return (f"take {owner['name']}'s own seat, {label_of(chair)}, while {owner['name']} is away: "
+                f"{_seat_note(observation, chair)} (it would wrong {owner['name']})")
     return f"take the chair {label_of(chair)}: {_seat_note(observation, chair)}"
 
 
@@ -119,6 +135,14 @@ def _someone(observation: Observation, visitor_id: Any) -> Mapping[str, Any] | N
                 None) or visible_visitor(observation, visitor_id)
 
 
+def _placed(observation: Observation, person: Mapping[str, Any] | None) -> str:
+    # Where someone within reach is, from the viewer's own spot. A guest standing by their table reaches
+    # those seated at it; to anyone else a stander is simply beside them.
+    if person and person.get("seat_id"):
+        return "sits at their table" if observation["actor"].get("seat_id") else "sits at the table they stand by"
+    return "stands beside them"
+
+
 def _talk(observation: Observation, action: Action) -> str:
     partner = _someone(observation, action["target_id"])
     name = label_of(partner) if partner else action["target_id"]
@@ -126,13 +150,24 @@ def _talk(observation: Observation, action: Action) -> str:
         return f"chat with {name} across the bar"
     if partner and not partner.get("seat_id"):
         return f"start a conversation with {name}, who stands beside them"
-    return f"chat with {name}, who sits across the table from them"
+    if observation["actor"].get("seat_id"):
+        return f"chat with {name}, who sits across the table from them"
+    return f"chat with {name}, who sits at the table they stand by"
+
+
+def _approach(observation: Observation, action: Action) -> str:
+    partner = _someone(observation, action["target_id"])
+    name = label_of(partner) if partner else action["target_id"]
+    table = known_object(observation, partner.get("table_id")) if partner else None
+    if table is None:
+        return f"walk over to {name}'s table and talk with them, standing beside it"
+    return (f"walk {walk_words(steps_to(observation, table))} over to the {label_of(table)} and talk with {name}, "
+            f"standing beside it ({company_at(observation, table['id'])})")
 
 
 def _confrontee(observation: Observation, action: Action) -> tuple[str, str]:
     victim = _someone(observation, action["target_id"])
-    where = "sits at their table" if victim and victim.get("seat_id") else "stands beside them"
-    return (label_of(victim) if victim else action["target_id"]), where
+    return (label_of(victim) if victim else action["target_id"]), _placed(observation, victim)
 
 
 def _shove(observation: Observation, action: Action) -> str:
@@ -149,7 +184,7 @@ def _fight(observation: Observation, action: Action) -> str:
 def _give(observation: Observation, action: Action) -> str:
     receiver = _someone(observation, action["target_id"])
     name = label_of(receiver) if receiver else action["target_id"]
-    where = "sits at their table" if receiver and receiver.get("seat_id") else "stands beside them"
+    where = _placed(observation, receiver)
     return (f"hand {ITEMS[action['item']].one} they are carrying to {name}, who {where} (it is theirs to give up, "
             f"and {name} may refuse it if there is bad blood between them)")
 
@@ -157,7 +192,7 @@ def _give(observation: Observation, action: Action) -> str:
 def _bring(observation: Observation, action: Action) -> str:
     receiver = _someone(observation, action["target_id"])
     name = label_of(receiver) if receiver else action["target_id"]
-    where = "sits at their table" if receiver and receiver.get("seat_id") else "stands beside them"
+    where = _placed(observation, receiver)
     return (f"fetch a mug of ale from the tap and bring it to {name}, who {where} with nothing in their hands "
             f"(it takes a trip, and {name} may refuse it if there is bad blood between them)")
 
@@ -168,7 +203,8 @@ def _join(observation: Observation, action: Action) -> str:
         raise ValueError(f"Cannot describe joining an unseen visitor {action['target_id']!r}")
     company = observation.get("people") or observation.get("visitors", [])
     names = [label_of(item) for item in company if item.get("conversation") == member.get("conversation")]
-    where = "at their table" if member.get("seat_id") else "beside them"
+    where = ("at their table" if observation["actor"].get("seat_id") else "at the table they stand by") \
+        if member.get("seat_id") else "beside them"
     return f"join the conversation {' and '.join(names) or label_of(member)} are having {where}"
 
 
@@ -233,7 +269,7 @@ def family_text(observation: Observation, option: Action) -> str:
 # Each verb's option sentence; a new verb needs an entry here (and one in `activities.ACTIVITIES`).
 _OPTIONS: Mapping[str, Callable[[Observation, Action], str]] = {
     "take_beer": _pour, "drink": _drink, "rest": _rest, "seating": _seating, "sit": _sit, "doze": _doze, "talk": _talk,
-    "join_conversation": _join, "play_darts": _darts, "stand_at_bar": _bar, "watch": _watch,
+    "approach": _approach, "join_conversation": _join, "play_darts": _darts, "stand_at_bar": _bar, "watch": _watch,
     "watch_dice": _watch_dice,
     "use_toilet": _toilet, "give": _give, "bring_drink": _bring,
     "inspect": _inspect, "wait": _wait, "leave": _leave, "cut_in_line": _cut, "shove": _shove, "start_fight": _fight}

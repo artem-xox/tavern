@@ -109,13 +109,16 @@ def _seat_question(action: Mapping[str, Any], observation: Mapping[str, Any]) ->
     chair = _briefed(observation, action, f"take the chair {action['target_id']!r}")
     return {"type": "score", "criteria": rubric, "instructions": (
         f"{_visitor_view()} {_guest(observation)} has decided to sit down and is choosing a chair; the one they "
-        f"pick becomes their own seat for the rest of the visit. How good a choice is it to {chair}? Weigh the "
-        "table's appeal (0 to 1) and its comforts: a window gives light and a view, the fireplace warmth and "
-        "cosiness, while a plain table in a corner has neither. Guests with a high comfort trait care most about "
-        "appeal. Company matters too: people already sitting at that table are welcome when the guest wishes for "
-        "company, while a quiet table suits someone who would rather be left alone, or who was wronged by those "
-        "people tonight. A long walk matters more when they are tired. If this chair is already their own seat, "
-        "staying is natural unless company elsewhere draws them.")}
+        f"pick becomes their own seat for the rest of the visit. How good a choice is it to {chair}? Weigh "
+        "manners and company first. A table someone has made theirs is theirs: sitting down there uninvited can "
+        "upset them, so it is a poor choice unless they are welcome (a friend, someone the guest likes, or "
+        "someone who asked them over). A chair that is another guest's own seat is worse still. People already "
+        "sitting at a table are welcome company when the guest wishes for company and gets on with them, while "
+        "a quiet or free table suits someone who would rather be left alone, or who was wronged by those people "
+        "tonight. Then weigh comfort: the table by the fire (the only one with a high appeal) is warm and cosy, "
+        "which guests with a high comfort trait enjoy a little more, and a long walk matters more when they are "
+        "tired. If this chair is already their own seat, staying is natural unless company elsewhere draws "
+        "them.")}
 
 
 def request_body(

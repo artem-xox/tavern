@@ -49,6 +49,19 @@ def hall(cards: bool = False, wall: bool = False) -> dict[str, Any]:
     ], "actors": guests}
 
 
+def spotted_hall(standing: dict[str, tuple[int, int]] | None = None) -> dict[str, Any]:
+    """Build `hall()` with a place to stand beside each table, and put the named guests on the given cells."""
+    data = hall()
+    spots = {"near": [[3, 3], [4, 3]], "far": [[3, 6], [4, 6]]}
+    for item in data["objects"]:
+        if item["id"] in spots:
+            item["interaction_spots"] = spots[item["id"]]
+    for item in data["actors"]:
+        if standing and item["id"] in standing:
+            item["x"], item["y"] = standing[item["id"]]
+    return data
+
+
 def command(verb: str, target: str | None = None) -> dict[str, Any]:
     """Build an executable action."""
     return {"id": verb if target is None else f"{verb}:{target}", "verb": verb, "target_id": target}

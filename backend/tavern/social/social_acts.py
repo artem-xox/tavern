@@ -3,6 +3,7 @@
 from collections.abc import Mapping
 from typing import Any
 
+from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World
 from tavern.social.names import called
 from tavern.social.scenes import Conversation
@@ -106,16 +107,23 @@ def disagree(world: World, scene: Conversation, speaker: Actor,
 
 def apologize(world: World, scene: Conversation, speaker: Actor,
               addressee: Actor | None) -> None:
-    """Halve the latest grudge the addressee (everyone else, if nobody in particular) holds against the speaker.
+    """Mend with the addressee (everyone else, if nobody in particular) by halving the latest grudge each holds.
 
     Args:
         world: Current world.
         scene: Speaker's scene.
         speaker: Visitor apologizing.
         addressee: Visitor apologized to, or None.
+
+    A listener whose grudge it softened thinks the better of the speaker for it, and both remember the apology; one
+    with no unsoftened grudge to mend is untouched, so a wrong is mended once.
     """
     for listener in _listeners(world, scene, speaker, addressee):
-        soften(listener, speaker["id"], world["time"])
+        if soften(listener, speaker["id"], world["time"]):
+            message = f"{speaker['name']} apologized to {listener['name']}"
+            for member in (speaker, listener):
+                record_event(world, member, "apologized", message)
+            _feel(world, listener, "apologized", speaker, "apologized to")
 
 
 def introduce(world: World, scene: Conversation, speaker: Actor,

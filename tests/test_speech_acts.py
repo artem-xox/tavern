@@ -72,6 +72,7 @@ def nothing(world: dict[str, Any]) -> None:
 
 
 Q = THOUGHTS["quarrel"]
+A = THOUGHTS["apologized"]
 
 
 @pytest.mark.parametrize("prepare, act, expected", [
@@ -82,7 +83,8 @@ Q = THOUGHTS["quarrel"]
     pytest.param(hated, "insult", (["insulted"], -20.0, -6.0), id="insult-hurts"),
     pytest.param(nothing, "agree", (["agreed"], 3.0, 0.0), id="agreement-pleases-a-little"),
     pytest.param(nothing, "disagree", (["disagreed"], -3.0, 0.0), id="disagreement-annoys-a-little"),
-    pytest.param(wronged, "apologize", (["quarrel"], Q.opinion / 2, Q.mood / 2), id="apology-halves-a-grudge"),
+    pytest.param(wronged, "apologize", (["quarrel", "apologized"], Q.opinion / 2 + A.opinion, Q.mood / 2 + A.mood),
+                 id="apology-halves-a-grudge-and-warms"),
 ])
 def test_acts_change_what_the_listener_thinks_of_the_speaker(prepare: Callable[[dict[str, Any]], None], act: str,
                                                              expected: tuple[list[str], float, float]) -> None:
@@ -99,7 +101,7 @@ def test_a_repeated_apology_softens_only_once_per_grudge() -> None:
     say(world, "apologize")
     say(world, "small_talk")
     say(world, "apologize")
-    assert opinions(world)[1] == pytest.approx(Q.opinion / 2)
+    assert opinions(world)[1] == pytest.approx(Q.opinion / 2 + A.opinion)
 
 
 @pytest.mark.parametrize("beers, patience, opinion, quarrel", [

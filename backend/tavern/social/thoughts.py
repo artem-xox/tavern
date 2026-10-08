@@ -34,6 +34,10 @@ class ThoughtKind:
 
 THOUGHTS: Mapping[str, ThoughtKind] = MappingProxyType({
     "seat_taken": ThoughtKind(-6.0, -15.0, 300.0, 3, "took their seat"),
+    # Held by the host of a table, about the guest who sat down there without being welcome (`tavern.social.tables`).
+    "table_intruded": ThoughtKind(-3.0, -10.0, 240.0, 2, "sat down at their table uninvited"),
+    # Held by the one an apology mended, about whoever made it (`tavern.social.social_acts`).
+    "apologized": ThoughtKind(1.0, 6.0, 300.0, 1, "apologized to them", acquaints=True),
     "line_cut": ThoughtKind(-4.0, -10.0, 180.0, 3, "cut in line ahead of them"),
     "quarrel": ThoughtKind(-8.0, -20.0, 300.0, 3, "quarreled with them", acquaints=True),
     "chat": ThoughtKind(3.0, 6.0, 240.0, 3, "had a pleasant chat with them", acquaints=True),
