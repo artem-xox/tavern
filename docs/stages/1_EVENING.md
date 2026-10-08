@@ -2040,7 +2040,7 @@ matters on the phone.
   - *Check:* `make check` and `make build`. The browser's Performance panel shows frame time unchanged
     within noise.
 
-- [ ] **U8 — Emotes you can read.** Today `showEmote` draws a text glyph (`! ? ✹ ♥ z …`, `EMOTE_GLYPHS`)
+- [x] **U8 — Emotes you can read.** Today `showEmote` draws a text glyph (`! ? ✹ ♥ z …`, `EMOTE_GLYPHS`)
   in 12 px system-ui on a cream box, beside the name. The glyph depends on the device's fonts, the box
   covers the art, and nothing says what an emote means. The new look is in the mockup's "Emotes over the
   head".
@@ -2064,6 +2064,18 @@ matters on the phone.
     panel can force `give` and `doze`. For all six, set an emote in `applySnapshot` with a local hack
     that is not committed. Post screenshots on the wood floor, on a rug and against a wall. Then `make
     check` and `make build`.
+
+  - *Result (2026-10-08):* `pixels.ts` (`outlined`: pads by one pixel and rings the art with key `0`; refuses ragged
+    maps and maps that use `0`) and `emotes.ts` (six 12×12 maps, `emoteFrames`, `emotePalette`, `emoteFrame`,
+    `emoteMotion`, `EMOTE_WORDS`), with 21 tests (`pixels.test.ts`, `emotes.test.ts`), shown red against stubs
+    first. The scene makes one nearest-filtered texture per picture at 2× (`textures.generate`), shows an
+    `Image` centred above the name, pops it in (0 → 1.2 → 1 over 200 ms) and bobs it by one pixel; a sleeper's
+    z's drift up eight pixels and fade in a 2 s loop, and the waiting dots light one after another (three
+    frames, 350 ms each). Near the top edge the emote is kept inside the map. Hovering a guest with an emote
+    names it in the hint line ("Edda · confused"; "startled", "confused", "angry", "fond", "dozing",
+    "waiting"). `EMOTE_GLYPHS` and the text object are gone. `tsconfig` now allows `.ts` extensions in imports,
+    because Node needs them between pure modules; AGENTS.md says so. Seen: all six at once on a local
+    override of the snapshot (nothing committed), on wood, a rug and by a wall; no cream box.
 
 - [ ] **U9 — Inspector: what matters first, readable type.** Needs U3. The target is the mockup's card,
   except the inventory, which is U10.
