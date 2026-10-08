@@ -3,11 +3,12 @@ import { OUTLINE, outlined } from "./pixels.ts";
 
 /** Colour of each key in `bucketRows`, as 0xRRGGBB. */
 export const BUCKET_PALETTE: Readonly<Record<string, number>> = {
-  [OUTLINE]: 0x24150f,
-  r: 0xd2ab74, R: 0xa97b48,
-  i: 0x24150d, j: 0x3a2214,
-  b: 0x5e4029, B: 0x7d5534, h: 0xa17446, k: 0x3b2619,
-  S: 0x9ba3ad, s: 0x4a4f58, d: 0x2b2d33,
+  // The woods are the chairs' and tables' (`furniture.ts`); the iron is the door's straps.
+  [OUTLINE]: 0x33251d,
+  r: 0xd8b077, R: 0xb48959,
+  i: 0x33251d, j: 0x4d3425,
+  b: 0x905b3d, B: 0xa2774d, h: 0xc09867, k: 0x58392a,
+  S: 0x9a9588, s: 0x4a4a46, d: 0x3b3a38,
 };
 
 const WIDTH = 22;
