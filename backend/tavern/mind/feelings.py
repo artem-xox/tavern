@@ -20,11 +20,12 @@ class Opinion(TypedDict):
 class Mind(TypedDict):
     """A visitor's inner state for the inspector and the scene.
 
-    Derived mood, active thoughts and opinions; drunkenness with its stage, and how far the
+    Derived mood and its words, active thoughts and opinions; drunkenness with its stage, and how far the
     client sways their sprite, and their copies of the news with the path of each (`facts.inspected`).
     """
 
     mood: float
+    mood_words: str
     thoughts: list[Thought]
     opinions: list[Opinion]
     drunkenness: float
@@ -46,13 +47,22 @@ def feelings(observation: Mapping[str, Any]) -> str:
     """
     actor, now = observation["actor"], observation.get("time", float("-inf"))
     rankles = rankling(actor, now)
-    parts = [f"They are {_mood_words(mood(actor, now))}.", *_opinions(actor, now),
+    parts = [f"They are {mood_words(mood(actor, now))}.", *_opinions(actor, now),
              f"Still rankling tonight: {'; '.join(rankles)}." if rankles else "",
              speech_instruction(actor.get("drunkenness", 0.0))]
     return " ".join(part for part in parts if part)
 
 
-def _mood_words(value: float) -> str:
+def mood_words(value: float) -> str:
+    """Put a mood into words, as the briefing and the inspector both say it.
+
+    Args:
+        value: A visitor's derived mood (`thoughts.mood`).
+
+    Returns:
+        A phrase that follows "They are": "in high spirits" from 8, "in a good mood" from 3, "in an even mood"
+        above −3, "in a sour mood" above −10, otherwise "in a foul mood".
+    """
     # A taken seat (−6) sours an even mood; two wrongs make it foul.
     return ("in high spirits" if value >= 8 else "in a good mood" if value >= 3 else "in an even mood" if value > -3
             else "in a sour mood" if value > -10 else "in a foul mood")
@@ -92,7 +102,7 @@ def minds(world: Mapping[str, Any]) -> dict[str, Mind]:
     """
     now = world["time"]
     return {actor["id"]: Mind(
-        mood=mood(actor, now), thoughts=[Thought(**item) for item in active_thoughts(actor["thoughts"], now)],
+        mood=mood(actor, now), mood_words=mood_words(mood(actor, now)), thoughts=[Thought(**item) for item in active_thoughts(actor["thoughts"], now)],
         opinions=[Opinion(id=other, name=relation["name"], opinion=opinion_of(actor, other, now),
                           familiarity=relation["familiarity"]) for other, relation in actor["relations"].items()],
         drunkenness=actor["drunkenness"], stage=drunk_stage(actor["drunkenness"]).name,
