@@ -1982,7 +1982,7 @@ matters on the phone.
     itself. Hob, a mug for me." stays one bubble. CI still runs Node 20 and no frontend tests: running them
     there needs `node-version: 22.6+` and an `npm test` step in `.github/workflows/ci.yml` (ask-first).
 
-- [ ] **U6 — The door: no black mat, as tall as the wall.** "The black rug" is the door mat. `drawDoor`
+- [x] **U6 — The door: no black mat, as tall as the wall.** "The black rug" is the door mat. `drawDoor`
   (`furniture.ts`) paints a dark rounded rectangle with a gold outline on the floor inside the door
   (`floor.fillStyle(0x41372a)…` and the `strokeRoundedRect` after it). The table rugs are yellow and
   green, and they stay. The door itself is 26 px tall from `y + 1`, while the stone face of a wall cell
@@ -1995,6 +1995,12 @@ matters on the phone.
     say why.
   - *Check:* before and after screenshots of the south wall at game scale and at 2×. Then `make check`
     and `make build`.
+
+  - *Result (2026-10-08):* `drawDoor(g, door, size)` loses its `floor` parameter and both mat calls. The door
+    is drawn from the cell's top + 2 to its bottom - 3, the span of the wall stones beside it, in a dark
+    timber frame with a lighter lintel and a stone threshold; four planks of two shades, two iron straps with
+    a rivet on each plank, and a brass ring on the latch side. Width (1.6 cells) and centring are as before.
+    Seen at game scale and at 4× in the browser: no mat above the door, and the frame lines up with the stones.
 
 - [ ] **U7 — A fireplace that reads as one.** `drawFireplace` draws a grey rounded box, a dark rectangle
   and three orange ellipses. At game scale it looks like an egg in a box. The fireplace is the `fireplace`
