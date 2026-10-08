@@ -2,6 +2,7 @@
 
 import argparse
 import asyncio
+from datetime import datetime
 import json
 from pathlib import Path
 from random import Random
@@ -13,6 +14,8 @@ from dotenv import dotenv_values
 from tavern.adapters import jev
 from tavern.adapters.claude import HAIKU_4_5, ClaudeError, ask_claude
 from tavern.adapters.probes import probes
+from tavern.adapters.tracing import (Scorer, Tracer, open_tracer, traced_intender, traced_question, traced_scores,
+                                     traced_writer)
 from tavern.evening.lockstep import Pace, evening_mode, run_evening
 from tavern.evening.metrics import (attention_counts, bar_metrics, conversation_counts, dice_metrics, evening_metrics,
                                     intention_counts, news_metrics, writer_stats)
@@ -61,6 +64,9 @@ def arguments(root: Path) -> argparse.ArgumentParser:
                         help="who writes conversation lines; default: Haiku when ANTHROPIC_API_KEY is in the env "
                              "file (a replay: when the recording has turns), else scripted")
     parser.add_argument("--env-file", type=Path, default=root / ".env")
+    parser.add_argument("--trace", action="store_true",
+                        help="trace the live Jev and Haiku calls to LangSmith, one thread per character; "
+                             "needs LANGSMITH_API_KEY in the env file and spends LangSmith quota")
     parser.add_argument("--step", type=float, default=0.1, help="game seconds per tick")
     parser.add_argument("--latency", type=float, default=1.0, help="virtual model latency, game seconds")
     parser.add_argument("--time-limit", type=float, default=1200.0, help="game seconds before the evening is cut off")
@@ -104,7 +110,8 @@ def keeper(calls: list[Record], log: Path) -> Callable[[Record], None]:
     return keep
 
 
-def evaluators(mode: str, recording: Path | None, calls: list[Record], keep: Callable[[Record], None]) -> Evaluators:
+def evaluators(mode: str, recording: Path | None, calls: list[Record], keep: Callable[[Record], None],
+               tracer: Tracer | None) -> Evaluators:
     """Wire the model port for a mode.
 
     Args:
@@ -112,6 +119,7 @@ def evaluators(mode: str, recording: Path | None, calls: list[Record], keep: Cal
         recording: Calls to replay, in replay mode.
         calls: Receives the calls loaded for replay.
         keep: Receives each live call as soon as it ends.
+        tracer: Traces each live call to LangSmith, or None.
     Returns:
         Evaluators for every decision stage; the actions within a chosen family are
         ordinary actions, so Jev scores them with the action question, recorded as `family`.
@@ -122,13 +130,16 @@ def evaluators(mode: str, recording: Path | None, calls: list[Record], keep: Cal
     if mode == "local":
         # Without a key the decisions never ask a model; Jev only fills the port.
         return Evaluators(jev.evaluate_actions, jev.evaluate_seats)
-    return Evaluators(record_calls("actions", jev.evaluate_actions_metered, keep, time.monotonic, jev.JevError),
-                      record_calls("seats", jev.evaluate_seats_metered, keep, time.monotonic, jev.JevError),
-                      record_calls("family", jev.evaluate_actions_metered, keep, time.monotonic, jev.JevError))
+    def scorer(stage: str, evaluate: Scorer) -> Scorer:
+        return evaluate if tracer is None else traced_scores(stage, evaluate, tracer)
+    return Evaluators(*(record_calls(stage, scorer(stage, evaluate), keep, time.monotonic, jev.JevError)
+                        for stage, evaluate in (("actions", jev.evaluate_actions_metered),
+                                                ("seats", jev.evaluate_seats_metered),
+                                                ("family", jev.evaluate_actions_metered))))
 
 
 def turn_writer(writer: str, mode: str, calls: list[Record], keep: Callable[[Record], None],
-                values: Mapping[str, Any]) -> TurnWriter:
+                values: Mapping[str, Any], tracer: Tracer | None) -> TurnWriter:
     """Wire the conversation line writer.
 
     Args:
@@ -137,6 +148,7 @@ def turn_writer(writer: str, mode: str, calls: list[Record], keep: Callable[[Rec
         calls: The evening's calls, loaded for a replay.
         keep: Receives each live Haiku call as soon as it ends, recorded as `turn`.
         values: Parsed env file with ANTHROPIC_API_KEY.
+        tracer: Traces each live line to LangSmith, or None.
     Returns:
         The writer port.
     """
@@ -149,11 +161,14 @@ def turn_writer(writer: str, mode: str, calls: list[Record], keep: Callable[[Rec
 
     async def ask(question: Question) -> Any:
         return await ask_claude(question, config)
-    return claude_writer(record_questions("turn", ask, keep, time.monotonic, ClaudeError))
+    if tracer is None:
+        return claude_writer(record_questions("turn", ask, keep, time.monotonic, ClaudeError))
+    asked = record_questions("turn", traced_question(ask, CLAUDE_MODEL, tracer), keep, time.monotonic, ClaudeError)
+    return traced_writer(claude_writer(asked), tracer)
 
 
 def mind(mode: str, values: Mapping[str, Any], prefix: str, calls: list[Record],
-         log: Path) -> tuple[Intender | None, str]:
+         log: Path, tracer: Tracer | None) -> tuple[Intender | None, str]:
     """Wire the mind port that writes guests' intentions, and say how it runs.
 
     Args:
@@ -162,6 +177,7 @@ def mind(mode: str, values: Mapping[str, Any], prefix: str, calls: list[Record],
         prefix: Shared system prefix of every intention question.
         calls: The evening's calls (loaded already in replay mode); live calls are added.
         log: JSON-lines file each live call is appended to.
+        tracer: Traces each live intention to LangSmith, or None.
     Returns:
         The intender, or None offline, and a label for the metrics.
     """
@@ -182,8 +198,12 @@ def mind(mode: str, values: Mapping[str, Any], prefix: str, calls: list[Record],
         calls.append(record)
         with log.open("a") as lines:
             lines.write(format_record(record))
-    asked = record_questions("intention", metered, keep, time.monotonic, ClaudeError)
-    return intention_writer(prefix, asked), "Claude Haiku 4.5 (claude-haiku-4-5), recorded"
+    if tracer is None:
+        asked = record_questions("intention", metered, keep, time.monotonic, ClaudeError)
+        return intention_writer(prefix, asked), "Claude Haiku 4.5 (claude-haiku-4-5), recorded"
+    asked = record_questions("intention", traced_question(metered, CLAUDE_MODEL, tracer), keep, time.monotonic,
+                             ClaudeError)
+    return traced_intender(intention_writer(prefix, asked), tracer), "Claude Haiku 4.5 (claude-haiku-4-5), recorded"
 
 
 def rounded(value: Any) -> Any:
@@ -250,17 +270,25 @@ def main(root: Path) -> None:
         parser.error(str(error))
     if mode == "replay" and args.calls is None:
         parser.error("replay mode needs --calls (make evening MODE=replay CALLS=...)")
+    if mode == "replay" and args.trace:
+        parser.error("a replay asks no model, so there is nothing to trace")
+    tracer = None
+    if args.trace:
+        try:
+            tracer = open_tracer(values, f"{args.out.name} {datetime.now():%Y-%m-%d %H:%M:%S}")
+        except ValueError as error:
+            parser.error(str(error))
     args.out.mkdir(parents=True, exist_ok=True)
     calls: list[Record] = []
     keep = calls.append if mode == "replay" else keeper(calls, args.out / "calls.jsonl")
-    ports = evaluators(mode, args.calls, calls, keep)
+    ports = evaluators(mode, args.calls, calls, keep, tracer)
     keyed = (any(record["kind"] == "turn" for record in calls) if mode == "replay"
              else bool(values.get("ANTHROPIC_API_KEY")))
     try:
         writer, writer_note = writer_mode(args.writer, keyed)
     except ValueError as error:
         parser.error(str(error))
-    lines = turn_writer(writer, mode, calls, keep, values)
+    lines = turn_writer(writer, mode, calls, keep, values, tracer)
     room = json.loads((root / "data" / "tavern.json").read_text())
     try:
         cards = parse_cards([json.loads(path.read_text()) for path in sorted(args.characters.glob("*.json"))])
@@ -271,11 +299,14 @@ def main(root: Path) -> None:
         parser.error(f"cannot open the evening: {error}")
     settings = config(values, mode)
     intender, minded = mind(mode, values, (root / "data" / "minds" / "intention_prefix.md").read_text(), calls,
-                            args.out / "calls.jsonl")
+                            args.out / "calls.jsonl", tracer)
     announce_health(parser, mode, writer, settings, values)
     started = time.monotonic()
     evening = asyncio.run(run_evening(world, settings, Random(args.seed), ports, pace, lines, intender=intender))
     wall = time.monotonic() - started
+    if tracer is not None:
+        # The client uploads in the background; what is still queued must leave before the process ends.
+        tracer.client.flush()
     # A replay matches its recording only with the same seed, pace and temperature, so they are shown.
     report = {"run": {"mode": mode, "decides": DECIDES[mode], "note": note, "seed": args.seed,
                       "model": settings["model"], "temperature": settings["temperature"], "step": pace.step,
@@ -296,6 +327,8 @@ def main(root: Path) -> None:
     print(json.dumps(rounded(report), indent=2))
     print(f"{mode} evening, seed {args.seed}, {writer} lines: {round(evening.end_time)} game s in {wall:.1f} "
           f"wall s{''.join(f' ({text})' for text in (note, writer_note) if text)}; wrote {args.out}")
+    if tracer is not None:
+        print(f"traced to LangSmith project {tracer.project!r}, one thread per character of {tracer.evening!r}")
 
 
 if __name__ == "__main__":
