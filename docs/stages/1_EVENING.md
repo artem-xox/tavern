@@ -86,7 +86,7 @@ barkeep (B0–B6) and E20 (hostile options), all 2026-10-04. Next:
 4. **The mind (MIND.md steps 0–5), done 2026-10-05.** Guests set typed goals, ask the mind within a budget,
    may promise to come over, and the barkeep keeps to his duty.
 5. **Giving (H0–H5), done 2026-10-05.** Guests hand each other what they carry, and fetch
-   a drink for someone as one chosen errand. Worlds are saved as version 14; the next `schema_version` is 15.
+   a drink for someone as one chosen errand. Worlds were saved as version 14; tables and manners (T3) made it 15, so the next is 16.
 
 The door at closing (D02) is fixed: it takes as many leavers at once as it has spots (offline
 seed 5: the last guest left 6.6 s after closing, was 42.8 s; stuck time 27.1 s → 6.1 s). The code now
@@ -2195,7 +2195,8 @@ Decisions for every T task (frozen 2026-10-08; change them here first if the cod
   stands to talk with those seated. They are the cells north and south of each 1×1 table, except (10, 4),
   which is a spot of the tap: Hearth `[[10, 6]]`, Window `[[4, 5], [4, 7]]`, Garden `[[4, 10], [4, 12]]`,
   Corner `[[15, 10], [15, 12]]`, East `[[15, 5], [15, 7]]`. `room._validate_spots` already checks that they
-  are walkable. They are content, so test halls add their own.
+  are walkable. They are content, so test halls add their own (`social_hall.spotted_hall`). A guest counts as
+  standing at one only once arrived (`path` empty), not while passing it.
 - **At a table** (`scenes.at_table(world, actor) -> str | None`): the table a guest sits at, or the table
   on one of whose spots they stand while not walking. **Within reach** (`scenes.within_reach(world, a, b)`,
   which replaces the private `actions._close_enough`): both are at the same table, or they stand side by side
@@ -2255,12 +2256,17 @@ Decisions for every T task (frozen 2026-10-08; change them here first if the cod
   event only). It is **not** a `hostility.HOSTILE_CAUSES`: rudeness is no reason for a shove.
 - **An apology mends.** `social_acts.apologize` keeps halving the latest grudge (`soften`). A listener whose
   grudge it softened also keeps `apologized` about the speaker, and both record `apologized` ("Edda
-  apologized to Bea"). An apology with no grudge to soften changes nothing and logs nothing, as now. The act's
-  meaning in `conversation.ACTS` says it "warms them a little".
+  apologized to Bea"). An apology with no unsoftened grudge changes nothing and logs nothing, so a second
+  apology for the same wrong does nothing. The act's meaning in `conversation.ACTS` says it "warms them a
+  little".
+- **Table manners are a rule of the hall (added while building T6).** Many tests seat strangers at one table
+  and assert on thoughts and opinions, so the penalty is `rules.manners.table_intrusion`, set from the layout's
+  `table_manners` (true in `data/tavern.json`, false by default). It also lets an evening be run with and without
+  manners on the same code.
 - **Whose table the mind sees.** `world.observe_actor` marks known chairs and tables with what anyone
   in the hall can see (a coat on the chair, a mug on the table). A chair that is another guest's own
-  seat gets `owner`, the name the viewer calls them by (`names.called`). A table with hosts gets `hosts`,
-  the same names, in `table_hosts` order. `observation.known_objects` accepts both. The briefing, the
+  seat gets `owner`, `{id, name}` with the name the viewer calls them by (`names.called`), else None. A table
+  gets `hosts`, a list of the same records in `table_hosts` order (none for the viewer's own table). `observation.known_objects` accepts both. The briefing, the
   option sentences and the seat rubric read them. Rules never do: the world decides intrusion from its
   own state.
 - **Appeal.** Windows keep `appeal` and `reach` (the map check requires them) at `appeal: 0.0`, so only
@@ -2275,17 +2281,22 @@ Decisions for every T task (frozen 2026-10-08; change them here first if the cod
   - `test_evening.py::test_demo_tables_are_ranked_by_their_surroundings` (T0): only the hearth table is rated.
   - `test_goals.py`, case `sit-at-their-table` (T2): `talk_to` is now served by `approach`, not by taking a chair
     at their table. Add an `approach-the-person` case beside it.
+  - `test_goals.py`, `test_the_briefing_marks_the_options_that_serve_the_goal` and
+    `test_the_local_policy_adds_a_bonus_to_options_that_serve_the_goal` (T2): they used a `talk_to` goal to
+    show a goal marking `seating` and `sit`; they now use `sit_with`, which still does.
   - `test_seating.py::test_seated_visitor_may_move_only_to_join_company`, cases `single-companion-to-join` and
-    `duplicate-companion-sighting`, and `test_lonely_visitor_moves_to_sit_with_company` (T5): a seated guest
+    `duplicate-companion-sighting`, and `test_lonely_visitor_moves_to_sit_with_company` (T2/T5): a seated guest
     moves only to join someone they like. Keep the cases, make the companion liked, and add stranger cases
     that expect `["sit:own"]`.
+  - `test_speech_acts.py`, the apology case and `test_a_repeated_apology_softens_only_once_per_grudge` (T7): the
+    listener also keeps the warm `apologized` thought.
   - `test_database.py` and `test_intention_saves.py` pin `schema_version` (T3: 15).
 
   Any other failing test is a surprise: stop and report it. T1, T2, T3 and T5 change whole evenings
   (`test_first_evening.py`, the news-spread test on seed 7). If one of them fails, report the seed and the
   failure. Do not change a seed or an assertion without the user's approval.
 
-- [ ] **T0 — Appeal only by the fire.**
+- [x] **T0 — Appeal only by the fire.**
   - Data: windows' `appeal` 0.0. Prompts: `briefing._table_note`/`_tables` (no number, nearest first),
     `options._seat_note` (no number), `jev._seat_question` (manners and company first, one clause on appeal;
     keep the word "appeal", which `test_seat_questions_have_their_own_rubric_about_appeal_and_company` pins),
@@ -2294,7 +2305,7 @@ Decisions for every T task (frozen 2026-10-08; change them here first if the cod
   - *Tests first:* the changed demo-ranking test (Hearth 0.5, the other four 0.0); a briefing case showing
     "by the fire" and no "appeal 0." in the table notes.
   - *Check:* `make check`; offline seed 5: count `sit` on each table before and after.
-- [ ] **T1 — Reach at a table (refactor, then behavior).**
+- [x] **T1 — Reach at a table (refactor, then behavior).**
   - Refactor first, no behavior change: move `actions._close_enough` to `scenes.within_reach` (public). Check
     that offline seed 5 gives a byte-identical `events.jsonl` (`cmp`).
   - Then: table standing spots in the data, `scenes.at_table`, scenes and reach as decided, and
@@ -2305,7 +2316,7 @@ Decisions for every T task (frozen 2026-10-08; change them here first if the cod
     tables), a talk between a seated and a standing guest that runs two turns, and the stander leaving the spot
     ends their part. A `pytest.raises` block for a map whose table spot is not walkable.
   - *Check:* in the running app, force a guest onto a table spot and force `talk` to the one seated there.
-- [ ] **T2 — Walk over for a word (`approach`).**
+- [x] **T2 — Walk over for a word (`approach`).**
   - The verb as decided: `Activity.approaches`, the route to the partner's table, arrival opens or joins the
     scene. Candidate (`agents._social_candidates`): every seated guest in sight at another table, not
     staff, available or in a scene that is not full. Local utility (`local_policy`): like `talk`, scaled by
@@ -2320,7 +2331,7 @@ Decisions for every T task (frozen 2026-10-08; change them here first if the cod
     spots taken, a partner who leaves before arrival). Also candidates and option text cases.
   - *Check:* offline seed 5 shows at least one `approach` that leads to two or more turns, and no stuck time
     added.
-- [ ] **T3 — Move to a free table together (`move_together`).**
+- [x] **T3 — Move to a free table together (`move_together`).**
   - `invitations.free_table`, the kind, `offered_kinds`, `errands` first steps (`sit` for both), the
     `seating` stage with `table` (also for `join_table`), save check and `schema_version` 15. Wording:
     `conversation.ACTS["invite"]`, `turn_prompt` (the act list and one example), and the scripted writer
@@ -2332,7 +2343,7 @@ Decisions for every T task (frozen 2026-10-08; change them here first if the cod
     `table` on another stage, or a missing `table`, is rejected.
   - *Check:* an offline evening where an approach ends in an accepted `move_together`, or a test-built
     world showing it if seed 5 has none.
-- [ ] **T4 — Whose table (what the mind sees).**
+- [x] **T4 — Whose table (what the mind sees).**
   - `social/tables.py` with `table_hosts` and `welcome` (no `intrude` yet), the `owner` and `hosts` marks
     in `observe_actor`, and the prompts:
     - Briefing table notes: "Window table (Bea's table, she sits there; one free chair)", "(Bea's table, she is
@@ -2347,7 +2358,7 @@ Decisions for every T task (frozen 2026-10-08; change them here first if the cod
     excluded, newcomer excluded; `welcome`: friend, liked, stranger, promise, `seating` errand), and briefing
     and option text cases.
   - *Check:* print a briefing from offline seed 5 at 120 s and read the table lines.
-- [ ] **T5 — Choosing a seat with manners.**
+- [x] **T5 — Choosing a seat with manners.**
   - `agents._seat_wish`: a seated guest is re-offered `seating` when their own seat was taken, when someone
     they like (friend, or opinion at least `LIKED`) sits at a table with a free chair, or when an active goal
     or promise is `sit_with`. Strangers' company is reached by `approach`. `local_policy._score_seats`: a
@@ -2358,7 +2369,7 @@ Decisions for every T task (frozen 2026-10-08; change them here first if the cod
     own chair).
   - *Check:* offline seed 5: `seat_taken` count before and after (expect fewer), and no guest left
     seatless for long (stuck seconds in `metrics.json`).
-- [ ] **T6 — Sitting down uninvited.**
+- [x] **T6 — Sitting down uninvited.**
   - `tables.intrude` from `_settle`, the `table_intruded` thought, both events, the emote, salience, and
     `metrics.json` counting `table_intrusions` (`metrics._occurrences`).
   - *Tests first* (`tests/test_tables.py`): one parametrized block on who resents a newcomer (stranger at a
@@ -2367,12 +2378,12 @@ Decisions for every T task (frozen 2026-10-08; change them here first if the cod
     empty table: nobody). Saves: a `table_intruded` thought reloads.
   - *Check:* in the running app, force a stranger onto the free chair at a hosted table: the host shows
     angry, and the inspector shows the thought and the log line.
-- [ ] **T7 — An apology that mends.**
+- [x] **T7 — An apology that mends.**
   - `social_acts.apologize` as decided, `metrics.json` counting `apologies`, the act meaning.
   - *Tests first* (`tests/test_speech_acts.py`): after `table_intruded`, an apology turns the host's opinion of
     the newcomer from −10 to +1 (−5 softened, +6 `apologized`); a second apology in the same evening only
     softens; an apology with no grudge changes nothing and logs nothing.
-- [ ] **T8 — Measure.**
+- [x] **T8 — Measure.**
   - Offline seed 5 and live seeds 5 and 7, before (`main`) and after: `seat_taken`, `table_intrusions`,
     `approach` scenes, accepted `move_together`, `apologies`, stuck seconds, cost. Replay the live run
     and `cmp` the events (step 8 of "Working on a task"). Record a moment from the log in which an
@@ -2380,6 +2391,21 @@ Decisions for every T task (frozen 2026-10-08; change them here first if the cod
   - *If hosts rarely react* (no line or decision within 15 s of `table_intruded`), propose a follow-up in
     which the world opens a scene from the host to the newcomer, so that the next line is the host's. Do
     not build it in T8.
+
+- *Built and measured (2026-10-08).* Modules: `social/tables.py` (`liked`, `table_hosts`, `welcome`, `mark_ownership`,
+  `intrude`), `evening/manner_metrics.py` (`manners` in `metrics.json`), `Activity.approaches`, `scenes.at_table` and
+  `within_reach`, `invitations.free_table` and the `seating` stage, `rules.manners` (see above). Saved worlds are
+  version 15. A guest likes someone (friend, or opinion of at least 10) is the test for sitting with them: `seating`
+  is re-offered only for liked company, and `approach` is not offered to liked company at a table with a free chair.
+  Offline, ten seeds (0–9), `main` against this branch: `seat_taken` 25 → 5, `table_intruded` 0 → 9, `approach` 0 → 107,
+  conversations 315 → 399, stuck seconds per evening 16.4 → 18.2, every guest gone at closing in all ten. A first
+  version gave the hearth table two more standing spots; it cut stuck time but halved the barkeep's chats in three
+  evenings of ten (and failed `test_barkeep_evening` on seed 1), so it was dropped. Live seed 5 (Jev + Haiku, 433 game
+  s, 444 s wall, about $0.32 over 216 Jev calls and 61 turns, no failures): 10 `approach`, one accepted `move_together`
+  (Brida and Edda at 82.7 s), two `table_intruded` (Saye at Calder's tables, at 258 s and 377 s), no apology, stuck time
+  21 s over six guests. Replay `cmp` byte-identical. No live run on `main` for comparison was paid for. Saye did not
+  apologize in either case; the apology exists and is offered whenever a host holds a grudge, but Haiku did not choose it.
+  Calder did not speak to Saye after either intrusion (no line or decision within 15 s), which is T8's trigger for a follow-up in which the world opens a scene from the host.
 
 ## Order
 

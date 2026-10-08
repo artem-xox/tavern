@@ -25,7 +25,10 @@ speech, a guest sets a typed goal the world checks, asks the mind far less often
 intentions became 26–33, goals reached 7 of 30 became 10 of 17), may promise to come over, and the
 barkeep keeps to his duty. Giving added the things a guest carries (a mug, a remedy, a keepsake), a `give`
 verb, a mug carried over rather than teleported, and a guest bringing someone a drink of their own accord.
-Saved worlds are version 14. Step 6 (memory between evenings) waits for Stage 4.
+Tables and manners (T0–T8, 2026-10-08): a guest walks over to another table to talk instead of taking a chair
+there, two guests agree to move to a free table together, sitting down at a held table uninvited upsets its hosts
+(an apology mends it), and only the hearth table is appealing.
+Saved worlds are version 15. Step 6 (memory between evenings) waits for Stage 4.
 **Done when:** recorded live evenings meet the Stage 1 metrics, an observer can retell
 a story from at least one of them, and its chronicle cites only logged events.
 
