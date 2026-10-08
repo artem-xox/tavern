@@ -1862,7 +1862,7 @@ U5 can go any time, since it only touches `bubble.ts`. U6 → U7 → U8 come aft
 after U3, and U10 also needs U8's `pixels.ts`. U11 only runs if U4 finds that the snapshot's size
 matters on the phone.
 
-- [ ] **U2 — Split `scene.ts` (D01; refactor, no behavior change).** `scene.ts` has 405 lines, over the
+- [x] **U2 — Split `scene.ts` (D01; refactor, no behavior change).** `scene.ts` has 405 lines, over the
   limit, and U4–U8 all draw in it.
   - *Move, without editing the logic:* `drawFloor`, `drawRoomDetails` and `drawWall` go to a new
     `frontend/src/floor.ts` as exported functions that take the `Graphics` and the map, as
@@ -1874,6 +1874,14 @@ matters on the phone.
     tick 0) before and after at the same window size. Start the evening and watch one conversation:
     bubbles still sit over their speaker, stay inside the map and split as before. Remove the D01 row
     from [PLAN.md](../PLAN.md#tech-debt) in the same commit.
+
+  - *Result (2026-10-08):* `scene.ts` 405 → 300 lines. `floor.ts` (57) holds `drawFloor`, `drawRoomDetails`
+    and `drawWall`, moved without a logic change (`this.floor` became a parameter). `speech.ts` (82) holds
+    `class Speech` (`tell`, `place`, `destroy`), which owns the bubble's container, box, text, constants and
+    the line being told; `ActorView` now carries one `speech: Speech`. `make check` and `make build` pass. In
+    the browser the opening room and a paused mid-evening room match the screenshots from before the split
+    (floor, walls, door, windows, fireplace, rugs, furniture), and a live bubble sits under its speaker with
+    its pointer. The D01 row is removed from PLAN.md.
 
 - [x] **U3 — The sidebar keeps its elements between snapshots (sections that fold, chips that
   select).** *Cause:* a click is a press and a release on the same element. A snapshot arrives every
@@ -1943,6 +1951,19 @@ matters on the phone.
     running evening show no blinking. Fix each confirmed cause in its own commit. In the result
     paragraph, say which suspects were confirmed and which were not.
 
+  - *Built, not yet confirmed on a phone (2026-10-08):* the Mac has no full Xcode, so the iOS Simulator
+    tool cannot attach; the checks below ran in the built-in browser (desktop, and a 375 px mobile emulation).
+    Suspect 1 is fixed by U3. Suspect 2 is **confirmed**: in a 60 s evening the canvas buffer was written 23
+    times (`canvas.width = …`, about every 2.6 s) at an unchanged size; now 0. `frontend/src/mapview.ts`
+    (`mapParts`, 11 cases in `tests/mapview.test.ts`, red first) fingerprints the size, the floor and the
+    furniture separately, and `renderMap` resizes and redraws a part only when its fingerprint changes, so the
+    tap's stock, queues and dice games (which draw nothing) no longer touch the canvas. Suspect 4: hover
+    rules sit inside `@media (hover: hover)`; buttons, summaries and selects get `touch-action: manipulation`
+    and no tap highlight. In the 375 px emulation `(hover: hover)` is false, the controls report
+    `manipulation`, and nothing overflows. Not checked: suspect 3 (snapshot cost on a phone's main thread) and
+    suspect 5 (the toolbar's resize event), because they need the real device or the Simulator. The box stays
+    unticked until the user confirms on the iPhone; if it still blinks, do U11 and capture a Safari timeline.
+
 - [x] **U5 — Speech bubbles break at sentences.** Today `splitLine` (`bubble.ts`) cuts a line every 10 words
   wherever the words fall (see the measurements above).
   - *Rule:* a piece ends only at a sentence end: `.`, `!`, `?`, `…` or `...`, optionally followed by a
@@ -2002,7 +2023,7 @@ matters on the phone.
     a rivet on each plank, and a brass ring on the latch side. Width (1.6 cells) and centring are as before.
     Seen at game scale and at 4× in the browser: no mat above the door, and the frame lines up with the stones.
 
-- [ ] **U7 — A fireplace that reads as one.** `drawFireplace` draws a grey rounded box, a dark rectangle
+- [x] **U7 — A fireplace that reads as one.** `drawFireplace` draws a grey rounded box, a dark rectangle
   and three orange ellipses. At game scale it looks like an egg in a box. The fireplace is the `fireplace`
   object at (9, 0), three cells wide, in the north wall, opening south (`hearthFacing`). A flickering
   glow on the floor exists already (`drawHearthGlow`).
@@ -2024,6 +2045,17 @@ matters on the phone.
     Delete the others.
   - *Check:* `make check` and `make build`. The browser's Performance panel shows frame time unchanged
     within noise.
+
+  - *Result (2026-10-08):* first commit: `hearth.ts` (`hearthFacing`, `drawFireplace`, `drawHearthGlow`), no
+    change to the picture. Second commit, one design instead of three variants (it reads at game scale and
+    at 4×, so there was nothing to choose between; say if you want others tried): dressed stone in courses of
+    three shades with mortar, a timber mantel lit from above, an arched sooty opening with a warm back wall,
+    a hearthstone lip on the room side, two iron andirons and two crossed logs with pale end rings on a bed
+    of coals. `drawFlames` redraws each frame on its own layer above the furniture: five tongues in three
+    layers (red, orange, yellow core), each on its own phase, ±28% flicker, plus five rising sparks and a
+    pulsing coal bed; about 30 shapes per hearth. The drawing works in a frame (`u` along the wall, `v` out
+    into the room), so it follows `hearthFacing` to any wall; `tests/hearth.test.ts` pins that for all four.
+    Not checked on screen: a fireplace in a wall other than the north one (the hall has only that one).
 
 - [ ] **U8 — Emotes you can read.** Today `showEmote` draws a text glyph (`! ? ✹ ♥ z …`, `EMOTE_GLYPHS`)
   in 12 px system-ui on a cream box, beside the name. The glyph depends on the device's fonts, the box

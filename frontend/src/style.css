@@ -4,8 +4,9 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: radial-gradient(ellipse at 35% 0%, #26342a 0, #121c19 70%); min-height: 100vh; }
 button, select { font: inherit; }
+button, summary, select { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 button { border: 1px solid #4a5546; background: #29382b; color: #e8e8d5; border-radius: 7px; padding: 9px 14px; cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s; }
-button:hover:not(:disabled) { background: #354734; border-color: #bda26b; }
+@media (hover: hover) { button:hover:not(:disabled) { background: #354734; border-color: #bda26b; } }
 button:disabled, select:disabled { opacity: .4; cursor: default; }
 button[aria-pressed="true"] { border-color: var(--gold); color: #f0d49f; background: #3b4230; }
 button:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
@@ -44,7 +45,7 @@ h3 { font-size: 14px; font-weight: 600; }
 .visitor-chip.selected { border-color: #a28e60; background: #34412d; }
 .visitor-chip.departed { opacity: .55; border-style: dashed; }
 button.primary { border-color: #b69a5e; background: #4a4a2c; color: #f4dfae; font-weight: 600; }
-button.primary:hover:not(:disabled) { background: #5a5933; border-color: var(--gold); }
+@media (hover: hover) { button.primary:hover:not(:disabled) { background: #5a5933; border-color: var(--gold); } }
 .curtain { position: absolute; inset: 14px; display: flex; align-items: center; justify-content: center; background: #1f1a1559; border-radius: 3px; pointer-events: none; }
 .curtain-card { display: flex; flex-direction: column; align-items: center; gap: 8px; width: min(300px, 80%); padding: 16px 20px; text-align: center; background: #2a231ce8; border: 1px solid #8a7348; border-radius: 10px; box-shadow: 0 12px 30px #0008; pointer-events: auto; }
 .curtain-title { font-family: "Libre Baskerville", Georgia, serif; font-size: 15px; color: #f2dcb0; }

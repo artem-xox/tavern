@@ -1,18 +1,12 @@
 import Phaser from "phaser";
-import { chunkAt, placeBubble, splitLine } from "./bubble";
-import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawFireplace, drawRugs, drawTable, drawTap, drawToilet, drawWindow, hearthFacing } from "./furniture";
+import { drawFloor } from "./floor";
+import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawTable, drawTap, drawToilet, drawWindow } from "./furniture";
+import { drawFireplace, drawFlames, drawHearthGlow } from "./hearth";
+import { mapParts, type MapParts } from "./mapview";
+import { Speech } from "./speech";
 import { shippedPose, spriteOf, stills } from "./sprites";
-import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Mind, Turn, Verb, World, WorldObject } from "./types";
+import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Mind, Verb, World, WorldObject } from "./types";
 
-/** Speech bubbles wrap at this many pixels and draw above every guest. */
-const BUBBLE_WRAP = 150;
-const BUBBLE_FILL = 0xf4e6c6;
-const BUBBLE_EDGE = 0x6b5640;
-/** Length and half-width of a bubble's pointer, and how far from a corner its tip stays. */
-const TAIL = 7;
-const TAIL_HALF = 6;
-const TAIL_INSET = 14;
-const BUBBLE_DEPTH = 1000;
 /** The seated version of a standing pose, for a visitor who does it from their seat. */
 const SEATED_POSES: Readonly<Record<string, string>> = { Drinking: "DrinkingSeated", Talking: "TalkingSeated", Giving: "GivingSeated", Receiving: "ReceivingSeated" };
 /** Poses drawn low on the cell, as a seated figure sits. */
@@ -37,11 +31,7 @@ interface ActorView {
   sprite: Phaser.GameObjects.Image;
   name: Phaser.GameObjects.Text;
   selection: Phaser.GameObjects.Arc;
-  speech: Phaser.GameObjects.Container;
-  speechBox: Phaser.GameObjects.Graphics;
-  speechText: Phaser.GameObjects.Text;
-  /** The line being told in pieces, and when it began. */
-  talk: { key: string; chunks: string[]; start: number } | null;
+  speech: Speech;
   emote: Phaser.GameObjects.Text;
   targetX: number;
   targetY: number;
@@ -60,9 +50,12 @@ export class TavernScene extends Phaser.Scene {
   private floor!: Phaser.GameObjects.Graphics;
   private hearthGlow!: Phaser.GameObjects.Graphics;
   private furniture!: Phaser.GameObjects.Graphics;
+  /** Flames and sparks, above the furniture and redrawn every frame. */
+  private flames!: Phaser.GameObjects.Graphics;
   private route!: Phaser.GameObjects.Graphics;
   private readonly visitors: Map<string, ActorView> = new Map();
-  private mapSignature: string = "";
+  /** The fingerprints of the map as drawn; empty before the first snapshot, so everything draws once. */
+  private drawn: MapParts = { size: "", floor: "", furniture: "" };
   private selectedId: string | null = null;
   private editing: boolean = false;
   private ready: boolean = false;
@@ -82,6 +75,7 @@ export class TavernScene extends Phaser.Scene {
     this.floor = this.add.graphics();
     this.hearthGlow = this.add.graphics();
     this.furniture = this.add.graphics();
+    this.flames = this.add.graphics();
     this.route = this.add.graphics();
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer): void => this.click(pointer));
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer): void => this.hover(pointer));
@@ -123,117 +117,25 @@ export class TavernScene extends Phaser.Scene {
       view.container.y += (view.targetY - view.container.y) * blend;
       // Everyone fidgets and drunk guests sway more; each at their own pace, so a table of drinkers does not rock in step.
       view.sprite.setAngle(Math.max(view.sway, IDLE_SWAY) * 8 * Math.sin(time / 420 + view.cellX * 1.7 + view.cellY));
-      this.placeSpeech(view);
+      view.speech.place(view.container.x, view.container.y, this.time.now, this.scale);
     }
-    this.drawHearthGlow(time);
-  }
-
-  /** Show the piece of the line now due in a bubble over its speaker, inside the map and above the other guests. */
-  private placeSpeech(view: ActorView): void {
-    const now: number = this.time.now;
-    view.speech.setVisible(view.talk !== null);
-    if (!view.talk) return;
-    const piece: string = view.talk.chunks[chunkAt(view.talk.chunks, now - view.talk.start)]!;
-    if (view.speechText.text !== piece) view.speechText.setText(piece);
-    const { width, height } = view.speechText;
-    const placement = placeBubble(view.container.x, view.container.y, width, height, this.scale);
-    view.speech.setPosition(placement.x, placement.y);
-    this.drawBubble(view, width, height, placement.originY, view.container.x - placement.x);
-  }
-
-  /** Draw the bubble's body around its text, with a pointer toward the speaker at `speakerDx` from its centre. */
-  private drawBubble(view: ActorView, width: number, height: number, originY: 0 | 1, speakerDx: number): void {
-    const top: number = originY === 1 ? -height : 0;
-    const down: number = originY === 1 ? 1 : -1;
-    const tailX: number = Math.min(Math.max(speakerDx, -width / 2 + TAIL_INSET), width / 2 - TAIL_INSET);
-    const baseY: number = originY === 1 ? top + height : top;
-    const box: Phaser.GameObjects.Graphics = view.speechBox.clear();
-    box.fillStyle(BUBBLE_FILL).fillRoundedRect(-width / 2, top, width, height, 9);
-    box.lineStyle(2, BUBBLE_EDGE).strokeRoundedRect(-width / 2, top, width, height, 9);
-    box.fillStyle(BUBBLE_FILL).fillRect(tailX - TAIL_HALF + 1, baseY - 1, 2 * TAIL_HALF - 2, 2);
-    box.fillTriangle(tailX - TAIL_HALF, baseY, tailX + TAIL_HALF, baseY, tailX, baseY + down * TAIL);
-    box.lineBetween(tailX - TAIL_HALF, baseY, tailX, baseY + down * TAIL);
-    box.lineBetween(tailX + TAIL_HALF, baseY, tailX, baseY + down * TAIL);
-    view.speechText.setY(top);
-  }
-
-  /** Let firelight flicker on the floor in front of each fireplace. */
-  private drawHearthGlow(time: number): void {
-    this.hearthGlow.clear();
-    if (!this.world) return;
-    const size: number = this.world.map.tile_size;
-    const flicker: number = 0.82 + 0.1 * Math.sin(time / 170) + 0.08 * Math.sin(time / 53);
-    for (const hearth of this.world.map.objects.filter((object: WorldObject): boolean => object.kind === "fireplace")) {
-      // Light spills into the room on the side the fireplace opens to.
-      const [dx, dy]: [number, number] = hearthFacing(hearth, this.world.map.width);
-      const x: number = (hearth.x + (hearth.width ?? 1) / 2 + dx * 0.9) * size;
-      const y: number = (hearth.y + (hearth.height ?? 1) / 2 + dy * 0.9) * size;
-      for (let ring: number = 5; ring > 0; ring -= 1) {
-        this.hearthGlow.fillStyle(0xf5a347, 0.045 * flicker).fillCircle(x, y, ring * size * 0.62 * flicker);
-      }
+    if (this.world) {
+      const { objects, width, tile_size: size } = this.world.map;
+      drawHearthGlow(this.hearthGlow, objects, width, size, time);
+      drawFlames(this.flames, objects, width, size, time);
     }
   }
 
   private renderMap(world: World): void {
-    const signature: string = JSON.stringify(world.map);
-    if (signature === this.mapSignature) return;
-    this.mapSignature = signature;
-    this.scale.resize(world.map.width * world.map.tile_size, world.map.height * world.map.tile_size);
-    this.drawFloor(world);
-    this.furniture.clear();
-    for (const object of world.map.objects) this.drawObject(object, world.map.tile_size);
-  }
-
-  private drawFloor(world: World): void {
-    const { width, height, tile_size: size, blocked } = world.map;
-    this.floor.clear();
-    for (let y: number = 0; y < height; y += 1) {
-      for (let x: number = 0; x < width; x += 1) {
-        this.floor.fillStyle([0x896649, 0x936e4d, 0x8d694a][(x + y * 3) % 3]!);
-        this.floor.fillRect(x * size, y * size, size, size);
-        this.floor.lineStyle(1, 0x382f26, 0.23);
-        this.floor.lineBetween(x * size, (y + 1) * size, (x + 1) * size, (y + 1) * size);
-        this.floor.lineBetween((x + (y % 2 ? 0.5 : 0)) * size, y * size, (x + (y % 2 ? 0.5 : 0)) * size, (y + 1) * size);
-        this.floor.lineStyle(1, 0xe2b887, 0.09);
-        this.floor.lineBetween(x * size + 3, y * size + 10, (x + 1) * size - 3, y * size + 10);
-      }
+    const parts: MapParts = mapParts(world.map);
+    // Resizing reallocates the canvas buffer, even to the same size, so only a new size resizes it.
+    if (parts.size !== this.drawn.size) this.scale.resize(world.map.width * world.map.tile_size, world.map.height * world.map.tile_size);
+    if (parts.floor !== this.drawn.floor) drawFloor(this.floor, world);
+    if (parts.furniture !== this.drawn.furniture) {
+      this.furniture.clear();
+      for (const object of world.map.objects) this.drawObject(object, world.map.tile_size);
     }
-    this.drawRoomDetails(size);
-    drawRugs(this.floor, world.map.objects, size);
-    for (const [x, y] of blocked) this.drawWall(x * size, y * size, size);
-    // Doors, windows and the fireplace sit inside the outer wall.
-    for (const object of world.map.objects.filter((item: WorldObject): boolean => ["door", "window", "fireplace"].includes(item.kind))) {
-      for (let dy: number = 0; dy < (object.height ?? 1); dy += 1) {
-        for (let dx: number = 0; dx < (object.width ?? 1); dx += 1) this.drawWall((object.x + dx) * size, (object.y + dy) * size, size);
-      }
-    }
-  }
-
-  private drawRoomDetails(size: number): void {
-    this.floor.fillStyle(0xb9afa0).fillRect(16 * size, size, 3 * size, 3 * size);
-    for (let x: number = 16; x < 19; x += 1) {
-      for (let y: number = 1; y < 4; y += 1) {
-        this.floor.lineStyle(1, 0x777e72, 0.4).strokeRect(x * size, y * size, size, size);
-        this.floor.fillStyle(0x667568, 0.25).fillRect((x + 0.45) * size, (y + 0.45) * size, 4, 4);
-      }
-    }
-    this.floor.fillStyle(0xddd1aa, 0.35).fillRect(2.3 * size, 8.2 * size, 3, size * 0.6);
-    for (const [x, y] of [[2, 2], [10, 2]]) {
-      for (let radius: number = 3; radius > 0; radius -= 1) {
-        this.floor.fillStyle(0xf5ce82, 0.025).fillCircle((x! + 0.5) * size, (y! + 0.5) * size, radius * size);
-      }
-    }
-  }
-
-  private drawWall(x: number, y: number, size: number): void {
-    this.floor.fillStyle(0x332d29);
-    this.floor.fillRect(x, y, size, size);
-    this.floor.fillStyle(0x555048);
-    this.floor.fillRoundedRect(x + 2, y + 2, size - 4, size - 5, 3);
-    this.floor.lineStyle(2, 0x756b5b, 0.55);
-    this.floor.lineBetween(x + 4, y + 3, x + size - 5, y + 3);
-    this.floor.lineStyle(1, 0x292724, 0.5);
-    this.floor.lineBetween(x + size / 2, y + 4, x + size / 2, y + size - 4);
+    this.drawn = parts;
   }
 
   private drawObject(object: WorldObject, size: number): void {
@@ -272,13 +174,10 @@ export class TavernScene extends Phaser.Scene {
     const { name: character, sheet } = spriteOf(actor);
     const sprite: Phaser.GameObjects.Image = this.add.image(0, sheet.lift, `${character}-Idle-south`).setDisplaySize(sheet.size, sheet.size);
     const name: Phaser.GameObjects.Text = this.add.text(0, -53, actor.name, { fontFamily: "system-ui", fontSize: "11px", color: "#fff4dc", stroke: "#322b24", strokeThickness: 3 }).setOrigin(0.5);
-    // Outside the container, so it can sit above every guest and be kept inside the map each frame.
-    const speechBox: Phaser.GameObjects.Graphics = this.add.graphics();
-    const speechText: Phaser.GameObjects.Text = this.add.text(0, 0, "", { fontFamily: "Georgia", fontSize: "11px", color: "#48392b", align: "center", lineSpacing: 2, padding: { x: 9, y: 6 }, wordWrap: { width: BUBBLE_WRAP, useAdvancedWrap: true } }).setOrigin(0.5, 0);
-    const speech: Phaser.GameObjects.Container = this.add.container(0, 0, [speechBox, speechText]).setDepth(BUBBLE_DEPTH).setVisible(false);
+    const speech: Speech = new Speech(this);
     const emote: Phaser.GameObjects.Text = this.add.text(17, -44, "", { fontFamily: "system-ui", fontSize: "12px", fontStyle: "bold", backgroundColor: "#f4e6c6", padding: { x: 4, y: 1 } }).setOrigin(0.5).setVisible(false);
     const container: Phaser.GameObjects.Container = this.add.container(0, 0, [shadow, selection, sprite, name, emote]);
-    return { container, sprite, name, selection, speech, speechBox, speechText, talk: null, emote, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south", sway: 0 };
+    return { container, sprite, name, selection, speech, emote, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south", sway: 0 };
   }
 
   private updateVisitor(view: ActorView, actor: Actor, size: number, reset: boolean): void {
@@ -304,18 +203,9 @@ export class TavernScene extends Phaser.Scene {
     view.targetY = y;
     view.name.setText(actor.name);
     view.sway = this.minds[actor.id]?.sway ?? 0;
-    this.tellLine(view, actor);
+    view.speech.tell(this.world?.conversations.find((item: Conversation): boolean => item.participants.includes(actor.id)), actor.id, this.time.now);
     this.showEmote(view, actor);
     view.container.setDepth(10 + y / 1000);
-  }
-
-  /** Tell the scene's latest line over its speaker in pieces; the server keeps the scene up while the last one is heard. */
-  private tellLine(view: ActorView, actor: Actor): void {
-    const scene: Conversation | undefined = this.world?.conversations.find((item: Conversation): boolean => item.participants.includes(actor.id));
-    const line: Turn | undefined = scene?.turns[scene.turns.length - 1];
-    if (line?.speaker !== actor.id) { view.talk = null; return; }
-    const key: string = `${line.time}:${line.line}`;
-    if (view.talk?.key !== key) view.talk = { key, chunks: splitLine(line.line), start: this.time.now };
   }
 
   private showEmote(view: ActorView, actor: Actor): void {
