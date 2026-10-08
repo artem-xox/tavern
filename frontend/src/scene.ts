@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { drawFloor } from "./floor";
-import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawFireplace, drawTable, drawTap, drawToilet, drawWindow, hearthFacing } from "./furniture";
+import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawTable, drawTap, drawToilet, drawWindow } from "./furniture";
+import { drawFireplace, drawHearthGlow } from "./hearth";
 import { mapParts, type MapParts } from "./mapview";
 import { Speech } from "./speech";
 import { shippedPose, spriteOf, stills } from "./sprites";
@@ -115,24 +116,7 @@ export class TavernScene extends Phaser.Scene {
       view.sprite.setAngle(Math.max(view.sway, IDLE_SWAY) * 8 * Math.sin(time / 420 + view.cellX * 1.7 + view.cellY));
       view.speech.place(view.container.x, view.container.y, this.time.now, this.scale);
     }
-    this.drawHearthGlow(time);
-  }
-
-  /** Let firelight flicker on the floor in front of each fireplace. */
-  private drawHearthGlow(time: number): void {
-    this.hearthGlow.clear();
-    if (!this.world) return;
-    const size: number = this.world.map.tile_size;
-    const flicker: number = 0.82 + 0.1 * Math.sin(time / 170) + 0.08 * Math.sin(time / 53);
-    for (const hearth of this.world.map.objects.filter((object: WorldObject): boolean => object.kind === "fireplace")) {
-      // Light spills into the room on the side the fireplace opens to.
-      const [dx, dy]: [number, number] = hearthFacing(hearth, this.world.map.width);
-      const x: number = (hearth.x + (hearth.width ?? 1) / 2 + dx * 0.9) * size;
-      const y: number = (hearth.y + (hearth.height ?? 1) / 2 + dy * 0.9) * size;
-      for (let ring: number = 5; ring > 0; ring -= 1) {
-        this.hearthGlow.fillStyle(0xf5a347, 0.045 * flicker).fillCircle(x, y, ring * size * 0.62 * flicker);
-      }
-    }
+    if (this.world) drawHearthGlow(this.hearthGlow, this.world.map.objects, this.world.map.width, this.world.map.tile_size, time);
   }
 
   private renderMap(world: World): void {
