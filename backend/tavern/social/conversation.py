@@ -113,7 +113,7 @@ ACTS: Mapping[str, Act] = MappingProxyType({
                            "a quarrel that ends the conversation"),
     "apologize": Act(social_acts.apologize, "apologize to the addressee (everyone, if nobody in particular) "
                                             "for a wrong; it halves the latest grudge each holds against the "
-                                            "speaker"),
+                                            "speaker and warms them a little to the speaker"),
     "agree": Act(social_acts.agree, "agree with the addressee (or whoever spoke last); they think a little "
                                     "better of the speaker"),
     "disagree": Act(social_acts.disagree, "disagree with the addressee (or whoever spoke last); they think a "
