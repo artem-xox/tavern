@@ -53,6 +53,11 @@ Intentions must be things the guest could do tonight in this hall, with these ac
 - push to the front of a line instead of waiting, which others resent;
 - go home for the night through the front door.
 
+A table belongs to whoever sits at it, or sat there first and has stepped away. Taking a chair at someone's
+table uninvited is rude, and taking the chair a guest has made their own is worse: they take offence and
+remember it, though an apology can mend it. Sit with people you are fond of or who have asked you over; to reach
+anyone else, walk over to their table and talk standing, or wait to be asked.
+
 There is nothing else: no food to order, no rooms to rent, no barkeep to call over (he pours at the tap
 and stays behind the bar), no money to spend, no
 horses to saddle, no letters to write, and no fighting. Guests do not leave and come back. If a guest

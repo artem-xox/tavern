@@ -72,6 +72,7 @@ def known_objects(observation: Mapping[str, Any]) -> list[Mapping[str, Any]]:
             raise ValueError("Unknown observed object kind")
         if "appeal" in item:
             number(item["appeal"], "Seat appeal", 0, 1)
+        _check_whose(item)
         if not isinstance(item.get("interaction_spots", []), list):
             raise ValueError("Observed interaction spots must be a list")
         if item["id"] in known and known[item["id"]] != item:
@@ -85,6 +86,15 @@ def known_objects(observation: Mapping[str, Any]) -> list[Mapping[str, Any]]:
         _check_line(item)
         known[item["id"]] = item
     return list(known.values())
+
+
+def _check_whose(item: Mapping[str, Any]) -> None:
+    # A chair may name whose own seat it is, a table whose table it is (observations built outside the world omit both).
+    holders = [item["owner"]] if item.get("owner") is not None else []
+    holders += item.get("hosts", []) if isinstance(item.get("hosts", []), list) else [None]
+    if any(not isinstance(who, Mapping) or set(who) != {"id", "name"} or not all(
+            isinstance(who[key], str) and who[key] for key in who) for who in holders):
+        raise ValueError("Observed owners and hosts must be {id, name} records")
 
 
 def _check_line(item: Mapping[str, Any]) -> None:

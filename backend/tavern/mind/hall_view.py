@@ -167,3 +167,39 @@ def setting_words(item: Mapping[str, Any]) -> str:
     nouns = {"fireplace": "the fire", "window": "a window"}
     near = [nouns[kind] for kind in item.get("comforts", []) if kind in nouns]
     return f"by {' and '.join(near)}" if near else ""
+
+
+def home_table_of(observation: Observation) -> Any:
+    """Name the table a visitor calls theirs.
+
+    Args:
+        observation: The visitor's observation.
+
+    Returns:
+        The table ID of the chair they sit on, else of their own seat, or None.
+    """
+    actor = observation["actor"]
+    chair = known_object(observation, actor.get("seat_id") or actor.get("favorite_seat_id"))
+    return chair.get("table_id") if chair else None
+
+
+def hosts_words(observation: Observation, table_id: Any) -> str:
+    """Say whose table a table is, as far as the visitor can tell.
+
+    Args:
+        observation: The visitor's observation.
+        table_id: Table to look at.
+
+    Returns:
+        "Bea's table", with ", though Bea is away" while none of its hosts sits there; "" for a table nobody
+        holds, or for the visitor's own.
+    """
+    table = known_object(observation, table_id)
+    hosts = table.get("hosts", []) if table else []
+    if not hosts:
+        return ""
+    names = " and ".join(item["name"] for item in hosts)
+    sitting = {label_of(item) for item in observation.get("visitors", [])
+               if item.get("seat_id") and item.get("table_id") == table_id}
+    away = f", though {names} {'is' if len(hosts) == 1 else 'are'} away" if not sitting & {i["name"] for i in hosts} else ""
+    return f"{names}'s table{away}"

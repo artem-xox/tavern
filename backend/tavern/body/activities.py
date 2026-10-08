@@ -366,7 +366,8 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              guidance="A separate decision picks the chair, which becomes their own seat for the rest of the "
                       "visit. Visitors who have just come in usually want to sit down and have a beer first. If "
                       "they already have a seat of their own, this means moving to another table, which is "
-                      "worth it mainly to join company when they feel lonely."),
+                      "worth it mainly to join company they like when they feel lonely, or to take a table "
+                      "nobody holds. Barging in on strangers is rude: to reach them they walk over and talk."),
     # Not a world action of its own: the world reads it as using the place, from the front of its line.
     Activity(verb="cut_in_line", target_kinds=("tap", "toilet", "darts"), duration=None, family="cutting_in",
              label="Cut in line",

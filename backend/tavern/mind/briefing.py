@@ -8,7 +8,8 @@ from tavern.body.items import carried_words, held_words
 from tavern.hall.room import SEAT_TABLES
 from tavern.mind.feelings import feelings
 from tavern.mind.goals import goal_words, serving
-from tavern.mind.hall_view import company_at, headcount, in_use, known_object, label_of, line_place, place_words, setting_words, steps_to, walk_words
+from tavern.mind.hall_view import (company_at, headcount, home_table_of, hosts_words, in_use, known_object, label_of,
+                                   line_place, place_words, setting_words, steps_to, walk_words)
 from tavern.mind.options import family_text, option_text
 from tavern.mind.portrait import portrait
 from tavern.social.invitations import invitation_note
@@ -224,7 +225,8 @@ def _table_note(observation: Observation, table: Mapping[str, Any]) -> str:
     chairs = [item for item in observation["objects"] if item.get("table_id") == table["id"]]
     actor_id = observation["actor"]["id"]
     free = sum(item.get("reserved_by") != actor_id and not in_use(observation, item) for item in chairs)
-    details = [setting_words(table), company_at(observation, table["id"]),
+    details = [setting_words(table), "their own table" if home_table_of(observation) == table["id"] else "",
+               hosts_words(observation, table["id"]), company_at(observation, table["id"]),
                f"{free} free chair{'' if free == 1 else 's'}"]
     return f"{label_of(table)} ({'; '.join(part for part in details if part)})"
 
@@ -233,7 +235,10 @@ def _tables(observation: Observation) -> str:
     # Nearest first: where a table stands matters more to a guest than how it is rated.
     tables = sorted((item for item in observation["objects"] if item["kind"] == "table"),
                     key=lambda item: (steps_to(observation, item), item["id"]))
-    return f"Tables: {'; '.join(_table_note(observation, item) for item in tables)}." if tables else ""
+    held = any(item.get("hosts") for item in tables)
+    manners = (" A table someone has made theirs is theirs: sitting down there without being asked may upset them. "
+               "Walk over and talk to them, or wait to be asked.") if held else ""
+    return f"Tables: {'; '.join(_table_note(observation, item) for item in tables)}.{manners}" if tables else ""
 
 
 def _ago(seconds: float) -> str:

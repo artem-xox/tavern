@@ -1,12 +1,14 @@
 """The sentence for each option a visitor may take, told from their own view."""
 
 from collections.abc import Callable, Mapping
+import math
 from typing import Any
 
 from tavern.body.activities import FAMILIES
 from tavern.body.items import ITEMS
-from tavern.mind.hall_view import (company_at, headcount, in_use, known_object, label_of, line_place, place_words,
-                              setting_words, steps_to, visible_visitor, walk_words)
+from tavern.social.tables import liked
+from tavern.mind.hall_view import (company_at, headcount, hosts_words, in_use, known_object, label_of, line_place,
+                                   place_words, setting_words, steps_to, visible_visitor, walk_words)
 
 Observation = Mapping[str, Any]
 Action = Mapping[str, Any]
@@ -82,9 +84,18 @@ def _rest(observation: Observation, action: Action) -> str:
 
 def _seat_note(observation: Observation, chair: Mapping[str, Any]) -> str:
     table = known_object(observation, chair.get("table_id"))
-    details = [setting_words(chair), company_at(observation, chair.get("table_id")),
-               f"{walk_words(steps_to(observation, chair))} away"]
+    details = [setting_words(chair), hosts_words(observation, chair.get("table_id")), _welcome(observation, table),
+               company_at(observation, chair.get("table_id")), f"{walk_words(steps_to(observation, chair))} away"]
     return f"{label_of(table) if table else label_of(chair)} ({'; '.join(part for part in details if part)})"
+
+
+def _welcome(observation: Observation, table: Mapping[str, Any] | None) -> str:
+    # Whether the table's hosts would be glad of them, as far as the visitor can tell: if they like one of them.
+    hosts = table.get("hosts", []) if table else []
+    if not hosts:
+        return ""
+    fond = next((item for item in hosts if liked(observation["actor"], item["id"], observation.get("time", -math.inf))), None)
+    return f"they get on with {fond['name']}" if fond else "they would be sitting down there uninvited"
 
 
 def _seating(observation: Observation, action: Action) -> str:
@@ -94,7 +105,8 @@ def _seating(observation: Observation, action: Action) -> str:
     tables = {item["table_id"]: _seat_note(observation, item) for item in free}
     choice = "; ".join(tables.values()) or "none"
     if actor.get("favorite_seat_id"):
-        return f"leave their own seat for a free chair at another table, for instance to join company (free: {choice})"
+        return (f"leave their own seat for a free chair at another table, for instance to join company they like or to "
+                f"take a table nobody holds (free: {choice})")
     return f"look for a seat and sit down (tables with a free chair: {choice})"
 
 
@@ -105,6 +117,10 @@ def _sit(observation: Observation, action: Action) -> str:
         return f"stay in their seat, {label_of(chair)}, a while longer to rest, sip and chat ({company})"
     if chair["id"] == actor.get("favorite_seat_id"):
         return f"walk {walk_words(steps_to(observation, chair))} back to their own seat, {label_of(chair)}, and sit down ({company})"
+    owner = chair.get("owner")
+    if owner:
+        return (f"take {owner['name']}'s own seat, {label_of(chair)}, while {owner['name']} is away: "
+                f"{_seat_note(observation, chair)} (it would wrong {owner['name']})")
     return f"take the chair {label_of(chair)}: {_seat_note(observation, chair)}"
 
 
