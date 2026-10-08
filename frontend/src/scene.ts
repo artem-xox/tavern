@@ -13,6 +13,10 @@ const TAIL = 7;
 const TAIL_HALF = 6;
 const TAIL_INSET = 14;
 const BUBBLE_DEPTH = 1000;
+/** The seated version of a standing pose, for a visitor who does it from their seat. */
+const SEATED_POSES: Readonly<Record<string, string>> = { Drinking: "DrinkingSeated", Talking: "TalkingSeated" };
+/** Poses drawn low on the cell, as a seated figure sits. */
+const LOW_POSES: readonly string[] = ["Seated", "Bathroom", ...Object.values(SEATED_POSES)];
 /** Even a sober guest fidgets a little; drink adds to it. */
 const IDLE_SWAY = 0.12;
 
@@ -290,7 +294,7 @@ export class TavernScene extends Phaser.Scene {
     const texture: string = `${character}-${pose}-${view.direction}`;
     if (view.sprite.texture.key !== texture) view.sprite.setTexture(texture);
     view.sprite.setDisplaySize(sheet.size, sheet.size);
-    view.sprite.setY(sheet.lift + (pose === "Seated" || pose === "Bathroom" || pose === "DrinkingSeated" || pose === "TalkingSeated" ? 3 : 0));
+    view.sprite.setY(sheet.lift + (LOW_POSES.includes(pose) ? 3 : 0));
     view.cellX = actor.x;
     view.cellY = actor.y;
     const x: number = (actor.x + 0.5) * size;
@@ -324,10 +328,7 @@ export class TavernScene extends Phaser.Scene {
   private actorPose(actor: Actor): string {
     if (actor.status === "walking") return "Walking";
     const pose: string | null | undefined = actor.action ? this.activities[actor.action.verb]?.pose : null;
-    if (actor.status === "interacting" && pose) {
-      if (actor.seat_id && pose === "Drinking") return "DrinkingSeated";
-      return actor.seat_id && pose === "Talking" ? "TalkingSeated" : pose;
-    }
+    if (actor.status === "interacting" && pose) return actor.seat_id ? SEATED_POSES[pose] ?? pose : pose;
     const chatting: boolean = this.world?.conversations.some((scene: Conversation): boolean => scene.participants.includes(actor.id)) ?? false;
     return actor.seat_id ? chatting ? "TalkingSeated" : "Seated" : "Idle";
   }
