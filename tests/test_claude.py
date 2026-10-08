@@ -72,8 +72,8 @@ def test_request_caches_each_system_block_and_asks_for_the_schema() -> None:
     assert (sent[0].url.path, sent[0].headers["x-api-key"]) == ("/v1/messages", "test-secret")
     assert body["system"] == [{"type": "text", "text": "World notes.", "cache_control": {"type": "ephemeral"}},
                               {"type": "text", "text": "Ada's card.", "cache_control": {"type": "ephemeral"}}]
-    assert (body["model"], body["max_tokens"], body["messages"], "thinking" in body) == (
-        "claude-haiku-4-5", 200, [{"role": "user", "content": "How is Ada?"}], False)
+    assert (body["model"], body["max_tokens"], body["messages"], body["thinking"]) == (
+        "claude-haiku-4-5", 200, [{"role": "user", "content": "How is Ada?"}], {"type": "disabled"})
     assert body["output_config"] == {"format": {"type": "json_schema", "schema": SCHEMA}}
 
 

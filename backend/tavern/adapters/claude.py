@@ -69,10 +69,12 @@ def _check_question(question: Question) -> None:
 
 def _request(question: Question, model: str) -> dict[str, Any]:
     # A breakpoint closes every system block, so each prefix level is cached on its own; the
-    # per-call content comes after them. Haiku 4.5 takes no adaptive thinking, so none is asked.
+    # per-call content comes after them. Thinking is switched off: Haiku 5.5 thinks by default, and
+    # that spends the small `max_tokens` bound before any answer is written (`stop_reason: max_tokens`).
     system = [{"type": "text", "text": block, "cache_control": {"type": "ephemeral"}} for block in question["system"]]
     return {"model": model, "max_tokens": question["max_tokens"], "system": system,
             "messages": [{"role": "user", "content": question["content"]}],
+            "thinking": {"type": "disabled"},
             "output_config": {"format": {"type": "json_schema", "schema": question["schema"]}}}
 
 
