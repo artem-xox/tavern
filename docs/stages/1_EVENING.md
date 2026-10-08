@@ -1862,7 +1862,7 @@ U5 can go any time, since it only touches `bubble.ts`. U6 → U7 → U8 come aft
 after U3, and U10 also needs U8's `pixels.ts`. U11 only runs if U4 finds that the snapshot's size
 matters on the phone.
 
-- [ ] **U2 — Split `scene.ts` (D01; refactor, no behavior change).** `scene.ts` has 405 lines, over the
+- [x] **U2 — Split `scene.ts` (D01; refactor, no behavior change).** `scene.ts` has 405 lines, over the
   limit, and U4–U8 all draw in it.
   - *Move, without editing the logic:* `drawFloor`, `drawRoomDetails` and `drawWall` go to a new
     `frontend/src/floor.ts` as exported functions that take the `Graphics` and the map, as
@@ -1874,6 +1874,14 @@ matters on the phone.
     tick 0) before and after at the same window size. Start the evening and watch one conversation:
     bubbles still sit over their speaker, stay inside the map and split as before. Remove the D01 row
     from [PLAN.md](../PLAN.md#tech-debt) in the same commit.
+
+  - *Result (2026-10-08):* `scene.ts` 405 → 300 lines. `floor.ts` (57) holds `drawFloor`, `drawRoomDetails`
+    and `drawWall`, moved without a logic change (`this.floor` became a parameter). `speech.ts` (82) holds
+    `class Speech` (`tell`, `place`, `destroy`), which owns the bubble's container, box, text, constants and
+    the line being told; `ActorView` now carries one `speech: Speech`. `make check` and `make build` pass. In
+    the browser the opening room and a paused mid-evening room match the screenshots from before the split
+    (floor, walls, door, windows, fireplace, rugs, furniture), and a live bubble sits under its speaker with
+    its pointer. The D01 row is removed from PLAN.md.
 
 - [ ] **U3 — The sidebar keeps its elements between snapshots (sections that fold, chips that
   select).** *Cause:* a click is a press and a release on the same element. A snapshot arrives every
