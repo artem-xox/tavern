@@ -63,6 +63,8 @@ class ExpectedGuest(Guest):
 class Scenario:
     """A validated evening plan; `closes_at` is in game seconds after opening.
 
+    `last_call_at`, when set, is when the barkeep calls closing time out loud: after the start and before `closes_at`.
+
     `ties` are the starting relationships between guests, in listed order: what later
     systems seed opinions and familiarity from. `news` is what the evening's guests start
     out knowing (see `facts`); with `news_tonight`, only that many items, drawn by the evening's seed, are told,
@@ -80,6 +82,7 @@ class Scenario:
     staff: tuple[StaffMember, ...] = ()
     opening_window: tuple[float, float] | None = None
     news_tonight: int | None = None
+    last_call_at: float | None = None
 
 
 def _fields(data: Any, required: set[str], optional: set[str], label: str) -> Mapping[str, Any]:
@@ -166,7 +169,8 @@ def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None,
             [first, last] in game seconds (none by default) and optional
             starting `relationships` (see `ties.parse_ties`), optional `news` (see `facts.parse_news`),
             an optional `news_tonight` (how many of the news items are told tonight, from 1 to the number of
-            items; every item is told as listed without it) and optional `staff` (see `parse_staff_member`). A guest is either described
+            items; every item is told as listed without it), an optional `last_call_at` (game seconds after
+            the start, before closing time, when the barkeep calls closing time) and optional `staff` (see `parse_staff_member`). A guest is either described
             inline with `traits`, or cast from a character card named by ID in `card`, with
             the card's name and sprite; so is a staff member, from the staff cards.
         cards: Character cards by ID. Without them only the schedule is read: guests cast from
@@ -180,11 +184,14 @@ def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None,
             ending before closing time, there are no guests, guest or staff
             IDs repeat, a guest would arrive at or after closing time, a guest's or staff member's card
             is unknown or does not match them, a relationship or news item is invalid, or `news_tonight` is
-            no whole number from 1 to the number of news items.
+            no whole number from 1 to the number of news items, or `last_call_at` is no number after the start
+            and before closing time.
     """
     fields = _fields(data, {"guests", "arrival", "closes_at"},
-                     {"seed", "relationships", "news", "news_tonight", "staff", "opening_window"}, "Scenario")
+                     {"seed", "relationships", "news", "news_tonight", "last_call_at", "staff", "opening_window"},
+                     "Scenario")
     closes_at = number(fields["closes_at"], "Closing time", 0, inf)
+    last_call = _last_call_at(fields.get("last_call_at"), closes_at)
     seed = fields.get("seed")
     if seed is not None and type(seed) is not int:
         raise ValueError("Scenario seed must be an integer")
@@ -197,7 +204,15 @@ def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None,
     # `arrival` is a required field above, so its ranges are never None here.
     arrival = cast(dict[str, tuple[float, float]], arrival_ranges(fields))
     return Scenario(guests=_with_ties(guests, ties), arrival=arrival, closes_at=closes_at, seed=seed, ties=ties,
-                    news=news, staff=staff, opening_window=window, news_tonight=told)
+                    news=news, staff=staff, opening_window=window, news_tonight=told, last_call_at=last_call)
+
+
+def _last_call_at(value: Any, closes_at: float) -> float | None:
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not 0 < value < closes_at:
+        raise ValueError(f"last_call_at must be a number after the start and before closing time ({closes_at}), not {value!r}")
+    return float(value)
 
 
 def _news_tonight(value: Any, items: int) -> int | None:
@@ -281,7 +296,7 @@ def open_evening(room: Mapping[str, Any], scenario: Scenario, seed: int) -> Worl
     news = scenario.news if scenario.news_tonight is None else draw_news(
         scenario.news, scenario.news_tonight, Random(f"{seed}:news"))
     world.update({"expected": _expected(scenario, seed), "closes_at": scenario.closes_at,
-                  "news": [News(**item) for item in news]})
+                  "last_call_at": scenario.last_call_at, "news": [News(**item) for item in news]})
     take_posts(world, scenario.staff)
     admit_arrivals(world)
     return world

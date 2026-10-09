@@ -242,6 +242,8 @@ export interface WorldEvent {
   actor_id: string | null;
   type: string;
   message: string;
+  /** The words a character says aloud, for the `last_call` event, which the scene shows in a bubble. */
+  line?: string;
 }
 
 /** A sound in the hall waiting for the listeners' attention at the end of the tick. */
@@ -349,6 +351,8 @@ export interface World {
   expected: ExpectedGuest[];
   /** Game seconds after opening when the inn closes; null for an evening that never closes. */
   closes_at: number | null;
+  /** When the barkeep calls closing time, a while before `closes_at`; null for an evening without a call. */
+  last_call_at: number | null;
   events: WorldEvent[];
   stimuli: Stimulus[];
   next_stimulus_id: number;

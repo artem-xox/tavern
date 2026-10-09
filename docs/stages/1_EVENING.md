@@ -2946,7 +2946,7 @@ F6 → F7 → F8 → F9. F6 needs F4, F8 needs F7, and F9 comes last. Each task 
     (seed 7 draws `salt_toll` for Calder, who arrives at 110 s and tells nobody). With the user's approval
     (2026-10-09) seed 7 became seed 0 in that test's parametrization; the assertions did not change. Offline seed 5:
     `pass_closing`, held by Calder, told to Rurik and overheard by Toren at 172 s.
-- [ ] **F4 — A ten-minute evening and the barkeep's call (the world).**
+- [x] **F4 — A ten-minute evening and the barkeep's call (the world).**
   - *Build:* `last_call_at` in the scenario, the world and the saves (the schema bump); `call_last_orders`,
     `closing_called`, the event with `line`, the sound; no pouring, `take_beer` or nap after the call;
     `called_closing` in `observe_actor`; `closes_at` 600 and `last_call_at` 540 in the first evening;
@@ -2964,6 +2964,20 @@ F6 → F7 → F8 → F9. F6 needs F4, F8 needs F7, and F9 comes last. Each task 
     not a number.
   - *Check:* `make check` and `make build`. Offline seed 5: quote the `last_call` event, and count guests
     present at the call and sent home at 600 (today's policy still waits for the close; F5 changes that).
+  - *Built (2026-10-09):* `hall/closing.py` (`LAST_CALL_LINE`, `closing_called`, `since_last_call`,
+    `call_last_orders`, `check_saved_last_call`); `World.last_call_at` and `schema_version` 16; `last_call_at` in the
+    scenario; `EVENT_SOUNDS["last_call"]`; `called_closing` in `observe_actor`; `WorldEvent.line` and
+    `World.last_call_at` in `types.ts`. First evening: `closes_at` 600, `last_call_at` 540. `tests/test_last_call.py`
+    (27 cases) is the spec. Two things differ from the plan above, both on purpose:
+    - *The refusal is at the start of an order, not in `action_error`.* `action_error` is also asked every tick of an
+      interaction, so a guest already waiting at the tap would have lost their mug at the call. A new
+      `Activity.stopped_at_last_call` (set on `take_beer`, "The bar has stopped serving") is read in
+      `world.start_action`, so an order made before the call is still poured, and the barkeep's `tend_bar` is unchanged.
+    - *`bring_drink` is not offered after the call either* (`agents._fetches`), because it sends the host to the tap.
+    Tests that changed, as approved for the save bump: `test_database.py` and `test_intention_saves.py` pin version 16.
+    Offline seed 5 (`--writer scripted`): `{"actor_id": "hob", "type": "last_call", "time": 540.0, "message": "Hob
+    called out: \"Time, friends! …\""}`; six guests were in at the call, one left before the close (Toren, 547 s) and
+    five were seen out at 605–609 s, as before F5.
 - [ ] **F5 — Guests answer the call (the minds).**
   - *Build:* the briefing line, `called` in `_leave_utility`, `leave`'s guidance, the `last_call` trigger
     and the intention prefix, the turn view and turn content and the prefix sentence, and

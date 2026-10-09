@@ -67,6 +67,8 @@ class Activity:
         interruptible: Whether a loud enough stimulus stops it; otherwise the visitor finishes first.
         asleep: Whether the visitor sleeps while doing it: others see a sleeper, and only a loud sound wakes them.
         seated: Whether it can only be done from a seat at a table.
+        stopped_at_last_call: Refusal given to anyone who starts it after the barkeep has called closing time, or None
+            when it goes on. What began before the call still finishes.
         sound: What others hear when the interaction begins, or None for a silent activity.
     """
 
@@ -101,6 +103,7 @@ class Activity:
     interruptible: bool = False
     asleep: bool = False
     seated: bool = False
+    stopped_at_last_call: str | None = None
     sound: Sound | None = None
 
 
@@ -203,7 +206,7 @@ def _settle(world: World, actor: Actor, seat: dict[str, Any] | None) -> None:
 
 ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity for activity in (
     Activity(verb="take_beer", fatigue_per_second=0.25, target_kinds=("tap",), duration=0.8, empty_target="Beer tap is empty",
-             leaves_seat=True, served=True, effect=_pour, label="Get a beer", status="getting ale", pose="TakeBeer",
+             stopped_at_last_call="The bar has stopped serving", leaves_seat=True, served=True, effect=_pour, label="Get a beer", status="getting ale", pose="TakeBeer",
              doing="fetching ale", done="poured a mug of ale",
              family="refreshment",
              what="walk to the tap {target} and get a mug of ale to carry: the barkeep pours it, or they pour "

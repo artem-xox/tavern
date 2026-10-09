@@ -1,5 +1,6 @@
 {
-  "closes_at": 420,
+  "closes_at": 600,
+  "last_call_at": 540,
   "opening_window": [1, 30],
   "arrival": {
     "needs": {
