@@ -81,6 +81,8 @@ class Actor(TypedDict):
     thoughts: "list[Thought]"
     relations: "dict[str, Relation]"
     drunkenness: float
+    # Whether they came in unwell (`tavern.body.ailment`): others see it, and a remedy cures it.
+    ailing: bool
     knowledge: Knowledge
     memory: list[dict[str, Any]]
     heard: "list[Heard]"

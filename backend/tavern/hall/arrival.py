@@ -22,7 +22,8 @@ def create_actor(data: Mapping[str, Any], world_map: Mapping[str, Any]) -> Actor
 
     Args:
         data: Actor definition with ID, cell, and optional name, color, sprite, needs, traits, inventory,
-            and the character card and ties of a scenario guest (validated by `scenario.parse_guest`).
+            whether they come in `ailing` (see `tavern.body.ailment`), and the character card and ties of a
+            scenario guest (validated by `scenario.parse_guest`).
             A visitor without a sprite of their own looks like the generic `visitor`.
         world_map: Validated map the visitor stands in.
     Returns:
@@ -40,6 +41,9 @@ def create_actor(data: Mapping[str, Any], world_map: Mapping[str, Any]) -> Actor
     check_inventory(inventory)
     if not isinstance(sprite, str) or not sprite:
         raise ValueError("Actor sprite must be a nonempty string")
+    ailing = data.get("ailing", False)
+    if type(ailing) is not bool:
+        raise ValueError(f"Actor ailing must be true or false, not {ailing!r}")
     return Actor(id=data["id"], name=data.get("name", data["id"]), color=data.get("color", "#d8ad68"),
                 sprite=sprite, post=data.get("post"), x=x, y=y, traits=traits, card=data.get("card"),
                 ties=list(data.get("ties", [])),
@@ -47,7 +51,7 @@ def create_actor(data: Mapping[str, Any], world_map: Mapping[str, Any]) -> Actor
                 action=None, path=[], seat_id=None, favorite_seat_id=None,
                 visit={"seconds": 0.0, "beers": 0}, thoughts=[],
                 relations=_relations(data["id"], data.get("name", data["id"]), data.get("ties", [])),
-                drunkenness=0.0,
+                drunkenness=0.0, ailing=ailing,
                 knowledge={"objects": {}, "cells": [], "facts": {}}, memory=[], heard=[],
                 decision={"source": "local", "scores": {}, "error": None},
                 facing=None, gaze=None, emote=None, interrupted_at=None, intention=None,
@@ -118,6 +122,8 @@ def admit_arrivals(world: World) -> None:
         actor["knowledge"]["facts"] = starting_facts(world["news"], actor["id"], world["time"])
         world["actors"].append(actor)
         record_event(world, actor, "arrival", f"{actor['name']} came in")
+        if actor["ailing"]:
+            record_event(world, actor, "arrived_unwell", f"{actor['name']} came in looking pale and feverish")
         look_around(world, actor)
 
 

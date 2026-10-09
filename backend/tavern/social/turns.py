@@ -150,8 +150,8 @@ def _add_invitations(view: dict[str, Any], world: Mapping[str, Any], scene: Conv
 def _mind(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str, Any]) -> dict[str, Any]:
     # Who the speaker is and how they feel, for a model writer: `card` (the card's words, or None),
     # `portrait`, `feelings` in words, their current `intention` (the mind's words, or None), `aims_at` (whom their active goal is about, or None), `drunkenness` (0–1; kept out of `feelings`, so a writer
-    # words it once), and `company`: their opinion of, familiarity with, and active thoughts
-    # about each other participant, in order of joining.
+    # words it once), whether they came in unwell (`ailing`), and `company`: whether each other participant looks
+    # unwell, and the speaker's opinion of, familiarity with, and active thoughts about them, in order of joining.
     now, card = world["time"], speaker["card"]
     others = [item for item in world["actors"] if item["id"] in scene["participants"] and item["id"] != speaker["id"]]
     others.sort(key=lambda item: scene["participants"].index(item["id"]))
@@ -159,12 +159,13 @@ def _mind(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str, A
     return {"card": None if card is None else {key: card[key] for key in TEXT_FIELDS},
             "portrait": portrait(speaker),
             "feelings": feelings({"actor": {**speaker, "drunkenness": 0.0}, "time": now}),
-            "drunkenness": speaker["drunkenness"],
+            "drunkenness": speaker["drunkenness"], "ailing": speaker["ailing"],
             "intention": None if speaker["intention"] is None else speaker["intention"]["intention"],
             "aims_at": _aims_at(speaker),
             "earlier": earlier_lines(speaker, EARLIER_LINES, scene["id"]),
             "news": carried(world, speaker),
-            "company": [{"id": other["id"], "name": other["name"], "opinion": opinion_of(speaker, other["id"], now),
+            "company": [{"id": other["id"], "name": other["name"], "ailing": other["ailing"],
+                         "opinion": opinion_of(speaker, other["id"], now),
                          "familiarity": familiarity_of(speaker, other["id"]),
                          "thoughts": [item["text"] for item in thoughts if item["about"] == other["id"]]}
                         for other in others]}
