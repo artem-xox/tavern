@@ -63,7 +63,8 @@ def _closing(observation: Observation) -> str:
     if since is None:
         return ""
     return (f"The barkeep called closing time {_duration(since)} ago: the inn is about to shut for the night, so "
-            "guests finish what is in hand, say their goodbyes and head home.")
+            "it is time to go: finish only the mug or the word in hand, say a goodbye and head for the door. "
+            "Starting something new (a game, a fresh chat, another round, a new seat) makes no sense now.")
 
 
 def _stay(observation: Observation) -> str:
