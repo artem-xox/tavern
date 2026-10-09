@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { drawCandles, drawSconces } from "./candles";
 import { EMOTE_KINDS, EMOTE_WORDS, emoteFrame, emoteFrames, emoteMotion, emotePalette } from "./emotes";
 import { drawFloor } from "./floor";
 import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawTable, drawTap, drawToilet, drawWindow } from "./furniture";
@@ -53,6 +54,8 @@ export class TavernScene extends Phaser.Scene {
   private furniture!: Phaser.GameObjects.Graphics;
   /** Flames and sparks, above the furniture and redrawn every frame. */
   private flames!: Phaser.GameObjects.Graphics;
+  /** The wall candles' flames and glow, redrawn every frame like the fire. */
+  private candles!: Phaser.GameObjects.Graphics;
   private route!: Phaser.GameObjects.Graphics;
   private readonly visitors: Map<string, ActorView> = new Map();
   /** The fingerprints of the map as drawn; empty before the first snapshot, so everything draws once. */
@@ -78,6 +81,7 @@ export class TavernScene extends Phaser.Scene {
     this.hearthGlow = this.add.graphics();
     this.furniture = this.add.graphics();
     this.flames = this.add.graphics();
+    this.candles = this.add.graphics();
     this.route = this.add.graphics();
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer): void => this.click(pointer));
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer): void => this.hover(pointer));
@@ -126,6 +130,7 @@ export class TavernScene extends Phaser.Scene {
       const { objects, width, tile_size: size } = this.world.map;
       drawHearthGlow(this.hearthGlow, objects, width, size, time);
       drawFlames(this.flames, objects, width, size, time);
+      drawCandles(this.candles, width, size, time);
     }
   }
 
@@ -137,6 +142,7 @@ export class TavernScene extends Phaser.Scene {
     if (parts.furniture !== this.drawn.furniture) {
       this.furniture.clear();
       for (const object of world.map.objects) this.drawObject(object, world.map.tile_size);
+      drawSconces(this.furniture, world.map.width, world.map.tile_size);
     }
     this.drawn = parts;
   }
