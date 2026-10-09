@@ -2897,12 +2897,15 @@ Order: F0 and F1 are data and client only, and can go any time, beside anything.
 F6 → F7 → F8 → F9. F6 needs F4, F8 needs F7, and F9 comes last. Each task is its own branch
 (`claude/stage1-f<n>`) and PR.
 
-- [ ] **F0 — Two windows on the west wall.**
+- [x] **F0 — Two windows on the west wall.**
   - *Build:* drop `window-2` from `data/tavern.json` and add [0, 6] to `blocked`.
   - *Tests first* (`tests/test_hall_layout.py`): a new test that the west wall has exactly the windows at
     (0, 4) and (0, 11). `test_the_hall_is_walled_all_round` must stay green unchanged.
   - *Check:* `make check`. In `make run`, post a screenshot of the west wall.
-- [ ] **F1 — Candles that glow like the fire (client only).**
+  - *Built (2026-10-09):* `window-2` is gone from `data/tavern.json` and [0, 6] is in `blocked`.
+    `test_hall_layout.py::test_the_west_wall_has_two_windows` (red before the data change); the rest of the suite
+    needed no change (2737 passed).
+- [x] **F1 — Candles that glow like the fire (client only).**
   - *Build:* `frontend/src/candles.ts`: the four cells above, the light point of each (the wall edge it
     faces, from `hearthFacing`), `drawSconces` (static, with the furniture) and `drawCandles` (flame and
     glow, per frame, on a new layer created beside `hearthGlow` in `scene.ts`).
@@ -2912,6 +2915,12 @@ F6 → F7 → F8 → F9. F6 needs F4, F8 needs F7, and F9 comes last. Each task 
     two candles flicker out of phase at the same time.
   - *Check:* `make check` and `make build`. In `make run`, post a screenshot of the whole hall and a 2×
     crop of the privy and the door.
+  - *Built (2026-10-09):* `frontend/src/candles.ts` (`CANDLES`, `candleLight`, `glowRadius`, `drawSconces`,
+    `drawCandles`); `hearth.ts` now exports `flicker(time, phase)` and `HEARTH_GLOW_RADIUS`, and `hearthFacing` takes a
+    `Pick<WorldObject, "x" | "y" | "width">`, so the fire and the candles share one flicker and one wall rule. Sconces
+    are drawn with the furniture, flames and glow on a layer of their own above it. `frontend/tests/candles.test.ts`
+    (12 cases) reads `data/tavern.json`. Checked in the running app: two west windows; a candle in the privy, by the
+    door and on the west and east walls.
 - [ ] **F2 — Full energy on arrival.**
   - *Build:* `first_evening.json`'s arrival `fatigue` [0, 0].
   - *Tests first:* in `tests/test_scenario_cards.py` (or beside the other first-evening checks), every
