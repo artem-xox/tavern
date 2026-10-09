@@ -104,7 +104,7 @@ def people_in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[
     Returns:
         Public facts about each visible person (see `world.observe_people`): ID, name as the
         viewer calls them, cell, seat and table, whether they are free to talk (not a sleeper), whether
-        they are asleep, their conversation, whether they are within reach of the viewer (at one table or side by
+        they are asleep, whether they look unwell (`ailing`), their conversation, whether they are within reach of the viewer (at one table or side by
         side), their current verb and target name, and
         what is in their hands (`holding`, counts of the kinds others can see); for staff also `post`, the name of the bar they work at.
     """
@@ -124,6 +124,7 @@ def people_in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[
         sleeping = asleep(visitor)
         people[-1].update(table_id=seat.get("table_id") if seat else None,
                           available=scene is None and not sleeping and not pressed(world, visitor), asleep=sleeping,
+                          ailing=visitor["ailing"],
                           conversation=scene["id"] if scene else None,
                           beside=within_reach(world, actor, visitor),
                           doing=action.get("verb"), target=target["name"] if target else None,

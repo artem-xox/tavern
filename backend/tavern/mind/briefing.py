@@ -37,7 +37,7 @@ def brief(observation: Observation, candidates: Sequence[Mapping[str, Any]]) -> 
     """
     parts = (_closing(observation), _stay(observation), _whereabouts(observation), _carrying(observation), _trigger(observation),
              _own_seat(observation),
-             _needs(observation), _temperament(observation), portrait(observation["actor"]),
+             _needs(observation), _unwell(observation), _temperament(observation), portrait(observation["actor"]),
              feelings(observation), invitation_note(observation), _intention(observation), _promises(observation),
              _people(observation),
              _places(observation), _tables(observation), _recent(observation))
@@ -63,7 +63,8 @@ def _closing(observation: Observation) -> str:
     if since is None:
         return ""
     return (f"The barkeep called closing time {_duration(since)} ago: the inn is about to shut for the night, so "
-            "guests finish what is in hand, say their goodbyes and head home.")
+            "it is time to go: finish only the mug or the word in hand, say a goodbye and head for the door. "
+            "Starting something new (a game, a fresh chat, another round, a new seat) makes no sense now.")
 
 
 def _stay(observation: Observation) -> str:
@@ -154,12 +155,23 @@ def _person(observation: Observation, visitor: Mapping[str, Any]) -> str:
         # Someone unavailable who is not talking or asleep is visibly in a hurry (see `scenes.pressed`).
         busy = (", asleep" if visitor.get("asleep") else ", busy talking" if visitor.get("conversation")
                 else "" if visitor.get("available", True) else ", in a hurry")
-        return f"{label_of(visitor)} sits {where}{busy}"
+        return f"{label_of(visitor)} sits {where}{busy}{_pale(visitor)}"
     doing = visitor.get("doing")
     activity = ACTIVITIES.get(doing) if isinstance(doing, str) else None
     if visitor.get("post"):
         return f"{label_of(visitor)}, the barkeep, is {activity.doing if activity and activity.doing else 'tending the bar'}"
-    return f"{label_of(visitor)} is {activity.doing if activity and activity.doing else 'standing about'}"
+    return f"{label_of(visitor)} is {activity.doing if activity and activity.doing else 'standing about'}{_pale(visitor)}"
+
+
+def _pale(visitor: Mapping[str, Any]) -> str:
+    # Anyone can see who came in with a fever (`tavern.body.ailment`).
+    return ", looking pale and feverish" if visitor.get("ailing") else ""
+
+
+def _unwell(observation: Observation) -> str:
+    if not observation["actor"].get("ailing"):
+        return ""
+    return "They feel feverish and weak tonight; a healer's remedy would help."
 
 
 def _promises(observation: Observation) -> str:

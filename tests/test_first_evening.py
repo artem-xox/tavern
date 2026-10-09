@@ -83,4 +83,6 @@ def test_every_guest_comes_in_with_full_energy(seed: int) -> None:
     world = open_evening(room, scenario, seed)
     tonight = [*guests(world), *world["expected"]]
     assert len(tonight) == len(scenario.guests)
-    assert {item["needs"]["fatigue"] for item in tonight} == {0.0}
+    # The one guest who comes in unwell (see `tavern.body.ailment`) is the exception.
+    assert {item["needs"]["fatigue"] for item in tonight if not item.get("ailing")} == {0.0}
+    assert [item["needs"]["fatigue"] for item in tonight if item.get("ailing")] == [80.0]

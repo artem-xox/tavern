@@ -108,7 +108,8 @@ def _scene(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:
     barkeeps = {item["id"] for item in scene["participants"] if item.get("on_duty")}
     present = [f"- {item['name']}{' (the barkeep)' if item['id'] in barkeeps else ''} (id \"{item['id']}\"): "
                f"{_FAMILIARITY[item['familiarity']]}; your opinion of "
-               f"them is {item['opinion']:+.0f} on -100 to 100" + (f"; on your mind: {'; '.join(item['thoughts'])}"
+               f"them is {item['opinion']:+.0f} on -100 to 100" + ("; looks pale and feverish" if item.get("ailing") else "")
+               + (f"; on your mind: {'; '.join(item['thoughts'])}"
                                                                     if item["thoughts"] else "")
                for item in me["company"]]
     lines = [f"{people.get(turn['speaker'], turn['speaker'])} to "
@@ -135,7 +136,8 @@ def _self(me: Mapping[str, Any]) -> str:
         "none, so the speaker cannot use share_place"
     goal = me["card"]["goal"] if me["card"] else "to rest and pass a pleasant evening"
     mean = f"\nWhat you mean to do: {me['intention']}" if me.get("intention") else ""
-    return (f"THE SPEAKER\n\nYou are {me['name']} (id \"{me['id']}\").\nHow they feel: {me['feelings']}\n"
+    unwell = "\nYou feel feverish and weak tonight." if me.get("ailing") else ""
+    return (f"THE SPEAKER\n\nYou are {me['name']} (id \"{me['id']}\").\nHow they feel: {me['feelings']}{unwell}\n"
             f"Drink: {speech_instruction(me['drunkenness']) or 'You are sober.'} "
             f"Beers tonight: {me['visit']['beers']}.\n"
             f"Needs (0 calm, 100 desperate; 75 or more presses hard): {needs}.\n"

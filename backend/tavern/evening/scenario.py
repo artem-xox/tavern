@@ -8,6 +8,7 @@ import math
 from random import Random
 from typing import Any, NotRequired, TypedDict, cast
 
+from tavern.body.ailment import draw_ailing, eligible, parse_ailment
 from tavern.body.items import parse_carries
 from tavern.hall.arrival import admit_arrivals, arrival_ranges, arriving, take_posts
 from tavern.hall.state import World
@@ -54,9 +55,13 @@ class StaffMember(TypedDict):
 
 
 class ExpectedGuest(Guest):
-    """A guest still on the way, kept in the world's `expected` list with tonight's needs drawn."""
+    """A guest still on the way, kept in the world's `expected` list with tonight's needs drawn.
+
+    The one guest who comes in unwell tonight (see `tavern.body.ailment`) also has `ailing`.
+    """
 
     needs: dict[str, float]
+    ailing: NotRequired[bool]
 
 
 @dataclass(frozen=True)
@@ -64,6 +69,8 @@ class Scenario:
     """A validated evening plan; `closes_at` is in game seconds after opening.
 
     `last_call_at`, when set, is when the barkeep calls closing time out loud: after the start and before `closes_at`.
+    `ailing_fatigue`, when set, makes one guest who carries no cure, drawn by the evening's seed, come in unwell with
+    that much tiredness (see `tavern.body.ailment`).
 
     `ties` are the starting relationships between guests, in listed order: what later
     systems seed opinions and familiarity from. `news` is what the evening's guests start
@@ -83,6 +90,7 @@ class Scenario:
     opening_window: tuple[float, float] | None = None
     news_tonight: int | None = None
     last_call_at: float | None = None
+    ailing_fatigue: float | None = None
 
 
 def _fields(data: Any, required: set[str], optional: set[str], label: str) -> Mapping[str, Any]:
@@ -170,8 +178,9 @@ def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None,
             starting `relationships` (see `ties.parse_ties`), optional `news` (see `facts.parse_news`),
             an optional `news_tonight` (how many of the news items are told tonight, from 1 to the number of
             items; every item is told as listed without it), an optional `last_call_at` (game seconds after
-            the start, before closing time, when the barkeep calls closing time) and optional `staff` (see `parse_staff_member`). A guest is either described
-            inline with `traits`, or cast from a character card named by ID in `card`, with
+            the start, before closing time, when the barkeep calls closing time), an optional `ailment`
+            (see `ailment.parse_ailment`: one guest who carries no cure comes in unwell) and optional `staff`
+            (see `parse_staff_member`). A guest is either described inline with `traits`, or cast from a character card named by ID in `card`, with
             the card's name and sprite; so is a staff member, from the staff cards.
         cards: Character cards by ID. Without them only the schedule is read: guests cast from
             a card come with no card and middling traits.
@@ -184,12 +193,12 @@ def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None,
             ending before closing time, there are no guests, guest or staff
             IDs repeat, a guest would arrive at or after closing time, a guest's or staff member's card
             is unknown or does not match them, a relationship or news item is invalid, or `news_tonight` is
-            no whole number from 1 to the number of news items, or `last_call_at` is no number after the start
-            and before closing time.
+            no whole number from 1 to the number of news items, `last_call_at` is no number after the start
+            and before closing time, or the `ailment` is malformed or every guest carries a cure.
     """
     fields = _fields(data, {"guests", "arrival", "closes_at"},
-                     {"seed", "relationships", "news", "news_tonight", "last_call_at", "staff", "opening_window"},
-                     "Scenario")
+                     {"seed", "relationships", "news", "news_tonight", "last_call_at", "ailment", "staff",
+                      "opening_window"}, "Scenario")
     closes_at = number(fields["closes_at"], "Closing time", 0, inf)
     last_call = _last_call_at(fields.get("last_call_at"), closes_at)
     seed = fields.get("seed")
@@ -201,10 +210,21 @@ def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None,
     ties = parse_ties(fields.get("relationships", []), [item["id"] for item in guests])
     news = parse_news(fields.get("news", []), [item["id"] for item in guests])
     told = _news_tonight(fields.get("news_tonight"), len(news))
+    ailing = _ailing_fatigue(fields.get("ailment"), guests)
     # `arrival` is a required field above, so its ranges are never None here.
     arrival = cast(dict[str, tuple[float, float]], arrival_ranges(fields))
     return Scenario(guests=_with_ties(guests, ties), arrival=arrival, closes_at=closes_at, seed=seed, ties=ties,
-                    news=news, staff=staff, opening_window=window, news_tonight=told, last_call_at=last_call)
+                    news=news, staff=staff, opening_window=window, news_tonight=told, last_call_at=last_call,
+                    ailing_fatigue=ailing)
+
+
+def _ailing_fatigue(value: Any, guests: Sequence[Guest]) -> float | None:
+    if value is None:
+        return None
+    fatigue = parse_ailment(value)
+    if not eligible(guests):
+        raise ValueError("The scenario's ailment needs a guest who carries no cure to fall ill")
+    return fatigue
 
 
 def _last_call_at(value: Any, closes_at: float) -> float | None:
@@ -314,6 +334,13 @@ def _expected(scenario: Scenario, seed: int) -> list[ExpectedGuest]:
         Random(f"{seed}:opening").shuffle(opening)
         for place, item in enumerate(opening):
             item["arrives_at"] = first + (last - first) * place / max(len(opening) - 1, 1)
+    if scenario.ailing_fatigue is not None:
+        # The unwell guest is drawn from a stream of their own too, and only their tiredness changes.
+        sick = draw_ailing(scenario.guests, Random(f"{seed}:ailment"))
+        for item in drawn:
+            if item["id"] == sick:
+                item["ailing"] = True
+                item["needs"]["fatigue"] = scenario.ailing_fatigue
     return sorted(drawn, key=lambda item: item["arrives_at"])
 
 
@@ -346,4 +373,6 @@ def _expected_guest(item: Any, world: Mapping[str, Any]) -> Guest:
         if need not in world["rules"]["need_rates"]:
             raise ValueError(f"Unknown saved need {need!r}")
         number(value, need, 0, 100)
-    return parse_guest({key: value for key, value in item.items() if key != "needs"})
+    if type(item.get("ailing", False)) is not bool:
+        raise ValueError("Saved expected guest has a malformed ailing flag")
+    return parse_guest({key: value for key, value in item.items() if key not in ("needs", "ailing")})

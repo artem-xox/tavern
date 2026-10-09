@@ -3022,7 +3022,7 @@ F6 → F7 → F8 → F9. F6 needs F4, F8 needs F7, and F9 comes last. Each task 
     seconds. `frontend/tests/bubble.test.ts` gained 13 cases. In the running app (8× to 8:50, then 1×, paused at 9:01):
     Hob's bubble read "Finish your cups and get yourselves home safe." (the second piece) and all five guests showed the
     alert emote and turned toward the bar.
-- [ ] **F7 — A sick guest and three remedies (the world).**
+- [x] **F7 — A sick guest and three remedies (the world).**
   - *Build:* `Item.cures`, the `ailment` field and the draw, `Actor.ailing` (and the expected guest's
     field) with the schema bump, `body/ailment.py` with `cure`, the `cured` thought and event, `ailing` in
     `people_in_sight`, Edda's three remedies, `{"fatigue": 80}` in the first evening, and `Actor.ailing`
@@ -3041,7 +3041,17 @@ F6 → F7 → F8 → F9. F6 needs F4, F8 needs F7, and F9 comes last. Each task 
     saved non-bool `ailing`.
   - *Check:* `make check` and `make build`. Offline seed 5: who fell sick, and whether anyone cured them
     yet (most likely not before F8).
-- [ ] **F8 — Edda seeks out the sick (the minds).**
+  - *Built (2026-10-09):* `body/ailment.py` (`parse_ailment`, `carries_cure`, `eligible`, `draw_ailing`, `relieve`,
+    `RELIEF` 40, `check_saved_ailing`); `Item.cures` (the remedy); `Actor.ailing`, saved as **version 17**; the
+    scenario's `ailment` (`Scenario.ailing_fatigue`), drawn from `Random(f"{seed}:ailment")` among guests who carry no
+    cure, and carried on the expected guest as `ailing`; `arrived_unwell` logged on arrival; `ailing` in
+    `people_in_sight`; `giving.hand_over` cures instead of giving (a `cured` event for both, a `cured` thought for the
+    receiver, `cured` in `giving.RECEIVED`); `Actor.ailing` in `types.ts` and an "Unwell" chip in the inspector. Edda
+    carries 3, and the first evening sets `{"fatigue": 80}`. `tests/test_ailment.py` (40 cases) is the spec. Tests that
+    changed, as approved: `test_database.py` and `test_intention_saves.py` pin version 17; `test_carries.py` expects
+    Edda to carry 3; `test_first_evening.py::test_every_guest_comes_in_with_full_energy` expects the one ailing
+    guest at 80 (the user asked for exactly that). Offline seed 5 before F8: Toren fell ill at 1 s and was not cured.
+- [x] **F8 — Edda seeks out the sick (the minds).**
   - *Build:* the briefing and option wording, both local bonuses, the Haiku views, and `ailment_metrics`
     wired into `scripts/evening.py`.
   - *Tests first:*
@@ -3057,13 +3067,53 @@ F6 → F7 → F8 → F9. F6 needs F4, F8 needs F7, and F9 comes last. Each task 
     cured in at least 6 of 8 evenings. Quote one cure from `events.jsonl`. If the target is missed, record
     why (the sick guest stood, slept, or left first) and propose, without building it, a compound `tend`
     errand like `bring_drink`'s `carrying` stage.
-- [ ] **F9 — Measure.**
+  - *Built (2026-10-09):* `briefing._pale` and `_unwell` (what others and the sick guest themselves are told), the
+    `give` and `approach` option wording, `local_policy.SEEKING_THE_SICK` (+0.5 on a walk over to someone who looks
+    unwell, for a guest who carries a cure) and `CURE_SCORE` (0.95 for a remedy to them), `ailing` in the turn view
+    (the speaker and each other participant) with a line in `haiku_turns`, and `evening/ailment_metrics.py` wired into
+    `scripts/evening.py` as `ailment`. The intention view needed no change: its `situation` is the briefing, which now
+    carries it (its `others` map is IDs to names that goals are checked against, so it was left alone, unlike the plan).
+    `tests/test_seeking_the_sick.py` (23 cases) is the spec. Offline seeds 1–8 (`--writer scripted`): cured in **7 of 8**
+    evenings, always the guest who fell ill and nobody else (cured_at 59, 140, 171, 235, 247, 269 and 347 s: Edda in six,
+    and Brida in seed 7, who had been given a remedy by Edda her old friend and passed it on to Calder). Seed 4: Brida
+    came in ill at 40 s and left uncured: Edda spent that evening choosing `sit` every 15 s and never got within reach of
+    her; not investigated further. No evening sent anyone home at closing (`closing.sent_home` 0 in all eight), and
+    1–2 guests napped in most of them. Seed 5: `{"actor_id": "mara", "type": "cured", "time": 268.8, "message": "Toren took
+    Edda's herbal remedy and looks better already"}`.
+- [x] **F9 — Measure.**
   - Offline seeds 1–8, and live seeds 5 and 7, before (`main`) and after. Record: `present_at_call`,
     `left_after_call` and `sent_home`; naps before 300 s; the news item, its holder and how far it went;
     who fell sick and when Edda cured them; stuck seconds; conversations; and cost (expect about 40% more
     for the longer evening). Replay the live run and `cmp` the events (step 8 of "Working on a task").
   - Record two moments from the log: the call and the goodbyes after it, and Edda's cure with the line
     around it, if any.
+  - *Measured (2026-10-09).* "Before" is the last recorded run on `main` (T8, live seed 5: 436 game s, 307 calls,
+    $0.28, no failed call); the first evening had no call, no sick guest and a 420 s close.
+    - *Offline, seeds 1–8 (`--writer scripted`):* every guest in the hall at the call (4–6) went home before the
+      close and none was sent home; the last left at 560–576 s of 600. Naps: seven evenings had one or two, every one by
+      the guest who came in unwell, none by a rested guest. The unwell guest was
+      cured in 7 of 8 (59–347 s); the one news item reached 4–7 guests, in two or three hops. Stuck seconds per evening
+      8–37 (mean 17.5), 49–66 conversations.
+    - *Live, Jev + Haiku, first wording of the briefing (seeds 5 and 7):* the call did **not** move guests. Only one or
+      two left before the close (`left_after_call` 1 and 2), and 5 and 4 were sent home at 600 s: they kept to what they
+      were doing (`sit`, a chat, a last round of dice) and went when the close came. Cost $0.41 and $0.50, 465 and 480
+      calls, none failed.
+    - *The fix:* the briefing now says it is time to go, to finish only what is in hand, and that starting something
+      new makes no sense (`briefing._closing`). Live again: seed 5 sent 1 home (`f9-live-5b`) and later 0
+      (`f9-live-5c`, all six left between the call and 581 s), seed 7 sent 1 home. Cost $0.36–$0.47 for 428–510 calls,
+      cache hit rate 0.87–0.89, no failed call, 0–2 turn fallbacks per evening. The replay of seeds 5c and 7b is
+      byte-identical (`cmp` on `events.jsonl`). The replay of the intermediate run 5b failed with `LookupError` (a
+      request with no recording): not explained, and that run's code was not committed, so it was not rerun.
+      Conversations fell from the 52–66 of the offline evenings to 35–46 live; a live evening of 600 game s costs
+      about 1.3 times the 436 s of T8.
+    - *Moments (live seed 7b):* at 540 s `Hob called out: "Time, friends! The Last Inn is closing for the night.
+      Finish your cups and get yourselves home safe."`, then at 543 s `Edda to Brida (leave_conversation): Right then,
+      Brida—time I got my feet up by that fire before they close us out.` and at 556 s `Edda to Hob (leave_conversation):
+      Well, the barkeep's calling it. I'll away to my bed—feet are killing me.`; and at 392 s `Calder took Edda's herbal
+      remedy and looks better already` (Edda found Calder, who came in unwell at 110 s).
+    - *Left behind:* in live seed 5c the unwell guest (Toren) was never cured; in offline seed 4 Brida was not
+      either. In live seed 7b one guest still waited for the close. The live goodbyes are Haiku's: only two
+      `leave_conversation` lines came after the call in seed 7b, so most guests left without saying one.
 
 ## Order
 
