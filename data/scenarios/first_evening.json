@@ -23,6 +23,7 @@
   "staff": [
     {"id": "hob", "name": "Hob", "color": "#c98f4a", "sprite": "bartender", "card": "hob", "post": "bar"}
   ],
+  "news_tonight": 1,
   "news": [
     {"id": "salt_toll", "topic": "the salt toll",
      "text": "The margrave has doubled the salt toll at the border post, and carters are turning back rather than pay it.",
