@@ -3080,13 +3080,40 @@ F6 → F7 → F8 → F9. F6 needs F4, F8 needs F7, and F9 comes last. Each task 
     her; not investigated further. No evening sent anyone home at closing (`closing.sent_home` 0 in all eight), and
     1–2 guests napped in most of them. Seed 5: `{"actor_id": "mara", "type": "cured", "time": 268.8, "message": "Toren took
     Edda's herbal remedy and looks better already"}`.
-- [ ] **F9 — Measure.**
+- [x] **F9 — Measure.**
   - Offline seeds 1–8, and live seeds 5 and 7, before (`main`) and after. Record: `present_at_call`,
     `left_after_call` and `sent_home`; naps before 300 s; the news item, its holder and how far it went;
     who fell sick and when Edda cured them; stuck seconds; conversations; and cost (expect about 40% more
     for the longer evening). Replay the live run and `cmp` the events (step 8 of "Working on a task").
   - Record two moments from the log: the call and the goodbyes after it, and Edda's cure with the line
     around it, if any.
+  - *Measured (2026-10-09).* "Before" is the last recorded run on `main` (T8, live seed 5: 436 game s, 307 calls,
+    $0.28, no failed call); the first evening had no call, no sick guest and a 420 s close.
+    - *Offline, seeds 1–8 (`--writer scripted`):* every guest in the hall at the call (4–6) went home before the
+      close and none was sent home; the last left at 560–576 s of 600. Naps: seven evenings had one or two, every one by
+      the guest who came in unwell, none by a rested guest. The unwell guest was
+      cured in 7 of 8 (59–347 s); the one news item reached 4–7 guests, in two or three hops. Stuck seconds per evening
+      8–37 (mean 17.5), 49–66 conversations.
+    - *Live, Jev + Haiku, first wording of the briefing (seeds 5 and 7):* the call did **not** move guests. Only one or
+      two left before the close (`left_after_call` 1 and 2), and 5 and 4 were sent home at 600 s: they kept to what they
+      were doing (`sit`, a chat, a last round of dice) and went when the close came. Cost $0.41 and $0.50, 465 and 480
+      calls, none failed.
+    - *The fix:* the briefing now says it is time to go, to finish only what is in hand, and that starting something
+      new makes no sense (`briefing._closing`). Live again: seed 5 sent 1 home (`f9-live-5b`) and later 0
+      (`f9-live-5c`, all six left between the call and 581 s), seed 7 sent 1 home. Cost $0.36–$0.47 for 428–510 calls,
+      cache hit rate 0.87–0.89, no failed call, 0–2 turn fallbacks per evening. The replay of seeds 5c and 7b is
+      byte-identical (`cmp` on `events.jsonl`). The replay of the intermediate run 5b failed with `LookupError` (a
+      request with no recording): not explained, and that run's code was not committed, so it was not rerun.
+      Conversations fell from the 52–66 of the offline evenings to 35–46 live; a live evening of 600 game s costs
+      about 1.3 times the 436 s of T8.
+    - *Moments (live seed 7b):* at 540 s `Hob called out: "Time, friends! The Last Inn is closing for the night.
+      Finish your cups and get yourselves home safe."`, then at 543 s `Edda to Brida (leave_conversation): Right then,
+      Brida—time I got my feet up by that fire before they close us out.` and at 556 s `Edda to Hob (leave_conversation):
+      Well, the barkeep's calling it. I'll away to my bed—feet are killing me.`; and at 392 s `Calder took Edda's herbal
+      remedy and looks better already` (Edda found Calder, who came in unwell at 110 s).
+    - *Left behind:* in live seed 5c the unwell guest (Toren) was never cured; in offline seed 4 Brida was not
+      either. In live seed 7b one guest still waited for the close. The live goodbyes are Haiku's: only two
+      `leave_conversation` lines came after the call in seed 7b, so most guests left without saying one.
 
 ## Order
 
