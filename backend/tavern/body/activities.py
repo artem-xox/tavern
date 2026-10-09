@@ -40,6 +40,9 @@ class Activity:
         names_item: Whether the action names an item from the actor's hands in `Action.item`, as giving does.
         opens_errand: Whether it sends the actor off on an errand for the visitor it targets (see
             `tavern.social.errands`); like giving, it needs that visitor near.
+        opens_project: The kind of `tavern.body.projects.PROJECTS` it opens instead of an action of its own, or None;
+            the world starts the project when the verb is chosen, and the project's steps do the walking.
+        chooses_chair: Whether a second decision picks the chair it is about, as for `seating`.
         duration: Seconds of interaction (nominal for a scene part), or None for a decision step
             that never runs in the world.
         family: The `FAMILIES` entry it is chosen under: a first decision picks the family, a
@@ -83,6 +86,8 @@ class Activity:
     near_person: bool = False
     names_item: bool = False
     opens_errand: bool = False
+    opens_project: str | None = None
+    chooses_chair: bool = False
     requires_item: str | None = None
     empty_target: str | None = None
     shared_target: bool = False
@@ -388,7 +393,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "guest who is tired late in the evening usually goes home to bed instead. It is pointless "
                       "when they are not tired."),
     # A decision step, not a world action: a second evaluation picks the chair to `sit` on.
-    Activity(verb="seating", duration=None,
+    Activity(verb="seating", duration=None, chooses_chair=True,
              family="seat_choice",
              what="find a seat: choose a free chair at one of the tables and sit down",
              guidance="A separate decision picks the chair, which becomes their own seat for the rest of the "
@@ -396,6 +401,14 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "they already have a seat of their own, this means moving to another table, which is "
                       "worth it mainly to join company they like when they feel lonely, or to take a table "
                       "nobody holds. Barging in on strangers is rude: to reach them they walk over and talk."),
+    # A decision step that opens a project (`tavern.body.projects`): a second decision picks the chair, and the project's
+    # own steps (the tap, the chair, the mug) do the rest.
+    Activity(verb="settle_in", duration=None, target_kinds=("chair",), opens_project="settle_in", chooses_chair=True,
+             family="refreshment", label="Settle in with an ale",
+             what="get a mug of ale at the tap, then take a chair at a table and drink it there",
+             guidance="What a guest does who has just come in thirsty and has no seat: one errand to the tap, then "
+                      "they sit down with their drink. A separate decision picks the chair. Pointless with a mug in "
+                      "hand, a seat of their own, or when they are not thirsty."),
     # Not a world action of its own: the world reads it as using the place, from the front of its line.
     Activity(verb="cut_in_line", target_kinds=("tap", "toilet", "darts"), duration=None, family="cutting_in",
              label="Cut in line",

@@ -6,14 +6,16 @@ import math
 from random import Random
 from typing import Any, NotRequired, TypedDict
 
+from tavern.body.activities import ACTIVITIES
 from tavern.body.items import ITEMS
+from tavern.body.projects import PROJECTS
 from tavern.mind.briefing import brief
 from tavern.mind.families import family_scores, group_families
 from tavern.mind.hall_view import in_use, line_place
 from tavern.mind.local_policy import ASK_FLOOR, local_aim_scores, local_scores, local_seat_scores
 from tavern.mind.observation import known_objects, own_actor
 from tavern.mind.options import aim_text
-from tavern.mind.selection import bounded, drawable, read_aims, read_lean, read_temperature, select, spread, worth_asking
+from tavern.mind.selection import bounded, drawable, read_aims, read_lean, read_projects, read_temperature, select, spread, worth_asking
 from tavern.social.aims import AIM_VERBS, aim_candidates, offered_aims
 from tavern.social.giving import empty_handed_company, gift_targets
 from tavern.social.hostility import HOSTILITY, hostile_targets
@@ -24,6 +26,8 @@ from tavern.social.tables import liked
 KEEPS_OWN_MUG = 50
 # The tiredness (0–100) from which a guest in their seat may choose to sleep there.
 SLEEPY = 60
+# The thirst (0–100) from which a seatless guest may settle in with an ale: the briefing's "mild", as for the tap itself.
+SETTLES_IN = 35
 
 
 class EvaluatorError(RuntimeError):
@@ -142,8 +146,8 @@ def _concrete_candidates(observation: Mapping[str, Any]) -> list[Action]:
         actions.extend(_line_options(observation, item, _action(verbs[item["kind"]], item["id"])))
     return [*actions, *_seat_wish(observation, objects), *_views(observation, objects), *_games(objects),
             *_bar_stand(observation, actor, objects), *talks, *_gifts(observation, actor),
-            *_fetches(observation, actor, objects), *_nap(observation, actor), _action("inspect"), _action("wait"),
-            *_hostile(observation)]
+            *_fetches(observation, actor, objects), *_nap(observation, actor), *_settling(observation, actor, objects),
+            _action("inspect"), _action("wait"), *_hostile(observation)]
 
 
 def _line_options(observation: Mapping[str, Any], item: Mapping[str, Any], action: Action) -> list[Action]:
@@ -224,6 +228,17 @@ def _nap(observation: Mapping[str, Any], actor: Mapping[str, Any]) -> list[Actio
     # A tired guest in their seat may sleep there, unless they are out on an errand for someone.
     sleepy = actor["needs"]["fatigue"] >= SLEEPY and actor["id"] not in observation.get("on_errands", [])
     return [_action("doze")] if sleepy and actor.get("seat_id") else []
+
+
+def _settling(observation: Mapping[str, Any], actor: Mapping[str, Any],
+              objects: Sequence[Mapping[str, Any]]) -> list[Action]:
+    # A thirsty guest with no seat and no mug may take on the whole of coming in: an ale from the tap, a chair, the drink.
+    # Only where the world has projects (`observation["projects"]`), and not for one out on an errand for someone.
+    stocked = any(item["kind"] == "tap" and item.get("stock") for item in objects)
+    able = (not actor.get("seat_id") and not actor["inventory"]["beer"] and actor["needs"]["thirst"] >= SETTLES_IN
+            and actor["id"] not in observation.get("on_errands", []))
+    return [_action("settle_in")] if "settle_in" in observation.get("projects", []) and able and stocked \
+        and _free_seats(observation, objects) else []
 
 
 def _hostile(observation: Mapping[str, Any]) -> list[Action]:
@@ -318,7 +333,8 @@ async def choose_action(
 
     Args:
         observation: Private actor observation; no other NPC's state is used.
-        config: Explicit API key, model, timeout and selection temperature.
+        config: Explicit API key, model, timeout and selection temperature, and the settings `lean`, `aims` and
+            `projects` when on.
         rng: Seeded random generator owned by the calling simulation.
         evaluators: Model port asked when the config holds a key. New callers pass it;
             None asks no model: a config with a model key then fails loudly.
@@ -336,21 +352,29 @@ async def choose_action(
         ValueError: Observation, configuration or limit is malformed.
     """
     evaluators = evaluators or Evaluators(_unwired, _unwired)
+    # Projects are offered where the config allows them: the observation says which kinds exist (`_settling` reads it).
+    observation = {**observation, "projects": list(PROJECTS)} if read_projects(config) else observation
     options, temperature = build_candidates(observation), read_temperature(config)
     # Every concrete action is scored together, so a family is worth its best member.
     local = local_scores(observation, [item for option in options for item in option.get("members", [option])])
     draw = (config, rng, temperature, limit)
     decision = await _decide(observation, options, family_scores(options, local), evaluators.actions, *draw)
     chosen = decision["action"]
-    if chosen["verb"] == "seating":
+    if "members" in chosen:
+        member = await _decide(observation, chosen["members"], local, evaluators.family or evaluators.actions, *draw)
+        decision = {**decision, "action": member["action"], "family": {"name": chosen["id"], **_stage(member)}}
+    action = decision["action"]
+    if ACTIVITIES[action["verb"]].chooses_chair:
+        # A second decision picks the chair; the verb that wished for one (sitting, or settling in) takes it.
         seats = build_seat_candidates(observation)
         seat = await _decide(observation, seats, local_seat_scores(observation, seats), evaluators.seats, *draw)
-        return {**decision, "action": seat["action"], "seat": _stage(seat)}
-    if "members" not in chosen:
-        return await _aimed(observation, decision, evaluators, draw)
-    member = await _decide(observation, chosen["members"], local, evaluators.family or evaluators.actions, *draw)
-    result = {**decision, "action": member["action"], "family": {"name": chosen["id"], **_stage(member)}}
-    return await _aimed(observation, result, evaluators, draw)
+        return {**decision, "action": _at_chair(action, seat["action"]), "seat": _stage(seat)}
+    return await _aimed(observation, decision, evaluators, draw)
+
+
+def _at_chair(wish: Mapping[str, Any], seat: Mapping[str, Any]) -> Action:
+    # `seating` becomes the chair's own `sit`; any other wish for a chair keeps its verb and names the chair.
+    return _action(seat["verb"] if wish["verb"] == "seating" else wish["verb"], seat["target_id"])
 
 
 async def _aimed(observation: Mapping[str, Any], decision: dict[str, Any], evaluators: Evaluators,

@@ -26,6 +26,7 @@ from tavern.evening.manner_metrics import manner_counts
 from tavern.evening.goal_metrics import goal_counts, promise_counts
 from tavern.evening.repetition import ALIKE, repetition_counts
 from tavern.evening.response_metrics import response_counts
+from tavern.evening.project_metrics import project_counts
 from tavern.evening.recording import (Record, format_record, parse_records, record_calls, record_questions, replay_calls,
                               replay_questions)
 from tavern.evening.scenario import open_evening, parse_scenario
@@ -96,7 +97,8 @@ def config(values: Mapping[str, Any], mode: str) -> dict[str, Any]:
     return {"typesafe_api_key": key, "model": values.get("TYPESAFE_MODEL", "jev-latest"),
             "timeout": float(values.get("AI_TIMEOUT", "8")), "temperature": float(values.get("AI_TEMPERATURE", "0.25")),
             "lean": read_switch(values.get("AI_LEAN"), True, "AI_LEAN"),
-            "aims": read_switch(values.get("AI_AIMS"), True, "AI_AIMS")}
+            "aims": read_switch(values.get("AI_AIMS"), True, "AI_AIMS"),
+            "projects": read_switch(values.get("AI_PROJECTS"), True, "AI_PROJECTS")}
 
 
 def keeper(calls: list[Record], log: Path) -> Callable[[Record], None]:
@@ -315,10 +317,11 @@ def main(root: Path) -> None:
     if tracer is not None:
         # The client uploads in the background; what is still queued must leave before the process ends.
         tracer.client.flush()
-    # A replay matches its recording only with the same seed, pace, temperature, lean and aims settings, so they are shown.
+    # A replay matches its recording only with the same seed, pace, temperature, lean, aims and projects settings, so they are shown.
     report = {"run": {"mode": mode, "decides": DECIDES[mode], "note": note, "seed": args.seed,
                       "model": settings["model"], "temperature": settings["temperature"],
-                      "lean": settings["lean"], "aims": settings["aims"], "step": pace.step,
+                      "lean": settings["lean"], "aims": settings["aims"],
+                      "projects": settings["projects"], "step": pace.step,
                       "model_latency": pace.model_latency, "time_limit": pace.time_limit,
                       "stuck_threshold": args.stuck_threshold, "input_usd_per_million": args.input_price,
                       "writer": writer, "writer_model": CLAUDE_MODEL if writer == "haiku" else None,
@@ -327,6 +330,7 @@ def main(root: Path) -> None:
               "intentions": intention_counts(evening), "repetition": repetition_counts(evening.events, ALIKE),
               "choice": choice_counts(evening.choices, evening.events),
               "responses": response_counts(evening.events), "aims": aim_counts(evening.events),
+              "projects": project_counts(evening.events),
               "goals": goal_counts(evening.events), "promises": promise_counts(evening.events),
               "attention": attention_counts(evening), "conversation": conversation_counts(evening),
               "news": news_metrics(world), "dice": dice_metrics(evening.events),

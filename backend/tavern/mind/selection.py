@@ -138,6 +138,21 @@ def read_lean(config: Mapping[str, Any]) -> bool:
     return _flag(config, "lean")
 
 
+def read_projects(config: Mapping[str, Any]) -> bool:
+    """Read whether guests may take on projects (see `tavern.body.projects`) from the AI config.
+
+    Args:
+        config: AI config, with a `projects` entry or none.
+
+    Returns:
+        The setting; no project is offered when the config does not say.
+
+    Raises:
+        ValueError: The setting is not a bool.
+    """
+    return _flag(config, "projects")
+
+
 def read_aims(config: Mapping[str, Any]) -> bool:
     """Read whether a social option is followed by a choice of aim (see `tavern.social.aims`) from the AI config.
 

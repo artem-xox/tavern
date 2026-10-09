@@ -363,8 +363,24 @@ export interface World {
   next_conversation_id: number;
   /** Accepted invitations under way. */
   invitations: Errand[];
+  /** Plans under way, at most one per guest. */
+  projects: Project[];
   /** The evening's news as first written; visitors' copies are in their `knowledge.facts`. */
   news: News[];
+}
+
+/** A plan a guest is carrying out step by step, without asking for decisions meanwhile. */
+export interface Project {
+  kind: string;
+  /** The guest it belongs to. */
+  by: string;
+  /** The chair it is about. */
+  target: string;
+  /** The step reached, from zero, out of `of`. */
+  step: number;
+  of: number;
+  running: boolean;
+  started_at: number;
 }
 
 export interface Snapshot {

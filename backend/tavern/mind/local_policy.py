@@ -43,6 +43,8 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
     utility = {
         "drink": 0.9 * thirst + 0.1,
         "take_beer": max(0.0, 0.8 * thirst - 0.3 * bladder),
+        # The whole of coming in thirsty, a little above fetching the ale alone (tap, then chair, then the drink).
+        "settle_in": min(1.0, 0.1 + 0.8 * thirst - 0.3 * bladder),
         "rest": fatigue * (0.85 + 0.15 * traits.get("comfort", 0.5)),
         "sit": seated_rest,
         "seating": 0.15 + 0.6 * actor["needs"].get("social", 0) / 100 if moving else seated_rest,
