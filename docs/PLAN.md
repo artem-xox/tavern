@@ -19,7 +19,7 @@ the evening and watches. See [Stage 1 tasks](stages/1_EVENING.md).
 
 **Status (2026-10-05):** M1–M3, the refactor R0–R8, D13 (Jev and Claude health markers), U1
 (no labels in the hall), E18b (conversation memory), E19 (facts and retelling), the dice game (G0–G5)
-the barkeep (B0–B6), giving (H0–H5) and E20 of M4 (hostile options) are done. Next: E21 (fight resolution).
+the barkeep (B0–B6), giving (H0–H5) and E20 of M4 (hostile options) are done. Next: fights (K0–K12, which replace E21–E22).
 The guest's mind was reworked in parallel, by [MIND.md](MIND.md) steps 0–5: the intention reaches
 speech, a guest sets a typed goal the world checks, asks the mind far less often (live seed 7: 56
 intentions became 26–33, goals reached 7 of 30 became 10 of 17), may promise to come over, and the
