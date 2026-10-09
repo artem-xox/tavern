@@ -144,7 +144,9 @@ def _answer_question(action: Mapping[str, Any], observation: Mapping[str, Any]) 
     return {"type": "score", "criteria": rubric, "instructions": (
         f"{_visitor_view()} {_guest(observation)} has been invited to do something together and must answer. "
         "Weigh what the invitation offers against what they want now, who is asking and what they think of them; "
-        "a guest may also turn it down and suggest something else. How natural is it for them, right now, to "
+        "a guest may also turn it down and suggest something else. Turning down a friendly offer needs a reason: a "
+        "pressing need, tiredness, or not liking who asks. With none, guests came to the inn for company and a game, "
+        "so they mostly say yes, and settling in their seat is no reason to refuse. How natural is it for them, right now, to "
         f"{_briefed(observation, action, 'answer')}?")}
 
 

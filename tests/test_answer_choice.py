@@ -110,7 +110,7 @@ def test_the_answer_question_asks_how_natural_the_answer_is() -> None:
     body = request_body(jev_view(), candidates("accept"), "jev-latest", answers=True)
     text = body["questions"]["accept"]["instructions"]
     assert ("accept Ada's invitation to play a game of dice" in text, "has been invited" in text,
-            len(body["questions"]["accept"]["criteria"])) == (True, True, 5)
+            "needs a reason" in text, len(body["questions"]["accept"]["criteria"])) == (True, True, True, 5)
 
 
 def test_answers_are_scored_by_the_jev_adapter() -> None:
