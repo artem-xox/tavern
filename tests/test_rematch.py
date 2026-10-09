@@ -125,3 +125,22 @@ def test_a_rematch_is_offered_while_the_loss_calls_for_an_answer() -> None:
 def test_a_rematch_is_not_offered_after_the_window() -> None:
     world = lost_to_cid(age=100.0)
     assert offered(seen(world)) is False
+
+
+def test_beginning_a_rematch_answers_the_loss_so_that_a_failure_does_not_ask_again() -> None:
+    world = lost_to_cid()
+    assert ask(world)["accepted"]
+    world["actors"].remove(actor(world, "cid"))
+    advance(world, 3)
+    assert (len(of(world, "project_failed")), [item.get("answered") for item in actor(world, "ada")["thoughts"]
+                                               if item["kind"] == "lost_at_dice"]) == (1, [True])
+
+
+def test_a_rematch_is_not_offered_with_a_winner_one_cannot_reach() -> None:
+    world = lost_to_cid()
+    cid = actor(world, "cid")
+    cid.update(seat_id=None, x=11, y=7)
+    for item in world["map"]["objects"]:
+        if item.get("reserved_by") == "cid":
+            item["reserved_by"] = None
+    assert offered(seen(world)) is False

@@ -264,8 +264,10 @@ def _rematches(observation: Mapping[str, Any], actor: Mapping[str, Any],
         return []
     free = any(item["kind"] == "dice_table" and len((item.get("game") or {}).get("players", [])) < 2 for item in objects)
     lost = {item["about"] for item in calling(actor, observation.get("time", -math.inf)) if item["kind"] == "lost_at_dice"}
+    # Only a winner they can get to: seated at a table, or standing beside them.
     return [_action("rematch", person["id"]) for person in observation.get("people", [])
-            if free and person["id"] in lost and not person.get("post")]
+            if free and person["id"] in lost and not person.get("post")
+            and (person.get("seat_id") or person.get("beside"))]
 
 
 def _hostile(observation: Mapping[str, Any]) -> list[Action]:

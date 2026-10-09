@@ -22,7 +22,7 @@ from tavern.hall.validation import number
 from tavern.social.dice import PLAY, open_chairs
 from tavern.social.errands import fetching_a_drink
 from tavern.social.invitations import errand_parties, known_place
-from tavern.social.responses import calling
+from tavern.social.responses import calling, mark_answered
 from tavern.social.scenes import conversation_of, table_of, within_reach
 
 # Starts an action the way `world.start_action` does: world, visitor ID, action; returns acceptance.
@@ -79,6 +79,7 @@ class ProjectKind:
         begin: Whether the guest can begin it with the target chosen: the reason it cannot, or None, and the fields the
             project takes (`target`, and `targets` where the kind has them).
         target_kind: What its `target` is: `chair`, `table` or `guest`.
+        opened: Called when a project of the kind has begun (the world, the guest, the project), or None.
     """
 
     wording: str
@@ -88,6 +89,7 @@ class ProjectKind:
     lasts: float
     begin: Callable[[Mapping[str, Any], Mapping[str, Any], str | None], tuple[str | None, dict[str, Any]]]
     target_kind: str
+    opened: Callable[[World, Actor, Project], None] | None = None
 
 
 def _action(verb: str, target: str | None, **more: Any) -> dict[str, Any]:
@@ -174,6 +176,12 @@ def _rematch_error(world: Mapping[str, Any], actor: Mapping[str, Any], target: s
     return None, {"target": target}
 
 
+def _loss_answered(world: World, actor: Actor, project: Project) -> None:
+    # Setting out to ask for a rematch is the answer to the loss, whatever comes of it: a plan that fails does not
+    # make the same loss call for another.
+    mark_answered(world, actor, {"verb": "talk", "target_id": project["target"]})
+
+
 def _reach(world: Mapping[str, Any], actor: Mapping[str, Any], project: Project) -> dict[str, Any] | None:
     # The way to a word with them from where the guest stands: join their talk, chat beside them, or walk over to
     # their table. The aim tells the line writers what the guest came for.
@@ -224,7 +232,7 @@ PROJECTS: Mapping[str, ProjectKind] = MappingProxyType({
         steps=_round_steps, lasts=240.0, begin=_round_error, target_kind="table"),
     "rematch": ProjectKind(
         wording="ask for a rematch", gerund="asking for a rematch", done_words="got the rematch",
-        steps=lambda project: _REMATCH, lasts=150.0, begin=_rematch_error, target_kind="guest"),
+        steps=lambda project: _REMATCH, lasts=150.0, begin=_rematch_error, target_kind="guest", opened=_loss_answered),
 })
 
 
@@ -267,6 +275,9 @@ def open_project(world: World, actor: Actor, kind: str, target: str | None) -> d
         project["targets"] = fields["targets"]
     project["of"] = len(PROJECTS[kind].steps(project))
     world["projects"].append(project)
+    opened = PROJECTS[kind].opened
+    if opened is not None:
+        opened(world, actor, project)
     return {"accepted": True, "reason": None}
 
 
