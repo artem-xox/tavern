@@ -3,7 +3,7 @@ import type Phaser from "phaser";
 import type { WorldObject } from "./types";
 
 /** Which way a fireplace opens: away from the outer wall it is built into. */
-export function hearthFacing(hearth: WorldObject, mapWidth: number): [number, number] {
+export function hearthFacing(hearth: Pick<WorldObject, "x" | "y" | "width">, mapWidth: number): [number, number] {
   if (hearth.x === 0) return [1, 0];
   if (hearth.x + (hearth.width ?? 1) === mapWidth) return [-1, 0];
   return hearth.y === 0 ? [0, 1] : [0, -1];
@@ -165,17 +165,25 @@ export function drawFlames(g: Phaser.GameObjects.Graphics, objects: readonly Wor
   }
 }
 
+/** How strongly a flame burns at a real time in milliseconds, around 0.8; a different `phase` keeps two flames from flickering in step. */
+export function flicker(time: number, phase: number = 0): number {
+  return 0.82 + 0.1 * Math.sin(time / 170 + phase) + 0.08 * Math.sin(time / 53 + phase * 1.7);
+}
+
+/** How far the firelight reaches into the room, in cells: the outermost of five rings. */
+export const HEARTH_GLOW_RADIUS = 5 * 0.62;
+
 /** Let firelight flicker on the floor in front of each fireplace among `objects`. */
 export function drawHearthGlow(g: Phaser.GameObjects.Graphics, objects: readonly WorldObject[], mapWidth: number, size: number, time: number): void {
   g.clear();
-  const flicker: number = 0.82 + 0.1 * Math.sin(time / 170) + 0.08 * Math.sin(time / 53);
+  const strength: number = flicker(time);
   for (const hearth of objects.filter((object: WorldObject): boolean => object.kind === "fireplace")) {
     // Light spills into the room on the side the fireplace opens to.
     const [dx, dy]: [number, number] = hearthFacing(hearth, mapWidth);
     const x: number = (hearth.x + (hearth.width ?? 1) / 2 + dx * 0.9) * size;
     const y: number = (hearth.y + (hearth.height ?? 1) / 2 + dy * 0.9) * size;
     for (let ring: number = 5; ring > 0; ring -= 1) {
-      g.fillStyle(0xf5a347, 0.045 * flicker).fillCircle(x, y, ring * size * 0.62 * flicker);
+      g.fillStyle(0xf5a347, 0.045 * strength).fillCircle(x, y, ring * size * 0.62 * strength);
     }
   }
 }
