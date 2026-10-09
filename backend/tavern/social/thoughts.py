@@ -87,6 +87,8 @@ class Thought(TypedDict):
     opinion: float
     expires_at: float
     source_event: str
+    # Whether the guest has set out to answer it (`tavern.social.responses`); absent until they do.
+    answered: NotRequired[bool]
 
 
 class Relation(TypedDict):
@@ -339,7 +341,8 @@ def check_mind(actor: Mapping[str, Any]) -> None:
     if not isinstance(thoughts, list) or not isinstance(relations, dict):
         raise ValueError("Saved thoughts must be a list and relations a mapping")
     for item in thoughts:
-        if not isinstance(item, dict) or set(item) != set(Thought.__annotations__) or item["kind"] not in THOUGHTS:
+        if not isinstance(item, dict) or set(item) - {"answered"} != set(Thought.__annotations__) - {"answered"} \
+                or item["kind"] not in THOUGHTS or not isinstance(item.get("answered", False), bool):
             raise ValueError(f"Invalid saved thought {item!r}")
         if not isinstance(item["text"], str) or not isinstance(item["source_event"], str) \
                 or not isinstance(item["about"], (str, type(None))):

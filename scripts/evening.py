@@ -24,6 +24,7 @@ from tavern.evening.giving_metrics import giving_counts
 from tavern.evening.manner_metrics import manner_counts
 from tavern.evening.goal_metrics import goal_counts, promise_counts
 from tavern.evening.repetition import ALIKE, repetition_counts
+from tavern.evening.response_metrics import response_counts
 from tavern.evening.recording import (Record, format_record, parse_records, record_calls, record_questions, replay_calls,
                               replay_questions)
 from tavern.evening.scenario import open_evening, parse_scenario
@@ -322,6 +323,7 @@ def main(root: Path) -> None:
               **evening_metrics(evening, calls, args.input_price, args.stuck_threshold, TARIFFS),
               "intentions": intention_counts(evening), "repetition": repetition_counts(evening.events, ALIKE),
               "choice": choice_counts(evening.choices, evening.events),
+              "responses": response_counts(evening.events),
               "goals": goal_counts(evening.events), "promises": promise_counts(evening.events),
               "attention": attention_counts(evening), "conversation": conversation_counts(evening),
               "news": news_metrics(world), "dice": dice_metrics(evening.events),

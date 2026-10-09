@@ -54,7 +54,9 @@ def _visitor_view() -> str:
         "their intention, weigh each option against their intention: what serves it is natural, what goes against "
         "it needs a reason, but an urgent need or something that just happened still comes first. An option "
         "marked as serving their goal moves them toward what they set out to do tonight; prefer it unless a need "
-        "presses or something just happened."
+        "presses or something just happened. An option marked as answering someone is how people respond to what "
+        "was just done to them: a wrong is taken up or let go according to temper and pride, a kindness is thanked "
+        "or returned, and letting either pass is natural for the patient and the shy."
     )
 
 

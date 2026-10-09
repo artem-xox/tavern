@@ -28,6 +28,7 @@ from tavern.hall.validation import number, unique_ids
 from tavern.social.dice import settle_games
 from tavern.social.commitments import promises_of, settle_commitments
 from tavern.social.errands import honor_invitations
+from tavern.social.responses import mark_answered
 from tavern.social.invitations import errand_parties, invitations_of
 from tavern.social.tables import mark_ownership
 from tavern.social.scenes import check_conversations
@@ -112,6 +113,7 @@ def start_action(world: World, actor_id: str, action: Mapping[str, Any]) -> dict
     if plan is None:
         return reject(world, actor, "No reachable interaction spot")
     activate(world, actor, action, plan)
+    mark_answered(world, actor, action)
     return {"accepted": True, "reason": None}
 
 

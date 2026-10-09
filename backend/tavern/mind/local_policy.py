@@ -8,6 +8,7 @@ from typing import Any
 from tavern.mind.goals import serving
 from tavern.mind.hall_view import in_use, line_place, steps_to
 from tavern.social.hostility import urge
+from tavern.social.responses import answering
 from tavern.social.tables import liked
 from tavern.social.thoughts import THOUGHTS, opinion_of, thought_mood
 
@@ -80,6 +81,7 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
     _score_gifts(observation, candidates, scores, company)
     _score_approaches(observation, candidates, scores)
     _score_goal(observation, candidates, scores)
+    _score_answers(observation, candidates, scores)
     return scores
 
 
@@ -132,6 +134,18 @@ def _score_goal(observation: Mapping[str, Any], candidates: Sequence[Mapping[str
     for action in candidates:
         if serving(observation, action):
             scores[action["id"]] = min(1.0, scores[action["id"]] + GOAL_BONUS)
+
+
+def _score_answers(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
+                   scores: dict[str, float]) -> None:
+    # Answering what was just done to them is tempting by temper after a wrong, and by sociability after a kindness.
+    # A thought that lowers the mood is a wrong.
+    actor, now = observation["actor"], observation.get("time", -math.inf)
+    for action in candidates:
+        thought = answering(actor, now, action)
+        if thought is not None:
+            urge_to_answer = actor.get("traits", {}).get("temper" if thought["mood"] < 0 else "sociability", 0.5)
+            scores[action["id"]] = min(1.0, scores[action["id"]] + 0.1 + 0.3 * urge_to_answer)
 
 
 def _score_lines(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
