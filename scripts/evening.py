@@ -19,6 +19,7 @@ from tavern.adapters.tracing import (Scorer, Tracer, open_tracer, traced_intende
 from tavern.evening.lockstep import Pace, evening_mode, run_evening
 from tavern.evening.metrics import (attention_counts, bar_metrics, conversation_counts, dice_metrics, evening_metrics,
                                     intention_counts, news_metrics, sleep_metrics, writer_stats)
+from tavern.evening.closing_metrics import closing_counts
 from tavern.evening.giving_metrics import giving_counts
 from tavern.evening.manner_metrics import manner_counts
 from tavern.evening.goal_metrics import goal_counts, promise_counts
@@ -322,6 +323,7 @@ def main(root: Path) -> None:
               "news": news_metrics(world), "dice": dice_metrics(evening.events),
               "sleep": sleep_metrics(evening.events, world["departed"], world["closes_at"]),
               "giving": giving_counts(evening.events), "manners": manner_counts(evening.events),
+              "closing": closing_counts(world["departed"], world["last_call_at"], world["closes_at"]),
               "bar": bar_metrics(evening.events, [item["id"] for item in world["actors"] if on_staff(item)]),
               "writer": writer_stats(evening, calls, "turn", HAIKU_4_5)}
     (args.out / "events.jsonl").write_text("".join(json.dumps(event, sort_keys=True) + "\n" for event in evening.events))

@@ -165,7 +165,12 @@ def _leave_utility(observation: Mapping[str, Any]) -> float:
     # A tired guest who has stayed a while means to go home to bed, less so one who has drunk: they sleep it off.
     weary = (min(1.0, max(0.0, (needs["fatigue"] / 100 - 0.6) / 0.3)) * (1 - 0.6 * actor.get("drunkenness", 0.0))
              * min(1.0, seconds / 180))
-    return 0.05 + 0.75 * max(content, weary, upset * min(1.0, seconds / 60))
+    wish = 0.05 + 0.75 * max(content, weary, upset * min(1.0, seconds / 60))
+    # Once the barkeep has called closing time everyone means to go: at first a guest finishes their mug or their
+    # chat, 40 s on nothing but a pressing need outweighs the door (a full bladder scores 1.0). 0.95 is as strong as
+    # walking home with someone.
+    called = observation.get("called_closing")
+    return wish if called is None else max(wish, 0.5 + 0.45 * min(1.0, called / 40))
 
 
 def _wrongs(observation: Mapping[str, Any]) -> float:

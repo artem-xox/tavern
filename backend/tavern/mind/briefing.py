@@ -57,9 +57,13 @@ def _duration(seconds: float) -> str:
 
 
 def _closing(observation: Observation) -> str:
-    if not observation.get("closed"):
+    if observation.get("closed"):
+        return "The inn has closed for the night: the innkeeper is seeing every guest out, so it is time to go home."
+    since = observation.get("called_closing")
+    if since is None:
         return ""
-    return "The inn has closed for the night: the innkeeper is seeing every guest out, so it is time to go home."
+    return (f"The barkeep called closing time {_duration(since)} ago: the inn is about to shut for the night, so "
+            "guests finish what is in hand, say their goodbyes and head home.")
 
 
 def _stay(observation: Observation) -> str:

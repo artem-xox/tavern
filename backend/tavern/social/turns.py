@@ -11,6 +11,7 @@ from collections.abc import Callable, Coroutine, Mapping
 from copy import deepcopy
 from typing import Any, NotRequired, TypedDict
 
+from tavern.hall.closing import closing_called
 from tavern.hall.memory import log_event
 from tavern.hall.staff import on_staff, post_of
 from tavern.hall.state import World
@@ -101,7 +102,8 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
         WC, darts), their `opinions` of the others and `earlier`, what they said and heard in other
         scenes tonight (`heard.earlier_lines`, the newest 24); `acts`: the meaning of each act offered
         now (`conversation.offered_acts`); `invitations`: the kinds an `invite` may name;
-        `seed`: the evening's seed, for a writer's seeded choices. Also who they are and how they feel (see `_mind`).
+        `seed`: the evening's seed, for a writer's seeded choices; `closing_called`: whether the barkeep has called
+        closing time, so a speaker winds the talk down. Also who they are and how they feel (see `_mind`).
 
     Raises:
         KeyError: The speaker's record lacks a field the view reads.
@@ -116,7 +118,8 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
             "speaker": {"id": speaker["id"], "name": speaker["name"], **deepcopy(
                 {key: speaker[key] for key in ("needs", "traits", "visit")}), "places": places,
                          **_mind(world, scene, speaker)},
-            "acts": offered_acts(world, scene, speaker), "seed": world["seed"]}
+            "acts": offered_acts(world, scene, speaker), "seed": world["seed"],
+            "closing_called": closing_called(world)}
     if on_staff(speaker):
         view["speaker"]["on_duty"] = post_of(world["map"], speaker)["name"]
     _add_invitations(view, world, scene, speaker)

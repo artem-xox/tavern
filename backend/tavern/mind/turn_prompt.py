@@ -30,7 +30,9 @@ There are several tables with chairs and a couple of benches. Hob the barkeep wo
 evening and pours every mug of ale at the tap, so guests wait there for him, and sometimes stand in line. Past the tables is the WC, \
 a small privy room that one person uses at a time, so there can be a line there too. On one wall hangs a darts \
 board where guests throw for fun or for a small wager, and by the fire a dice table has two chairs for a game of \
-chance that others like to watch. When the bell rings for closing, everyone must go home \
+chance that others like to watch. A little before closing the barkeep calls out that the inn is shutting; \
+after that call guests finish what is in hand, wind their talk down with a goodbye, a plan to meet again or \
+a last word, and go. When the bell rings for closing, everyone must go home \
 or up to their beds, and the evening is over.
 
 Guests are ordinary travellers and locals: traders, carters, soldiers off duty, charcoal burners, pilgrims, \

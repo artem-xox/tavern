@@ -53,7 +53,8 @@ def turn_content(view: Mapping[str, Any]) -> str:
     Returns:
         The per-call text that follows the cached blocks.
     """
-    nudges = _nudges(view["conversation"], view["speaker"], view.get("invitations") or [], view["acts"])
+    nudges = _nudges(view["conversation"], view["speaker"], view.get("invitations") or [], view["acts"],
+                     view.get("closing_called", False))
     earlier = _earlier(view["speaker"].get("earlier") or [])
     return "\n\n".join([_scene(view["conversation"], view["speaker"]), *([earlier] if earlier else []),
                         _self(view["speaker"]), _news(view["speaker"]), *([f"THE MOMENT\n\n{nudges}"] if nudges else []), _offer(view),
@@ -72,7 +73,8 @@ def _offer(view: Mapping[str, Any]) -> str:
             f"The addressee must be null or one of these ids: {', '.join(others)}.")
 
 
-def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequence[str], acts: Sequence[str]) -> str:
+def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequence[str], acts: Sequence[str],
+            closing_called: bool = False) -> str:
     # The scripted writer's thresholds (`scripted.PRESSING`, `scripted.CONTENT`) say when a need
     # presses or company is enough; left to itself, the model rarely leaves or shares places.
     # A barkeep's needs read as all at 0, which would send him off for company enough: his nudge says he stays.
@@ -85,6 +87,9 @@ def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequen
         if duty else "",
         f"Pressing now: {', '.join(pressing)}. The speaker should excuse themselves and leave the conversation."
         if pressing and not duty else "",
+        "The barkeep has just called closing time: the talk turns to goodbyes and heading home, so the speaker "
+        "winds it down and may say goodbye."
+        if closing_called and not duty else "",
         "The speaker has had enough company for now and may say goodbye after answering."
         if me["needs"]["social"] < CONTENT and not duty else "",
         "The speaker has not yet told anyone here where the places they know are; someone may want to know."
