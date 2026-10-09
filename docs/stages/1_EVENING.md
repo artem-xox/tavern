@@ -99,6 +99,9 @@ barkeep (B0–B6) and E20 (hostile options), all 2026-10-04. Next:
 9. **Choice depth (C0–C8), built 2026-10-09.** A lean first stage, answers to what was just done to a guest, a third
    stage that picks why for social options, temperament in the draw, projects of several steps, and the invitee's
    own answer to an invitation (off by default: D24). Worlds are saved as version 18 (16 and 17 came from the F tasks and C5).
+10. **Fights (K0–K12), planned 2026-10-09.** One-on-one fights from drink or hatred, a formula over strength, skill,
+    weapon (fists or a cudgel) and drink, five ways to end, a room that watches, cheers, steps in or joins, hurt guests
+    who show it and go for a remedy or home, and six new poses. It replaces E21 and E22.
 
 The door at closing (D02) is fixed: it takes as many leavers at once as it has spots (offline
 seed 5: the last guest left 6.6 s after closing, was 42.8 s; stuck time 27.1 s → 6.1 s). The code now
@@ -806,7 +809,7 @@ which G0 extracts from the `Random(f"{seed}:{tick}:…")` pattern before the dic
     anyone, so no hostile option was offered live:** the proof is the tests, including the one that takes a guest
     with a grudge from `choose_action` to a `start_fight` in the world. How often Haiku's guests turn on each
     other is for E28 to count; E21 resolves the blow and E22 the room's reaction.
-- [ ] **E21 — Fight resolution.** Seeded exchanges with hit chance, damage,
+- [ ] **E21 — Fight resolution.** *Replaced by Fights (K0–K12), 2026-10-09.* Seeded exchanges with hit chance, damage,
   consciousness, yielding, and knockouts; a shove can stagger or knock down; a knocked
   out guest lies down, gets up groggy, and keeps thoughts. Done: parametrized outcome
   rates (a strong sober guest usually beats a weak drunk one) and seeded replays.
@@ -826,7 +829,7 @@ which G0 extracts from the `Random(f"{seed}:{tick}:…")` pattern before the dic
   - *Tests:* rates over 200 seeds as parametrized cases. A strong sober guest beats a
     weak drunk one at least 80% of the time; equal guests win 50 ± 15%; at least 20% of
     fights end without a knockout. A seeded fight replays identically.
-- [ ] **E22 — Bystanders and aftermath.** Witnesses watch from a ring, cheer, intervene
+- [ ] **E22 — Bystanders and aftermath.** *Replaced by Fights (K0–K12), 2026-10-09.* Witnesses watch from a ring, cheer, intervene
   with a chance to separate, back away, leave, or help the fallen up; everyone involved
   gets thoughts; spilled drinks are lost. Done: a forced fight draws at least two kinds
   of reaction that follow the witnesses' traits.
@@ -3544,6 +3547,311 @@ code disagrees):
     countered invitation: "Rurik turned down an invitation to play darts together and invited Calder to have an ale on
     them instead" (seed 1, 224 s, with the invitee's answer on).
 
+### Fights (K0–K12)
+
+Added 2026-10-09 at the user's request. It replaces E21 and E22 above (their texts stay as history; this block is
+what gets built). The request:
+
+1. Drunk guests, or guests who loathe each other, may come to open conflict and fight one on one.
+2. A formula over the fighters' traits (strength, skill, weapon, drunkenness and so on) decides how it ends, and the
+   ends differ: one is knocked out (the other wins), they part, they go on cursing each other, or both are out.
+3. Two weapons: fists and a cudgel. A cudgel is an item in the inventory and in the fighter's hand.
+4. The room reacts: a fight is the loudest thing in an evening. Others may step in, and may start fighting too, but
+   every fight is one on one and lasts at least 3 seconds.
+5. A beaten guest shows it at a glance. They go looking for a remedy or go home to heal at once, and Jev is told so
+   in so many words.
+
+What exists already (read 2026-10-09):
+
+- E20: `social/hostility.py` (`HOSTILITY`: opinion −30, a cause within 120 s, urge `shove` 0.45 and `start_fight`
+  0.85; urge is `temper × drunkenness.inhibition_modifier`), `shove` (1.0 s) and `start_fight` (2.0 s) in the
+  `confront` family with `near_person=True`. Their effects only log `shove`/`fight_started`, make the sounds
+  `scuffle` (1.0, reach 24) and `brawl` (1.0, reach 30), and give the victim `shoved` or `attacked`. Nothing resolves
+  a fight. `drunkenness.fight_accuracy(level)` exists, unused.
+- Cards have `strength`, `brawling` and `courage` (0–1). There is no sex, size or weight. Rurik is the strong one
+  (0.8/0.7), Saye and Edda the weak ones (0.2/0.1, 0.3/0.1).
+- `hall/chance.roll(world, *keys)` is the seeded draw. `Activity.shared_target` and `Activity.game` exist (the dice
+  watchers stand on them).
+- Items (`body/items.py`): `beer`, `remedy` (`cures`), `keepsake`. `body/ailment.py` cures an `ailing` guest with a
+  remedy (`RELIEF` 40 off fatigue). Edda carries three remedies; one may go to tonight's sick guest.
+- C2 (`social/responses.py`): no blow answers anything; a hostile act keeps its own gate. C5 (`body/projects.py`): a
+  project is a plan of several steps chosen once, carried out by the lifecycle. A beaten guest's search for a remedy
+  is a project.
+- Poses are stills, one PNG per direction (`frontend/src/sprites.ts` `ALL_POSES`, 15 of them). A pose a sprite
+  lacks falls back to `Idle` (or `Seated`). An "animation" is the client switching stills and moving, tinting or
+  shaking the sprite.
+- Saved worlds are version 18.
+
+Decisions for every K task. Four questions were answered on 2026-10-09 (sex, the cudgel, the remedy, the barkeep) and
+are frozen below; two are still open at the end of this block. Freeze those here before K1 is coded.
+
+- **A fight is a thing in the world, one on one.** `world["fights"]` is a list of
+  `Fight = {id, a, b, weapons: {a: str, b: str}, started_at, next_exchange_at, exchanges: [Exchange], outcome,
+  ended_at}`, where `Exchange = {time, attacker, hit, damage, health_after}` and `outcome` is null while it runs.
+  Nobody is in two fights at once; `action_error` refuses a `start_fight` against someone already fighting. Several
+  fights may run at once, each between two. A fighter's action is locked while the fight lasts (as a scene member's
+  is): no decision, no interrupt but the fight's end. Both stand: a seated fighter gets up, keeps their seat as their
+  own, and the two face each other on neighbouring cells (the attacker steps next to the victim if they share a table
+  but not a side).
+- **Health and condition.** `Actor.health` (0–100, 100 on arrival) and `Actor.condition`: `ok`, `staggered`, `down`
+  (knocked down by a shove), `out` (knocked out), `groggy`, with `condition_until` (game seconds, or null). Health does
+  not come back by itself in an evening: a remedy or going home heals it. `hurt(actor)` is health below `HURT` (70);
+  `battered(actor)` below `BATTERED` (40).
+- **The exchange (`body/fights.py`, pure).** Every `EXCHANGE` (1.0 s) both fighters swing, in ID order; each swing
+  is one `chance.roll(world, fight_id, attacker, "hit")` and one for damage. Starting numbers, which the rate tests
+  pin and may tune:
+  - hit chance = `clamp(0.5 + 0.35·(brawling_A − brawling_B), 0.15, 0.9) · accuracy(drunk_A) ·
+    (1 + 0.5·(1 − accuracy(drunk_B)))`, capped at 0.95: a drunk aims worse and dodges worse.
+  - damage = `(weapon.base + weapon.scale · strength_A · (0.5 + roll)) · (1 − 0.3 · toughness_B)`; fists: base 4,
+    scale 12; cudgel: base 10, scale 18. `toughness = clamp(strength + SEX_TOUGHNESS[sex], 0, 1)`, with
+    `SEX_TOUGHNESS = {female: 0.0, male: 0.1}`: a strong guest takes blows better, and a man of the same strength a
+    little better. Shoves use toughness too.
+- **Sex on the card (answered: an explicit field).** `Card.sex`: `female` or `male`, required. `parse_card` refuses
+    anything else; `card_compiler` asks Haiku for it. The cards as their texts already read: Edda, Brida and Saye
+    `female`; Rurik, Calder, Toren and Hob `male`. `names` gains `pronoun(actor)` (she/he, her/his) for `options`,
+    the briefing and metrics wording, replacing any hard-coded "she". It goes into the K0 formula through toughness
+    only, never into the hit chance. The snapshot's actor carries `sex` (`types.ts`).
+  - `WEAPONS` is a table keyed by weapon kind (`fists`, `cudgel`), with `base`, `scale` and `reach` (a cudgel adds
+    +0.1 to the hit chance). The weapon of a fighter is `cudgel` when they hold one when the fight starts, else
+    `fists`.
+- **How it ends.** The fight is checked after each exchange, but no outcome before `MIN_SECONDS` (3.0): until then a
+  fighter's health stops at 16, so the first three exchanges always land. Then, in this order:
+  - both at 15 or less → `double_knockout`: both `out`;
+  - one at 15 or less → `knockout`: they are `out` 20–40 s (rolled), then `groggy`; the other `won` (what happens
+    to the knocked-out is the next decision);
+  - one below their yield line `50·(1 − courage)·(1 − 0.5·drunkenness)` → `yielded`: they back off a step, the other
+    `won`; drink keeps a guest in a fight they should leave;
+  - `MAX_SECONDS` (12) passed, or both fighters' fatigue at 90 or more → `shouting` when either fighter's temper is
+    0.5 or more, else `parted`;
+  - a bystander separated them (K6) → `separated`.
+
+  `shouting` opens a conversation between the two (K5) in which they go on cursing each other. `parted` and
+  `separated` leave both standing, hurt as they are.
+- **A shove resolves too.** `strength` of the shover against the victim's, plus drink: nothing, `staggered` 2 s, or
+  `down` 6 s (`body/fights.py` `shove_result`). A shove never starts a fight by itself; the victim may answer it
+  (the E20 gate, now with a fresh `shoved`).
+- **Who fights (`hostility.py`).** Two roads to `start_fight`, both still needing the target in reach and a recent
+  cause:
+  - **drink:** urge (temper × inhibition) at 0.85 or more, opinion −30 or lower (today's rule);
+  - **hatred:** opinion −60 or lower (`HATRED`) and urge 0.5 or more, sober or not.
+
+  `HOSTILITY` gains `hatred_opinion` and `hatred_urge`, and the drink road gains `drunk_level` 0.45 (the `drunk`
+  stage): a tipsy hothead shoves, only a really drunk one fights. A hostile option stays rare: the local weights of E20
+  stay.
+- **How often (answered).** With the first evening's six guests, a fight in about one evening in four, and mostly
+  when someone is really drunk. K12's target over offline seeds 0–19: fights in 4–7 of 20 evenings, and in at least
+  80% of fights at least one fighter at `drunk` or worse when it starts. Tune the thresholds above, not the formula,
+  to reach it; if guests seldom get that drunk in ten minutes, say so in K12 rather than lowering `drunk_level`.
+- **Bad blood in the backstories (answered: some guests should dislike each other more; confirmed 2026-10-09).**
+  Data only, plus one new tie kind:
+  - `ties.KINDS` gains `bad blood` (`thoughts`: opinion −55, `acquaintance`): a grudge that one fresh slight takes
+    past the hatred line. `portrait` says "someone they have bad blood with".
+  - Rurik–Toren: `rivals` → `bad blood`. Note: "Rurik is now sure Toren runs bales past the gate at night and means
+    to catch him; Toren has told half the valley that Rurik takes coin to look away." (both secrets, half-guessed).
+  - Calder–Toren, new `rivals`: "Calder lost a month's pay to Toren at dice in Harrow Ford and swears the dice were
+    weighted." Calder is the hothead (temper 0.7) and cannot pass a game by.
+  - Rurik's card: temper 0.3 → 0.4 and his temperament gains "though drink turns him mean late at night", so a
+    wasted Rurik (2.2 × 0.4 = 0.88) passes the drink road, a sober one never. His cudgel makes that dangerous.
+  - Old friends stay (Edda–Brida), and Brida stays the calm one (temper 0.25) who is never a fighter.
+
+  `test_scenario_cards.py` and the seeded first-evening tests may move with the data: name each in the commit.
+- **A knockout (answered).** The knocked-out guest lies `out` 20–40 s, then gets up `groggy` (`Hurt` pose).
+  While `out` or `groggy`, anyone may `help_up` them, and a carrier of a cure may `give` them a remedy: that heals
+  40, ends `groggy`, and the guest stays and chooses as any hurt guest does (K8). If `GROGGY_SECONDS` (30) pass after
+  they get up and nobody has given them a remedy, the world sends them home: a `limp_home` action they did not choose
+  (slow walk, `Hurt` pose, no decisions on the way), the event "Toren, battered, slipped quietly out of the inn", and a
+  thought `limped_home` kept for the chronicle. A remedy given on the way stops it. Not a choice for Jev: it is the
+  body's rule, like nodding off.
+- **The cudgel.** `ITEMS["cudgel"]`: held "a cudgel" (visible), `hands` 1, `received` `gifted`. Where it
+  comes from (answered): Rurik comes in carrying his own (`"carries": {"cudgel": 1}` in the scenario), and Hob
+  keeps one under the bar (`carries` on the staff entry). Nobody can take Hob's, and he never fights with it in
+  Stage 1 (below): it waits for Stage 2. Whoever holds it fights with it. It stays with whoever holds it when the fight
+  ends; a knocked-out fighter drops it on their cell (a `dropped` item on the map is out of scope: it goes to the
+  winner, or back behind the bar). The briefing says "holding a cudgel" of anyone who holds one; Jev's guidance says
+  a cudgel makes a fight far more dangerous.
+- **The loudest event.** Every exchange that lands logs `blow` with a sound `brawl` of loudness 1.0 and reach 40 (the
+  whole hall), and the fight's start and end log their own events. `attention` treats `brawl` above every other
+  sound: it interrupts any interruptible action, ends nobody's scene by itself but turns every head, and wakes every
+  sleeper (Z3's rule already wakes at 1.0).
+- **Reactions (`social/bystanders.py`).** A `react` family is offered only while a fight (or someone `down`, `out`
+  or `groggy`) is in sight; its members: `watch_fight` (a ring cell 2–3 from the fight, `shared_target` on the
+  fight), `cheer` (for one fighter: a short loud act, picks a side), `intervene` (walk in and try to part them:
+  `chance.roll` against `0.25 + 0.4·strength + 0.3·courage − 0.3·max(fighters' strength)`; a failed try may turn on
+  the intervener, see K7), `join_fight` (K7), `back_away` (to the far side of the hall), `leave` (already exists:
+  guidance adds a fight as a reason) and `help_up` (someone `down` or `out`: ends `out` early and turns them
+  `groggy`). The barkeep (answered: he shouts and watches) does not join the `react` family: `bartending` has him stop pouring
+  while a fight runs, turn to it and call out once per fight (event `barkeep_shout` with a `line`, a constant, e.g.
+  "Not in my hall! Take it outside!", shown as F4's call-out bubble). He never intervenes or fights in Stage 1.
+- **Joining is one on one (K7).** `join_fight` targets a fighter. Whoever is joined against is still fighting: the
+  joiner waits in the ring (`waiting_to_fight`, at most one per fighter) and starts a fresh fight with them the
+  moment the current one ends, if both still stand. A bystander may also `start_fight` with another bystander (a
+  cheerer for the other side) under the ordinary gate, which makes two fights at once. A brawl is a chain of duels.
+- **Being hurt shows.** The snapshot carries `health`, `condition` and `condition_until`; the client draws (K10):
+  a red flash and a small shake on each blow, a "stars" mark over the groggy, the knocked-out lying down, the hurt
+  walking with a limp bob and a bruise mark over the head, the battered tinted. The inspector shows health.
+- **The hurt seek treatment at once (K8).** After a fight, a hurt guest is offered only treatment: `seek_remedy`
+  (a C5 project: walk to a guest who carries a cure and ask; the carrier answers through `give`) or `leave` (to heal
+  at home). A guest who carries a remedy themselves takes it (`use_remedy`). A remedy `cures` a hurt guest: health
+  +40, up to 100, and the `treated_wounds` thought. Jev: `seek_remedy`'s and `leave`'s guidance and the visitor view
+  say plainly that a hurt guest's first business is a remedy or bed, not another drink. Haiku: the intention prefix
+  and the turn view say so too. A carrier of cures (Edda) is drawn to the hurt as to the sick (F8's bonuses).
+- **Thoughts (K9).** `won_fight`, `lost_fight` (about the other), `knocked_out_by`, `beat_up` (about the other), `saw_fight`
+  (about each fighter, by sides: a witness's opinion of the one who started it drops), `separated_us`, `helped_up`,
+  `cheered_on` (about whoever cheered for them). A fighter's beer is spilled (inventory to 0, `spilled` event).
+- **Saves:** `schema_version` 19: `world.fights`, `Actor.health`, `condition`, `condition_until`, the new item kind
+  (`check_inventory` reads `ITEMS`, so older saves are refused anyway). `test_database.py` and
+  `test_intention_saves.py` pin the version.
+- **Metrics** (`evening/fight_metrics.py`): `fights` in `metrics.json`: per fight the two names, weapons, who started
+  it, seconds, exchanges, hits, outcome and winner; reactions by kind; how each hurt guest was treated (`remedy`,
+  `went_home`, `untreated`) and how long it took.
+- **Out of scope:** more than two in a fight, a weapon other than fists and the cudgel, a cudgel lying on the floor,
+  death or lasting injury, the barkeep throwing someone out (Stage 2), money for damages (Stage 3), grudges kept
+  between evenings (Stage 4).
+
+#### New poses
+
+Six poses, cut down on 2026-10-09 at the user's request: no animation of blows in art. A fighter has one stance,
+fists up, and the client makes the fight move. The rules of [CHARACTER_ART_PIPELINE.md](../CHARACTER_ART_PIPELINE.md)
+apply: four cardinal views, 68 px requested, the export size checked before a batch, `create_character_state` on each
+guest's base character with "same face, outfit, colours and scale; change only the pose",
+`use_color_palette_from_reference=true`, and the user's approval before credits are spent.
+
+**Who gets them.** The six guests' sheets (`edda`, `rurik`, `toren`, `cook`, `courier`, `visitor`): 24 stills a
+pose, 144 in all. Hob (`bartender`) only shouts and watches in Stage 1 and gets none; `sprites.ts` lists poses per
+sheet, so his fall back.
+
+| # | Pose | Shown when | Fallback until it ships |
+|---|------|------------|-------------------------|
+| 1 | `Fighting` | a fighter, all the fight long, with fists or a cudgel | `Talking` + shake |
+| 2 | `KnockedOut` | `out` (20–40 s) and `down` after a shove (6 s) | `SleepingSeated` turned 90° |
+| 3 | `Hurt` | standing or walking while `groggy` or `hurt` (health < 70): after a fight, `seek_remedy`, `limp_home` | `Idle` + tint + stars |
+| 4 | `HurtSeated` | seated while hurt (waiting for a remedy) | `Seated` + tint |
+| 5 | `Shoving` | `shove` (1 s) and `intervene` (pushing the two apart) | `Giving` |
+| 6 | `HelpingUp` | `help_up`, and `give` to someone `out` or `down` | `Giving` |
+
+What each looks like (the `edit_description` after "Same <name>, same face, outfit, colours and scale; change only
+the pose:"). A fighter faces the opponent.
+
+- **`Fighting`**: "standing in a brawler's guard: knees bent, weight forward, both fists raised to the chin, elbows
+  in, shoulders hunched, jaw set and brows drawn down in anger." It must read as a fight at 1×: fists above the
+  shoulders, a wider stance than `Idle`. The right fist must be clear of the body in the east, west and south views,
+  since the client puts the cudgel there.
+- **`KnockedOut`**: "lying flat on the back on the floor, out cold: arms splayed, legs loose, eyes shut, head lolled
+  to one side, a bruise on the cheek." The four views are the figure lying with the head to the south, north, east
+  or west; the client picks the one with the head away from the opponent (they fell backwards). A lying figure may
+  export wider than 68 px: it must still rest inside its cell, or get its own offset in `sprites.ts`.
+- **`Hurt`**: "standing battered and unsteady: hunched forward, one hand clutching the ribs, the other pressed to a
+  black eye, knees slightly bent, clothes rumpled and a sleeve torn, a bruise on the face." It must differ from `Idle`
+  at a glance (lower head, bent body, a dark eye) and serves for walking too, so the feet stay under the body.
+- **`HurtSeated`**: "slumped in a chair, elbows on knees, head in one hand, a black eye and a bruise, the other hand
+  holding the side." No chair drawn, as in every seated pose.
+- **`Shoving`**: "shoving someone hard: both arms thrust straight forward with open palms at chest height, body
+  leaning into the push, one foot forward."
+- **`HelpingUp`**: "bent forward at the waist, one arm reaching down and out with an open hand to help someone up
+  from the floor, the other hand on the knee."
+
+**Made by the client from these and the poses that exist (K10, pure `fightview.ts`):**
+
+| Moment | How it is drawn |
+|--------|-----------------|
+| a swing | `Fighting` lunged 3–4 px toward the opponent and back (~0.25 s), out of step with the opponent's |
+| a blow taken | `Fighting` knocked 2–3 px back, a red flash, a short shake |
+| between blows | `Fighting` with a small bob and sway, the two circling half a step |
+| `staggered` after a shove | `Hurt` knocked back a step, a shake |
+| a cudgel | a small cudgel sprite drawn in the right hand per direction, on `Fighting`, `Idle`, `Walking` and `Hurt`, for whoever holds one (as the mug overlay is) |
+| `cheer` | `Talking`, turned toward the fight, with a small hop |
+| `watch_fight` | `Idle` turned toward the fight |
+| `groggy` | `Hurt` with stars circling over the head |
+| hurt and walking | `Hurt` with a limp bob, slower steps |
+| health | the sprite tinted by health; the inspector's health bar |
+| a spilled mug | a small puddle where the fighter stood |
+
+The mug overlay is hidden on a fighter (their beer is spilled at the start).
+
+Generation order: Toren (the plainest silhouette) in `Fighting` and `KnockedOut` first, previewed at 1× in the hall
+beside a guest in `Idle`, with the client's lunge and cudgel on top; only after the user approves those, the six
+poses for all six guests. A pose is added to `ALL_POSES` only when every guest sheet has it.
+
+Order: K0 first. K1 needs K0; K2, K3, K4, K5 and K6 need K1 and may go in any order (K3 first is best: it lets fights
+happen on their own). K7 needs K6. K8 needs K1 (and C5's projects). K9 needs K6. K10 needs K1's snapshot and can ship
+on fallbacks; K11 (the art) can start at once and lands into K10. K12 comes last. K1–K9 touch `activities.py`,
+`actions.py`, `lifecycle.py`, `attention.py` and `local_policy.py`, so run them one at a time. Each task is its own
+branch (`claude/stage1-k<n>`) and PR. `agents.py` has 523 lines and `activities.py` 470: K3 splits the hostile
+candidates out of `agents.py` first (a refactor commit), and K6 puts the `react` verbs' effects in `bystanders.py`, not
+`activities.py`.
+
+- [ ] **K0 — The formula, alone (`body/fights.py`, pure).**
+  - *Build:* `WEAPONS`, `hit_chance`, `damage`, `yield_line`, `exchange(fight, fighters, rolls)`,
+    `outcome(fight, fighters, now)` and `shove_result`. No world, no wiring: inputs are two fighter records
+    (`strength`, `sex`, `brawling`, `courage`, `temper`, `drunkenness`, `health`, `fatigue`, `weapon`) and the rolls.
+  - *Tests first* (`tests/test_fights.py`): parametrized single-swing cases (drink lowers the hit chance, a cudgel raises
+    damage, a strong defender takes less); every outcome reachable by a hand-picked fighter pair; no outcome before 3 s.
+    Rates over 500 seeds, each a parametrized case: a strong sober guest beats a weak drunk one at least 80% of the time;
+    equals win 50 ± 10%; a cudgel against fists between equals wins at least 75%; at least 20% of fist fights end without
+    a knockout; a double knockout happens in 1–8% of cudgel-against-cudgel fights and under 3% with fists; drunk guests
+    yield less often than sober ones. The six guests' pairs in a table (printed by a scratch script, not committed) go in
+    the result.
+- [ ] **K1 — A fight in the world.**
+  - *Build:* `world.fights`, `Actor.health/condition/condition_until`, `start_fight`'s effect opens a fight instead of
+    logging, `step_world` runs exchanges and conditions (`out` → `groggy` → `ok`), fighters locked
+    (`decisions.free_to_decide`), facing each other, the loud `blow`/`fight_ended` events, the spilled beer. Saves 19;
+    snapshot and `types.ts` together. A debug-panel command "force fight" (two guests, weapons) in `server/controls.py`.
+  - *Tests first:* a forced fight runs at least 3 s and ends in one of the outcomes; nobody is in two fights; locked
+    fighters get no decisions; a knocked-out guest lies, gets up groggy, keeps their thoughts; a seeded fight replays
+    byte-identically; saves round-trip and a bad fight, health or condition fails loudly.
+- [ ] **K2 — The shove lands.** `shove_result` applied: stagger or down, with the `Staggered`/`KnockedOut` condition;
+  a guest `down` cannot act until they get up. *Tests:* parametrized by strength and drink.
+- [ ] **K3 — Who comes to blows.** The hatred road in `hostility.py`; `briefing` and `options` say what the guest has
+  against the target; Jev guidance for `start_fight` names both roads and that it is rare; the Haiku turn view of a
+  guest with a fresh hostile cause allows `insult` → threat. *Tests:* the E20 peaceful cases stay peaceful unchanged; new
+  positive cases for hatred (sober) and drink; a tipsy hothead gets `shove` but not `start_fight`; a lockstep evening
+  with two forced enemies reaches a fight.
+  - *Data:* the bad-blood ties and Rurik's card above; `bad blood` in `ties.KINDS`,
+    `thoughts` and `portrait`.
+- [ ] **K4 — The cudgel and sex.** The item; Rurik's and Hob's `carries`; `Card.sex`, `names.pronoun`; the weapon and
+  toughness in K0's
+  formula, the briefing's and options' words, Jev guidance. Client: the cudgel drawn in the hand of whoever holds one
+  (an overlay, never art). *Tests:* a guest holding a cudgel fights with it; hands 1; saves.
+- [ ] **K5 — They go on cursing.** `shouting` opens a scene between the two with a hostile topic; their turns are
+  insults and threats until one leaves or the scene ends; Haiku's turn view says "you have just fought X"; the scripted
+  writer insults. A `shouting` scene can turn into a second fight under K3's gate. *Tests:* the scene opens; the acts
+  offered; the scripted lines.
+- [ ] **K6 — The room reacts.** `bystanders.py`, the `react` family (watch, cheer, intervene, back away, help up),
+  the ring cells, `brawl` above every sound in `attention`, the barkeep's rule (questions), the local utilities by
+  courage, strength, sociability and ties to the fighters, the options' sentences, Jev guidance. *Tests:* parametrized
+  by traits (brave and strong intervene more, timid back away or leave, friends of a fighter cheer or step in); a
+  forced fight in a seeded evening draws at least two kinds of reaction; separation ends a fight as `separated`.
+- [ ] **K7 — Others join in, one on one.** `join_fight`, the wait in the ring, the next fight starting as the first
+  ends, a failed `intervene` that turns on the intervener, a cheerer for the other side as a cause (`provoked`).
+  *Tests:* a third guest never fights two at once; a chain of two fights in one evening; at most one waiting per fighter.
+- [ ] **K8 — Hurt, and the road to a remedy.** `hurt`/`battered`, the restricted candidates of a hurt guest
+  (`seek_remedy`, `use_remedy`, `leave`), the `seek_remedy` project, a cure for wounds in a new `body/wounds.py`
+  (the potion is Edda's `remedy`, answered: no new item, no stock behind the bar), F8's carrier bonuses extended to the hurt, the words for Jev, the intention prefix and the turn view.
+  The knockout rule above (`limp_home`) belongs here. *Tests:* a knocked-out guest with no help limps home after
+  `GROGGY_SECONDS`; a remedy before that keeps them in; a hurt guest is offered nothing else; a remedy heals 40; a project that finds no carrier ends `failed` and
+  the guest is offered `leave`; Edda walks to the hurt; the guidance text says it.
+- [ ] **K9 — What it leaves behind.** The thoughts, the witnesses' opinions by side, the memory events the chronicle
+  cites, `fight_metrics.py`. *Tests:* each thought by role; the metric from a fixed event log.
+- [ ] **K10 — The client: a fight you can read.** A pure `frontend/src/fightview.ts` (pose of a fighter at a time,
+  lunge offset, flash and shake, stars, limp bob, tint by health) tested with `node:test`; `scene.ts` wires it; the
+  inspector's health bar; the ring highlight. Fallback poses until K11. *Check:* `make build`, screenshots of each
+  outcome from a forced fight.
+- [ ] **K11 — The art.** The six poses above through PixelLab, Toren's `Fighting` and `KnockedOut` first, after the
+  user approves the credits.
+  `sprites.ts` `ALL_POSES` grows with each pose that ships for every sheet.
+- [ ] **K12 — Measure.** Offline seeds 0–19 and two live evenings, plus five forced fights: fights per evening, how
+  they started (drink or hatred), outcomes, weapons, reactions, joins, treatment and its delay, stuck seconds, cost.
+  The target is the frequency decided above (4–7 of 20 offline evenings, mostly drunk) and acceptance scenario 4
+  (not every fight a knockout). Also report knockouts: how many got a remedy and stayed, how many limped home.
+
+Questions asked 2026-10-09, all answered and frozen above: sex is an explicit card field; the cudgel is Rurik's own
+and one under Hob's bar; the potion is Edda's remedy; the barkeep shouts and watches;
+
+5. How often: about one evening in four, when someone is really drunk (frozen above).
+6. A knockout: lies a while; a remedy lets them stay; with no help they limp home quietly (frozen above).
+
+The bad-blood pairs were confirmed on 2026-10-09 without Saye–Edda.
+
 ## Order
 
 M1 comes first: E01 is a refactor under the existing tests, and E02–E03 make every later
@@ -3598,6 +3906,10 @@ widens `refreshment`); C6 needs C3 and C5; C7 needs only C0, but goes after C3 i
 `haiku_turns.py` at once. C8 comes last. C2, C3 and C7 touch `scenes.py`, `turns.py` and the Haiku prefix; C5 and C6
 touch `errands.py`, `actions.py` and the lifecycle, as E21 does, so do not run them beside E21. One task per branch
 (`claude/stage1-c<n>`).
+
+Fights (K0–K12) were added 2026-10-09 at the user's request and replace E21–E22. Their internal order is at the head
+of their block. K1 bumps `schema_version` to 19, and K1–K9 touch the lifecycle, actions and local policy, so do not run
+them beside each other or beside another backend block. K0, K10 and K11 can run beside anything.
 
 ## Acceptance scenarios
 
