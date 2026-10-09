@@ -113,6 +113,8 @@ export interface Actor {
   relations: Record<string, { name: string; opinion: number; familiarity: Familiarity; knows_name?: boolean }>;
   /** 0 (sober) to 1 (as drunk as can be); beers raise it and it wears off slowly. */
   drunkenness: number;
+  /** Came in unwell, looking pale and feverish, until a remedy cures them. */
+  ailing: boolean;
   path: Cell[];
   knowledge: { objects: Record<string, Record<string, unknown>>; facts: Record<string, Fact> };
   memory: unknown[];

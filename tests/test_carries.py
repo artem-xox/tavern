@@ -53,4 +53,4 @@ def test_the_first_evening_has_edda_carry_remedies_and_toren_keepsakes() -> None
     cards = parse_cards([json.loads(path.read_text()) for path in sorted((ROOT / "data" / "characters").glob("*.json"))])
     scenario = parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()), cards)
     assert {item["name"]: item["carries"] for item in scenario.guests if "carries" in item} == {
-        "Edda": {"remedy": 2}, "Toren": {"keepsake": 2}}
+        "Edda": {"remedy": 3}, "Toren": {"keepsake": 2}}

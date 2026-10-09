@@ -13,7 +13,7 @@
   },
   "guests": [
     {"id": "mara", "name": "Edda", "color": "#e8a86b", "sprite": "edda", "card": "edda", "arrives_at": 0,
-     "carries": {"remedy": 2}},
+     "carries": {"remedy": 3}},
     {"id": "ivo", "name": "Rurik", "color": "#81b3c6", "sprite": "rurik", "card": "rurik", "arrives_at": 0},
     {"id": "nell", "name": "Toren", "color": "#b8aa76", "sprite": "toren", "card": "toren", "arrives_at": 0,
      "carries": {"keepsake": 2}},
@@ -25,6 +25,7 @@
     {"id": "hob", "name": "Hob", "color": "#c98f4a", "sprite": "bartender", "card": "hob", "post": "bar"}
   ],
   "news_tonight": 1,
+  "ailment": {"fatigue": 80},
   "news": [
     {"id": "salt_toll", "topic": "the salt toll",
      "text": "The margrave has doubled the salt toll at the border post, and carters are turning back rather than pay it.",
