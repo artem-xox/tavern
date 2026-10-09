@@ -2,6 +2,7 @@
 
 import math
 from collections.abc import Collection, Mapping, Sequence
+from dataclasses import dataclass
 from random import Random
 from typing import Any
 
@@ -50,12 +51,14 @@ def select(candidates: Sequence[Mapping[str, Any]], scores: Mapping[str, float],
     return rng.choices(candidates, weights=weights, k=1)[0]
 
 
-def drawable(candidates: Sequence[Mapping[str, Any]], scores: Mapping[str, float]) -> list[Mapping[str, Any]]:
+def drawable(candidates: Sequence[Mapping[str, Any]], scores: Mapping[str, float],
+             window: float = 0.15) -> list[Mapping[str, Any]]:
     """Keep the options chance may pick: never a pointless exit, never a clearly worse option.
 
     Args:
         candidates: Nonempty scored options.
         scores: Score per option ID, 0–1.
+        window: How far below the best an option may score and still be drawn (see `spread`).
 
     Returns:
         The options worth drawing from, in candidate order.
@@ -66,9 +69,9 @@ def drawable(candidates: Sequence[Mapping[str, Any]], scores: Mapping[str, float
     eligible = [action for action in candidates if action["verb"] not in _FINAL or scores[action["id"]] >= 0.5]
     eligible = eligible or list(candidates)
     # People weigh only the options nearly as good as their best; chance picks among those,
-    # never a clearly worse one (0.15 is just over half a rubric level).
+    # never a clearly worse one (0.15 is just over half a rubric level, the window of an ordinary guest).
     best = max(scores[action["id"]] for action in eligible)
-    return [action for action in eligible if scores[action["id"]] >= best - 0.15]
+    return [action for action in eligible if scores[action["id"]] >= best - window]
 
 
 def bounded(candidates: Sequence[Mapping[str, Any]], scores: Mapping[str, float],
@@ -169,3 +172,51 @@ def read_switch(text: str | None, default: bool, name: str) -> bool:
     if text not in ("true", "false"):
         raise ValueError(f"{name} must be true or false, not {text!r}")
     return text == "true"
+
+
+@dataclass(frozen=True)
+class Spread:
+    """How a guest's draw spreads: the `window` below the best score that chance still reaches (see `drawable`) and the
+    softmax `temperature` (see `select`)."""
+
+    window: float
+    temperature: float
+
+
+# How far a guest's temper (against their patience) and drink widen or narrow the draw. The factor is 1 for an ordinary
+# sober guest, so the config's window and temperature stand for them; each term is a guess to tune on evenings.
+TEMPER_PULL = 0.6
+DRINK_PULL = 0.8
+# The window of the near-best draw stays between these, and the temperature between these multiples of the config's,
+# so that a cool head never reaches for nothing and a hot one never draws blindly.
+WINDOW_BAND = (0.08, 0.3)
+TEMPERATURE_BAND = (0.5, 2.0)
+
+
+def spread(actor: Mapping[str, Any], temperature: float) -> Spread:
+    """Tell how widely a guest's draw ranges: wider for the hot-tempered and the drunk, narrower for the patient.
+
+    Args:
+        actor: The guest, with `traits` (`temper` and `patience`, 0-1, each 0.5 when missing as for a Stage 0 visitor)
+            and `drunkenness` (0-1, 0 when missing).
+        temperature: The config's selection temperature.
+
+    Returns:
+        The window and temperature of their draw: the usual 0.15 and the config's temperature, times
+        `1 + TEMPER_PULL * (temper - patience) + DRINK_PULL * drunkenness`, kept within `WINDOW_BAND` and
+        `TEMPERATURE_BAND`. A temperature of 0 stays 0: the best option is taken whoever chooses.
+
+    Raises:
+        ValueError: A trait or drunkenness is outside 0-1, or the temperature is negative or not finite.
+    """
+    if not math.isfinite(temperature) or temperature < 0:
+        raise ValueError(f"Temperature must be a nonnegative finite number, not {temperature!r}")
+    traits = actor.get("traits", {})
+    temper, patience, drunk = traits.get("temper", 0.5), traits.get("patience", 0.5), actor.get("drunkenness", 0.0)
+    for name, value in (("temper", temper), ("patience", patience), ("drunkenness", drunk)):
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not 0 <= value <= 1:
+            raise ValueError(f"A guest's {name} must be from 0 to 1, not {value!r}")
+    factor = 1 + TEMPER_PULL * (temper - patience) + DRINK_PULL * drunk
+    low, high = TEMPERATURE_BAND
+    return Spread(min(WINDOW_BAND[1], max(WINDOW_BAND[0], 0.15 * factor)),
+                  min(high * temperature, max(low * temperature, temperature * factor)))

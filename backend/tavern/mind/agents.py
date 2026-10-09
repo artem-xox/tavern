@@ -13,7 +13,7 @@ from tavern.mind.hall_view import in_use, line_place
 from tavern.mind.local_policy import ASK_FLOOR, local_aim_scores, local_scores, local_seat_scores
 from tavern.mind.observation import known_objects, own_actor
 from tavern.mind.options import aim_text
-from tavern.mind.selection import bounded, drawable, read_aims, read_lean, read_temperature, select, worth_asking
+from tavern.mind.selection import bounded, drawable, read_aims, read_lean, read_temperature, select, spread, worth_asking
 from tavern.social.aims import AIM_VERBS, aim_candidates, offered_aims
 from tavern.social.giving import empty_handed_company, gift_targets
 from tavern.social.hostility import HOSTILITY, hostile_targets
@@ -415,5 +415,7 @@ async def _decide(
             source = "jev"
         except EvaluatorError as failure:
             error = str(failure)
-    return {"action": select(drawable(candidates, scores), scores, temperature, rng),
+    # Everyone draws from the options near their best, but how near and how evenly depends on who they are.
+    draw = spread(observation["actor"], temperature)
+    return {"action": select(drawable(candidates, scores, draw.window), scores, draw.temperature, rng),
             "source": source, "scores": scores, "error": error}
