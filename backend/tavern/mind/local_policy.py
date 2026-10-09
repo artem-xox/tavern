@@ -193,6 +193,44 @@ def local_aim_scores(observation: Mapping[str, Any], candidates: Sequence[Mappin
     return scores
 
 
+def _invitation_worth(observation: Mapping[str, Any], kind: str) -> float:
+    # What each thing an invitation leads to is worth to this guest now, in the terms of the options it stands for.
+    needs = observation["actor"]["needs"]
+    return {"darts_together": 0.15 + 0.65 * needs.get("boredom", 0) / 100,
+            "dice_together": 0.15 + 0.65 * needs.get("boredom", 0) / 100,
+            "buy_drink": 0.4 + 0.5 * needs["thirst"] / 100,  # an ale is always welcome
+            "join_table": 0.2 + 0.6 * needs.get("social", 0) / 100,
+            "move_together": 0.2 + 0.6 * needs.get("social", 0) / 100,
+            "leave_together": _leave_utility(observation)}[kind]
+
+
+def local_answer_scores(observation: Mapping[str, Any], invitation: Mapping[str, Any],
+                        candidates: Sequence[Mapping[str, Any]]) -> dict[str, float]:
+    """Score how a guest might answer an invitation without a model.
+
+    Args:
+        observation: The invitee's observation.
+        invitation: The pending invitation (`kind`, `from`).
+        candidates: Answer candidates, each with its `answer`: `accept`, `decline` or `counter:<kind>`.
+
+    Returns:
+        A 0-1 score per candidate ID: accepting is worth what the invitation leads to plus a quarter of the opinion of
+        whoever asks, declining is worth more to the unsociable, and a counter is worth its own kind a little less than
+        accepting would be, since the guest sets it up themselves.
+    """
+    actor, now = observation["actor"], observation.get("time", -math.inf)
+    worth = _invitation_worth(observation, invitation["kind"])
+    liking = 0.25 * opinion_of(actor, invitation["from"], now) / 100
+    scores = {}
+    for candidate in candidates:
+        answer = candidate["answer"]
+        score = (worth + liking if answer == "accept"
+                 else 0.3 + 0.2 * (1 - actor.get("traits", {}).get("sociability", 0.5)) if answer == "decline"
+                 else _invitation_worth(observation, answer.partition(":")[2]) - 0.1)
+        scores[candidate["id"]] = min(1.0, max(0.0, score))
+    return scores
+
+
 def _score_lines(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
                  scores: dict[str, float]) -> None:
     # Each person ahead, including whoever uses the place, makes waiting less worthwhile, more so

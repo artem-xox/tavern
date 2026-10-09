@@ -8,7 +8,7 @@ from tavern.body.activities import FAMILIES
 from tavern.body.items import ITEMS
 from tavern.social.aims import aim_words
 from tavern.social.giving import empty_handed_tablemates
-from tavern.social.invitations import known_place
+from tavern.social.invitations import KINDS, known_place
 from tavern.social.tables import liked
 from tavern.mind.hall_view import (company_at, headcount, hosts_words, in_use, known_object, label_of, line_place,
                                    place_words, setting_words, steps_to, visible_visitor, walk_words)
@@ -56,6 +56,34 @@ def aim_text(observation: Observation, candidate: Action) -> str:
     topics = {fact_id: fact["topic"] for fact_id, fact in observation["actor"].get("knowledge", {}).get("facts", {}).items()}
     words = aim_words(candidate["aim"], label_of(person), topics)
     return f"{option_text(observation, candidate)}, meaning to {words}"
+
+
+def answer_text(observation: Observation, invitation: Mapping[str, Any], answer: str) -> str:
+    """Describe one way of answering an invitation, from the invitee's view.
+
+    Args:
+        observation: The invitee's observation.
+        invitation: The pending invitation (`kind`, `from`).
+        answer: `accept`, `decline` or `counter:<kind>`.
+
+    Returns:
+        For example "turn down Ada's invitation to play a game of dice and invite them to play darts together instead".
+
+    Raises:
+        ValueError: The inviter is not in sight, or the answer is none of the three.
+    """
+    inviter = next((item for item in [*observation.get("visitors", []), *observation.get("people", [])]
+                    if item["id"] == invitation["from"]), None)
+    if inviter is None:
+        raise ValueError(f"Cannot describe an answer to {invitation['from']!r}, who is not in sight")
+    asked = f"{label_of(inviter)}'s invitation to {KINDS[invitation['kind']]}"
+    if answer == "accept":
+        return f"accept {asked}"
+    if answer == "decline":
+        return f"turn down {asked}"
+    if answer.startswith("counter:") and answer.partition(":")[2] in KINDS:
+        return f"turn down {asked} and invite them to {KINDS[answer.partition(':')[2]]} instead"
+    raise ValueError(f"Cannot describe the answer {answer!r}")
 
 
 def _waiting(observation: Observation, action: Action) -> str:

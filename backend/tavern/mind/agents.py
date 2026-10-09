@@ -12,11 +12,12 @@ from tavern.body.projects import PROJECTS
 from tavern.mind.briefing import brief
 from tavern.mind.families import family_scores, group_families
 from tavern.mind.hall_view import in_use, line_place
-from tavern.mind.local_policy import ASK_FLOOR, local_aim_scores, local_scores, local_seat_scores
+from tavern.mind.local_policy import ASK_FLOOR, local_aim_scores, local_answer_scores, local_scores, local_seat_scores
 from tavern.mind.observation import known_objects, own_actor
-from tavern.mind.options import aim_text
-from tavern.mind.selection import bounded, drawable, read_aims, read_lean, read_projects, read_temperature, select, spread, worth_asking
+from tavern.mind.options import aim_text, answer_text
+from tavern.mind.selection import bounded, drawable, read_aims, read_answers, read_lean, read_projects, read_temperature, select, spread, worth_asking
 from tavern.social.aims import AIM_VERBS, aim_candidates, offered_aims
+from tavern.social.invitations import answer_act
 from tavern.social.giving import empty_handed_company, empty_handed_tablemates, gift_targets
 from tavern.social.responses import calling
 from tavern.social.hostility import HOSTILITY, hostile_targets
@@ -66,13 +67,15 @@ class Evaluators:
     `actions` scores the first stage, one option per activity family; `seats` the chairs
     after `seating`; `family` the actions within another chosen family. Without `family`,
     `actions` scores those too: they are ordinary actions. `aims` scores the aims of a chosen social
-    option, when the config asks for them (`selection.read_aims`); a model cannot be asked without it.
+    option, when the config asks for them (`selection.read_aims`); a model cannot be asked without it. `answers` scores how
+    an invitee answers (`selection.read_answers`), likewise.
     """
 
     actions: Evaluator
     seats: Evaluator
     family: Evaluator | None = None
     aims: Evaluator | None = None
+    answers: Evaluator | None = None
 
 
 class Decision(TypedDict):
@@ -418,6 +421,45 @@ async def _aimed(observation: Mapping[str, Any], decision: dict[str, Any], evalu
                           evaluators.aims or _unwired, *draw, view=_aim_view)
     aim = stage["action"]["aim"]
     return {**decision, "action": {**action, "aim": aim}, "aim": {"name": aim, **_stage(stage)}}
+
+
+async def choose_answer(observation: Mapping[str, Any], invitation: Mapping[str, Any], options: Sequence[str],
+                        config: Mapping[str, Any], rng: Random, evaluators: Evaluators | None = None,
+                        limit: int = 8) -> dict[str, Any]:
+    """Choose how an invitee answers the invitation waiting for them.
+
+    Args:
+        observation: The invitee's observation, with the people in sight.
+        invitation: The pending invitation (`kind`, `from`, `to`).
+        options: The answers open to them (`invitations.answer_options`).
+        config: Explicit API key, model, timeout and selection temperature.
+        rng: Seeded random generator owned by the calling simulation.
+        evaluators: Model port; its `answers` is asked when the config holds a key.
+        limit: Most options one request may hold.
+
+    Returns:
+        `answer` (one of the options), the `source` of the choice (`jev` or `local`), the `scores` per option and
+        the visible fallback `error`, as for a decision.
+
+    Raises:
+        ValueError: There are no options, an option is not an answer, the config is malformed, or a key is set with
+            the answers setting on but no evaluator of answers is wired.
+    """
+    if not options:
+        raise ValueError("An invitee needs at least one way to answer")
+    evaluators = evaluators or Evaluators(_unwired, _unwired)
+    if config.get("typesafe_api_key") and read_answers(config) and evaluators.answers is None:
+        raise ValueError("The answers setting is on but no evaluator of answers is wired")
+    candidates = [{"id": option, "verb": answer_act(option), "target_id": invitation["from"], "answer": option}
+                  for option in options]
+
+    def view(seen: Mapping[str, Any], shown: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+        return {**_evaluator_view(seen, []), "options": {item["id"]: answer_text(seen, invitation, item["answer"])
+                                                         for item in shown}}
+
+    decision = await _decide(observation, candidates, local_answer_scores(observation, invitation, candidates),
+                             evaluators.answers or _unwired, config, rng, read_temperature(config), limit, view=view)
+    return {"answer": decision["action"]["answer"], **_stage(decision)}
 
 
 def _stage(decision: Mapping[str, Any]) -> dict[str, Any]:

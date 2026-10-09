@@ -17,7 +17,7 @@ from tavern.social.turns import TurnResult, TurnWriter
 DEFAULT_ENDPOINT = "https://api.smith.langchain.com"
 DEFAULT_PROJECT = "tavern"
 # The decision stages Jev scores (`agents.Evaluators`); only `seats` asks the seat question.
-_STAGES = ("actions", "seats", "family", "aims")
+_STAGES = ("actions", "seats", "family", "aims", "answers")
 
 # A metered Jev evaluator (`jev.evaluate_actions_metered`): the scores and the usage it reported.
 Scorer = Callable[[Mapping[str, Any], Sequence[Mapping[str, Any]], Mapping[str, Any]],
@@ -78,7 +78,7 @@ def traced_scores(stage: str, evaluate: Scorer, tracer: Tracer) -> Scorer:
     async def traced(view: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
                      config: Mapping[str, Any]) -> tuple[dict[str, float], Mapping[str, Any] | None]:
         guest = _name(view.get("self"), "A Jev view's self")
-        prompt = request_body(view, candidates, config.get("model", ""), stage == "seats", stage == "aims")
+        prompt = request_body(view, candidates, config.get("model", ""), stage == "seats", stage == "aims", stage == "answers")
         with _run(tracer, f"jev.{stage}", "llm", prompt, guest, _model("typesafe", prompt["model"])) as run:
             scores, usage = await evaluate(view, candidates, config)
             run.end(outputs={"scores": scores, **_usage(usage)})

@@ -153,6 +153,21 @@ def read_projects(config: Mapping[str, Any]) -> bool:
     return _flag(config, "projects")
 
 
+def read_answers(config: Mapping[str, Any]) -> bool:
+    """Read whether an invitee's answer is their own choice (see `tavern.mind.agents.choose_answer`) from the AI config.
+
+    Args:
+        config: AI config, with an `answers` entry or none.
+
+    Returns:
+        The setting; the line writer decides the answer when the config does not say.
+
+    Raises:
+        ValueError: The setting is not a bool.
+    """
+    return _flag(config, "answers")
+
+
 def read_aims(config: Mapping[str, Any]) -> bool:
     """Read whether a social option is followed by a choice of aim (see `tavern.social.aims`) from the AI config.
 

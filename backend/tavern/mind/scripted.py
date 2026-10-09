@@ -115,7 +115,7 @@ def _retold(fact: Mapping[str, Any]) -> str:
 
 def _addressee(scene: Mapping[str, Any], me: Mapping[str, Any], act: str) -> Mapping[str, Any]:
     people = [item for item in scene["participants"] if item["id"] != me["id"]]
-    if act in ("accept", "decline"):
+    if act in ("accept", "decline") or (act == "invite" and (scene["invitation"] or {}).get("to") == me["id"]):
         return next(item for item in people if item["id"] == scene["invitation"]["from"])
     ids = [item["id"] for item in scene["participants"]]
     return scene["participants"][(ids.index(me["id"]) + 1) % len(ids)] if me["id"] in ids else people[0]
@@ -126,6 +126,10 @@ def _act(view: Mapping[str, Any], rng: Random) -> tuple[str, str]:
     scene, me, acts = view["conversation"], view["speaker"], view["acts"]
     if not scene["turns"]:
         return "greet", "greet"
+    if view.get("answer"):
+        # The invitee decided (`invitations.answer_options`): the line says it, a counter with an invitation of its own.
+        decided = view["answer"]
+        return ("invite", decided.partition(":")[2]) if decided.startswith("counter:") else (decided, decided)
     if "accept" in acts:
         answer = _answer(scene["invitation"]["kind"], me)
         return answer, answer

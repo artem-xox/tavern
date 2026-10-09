@@ -22,7 +22,7 @@ from tavern.social.aims import aim_view, note_spoken
 from tavern.social.conversation import ACTS, offered_acts
 from tavern.social.facts import carried
 from tavern.social.heard import earlier_lines, hear_line
-from tavern.social.invitations import offered_kinds
+from tavern.social.invitations import offered_kinds, pending_for
 from tavern.social.names import called, knows_name, looks
 from tavern.social.overhearing import overhear_turn
 from tavern.social.scenes import Conversation, Turn
@@ -141,7 +141,12 @@ def _add_invitations(view: dict[str, Any], world: Mapping[str, Any], scene: Conv
     # The pending invitation, the kinds the speaker may offer, and how they regard the others,
     # which invitations and insults depend on.
     view["conversation"]["invitation"] = deepcopy(scene["invitation"])
-    view["invitations"] = offered_kinds(world, scene, speaker)
+    waiting = pending_for(scene, speaker["id"])
+    answer = None if waiting is None else waiting.get("answer")
+    # An invitee who decided to counter may offer that kind and no other.
+    view["invitations"] = ([answer.partition(":")[2]] if answer and answer.startswith("counter:")
+                           else [] if answer else offered_kinds(world, scene, speaker))
+    view["answer"] = answer
     view["speaker"]["opinions"] = {item: opinion_of(speaker, item, world["time"])
                                    for item in scene["participants"] if item != speaker["id"]}
 

@@ -11,9 +11,10 @@ from tavern.evening.mind_loop import MindLoop
 from tavern.hall.staff import guests
 from tavern.hall.state import World
 from tavern.hall.world import step_world
-from tavern.mind.agents import Evaluators, choose_action
+from tavern.mind.agents import Evaluators, choose_action, choose_answer
 from tavern.mind.intentions import INTENTION_RULES, Intender, IntentionRules
 from tavern.mind.scripted import write_scripted_turn
+from tavern.mind.selection import read_answers
 from tavern.social.turns import TurnWriter
 
 
@@ -241,8 +242,11 @@ async def run_evening(world: World, config: Mapping[str, Any], rng: Random, eval
         raise ValueError("A paused world never reaches the end of the evening")
     run = _Run(events=list(world["events"]))
     courier = LockstepCourier(pace.model_latency)
+    # With the answers setting on, an invitee's answer is their own choice, asked before their line (C7).
+    answer = ((lambda observation, invitation, options: choose_answer(observation, invitation, options, config, rng,
+                                                                      evaluators)) if read_answers(config) else None)
     mind = MindLoop(courier, lambda observation: choose_action(observation, config, rng, evaluators),
-                    lambda view: writer(view, config), intender, intention_rules)
+                    lambda view: writer(view, config), intender, intention_rules, answer)
     _track(world, run)
     while not evening_over(world, pace.time_limit):
         step_world(world, pace.step)

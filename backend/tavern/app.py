@@ -11,19 +11,19 @@ from typing import Any
 from fastapi import FastAPI
 
 from tavern.adapters.claude import ClaudeError, ask_claude
-from tavern.adapters.jev import (evaluate_actions, evaluate_actions_metered, evaluate_aims, evaluate_aims_metered,
+from tavern.adapters.jev import (evaluate_actions, evaluate_actions_metered, evaluate_aims, evaluate_aims_metered, evaluate_answers, evaluate_answers_metered,
                                  evaluate_seats, evaluate_seats_metered)
 from tavern.adapters.probes import probes
 from tavern.adapters.tracing import (Scorer, Tracer, open_tracer, traced_intender, traced_question, traced_scores,
                                      traced_writer)
-from tavern.mind.agents import Evaluator, EvaluatorError, Evaluators, choose_action
+from tavern.mind.agents import Evaluator, EvaluatorError, Evaluators, choose_action, choose_answer
 from tavern.mind.haiku_turns import claude_writer
 from tavern.mind.intentions import intention_writer
 from tavern.mind.selection import read_switch
 from tavern.mind.model_health import HealthBoard
 from tavern.mind.questions import Ask, Question
 from tavern.server.api import create_app
-from tavern.server.runtime import Chooser
+from tavern.server.runtime import Answerer, Chooser
 
 
 def create_default_app() -> FastAPI:
@@ -46,7 +46,8 @@ def create_default_app() -> FastAPI:
               "temperature": float(os.environ.get("AI_TEMPERATURE", "0.25")),
               "lean": read_switch(os.environ.get("AI_LEAN"), True, "AI_LEAN"),
               "aims": read_switch(os.environ.get("AI_AIMS"), True, "AI_AIMS"),
-              "projects": read_switch(os.environ.get("AI_PROJECTS"), True, "AI_PROJECTS")}
+              "projects": read_switch(os.environ.get("AI_PROJECTS"), True, "AI_PROJECTS"),
+              "answers": read_switch(os.environ.get("AI_ANSWERS"), True, "AI_ANSWERS")}
     board = HealthBoard({"jev": bool(config["typesafe_api_key"]), "claude": bool(os.environ.get("ANTHROPIC_API_KEY"))},
                         log=logging.getLogger("tavern.health").warning)
     # Traces spend LangSmith quota, so only an explicit switch turns them on; one server run is one evening.
@@ -64,12 +65,13 @@ def create_default_app() -> FastAPI:
         if tracer is not None:
             writer, intender = traced_writer(writer, tracer), traced_intender(intender, tracer)
         lines = {"writer": writer, "writer_label": "haiku"}
+    choosers = _jev_choosers(board, tracer)
     return create_app(root / "data" / "tavern.json", root / "saves", config,
                       database_url=database_url, seed=Random().randrange(1 << 30),
                       scenario_path=root / "data" / "scenarios" / "first_evening.json",
                       characters_dir=root / "data" / "characters", staff_dir=root / "data" / "staff",
                       ask=ask, intender=intender,
-                      choose=_jev_chooser(board, tracer), health=board, probes=probes(config, os.environ.get("ANTHROPIC_API_KEY")),
+                      choose=choosers[0], answer=choosers[1], health=board, probes=probes(config, os.environ.get("ANTHROPIC_API_KEY")),
                       **lines)
 
 
@@ -95,7 +97,7 @@ def _claude_port(key: str | None, board: HealthBoard, tracer: Tracer | None) -> 
     return ask
 
 
-def _jev_chooser(board: HealthBoard, tracer: Tracer | None) -> Chooser:
+def _jev_choosers(board: HealthBoard, tracer: Tracer | None) -> tuple[Chooser, Answerer]:
     # Jev's evaluators, each call noted on the board (and traced, when tracing is on); a failure
     # still falls back to the local policy.
     def scorer(stage: str, plain: Evaluator, metered: Scorer) -> Evaluator:
@@ -124,8 +126,13 @@ def _jev_chooser(board: HealthBoard, tracer: Tracer | None) -> Chooser:
     evaluators = Evaluators(watched(scorer("actions", evaluate_actions, evaluate_actions_metered)),
                             watched(scorer("seats", evaluate_seats, evaluate_seats_metered)),
                             watched(scorer("family", evaluate_actions, evaluate_actions_metered)),
-                            watched(scorer("aims", evaluate_aims, evaluate_aims_metered)))
+                            watched(scorer("aims", evaluate_aims, evaluate_aims_metered)),
+                            watched(scorer("answers", evaluate_answers, evaluate_answers_metered)))
 
     async def choose(observation: Mapping[str, Any], config: Mapping[str, Any], rng: Random) -> dict[str, Any]:
         return await choose_action(observation, config, rng, evaluators)
-    return choose
+
+    async def answer(observation: Mapping[str, Any], invitation: Mapping[str, Any], options: Sequence[str],
+                     config: Mapping[str, Any], rng: Random) -> dict[str, Any]:
+        return await choose_answer(observation, invitation, options, config, rng, evaluators)
+    return choose, answer
