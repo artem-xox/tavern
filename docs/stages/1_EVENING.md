@@ -2917,88 +2917,83 @@ code disagrees):
     21 and 25 aims set, 13 and 18 kept; leaving out `pass_time`, which is never nudged, 10 of 14 and 18 of 19 were
     said in the scene, so Haiku does what the guest came for about nine times in ten. The aim stage asked 23 and 28
     times (near-best 2.0, so the choice is real), cost $0.005 and $0.007 an evening, and the evenings $0.30 and $0.34.
-    A moment: Calder, whose card gives him dice, asks a different guest for a game eight times in seed 7 (145, 163, 238,
+    A moment: Calder, whose card gives him dice, asks guests for a game eight times in seed 7 (145, 163, 238,
     292, 306, 318, 357, 370 s); Rurik at 170 s and Toren at 244 s accept and the games are played, Brida declines. Not
     built, as it argues with character, not a defect: a limit on asking the same person again.
 
-- [ ] **C4 — Temperament in the draw.**
-  - Everyone draws from options within 0.15 of their best at temperature 0.25 (`AI_TEMPERATURE`), so a patient
-    sober guest and a hot-headed drunk one are equally predictable. `selection.spread(actor, temperature) ->
-    Spread` (a frozen dataclass: `window`, `temperature`) widens both for the impulsive and the drunk and narrows
-    them for the patient: `factor = 1 + 0.6 × (temper − patience) + 0.8 × drunkenness`, window `0.15 × factor`
-    clamped to 0.08–0.3, temperature `temperature × factor` clamped to 0.5–2 times the config's. Constants are
-    parameters with why-comments; traits a Stage 0 visitor lacks read as 0.5 and drunkenness as 0.
-  - `drawable` takes `window` (default 0.15, so its tests and other callers keep their meaning); `_decide` passes the
-    guest's spread at every stage.
-  - *Tests first:* `spread` cases: an ordinary sober guest (the config's values), a patient sober guest, a
-    hot-headed drunk (capped), traits missing; a `pytest.raises` block for a trait outside 0–1 and a negative
-    temperature. `drawable` with a window.
-  - *Check:* offline seeds 0–9 and live seed 7: C0's `decided` per guest, distinct verbs per guest, and how many
-    guests make the same first three choices on arrival (the "guests think alike" of MIND.md).
+- [x] **C4 — Temperament in the draw.**
+  - `selection.spread(actor, temperature) -> Spread(window, temperature)`: `factor = 1 + TEMPER_PULL × (temper −
+    patience) + DRINK_PULL × drunkenness` (0.6 and 0.8; a trait or drunkenness missing reads as 0.5 and 0), the window
+    `0.15 × factor` kept in `WINDOW_BAND` (0.08–0.3) and the temperature `temperature × factor` in `TEMPERATURE_BAND`
+    (0.5–2 times the config's); a temperature of 0 stays 0. An ordinary sober guest draws as before. `drawable` takes
+    the window (default 0.15, so its tests and callers keep their meaning); `agents._decide` passes each guest's spread
+    at every stage. A trait outside 0–1 or a negative temperature raises `ValueError`. No setting: nothing changes for a
+    state without these traits, and no existing test changed.
+  - *Tests* (`tests/test_spread.py`): eight spreads (ordinary, patient and capped narrow, calm, hot head in drink,
+    the capped extreme, missing traits, zero temperature, no traits), impossible input, `drawable` with three windows,
+    and over 200 seeds an ordinary guest never takes what a model rates far below the best while a hot-headed drunk
+    sometimes does.
+  - *Built and measured (2026-10-09).* Offline seeds 0–9, against C3: distinct verbs per guest 8.6 → 9.0, pairs of
+    guests making the same first three choices per evening 2.2 → 1.9, `decided` 33% → 36% (the patient are surer),
+    repeats 36% → 37%, stuck seconds 16.7 → 20.1 (the spread of single seeds is 8–27, so no more than noise),
+    departures 6 in all ten. Live seeds 5 and 7, against C3 (replays byte-identical): repeats 28% → 23%, near-best 1.65 →
+    1.62, stuck seconds 26.9 → 23.2, cost $0.32 both. A gentle change, as intended.
 
-- [ ] **C5 — Projects: a plan of several steps chosen once.**
-  - A project is a short plan the guest takes on with one choice; the world carries out its steps through the
-    ordinary lifecycle, as errands do (`social/errands.py`), and the guest asks for no decision until it ends. It
-    gives a step memory of the last one, holds a guest to what they set out to do, and ends in a logged outcome a
-    story can cite.
-  - `body/projects.py` (new: "Projects: plans of several steps a guest takes on with one choice, and how each step
-    is carried out"):
-
-    ```python
-    class Project(TypedDict):
-        """A plan under way: its kind, whose it is, what it is about, the step reached and since when."""
-        kind: str
-        by: str
-        target: str | None
-        step: int
-        started_at: float
-
-    @dataclass(frozen=True)
-    class Step:
-        """One step: the verb started, and how its target is found when the step begins (None: it cannot be)."""
-        verb: str
-        target: Callable[[Mapping[str, Any], Project], str | None]
-
-    @dataclass(frozen=True)
-    class ProjectKind:
-        """One kind of project: its steps in order, and the game seconds before an unfinished one lapses."""
-        steps: tuple[Step, ...]
-        lasts: float
-    ```
-
-    `world["projects"]: list[Project]`, checked by `check_saved_projects`; saved worlds take the next version.
-    `honor_projects(world, start)` runs each tick beside `honor_invitations`: when the guest is idle, it starts the
-    next step; a refused step ends the project as `failed`; the last step completed ends it as `done`; an interrupt
-    (`attention`) ends it as `dropped`; a guest who left ends it silently; `lasts` passed ends it as `expired`. Each
-    end is one event, `project_done` / `project_failed` / `project_dropped` / `project_expired`, e.g. "Edda could not
-    settle in: the tap had run dry". `decisions.free_to_decide` is false while the guest has a project, as it is
-    while fetching a drink.
-  - *The first kind, `settle_in`*: take an ale at the tap, sit on the chosen chair, drink. A new verb, in the
-    `refreshment` family (the same wish: something to drink), so no first-stage request grows and `refreshment`
-    becomes a real family of two:
+- [x] **C5 — Projects: a plan of several steps chosen once.**
+  - A project is a short plan the guest takes on with one choice; the world carries out its steps through the ordinary
+    lifecycle, as errands do, and the guest asks for no decision until it ends. `body/projects.py` (new: "Projects:
+    plans of several steps a guest takes on with one choice, and how each step is carried out"):
 
     ```python
-    Activity(verb="settle_in", duration=0.5, opens_project=True, effect=_settle_in, family="refreshment",
-             label="Settle in with an ale", doing="getting an ale to take to a table", done="settled in with an ale",
-             what="pour a mug of ale at the tap, then take {target} and drink it there",
-             guidance="What a guest does on coming in thirsty without a seat: one errand to the tap, then they sit "
-                      "with their drink. Pointless with a mug in hand or a seat already their own.")
+    class Project(TypedDict):  # kind, by, target, step, of, running, started_at, targets (optional)
+    class Step:                # name, command, done, broken (a step that only waits has no command)
+    class ProjectKind:         # wording, gerund, done_words, steps, lasts, begin, target_kind, opened
     ```
 
-    `Activity.opens_project` is a new flag. Offered (`agents`) when the guest holds no beer, sits nowhere and has no
-    own seat free, knows a stocked tap and a free table chair, and thirst is at least 35 (the tap's existing rule
-    for social guests). Choosing it takes the seat stage, as `seating` does: `Activity.chooses_chair` (new flag, on
-    `seating` and `settle_in`) replaces the `chosen["verb"] == "seating"` test in `choose_action`, and the seat
-    stage returns `settle_in:<chair>`. So one choice runs three levels deep: `refreshment` → `settle_in` → chair.
-    Local utility: `0.1 + 0.8 × thirst − 0.3 × bladder`, a little above `take_beer` for a seatless guest.
-  - *Snapshot:* an actor's `project` (`kind`, `step`, `of`) for the inspector ("Settling in: step 2 of 3"); `types.ts`.
-  - *Tests first* (`tests/test_projects.py`): steps start in order; a refused step fails with its event; an
-    interrupt drops it; a departed guest's project goes; `lasts` expires it; no decision is asked meanwhile; a save
-    round trip, and a `pytest.raises` block for an unknown kind, a step past the last and a missing guest.
-    Candidates: `settle_in` offered and not offered (holding a mug, seated, no free chair, tap dry, thirst 20);
-    `choose_action` returns `settle_in:<chair>` through the seat stage with fake evaluators.
-  - *Check:* offline seed 5 and live seed 7: Jev requests per guest in their first 60 s, `seat_taken` and refused
-    `sit` in the first 60 s, projects done/failed/dropped, stuck seconds.
+    `world["projects"]` is checked by `check_saved_projects`; **saved worlds are version 16** (the approved bump:
+    `test_database.py` and `test_intention_saves.py` pin the version and changed with it; no other test changed).
+    `world.start_action` opens a project for a verb with `Activity.opens_project` (a new field, the kind's name; verbs
+    with it have `duration=None`, so `rules.durations` and old saves are untouched, like `seating`). `honor_projects`
+    runs each tick beside `honor_invitations`: finished steps are passed over; while the guest is idle, in no
+    conversation and on no errand, a started step that came to nothing ends the project (**dropped** if an interrupt
+    came after it began, else **failed**) and the next step is started, a refusal ending it as **failed**; `lasts`
+    passed ends it **expired**; a guest who went home takes it with them. Each end is one event, `project_done`,
+    `project_failed`, `project_dropped` or `project_expired`, e.g. "Calder could not settle in: sit came to nothing
+    (settle_in)". `decisions.free_to_decide` is false while the guest has one.
+  - *The first kind, `settle_in`*: take an ale at the tap, sit on the chosen chair, drink (`lasts` 150 s). A new verb in
+    the `refreshment` family, which becomes a real family of two:
+
+    ```python
+    Activity(verb="settle_in", duration=None, target_kinds=("chair",), opens_project="settle_in", chooses_chair=True,
+             family="refreshment", label="Settle in with an ale", what=..., guidance=...)
+    ```
+
+    `Activity.chooses_chair` (new, also on `seating`) replaces the `chosen["verb"] == "seating"` test in `choose_action`,
+    which now runs: first stage → family → seat stage → aim. Choosing it is three levels deep: `refreshment` →
+    `settle_in` → chair. Offered (`agents._settling`) when the guest holds no beer, sits nowhere, knows a stocked tap and
+    a free table chair, has a thirst of 35 or more and is on no errand. Local utility `0.1 + 0.8 × thirst − 0.3 ×
+    bladder`, a little above `take_beer`.
+  - *A setting* (as C1, C3): `config["projects"]` (`selection.read_projects`), on in the shell as `AI_PROJECTS`. A first
+    version told every observation that projects exist, and moved the seed-4 evening of
+    `test_facts.py::test_a_news_item_reaches_a_third_guest_in_other_words` (no news travelled two hops any more),
+    which AGENTS forbids changing without the user; with the setting off in the library that test, and every other,
+    is untouched.
+  - *Snapshot:* `state.projects` reaches the client as part of the world; `types.ts` gets `Project`, and the inspector
+    says "Plan · settle in, step 2 of 3" (`frontend/src/projects.ts`, tested). `metrics.json` gets `projects`:
+    ended per kind and outcome (`evening/project_metrics.py`).
+  - *Tests* (`tests/test_projects.py`, `test_project_metrics.py`, `frontend/tests/projects.test.ts`): the project is
+    opened, not an action; carried out step by step to a logged end; a refused step (the tap dry, the chair taken)
+    fails it; an interrupt drops it; it lapses; a guest who left takes it with them; a conversation holds the next
+    step back; seven cases of when it is offered, and not where projects are off; the family and the score; three
+    levels through `choose_action`; saves round trip and ten malformed ones; refusals to begin.
+  - *Built and measured (2026-10-09).* Offline seeds 0–9: 59 `settle_in` done, none failed, stuck seconds 20.1 → 16.9,
+    guest actions in the first 60 s unchanged (14.9 → 14.5). The cost is sameness: pairs of guests with the same first
+    three choices per evening rose from 1.9 to **8.2**, since nearly every arrival now takes ale, chair and drink at
+    once; a threshold of 50 for the thirst changed nothing, as every arrival is thirsty. Live seeds 5 and 7 (replays
+    byte-identical): 8 done and 1 failed ("sit came to nothing", Calder at 246 s), first-stage Jev requests 156 and 172
+    (162 and 158 before: no fewer, since the plan covers only the first minute), no seat taken, stuck seconds 29 and 37
+    (17 and 29 before: within the spread seen in C1). The inertia the plan gives is real; the uniform arrival is the price,
+    and a reason to let C6's plans and C3's aims carry the variety.
 
 - [ ] **C6 — Social projects: a round for the table, and a rematch.**
   - `stand_a_round`: fetch an ale for each empty-handed tablemate in turn. In the `fetching` family (the same wish),
