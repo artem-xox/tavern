@@ -71,3 +71,18 @@ def test_six_guests_arrive_over_time_and_all_go_home_by_closing(seed: int) -> No
     assert [arrived[guest] >= time - 0.01 for guest, time in schedule.items()] == [True] * len(schedule)
     assert len({round(time) for time in arrived.values()}) >= 4
     assert last_out <= scenario.closes_at + 60
+
+
+@pytest.mark.parametrize("seed", [
+    pytest.param(1, id="seed-1"),
+    pytest.param(7, id="seed-7"),
+])
+def test_every_guest_comes_in_with_full_energy(seed: int) -> None:
+    # Energy is the `fatigue` need, as urgency: 0 is fully rested, so nobody lies down to sleep on arrival.
+    room, scenario = first_evening()
+    world = open_evening(room, scenario, seed)
+    tonight = [*guests(world), *world["expected"]]
+    assert len(tonight) == len(scenario.guests)
+    # The one guest who comes in unwell (see `tavern.body.ailment`) is the exception.
+    assert {item["needs"]["fatigue"] for item in tonight if not item.get("ailing")} == {0.0}
+    assert [item["needs"]["fatigue"] for item in tonight if item.get("ailing")] == [80.0]

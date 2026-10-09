@@ -11,6 +11,7 @@ from collections.abc import Callable, Coroutine, Mapping
 from copy import deepcopy
 from typing import Any, NotRequired, TypedDict
 
+from tavern.hall.closing import closing_called
 from tavern.hall.memory import log_event
 from tavern.hall.staff import on_staff, post_of
 from tavern.hall.state import World
@@ -102,7 +103,8 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
         WC, darts), their `opinions` of the others and `earlier`, what they said and heard in other
         scenes tonight (`heard.earlier_lines`, the newest 24); `acts`: the meaning of each act offered
         now (`conversation.offered_acts`); `invitations`: the kinds an `invite` may name;
-        `seed`: the evening's seed, for a writer's seeded choices. Also who they are and how they feel (see `_mind`).
+        `seed`: the evening's seed, for a writer's seeded choices; `closing_called`: whether the barkeep has called
+        closing time, so a speaker winds the talk down. Also who they are and how they feel (see `_mind`).
 
     Raises:
         KeyError: The speaker's record lacks a field the view reads.
@@ -117,7 +119,8 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
             "speaker": {"id": speaker["id"], "name": speaker["name"], **deepcopy(
                 {key: speaker[key] for key in ("needs", "traits", "visit")}), "places": places,
                          **_mind(world, scene, speaker)},
-            "acts": offered_acts(world, scene, speaker), "seed": world["seed"]}
+            "acts": offered_acts(world, scene, speaker), "seed": world["seed"],
+            "closing_called": closing_called(world)}
     if on_staff(speaker):
         view["speaker"]["on_duty"] = post_of(world["map"], speaker)["name"]
     view["speaker"]["aim"] = aim_view(world, scene, speaker)
@@ -154,8 +157,8 @@ def _add_invitations(view: dict[str, Any], world: Mapping[str, Any], scene: Conv
 def _mind(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str, Any]) -> dict[str, Any]:
     # Who the speaker is and how they feel, for a model writer: `card` (the card's words, or None),
     # `portrait`, `feelings` in words, their current `intention` (the mind's words, or None), `aims_at` (whom their active goal is about, or None), `drunkenness` (0–1; kept out of `feelings`, so a writer
-    # words it once), and `company`: their opinion of, familiarity with, and active thoughts
-    # about each other participant, in order of joining.
+    # words it once), whether they came in unwell (`ailing`), and `company`: whether each other participant looks
+    # unwell, and the speaker's opinion of, familiarity with, and active thoughts about them, in order of joining.
     now, card = world["time"], speaker["card"]
     others = [item for item in world["actors"] if item["id"] in scene["participants"] and item["id"] != speaker["id"]]
     others.sort(key=lambda item: scene["participants"].index(item["id"]))
@@ -163,12 +166,13 @@ def _mind(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str, A
     return {"card": None if card is None else {key: card[key] for key in TEXT_FIELDS},
             "portrait": portrait(speaker),
             "feelings": feelings({"actor": {**speaker, "drunkenness": 0.0}, "time": now}),
-            "drunkenness": speaker["drunkenness"],
+            "drunkenness": speaker["drunkenness"], "ailing": speaker["ailing"],
             "intention": None if speaker["intention"] is None else speaker["intention"]["intention"],
             "aims_at": _aims_at(speaker),
             "earlier": earlier_lines(speaker, EARLIER_LINES, scene["id"]),
             "news": carried(world, speaker),
-            "company": [{"id": other["id"], "name": other["name"], "opinion": opinion_of(speaker, other["id"], now),
+            "company": [{"id": other["id"], "name": other["name"], "ailing": other["ailing"],
+                         "opinion": opinion_of(speaker, other["id"], now),
                          "familiarity": familiarity_of(speaker, other["id"]),
                          "thoughts": [item["text"] for item in thoughts if item["about"] == other["id"]]}
                         for other in others]}

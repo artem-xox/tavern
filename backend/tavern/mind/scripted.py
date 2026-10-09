@@ -19,6 +19,7 @@ LINES: Mapping[str, tuple[str, ...]] = MappingProxyType({
     "complain": ("This ale tastes of old boots.", "Too loud in here, {name}.", "You never listen, {name}."),
     "content": ("Good talk. I'll let you be.", "Well, I'll leave you to it."),
     "pressed": ("Excuse me, I must step out.", "Pardon me a moment."),
+    "closing": ("Time to go. Good night, {name}.", "Last call already. Good night."),
     "introduce": ("I'm {me}, by the way.", "Name's {me}.", "They call me {me}."),
     "insult": ("You're a fool, {name}.", "Nobody asked you, {name}.", "You smell of the stable."),
     "apologize": ("Sorry about earlier, {name}.", "No hard feelings, {name}?"),
@@ -56,8 +57,8 @@ def scripted_turn(view: Mapping[str, Any]) -> "TurnResult":
     """Write the next line of a scene by a seeded rule, without a model.
 
     The first line greets. An invitee answers a pending invitation first (see `_answer`). A
-    speaker pressed by a need says goodbye, and so does one with company enough once they have
-    said something besides a greeting. Otherwise, using only acts the view offers, a stranger
+    speaker pressed by a need says goodbye, and so does one with company enough, or after the barkeep's
+    call (`closing_called` in the view), once they have said something besides a greeting. Otherwise, using only acts the view offers, a stranger
     introduces themselves once; a tipsy, impatient speaker may insult someone they dislike once,
     or complain once; a patient one apologizes once to whoever holds a grudge; they tell a piece
     of news they hold that the scene has not heard from them, once (see `_retold`); they tell where
@@ -144,6 +145,9 @@ def _act(view: Mapping[str, Any], rng: Random) -> tuple[str, str]:
     # does: his needs read as content (all at 0), but he stays while the guest does.
     if needs["social"] < CONTENT and said - {"greet"} and not me.get("on_duty"):
         return "leave_conversation", "content"
+    # After the barkeep's call the talk ends the same way: an answer, then goodnight.
+    if view.get("closing_called") and said - {"greet"} and not me.get("on_duty"):
+        return "leave_conversation", "closing"
     return _opening_up(view, said, rng) or _friendly(view, said, rng)
 
 

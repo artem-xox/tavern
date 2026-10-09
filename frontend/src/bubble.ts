@@ -1,4 +1,38 @@
-/** Speech bubbles: where one sits over its speaker, kept whole inside the map. */
+/** Speech bubbles: where one sits over its speaker, kept whole inside the map, and which line a character has to say. */
+import type { WorldEvent } from "./types.ts";
+
+/** A line someone said aloud: who, the words, and the game time they said them. */
+export interface Spoken {
+  speaker: string;
+  line: string;
+  time: number;
+}
+
+/** How long, in game seconds, a barkeep's call stays over his head: about what its two pieces take to read. */
+const CALLOUT_SECONDS = 8;
+
+/**
+ * The call a character made while it is still new, to show over their head.
+ *
+ * @param events The world's event log, oldest first; only a `last_call` event with words counts.
+ * @param actorId The character.
+ * @param worldTime Game time now.
+ * @returns The newest call by them, as a line, while it is under `CALLOUT_SECONDS` old; otherwise null.
+ */
+export function callout(events: readonly WorldEvent[], actorId: string, worldTime: number): Spoken | null {
+  for (let index: number = events.length - 1; index >= 0; index -= 1) {
+    const event: WorldEvent = events[index]!;
+    if (event.type !== "last_call" || event.actor_id !== actorId || event.line === undefined) continue;
+    return worldTime - event.time < CALLOUT_SECONDS ? { speaker: actorId, line: event.line, time: event.time } : null;
+  }
+  return null;
+}
+
+/** The later of two lines, the first on a tie (null when neither was said). */
+export function newer(first: Spoken | null, second: Spoken | null): Spoken | null {
+  if (first === null || second === null) return first ?? second;
+  return second.time > first.time ? second : first;
+}
 
 /** Pixels the bubble keeps clear of the map edge, and its gap above a speaker's head or below their feet. */
 const MARGIN = 4;

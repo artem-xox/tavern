@@ -93,9 +93,12 @@ barkeep (B0–B6) and E20 (hostile options), all 2026-10-04. Next:
    The saved world did not change (still version 14 then). The live evening and its replay are still to run.
 7. **Tables and manners (T0–T8), built 2026-10-08.** Guests walk over to another table to talk, agree to move to a
    free table together, and upset the hosts of a table they sit down at uninvited; an apology mends it.
-8. **Choice depth (C0–C8), built 2026-10-09.** A lean first stage, answers to what was just done to a guest, a third
+8. **Closing call, news and a sick guest (F0–F9), planned 2026-10-09.** A ten-minute evening whose barkeep calls
+   closing time out loud, guests who come in rested, one item of news with one holder, two windows on the west wall,
+   candles, and a sick guest whom Edda seeks out with a remedy.
+9. **Choice depth (C0–C8), built 2026-10-09.** A lean first stage, answers to what was just done to a guest, a third
    stage that picks why for social options, temperament in the draw, projects of several steps, and the invitee's
-   own answer to an invitation (off by default: D24). Worlds are saved as version 16.
+   own answer to an invitation (off by default: D24). Worlds are saved as version 18 (16 and 17 came from the F tasks and C5).
 
 The door at closing (D02) is fixed: it takes as many leavers at once as it has spots (offline
 seed 5: the last guest left 6.6 s after closing, was 42.8 s; stuck time 27.1 s → 6.1 s). The code now
@@ -2690,6 +2693,430 @@ Decisions for every T task (frozen 2026-10-08; change them here first if the cod
   for a follow-up in which the world opens a scene from the host, not built here. Haiku chose `move_together` once in two
   live evenings and `apologize` never, so E28 should count both.
 
+### Closing call, news and a sick guest (F0–F9)
+
+Added 2026-10-09 at the user's request, as six fixes:
+
+1. The evening lasts 10 minutes, and the barkeep says out loud that the inn is closing. Guests react to
+   it and decide for themselves that it is time to go.
+2. Guests come in with full energy, so nobody lies down to sleep right away.
+3. Only one news item is told tonight, drawn at random, and only one guest knows it and spreads it.
+   Nobody else knows it at first.
+4. The middle window of the west wall goes; two windows stay on that wall.
+5. A few small candles glow the way the fireplace does: one in the privy, one by the front door, and
+   two more on the walls.
+6. Edda carries three herbal remedies. One guest, drawn at random, comes in sick with little energy
+   and needs one remedy. Edda finds whoever needs it and offers it of her own accord.
+
+What exists already (read 2026-10-09):
+
+- `data/scenarios/first_evening.json`: `closes_at` 420, `opening_window` [1, 30], arrival `fatigue`
+  [25, 55], five news items with one or two `known_by` each, Edda `carries` `{"remedy": 2}`. Guests arrive
+  at 0 (in the window), 40, 110 and 190 s. Hob is the only staff member.
+- Closing (`hall/closing.py`): `call_closing` logs `closing` ("Closing time: the innkeeper calls for every
+  guest to head home") and emits `EVENT_SOUNDS["closing"]` (loudness 1.0, reach 40) from the middle of the
+  bar. From then on `agents._concrete_candidates` offers only `leave` (`_going_home`), `briefing._closing`
+  says so, every scene ends (`scenes.check_conversations`), the barkeep stops pouring (`bartending.tend_bar`),
+  nobody nods off (`dozing`), and `intentions.latest_trigger` returns a `closing` trigger. Nobody says a word.
+  The client shows a speech bubble only for the latest turn of a conversation (`speech.ts` `Speech.tell`).
+- Energy is the `fatigue` need (Z0–Z6). `SLEEPY` is 60 in `agents.py`. Arrival needs are drawn by
+  `arrival.arriving` from `Random(seed)`.
+- News (E19): `scenario.parse_scenario` reads `news` (`facts.parse_news`), `open_evening` copies all of it
+  into `world["news"]`, and `arrival.admit_arrivals` gives each guest `facts.starting_facts` for every item
+  whose `known_by` names them.
+- The west wall has three windows: `window-1` (0, 4), `window-2` (0, 6) and `window-3` (0, 11), all at
+  `appeal` 0.0 since T0. A window's cell is closed by the window, so it is not in `blocked`
+  (`test_hall_layout.py::test_the_hall_is_walled_all_round`).
+- Light: `hearth.ts` `drawHearthGlow` draws five rings of `0xf5a347` in front of each fireplace, with a
+  flicker of `0.82 + 0.1·sin(t/170) + 0.08·sin(t/53)`, on its own layer that it clears every frame.
+  `floor.ts` `drawRoomDetails` already places hall details by hand (the privy's flagstones, two faint
+  warm spots).
+- Remedies: `ITEMS["remedy"]` (`hands` 3, out of sight, `received` = `cared_for`). A remedy is only ever
+  given by `give`, which needs the two within reach (`near_person`; `gift_targets` reads `beside` or the same
+  table). `approach` (T2) walks to someone seated at another table and stands at it, which puts them within
+  reach. Edda's card goal already says she means to "press a remedy on anyone who looks unwell". Nobody is
+  unwell.
+
+Decisions for every F task (frozen 2026-10-09; change them here first if the code disagrees):
+
+- **The west wall.** `window-2` leaves `data/tavern.json` and its cell [0, 6] joins `blocked`, so the hall
+  stays walled. `window-1` and `window-3` stay. The Window table keeps its name: `window-1` is still in
+  reach of it, and windows have no appeal anyway.
+- **Candles are decoration.** The client draws them; no rule reads them, and they are in neither the map,
+  the saves nor the snapshot. Their cells live in a new pure module `frontend/src/candles.ts`, beside the
+  other hand-placed details of this hall (`floor.ts` `drawRoomDetails`). Each hangs on a wall cell and
+  shines into the room:
+
+  | where | cell | wall |
+  |-------|------|------|
+  | the privy | (19, 2) | east |
+  | by the front door | (11, 13) | south |
+  | west wall, between the darts and the garden window | (0, 9) | west |
+  | east wall, between the East and Corner tables | (19, 9) | east |
+
+  Which way a candle shines is `hearth.hearthFacing`, reused: widen its parameter to
+  `Pick<WorldObject, "x" | "y" | "width" | "height">` rather than write a second copy. The sconce (an iron
+  bracket and a pale candle, a few pixels) is drawn once with the furniture. Each frame a small flame and
+  the glow are drawn on a layer of their own, beside `hearthGlow` and below the guests. The glow is the
+  hearth's: same colour, same flicker formula, each candle on its own phase, three rings of `0.45·size`
+  each instead of five of `0.62·size`. Putting candles in `data/tavern.json` would mean backend validation
+  and a save change for pure decoration. That is out of scope; ask the user if it ever matters.
+- **Full energy on arrival.** The scenario's arrival range of `fatigue` becomes [0, 0]: every guest comes
+  in with Energy 100. `data/tavern.json` keeps its own ranges, which
+  `test_evening.py::test_demo_visitors_arrive_wanting_a_seat_and_a_beer` pins (as in Z1). The sick guest
+  (below) is the one exception.
+- **One item of news, one holder.** A new optional scenario field, `news_tonight` (an integer from 1 to the
+  number of items). Without it, every item is told as listed, so every existing scenario and test hall
+  keeps today's behaviour. With it, `open_evening` draws that many items, and then one holder for each from
+  its `known_by`. The draw uses a stream of its own, `Random(f"{seed}:news")`, so arrival needs and the
+  opening order stay as they are drawn today (the precedent is `Random(f"{seed}:opening")`). Drawn items keep
+  their listed order, and holders are drawn item by item; say so in a comment. `world["news"]` holds only
+  the drawn items, each with `known_by` = [holder], so `starting_facts`, `check_saved_news` and the
+  inspector need no change. The pure step is `facts.draw_news(news, count, rng) -> tuple[News, ...]`.
+  `first_evening.json` keeps its five items and sets `"news_tonight": 1`. The holder is drawn from
+  `known_by`, not from all guests, because E19 hands out news by occupation (a toll guard knows the
+  toll). Staff never hold news.
+- **A ten-minute evening.** `closes_at` 420 → 600. A new optional scenario field, `last_call_at`, is when
+  the barkeep calls closing time. It must satisfy `0 < last_call_at < closes_at`, and the first evening
+  sets 540. The world gets `last_call_at: float | None` (None in a hall without a scenario, or a scenario
+  without the field). It is saved: bump `schema_version` to the next free number (16 if F4 lands before
+  F7). `test_database.py` and `test_intention_saves.py` pin the version.
+- **The call.** `closing.call_last_orders(world, since)` runs beside `call_closing` in `step_world`, just
+  before it. On the tick that reaches `last_call_at`, the barkeep calls out once. The barkeep is the first
+  staff member in `world["actors"]` (`staff.on_staff`); with no staff, the event has `actor_id` None and
+  there is no bubble.
+  - Event `last_call`, with the message `Hob called out: "<LINE>"` ("The innkeeper called out: …" without
+    staff). It also carries `line`, the words alone, for the client's bubble. Events are free-form dicts
+    (D05), and the client's `WorldEvent` gains `line?: string` in the same commit.
+  - `LINE` is a constant in `closing.py`, as the closing message is: "Time, friends! The Last Inn is
+    closing for the night. Finish your cups and get yourselves home safe."
+  - Sound: `EVENT_SOUNDS["last_call"] = Sound("closing_call", 1.0, 40.0, "the barkeep calling closing
+    time")`, from the barkeep's cell, or from `_innkeeper` without staff. It is loud, so it interrupts
+    (`attention`) and wakes any sleeper (Z3's rule, no new code).
+  - `closing.closing_called(world) -> bool` is true from `last_call_at` on.
+- **After the call the guests choose.** Only what an inn stops at closing time stops:
+  - The barkeep pours no new mug (`tend_bar` reads `closing_called` where it now reads `inn_closed`).
+  - `take_beer` is refused by `actions.action_error` with "The bar has stopped serving" and is not
+    offered (`agents`).
+  - Nobody nods off (`dozing`), and `doze` is not offered.
+
+  Everything else stays a choice: a chat, the mug in hand, the WC, a goodbye, going home. Scenes do not
+  end at the call. The hard close at `closes_at` is unchanged, as the backstop: whoever is still in at 600
+  is sent home, as today.
+- **What the minds see of the call.**
+  - The observation gains `called_closing`: game seconds since the call, or None before it (and in a hall
+    without one).
+  - `briefing._closing`, between the call and the close: "The barkeep called closing time N seconds ago:
+    the inn shuts for the night within the minute. Guests finish what is in hand, say their goodbyes and
+    head home." After the close it says what it says today.
+  - Local policy: `_leave_utility` takes `called = 0.55 + 0.4·min(1, seconds since the call / 40)` in its
+    `max`. A guest with a mug or a chat going may finish it first; 40 s later leaving beats everything. It
+    is a starting point: the tests are the spec.
+  - `leave`'s `guidance` gains: "Once the barkeep has called closing time, going home is what guests do:
+    they finish what is in hand, say goodbye and go." `test_jev.py` may pin activity text; if so, name that
+    change in the commit.
+  - Intentions: `latest_trigger` gives `Trigger(kind="last_call", text="The barkeep called closing time",
+    time=last_call_at)` once called, ranked as the `closing` trigger is. In `data/minds/intention_prefix.md`,
+    item 7 and the closing lines say that once the barkeep calls closing time a guest means to go home soon:
+    finish the drink in hand, say goodbye to their company, go. Nobody orders another.
+  - Turns: `turns.turn_view` gains `closing_called: bool`, and `haiku_turns.turn_content` adds one line:
+    "The barkeep has just called closing time: the talk turns to goodbyes and heading home." The hall paragraph of
+    `turn_prompt.shared_prefix` ("When the bell rings for closing…") gains: after the call, a speaker winds
+    the talk down with a goodbye, a plan to meet again or a last word. Both prefixes stay byte-identical
+    across calls and above 4,096 tokens.
+- **The bubble.** A pure `bubble.callout(events, actorId, worldTime)` returns the newest `last_call` line
+  of that actor, as a turn-like `{speaker, line, time}`, while `worldTime − event.time < 8` game seconds,
+  else null. `scene.ts` hands it to `Speech.tell` when the actor has no conversation turn of their own.
+  `Speech` keys its pieces by time and line, so the call is told once, in pieces, like any line.
+- **The sick guest.** A new optional scenario field, `ailment: {"fatigue": <0–100>}`. With it,
+  `open_evening` draws one guest from those who carry no cure (below), in listed order, from a stream
+  `Random(f"{seed}:ailment")`. That guest arrives `ailing`, with `fatigue` set to the given value: it
+  overrides the drawn value, and is set after the draw so other needs stay as drawn. If every guest
+  carries a cure, there is nobody to draw: `parse_scenario` raises ValueError. The first evening sets
+  `{"fatigue": 80}` (Energy 20). Edda never falls sick, because she carries remedies.
+  - `Actor.ailing: bool` is False for everyone else, staff included. An expected guest carries
+    `ailing: true` until they come in: `ExpectedGuest.ailing: NotRequired[bool]`, and `_expected_guest`
+    strips it before `parse_guest`, as it strips `needs` (otherwise the saved-expected check rejects the
+    unknown field). It is saved: bump `schema_version` to the next free number, and persistence refuses
+    a non-bool.
+  - `Item.cures: bool = False`, and the remedy sets it. Rules key off `cures`, never `kind == "remedy"`.
+  - Edda carries three: `"carries": {"remedy": 3}` (the remedy's `hands` is 3).
+- **What a remedy does** (`body/ailment.py`, new: "Who comes in unwell tonight, how it shows, and what a
+  remedy does for them"). When `giving.hand_over` hands a `cures` item to an `ailing` receiver who takes it,
+  it calls `ailment.cure(world, giver, receiver)`:
+  - The receiver takes the remedy at once: their count of it is back where it was, so the remedy is used
+    up.
+  - `ailing` becomes False, and `fatigue` drops by `RELIEF` = 40, never below 0. `RELIEF` is a module
+    constant with a why-comment, as `SLEEPY` is.
+  - The receiver keeps a new thought, `cured` (6.0, 20.0, 600.0, 1, "cured them of their fever",
+    acquaints), instead of the item's usual `cared_for`, not on top of it.
+  - Both record `cured`: "Saye took Edda's herbal remedy and looks better already".
+
+  The giver keeps `generous`, and the receiver shows the affection emote, as today. A receiver who is not
+  ailing keeps the remedy and the `cared_for` thought, as today. One who refuses it (`refuse_below`) stays
+  sick.
+- **Being seen as sick, and being sought out.** Nothing forces anyone; it is all in what the minds see and
+  in the scores.
+  - `sight.people_in_sight` gains `ailing`, beside `asleep`. Follow `asleep` (Z2) through every reader.
+  - `briefing._person` adds ", looking pale and feverish". The sick guest's own situation says: "They feel
+    feverish and weak tonight; a healer's remedy would help."
+  - `options`: a `give` of a cure to an ailing person reads "hand Saye a herbal remedy (she looks pale and
+    feverish; it would help her)". An `approach` to one adds "(she looks pale and feverish)".
+  - Local policy, for a guest who carries a cure: `approach` to an ailing guest gets +0.5 (in
+    `_score_approaches`), and `give` of a cure to an ailing guest scores 0.95 (in `_score_gifts`). A guest
+    with no cure gets neither bonus.
+  - Haiku: the intention view's list of others and the turn view's participants say "looks pale and
+    feverish", and the sick speaker's own note says "You feel feverish and weak tonight." No prefix change
+    is needed: Edda's card already wants to press remedies on the unwell.
+- **Client.** `types.ts` gains `Actor.ailing: boolean`, `World.last_call_at: number | null` and
+  `WorldEvent.line?: string`. The inspector shows the word "unwell" for an ailing guest, as the dashboard
+  shows "asleep". No new art.
+- **Metrics** (`metrics.json`, each in a small module of its own, as `manner_metrics.py` is):
+  - `closing` (`evening/closing_metrics.py`): `last_call_at`, `closes_at`, `present_at_call`,
+    `left_after_call` (left in [call, close)), `sent_home` (left at or after the close) and `last_out`.
+  - `ailment` (`evening/ailment_metrics.py`): `ailing` (name), `arrived_at`, `cured_by` (name or null),
+    `cured_at` (or null) and `left_ailing`.
+- **Out of scope:** a sickness that spreads or worsens, the sick guest asking for a remedy, more than one
+  sick guest, remedies for anything else, the barkeep's line written by Haiku, a closing bell sound, candles
+  that go out, a lit window, and moving the arrival times for the longer evening.
+- **Tests expected to change.** The user asked for these behaviours (2026-10-09). Name the test and the
+  reason in the commit:
+  - `test_carries.py::test_the_first_evening_has_edda_carry_remedies_and_toren_keepsakes` (F7): Edda carries
+    3.
+  - `test_database.py` and `test_intention_saves.py` pin `schema_version` (F4, F7).
+  - `test_jev.py`, only if it pins `leave`'s guidance (F5).
+
+  Any other failing test is a surprise: stop and report it. F2–F8 change whole evenings, and these seeded
+  first-evening tests can fail by chance: `test_facts.py::test_a_news_item_reaches_a_third_guest_in_other_words`
+  (seeds 7 and 4; with one item and one holder, a two-hop path is much rarer), `test_barkeep_evening.py`,
+  `test_dice_invitation.py::test_a_game_invited_to_in_the_first_evening_reaches_a_result` and
+  `test_first_evening.py`. If one fails, report the seed and the failure. Do not change a seed or an
+  assertion without the user's approval.
+- **Sizes.** `agents.py` has 374 lines and `scenario.py` 318. If a task pushes one past about 400, split
+  it first, as a separate refactor commit (for example, the scenario's tonight-draws into
+  `evening/tonight.py`).
+
+Order: F0 and F1 are data and client only, and can go any time, beside anything. Then F2 → F3 → F4 → F5 →
+F6 → F7 → F8 → F9. F6 needs F4, F8 needs F7, and F9 comes last. Each task is its own branch
+(`claude/stage1-f<n>`) and PR.
+
+- [x] **F0 — Two windows on the west wall.**
+  - *Build:* drop `window-2` from `data/tavern.json` and add [0, 6] to `blocked`.
+  - *Tests first* (`tests/test_hall_layout.py`): a new test that the west wall has exactly the windows at
+    (0, 4) and (0, 11). `test_the_hall_is_walled_all_round` must stay green unchanged.
+  - *Check:* `make check`. In `make run`, post a screenshot of the west wall.
+  - *Built (2026-10-09):* `window-2` is gone from `data/tavern.json` and [0, 6] is in `blocked`.
+    `test_hall_layout.py::test_the_west_wall_has_two_windows` (red before the data change); the rest of the suite
+    needed no change (2737 passed).
+- [x] **F1 — Candles that glow like the fire (client only).**
+  - *Build:* `frontend/src/candles.ts`: the four cells above, the light point of each (the wall edge it
+    faces, from `hearthFacing`), `drawSconces` (static, with the furniture) and `drawCandles` (flame and
+    glow, per frame, on a new layer created beside `hearthGlow` in `scene.ts`).
+  - *Tests first* (`frontend/tests/candles.test.ts`, node:test): each candle stands on a blocked cell of
+    `data/tavern.json` (read with `node:fs`), and the cell it shines into is walkable floor; the light point
+    of a candle on each of the four walls (parametrized); a candle's glow is smaller than the hearth's, and
+    two candles flicker out of phase at the same time.
+  - *Check:* `make check` and `make build`. In `make run`, post a screenshot of the whole hall and a 2×
+    crop of the privy and the door.
+- [x] **F2 — Full energy on arrival.**
+  - *Build:* `first_evening.json`'s arrival `fatigue` [0, 0].
+  - *Tests first:* in `tests/test_scenario_cards.py` (or beside the other first-evening checks), every
+    guest the first evening expects has `fatigue` 0, for two seeds.
+  - *Check:* `make check`. Offline seed 5 (`--writer scripted`), before and after: the time of the first
+    `dozed_off` and each guest's `fatigue` on leaving (a scratch script, not committed). Expect no nap
+    before 300 s.
+  - *Built (2026-10-09):* the scenario's arrival `fatigue` is [0, 0].
+    `test_first_evening.py::test_every_guest_comes_in_with_full_energy` (seeds 1 and 7) was red before the data
+    change. Offline seed 5 afterwards: no nap at all (`sleep.naps` 0), guests left with fatigue 28–49.
+- [x] **F3 — One item of news, one holder.**
+  - *Build:* `news_tonight` in `parse_scenario` and `Scenario`, `facts.draw_news`, the draw in
+    `open_evening`, and `"news_tonight": 1` in the first evening.
+  - *Tests first* (`tests/test_facts.py` or a new `tests/test_news_tonight.py`). Parametrized:
+    - `draw_news` with count 1 over five items gives one item with one holder from its `known_by`;
+    - count equal to the number of items gives every item in listed order;
+    - an item with a single holder keeps them;
+    - the same seed draws the same item and holder;
+    - over 20 seeds, the first evening draws at least three different items.
+
+    `open_evening` with `news_tonight` 1: exactly one guest starts with a fact. Without the field, today's
+    holders. A separate `pytest.raises` block: 0, more than the items, a non-integer, and `news_tonight`
+    with no `news`.
+  - *Check:* `make check`. Offline seeds 1–8: the item drawn, its holder, and how many guests held it at
+    the end (`news_metrics`). Report any seeded test that fails, as decided above.
+  - *Built (2026-10-09):* `facts.draw_news(news, count, rng)`; `Scenario.news_tonight` and `_news_tonight` in
+    `scenario.py`; `open_evening` draws from `Random(f"{seed}:news")`, so arrival needs are unchanged (pinned by a test).
+    The first evening sets `"news_tonight": 1`. `tests/test_news_tonight.py` (35 cases) is the spec. Over seeds 0–20
+    the drawn item is `margrave_fever` 9 times, `salt_toll` 4, `pass_closing` 4, `cloth_robbery` 3 and `deserters` 1,
+    and the item reached a third guest (two hops) in 15 of 21 evenings played offline with the paraphrasing writer.
+    One seeded test failed, as foreseen: `test_facts.py::test_a_news_item_reaches_a_third_guest_in_other_words[seed-7]`
+    (seed 7 draws `salt_toll` for Calder, who arrives at 110 s and tells nobody). With the user's approval
+    (2026-10-09) seed 7 became seed 0 in that test's parametrization; the assertions did not change. Offline seed 5:
+    `pass_closing`, held by Calder, told to Rurik and overheard by Toren at 172 s.
+- [x] **F4 — A ten-minute evening and the barkeep's call (the world).**
+  - *Build:* `last_call_at` in the scenario, the world and the saves (the schema bump); `call_last_orders`,
+    `closing_called`, the event with `line`, the sound; no pouring, `take_beer` or nap after the call;
+    `called_closing` in `observe_actor`; `closes_at` 600 and `last_call_at` 540 in the first evening;
+    `World.last_call_at` and `WorldEvent.line` in `types.ts`.
+  - *Tests first* (`tests/test_closing.py`):
+    - one `last_call` event on the tick that crosses 540, with Hob's `actor_id` and `line`, never twice;
+    - none without `last_call_at`, and `actor_id` None without staff;
+    - a sleeper across the hall wakes at the call (`woken`), and an idle guest turns to the bar;
+    - after the call, `take_beer` is refused with the reason and not a candidate, `doze` is not a
+      candidate, and the barkeep starts no pour; `talk` and `leave` are still candidates;
+    - `called_closing` is None at 539 and 3.0 at 543;
+    - a save made after the call reloads.
+
+    Error blocks: `last_call_at` of 0, equal to `closes_at`, or a string; a saved `last_call_at` that is
+    not a number.
+  - *Check:* `make check` and `make build`. Offline seed 5: quote the `last_call` event, and count guests
+    present at the call and sent home at 600 (today's policy still waits for the close; F5 changes that).
+  - *Built (2026-10-09):* `hall/closing.py` (`LAST_CALL_LINE`, `closing_called`, `since_last_call`,
+    `call_last_orders`, `check_saved_last_call`); `World.last_call_at` and `schema_version` 16; `last_call_at` in the
+    scenario; `EVENT_SOUNDS["last_call"]`; `called_closing` in `observe_actor`; `WorldEvent.line` and
+    `World.last_call_at` in `types.ts`. First evening: `closes_at` 600, `last_call_at` 540. `tests/test_last_call.py`
+    (27 cases) is the spec. Two things differ from the plan above, both on purpose:
+    - *The refusal is at the start of an order, not in `action_error`.* `action_error` is also asked every tick of an
+      interaction, so a guest already waiting at the tap would have lost their mug at the call. A new
+      `Activity.stopped_at_last_call` (set on `take_beer`, "The bar has stopped serving") is read in
+      `world.start_action`, so an order made before the call is still poured, and the barkeep's `tend_bar` is unchanged.
+    - *`bring_drink` is not offered after the call either* (`agents._fetches`), because it sends the host to the tap.
+    Tests that changed, as approved for the save bump: `test_database.py` and `test_intention_saves.py` pin version 16.
+    Offline seed 5 (`--writer scripted`): `{"actor_id": "hob", "type": "last_call", "time": 540.0, "message": "Hob
+    called out: \"Time, friends! …\""}`; six guests were in at the call, one left before the close (Toren, 547 s) and
+    five were seen out at 605–609 s, as before F5.
+- [x] **F5 — Guests answer the call (the minds).**
+  - *Build:* the briefing line, `called` in `_leave_utility`, `leave`'s guidance, the `last_call` trigger
+    and the intention prefix, the turn view and turn content and the prefix sentence, and
+    `closing_metrics` wired into `scripts/evening.py`.
+  - *Tests first:*
+    - briefing text between the call and the close, and after the close.
+    - Local scores, parametrized, on a seated guest 400 s in with a half-full mug, one beer and a
+      tablemate: at the call, `drink` beats `leave`; 40 s later, `leave` beats `drink`, `talk` and `sit`;
+      before the call, today's order.
+    - The trigger is `last_call` after the call and `closing` after the close.
+    - `turn_content` carries the line only after the call.
+    - `closing_metrics` from a hand-built list of departures.
+  - *Check:* `make check`. Offline seeds 1–8: `present_at_call`, `left_after_call` and `sent_home` per seed.
+    Target: on average at most one guest per evening sent home, and none still in at 630. If it is missed,
+    tune `called` (never the tests) and record both runs. Quote one goodbye line said after the call.
+  - *Built (2026-10-09):* `briefing._closing` (between the call and the close), `local_policy._leave_utility`
+    (`called` floors the wish to leave at 0.5 at the call and 0.95 forty seconds later, so a pressing need such as a
+    full bladder still comes first), `leave`'s guidance, the `last_call` trigger in `intentions.latest_trigger`
+    (also in `UNMETERED`), `closing_called` in `turns.turn_view`, a nudge in `haiku_turns._nudges`, the scripted
+    writer's goodbye (`scripted.LINES["closing"]`, said once a speaker has answered, never by the barkeep), a sentence
+    each in the two shared prefixes (`turn_prompt` and `data/minds/intention_prefix.md`), and
+    `evening/closing_metrics.py` wired into `scripts/evening.py` as `closing` in `metrics.json`.
+    `tests/test_answering_the_call.py` (28 cases) is the spec. Offline seeds 1–8 (`--writer scripted`): five or six
+    guests were in at the call, all of them went home before closing time (`left_after_call` 5, 5, 5, 5, 5, 5, 6, 5),
+    `sent_home` 0 in every evening, and the last guest left between 557 and 573 s (the close is at 600 s). No nap in any
+    evening. Offline lines are not logged in `events.jsonl`, so no goodbye line is quoted; at the call all five guests
+    of seed 5 logged `interrupted` ("turned toward the barkeep calling closing time"), and Toren, Saye and the rest
+    chose `leave` within seconds. The `last_call` intention trigger needs a key to see; it is pinned by test only.
+- [x] **F6 — The barkeep's line on screen (client).**
+  - *Build:* `bubble.callout` and its use in `scene.ts` and `Speech`.
+  - *Tests first* (`frontend/tests/bubble.test.ts`), parametrized: no event; another actor's call; the
+    call 3 s ago gives the line; 9 s ago gives null; of two calls, the newest; a different event type is
+    ignored.
+  - *Check:* `make check` and `make build`. In `make run`, raise the speed in the debug panel until 9:00,
+    and post a screenshot of Hob's bubble and the guests turning to him.
+  - *Built (2026-10-09):* `bubble.callout`, `bubble.newer` and `bubble.Spoken`; `Speech.tell(line, now)` takes the line
+    to tell instead of a conversation, and `scene.ts` hands it the newer of the guest's own latest conversation line and
+    their call, so a call is told once, in two pieces, and a line spoken after it replaces it. The window is 8 game
+    seconds. `frontend/tests/bubble.test.ts` gained 13 cases. In the running app (8× to 8:50, then 1×, paused at 9:01):
+    Hob's bubble read "Finish your cups and get yourselves home safe." (the second piece) and all five guests showed the
+    alert emote and turned toward the bar.
+- [x] **F7 — A sick guest and three remedies (the world).**
+  - *Build:* `Item.cures`, the `ailment` field and the draw, `Actor.ailing` (and the expected guest's
+    field) with the schema bump, `body/ailment.py` with `cure`, the `cured` thought and event, `ailing` in
+    `people_in_sight`, Edda's three remedies, `{"fatigue": 80}` in the first evening, and `Actor.ailing`
+    and the inspector word in the client.
+  - *Tests first* (`tests/test_ailment.py`, new; the spec):
+    - The draw, parametrized over seeds: never a guest who carries a cure, the same seed gives the same
+      guest, their `fatigue` is 80 and the others' are drawn as before, and nobody is ailing without the
+      field.
+    - The cure, parametrized: a remedy to an ailing guest cures them (`ailing` False, `fatigue` −40, the
+      remedy used up, the event, `cured` and not `cared_for`); one to a well guest is as today; a refused
+      one leaves them sick; at `fatigue` 30, the cure stops at 0.
+    - `people_in_sight` shows `ailing`.
+    - Saves: an ailing guest, and an ailing guest still expected, both reload.
+
+    Error blocks: `ailment` with unknown keys, a `fatigue` out of range, every guest carrying a cure, and a
+    saved non-bool `ailing`.
+  - *Check:* `make check` and `make build`. Offline seed 5: who fell sick, and whether anyone cured them
+    yet (most likely not before F8).
+  - *Built (2026-10-09):* `body/ailment.py` (`parse_ailment`, `carries_cure`, `eligible`, `draw_ailing`, `relieve`,
+    `RELIEF` 40, `check_saved_ailing`); `Item.cures` (the remedy); `Actor.ailing`, saved as **version 17**; the
+    scenario's `ailment` (`Scenario.ailing_fatigue`), drawn from `Random(f"{seed}:ailment")` among guests who carry no
+    cure, and carried on the expected guest as `ailing`; `arrived_unwell` logged on arrival; `ailing` in
+    `people_in_sight`; `giving.hand_over` cures instead of giving (a `cured` event for both, a `cured` thought for the
+    receiver, `cured` in `giving.RECEIVED`); `Actor.ailing` in `types.ts` and an "Unwell" chip in the inspector. Edda
+    carries 3, and the first evening sets `{"fatigue": 80}`. `tests/test_ailment.py` (40 cases) is the spec. Tests that
+    changed, as approved: `test_database.py` and `test_intention_saves.py` pin version 17; `test_carries.py` expects
+    Edda to carry 3; `test_first_evening.py::test_every_guest_comes_in_with_full_energy` expects the one ailing
+    guest at 80 (the user asked for exactly that). Offline seed 5 before F8: Toren fell ill at 1 s and was not cured.
+- [x] **F8 — Edda seeks out the sick (the minds).**
+  - *Build:* the briefing and option wording, both local bonuses, the Haiku views, and `ailment_metrics`
+    wired into `scripts/evening.py`.
+  - *Tests first:*
+    - The briefing (the person, and the sick guest's own line).
+    - Option sentences for `give` and `approach`.
+    - Local scores, parametrized, for Edda with remedies:
+      - the sick guest at another table: `approach` to them beats `approach` to a well guest she thinks
+        as well of;
+      - the sick guest at her table: `give` of a remedy to them is her top option;
+      - the same Edda without remedies: no bonus.
+    - Turn content and the intention view say "looks pale and feverish".
+  - *Check:* `make check`. Offline seeds 1–8: who fell sick, `cured_by` and `cured_at` per seed. Target:
+    cured in at least 6 of 8 evenings. Quote one cure from `events.jsonl`. If the target is missed, record
+    why (the sick guest stood, slept, or left first) and propose, without building it, a compound `tend`
+    errand like `bring_drink`'s `carrying` stage.
+  - *Built (2026-10-09):* `briefing._pale` and `_unwell` (what others and the sick guest themselves are told), the
+    `give` and `approach` option wording, `local_policy.SEEKING_THE_SICK` (+0.5 on a walk over to someone who looks
+    unwell, for a guest who carries a cure) and `CURE_SCORE` (0.95 for a remedy to them), `ailing` in the turn view
+    (the speaker and each other participant) with a line in `haiku_turns`, and `evening/ailment_metrics.py` wired into
+    `scripts/evening.py` as `ailment`. The intention view needed no change: its `situation` is the briefing, which now
+    carries it (its `others` map is IDs to names that goals are checked against, so it was left alone, unlike the plan).
+    `tests/test_seeking_the_sick.py` (23 cases) is the spec. Offline seeds 1–8 (`--writer scripted`): cured in **7 of 8**
+    evenings, always the guest who fell ill and nobody else (cured_at 59, 140, 171, 235, 247, 269 and 347 s: Edda in six,
+    and Brida in seed 7, who had been given a remedy by Edda her old friend and passed it on to Calder). Seed 4: Brida
+    came in ill at 40 s and left uncured: Edda spent that evening choosing `sit` every 15 s and never got within reach of
+    her; not investigated further. No evening sent anyone home at closing (`closing.sent_home` 0 in all eight), and
+    1–2 guests napped in most of them. Seed 5: `{"actor_id": "mara", "type": "cured", "time": 268.8, "message": "Toren took
+    Edda's herbal remedy and looks better already"}`.
+- [x] **F9 — Measure.**
+  - Offline seeds 1–8, and live seeds 5 and 7, before (`main`) and after. Record: `present_at_call`,
+    `left_after_call` and `sent_home`; naps before 300 s; the news item, its holder and how far it went;
+    who fell sick and when Edda cured them; stuck seconds; conversations; and cost (expect about 40% more
+    for the longer evening). Replay the live run and `cmp` the events (step 8 of "Working on a task").
+  - Record two moments from the log: the call and the goodbyes after it, and Edda's cure with the line
+    around it, if any.
+  - *Measured (2026-10-09).* "Before" is the last recorded run on `main` (T8, live seed 5: 436 game s, 307 calls,
+    $0.28, no failed call); the first evening had no call, no sick guest and a 420 s close.
+    - *Offline, seeds 1–8 (`--writer scripted`):* every guest in the hall at the call (4–6) went home before the
+      close and none was sent home; the last left at 560–576 s of 600. Naps: seven evenings had one or two, every one by
+      the guest who came in unwell, none by a rested guest. The unwell guest was
+      cured in 7 of 8 (59–347 s); the one news item reached 4–7 guests, in two or three hops. Stuck seconds per evening
+      8–37 (mean 17.5), 49–66 conversations.
+    - *Live, Jev + Haiku, first wording of the briefing (seeds 5 and 7):* the call did **not** move guests. Only one or
+      two left before the close (`left_after_call` 1 and 2), and 5 and 4 were sent home at 600 s: they kept to what they
+      were doing (`sit`, a chat, a last round of dice) and went when the close came. Cost $0.41 and $0.50, 465 and 480
+      calls, none failed.
+    - *The fix:* the briefing now says it is time to go, to finish only what is in hand, and that starting something
+      new makes no sense (`briefing._closing`). Live again: seed 5 sent 1 home (`f9-live-5b`) and later 0
+      (`f9-live-5c`, all six left between the call and 581 s), seed 7 sent 1 home. Cost $0.36–$0.47 for 428–510 calls,
+      cache hit rate 0.87–0.89, no failed call, 0–2 turn fallbacks per evening. The replay of seeds 5c and 7b is
+      byte-identical (`cmp` on `events.jsonl`). The replay of the intermediate run 5b failed with `LookupError` (a
+      request with no recording): not explained, and that run's code was not committed, so it was not rerun.
+      Conversations fell from the 52–66 of the offline evenings to 35–46 live; a live evening of 600 game s costs
+      about 1.3 times the 436 s of T8.
+    - *Moments (live seed 7b):* at 540 s `Hob called out: "Time, friends! The Last Inn is closing for the night.
+      Finish your cups and get yourselves home safe."`, then at 543 s `Edda to Brida (leave_conversation): Right then,
+      Brida—time I got my feet up by that fire before they close us out.` and at 556 s `Edda to Hob (leave_conversation):
+      Well, the barkeep's calling it. I'll away to my bed—feet are killing me.`; and at 392 s `Calder took Edda's herbal
+      remedy and looks better already` (Edda found Calder, who came in unwell at 110 s).
+    - *Left behind:* in live seed 5c the unwell guest (Toren) was never cured; in offline seed 4 Brida was not
+      either. In live seed 7b one guest still waited for the close. The live goodbyes are Haiku's: only two
+      `leave_conversation` lines came after the call in seed 7b, so most guests left without saying one.
 ### Choice depth (C0–C8)
 
 Added 2026-10-09 at the user's request. The choice layer (Jev) picks one next step at a time, at most two levels
@@ -2950,7 +3377,7 @@ code disagrees):
     class ProjectKind:         # wording, gerund, done_words, steps, lasts, begin, target_kind, opened
     ```
 
-    `world["projects"]` is checked by `check_saved_projects`; **saved worlds are version 16** (the approved bump:
+    `world["projects"]` is checked by `check_saved_projects`; **saved worlds are version 18** (the approved bump, after main's 16 and 17:
     `test_database.py` and `test_intention_saves.py` pin the version and changed with it; no other test changed).
     `world.start_action` opens a project for a verb with `Activity.opens_project` (a new field, the kind's name; verbs
     with it have `duration=None`, so `rules.durations` and old saves are untouched, like `seating`). `honor_projects`
@@ -3001,7 +3428,7 @@ code disagrees):
     reason; a kind builds its `steps` from the project, so their number may depend on its `targets`; a kind says what
     its `target` is (`chair`, `table` or `guest`), how it `begin`s and what follows `opened`. A project waiting on an
     errand of its own (`fetching_a_drink`) is left alone. `Project.targets` (optional) holds the guests a plan serves in
-    turn, frozen at the start. Saves stay version 16.
+    turn, frozen at the start. Saves stay version 18.
   - `stand_a_round` (verb with `opens_project`, family `fetching`, which now reads "or stand the whole table a round"):
     offered to a guest with a free hand, a stocked tap known, on no errand, with at least two tablemates who visibly hold
     no mug (`giving.empty_handed_tablemates`, new). The project's target is the table, its `targets` the empty-handed at
@@ -3038,7 +3465,7 @@ code disagrees):
     the invitation leads to (a game 0.15 + 0.65 × boredom, an ale 0.4 + 0.5 × thirst, a table 0.2 + 0.6 × the wish for
     company, going home the leave utility) plus a quarter of the opinion of whoever asks; declining 0.3 + 0.2 × (1 −
     sociability); a counter its own kind's worth less 0.1. The result is `answer`, `source`, `scores` and `error`.
-  - *The scene waits for it.* `Invitation.answer` is optional (saves stay version 16; `check_invitations` accepts an
+  - *The scene waits for it.* `Invitation.answer` is optional (saves stay version 18; `check_invitations` accepts an
     answer that is `accept`, `decline` or a counter of another kind). `MindLoop` gets an `answer` port (None: nothing
     changes): when the invitee's line comes next, it claims the scene's turn as a line writer would and asks; the answer
     is kept on the invitation if the invitation is still the same and the answer one of the options, and the line is
@@ -3159,6 +3586,10 @@ edit the briefing's table notes) and T3 (`welcome` reads the `seating` errand). 
 needs only T6. T8 comes last. It touches `actions.py`, `scenes.py`, `invitations.py` and `errands.py`,
 as E21 does, so do not run the two at once. One task per branch (`claude/stage1-t<n>`), as for every
 task.
+
+Closing call, news and a sick guest (F0–F9) was added 2026-10-09 at the user's request. Its internal order is at the
+head of its block. F4 and F7 each bump `schema_version`, and F2–F8 change whole evenings, so do not run them beside
+E21 or one another. F0 and F1 can run beside anything.
 
 Choice depth (C0–C8) was added 2026-10-09 at the user's request. C0 comes first: every later C task compares with
 its baseline. C1 next, so that new options do not land in requests full of dead ones. C2 → C3 is strict (C3's

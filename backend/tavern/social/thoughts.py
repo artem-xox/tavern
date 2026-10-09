@@ -57,6 +57,8 @@ THOUGHTS: Mapping[str, ThoughtKind] = MappingProxyType({
     # Held by the receiver of a gift (`tavern.social.giving`), about the giver; `treated` is the one for a drink.
     "cared_for": ThoughtKind(4.0, 12.0, 300.0, 2, "gave them a remedy", acquaints=True),
     "gifted": ThoughtKind(3.0, 10.0, 300.0, 2, "gave them a keepsake", acquaints=True),
+    # Held by a guest who came in unwell, about whoever gave them the remedy that cured them (`tavern.body.ailment`).
+    "cured": ThoughtKind(6.0, 20.0, 600.0, 1, "cured them of their fever", acquaints=True),
     # Held by a giver, about the one who took what they gave: it is how they remember having given it.
     "generous": ThoughtKind(1.0, 0.0, 300.0, 2, "accepted a gift from them"),
     # Held by a giver whose gift was refused, about the one who refused it.

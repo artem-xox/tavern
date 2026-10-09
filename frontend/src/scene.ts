@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { callout, newer } from "./bubble";
+import { drawCandles, drawSconces } from "./candles";
 import { EMOTE_KINDS, EMOTE_WORDS, emoteFrame, emoteFrames, emoteMotion, emotePalette } from "./emotes";
 import { drawFloor } from "./floor";
 import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawTable, drawTap, drawToilet, drawWindow } from "./furniture";
@@ -6,7 +8,7 @@ import { drawFireplace, drawFlames, drawHearthGlow } from "./hearth";
 import { mapParts, type MapParts } from "./mapview";
 import { Speech } from "./speech";
 import { shippedPose, spriteOf, stills } from "./sprites";
-import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Mind, Verb, World, WorldObject } from "./types";
+import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Mind, Turn, Verb, World, WorldObject } from "./types";
 
 /** The seated version of a standing pose, for a visitor who does it from their seat. */
 const SEATED_POSES: Readonly<Record<string, string>> = { Drinking: "DrinkingSeated", Talking: "TalkingSeated", Giving: "GivingSeated", Receiving: "ReceivingSeated" };
@@ -53,6 +55,8 @@ export class TavernScene extends Phaser.Scene {
   private furniture!: Phaser.GameObjects.Graphics;
   /** Flames and sparks, above the furniture and redrawn every frame. */
   private flames!: Phaser.GameObjects.Graphics;
+  /** The wall candles' flames and glow, redrawn every frame like the fire. */
+  private candles!: Phaser.GameObjects.Graphics;
   private route!: Phaser.GameObjects.Graphics;
   private readonly visitors: Map<string, ActorView> = new Map();
   /** The fingerprints of the map as drawn; empty before the first snapshot, so everything draws once. */
@@ -78,6 +82,7 @@ export class TavernScene extends Phaser.Scene {
     this.hearthGlow = this.add.graphics();
     this.furniture = this.add.graphics();
     this.flames = this.add.graphics();
+    this.candles = this.add.graphics();
     this.route = this.add.graphics();
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer): void => this.click(pointer));
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer): void => this.hover(pointer));
@@ -126,6 +131,7 @@ export class TavernScene extends Phaser.Scene {
       const { objects, width, tile_size: size } = this.world.map;
       drawHearthGlow(this.hearthGlow, objects, width, size, time);
       drawFlames(this.flames, objects, width, size, time);
+      drawCandles(this.candles, width, size, time);
     }
   }
 
@@ -137,6 +143,7 @@ export class TavernScene extends Phaser.Scene {
     if (parts.furniture !== this.drawn.furniture) {
       this.furniture.clear();
       for (const object of world.map.objects) this.drawObject(object, world.map.tile_size);
+      drawSconces(this.furniture, world.map.width, world.map.tile_size);
     }
     this.drawn = parts;
   }
@@ -206,7 +213,9 @@ export class TavernScene extends Phaser.Scene {
     view.targetY = y;
     view.name.setText(actor.name);
     view.sway = this.minds[actor.id]?.sway ?? 0;
-    view.speech.tell(this.world?.conversations.find((item: Conversation): boolean => item.participants.includes(actor.id)), actor.id, this.time.now);
+    const talk: Conversation | undefined = this.world?.conversations.find((item: Conversation): boolean => item.participants.includes(actor.id));
+    const turn: Turn | undefined = talk?.turns[talk.turns.length - 1];
+    view.speech.tell(newer(turn?.speaker === actor.id ? turn : null, callout(this.world?.events ?? [], actor.id, this.world?.time ?? 0)), this.time.now);
     this.showEmote(view, actor);
     view.container.setDepth(10 + y / 1000);
   }

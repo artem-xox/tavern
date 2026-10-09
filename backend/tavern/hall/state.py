@@ -83,6 +83,8 @@ class Actor(TypedDict):
     thoughts: "list[Thought]"
     relations: "dict[str, Relation]"
     drunkenness: float
+    # Whether they came in unwell (`tavern.body.ailment`): others see it, and a remedy cures it.
+    ailing: bool
     knowledge: Knowledge
     memory: list[dict[str, Any]]
     heard: "list[Heard]"
@@ -236,6 +238,8 @@ class World(TypedDict):
     departed: list[Actor]
     expected: "list[ExpectedGuest]"
     closes_at: float | None
+    # When the barkeep calls closing time, a while before `closes_at`; None for an evening without a call.
+    last_call_at: float | None
     events: list[dict[str, Any]]
     stimuli: "list[Stimulus]"
     next_stimulus_id: int

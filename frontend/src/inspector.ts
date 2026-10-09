@@ -72,7 +72,7 @@ function header(actor: Actor, ctx: InspectorContext, mind: Mind | undefined): Te
   return html`<div class="who" style="--visitor:${ctx.color}">
     <div class="portrait"><img alt="" src="/characters/${spriteOf(actor).name}/Idle/rotations/south.png"></div>
     <div><h2>${actor.name}</h2><p class="doing">${sentence(ctx.status)}</p>
-      ${mind ? html`<div class="chips"><span class="chip ${tone}" title="mood ${signed(mind.mood)}">${sentence(mind.mood_words)}</span><span class="chip" title="drunkenness ${Math.round(mind.drunkenness * 100)}%">${sentence(mind.stage)}</span></div>` : ""}</div></div>`;
+      ${mind ? html`<div class="chips"><span class="chip ${tone}" title="mood ${signed(mind.mood)}">${sentence(mind.mood_words)}</span><span class="chip" title="drunkenness ${Math.round(mind.drunkenness * 100)}%">${sentence(mind.stage)}</span>${actor.ailing ? html`<span class="chip bad" title="came in with a fever; a herbal remedy would cure them">Unwell</span>` : ""}</div>` : ""}</div></div>`;
 }
 
 /** What the guest is doing and where, the thought behind it in their own words, and what they intend. */

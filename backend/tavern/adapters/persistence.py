@@ -5,6 +5,7 @@ import math
 from pathlib import Path
 from typing import Any, Mapping, cast
 
+from tavern.body.ailment import check_saved_ailing
 from tavern.body.drunkenness import check_drunkenness
 from tavern.body.activities import ACTIVITIES
 from tavern.body.expression import check_saved_expression
@@ -13,6 +14,7 @@ from tavern.body.items import ITEMS, check_inventory
 from tavern.body.queues import check_saved_lines
 from tavern.evening.scenario import check_saved_expected
 from tavern.hall.arrival import check_saved_visit
+from tavern.hall.closing import check_saved_last_call
 from tavern.hall.lifecycle import check_saved_progress, check_saved_seat
 from tavern.hall.navigation import find_path
 from tavern.hall.rules import check_rules
@@ -102,6 +104,7 @@ def _validate_actor_runtime(world: Mapping[str, Any]) -> None:
         check_mind(actor)
         check_heard(actor, world["rules"])
         check_drunkenness(actor, world["rules"])
+        check_saved_ailing(actor)
         check_saved_expression(actor, world)
         _validate_character(actor)
         check_saved_intention(actor)
@@ -132,6 +135,7 @@ def _validate_departed(world: Mapping[str, Any]) -> None:
         check_mind(item)
         check_heard(item, world["rules"])
         check_drunkenness(item, world["rules"])
+        check_saved_ailing(item)
         check_saved_intention(item)
         if "left_at" not in item["visit"]:
             raise ValueError("Departed visitor has no departure time")
@@ -198,7 +202,7 @@ def parse_world(encoded: str) -> World:
     """
     try:
         world = json.loads(encoded)
-        if not isinstance(world, dict) or world.get("schema_version") != 16:
+        if not isinstance(world, dict) or world.get("schema_version") != 18:
             raise ValueError("Unsupported snapshot version")
         json.dumps(world, allow_nan=False)
         _validate_clock(world)
@@ -209,6 +213,7 @@ def parse_world(encoded: str) -> World:
         _validate_departed(world)
         check_saved_staff(world)
         check_saved_expected(world)
+        check_saved_last_call(world)
         check_saved_news(world)
         check_saved_stimuli(world)
         check_saved_games(world)

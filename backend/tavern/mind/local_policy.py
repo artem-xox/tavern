@@ -5,6 +5,8 @@ import math
 from types import MappingProxyType
 from typing import Any
 
+from tavern.body.ailment import carries_cure
+from tavern.body.items import ITEMS
 from tavern.mind.goals import serving
 from tavern.mind.hall_view import in_use, line_place, steps_to
 from tavern.social.giving import empty_handed_tablemates
@@ -16,6 +18,9 @@ from tavern.social.thoughts import THOUGHTS, opinion_of, thought_mood
 
 # How far the most and least sociable guests drift from an ordinary one's taste for company.
 SOCIABLE_PULL = 0.4
+# What a walk over to someone who looks unwell adds for a guest who carries a cure, and how a remedy for them scores.
+SEEKING_THE_SICK = 0.5
+CURE_SCORE = 0.95
 
 
 def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]]) -> dict[str, float]:
@@ -116,12 +121,16 @@ def _score_gifts(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
             empty = not people.get(action["target_id"], {}).get("holding", {}).get("beer", 0)
             score += 0.15 * empty - 0.4 * needs["thirst"] / 100
         scores[action["id"]] = min(1.0, max(0.0, score))
+        # A remedy for someone who looks unwell is what a healer carries it for: little outweighs it.
+        if action["verb"] == "give" and ITEMS[action["item"]].cures and people.get(action["target_id"], {}).get("ailing"):
+            scores[action["id"]] = CURE_SCORE
 
 
 def _score_approaches(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
                       scores: dict[str, float]) -> None:
     # The walk costs a little, a long one more; company they like draws and company they dislike repels.
     actor, now = observation["actor"], observation.get("time", -math.inf)
+    healer = carries_cure(actor["inventory"])
     people = {item["id"]: item for item in [*observation.get("visitors", []), *observation.get("people", [])]}
     objects = {item["id"]: item for item in observation["objects"]}
     for action in candidates:
@@ -130,6 +139,9 @@ def _score_approaches(observation: Mapping[str, Any], candidates: Sequence[Mappi
         table = objects.get(people.get(action["target_id"], {}).get("table_id"))
         walk = steps_to(observation, table) if table else 0
         score = scores[action["id"]] - min(0.15, 0.01 * walk) + 0.25 * opinion_of(actor, action["target_id"], now) / 100
+        # Someone who carries a cure goes to the one who looks unwell (`tavern.body.ailment`) before anyone else.
+        if healer and people.get(action["target_id"], {}).get("ailing"):
+            score += SEEKING_THE_SICK
         scores[action["id"]] = min(1.0, max(0.0, score))
 
 
@@ -269,7 +281,12 @@ def _leave_utility(observation: Mapping[str, Any]) -> float:
     # A tired guest who has stayed a while means to go home to bed, less so one who has drunk: they sleep it off.
     weary = (min(1.0, max(0.0, (needs["fatigue"] / 100 - 0.6) / 0.3)) * (1 - 0.6 * actor.get("drunkenness", 0.0))
              * min(1.0, seconds / 180))
-    return 0.05 + 0.75 * max(content, weary, upset * min(1.0, seconds / 60))
+    wish = 0.05 + 0.75 * max(content, weary, upset * min(1.0, seconds / 60))
+    # Once the barkeep has called closing time everyone means to go: at first a guest finishes their mug or their
+    # chat, 40 s on nothing but a pressing need outweighs the door (a full bladder scores 1.0). 0.95 is as strong as
+    # walking home with someone.
+    called = observation.get("called_closing")
+    return wish if called is None else max(wish, 0.5 + 0.45 * min(1.0, called / 40))
 
 
 def _wrongs(observation: Mapping[str, Any]) -> float:

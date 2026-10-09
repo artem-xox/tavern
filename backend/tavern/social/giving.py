@@ -3,6 +3,7 @@
 from collections.abc import Mapping
 from typing import Any
 
+from tavern.body.ailment import relieve
 from tavern.body.expression import show_emote
 from tavern.body.items import ITEMS
 from tavern.hall.memory import record_event
@@ -43,7 +44,7 @@ def gift_error(world: Mapping[str, Any], giver: Mapping[str, Any], receiver: Map
 
 
 # What a guest keeps when someone gave them something, whatever it was.
-RECEIVED = tuple(item.received for item in ITEMS.values())
+RECEIVED = (*(item.received for item in ITEMS.values()), "cured")
 
 
 def formed_since(holder: Mapping[str, Any], about_id: str, kinds: tuple[str, ...], since: float) -> bool:
@@ -148,10 +149,17 @@ def hand_over(world: World, giver: Actor, receiver: Actor, kind: str) -> None:
               about=receiver)
         return
     giver["inventory"][kind] -= 1
-    receiver["inventory"][kind] += 1
-    message = f"{giver['name']} gave {receiver['name']} {item.one}"
+    # A remedy given to a guest who came in unwell is used on the spot, so they never hold it.
+    cured = item.cures and receiver["ailing"]
+    if cured:
+        relieve(receiver)
+    else:
+        receiver["inventory"][kind] += 1
+    message = (f"{receiver['name']} took {giver['name']}'s {item.one.removeprefix('a ')} and looks better already" if cured
+               else f"{giver['name']} gave {receiver['name']} {item.one}")
     for member in (giver, receiver):
-        record_event(world, member, "gave", message)
-    think(receiver, item.received, now, f"{called(receiver, giver)} gave me {item.one}", message, about=giver)
+        record_event(world, member, "cured" if cured else "gave", message)
+    think(receiver, "cured" if cured else item.received, now, f"{called(receiver, giver)} gave me {item.one}", message,
+          about=giver)
     think(giver, "generous", now, f"I gave {called(giver, receiver)} {item.one}", message, about=receiver)
     show_emote(receiver, "affection", now + world["rules"]["emote_seconds"]["affection"])

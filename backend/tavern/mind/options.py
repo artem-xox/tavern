@@ -234,9 +234,10 @@ def _approach(observation: Observation, action: Action) -> str:
     partner = _someone(observation, action["target_id"])
     name = label_of(partner) if partner else action["target_id"]
     table = known_object(observation, partner.get("table_id")) if partner else None
+    pale = f" ({name} looks pale and feverish)" if partner and partner.get("ailing") else ""
     if table is None:
-        return f"walk over to {name}'s table and talk with them, standing beside it"
-    return (f"walk {walk_words(steps_to(observation, table))} over to the {label_of(table)} and talk with {name}, "
+        return f"walk over to {name}'s table and talk with them{pale}, standing beside it"
+    return (f"walk {walk_words(steps_to(observation, table))} over to the {label_of(table)} and talk with {name}{pale}, "
             f"standing beside it ({company_at(observation, table['id'])})")
 
 
@@ -260,7 +261,9 @@ def _give(observation: Observation, action: Action) -> str:
     receiver = _someone(observation, action["target_id"])
     name = label_of(receiver) if receiver else action["target_id"]
     where = _placed(observation, receiver)
-    return (f"hand {ITEMS[action['item']].one} they are carrying to {name}, who {where} (it is theirs to give up, "
+    item = ITEMS[action["item"]]
+    cure = "they look pale and feverish: this would cure them; " if item.cures and receiver and receiver.get("ailing") else ""
+    return (f"hand {item.one} they are carrying to {name}, who {where} ({cure}it is theirs to give up, "
             f"and {name} may refuse it if there is bad blood between them)")
 
 

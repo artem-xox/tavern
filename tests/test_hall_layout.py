@@ -59,3 +59,8 @@ def test_the_fireplace_is_stood_at_from_the_row_below_it() -> None:
 def test_fireplace_cells_are_not_also_walls(cell: list[int]) -> None:
     # The fireplace is built into the wall: its cells are its own, never listed as blocked as well.
     assert cell not in create_world(LAYOUT)["map"]["blocked"]
+
+
+def test_the_west_wall_has_two_windows() -> None:
+    windows = sorted((item["x"], item["y"]) for item in create_world(LAYOUT)["map"]["objects"] if item["kind"] == "window")
+    assert windows == [(0, 4), (0, 11)]

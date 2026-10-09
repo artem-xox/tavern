@@ -18,6 +18,7 @@ class Item:
             of sight (a remedy in a sleeve).
         hands: Most a visitor can carry at once.
         received: The `THOUGHTS` kind a receiver keeps about whoever gave it to them.
+        cures: Whether it cures a guest who came in unwell (see `tavern.body.ailment`): one given to them is used up.
     """
 
     kind: str
@@ -26,6 +27,7 @@ class Item:
     held: str | None
     hands: int
     received: str
+    cures: bool = False
 
     @property
     def visible(self) -> bool:
@@ -35,7 +37,7 @@ class Item:
 
 ITEMS: Mapping[str, Item] = MappingProxyType({
     "beer": Item("beer", "a mug of ale", "mugs of ale", held="a full mug of ale", hands=2, received="treated"),
-    "remedy": Item("remedy", "a herbal remedy", "herbal remedies", held=None, hands=3, received="cared_for"),
+    "remedy": Item("remedy", "a herbal remedy", "herbal remedies", held=None, hands=3, received="cared_for", cures=True),
     "keepsake": Item("keepsake", "a keepsake", "keepsakes", held=None, hands=3, received="gifted"),
 })
 

@@ -54,7 +54,7 @@ def turn_content(view: Mapping[str, Any]) -> str:
         The per-call text that follows the cached blocks.
     """
     nudges = _nudges(view["conversation"], view["speaker"], view.get("invitations") or [], view["acts"],
-                     view.get("answer"))
+                     view.get("closing_called", False), view.get("answer"))
     earlier = _earlier(view["speaker"].get("earlier") or [])
     return "\n\n".join([_scene(view["conversation"], view["speaker"]), *([earlier] if earlier else []),
                         _self(view["speaker"]), _news(view["speaker"]), *([f"THE MOMENT\n\n{nudges}"] if nudges else []), _offer(view),
@@ -74,7 +74,7 @@ def _offer(view: Mapping[str, Any]) -> str:
 
 
 def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequence[str], acts: Sequence[str],
-            answer: str | None = None) -> str:
+            closing_called: bool = False, answer: str | None = None) -> str:
     # The scripted writer's thresholds (`scripted.PRESSING`, `scripted.CONTENT`) say when a need
     # presses or company is enough; left to itself, the model rarely leaves or shares places.
     # A barkeep's needs read as all at 0, which would send him off for company enough: his nudge says he stays.
@@ -87,6 +87,9 @@ def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequen
         if duty else "",
         f"Pressing now: {', '.join(pressing)}. The speaker should excuse themselves and leave the conversation."
         if pressing and not duty else "",
+        "The barkeep has just called closing time: the talk turns to goodbyes and heading home, so the speaker "
+        "winds it down and may say goodbye."
+        if closing_called and not duty else "",
         "The speaker has had enough company for now and may say goodbye after answering."
         if me["needs"]["social"] < CONTENT and not duty else "",
         "The speaker has not yet told anyone here where the places they know are; someone may want to know."
@@ -131,7 +134,8 @@ def _scene(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:
     barkeeps = {item["id"] for item in scene["participants"] if item.get("on_duty")}
     present = [f"- {item['name']}{' (the barkeep)' if item['id'] in barkeeps else ''} (id \"{item['id']}\"): "
                f"{_FAMILIARITY[item['familiarity']]}; your opinion of "
-               f"them is {item['opinion']:+.0f} on -100 to 100" + (f"; on your mind: {'; '.join(item['thoughts'])}"
+               f"them is {item['opinion']:+.0f} on -100 to 100" + ("; looks pale and feverish" if item.get("ailing") else "")
+               + (f"; on your mind: {'; '.join(item['thoughts'])}"
                                                                     if item["thoughts"] else "")
                for item in me["company"]]
     lines = [f"{people.get(turn['speaker'], turn['speaker'])} to "
@@ -158,7 +162,8 @@ def _self(me: Mapping[str, Any]) -> str:
         "none, so the speaker cannot use share_place"
     goal = me["card"]["goal"] if me["card"] else "to rest and pass a pleasant evening"
     mean = f"\nWhat you mean to do: {me['intention']}" if me.get("intention") else ""
-    return (f"THE SPEAKER\n\nYou are {me['name']} (id \"{me['id']}\").\nHow they feel: {me['feelings']}\n"
+    unwell = "\nYou feel feverish and weak tonight." if me.get("ailing") else ""
+    return (f"THE SPEAKER\n\nYou are {me['name']} (id \"{me['id']}\").\nHow they feel: {me['feelings']}{unwell}\n"
             f"Drink: {speech_instruction(me['drunkenness']) or 'You are sober.'} "
             f"Beers tonight: {me['visit']['beers']}.\n"
             f"Needs (0 calm, 100 desperate; 75 or more presses hard): {needs}.\n"

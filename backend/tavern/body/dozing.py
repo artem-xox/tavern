@@ -9,7 +9,7 @@ from tavern.body.drunkenness import drunk_stage
 from tavern.body.expression import show_emote
 from tavern.body.hearing import Stimulus, heard_loudness
 from tavern.hall.chance import roll
-from tavern.hall.closing import inn_closed
+from tavern.hall.closing import closing_called, inn_closed
 from tavern.hall.state import Actor, World
 from tavern.social.scenes import conversation_of
 
@@ -18,7 +18,7 @@ def nodding_off(world: World, elapsed: float) -> list[Actor]:
     """Find the wasted visitors who nod off at their table this tick, and log it.
 
     Only someone sitting in their seat, not talking and doing nothing they would not break
-    off, can doze, and nobody does once the inn has closed. Each such wasted visitor nods off with
+    off, can doze, and nobody does once the barkeep has called closing time. Each such wasted visitor nods off with
     `doze_per_second` per second.
 
     Args:
@@ -28,7 +28,7 @@ def nodding_off(world: World, elapsed: float) -> list[Actor]:
     Returns:
         The visitors who nod off; the world starts their `doze`, which logs it.
     """
-    if inn_closed(world):
+    if inn_closed(world) or closing_called(world):
         return []
     chance = 1 - math.exp(-world["rules"]["drunkenness"]["doze_per_second"] * elapsed)
     dozers = []

@@ -33,7 +33,7 @@ there, two guests agree to move to a free table together, sitting down at a held
 Choice depth (C0-C8, 2026-10-09): the choice is lean (the fixtures Jev has no reason to weigh are left out), a guest can answer what
 was just done to them, a social option carries an aim the line writer reads, temperament shapes the draw, and a thirsty
 newcomer, a table's host and a loser at dice can each take on a plan of several steps.
-Saved worlds are version 16. Step 6 (memory between evenings) waits for Stage 4.
+Saved worlds are version 18. Step 6 (memory between evenings) waits for Stage 4.
 **Done when:** recorded live evenings meet the Stage 1 metrics, an observer can retell
 a story from at least one of them, and its chronicle cites only logged events.
 
