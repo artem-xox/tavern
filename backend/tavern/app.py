@@ -47,7 +47,7 @@ def create_default_app() -> FastAPI:
               "lean": read_switch(os.environ.get("AI_LEAN"), True, "AI_LEAN"),
               "aims": read_switch(os.environ.get("AI_AIMS"), True, "AI_AIMS"),
               "projects": read_switch(os.environ.get("AI_PROJECTS"), True, "AI_PROJECTS"),
-              "answers": read_switch(os.environ.get("AI_ANSWERS"), True, "AI_ANSWERS")}
+              "answers": read_switch(os.environ.get("AI_ANSWERS"), False, "AI_ANSWERS")}
     board = HealthBoard({"jev": bool(config["typesafe_api_key"]), "claude": bool(os.environ.get("ANTHROPIC_API_KEY"))},
                         log=logging.getLogger("tavern.health").warning)
     # Traces spend LangSmith quota, so only an explicit switch turns them on; one server run is one evening.

@@ -100,7 +100,7 @@ def config(values: Mapping[str, Any], mode: str) -> dict[str, Any]:
             "lean": read_switch(values.get("AI_LEAN"), True, "AI_LEAN"),
             "aims": read_switch(values.get("AI_AIMS"), True, "AI_AIMS"),
             "projects": read_switch(values.get("AI_PROJECTS"), True, "AI_PROJECTS"),
-            "answers": read_switch(values.get("AI_ANSWERS"), True, "AI_ANSWERS")}
+            "answers": read_switch(values.get("AI_ANSWERS"), False, "AI_ANSWERS")}
 
 
 def keeper(calls: list[Record], log: Path) -> Callable[[Record], None]:
