@@ -2995,27 +2995,37 @@ code disagrees):
     (17 and 29 before: within the spread seen in C1). The inertia the plan gives is real; the uniform arrival is the price,
     and a reason to let C6's plans and C3's aims carry the variety.
 
-- [ ] **C6 — Social projects: a round for the table, and a rematch.**
-  - `stand_a_round`: fetch an ale for each empty-handed tablemate in turn. In the `fetching` family (the same wish),
-    which becomes a real family beside `bring_drink`. Offered to a seated guest with a free hand, a stocked tap
-    known, not on an errand, and at least two tablemates visibly holding no mug (`giving.empty_handed_company`
-    restricted to the table). The project freezes its receivers at the start, in seat order, as
-    `targets: list[str]` (a field of this kind only; `check_saved_projects` checks it), and runs one `buy_drink`
-    errand per receiver (`social/errands.py`), the next when the last one ends. Each receiver keeps `treated`, as a
-    gift of a mug does now. It ends `done` with `round_stood` ("Brida stood the Hearth table a round: 3 ales"), or
-    `failed` when the tap runs dry or the guest leaves the table. Local utility as `bring_drink`'s, plus
-    `0.1 × (receivers − 1)`.
-  - `rematch` (needs C2 and C3): offered while `lost_at_dice` about someone calls for an answer (C2), the dice table
-    is known with two free chairs, and that person is in sight. Step one reaches them (`talk`, `approach` or
-    `join_conversation`, whichever reaches them, with the aim `rematch`). Step two waits on the world: `done` when
-    `dice_started` names both, `failed` on `invitation_declined` (the asker keeps `rebuffed`, an existing thought) or
-    when the person leaves, `expired` after 120 s. A step that waits needs `Step.until` (a new optional field:
-    `Callable[[world, Project], str | None]`, returning the outcome once the world shows it).
-  - *Tests first* (`tests/test_round.py`, `tests/test_rematch.py`): a round to two tablemates; a tablemate who
-    leaves mid-round is skipped; the tap runs dry on the second mug; offered and not offered cases. A rematch asked
-    and played; declined (`rebuffed`); the person leaves; it lapses.
-  - *Check:* live seeds 5 and 7: rounds stood, rematches asked, played and refused, and one moment from the log of
-    each, if any. Baseline: live seed 7 had one rematch, talked into by Haiku with no choice behind it.
+- [x] **C6 — Social projects: a round for the table, and a rematch.**
+  - *The project model grew for them* (`body/projects.py`): a `Step` now holds a `command` (any action, built from the
+    world, the guest and the project) or none for a step that only waits on the world, with a `done` test and a `broken`
+    reason; a kind builds its `steps` from the project, so their number may depend on its `targets`; a kind says what
+    its `target` is (`chair`, `table` or `guest`), how it `begin`s and what follows `opened`. A project waiting on an
+    errand of its own (`fetching_a_drink`) is left alone. `Project.targets` (optional) holds the guests a plan serves in
+    turn, frozen at the start. Saves stay version 16.
+  - `stand_a_round` (verb with `opens_project`, family `fetching`, which now reads "or stand the whole table a round"):
+    offered to a guest with a free hand, a stocked tap known, on no errand, with at least two tablemates who visibly hold
+    no mug (`giving.empty_handed_tablemates`, new). The project's target is the table, its `targets` the empty-handed at
+    it in the order of its chairs, one `bring_drink` step each; a tablemate who left the table or the hall, or who got a
+    mug meanwhile, is skipped; a step that ended with no mug in their hand (the tap ran dry, the gift was refused) fails it.
+    "Ada stood the table a round (stand_a_round)". Local score: that of `bring_drink` plus 0.1 for each receiver beyond
+    one, averaged over their opinions.
+  - `rematch` (verb with `opens_project`, family `company`): offered while a `lost_at_dice` thought about someone in
+    sight (seated at a table or beside the guest) still calls for an answer (C2), a dice table they know is free.
+    Two steps: reach them (`talk`, `join_conversation` or `approach`, with the aim `rematch` of C3), then wait on the
+    world: done when both sit at a game, failed when they went home, refused ("they would not play"), or the talk
+    ended with no game agreed or on its way. **Setting out answers the loss** (`opened`), so a plan that fails does not
+    make the same loss call for another.
+  - *Found live and fixed:* the first live run showed Calder asking for a rematch five times in 20 s with a winner he
+    could not reach (stuck seconds 54); the offer now needs a winner they can reach, and beginning answers the loss
+    (two tests added, a separate commit).
+  - *Tests* (`tests/test_round.py`, `tests/test_rematch.py`, and `test_projects.py` as before): a round to two in seat
+    order, served in turn and logged; skipped tablemates (gone, already served); failed when the tap runs dry; five refusals
+    and four offer cases; the family and the score; a rematch asked and played (the scripted writer carries the scene),
+    refused, the winner gone, lapsed, five refusals, offered and not after the window, answered by beginning, not
+    offered to a winner out of reach.
+  - *Built and measured (2026-10-09).* Offline seeds 0–9 never meet the conditions (no lost game, nobody
+    empty-handed): no round and no rematch. Live seeds 5 and 7 before the fix: one rematch reached and played (Calder,
+    203 s: "got the rematch") and six failed, the loop above. Rounds: none yet in any evening.
 
 - [ ] **C7 — The invitee decides.**
   - Today the line writer decides whether an invitation is accepted, by choosing `accept` or `decline` for the
