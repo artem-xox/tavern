@@ -2897,12 +2897,15 @@ Order: F0 and F1 are data and client only, and can go any time, beside anything.
 F6 → F7 → F8 → F9. F6 needs F4, F8 needs F7, and F9 comes last. Each task is its own branch
 (`claude/stage1-f<n>`) and PR.
 
-- [ ] **F0 — Two windows on the west wall.**
+- [x] **F0 — Two windows on the west wall.**
   - *Build:* drop `window-2` from `data/tavern.json` and add [0, 6] to `blocked`.
   - *Tests first* (`tests/test_hall_layout.py`): a new test that the west wall has exactly the windows at
     (0, 4) and (0, 11). `test_the_hall_is_walled_all_round` must stay green unchanged.
   - *Check:* `make check`. In `make run`, post a screenshot of the west wall.
-- [ ] **F1 — Candles that glow like the fire (client only).**
+  - *Built (2026-10-09):* `window-2` is gone from `data/tavern.json` and [0, 6] is in `blocked`.
+    `test_hall_layout.py::test_the_west_wall_has_two_windows` (red before the data change); the rest of the suite
+    needed no change (2737 passed).
+- [x] **F1 — Candles that glow like the fire (client only).**
   - *Build:* `frontend/src/candles.ts`: the four cells above, the light point of each (the wall edge it
     faces, from `hearthFacing`), `drawSconces` (static, with the furniture) and `drawCandles` (flame and
     glow, per frame, on a new layer created beside `hearthGlow` in `scene.ts`).
@@ -2912,14 +2915,17 @@ F6 → F7 → F8 → F9. F6 needs F4, F8 needs F7, and F9 comes last. Each task 
     two candles flicker out of phase at the same time.
   - *Check:* `make check` and `make build`. In `make run`, post a screenshot of the whole hall and a 2×
     crop of the privy and the door.
-- [ ] **F2 — Full energy on arrival.**
+- [x] **F2 — Full energy on arrival.**
   - *Build:* `first_evening.json`'s arrival `fatigue` [0, 0].
   - *Tests first:* in `tests/test_scenario_cards.py` (or beside the other first-evening checks), every
     guest the first evening expects has `fatigue` 0, for two seeds.
   - *Check:* `make check`. Offline seed 5 (`--writer scripted`), before and after: the time of the first
     `dozed_off` and each guest's `fatigue` on leaving (a scratch script, not committed). Expect no nap
     before 300 s.
-- [ ] **F3 — One item of news, one holder.**
+  - *Built (2026-10-09):* the scenario's arrival `fatigue` is [0, 0].
+    `test_first_evening.py::test_every_guest_comes_in_with_full_energy` (seeds 1 and 7) was red before the data
+    change. Offline seed 5 afterwards: no nap at all (`sleep.naps` 0), guests left with fatigue 28–49.
+- [x] **F3 — One item of news, one holder.**
   - *Build:* `news_tonight` in `parse_scenario` and `Scenario`, `facts.draw_news`, the draw in
     `open_evening`, and `"news_tonight": 1` in the first evening.
   - *Tests first* (`tests/test_facts.py` or a new `tests/test_news_tonight.py`). Parametrized:
@@ -2934,7 +2940,16 @@ F6 → F7 → F8 → F9. F6 needs F4, F8 needs F7, and F9 comes last. Each task 
     with no `news`.
   - *Check:* `make check`. Offline seeds 1–8: the item drawn, its holder, and how many guests held it at
     the end (`news_metrics`). Report any seeded test that fails, as decided above.
-- [ ] **F4 — A ten-minute evening and the barkeep's call (the world).**
+  - *Built (2026-10-09):* `facts.draw_news(news, count, rng)`; `Scenario.news_tonight` and `_news_tonight` in
+    `scenario.py`; `open_evening` draws from `Random(f"{seed}:news")`, so arrival needs are unchanged (pinned by a test).
+    The first evening sets `"news_tonight": 1`. `tests/test_news_tonight.py` (35 cases) is the spec. Over seeds 0–20
+    the drawn item is `margrave_fever` 9 times, `salt_toll` 4, `pass_closing` 4, `cloth_robbery` 3 and `deserters` 1,
+    and the item reached a third guest (two hops) in 15 of 21 evenings played offline with the paraphrasing writer.
+    One seeded test failed, as foreseen: `test_facts.py::test_a_news_item_reaches_a_third_guest_in_other_words[seed-7]`
+    (seed 7 draws `salt_toll` for Calder, who arrives at 110 s and tells nobody). With the user's approval
+    (2026-10-09) seed 7 became seed 0 in that test's parametrization; the assertions did not change. Offline seed 5:
+    `pass_closing`, held by Calder, told to Rurik and overheard by Toren at 172 s.
+- [x] **F4 — A ten-minute evening and the barkeep's call (the world).**
   - *Build:* `last_call_at` in the scenario, the world and the saves (the schema bump); `call_last_orders`,
     `closing_called`, the event with `line`, the sound; no pouring, `take_beer` or nap after the call;
     `called_closing` in `observe_actor`; `closes_at` 600 and `last_call_at` 540 in the first evening;
@@ -2952,7 +2967,21 @@ F6 → F7 → F8 → F9. F6 needs F4, F8 needs F7, and F9 comes last. Each task 
     not a number.
   - *Check:* `make check` and `make build`. Offline seed 5: quote the `last_call` event, and count guests
     present at the call and sent home at 600 (today's policy still waits for the close; F5 changes that).
-- [ ] **F5 — Guests answer the call (the minds).**
+  - *Built (2026-10-09):* `hall/closing.py` (`LAST_CALL_LINE`, `closing_called`, `since_last_call`,
+    `call_last_orders`, `check_saved_last_call`); `World.last_call_at` and `schema_version` 16; `last_call_at` in the
+    scenario; `EVENT_SOUNDS["last_call"]`; `called_closing` in `observe_actor`; `WorldEvent.line` and
+    `World.last_call_at` in `types.ts`. First evening: `closes_at` 600, `last_call_at` 540. `tests/test_last_call.py`
+    (27 cases) is the spec. Two things differ from the plan above, both on purpose:
+    - *The refusal is at the start of an order, not in `action_error`.* `action_error` is also asked every tick of an
+      interaction, so a guest already waiting at the tap would have lost their mug at the call. A new
+      `Activity.stopped_at_last_call` (set on `take_beer`, "The bar has stopped serving") is read in
+      `world.start_action`, so an order made before the call is still poured, and the barkeep's `tend_bar` is unchanged.
+    - *`bring_drink` is not offered after the call either* (`agents._fetches`), because it sends the host to the tap.
+    Tests that changed, as approved for the save bump: `test_database.py` and `test_intention_saves.py` pin version 16.
+    Offline seed 5 (`--writer scripted`): `{"actor_id": "hob", "type": "last_call", "time": 540.0, "message": "Hob
+    called out: \"Time, friends! …\""}`; six guests were in at the call, one left before the close (Toren, 547 s) and
+    five were seen out at 605–609 s, as before F5.
+- [x] **F5 — Guests answer the call (the minds).**
   - *Build:* the briefing line, `called` in `_leave_utility`, `leave`'s guidance, the `last_call` trigger
     and the intention prefix, the turn view and turn content and the prefix sentence, and
     `closing_metrics` wired into `scripts/evening.py`.
@@ -2967,13 +2996,32 @@ F6 → F7 → F8 → F9. F6 needs F4, F8 needs F7, and F9 comes last. Each task 
   - *Check:* `make check`. Offline seeds 1–8: `present_at_call`, `left_after_call` and `sent_home` per seed.
     Target: on average at most one guest per evening sent home, and none still in at 630. If it is missed,
     tune `called` (never the tests) and record both runs. Quote one goodbye line said after the call.
-- [ ] **F6 — The barkeep's line on screen (client).**
+  - *Built (2026-10-09):* `briefing._closing` (between the call and the close), `local_policy._leave_utility`
+    (`called` floors the wish to leave at 0.5 at the call and 0.95 forty seconds later, so a pressing need such as a
+    full bladder still comes first), `leave`'s guidance, the `last_call` trigger in `intentions.latest_trigger`
+    (also in `UNMETERED`), `closing_called` in `turns.turn_view`, a nudge in `haiku_turns._nudges`, the scripted
+    writer's goodbye (`scripted.LINES["closing"]`, said once a speaker has answered, never by the barkeep), a sentence
+    each in the two shared prefixes (`turn_prompt` and `data/minds/intention_prefix.md`), and
+    `evening/closing_metrics.py` wired into `scripts/evening.py` as `closing` in `metrics.json`.
+    `tests/test_answering_the_call.py` (28 cases) is the spec. Offline seeds 1–8 (`--writer scripted`): five or six
+    guests were in at the call, all of them went home before closing time (`left_after_call` 5, 5, 5, 5, 5, 5, 6, 5),
+    `sent_home` 0 in every evening, and the last guest left between 557 and 573 s (the close is at 600 s). No nap in any
+    evening. Offline lines are not logged in `events.jsonl`, so no goodbye line is quoted; at the call all five guests
+    of seed 5 logged `interrupted` ("turned toward the barkeep calling closing time"), and Toren, Saye and the rest
+    chose `leave` within seconds. The `last_call` intention trigger needs a key to see; it is pinned by test only.
+- [x] **F6 — The barkeep's line on screen (client).**
   - *Build:* `bubble.callout` and its use in `scene.ts` and `Speech`.
   - *Tests first* (`frontend/tests/bubble.test.ts`), parametrized: no event; another actor's call; the
     call 3 s ago gives the line; 9 s ago gives null; of two calls, the newest; a different event type is
     ignored.
   - *Check:* `make check` and `make build`. In `make run`, raise the speed in the debug panel until 9:00,
     and post a screenshot of Hob's bubble and the guests turning to him.
+  - *Built (2026-10-09):* `bubble.callout`, `bubble.newer` and `bubble.Spoken`; `Speech.tell(line, now)` takes the line
+    to tell instead of a conversation, and `scene.ts` hands it the newer of the guest's own latest conversation line and
+    their call, so a call is told once, in two pieces, and a line spoken after it replaces it. The window is 8 game
+    seconds. `frontend/tests/bubble.test.ts` gained 13 cases. In the running app (8× to 8:50, then 1×, paused at 9:01):
+    Hob's bubble read "Finish your cups and get yourselves home safe." (the second piece) and all five guests showed the
+    alert emote and turned toward the bar.
 - [ ] **F7 — A sick guest and three remedies (the world).**
   - *Build:* `Item.cures`, the `ailment` field and the draw, `Actor.ailing` (and the expected guest's
     field) with the schema bump, `body/ailment.py` with `cure`, the `cured` thought and event, `ailing` in

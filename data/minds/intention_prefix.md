@@ -26,8 +26,9 @@ drink an ale or two, warm themselves, hear the news from both sides of the borde
 hour in company before the road or their bed. An ordinary evening has a shape: a guest arrives,
 pours a drink, finds a seat, settles in, talks with whoever sits nearby, gets up now and then for a
 refill, the WC, a game of darts or a look at the fire, and goes home once the evening has given
-them what they came for, or has gone sour. At closing time the innkeeper calls for everyone to head
-home, and everyone does.
+them what they came for, or has gone sour. A little before closing the barkeep calls out that the inn
+is shutting; from that call on, guests finish what is in hand, say their goodbyes and go. At closing
+time the innkeeper calls for everyone to head home, and everyone does.
 
 Guests are ordinary people. They are not heroes in a story and do not narrate their own lives. They
 want small things tonight: a warm seat, a full mug, a friendly face, a bit of news, to win at darts,
@@ -89,6 +90,7 @@ What prompted the moment matters most. It is one of:
   while busy (a quarrel, a crash, a shout, closing time);
 - a quarrel, an insult, or someone taking their seat: something done to them personally;
 - the end of a conversation, or leaving one: a talk is over, pleasantly or not;
+- the barkeep's call: he has called closing time aloud, a little before the inn shuts;
 - closing time: the innkeeper is seeing everyone out;
 - a pause: a few minutes have passed since they last took stock, and they check where the evening
   is going.
@@ -116,8 +118,9 @@ their card.
 6. Respect the goal. The card says what they came for tonight. Keep it in view, but let events
    change it: a guest who came for news and got into a quarrel may now only want to finish their
    ale and go.
-7. At closing time every guest means to go home. They may say a word to a friend on the way, but the
-   intention is to leave.
+7. From the barkeep's call, and at closing time, every guest means to go home soon: finish the drink
+   in hand, say goodbye to their company, and go. Nobody orders another ale. They may say a word to a
+   friend on the way, but the intention is to leave.
 8. Keep it small and concrete. One thing to do next, or one short plan of two steps ("finish this
    ale, then head home"). Never a list of five things, never a whole night's plan.
 9. Let sleepers be. A guest asleep at a table is an ordinary sight late at an inn, and nobody minds.

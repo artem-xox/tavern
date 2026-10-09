@@ -14,7 +14,7 @@ from tavern.body.energy import tire
 from tavern.body.expression import update_expression
 from tavern.body.queues import check_lines, cut_in, line_of, must_wait
 from tavern.hall.arrival import admit_arrivals, arrival_ranges, arriving, create_actor
-from tavern.hall.closing import call_closing, inn_closed
+from tavern.hall.closing import call_closing, call_last_orders, closing_called, inn_closed, since_last_call
 from tavern.hall.lifecycle import (activate, clear_action, complete_action, finish_parts, line_up, look, notice_target,
                               reject, step_actor, talk_in_line)
 from tavern.hall.memory import record_event
@@ -65,8 +65,8 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> World:
     if type(manners) is not bool:
         raise ValueError(f"The layout's table_manners must be true or false, not {manners!r}")
     rules["manners"]["table_intrusion"] = manners
-    world = World(schema_version=15, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
-                  map=world_map, actors=actors, departed=[], expected=[], closes_at=None,
+    world = World(schema_version=16, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
+                  map=world_map, actors=actors, departed=[], expected=[], closes_at=None, last_call_at=None,
                   events=[], stimuli=[], next_stimulus_id=0, conversations=[], next_conversation_id=0,
                   commitments=[], invitations=[], news=[], rules=rules)
     check_lines(world)
@@ -99,7 +99,7 @@ def start_action(world: World, actor_id: str, action: Mapping[str, Any]) -> dict
         return {"accepted": False, "reason": f"{actor['name']} works behind the bar"}
     cutting = action.get("verb") == "cut_in_line"
     action, reason = cut_in(world, action)
-    reason = reason or action_error(world, actor, action)
+    reason = reason or action_error(world, actor, action) or _last_call_error(world, action)
     if reason:
         notice_target(world, actor, action)
         return reject(world, actor, reason)
@@ -113,6 +113,12 @@ def start_action(world: World, actor_id: str, action: Mapping[str, Any]) -> dict
         return reject(world, actor, "No reachable interaction spot")
     activate(world, actor, action, plan)
     return {"accepted": True, "reason": None}
+
+
+def _last_call_error(world: Mapping[str, Any], action: Mapping[str, Any]) -> str | None:
+    # Only a new order is refused once the barkeep has called closing time: one made before it is still served.
+    refusal = ACTIVITIES[action["verb"]].stopped_at_last_call
+    return refusal if refusal and closing_called(world) else None
 
 
 def step_world(world: World, dt: float) -> None:
@@ -139,6 +145,7 @@ def step_world(world: World, dt: float) -> None:
     for actor in world["actors"]:
         step_actor(world, actor, elapsed)
     _see_off(world)
+    call_last_orders(world, since)
     call_closing(world, since)
     admit_arrivals(world)
     check_conversations(world)
@@ -198,7 +205,7 @@ def observe_actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
             "memory": deepcopy(actor["memory"][-10:]), "visible_cells": visible, "time": world["time"],
             "invitations": invitations_of(world, actor), "promises": promises_of(world, actor_id),
             "map": {"width": world["map"]["width"], "height": world["map"]["height"]},
-            "closed": inn_closed(world), "giving": dict(world["rules"]["giving"]),
+            "closed": inn_closed(world), "called_closing": since_last_call(world), "giving": dict(world["rules"]["giving"]),
             "on_errands": errand_parties(world)}
 
 

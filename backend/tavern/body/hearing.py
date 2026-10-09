@@ -65,6 +65,7 @@ EVENT_SOUNDS: Mapping[str, Sound] = MappingProxyType({
     "arrival": Sound("door", 0.25, 20.0, "the front door"),
     "departure": Sound("door", 0.25, 20.0, "the front door"),
     "closing": Sound("closing_call", 1.0, 40.0, "the innkeeper's call"),
+    "last_call": Sound("closing_call", 1.0, 40.0, "the barkeep calling closing time"),
     "action_failed": Sound("grumble", 0.2, 4.0, "a muttered complaint"),
     # A blow is as loud as a quarrel, and carries as far or further: the whole room turns to look.
     "shove": Sound("scuffle", 1.0, 24.0, "a scuffle"),

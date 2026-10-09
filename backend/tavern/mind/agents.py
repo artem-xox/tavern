@@ -129,7 +129,7 @@ def _concrete_candidates(observation: Mapping[str, Any]) -> list[Action]:
     for item in sorted(objects, key=lambda item: item["id"]):
         if item["kind"] not in verbs or item.get("table_id"):
             continue
-        if item["kind"] == "tap" and (not item.get("stock") or actor["inventory"]["beer"]):
+        if item["kind"] == "tap" and (not item.get("stock") or actor["inventory"]["beer"] or _called(observation)):
             continue
         if item["kind"] == "tap" and "social" in actor["needs"] and actor["needs"]["thirst"] < 35:
             continue
@@ -157,6 +157,15 @@ def _closed(observation: Mapping[str, Any]) -> bool:
     if not isinstance(closed, bool):
         raise ValueError("Closing flag must be a boolean")
     return closed
+
+
+def _called(observation: Mapping[str, Any]) -> bool:
+    # The barkeep's call came `called_closing` seconds ago; the bar serves no new order after it, and nobody naps.
+    # Observations built outside the world may omit it, which reads as no call yet.
+    since = observation.get("called_closing")
+    if since is not None and (isinstance(since, bool) or not isinstance(since, (int, float)) or since < 0):
+        raise ValueError("Closing call age must be a nonnegative number or None")
+    return since is not None
 
 
 def _going_home(observation: Mapping[str, Any], objects: Sequence[Mapping[str, Any]]) -> list[Action]:
@@ -209,14 +218,15 @@ def _fetches(observation: Mapping[str, Any], actor: Mapping[str, Any],
     # A guest with a free hand who knows a tap that has ale may fetch a drink for company with empty hands,
     # unless they are on an errand already.
     free_hand = actor["inventory"].get("beer", 0) < ITEMS["beer"].hands
-    able = free_hand and actor["id"] not in observation.get("on_errands", [])
+    able = free_hand and actor["id"] not in observation.get("on_errands", []) and not _called(observation)
     stocked = any(item["kind"] == "tap" and item.get("stock") for item in objects)
     return [_action("bring_drink", target) for target in empty_handed_company(observation)] if able and stocked else []
 
 
 def _nap(observation: Mapping[str, Any], actor: Mapping[str, Any]) -> list[Action]:
     # A tired guest in their seat may sleep there, unless they are out on an errand for someone.
-    sleepy = actor["needs"]["fatigue"] >= SLEEPY and actor["id"] not in observation.get("on_errands", [])
+    sleepy = (actor["needs"]["fatigue"] >= SLEEPY and actor["id"] not in observation.get("on_errands", [])
+              and not _called(observation))
     return [_action("doze")] if sleepy and actor.get("seat_id") else []
 
 

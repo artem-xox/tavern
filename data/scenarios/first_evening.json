@@ -1,10 +1,11 @@
 {
-  "closes_at": 420,
+  "closes_at": 600,
+  "last_call_at": 540,
   "opening_window": [1, 30],
   "arrival": {
     "needs": {
       "thirst": [55, 90],
-      "fatigue": [25, 55],
+      "fatigue": [0, 0],
       "bladder": [0, 25],
       "social": [15, 65],
       "boredom": [5, 35]
@@ -23,6 +24,7 @@
   "staff": [
     {"id": "hob", "name": "Hob", "color": "#c98f4a", "sprite": "bartender", "card": "hob", "post": "bar"}
   ],
+  "news_tonight": 1,
   "news": [
     {"id": "salt_toll", "topic": "the salt toll",
      "text": "The margrave has doubled the salt toll at the border post, and carters are turning back rather than pay it.",

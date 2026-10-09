@@ -13,6 +13,7 @@ from tavern.body.items import ITEMS, check_inventory
 from tavern.body.queues import check_saved_lines
 from tavern.evening.scenario import check_saved_expected
 from tavern.hall.arrival import check_saved_visit
+from tavern.hall.closing import check_saved_last_call
 from tavern.hall.lifecycle import check_saved_progress, check_saved_seat
 from tavern.hall.navigation import find_path
 from tavern.hall.rules import check_rules
@@ -196,7 +197,7 @@ def parse_world(encoded: str) -> World:
     """
     try:
         world = json.loads(encoded)
-        if not isinstance(world, dict) or world.get("schema_version") != 15:
+        if not isinstance(world, dict) or world.get("schema_version") != 16:
             raise ValueError("Unsupported snapshot version")
         json.dumps(world, allow_nan=False)
         _validate_clock(world)
@@ -207,6 +208,7 @@ def parse_world(encoded: str) -> World:
         _validate_departed(world)
         check_saved_staff(world)
         check_saved_expected(world)
+        check_saved_last_call(world)
         check_saved_news(world)
         check_saved_stimuli(world)
         check_saved_games(world)

@@ -3,7 +3,7 @@
 The mind layer writes, per guest, one first-person `thought` about how they read the situation and
 one `intention` for what they want to do next. Jev reads the intention in the briefing and weighs
 its options against it. A guest takes stock on arrival, after a salient event (an interrupt or an
-alert, a wrong done to them, a game's result, a goal's end, closing time) and every `interval` seconds, at
+alert, a wrong done to them, a game's result, a goal's end, the barkeep's call, closing time) and every `interval` seconds, at
 most `budget` times after arrival.
 Runners ask asynchronously, like decisions: one request per guest at a time, at least `min_gap`
 seconds apart; a salient event after the request makes its answer stale (`stale_intentions`).
@@ -18,6 +18,7 @@ from typing import Any, NotRequired, TypedDict
 
 from tavern.body.dozing import asleep
 from tavern.body.drunkenness import drunk_stage
+from tavern.hall.closing import closing_called
 from tavern.hall.memory import log_event
 from tavern.hall.staff import on_staff, post_of
 from tavern.hall.state import World, find_actor
@@ -85,11 +86,11 @@ class IntentionRules:
             raise ValueError(f"Intention budget must be a nonnegative number of requests or None, not {self.budget!r}")
 
 
-# Every three minutes of game time: twice or three times in a seven-minute evening.
+# Every three minutes of game time: twice or three times in a ten-minute evening.
 # Each guest's mind is asked at most four more times after arrival: the evening's turning points, not every scene.
 INTENTION_RULES = IntentionRules(interval=180.0, min_gap=3.0, budget=4)
-# Triggers the budget never withholds: a guest always plans on arriving and when the inn closes.
-UNMETERED = ("arrival", "closing")
+# Triggers the budget never withholds: a guest always plans on arriving, at the barkeep's call and when the inn closes.
+UNMETERED = ("arrival", "last_call", "closing")
 
 # Remembered events that make a guest take stock, by trigger kind.
 # A scene's end alone is not one: what a talk changed is told by a goal reached, a thought or a fact.
@@ -107,16 +108,18 @@ def latest_trigger(world: Mapping[str, Any], actor: Mapping[str, Any], since: fl
     """Find the newest salient event a guest met after a game time.
 
     Args:
-        world: Current world with `time` and `closes_at`.
+        world: Current world with `time`, `last_call_at` and `closes_at`.
         actor: Guest with `memory` and `thoughts`.
         since: Game time; only later events count.
 
     Returns:
-        The newest salient thought, closing call or remembered event, or None. On a tie a thought
-        wins over the closing call, and that over a remembered event: it says most about why.
+        The newest salient thought, the barkeep's call, closing time or remembered event, or None. On a tie a
+        thought wins over the call and the close, and those over a remembered event: it says most about why.
     """
     found = [Trigger(kind=item["kind"], text=item["text"], time=item["expires_at"] - THOUGHTS[item["kind"]].seconds)
              for item in actor["thoughts"] if item["kind"] in SALIENT_THOUGHTS and item["kind"] in THOUGHTS]
+    if closing_called(world):
+        found.append(Trigger(kind="last_call", text="The barkeep called closing time", time=world["last_call_at"]))
     if world["closes_at"] is not None and world["closes_at"] <= world["time"]:
         found.append(Trigger(kind="closing", text="The innkeeper called closing time", time=world["closes_at"]))
     found += [Trigger(kind=SALIENT_EVENTS[item["type"]], text=item["message"], time=item["time"])
