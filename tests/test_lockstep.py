@@ -242,3 +242,10 @@ def test_evening_waits_for_guests_who_have_not_arrived(present: list[str], expec
     world = create_world(hall(present), seed=0)
     world["expected"] = [{"id": guest} for guest in expected]
     assert evening_over(world, time_limit=600.0) is over
+
+
+def test_every_logged_choice_keeps_the_scores_it_was_drawn_from() -> None:
+    result, _world = evening(preferring("wait"), limit=20.0)
+    assert result.choices and all(
+        item["scores"] and max(item["scores"], key=item["scores"].__getitem__) == "wait" for item in result.choices
+        if item["kind"] == "actions")

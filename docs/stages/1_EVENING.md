@@ -2744,26 +2744,35 @@ code disagrees):
 - **Out of scope:** wagers and stakes (Stage 3, the economy); several promise kinds (D22); a guest ordering
   another away; walking up to someone who stands (T's out-of-scope still holds); any new pose or art.
 
-- [ ] **C0 — Measure the choice.**
+- [x] **C0 — Measure the choice.**
   - `evening/choice_metrics.py` (new: "How wide and how deep the evening's choices were"), pure, from the
-    lockstep's recorded choices. `lockstep._record_choices` keeps, per stage: `time`, `actor_id`, `kind`
-    (`actions`, `family`, `seats`; later `aims`), `source`, `error`, `options` (IDs in request order),
-    `scores` and `chosen` (ID). `choice_metrics(choices, events)` returns `ChoiceCounts` (a `TypedDict`):
-    - per stage: `requests`, `options` (mean), `near_best` (mean size of `selection.drawable`, recomputed from
-      the scores; a family ID and a concrete ID both read their verb as the part before the first `:`),
-      `decided` (share with a near-best set of one);
-    - `dead`: share of first-stage options scored below 0.15 (the dead slots above);
-    - `depth`: share of decisions that reached a second stage, and (after C3) a third;
-    - `repeats`: share of a guest's consecutive chosen actions with the same verb, from `action_started` events.
-    `scripts/evening.py` writes it as `choice` in `metrics.json`, beside `repetition`.
-  - Rounding stays in the presentation (`metrics.json` writer), not in `choice_metrics`.
-  - *Tests first* (`tests/test_choice_metrics.py`): one parametrized block on `ChoiceCounts` from hand-made
-    choices: empty evening (no requests: means are None, not 0), a single request, a request with a tie at the
-    top, a family stage after an action stage, duplicate consecutive verbs in events. A `pytest.raises` block for
-    a choice whose `chosen` is not among its `options`.
-  - *Check:* `make check`; offline seed 5 and live seeds 5 and 7 on `main` give the baseline every later C task
-    compares with (record the table here). The live seed 7 numbers should match the table above within the
-    noise of a live run.
+    lockstep's recorded choices. `lockstep._record_choices` keeps each stage's `scores` (option ID to score, in
+    request order; the options are its keys) beside `time`, `actor_id`, `kind` (`actions`, `family`, `seats`; later
+    `aims`), `source` and `error`; `Choice.scores` is `NotRequired`, so hand-made choices still type-check. The
+    decision itself does not change shape. `choice_counts(choices, events)` returns `ChoiceCounts` (a `TypedDict`):
+    - `stages`, per kind: `requests`, `options` (mean), `near_best` (mean size of `selection.drawable`, recomputed
+      from the scores; an option's verb is its ID before the first `:`) and `decided` (share with a near-best set of
+      one);
+    - `dead`: share of first-stage options scored below `DEAD` (0.15);
+    - `depth`: `second` and `third`, the shares of decisions (first stages) followed by a family or seat stage, and
+      by an `aims` stage (after C3), matched by guest and moment;
+    - `repeats`: share of a guest's consecutive actions with the same verb, from `action_started` events, for the
+      guests who made choices (staff are left out).
+    Shares are None for an evening with nothing to share over. `scripts/evening.py` writes it as `choice` in
+    `metrics.json`; rounding stays in its writer.
+  - *Tests* (`tests/test_choice_metrics.py`, `test_lockstep.py`): empty evening, single request, a tie at the top, a
+    pointless exit, dead options, a family stage, a seat stage matched to its own moment, a third stage, repeats per
+    guest and between duplicate verbs, staff left out; a `pytest.raises` block for a stage without scores, one without
+    options and an action event without a verb; the lockstep keeps every stage's scores.
+  - *Built (2026-10-09), the baseline every later C task compares with* (`7d161f8` plus C0; the live runs are
+    replayable from their `calls.jsonl`, and the live seed 7 replay is byte-identical to the evening analysed above).
+    Offline, seeds 0–9: first-stage near-best 1.99, `decided` 32%, `dead` 32%, `second` 43%, `repeats` 38%, 174
+    first-stage requests, 29.7 conversations, 16.8 stuck seconds, every guest gone at closing in all ten. Live:
+
+    | | requests | near-best | decided | dead | second | repeats | conversations | stuck s | cost |
+    |---|---|---|---|---|---|---|---|---|---|
+    | seed 5 | 165 | 1.66 | 53% | 26% | 36% | 33% | 28 | 19.0 | $0.36 |
+    | seed 7 | 168 | 1.70 | 51% | 31% | 40% | 31% | 38 | 22.1 | $0.40 |
 
 - [ ] **C1 — A lean first stage.**
   - *Rule:* a fixture verb is put to the model only when the guest's own state makes it worth weighing. A table in

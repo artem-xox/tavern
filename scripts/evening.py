@@ -16,6 +16,7 @@ from tavern.adapters.claude import HAIKU_4_5, ClaudeError, ask_claude
 from tavern.adapters.probes import probes
 from tavern.adapters.tracing import (Scorer, Tracer, open_tracer, traced_intender, traced_question, traced_scores,
                                      traced_writer)
+from tavern.evening.choice_metrics import choice_counts
 from tavern.evening.lockstep import Pace, evening_mode, run_evening
 from tavern.evening.metrics import (attention_counts, bar_metrics, conversation_counts, dice_metrics, evening_metrics,
                                     intention_counts, news_metrics, sleep_metrics, writer_stats)
@@ -317,6 +318,7 @@ def main(root: Path) -> None:
                       "writer_note": writer_note, "intentions": minded},
               **evening_metrics(evening, calls, args.input_price, args.stuck_threshold, TARIFFS),
               "intentions": intention_counts(evening), "repetition": repetition_counts(evening.events, ALIKE),
+              "choice": choice_counts(evening.choices, evening.events),
               "goals": goal_counts(evening.events), "promises": promise_counts(evening.events),
               "attention": attention_counts(evening), "conversation": conversation_counts(evening),
               "news": news_metrics(world), "dice": dice_metrics(evening.events),

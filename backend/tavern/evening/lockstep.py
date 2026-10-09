@@ -4,7 +4,7 @@ from collections.abc import Callable, Coroutine, Mapping
 from dataclasses import dataclass, field
 import math
 from random import Random
-from typing import Any, TypedDict
+from typing import Any, NotRequired, TypedDict
 
 from tavern.evening.decisions import free_to_decide
 from tavern.evening.mind_loop import MindLoop
@@ -40,13 +40,15 @@ class Pace:
 
 
 class Choice(TypedDict):
-    """One stage of a decision: `kind` is `actions`, `seats` or `family`, as in recorded calls."""
+    """One stage of a decision: `kind` is `actions`, `seats` or `family`, as in recorded calls. `scores` holds
+    the score of every option asked, by ID, in request order (`evening.choice_metrics` reads it)."""
 
     time: float
     actor_id: str
     kind: str
     source: str
     error: str | None
+    scores: NotRequired[dict[str, float]]
 
 
 class Spell(TypedDict):
@@ -260,7 +262,8 @@ def _record_choices(world: Mapping[str, Any], run: _Run, courier: LockstepCourie
         second = [(kind, decision[key]) for kind, key in (("seats", "seat"), ("family", "family")) if key in decision]
         stages = [("actions", decision), *second]
         run.choices.extend({"time": world["time"], "actor_id": actor_id, "kind": kind,
-                            "source": stage["source"], "error": stage["error"]} for kind, stage in stages)
+                            "source": stage["source"], "error": stage["error"], "scores": stage["scores"]}
+                           for kind, stage in stages)
 
 
 def _collect(world: Mapping[str, Any], run: _Run) -> None:
