@@ -82,7 +82,7 @@ def scripted_turn(view: Mapping[str, Any]) -> "TurnResult":
     addressee = _addressee(scene, me, act)
     name = addressee["name"] if addressee.get("known", True) else "friend"
     if kind == "share_news":
-        fact = rng.choice(_untold(scene, me))
+        fact = _aimed_fact(me) or rng.choice(_untold(scene, me))
         line = _retold(fact)
     elif kind == "share_place":
         line = PLACE_LINES[rng.choice(me["places"])["kind"]]  # Every known place is shared; the line names one.
@@ -116,7 +116,7 @@ def _retold(fact: Mapping[str, Any]) -> str:
 
 def _addressee(scene: Mapping[str, Any], me: Mapping[str, Any], act: str) -> Mapping[str, Any]:
     people = [item for item in scene["participants"] if item["id"] != me["id"]]
-    if act in ("accept", "decline"):
+    if act in ("accept", "decline") or (act == "invite" and (scene["invitation"] or {}).get("to") == me["id"]):
         return next(item for item in people if item["id"] == scene["invitation"]["from"])
     ids = [item["id"] for item in scene["participants"]]
     return scene["participants"][(ids.index(me["id"]) + 1) % len(ids)] if me["id"] in ids else people[0]
@@ -127,12 +127,19 @@ def _act(view: Mapping[str, Any], rng: Random) -> tuple[str, str]:
     scene, me, acts = view["conversation"], view["speaker"], view["acts"]
     if not scene["turns"]:
         return "greet", "greet"
+    if view.get("answer"):
+        # The invitee decided (`invitations.answer_options`): the line says it, a counter with an invitation of its own.
+        decided = view["answer"]
+        return ("invite", decided.partition(":")[2]) if decided.startswith("counter:") else (decided, decided)
     if "accept" in acts:
         answer = _answer(scene["invitation"]["kind"], me)
         return answer, answer
     needs = me["needs"]
     if max(needs["thirst"], needs["fatigue"], needs["bladder"]) >= PRESSING:
         return "leave_conversation", "pressed"
+    aimed = _aimed(view)
+    if aimed:
+        return aimed
     said = {turn["act"] for turn in scene["turns"] if turn["speaker"] == me["id"]}
     # Even a guest with company enough answers once before taking their leave. A barkeep on duty never
     # does: his needs read as content (all at 0), but he stays while the guest does.
@@ -142,6 +149,32 @@ def _act(view: Mapping[str, Any], rng: Random) -> tuple[str, str]:
     if view.get("closing_called") and said - {"greet"} and not me.get("on_duty"):
         return "leave_conversation", "closing"
     return _opening_up(view, said, rng) or _friendly(view, said, rng)
+
+
+def _aimed(view: Mapping[str, Any]) -> tuple[str, str] | None:
+    # What the speaker came for, in the first of the aim's acts that is on offer and has lines to voice it: an invite
+    # names its invitation, news the fact the aim names. Passing the time is what scripted lines do anyway.
+    me, aim = view["speaker"], view["speaker"].get("aim")
+    if aim is None or aim["done"] or aim["id"] == "pass_time":
+        return None
+    for act in aim["acts"]:
+        if act not in view["acts"]:
+            continue
+        if act == "invite" and aim["detail"] in view.get("invitations", []):
+            return "invite", aim["detail"]
+        if act == "share_news" and _aimed_fact(me, aim) is not None and _aimed_fact(me, aim) in _untold(view["conversation"], me):
+            return "share_news", "share_news"
+        if act in LINES:
+            return act, act
+    return None
+
+
+def _aimed_fact(me: Mapping[str, Any], aim: Mapping[str, Any] | None = None) -> Mapping[str, Any] | None:
+    # The piece of news a tell-news aim names, if the speaker holds it.
+    aim = aim or me.get("aim")
+    if aim is None or not aim["id"].startswith("tell_news:"):
+        return None
+    return next((item for item in me["news"] if item["id"] == aim["detail"]), None)
 
 
 def _opening_up(view: Mapping[str, Any], said: set[str], rng: Random) -> tuple[str, str] | None:

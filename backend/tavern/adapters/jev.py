@@ -9,6 +9,7 @@ import httpx
 from tavern.body.activities import ACTIVITIES, FAMILIES
 from tavern.body.items import ITEMS
 from tavern.mind.agents import EvaluatorError
+from tavern.social.aims import AIMS
 
 
 class JevError(EvaluatorError):
@@ -54,7 +55,9 @@ def _visitor_view() -> str:
         "their intention, weigh each option against their intention: what serves it is natural, what goes against "
         "it needs a reason, but an urgent need or something that just happened still comes first. An option "
         "marked as serving their goal moves them toward what they set out to do tonight; prefer it unless a need "
-        "presses or something just happened."
+        "presses or something just happened. An option marked as answering someone is how people respond to what "
+        "was just done to them: a wrong is taken up or let go according to temper and pride, a kindness is thanked "
+        "or returned, and letting either pass is natural for the patient and the shy."
     )
 
 
@@ -121,8 +124,35 @@ def _seat_question(action: Mapping[str, Any], observation: Mapping[str, Any]) ->
         "them.")}
 
 
+def _aim_question(action: Mapping[str, Any], observation: Mapping[str, Any]) -> dict[str, Any]:
+    if "aim" not in action:
+        raise ValueError("Aim questions only judge aims")
+    rubric = ["Makes no sense for them now", "Unlikely, though possible", "A reasonable choice",
+              "A very natural choice", "Exactly what they would do now"]
+    guidance = AIMS[action["aim"].partition(":")[0]].guidance
+    return {"type": "score", "criteria": rubric, "instructions": (
+        f"{_visitor_view()} {_guest(observation)} has decided to talk to someone and is choosing what to come for; "
+        f"it is what they will try to bring up. How natural is it for them, right now, to "
+        f"{_briefed(observation, action, 'talk')}? {guidance}")}
+
+
+def _answer_question(action: Mapping[str, Any], observation: Mapping[str, Any]) -> dict[str, Any]:
+    if "answer" not in action:
+        raise ValueError("Answer questions only judge answers")
+    rubric = ["Makes no sense for them now", "Unlikely, though possible", "A reasonable choice",
+              "A very natural choice", "Exactly what they would do now"]
+    return {"type": "score", "criteria": rubric, "instructions": (
+        f"{_visitor_view()} {_guest(observation)} has been invited to do something together and must answer. "
+        "Weigh what the invitation offers against what they want now, who is asking and what they think of them; "
+        "a guest may also turn it down and suggest something else. Turning down a friendly offer needs a reason: a "
+        "pressing need, tiredness, or not liking who asks. With none, guests came to the inn for company and a game, "
+        "so they mostly say yes, and settling in their seat is no reason to refuse. How natural is it for them, right now, to "
+        f"{_briefed(observation, action, 'answer')}?")}
+
+
 def request_body(
     observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]], model: str, seats: bool = False,
+    aims: bool = False, answers: bool = False,
 ) -> dict[str, Any]:
     """Lay out the scoring request Jev receives; the API key travels in a header, never here.
 
@@ -131,14 +161,19 @@ def request_body(
         candidates: Candidate actions, each asked about once.
         model: Jev model name.
         seats: Ask the seat question of `sit` candidates instead of the action question.
+        aims: Ask the aim question of aim candidates (`aims.aim_candidates`) instead of the action question.
+        answers: Ask the answer question of answer candidates (`agents.choose_answer`) instead of the action question.
 
     Returns:
         The JSON body: the model, the observation and candidates as state, one question per candidate.
 
     Raises:
-        ValueError: A candidate's verb or item cannot be described, or a seat candidate is not `sit`.
+        ValueError: A candidate's verb or item cannot be described, a seat candidate is not `sit`, an aim candidate
+            has no aim, or both `seats` and `aims` are set.
     """
-    question = _seat_question if seats else _action_question
+    if seats + aims + answers > 1:
+        raise ValueError("A request asks one kind of question only")
+    question = _seat_question if seats else _aim_question if aims else _answer_question if answers else _action_question
     return {"model": model, "state": {"observation": dict(observation), "actions": list(candidates)},
             "questions": {action["id"]: question(action, observation) for action in candidates}}
 
@@ -211,7 +246,7 @@ async def evaluate_actions(
         ValueError: Candidates, their verbs or configuration are malformed.
         JevError: Transport, HTTP, JSON or typed-score validation fails.
     """
-    return (await _evaluate(observation, candidates, config, client, False))[0]
+    return (await _evaluate(observation, candidates, config, client, "actions"))[0]
 
 
 async def evaluate_seats(
@@ -233,7 +268,7 @@ async def evaluate_seats(
         ValueError: Candidates are not `sit` actions or configuration is malformed.
         JevError: Transport, HTTP, JSON or typed-score validation fails.
     """
-    return (await _evaluate(observation, candidates, config, client, True))[0]
+    return (await _evaluate(observation, candidates, config, client, "seats"))[0]
 
 
 async def evaluate_actions_metered(
@@ -255,7 +290,7 @@ async def evaluate_actions_metered(
         ValueError: Candidates, their verbs or configuration are malformed.
         JevError: Transport, HTTP, JSON, typed-score or usage validation fails.
     """
-    scores, payload = await _evaluate(observation, candidates, config, client, False)
+    scores, payload = await _evaluate(observation, candidates, config, client, "actions")
     return scores, _read_usage(payload)
 
 
@@ -278,7 +313,97 @@ async def evaluate_seats_metered(
         ValueError: Candidates are not `sit` actions or configuration is malformed.
         JevError: Transport, HTTP, JSON, typed-score or usage validation fails.
     """
-    scores, payload = await _evaluate(observation, candidates, config, client, True)
+    scores, payload = await _evaluate(observation, candidates, config, client, "seats")
+    return scores, _read_usage(payload)
+
+
+async def evaluate_answers(
+    observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
+    config: Mapping[str, Any], client: httpx.AsyncClient | None = None,
+) -> dict[str, float]:
+    """Score the ways an invitee might answer an invitation.
+
+    Args:
+        observation: Private agent view with an option sentence per candidate.
+        candidates: Answer candidates (`agents.choose_answer`).
+        config: Explicit API key, model name and timeout in seconds.
+        client: Optional injected HTTP client for boundary verification.
+
+    Returns:
+        Scores normalized from the five-level rubric to 0-1.
+
+    Raises:
+        ValueError: Candidates are not answers or configuration is malformed.
+        JevError: Transport, HTTP, JSON or typed-score validation fails.
+    """
+    return (await _evaluate(observation, candidates, config, client, "answers"))[0]
+
+
+async def evaluate_answers_metered(
+    observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
+    config: Mapping[str, Any], client: httpx.AsyncClient | None = None,
+) -> tuple[dict[str, float], Usage | None]:
+    """Score answers, as `evaluate_answers`, and report the request's token usage.
+
+    Args:
+        observation: Private agent view with an option sentence per candidate.
+        candidates: Answer candidates (`agents.choose_answer`).
+        config: Explicit API key, model name and timeout in seconds.
+        client: Optional injected HTTP client for boundary verification.
+
+    Returns:
+        Normalized scores, and the provider-reported usage or None when it reported none.
+
+    Raises:
+        ValueError: Candidates are not answers or configuration is malformed.
+        JevError: Transport, HTTP, JSON, typed-score or usage validation fails.
+    """
+    scores, payload = await _evaluate(observation, candidates, config, client, "answers")
+    return scores, _read_usage(payload)
+
+
+async def evaluate_aims(
+    observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
+    config: Mapping[str, Any], client: httpx.AsyncClient | None = None,
+) -> dict[str, float]:
+    """Score the aims a guest who chose a social option might come for.
+
+    Args:
+        observation: Private agent view with an option sentence per candidate.
+        candidates: Aim candidates (`aims.aim_candidates`).
+        config: Explicit API key, model name and timeout in seconds.
+        client: Optional injected HTTP client for boundary verification.
+
+    Returns:
+        Scores normalized from the five-level rubric to 0-1.
+
+    Raises:
+        ValueError: Candidates are not aims or configuration is malformed.
+        JevError: Transport, HTTP, JSON or typed-score validation fails.
+    """
+    return (await _evaluate(observation, candidates, config, client, "aims"))[0]
+
+
+async def evaluate_aims_metered(
+    observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
+    config: Mapping[str, Any], client: httpx.AsyncClient | None = None,
+) -> tuple[dict[str, float], Usage | None]:
+    """Score aims, as `evaluate_aims`, and report the request's token usage.
+
+    Args:
+        observation: Private agent view with an option sentence per candidate.
+        candidates: Aim candidates (`aims.aim_candidates`).
+        config: Explicit API key, model name and timeout in seconds.
+        client: Optional injected HTTP client for boundary verification.
+
+    Returns:
+        Normalized scores, and the provider-reported usage or None when it reported none.
+
+    Raises:
+        ValueError: Candidates are not aims or configuration is malformed.
+        JevError: Transport, HTTP, JSON, typed-score or usage validation fails.
+    """
+    scores, payload = await _evaluate(observation, candidates, config, client, "aims")
     return scores, _read_usage(payload)
 
 
@@ -296,11 +421,11 @@ def _read_usage(payload: Mapping[str, Any]) -> Usage | None:
 
 async def _evaluate(
     observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]], config: Mapping[str, Any],
-    client: httpx.AsyncClient | None, seats: bool,
+    client: httpx.AsyncClient | None, stage: str,
 ) -> tuple[dict[str, float], Any]:
     ids = _candidate_ids(candidates)
     key, model, timeout = _configuration(config)
-    body = request_body(observation, candidates, model, seats)
+    body = request_body(observation, candidates, model, stage == "seats", stage == "aims", stage == "answers")
     if client is None:
         async with httpx.AsyncClient() as owned_client:
             payload = await _post_scores(owned_client, body, key, timeout)

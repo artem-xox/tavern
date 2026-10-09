@@ -54,7 +54,7 @@ def turn_content(view: Mapping[str, Any]) -> str:
         The per-call text that follows the cached blocks.
     """
     nudges = _nudges(view["conversation"], view["speaker"], view.get("invitations") or [], view["acts"],
-                     view.get("closing_called", False))
+                     view.get("closing_called", False), view.get("answer"))
     earlier = _earlier(view["speaker"].get("earlier") or [])
     return "\n\n".join([_scene(view["conversation"], view["speaker"]), *([earlier] if earlier else []),
                         _self(view["speaker"]), _news(view["speaker"]), *([f"THE MOMENT\n\n{nudges}"] if nudges else []), _offer(view),
@@ -74,7 +74,7 @@ def _offer(view: Mapping[str, Any]) -> str:
 
 
 def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequence[str], acts: Sequence[str],
-            closing_called: bool = False) -> str:
+            closing_called: bool = False, answer: str | None = None) -> str:
     # The scripted writer's thresholds (`scripted.PRESSING`, `scripted.CONTENT`) say when a need
     # presses or company is enough; left to itself, the model rarely leaves or shares places.
     # A barkeep's needs read as all at 0, which would send him off for company enough: his nudge says he stays.
@@ -100,7 +100,33 @@ def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequen
         if me["needs"]["boredom"] >= BORED and "dice_together" in invitations else "",
         "The speaker means to join someone here at their table: when saying so, use the promise act addressed to "
         "them, so the game can hold the speaker to it; promise it only if the speaker means to come."
-        if "promise" in acts and me.get("aims_at") in {item["id"] for item in scene["participants"]} else "") if text)
+        if "promise" in acts and me.get("aims_at") in {item["id"] for item in scene["participants"]} else "",
+        _came_for(me.get("aim"), acts), _answering(answer)) if text)
+
+
+def _answering(answer: str | None) -> str:
+    # What the speaker has decided to answer the invitation waiting for them; the acts offered are then only that one.
+    if answer is None:
+        return ""
+    if answer == "accept":
+        return "The speaker has decided to accept the invitation: say yes in their own words."
+    if answer == "decline":
+        return "The speaker has decided to turn it down: refuse in their own words, politely or not as they are."
+    kind = answer.partition(":")[2]
+    return (f"The speaker has decided to turn it down and offer something else: invite them to {KINDS[kind]} instead "
+            f"(invitation {kind}) in their own words.")
+
+
+def _came_for(aim: Mapping[str, Any] | None, acts: Sequence[str]) -> str:
+    # What the speaker came over to do, until they have: the acts that carry it, and the news or invitation to name.
+    # Passing the time needs no nudge, and an aim none of whose acts is offered now waits.
+    fitting = [act for act in (aim["acts"] if aim else []) if act in acts]
+    if aim is None or aim["done"] or aim["id"] == "pass_time" or not fitting:
+        return ""
+    names = {"share_news": "fact_id", "invite": "invitation"}
+    named = f" ({names[fitting[0]]} {aim['detail']})" if fitting[0] in names and aim["detail"] else ""
+    return (f"The speaker came over to {aim['words']}: say so in their own words, early. "
+            f"Acts that fit: {', '.join(fitting)}{named}.")
 
 
 def _scene(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:

@@ -19,10 +19,11 @@ from tavern.mind.cards import TEXT_FIELDS
 from tavern.mind.feelings import feelings
 from tavern.mind.portrait import portrait
 from tavern.mind.scripted import scripted_turn
+from tavern.social.aims import aim_view, note_spoken
 from tavern.social.conversation import ACTS, offered_acts
 from tavern.social.facts import carried
 from tavern.social.heard import earlier_lines, hear_line
-from tavern.social.invitations import offered_kinds
+from tavern.social.invitations import offered_kinds, pending_for
 from tavern.social.names import called, knows_name, looks
 from tavern.social.overhearing import overhear_turn
 from tavern.social.scenes import Conversation, Turn
@@ -122,6 +123,7 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
             "closing_called": closing_called(world)}
     if on_staff(speaker):
         view["speaker"]["on_duty"] = post_of(world["map"], speaker)["name"]
+    view["speaker"]["aim"] = aim_view(world, scene, speaker)
     _add_invitations(view, world, scene, speaker)
     return view
 
@@ -142,7 +144,12 @@ def _add_invitations(view: dict[str, Any], world: Mapping[str, Any], scene: Conv
     # The pending invitation, the kinds the speaker may offer, and how they regard the others,
     # which invitations and insults depend on.
     view["conversation"]["invitation"] = deepcopy(scene["invitation"])
-    view["invitations"] = offered_kinds(world, scene, speaker)
+    waiting = pending_for(scene, speaker["id"])
+    answer = None if waiting is None else waiting.get("answer")
+    # An invitee who decided to counter may offer that kind and no other.
+    view["invitations"] = ([answer.partition(":")[2]] if answer and answer.startswith("counter:")
+                           else [] if answer else offered_kinds(world, scene, speaker))
+    view["answer"] = answer
     view["speaker"]["opinions"] = {item: opinion_of(speaker, item, world["time"])
                                    for item in scene["participants"] if item != speaker["id"]}
 
@@ -317,6 +324,7 @@ def _speak(world: World, scene: Conversation, speaker_id: str, result: Mapping[s
                   "next_turn_at": world["time"] + reading_time(result["line"], world["rules"]["conversation"])})
     listener = people[result["addressee"]]["name"] if result["addressee"] else "everyone"
     log_event(world, speaker_id, "turn", f"{people[speaker_id]['name']} to {listener} ({result['act']}): {result['line']}")
+    note_spoken(world, scene, people[speaker_id])
     # Heard before the act takes effect, while the scene still holds everyone who spoke in it.
     hear_line(world, scene, turn)
     overhear_turn(world, scene, turn)

@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from tavern.body.expression import Emote, Gaze
     from tavern.body.hearing import Stimulus
     from tavern.mind.intentions import Intention
+    from tavern.body.projects import Project
     from tavern.social.facts import Fact, News
     from tavern.social.heard import Heard
     from tavern.social.commitments import Commitment
@@ -53,6 +54,7 @@ class Decision(TypedDict):
     error: str | None
     seat: NotRequired[dict[str, Any]]
     family: NotRequired[dict[str, Any]]
+    aim: NotRequired[dict[str, Any]]
 
 
 class Actor(TypedDict):
@@ -245,6 +247,7 @@ class World(TypedDict):
     next_conversation_id: int
     commitments: "list[Commitment]"
     invitations: "list[Errand]"
+    projects: "list[Project]"
     news: "list[News]"
     rules: Rules
 

@@ -1,13 +1,13 @@
 """The live runtime of one session: its world, the requests in flight, the operator's commands and saves."""
 
-from collections.abc import Callable, Coroutine
+from collections.abc import Callable, Coroutine, Sequence
 from copy import deepcopy
 from pathlib import Path
 from random import Random
 from typing import Any, Mapping, Protocol
 
 
-from tavern.adapters.jev import evaluate_actions, evaluate_seats
+from tavern.adapters.jev import evaluate_actions, evaluate_aims, evaluate_answers, evaluate_seats
 from tavern.adapters.persistence import FileStore
 from tavern.body.activities import ACTIVITIES, client_activities
 from tavern.body.items import client_items
@@ -19,6 +19,7 @@ from tavern.hall.state import World
 from tavern.hall.world import create_world, step_world
 from tavern.mind import agents
 from tavern.mind.feelings import minds
+from tavern.mind.selection import read_answers
 from tavern.mind.intentions import INTENTION_RULES, Intender, IntentionRules
 from tavern.mind.model_health import HealthBoard
 from tavern.mind.scripted import write_scripted_turn
@@ -40,11 +41,32 @@ async def choose_action(observation: Mapping[str, Any], config: Mapping[str, Any
     Raises:
         ValueError: Observation or configuration is malformed.
     """
-    return await agents.choose_action(observation, config, rng, agents.Evaluators(evaluate_actions, evaluate_seats))
+    return await agents.choose_action(observation, config, rng, agents.Evaluators(evaluate_actions, evaluate_seats, aims=evaluate_aims))
+
+
+async def choose_invitation_answer(observation: Mapping[str, Any], invitation: Mapping[str, Any],
+                                   options: Sequence[str], config: Mapping[str, Any], rng: Random) -> dict[str, Any]:
+    """Decide an invitee's answer with the Jev adapter wired in as the model.
+
+    Args:
+        observation: The invitee's observation.
+        invitation: The pending invitation.
+        options: The answers open to them.
+        config: Explicit API key, model, timeout and selection temperature.
+        rng: The runtime's seeded random generator.
+
+    Returns:
+        The result of `tavern.mind.agents.choose_answer`.
+    """
+    return await agents.choose_answer(observation, invitation, options, config, rng, agents.Evaluators(
+        evaluate_actions, evaluate_seats, aims=evaluate_aims, answers=evaluate_answers))
 
 
 # Decides a visitor's next action from their observation, the AI config and the runtime's generator.
 Chooser = Callable[[Mapping[str, Any], Mapping[str, Any], Random], Coroutine[Any, Any, dict[str, Any]]]
+# Decides how an invitee answers: their observation, the invitation, the answers open, the AI config, the generator.
+Answerer = Callable[[Mapping[str, Any], Mapping[str, Any], Sequence[str], Mapping[str, Any], Random],
+                    Coroutine[Any, Any, dict[str, Any]]]
 
 
 class Store(Protocol):
@@ -69,7 +91,8 @@ class TavernRuntime:
                  scenario: Scenario | None = None, writer: TurnWriter = write_scripted_turn,
                  writer_label: str = "scripted",
                  intender: Intender | None = None, intention_rules: IntentionRules = INTENTION_RULES,
-                 choose: Chooser = choose_action, health: HealthBoard | None = None) -> None:
+                 choose: Chooser = choose_action, health: HealthBoard | None = None,
+                 answer: Answerer = choose_invitation_answer) -> None:
         self.map_data = deepcopy(dict(map_data))
         self.scenario = scenario
         self.world = self._open(seed)
@@ -84,8 +107,11 @@ class TavernRuntime:
         self.intender, self.intention_rules = intender, intention_rules
         # How Jev and Claude are doing, for the client's badges; None where nobody watches them.
         self.health = health
+        # With the answers setting on, an invitee's answer is their own choice, asked before their line.
+        answers = ((lambda observation, invitation, options: answer(observation, invitation, options, self.ai_config,
+                                                                    self.rng)) if read_answers(self.ai_config) else None)
         self.mind = MindLoop(TaskCourier(), lambda observation: choose(observation, self.ai_config, self.rng),
-                             lambda view: self.writer(view, self.ai_config), intender, intention_rules)
+                             lambda view: self.writer(view, self.ai_config), intender, intention_rules, answers)
 
     @property
     def pending(self) -> dict[str, tuple[Any, int]]:

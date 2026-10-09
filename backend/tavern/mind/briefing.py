@@ -1,6 +1,7 @@
 """Plain-language briefings: a visitor's situation and options, told from their own view."""
 
 from collections.abc import Mapping, Sequence
+import math
 from typing import Any
 
 from tavern.body.activities import ACTIVITIES, FAMILIES
@@ -13,6 +14,8 @@ from tavern.mind.hall_view import (company_at, headcount, home_table_of, hosts_w
 from tavern.mind.options import family_text, option_text
 from tavern.mind.portrait import portrait
 from tavern.social.invitations import invitation_note
+from tavern.social.responses import age_of, answering, calling
+from tavern.social.thoughts import THOUGHTS
 
 Observation = Mapping[str, Any]
 Action = Mapping[str, Any]
@@ -39,6 +42,7 @@ def brief(observation: Observation, candidates: Sequence[Mapping[str, Any]]) -> 
              _own_seat(observation),
              _needs(observation), _unwell(observation), _temperament(observation), portrait(observation["actor"]),
              feelings(observation), invitation_note(observation), _intention(observation), _promises(observation),
+             _unanswered(observation),
              _people(observation),
              _places(observation), _tables(observation), _recent(observation))
     return {"situation": " ".join(part for part in parts if part),
@@ -182,8 +186,34 @@ def _promises(observation: Observation) -> str:
 
 
 def _marked(observation: Observation, action: Mapping[str, Any], text: str) -> str:
-    # An option that brings the guest closer to their goal says so, so a model need not match prose.
-    return f"{text} (this serves the goal they set themselves)" if serving(observation, action) else text
+    # An option that brings the guest closer to their goal, or answers what was just done to them, says so, so a
+    # model need not match prose.
+    goal = " (this serves the goal they set themselves)" if serving(observation, action) else ""
+    return f"{text}{goal}{_answers(observation, answering(observation['actor'], observation.get('time', -math.inf), action))}"
+
+
+def _answers(observation: Observation, thought: Mapping[str, Any] | None) -> str:
+    if thought is None:
+        return ""
+    return f" (this answers {_who(observation, thought)} {_ago(age_of(thought, observation['time']))})"
+
+
+def _who(observation: Observation, thought: Mapping[str, Any]) -> str:
+    # "Rurik, who beat them at dice": the one the thought is about, as the guest calls them, and what they did.
+    person = next((item for item in [*observation.get("visitors", []), *observation.get("people", [])]
+                   if item["id"] == thought["about"]), None)
+    return f"{label_of(person) if person else 'that guest'}, who {THOUGHTS[thought['kind']].reason}"
+
+
+def _unanswered(observation: Observation) -> str:
+    # What was just done to the guest by someone in sight and still waits for an answer; without a clock, nothing does.
+    now = observation.get("time")
+    if now is None:
+        return ""
+    sight = {item["id"] for item in [*observation.get("visitors", []), *observation.get("people", [])]}
+    waiting = [f"{_who(observation, item)} ({_ago(age_of(item, now))})" for item in calling(observation["actor"], now)
+               if item["about"] in sight]
+    return f"Unanswered: {'; '.join(waiting)}." if waiting else ""
 
 
 def _intention(observation: Observation) -> str:

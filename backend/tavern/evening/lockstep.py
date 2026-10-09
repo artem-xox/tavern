@@ -4,16 +4,17 @@ from collections.abc import Callable, Coroutine, Mapping
 from dataclasses import dataclass, field
 import math
 from random import Random
-from typing import Any, TypedDict
+from typing import Any, NotRequired, TypedDict
 
 from tavern.evening.decisions import free_to_decide
 from tavern.evening.mind_loop import MindLoop
 from tavern.hall.staff import guests
 from tavern.hall.state import World
 from tavern.hall.world import step_world
-from tavern.mind.agents import Evaluators, choose_action
+from tavern.mind.agents import Evaluators, choose_action, choose_answer
 from tavern.mind.intentions import INTENTION_RULES, Intender, IntentionRules
 from tavern.mind.scripted import write_scripted_turn
+from tavern.mind.selection import read_answers
 from tavern.social.turns import TurnWriter
 
 
@@ -40,13 +41,15 @@ class Pace:
 
 
 class Choice(TypedDict):
-    """One stage of a decision: `kind` is `actions`, `seats` or `family`, as in recorded calls."""
+    """One stage of a decision: `kind` is `actions`, `seats`, `family` or `aims`, as in recorded calls. `scores` holds
+    the score of every option asked, by ID, in request order (`evening.choice_metrics` reads it)."""
 
     time: float
     actor_id: str
     kind: str
     source: str
     error: str | None
+    scores: NotRequired[dict[str, float]]
 
 
 class Spell(TypedDict):
@@ -239,8 +242,11 @@ async def run_evening(world: World, config: Mapping[str, Any], rng: Random, eval
         raise ValueError("A paused world never reaches the end of the evening")
     run = _Run(events=list(world["events"]))
     courier = LockstepCourier(pace.model_latency)
+    # With the answers setting on, an invitee's answer is their own choice, asked before their line (C7).
+    answer = ((lambda observation, invitation, options: choose_answer(observation, invitation, options, config, rng,
+                                                                      evaluators)) if read_answers(config) else None)
     mind = MindLoop(courier, lambda observation: choose_action(observation, config, rng, evaluators),
-                    lambda view: writer(view, config), intender, intention_rules)
+                    lambda view: writer(view, config), intender, intention_rules, answer)
     _track(world, run)
     while not evening_over(world, pace.time_limit):
         step_world(world, pace.step)
@@ -257,10 +263,11 @@ def _record_choices(world: Mapping[str, Any], run: _Run, courier: LockstepCourie
                     asked: list[tuple[str, Any]]) -> None:
     for actor_id, ticket in asked:
         decision = courier.outcome(ticket)()
-        second = [(kind, decision[key]) for kind, key in (("seats", "seat"), ("family", "family")) if key in decision]
+        second = [(kind, decision[key]) for kind, key in (("seats", "seat"), ("family", "family"), ("aims", "aim")) if key in decision]
         stages = [("actions", decision), *second]
         run.choices.extend({"time": world["time"], "actor_id": actor_id, "kind": kind,
-                            "source": stage["source"], "error": stage["error"]} for kind, stage in stages)
+                            "source": stage["source"], "error": stage["error"], "scores": stage["scores"]}
+                           for kind, stage in stages)
 
 
 def _collect(world: Mapping[str, Any], run: _Run) -> None:

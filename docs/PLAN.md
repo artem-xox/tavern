@@ -30,7 +30,10 @@ their seat until a loud noise wakes them.
 Tables and manners (T0–T8, 2026-10-08): a guest walks over to another table to talk instead of taking a chair
 there, two guests agree to move to a free table together, sitting down at a held table uninvited upsets its hosts
 (an apology mends it), and only the hearth table is appealing.
-Saved worlds are version 15. Step 6 (memory between evenings) waits for Stage 4.
+Choice depth (C0-C8, 2026-10-09): the choice is lean (the fixtures Jev has no reason to weigh are left out), a guest can answer what
+was just done to them, a social option carries an aim the line writer reads, temperament shapes the draw, and a thirsty
+newcomer, a table's host and a loser at dice can each take on a plan of several steps.
+Saved worlds are version 18. Step 6 (memory between evenings) waits for Stage 4.
 **Done when:** recorded live evenings meet the Stage 1 metrics, an observer can retell
 a story from at least one of them, and its chronicle cites only logged events.
 
@@ -81,3 +84,6 @@ next milestone before starting that milestone.
 | D20 | A guest's save fails to load once their conversation has outlasted the talk's 8 s: a part in a scene is never clamped at zero, so `_remaining` goes negative and `check_saved_progress` rejects it | read in `lifecycle._interact` and shown by hand (`_remaining` of -3.0 gives "Invalid saved action timer"); not yet seen in a live autosave. A `game` and a `served` verb are clamped | Failing test first (save during a 12 s conversation), then clamp every held-open verb; a bug fix, in its own commit |
 | D22 | Haiku never uses the `promise` act, so MIND.md's say-and-do cannot be measured | live seeds 7, 5 and 1 (2026-10-05): offered in 108 of 223 lines, used 0, and "I'll sit by the fire if you'll have me" went out as `small_talk` | Let a `talk_to` or `sit_with` goal said aloud become a commitment without an act, or promise more kinds once giving (H3) lands; then count `promises` in `metrics.json` |
 | D23 | "A new fact on a topic" is not a reason to take stock: telling news logs no memory for the listener | `social/facts.tell` calls `log_event` for the speaker only; MIND.md step 3 | Record `news_heard` for the listener and add it to `intentions.SALIENT_EVENTS`; it changes recorded evenings, so replay-pinned tests move with it |
+| D24 | An invitee who chooses their own answer makes the evening quieter | live seeds 5, 7, 1, 2, 3 (2026-10-09), C7: accepted invitations 3.6 → 1.0 an evening, dice games about a quarter, with `AI_ANSWERS=true` | `AI_ANSWERS` is off. Raise the wish for company, give an invitation an inviter's pull, or ask for an answer only when a need presses or the inviter is disliked; then switch it on and rerun C8's table |
+| D25 | Every arrival takes the same three first steps | offline seeds 0-9 (2026-10-09), C5: pairs of guests with the same first three choices per evening 1.9 → 8.2, since `settle_in` covers ale, chair and drink for each thirsty newcomer | Let a guest's character shape the plan (a loner takes the corner, a drinker the bar), or offer `settle_in` to some arrivals only |
+| D26 | The `called` count of C2 is not logged, so how many wrongs go unanswered is counted by hand from the events | C2: `responses` in `metrics.json` has answers only | Log a `called` event when `think` makes a thought of a kind in `RESPONSES` about a guest in the hall |

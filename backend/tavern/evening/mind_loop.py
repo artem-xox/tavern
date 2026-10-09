@@ -6,17 +6,19 @@ free to decide, deliver written lines, claim and ask the next lines, then take i
 way. They differ only in when an answer arrives, which a `Courier` decides.
 """
 
-from collections.abc import Callable, Coroutine, Mapping
+from collections.abc import Callable, Coroutine, Mapping, Sequence
 from contextlib import suppress
 import asyncio
 from typing import Any, Protocol
 
 from tavern.evening.decisions import apply_decision, decision_requests, free_to_decide, stale_requests
 from tavern.hall.state import World, find_actor
+from tavern.hall.world import observe_actor, observe_people
 from tavern.mind.goals import settle_goals
 from tavern.mind.intentions import (UNMETERED, IntentionRules, Intender, deliver_intention, intention_requests,
                                     stale_intentions)
-from tavern.social.turns import TurnResult, claim_turns, deliver_turn
+from tavern.social.invitations import answer_options
+from tavern.social.turns import TurnResult, claim_turns, deliver_turn, next_speaker
 
 # One answer in flight. What it is belongs to the courier: a task live, a stored coroutine in lockstep.
 Ticket = Any
@@ -24,6 +26,8 @@ Ticket = Any
 # Asks for a visitor's next decision from their observation; for a turn from the speaker's view.
 Decide = Callable[[Mapping[str, Any]], Coroutine[Any, Any, dict[str, Any]]]
 Write = Callable[[Mapping[str, Any]], Coroutine[Any, Any, TurnResult]]
+# Asks how an invitee answers: their observation, the pending invitation and the answers open to them.
+Answer = Callable[[Mapping[str, Any], Mapping[str, Any], Sequence[str]], Coroutine[Any, Any, dict[str, Any]]]
 
 
 class Courier(Protocol):
@@ -83,7 +87,7 @@ class MindLoop:
     """
 
     def __init__(self, courier: Courier, decide: Decide, write: Write, intender: Intender | None,
-                 rules: IntentionRules) -> None:
+                 rules: IntentionRules, answer: Answer | None = None) -> None:
         """Create a loop with nothing in flight.
 
         Args:
@@ -92,14 +96,17 @@ class MindLoop:
             write: Asks for a line from a speaker's view.
             intender: Writes intentions; None offline, which asks for none.
             rules: When guests take stock.
+            answer: Asks how an invitee answers; None leaves the answer to the line writer, as before.
         """
-        self.courier, self.decide, self.write = courier, decide, write
+        self.courier, self.decide, self.write, self.answer = courier, decide, write, answer
         self.intender, self.rules = intender, rules
         self.pending: dict[str, tuple[Ticket, int]] = {}
         self.revisions: dict[str, int] = {}
         self.next_decision: dict[str, float] = {}
         self.asked_at: dict[str, float] = {}
         self.writing: dict[tuple[str, int], Ticket] = {}
+        self.answering: dict[tuple[str, int], tuple[Ticket, dict[str, str]]] = {}
+        self.answered: set[tuple[str, int]] = set()  # Answers asked once, whatever came of it: never asked twice.
         self.intending: dict[str, tuple[Ticket, float, dict[str, Any]]] = {}
         self.next_intention: dict[str, float] = {}
         self.made: dict[str, int] = {}
@@ -117,6 +124,8 @@ class MindLoop:
         self._drop_stale_decisions(world)
         self._apply_decisions(world)
         asked = self._ask_decisions(world)
+        self._deliver_answers(world)
+        self._ask_answers(world)
         self._deliver_lines(world)
         self._ask_lines(world)
         if self.intender is not None:
@@ -135,7 +144,7 @@ class MindLoop:
         """Cancel everything in flight and forget every revision, wait and pause."""
         for ticket in self._tickets():
             self.courier.cancel(ticket)
-        for requests in (self.pending, self.writing, self.intending, self.next_intention, self.asked_at,
+        for requests in (self.pending, self.writing, self.answering, self.answered, self.intending, self.next_intention, self.asked_at,
                          self.revisions, self.next_decision, self.made):
             requests.clear()
 
@@ -147,6 +156,7 @@ class MindLoop:
 
     def _tickets(self) -> list[Ticket]:
         return [*(ticket for ticket, _revision in self.pending.values()), *self.writing.values(),
+                *(ticket for ticket, _ in self.answering.values()),
                 *(ticket for ticket, _, _ in self.intending.values())]
 
     def _drop_stale_decisions(self, world: World) -> None:
@@ -177,6 +187,45 @@ class MindLoop:
             self.asked_at[actor_id] = world["time"]
             asked.append((actor_id, ticket))
         return asked
+
+    def _ask_answers(self, world: World) -> None:
+        # An invitee whose line comes next first decides how they answer: the scene's claim holds their line back
+        # until the answer is in (or the line's own timeout speaks a scripted one).
+        if self.answer is None:
+            return
+        for scene in world["conversations"]:
+            invitation = scene["invitation"]
+            key = (scene["id"], len(scene["turns"]))
+            invitee = find_actor(world, invitation["to"]) if invitation else None
+            if (invitation is None or invitee is None or "answer" in invitation or key in self.answering or key in self.answered
+                    or scene["writing"] is not None or scene["written"] is not None
+                    or next_speaker(scene) != invitation["to"]):
+                continue
+            options = answer_options(world, scene, invitee)
+            seen = {**observe_actor(world, invitee["id"]), "people": observe_people(world, invitee["id"])}
+            scene["writing"] = {"turn": key[1], "speaker": invitee["id"], "since": world["time"]}
+            self.answered.add(key)
+            self.answering[key] = (self.courier.send(self.answer(seen, dict(invitation), options), world["time"]),
+                                   dict(invitation))
+
+    def _deliver_answers(self, world: World) -> None:
+        for key, (ticket, asked) in list(self.answering.items()):
+            if not self.courier.ready(ticket, world["time"]):
+                continue
+            del self.answering[key]
+            outcome = self.courier.outcome(ticket)
+            scene = next((item for item in world["conversations"] if item["id"] == key[0]), None)
+            claim = scene["writing"] if scene is not None else None
+            if scene is not None and claim is not None and (claim["turn"], claim["speaker"]) == (key[1], asked["to"]):
+                scene["writing"] = None  # The line can be claimed now, with the answer if one came.
+            current = scene["invitation"] if scene is not None else None
+            try:
+                answer = outcome()["answer"]
+            except Exception:  # A failed request leaves the answer to the line writer, as without this stage.
+                continue
+            if scene is not None and current == asked and answer in answer_options(
+                    world, scene, find_actor(world, asked["to"]) or {}):
+                current["answer"] = answer
 
     def _deliver_lines(self, world: World) -> None:
         for key, ticket in list(self.writing.items()):

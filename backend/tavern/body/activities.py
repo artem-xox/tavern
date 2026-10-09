@@ -9,6 +9,7 @@ from tavern.body.drunkenness import drink_beer
 from tavern.body.hearing import Sound
 from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World
+from tavern.social.aims import begin_aim
 from tavern.social.giving import hand_over
 from tavern.social.invitations import begin_errand
 from tavern.social.names import called
@@ -39,6 +40,9 @@ class Activity:
         names_item: Whether the action names an item from the actor's hands in `Action.item`, as giving does.
         opens_errand: Whether it sends the actor off on an errand for the visitor it targets (see
             `tavern.social.errands`); like giving, it needs that visitor near.
+        opens_project: The kind of `tavern.body.projects.PROJECTS` it opens instead of an action of its own, or None;
+            the world starts the project when the verb is chosen, and the project's steps do the walking.
+        chooses_chair: Whether a second decision picks the chair it is about, as for `seating`.
         duration: Seconds of interaction (nominal for a scene part), or None for a decision step
             that never runs in the world.
         family: The `FAMILIES` entry it is chosen under: a first decision picks the family, a
@@ -84,6 +88,8 @@ class Activity:
     near_person: bool = False
     names_item: bool = False
     opens_errand: bool = False
+    opens_project: str | None = None
+    chooses_chair: bool = False
     requires_item: str | None = None
     empty_target: str | None = None
     shared_target: bool = False
@@ -126,12 +132,14 @@ def _open_scene(world: World, actor: Actor, partner: Actor | None) -> None:
     if partner is None:
         raise ValueError("Starting a conversation needs a partner")
     start_conversation(world, actor, partner)
+    begin_aim(world, actor, partner)
 
 
 def _join_scene(world: World, actor: Actor, member: Actor | None) -> None:
     if member is None:
         raise ValueError("Joining a conversation needs a member to join")
     join_conversation(world, actor, member)
+    begin_aim(world, actor, member)
 
 
 def _approach_scene(world: World, actor: Actor, partner: Actor | None) -> None:
@@ -141,6 +149,7 @@ def _approach_scene(world: World, actor: Actor, partner: Actor | None) -> None:
         start_conversation(world, actor, partner)
     else:
         join_conversation(world, actor, partner)
+    begin_aim(world, actor, partner)
 
 
 def _confront(world: World, actor: Actor, victim: Actor | None, event: str, thought: str, act: str) -> None:
@@ -389,7 +398,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "guest who is tired late in the evening usually goes home to bed instead. It is pointless "
                       "when they are not tired."),
     # A decision step, not a world action: a second evaluation picks the chair to `sit` on.
-    Activity(verb="seating", duration=None,
+    Activity(verb="seating", duration=None, chooses_chair=True,
              family="seat_choice",
              what="find a seat: choose a free chair at one of the tables and sit down",
              guidance="A separate decision picks the chair, which becomes their own seat for the rest of the "
@@ -397,6 +406,25 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "they already have a seat of their own, this means moving to another table, which is "
                       "worth it mainly to join company they like when they feel lonely, or to take a table "
                       "nobody holds. Barging in on strangers is rude: to reach them they walk over and talk."),
+    # A decision step that opens a project (`tavern.body.projects`): a second decision picks the chair, and the project's
+    # own steps (the tap, the chair, the mug) do the rest.
+    Activity(verb="settle_in", duration=None, target_kinds=("chair",), opens_project="settle_in", chooses_chair=True,
+             family="refreshment", label="Settle in with an ale",
+             what="get a mug of ale at the tap, then take a chair at a table and drink it there",
+             guidance="What a guest does who has just come in thirsty and has no seat: one errand to the tap, then "
+                      "they sit down with their drink. A separate decision picks the chair. Pointless with a mug in "
+                      "hand, a seat of their own, or when they are not thirsty."),
+    # Plans of several steps, like `settle_in`: the world opens a project when the verb is chosen.
+    Activity(verb="stand_a_round", duration=None, opens_project="stand_a_round", family="fetching",
+             label="Stand a round",
+             what="stand the table a round: fetch each tablemate who has no mug an ale from the tap, one after the other",
+             guidance="A generous thing to do for a table of friends or new acquaintances who sit with empty hands. It "
+                      "costs a walk to the tap for each of them, so it is worth it only for someone who is not "
+                      "pressed by a need of their own. Pointless when only one has no mug (just bring that one a drink)."),
+    Activity(verb="rematch", duration=None, opens_project="rematch", family="company", label="Ask for a rematch",
+             what="go to {target}, who just beat them at dice, and ask for another game",
+             guidance="Natural for someone who has just lost at dice, more so if they are bored or hot-tempered. It is "
+                      "pointless once the loss no longer rankles, or when no dice table is free."),
     # Not a world action of its own: the world reads it as using the place, from the front of its line.
     Activity(verb="cut_in_line", target_kinds=("tap", "toilet", "darts"), duration=None, family="cutting_in",
              label="Cut in line",
@@ -421,7 +449,7 @@ FAMILIES: Mapping[str, str] = MappingProxyType({
     "idling": "wait a moment",
     "going_home": "go home for the night",
     "cutting_in": "push to the front of a line instead of waiting",
-    "fetching": "fetch someone at their table or beside them a drink from the tap",
+    "fetching": "fetch someone at their table or beside them a drink from the tap, or stand the whole table a round",
     "confront": "shove someone who wronged them, or start a fight",
 })
 

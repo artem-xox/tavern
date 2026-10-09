@@ -6,6 +6,9 @@ from typing import Any
 
 from tavern.body.activities import FAMILIES
 from tavern.body.items import ITEMS
+from tavern.social.aims import aim_words
+from tavern.social.giving import empty_handed_tablemates
+from tavern.social.invitations import KINDS, known_place
 from tavern.social.tables import liked
 from tavern.mind.hall_view import (company_at, headcount, hosts_words, in_use, known_object, label_of, line_place,
                                    place_words, setting_words, steps_to, visible_visitor, walk_words)
@@ -30,6 +33,57 @@ def option_text(observation: Observation, action: Action) -> str:
     if action["verb"] not in _OPTIONS:
         raise ValueError(f"Cannot describe the action verb {action['verb']!r}")
     return _waiting(observation, action) or _OPTIONS[action["verb"]](observation, action)
+
+
+def aim_text(observation: Observation, candidate: Action) -> str:
+    """Describe an aim of a social option in plain words, from the visitor's own view.
+
+    Args:
+        observation: The visitor's observation.
+        candidate: An aim candidate (`aims.aim_candidates`): the social action and its `aim`.
+
+    Returns:
+        The action's sentence and what the visitor means by it, for example "chat with Bea, meaning to ask Bea for a
+        rematch at dice".
+
+    Raises:
+        ValueError: The person is not in sight, or the action cannot be described.
+    """
+    person = next((item for item in [*observation.get("visitors", []), *observation.get("people", [])]
+                   if item["id"] == candidate["target_id"]), None)
+    if person is None:
+        raise ValueError(f"Cannot describe an aim towards {candidate['target_id']!r}, who is not in sight")
+    topics = {fact_id: fact["topic"] for fact_id, fact in observation["actor"].get("knowledge", {}).get("facts", {}).items()}
+    words = aim_words(candidate["aim"], label_of(person), topics)
+    return f"{option_text(observation, candidate)}, meaning to {words}"
+
+
+def answer_text(observation: Observation, invitation: Mapping[str, Any], answer: str) -> str:
+    """Describe one way of answering an invitation, from the invitee's view.
+
+    Args:
+        observation: The invitee's observation.
+        invitation: The pending invitation (`kind`, `from`).
+        answer: `accept`, `decline` or `counter:<kind>`.
+
+    Returns:
+        For example "turn down Ada's invitation to play a game of dice and invite them to play darts together instead".
+
+    Raises:
+        ValueError: The inviter is not in sight, or the answer is none of the three.
+    """
+    inviter = next((item for item in [*observation.get("visitors", []), *observation.get("people", [])]
+                    if item["id"] == invitation["from"]), None)
+    if inviter is None:
+        raise ValueError(f"Cannot describe an answer to {invitation['from']!r}, who is not in sight")
+    asked = f"{label_of(inviter)}'s invitation to {KINDS[invitation['kind']]}"
+    if answer == "accept":
+        return f"accept {asked}"
+    if answer == "decline":
+        return f"turn down {asked}"
+    if answer.startswith("counter:") and answer.partition(":")[2] in KINDS:
+        return f"turn down {asked} and invite them to {KINDS[answer.partition(':')[2]]} instead"
+    raise ValueError(f"Cannot describe the answer {answer!r}")
 
 
 def _waiting(observation: Observation, action: Action) -> str:
@@ -69,6 +123,27 @@ def _pour(observation: Observation, action: Action) -> str:
     barkeep = next((person for person in observation.get("people", []) if person.get("post")), None)
     pour = f"ask {label_of(barkeep)} for a mug of ale" if barkeep else "pour a mug of ale"
     return f"walk {walk_words(steps_to(observation, tap))} to the tap and {pour} ({tap.get('stock')} servings when last seen)"
+
+
+def _settle(observation: Observation, action: Action) -> str:
+    tap = known_object(observation, known_place(observation["actor"], "tap"))
+    where = f"walk {walk_words(steps_to(observation, tap))} to the tap, get a mug of ale, and take a chair at a table to " \
+        "drink it there" if tap else "get a mug of ale and take a chair at a table to drink it there"
+    return f"{where} (they choose the chair next)"
+
+
+def _round(observation: Observation, action: Action) -> str:
+    people = {item["id"]: item for item in observation.get("people", [])}
+    names = [label_of(people[item]) for item in empty_handed_tablemates(observation) if item in people]
+    return (f"stand the table a round: fetch {', '.join(names)} an ale each from the tap, one after the other "
+            "(they sit there with empty hands)")
+
+
+def _rematch(observation: Observation, action: Action) -> str:
+    other = next((item for item in observation.get("people", []) if item["id"] == action["target_id"]), None)
+    if other is None:
+        raise ValueError(f"Cannot describe a rematch with {action['target_id']!r}, who is not in sight")
+    return f"go to {label_of(other)}, who beat them at dice, and ask for a rematch"
 
 
 def _drink(observation: Observation, action: Action) -> str:
@@ -271,7 +346,7 @@ def family_text(observation: Observation, option: Action) -> str:
 
 # Each verb's option sentence; a new verb needs an entry here (and one in `activities.ACTIVITIES`).
 _OPTIONS: Mapping[str, Callable[[Observation, Action], str]] = {
-    "take_beer": _pour, "drink": _drink, "rest": _rest, "seating": _seating, "sit": _sit, "doze": _doze, "talk": _talk,
+    "take_beer": _pour, "settle_in": _settle, "stand_a_round": _round, "rematch": _rematch, "drink": _drink, "rest": _rest, "seating": _seating, "sit": _sit, "doze": _doze, "talk": _talk,
     "approach": _approach, "join_conversation": _join, "play_darts": _darts, "stand_at_bar": _bar, "watch": _watch,
     "watch_dice": _watch_dice,
     "use_toilet": _toilet, "give": _give, "bring_drink": _bring,

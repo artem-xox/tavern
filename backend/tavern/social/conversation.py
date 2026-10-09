@@ -153,7 +153,12 @@ def offered_acts(world: Mapping[str, Any], scene: Conversation, speaker: Mapping
         while they hold any news.
     """
     others = [item for item in _members(world, scene) if item["id"] != speaker["id"]]
-    now, asked = world["time"], invitations.pending_for(scene, speaker["id"]) is not None
+    now, waiting = world["time"], invitations.pending_for(scene, speaker["id"])
+    if waiting is not None and "answer" in waiting:
+        # The invitee has decided (`invitations.answer_options`): the line says it, and nothing else.
+        act = invitations.answer_act(waiting["answer"])
+        return {act: ACTS[act].meaning}
+    asked = waiting is not None
     situational = {
         "introduce": any(called(item, speaker) != speaker["name"] for item in others),
         "insult": any(opinion_of(speaker, item["id"], now) <= DISLIKED for item in others),

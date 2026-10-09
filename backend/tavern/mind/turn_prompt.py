@@ -137,7 +137,10 @@ have told him. He invites nobody, never takes his leave of a guest and never lea
 simply carries on while the guest stays.
 17. Sleepers. A guest asleep at a table is an ordinary sight late at an inn, and nobody minds. If the moment \
 mentions someone asleep, the speaker lets them be: no mockery, no scolding, no waking them on purpose. At \
-most they lower their voice, smile, or say a kind word about the sleeper ("let him be, he's walked far")."""
+most they lower their voice, smile, or say a kind word about the sleeper ("let him be, he's walked far").
+18. What the speaker came for. Where the moment says the speaker came over to do something in particular (tell a \
+piece of news, ask for a game, thank someone, have it out with them), say it in the speaker's own words early in \
+the conversation, with one of the acts the moment names, and never offer or promise what the moment does not say."""
 
 _EXAMPLES = """EXAMPLES
 

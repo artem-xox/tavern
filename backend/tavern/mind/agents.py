@@ -6,14 +6,20 @@ import math
 from random import Random
 from typing import Any, NotRequired, TypedDict
 
+from tavern.body.activities import ACTIVITIES
 from tavern.body.items import ITEMS
+from tavern.body.projects import PROJECTS
 from tavern.mind.briefing import brief
 from tavern.mind.families import family_scores, group_families
 from tavern.mind.hall_view import in_use, line_place
-from tavern.mind.local_policy import local_scores, local_seat_scores
+from tavern.mind.local_policy import ASK_FLOOR, local_aim_scores, local_answer_scores, local_scores, local_seat_scores
 from tavern.mind.observation import known_objects, own_actor
-from tavern.mind.selection import bounded, drawable, read_temperature, select
-from tavern.social.giving import empty_handed_company, gift_targets
+from tavern.mind.options import aim_text, answer_text
+from tavern.mind.selection import bounded, drawable, read_aims, read_answers, read_lean, read_projects, read_temperature, select, spread, worth_asking
+from tavern.social.aims import AIM_VERBS, aim_candidates, offered_aims
+from tavern.social.invitations import answer_act
+from tavern.social.giving import empty_handed_company, empty_handed_tablemates, gift_targets
+from tavern.social.responses import calling
 from tavern.social.hostility import HOSTILITY, hostile_targets
 from tavern.social.tables import liked
 
@@ -22,6 +28,8 @@ from tavern.social.tables import liked
 KEEPS_OWN_MUG = 50
 # The tiredness (0–100) from which a guest in their seat may choose to sleep there.
 SLEEPY = 60
+# The thirst (0–100) from which a seatless guest may settle in with an ale: the briefing's "mild", as for the tap itself.
+SETTLES_IN = 35
 
 
 class EvaluatorError(RuntimeError):
@@ -43,6 +51,8 @@ class Action(TypedDict):
     target_id: str | None
     # The item from the actor's hands that a verb such as `give` names; absent for the others.
     item: NotRequired[str]
+    # What a social verb (`aims.AIM_VERBS`) is for, once the third stage of the choice has picked it.
+    aim: NotRequired[str]
 
 
 # Scores each candidate 0–1 from the evaluator view, the candidates and the AI config;
@@ -56,12 +66,16 @@ class Evaluators:
 
     `actions` scores the first stage, one option per activity family; `seats` the chairs
     after `seating`; `family` the actions within another chosen family. Without `family`,
-    `actions` scores those too: they are ordinary actions.
+    `actions` scores those too: they are ordinary actions. `aims` scores the aims of a chosen social
+    option, when the config asks for them (`selection.read_aims`); a model cannot be asked without it. `answers` scores how
+    an invitee answers (`selection.read_answers`), likewise.
     """
 
     actions: Evaluator
     seats: Evaluator
     family: Evaluator | None = None
+    aims: Evaluator | None = None
+    answers: Evaluator | None = None
 
 
 class Decision(TypedDict):
@@ -136,8 +150,9 @@ def _concrete_candidates(observation: Mapping[str, Any]) -> list[Action]:
         actions.extend(_line_options(observation, item, _action(verbs[item["kind"]], item["id"])))
     return [*actions, *_seat_wish(observation, objects), *_views(observation, objects), *_games(objects),
             *_bar_stand(observation, actor, objects), *talks, *_gifts(observation, actor),
-            *_fetches(observation, actor, objects), *_nap(observation, actor), _action("inspect"), _action("wait"),
-            *_hostile(observation)]
+            *_fetches(observation, actor, objects), *_round(observation, actor, objects),
+            *_rematches(observation, actor, objects), *_nap(observation, actor), *_settling(observation, actor, objects),
+            _action("inspect"), _action("wait"), *_hostile(observation)]
 
 
 def _line_options(observation: Mapping[str, Any], item: Mapping[str, Any], action: Action) -> list[Action]:
@@ -228,6 +243,41 @@ def _nap(observation: Mapping[str, Any], actor: Mapping[str, Any]) -> list[Actio
     sleepy = (actor["needs"]["fatigue"] >= SLEEPY and actor["id"] not in observation.get("on_errands", [])
               and not _called(observation))
     return [_action("doze")] if sleepy and actor.get("seat_id") else []
+
+
+def _settling(observation: Mapping[str, Any], actor: Mapping[str, Any],
+              objects: Sequence[Mapping[str, Any]]) -> list[Action]:
+    # A thirsty guest with no seat and no mug may take on the whole of coming in: an ale from the tap, a chair, the drink.
+    # Only where the world has projects (`observation["projects"]`), and not for one out on an errand for someone.
+    stocked = any(item["kind"] == "tap" and item.get("stock") for item in objects)
+    able = (not actor.get("seat_id") and not actor["inventory"]["beer"] and actor["needs"]["thirst"] >= SETTLES_IN
+            and actor["id"] not in observation.get("on_errands", []))
+    return [_action("settle_in")] if "settle_in" in observation.get("projects", []) and able and stocked \
+        and _free_seats(observation, objects) else []
+
+
+def _round(observation: Mapping[str, Any], actor: Mapping[str, Any],
+           objects: Sequence[Mapping[str, Any]]) -> list[Action]:
+    # Standing the whole table a round: a seated guest with a free hand and a tap that has ale, and at least two
+    # tablemates visibly holding no mug (a single one is just brought a drink).
+    able = (actor["inventory"].get("beer", 0) < ITEMS["beer"].hands and actor["id"] not in observation.get("on_errands", [])
+            and any(item["kind"] == "tap" and item.get("stock") for item in objects))
+    return [_action("stand_a_round")] if "stand_a_round" in observation.get("projects", []) and able \
+        and len(empty_handed_tablemates(observation)) >= 2 else []
+
+
+def _rematches(observation: Mapping[str, Any], actor: Mapping[str, Any],
+               objects: Sequence[Mapping[str, Any]]) -> list[Action]:
+    # Asking someone who just beat them at dice for another game: while the loss still calls for an answer, the
+    # winner is in sight and a dice table they know is free as far as they can tell.
+    if "rematch" not in observation.get("projects", []) or actor["id"] in observation.get("on_errands", []):
+        return []
+    free = any(item["kind"] == "dice_table" and len((item.get("game") or {}).get("players", [])) < 2 for item in objects)
+    lost = {item["about"] for item in calling(actor, observation.get("time", -math.inf)) if item["kind"] == "lost_at_dice"}
+    # Only a winner they can get to: seated at a table, or standing beside them.
+    return [_action("rematch", person["id"]) for person in observation.get("people", [])
+            if free and person["id"] in lost and not person.get("post")
+            and (person.get("seat_id") or person.get("beside"))]
 
 
 def _hostile(observation: Mapping[str, Any]) -> list[Action]:
@@ -322,7 +372,8 @@ async def choose_action(
 
     Args:
         observation: Private actor observation; no other NPC's state is used.
-        config: Explicit API key, model, timeout and selection temperature.
+        config: Explicit API key, model, timeout and selection temperature, and the settings `lean`, `aims` and
+            `projects` when on.
         rng: Seeded random generator owned by the calling simulation.
         evaluators: Model port asked when the config holds a key. New callers pass it;
             None asks no model: a config with a model key then fails loudly.
@@ -340,20 +391,87 @@ async def choose_action(
         ValueError: Observation, configuration or limit is malformed.
     """
     evaluators = evaluators or Evaluators(_unwired, _unwired)
+    # Projects are offered where the config allows them: the observation says which kinds exist (`_settling` reads it).
+    observation = {**observation, "projects": list(PROJECTS)} if read_projects(config) else observation
     options, temperature = build_candidates(observation), read_temperature(config)
     # Every concrete action is scored together, so a family is worth its best member.
     local = local_scores(observation, [item for option in options for item in option.get("members", [option])])
     draw = (config, rng, temperature, limit)
     decision = await _decide(observation, options, family_scores(options, local), evaluators.actions, *draw)
     chosen = decision["action"]
-    if chosen["verb"] == "seating":
+    if "members" in chosen:
+        member = await _decide(observation, chosen["members"], local, evaluators.family or evaluators.actions, *draw)
+        decision = {**decision, "action": member["action"], "family": {"name": chosen["id"], **_stage(member)}}
+    action = decision["action"]
+    if ACTIVITIES[action["verb"]].chooses_chair:
+        # A second decision picks the chair; the verb that wished for one (sitting, or settling in) takes it.
         seats = build_seat_candidates(observation)
         seat = await _decide(observation, seats, local_seat_scores(observation, seats), evaluators.seats, *draw)
-        return {**decision, "action": seat["action"], "seat": _stage(seat)}
-    if "members" not in chosen:
+        return {**decision, "action": _at_chair(action, seat["action"]), "seat": _stage(seat)}
+    return await _aimed(observation, decision, evaluators, draw)
+
+
+def _at_chair(wish: Mapping[str, Any], seat: Mapping[str, Any]) -> Action:
+    # `seating` becomes the chair's own `sit`; any other wish for a chair keeps its verb and names the chair.
+    return _action(seat["verb"] if wish["verb"] == "seating" else wish["verb"], seat["target_id"])
+
+
+async def _aimed(observation: Mapping[str, Any], decision: dict[str, Any], evaluators: Evaluators,
+                 draw: tuple[Mapping[str, Any], Random, float, int]) -> dict[str, Any]:
+    # The third stage: a social option is followed by what the guest means by it, when the config asks. One aim is
+    # set without a request, and shows no stage.
+    action, config = decision["action"], draw[0]
+    if action["verb"] not in AIM_VERBS or not read_aims(config):
         return decision
-    member = await _decide(observation, chosen["members"], local, evaluators.family or evaluators.actions, *draw)
-    return {**decision, "action": member["action"], "family": {"name": chosen["id"], **_stage(member)}}
+    aims = offered_aims(observation, action)
+    if len(aims) == 1:
+        return {**decision, "action": {**action, "aim": aims[0]}}
+    if config.get("typesafe_api_key") and evaluators.aims is None:
+        raise ValueError("The aims setting is on but no evaluator of aims is wired")
+    candidates = aim_candidates(action, aims)
+    stage = await _decide(observation, candidates, local_aim_scores(observation, candidates),
+                          evaluators.aims or _unwired, *draw, view=_aim_view)
+    aim = stage["action"]["aim"]
+    return {**decision, "action": {**action, "aim": aim}, "aim": {"name": aim, **_stage(stage)}}
+
+
+async def choose_answer(observation: Mapping[str, Any], invitation: Mapping[str, Any], options: Sequence[str],
+                        config: Mapping[str, Any], rng: Random, evaluators: Evaluators | None = None,
+                        limit: int = 8) -> dict[str, Any]:
+    """Choose how an invitee answers the invitation waiting for them.
+
+    Args:
+        observation: The invitee's observation, with the people in sight.
+        invitation: The pending invitation (`kind`, `from`, `to`).
+        options: The answers open to them (`invitations.answer_options`).
+        config: Explicit API key, model, timeout and selection temperature.
+        rng: Seeded random generator owned by the calling simulation.
+        evaluators: Model port; its `answers` is asked when the config holds a key.
+        limit: Most options one request may hold.
+
+    Returns:
+        `answer` (one of the options), the `source` of the choice (`jev` or `local`), the `scores` per option and
+        the visible fallback `error`, as for a decision.
+
+    Raises:
+        ValueError: There are no options, an option is not an answer, the config is malformed, or a key is set with
+            the answers setting on but no evaluator of answers is wired.
+    """
+    if not options:
+        raise ValueError("An invitee needs at least one way to answer")
+    evaluators = evaluators or Evaluators(_unwired, _unwired)
+    if config.get("typesafe_api_key") and read_answers(config) and evaluators.answers is None:
+        raise ValueError("The answers setting is on but no evaluator of answers is wired")
+    candidates = [{"id": option, "verb": answer_act(option), "target_id": invitation["from"], "answer": option}
+                  for option in options]
+
+    def view(seen: Mapping[str, Any], shown: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+        return {**_evaluator_view(seen, []), "options": {item["id"]: answer_text(seen, invitation, item["answer"])
+                                                         for item in shown}}
+
+    decision = await _decide(observation, candidates, local_answer_scores(observation, invitation, candidates),
+                             evaluators.answers or _unwired, config, rng, read_temperature(config), limit, view=view)
+    return {"answer": decision["action"]["answer"], **_stage(decision)}
 
 
 def _stage(decision: Mapping[str, Any]) -> dict[str, Any]:
@@ -368,17 +486,38 @@ def _evaluator_view(observation: Mapping[str, Any], candidates: Sequence[Mapping
     return {**brief(observation, candidates), "self": {key: actor.get(key) for key in keys}}
 
 
+def _in_line(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]]) -> set[str]:
+    # Keeping one's place in a line is never a fixture to drop, however little the place is wanted.
+    places = {item["id"]: item for item in observation["objects"] if "queue_spots" in item}
+    return {action["id"] for action in candidates
+            if action.get("target_id") in places and line_place(observation, places[action["target_id"]])[1]}
+
+
+def _aim_view(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    # The same picture of the guest as for any choice, with each option told as an aim of the action.
+    return {**_evaluator_view(observation, []), "options": {item["id"]: aim_text(observation, item)
+                                                            for item in candidates}}
+
+
 async def _decide(
     observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]], local: Mapping[str, float], remote: Evaluator,
     config: Mapping[str, Any], rng: Random, temperature: float, limit: int,
+    view: Callable[[Mapping[str, Any], Sequence[Mapping[str, Any]]], dict[str, Any]] = _evaluator_view,
 ) -> dict[str, Any]:
+    asks = bool(config.get("typesafe_api_key"))
+    # Only a model's request is made lean, and only when the config says so: the local policy already ranks by these
+    # scores, so a model-less evening draws from the same options as before.
+    if asks and read_lean(config):
+        candidates = worth_asking(candidates, local, ASK_FLOOR, _in_line(observation, candidates))
     candidates = bounded(candidates, local, limit)
     scores, source, error = {action["id"]: local[action["id"]] for action in candidates}, "local", None
-    if config.get("typesafe_api_key"):
+    if asks:
         try:
-            scores = await remote(_evaluator_view(observation, candidates), candidates, config)
+            scores = await remote(view(observation, candidates), candidates, config)
             source = "jev"
         except EvaluatorError as failure:
             error = str(failure)
-    return {"action": select(drawable(candidates, scores), scores, temperature, rng),
+    # Everyone draws from the options near their best, but how near and how evenly depends on who they are.
+    draw = spread(observation["actor"], temperature)
+    return {"action": select(drawable(candidates, scores, draw.window), scores, draw.temperature, rng),
             "source": source, "scores": scores, "error": error}

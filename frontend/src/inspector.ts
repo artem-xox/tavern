@@ -1,7 +1,9 @@
 /** The inspector panel: one visitor's story first, then what lies behind it, drawn into its container. */
 import { html, render, svg, type TemplateResult } from "lit-html";
+import { aimLabel } from "./aims";
 import { clock } from "./clock";
 import { iconPixels } from "./icons";
+import { projectLabel } from "./projects";
 import { mergeThoughts, NEED_PIPS, needPips, needTone, needWord, opinionBar, type MergedThought } from "./mindview";
 import { spriteOf } from "./sprites";
 import type { ActivityView, Actor, ItemView, Mind, NewsCopy, Verb, World, WorldObject } from "./types";
@@ -42,7 +44,7 @@ export function renderInspector(inspector: HTMLElement, actor: Actor, ctx: Inspe
     <div class="insp-section"><p class="eyebrow"><span>Carrying</span><span></span></p>${slots(actor, ctx)}${visit(actor, ctx)}</div>
     ${mind ? feelings(mind) : ""}${mind ? people(mind) : ""}${mind ? news(mind) : ""}
     <details id="traits-detail"><summary><span>Character</span><span>${Object.keys(actor.traits).length} traits</span></summary><div class="detail-body"><div class="traits">${Object.entries(actor.traits).map(([key, value]: [string, unknown]) => html`<span>${key.replaceAll("_", " ")} ${value}</span>`)}</div></div></details>
-    <details id="decision-detail"><summary><span>Why this decision?</span><span>${actor.decision?.source === "jev" ? "JEV" : "LOCAL"}</span></summary><div class="detail-body">${scoreList(actor.decision?.scores)}${actor.decision?.error ? html`<p class="decision-error">Fallback: ${actor.decision.error}</p>` : ""}${seatChoice(actor)}</div></details>
+    <details id="decision-detail"><summary><span>Why this decision?</span><span>${actor.decision?.source === "jev" ? "JEV" : "LOCAL"}</span></summary><div class="detail-body">${scoreList(actor.decision?.scores)}${actor.decision?.error ? html`<p class="decision-error">Fallback: ${actor.decision.error}</p>` : ""}${seatChoice(actor)}${aimChoice(actor)}</div></details>
     <details id="knowledge-detail"><summary><span>What they know</span><span>${Object.keys(actor.knowledge.objects).length}</span></summary><div class="detail-body">${knowledge(actor)}</div></details>
     <details id="memory-detail"><summary><span>Recent memories</span><span>${actor.memory.length}</span></summary><div class="detail-body memories">${memories(actor)}</div></details>`, inspector);
 }
@@ -81,7 +83,8 @@ function now(actor: Actor, ctx: InspectorContext): TemplateResult {
   const place: string = actor.visit.left_at !== undefined ? `Left at ${clock(actor.visit.left_at)}` : target ? target.name : partner ? `With ${partner.name}` : "";
   const written = actor.intention;
   const goal: string = written?.goal ? `${written.goal.kind.replace("_", " ")} ${ctx.world.actors.find((item: Actor): boolean => item.id === written.goal?.target)?.name ?? written.goal.target}` : "";
-  return html`<div class="now"><p class="action">${action}</p><p class="where">${place}</p>
+  const plan = ctx.world.projects.find((item) => item.by === actor.id);
+  return html`<div class="now"><p class="action">${action}</p><p class="where">${place}</p>${plan ? html`<p class="where">${projectLabel(plan.kind, plan.step, plan.of)}</p>` : ""}
     ${written ? html`<p class="thought">“${written.thought}”</p><p class="intends"><b>Intends</b> ${written.intention}</p>${goal ? html`<span class="goal" title="${written.goal?.status ?? ""}">Goal · ${goal}</span>` : ""}`
       : html`<p class="quiet">${ctx.intentions ? "No intention written yet." : "Offline: no Claude key, so guests write no intentions."}</p>`}</div>`;
 }
@@ -149,6 +152,13 @@ function seatChoice(actor: Actor): TemplateResult | string {
   if (!stage) return "";
   const heading: string = family ? `Which ${family.name.replace("_", " ")}?` : "Which seat?";
   return html`<p class="stage-heading">${heading} <span class="source-tag">${stage.source === "jev" ? "JEV" : "LOCAL"}</span></p>${scoreList(stage.scores)}${stage.error ? html`<p class="decision-error">Fallback: ${stage.error}</p>` : ""}`;
+}
+
+/** Show the third decision stage: what a visitor who chose to talk came for. */
+function aimChoice(actor: Actor): TemplateResult | string {
+  const stage = actor.decision?.aim;
+  if (!stage) return "";
+  return html`<p class="stage-heading">Came for: ${aimLabel(stage.name)} <span class="source-tag">${stage.source === "jev" ? "JEV" : "LOCAL"}</span></p>${scoreList(stage.scores)}${stage.error ? html`<p class="decision-error">Fallback: ${stage.error}</p>` : ""}`;
 }
 
 function scoreList(scores: unknown): TemplateResult {

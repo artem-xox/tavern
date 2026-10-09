@@ -34,8 +34,9 @@ KINDS: Mapping[str, str] = MappingProxyType({
 # seating: those sent are on their way to chairs at a table (`table`) and the errand lasts until they sit.
 STAGES = ("accepted", "fetching", "carrying", "following", "seating")
 
-# `from` is a Python keyword, hence the functional form.
-Invitation = TypedDict("Invitation", {"kind": str, "from": str, "to": str})
+# `from` is a Python keyword, hence the functional form. `answer` is what the invitee decided to answer (see
+# `answer_options`), once their choice is in.
+Invitation = TypedDict("Invitation", {"kind": str, "from": str, "to": str, "answer": NotRequired[str]})
 # `held` is the mugs the inviter held when an errand began; `since` the game time carrying began; `unasked`
 # marks an errand nobody invited (a guest bringing a drink of their own accord), which the other knows nothing of;
 # `table` is the table a `seating` errand goes to.
@@ -172,6 +173,56 @@ def _dice_table_free(world: Mapping[str, Any], actor: Mapping[str, Any]) -> bool
     return table is not None and bool(open_chairs(world, table))
 
 
+def counter_kinds(world: Mapping[str, Any], scene: Mapping[str, Any], speaker: Mapping[str, Any]) -> list[str]:
+    """List what a guest could offer instead of the invitation waiting for them.
+
+    Args:
+        world: Current world.
+        scene: Their scene, with an invitation to them pending.
+        speaker: The invitee.
+
+    Returns:
+        The kinds they could invite the inviter to (`offered_kinds` as if nothing were pending), without the kind they
+        were asked.
+    """
+    asked = pending_for(scene, speaker["id"])
+    kinds = offered_kinds(world, {**scene, "invitation": None}, speaker)
+    return [kind for kind in kinds if asked is None or kind != asked["kind"]]
+
+
+def answer_options(world: Mapping[str, Any], scene: Mapping[str, Any], invitee: Mapping[str, Any]) -> list[str]:
+    """List how an invitee may answer the invitation waiting for them.
+
+    Args:
+        world: Current world.
+        scene: Their scene.
+        invitee: The guest asked.
+
+    Returns:
+        `accept`, `decline`, and `counter:<kind>` for each kind in `counter_kinds`.
+    """
+    return ["accept", "decline", *(f"counter:{kind}" for kind in counter_kinds(world, scene, invitee))]
+
+
+def answer_act(answer: str) -> str:
+    """Name the speech act that says an answer.
+
+    Args:
+        answer: `accept`, `decline` or `counter:<kind>`.
+
+    Returns:
+        `accept`, `decline` or `invite` (a counter is an invitation of the invitee's own).
+
+    Raises:
+        ValueError: The answer is none of these.
+    """
+    if answer in ("accept", "decline"):
+        return answer
+    if isinstance(answer, str) and answer.startswith("counter:") and answer.partition(":")[2] in KINDS:
+        return "invite"
+    raise ValueError(f"Unknown answer to an invitation: {answer!r}")
+
+
 def pending_for(scene: Mapping[str, Any], actor_id: str) -> Invitation | None:
     """Find the invitation a guest in a scene is to answer.
 
@@ -198,7 +249,12 @@ def invite(world: World, scene: Conversation, speaker: Actor,
     """
     if addressee is None:
         raise ValueError("An invitation needs an addressee")
-    scene["invitation"] = {"kind": scene["turns"][-1]["invitation"], "from": speaker["id"], "to": addressee["id"]}
+    kind, asked = scene["turns"][-1]["invitation"], pending_for(scene, speaker["id"])
+    scene["invitation"] = {"kind": kind, "from": speaker["id"], "to": addressee["id"]}
+    if asked is not None:
+        # An invitation made while one waits for the speaker turns that one down in favour of this: a counter.
+        record_event(world, speaker, "invitation_countered", f"{speaker['name']} turned down an invitation to "
+                     f"{KINDS[asked['kind']]} and invited {addressee['name']} to {KINDS[kind]} instead")
 
 
 def accept(world: World, scene: Conversation, speaker: Actor,
@@ -215,7 +271,9 @@ def accept(world: World, scene: Conversation, speaker: Actor,
     if invitation is None:
         return
     scene["invitation"] = None
-    world["invitations"].append(Errand(**invitation, stage="accepted", held=0))
+    errand: Errand = {"kind": invitation["kind"], "from": invitation["from"], "to": invitation["to"],
+                      "stage": "accepted", "held": 0}  # The answer, decided or not, is not carried into the errand.
+    world["invitations"].append(errand)
     record_event(world, speaker, "invitation_accepted", f"{speaker['name']} accepted an invitation to "
                  f"{KINDS[invitation['kind']]} from {_people(world)[invitation['from']]['name']}")
 
@@ -338,8 +396,8 @@ def check_invitations(world: Mapping[str, Any]) -> None:
     """
     for scene in world["conversations"]:
         item = scene["invitation"]
-        if item is not None and (not isinstance(item, dict) or set(item) != {"kind", "from", "to"}
-                                 or not _valid(item, scene["participants"])):
+        if item is not None and (not isinstance(item, dict) or set(item) - {"answer"} != {"kind", "from", "to"}
+                                 or not _valid(item, scene["participants"]) or not _answer_valid(item)):
             raise ValueError(f"Invalid saved pending invitation {item!r}")
     errands, guests = world.get("invitations"), [item["id"] for item in [*world["actors"], *world["departed"]]]
     if not isinstance(errands, list):
@@ -361,6 +419,17 @@ def check_invitations(world: Mapping[str, Any]) -> None:
             raise ValueError(f"Saved invitation {item!r} must have a start exactly while it is carrying")
         if "since" in item:
             number(item["since"], "Saved carrying start", 0, world["time"])
+
+
+def _answer_valid(item: Mapping[str, Any]) -> bool:
+    # A decided answer is `accept`, `decline` or a counter of some other kind than the one asked.
+    if "answer" not in item:
+        return True
+    try:
+        answer_act(item["answer"])
+    except ValueError:
+        return False
+    return item["answer"] != f"counter:{item['kind']}"
 
 
 def _valid(item: Mapping[str, Any], guests: Sequence[str]) -> bool:

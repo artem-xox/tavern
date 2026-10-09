@@ -74,12 +74,19 @@ export interface FamilyStage extends DecisionStage {
   name: string;
 }
 
+/** The third stage after choosing a social option: what the visitor came to talk for, as an aim ID such as `rematch`. */
+export interface AimStage extends DecisionStage {
+  name: string;
+}
+
 export interface Action {
   id: string;
   verb: Verb;
   target_id: string | null;
   /** The kind of item a verb such as `give` hands over; absent for the others. */
   item?: string;
+  /** What a social verb is for (`pass_time`, `tell_news:<fact>`, `invite:<kind>`, ...); absent for the others. */
+  aim?: string;
 }
 
 export interface Actor {
@@ -120,7 +127,7 @@ export interface Actor {
   memory: unknown[];
   /** The lines this visitor spoke or heard tonight, oldest first, the newest 40 kept. */
   heard: Heard[];
-  decision: (DecisionStage & { seat?: DecisionStage; family?: FamilyStage }) | null;
+  decision: (DecisionStage & { seat?: DecisionStage; family?: FamilyStage; aim?: AimStage }) | null;
   /** Where the server turns the visitor; null keeps the seat's, the task's, or the walking direction. */
   facing: Facing | null;
   /** A cell the visitor looks at until a game time, drawn by a stimulus. */
@@ -362,8 +369,26 @@ export interface World {
   next_conversation_id: number;
   /** Accepted invitations under way. */
   invitations: Errand[];
+  /** Plans under way, at most one per guest. */
+  projects: Project[];
   /** The evening's news as first written; visitors' copies are in their `knowledge.facts`. */
   news: News[];
+}
+
+/** A plan a guest is carrying out step by step, without asking for decisions meanwhile. */
+export interface Project {
+  kind: string;
+  /** The guest it belongs to. */
+  by: string;
+  /** What it is about: a chair, a table or a guest, by kind. */
+  target: string;
+  /** The guests a plan serves in turn (a round), frozen when it began; absent for other kinds. */
+  targets?: string[];
+  /** The step reached, from zero, out of `of`. */
+  step: number;
+  of: number;
+  running: boolean;
+  started_at: number;
 }
 
 export interface Snapshot {
