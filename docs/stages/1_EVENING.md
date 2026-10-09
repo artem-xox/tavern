@@ -2774,103 +2774,91 @@ code disagrees):
     | seed 5 | 165 | 1.66 | 53% | 26% | 36% | 33% | 28 | 19.0 | $0.36 |
     | seed 7 | 168 | 1.70 | 51% | 31% | 40% | 31% | 38 | 22.1 | $0.40 |
 
-- [ ] **C1 — A lean first stage.**
+- [x] **C1 — A lean first stage.**
   - *Rule:* a fixture verb is put to the model only when the guest's own state makes it worth weighing. A table in
     `local_policy`, keyed by verb:
 
     ```python
-    # The local score below which a fixture is not worth a model's slot; the guest's state lifts it when it matters.
-    ASK_FLOOR: Mapping[str, float] = MappingProxyType({"inspect": 0.3, "wait": 0.25, "use_toilet": 0.25,
-                                                       "leave": 0.25})
+    # The local score at which a fixture is worth a model's slot; the guest's state lifts it over the floor.
+    ASK_FLOOR = {"inspect": 0.3, "wait": 0.1, "use_toilet": 0.25, "leave": 0.25}
     ```
 
-    `selection.worth_asking(candidates, scores, floors) -> list` keeps the options at or above their floor (verbs
-    not in the table always), in candidate order. It never empties a request: when every option is under its
-    floor, all are kept (an empty known world, closing time with two doors). It never drops staying in a line the
-    guest already joined (`line_place(...)[1]`). `agents._decide` calls it before `bounded`, **only when a model is
-    asked**: the local policy already ranks by these scores, so offline evenings stay byte-identical, which is the
-    refactor check.
-  - What the floors mean today: `inspect` is asked while a need of about 40 or more has no known relief, or the WC
-    is unknown and the bladder presses; `use_toilet` from bladder 25 ("mild" in the briefing); `leave` once
-    `_leave_utility` finds the evening content, weary or upset (about two beers after four minutes, a grudge, a dry
-    tap), and at closing; `wait` only when nothing else is left. Write each as a why-comment beside the table.
-  - `jev._visitor_view` drops nothing: the options it describes are just fewer.
-  - *Tests first:* `tests/test_selection.py` (or `test_families.py`, where `bounded` is tested today):
-    `worth_asking` cases: empty, single option under its floor (kept), duplicates, a fixture over its floor, all
-    under (all kept), a joined line under its floor (kept), a verb without a floor. `tests/test_agents.py`: with a
-    key and a fake evaluator, the candidates the evaluator receives omit `inspect` beside a seat on offer, and
-    include it when thirst is 60 and no tap is known.
-  - *Tests expected to change:* none. Tests that pass a key with a hand-made observation of only `inspect` and
-    `wait` (`test_seating.py::test_only_options_close_to_the_best_are_drawn`, `test_agents.py`'s evaluator cases)
-    keep both, since all are under their floors. Any failing test is a surprise: stop and report it.
-  - *Check:* offline seed 5 `cmp` byte-identical; live seed 7: `dead` share (baseline 31%), first-stage input
-    tokens (baseline 5,770), how often `bring_drink` and `give` reach Jev, departures before closing (baseline 0),
-    WC visits and stuck seconds (no worse), every guest gone at closing.
+    `selection.worth_asking(candidates, scores, floors, kept=())` keeps the options at or above their floor (verbs
+    not in the table always) and those whose ID is in `kept`, in candidate order. It never empties a request: when every
+    option is under its floor, all are kept (an empty known world, closing time with two doors). Nor does it leave
+    only an exit (`leave`, or the `going_home` family of two doors): the request stays whole, so that staying is an
+    option too (without it `drawable` would send a guest home whom Jev rated 0.25). `agents._in_line` puts the options
+    that keep a place in a line the guest already joined into `kept`. What the floors mean: `inspect` is asked while
+    a need of about 40 or more has no known relief; `use_toilet` from a bladder of 25 ("mild" in the briefing); `leave`
+    once `_leave_utility` finds the evening content, weary or upset; `wait`, the one way to stay put, unless a need of
+    about 50 presses (its local score is then under 0.1). Each floor has a why-comment beside the table.
+  - *A setting, not a rule of the library (changed while building).* A first version applied the floors whenever a
+    model was asked, and broke 16–18 existing tests whose fake evaluators score `inspect`, `wait` or `leave` in
+    hand-made states that have nothing else (`test_lockstep.py`, `test_seating.py`, `test_agents.py`,
+    `test_hostile_options.py`, `test_fetching_evening.py`). Those tests pin that a fake model's choice is the one
+    taken, which stays true; so the rule became `config["lean"]` (`selection.read_lean`: a bool, off when absent, a
+    `ValueError` for anything else), on in the shell (`AI_LEAN`, default `true`, read by `selection.read_switch` in
+    `app.create_default_app` and `scripts/evening.py`, shown in the run report; `.env.example`) and off in the
+    library. A replay needs the recorded run's setting, like its temperature. No test was changed.
+  - *Tests* (`tests/test_lean_requests.py`): `worth_asking` cases (empty, single option under its floor, fixtures
+    left out, one over its floor, a score at the floor, all under, verbs without a floor, duplicate fixtures, an exit
+    alone, an exit beside a seat, `kept`); the options the evaluator receives through `choose_action` (a calm guest is
+    not asked about wandering, thirst with no known tap is), with the setting on, off and absent, and without a key;
+    the setting and switch readers, with `pytest.raises` blocks.
+  - *Built and measured (2026-10-09).* Offline seeds 0–9 are byte-identical to the C0 baseline (`cmp` of
+    `events.jsonl`), since a model-less evening never asks. Live seeds 5, 7, 1, 2, 3, C0 against C1 (replays of the C1
+    seeds 5 and 7 are byte-identical): the share of first-stage options under 0.15 fell from 27% to 5%; the
+    options `inspect`, `wait`, `leave` and the WC were asked 779, 738, 832 and 773 times in all and now 123, 322, 357 and
+    443; input tokens per first-stage request fell from 5,798 to 4,595 (−21%); `bring_drink` reached Jev 124 times and
+    now 183; the near-best set (1.66, 1.64) and the share decided before the draw (55%, 51%) did not change, since the
+    draw was already narrow; cost per evening $0.35 → $0.33. Stuck time is the open point: mean 25.5 s → 30.2 s, from
+    19–35 s to 15–53 s over the five seeds (the two seeds run first were the worst, 38.6 s and 53.1 s, with more
+    blocked routes, not more waiting for a decision). That spread is wider than the difference, so it is no evidence
+    for or against; C8 repeats it over more evenings. Not measured: departures before closing (none in either).
 
-- [ ] **C2 — Answer what was just done to them.**
-  - `social/responses.py` (new: "Which fresh wrongs and kindnesses call for an answer, and which options answer
-    them"). A table keyed by thought kind:
-
-    ```python
-    @dataclass(frozen=True)
-    class Response:
-        """How a fresh thought about someone calls for an answer.
-
-        Attributes:
-            verbs: Verbs that answer it when aimed at the person the thought is about.
-            within: Game seconds after the thought during which it still calls for an answer.
-        """
-        verbs: tuple[str, ...]
-        within: float
-
-    _HAVE_IT_OUT = ("talk", "approach", "join_conversation")
-    RESPONSES: Mapping[str, Response] = MappingProxyType({
-        "seat_taken": Response((*_HAVE_IT_OUT, "shove", "start_fight"), 90.0),
-        "table_intruded": Response(("talk", "join_conversation", "shove"), 90.0),
-        "line_cut": Response(("talk", "join_conversation", "shove", "start_fight"), 60.0),
-        "insulted": Response((*_HAVE_IT_OUT, "shove", "start_fight"), 90.0),
-        "quarrel": Response((*_HAVE_IT_OUT, "shove", "start_fight"), 90.0),
-        "friend_insulted": Response(_HAVE_IT_OUT, 90.0),
-        "let_down": Response(_HAVE_IT_OUT, 120.0),
-        "lost_at_dice": Response(_HAVE_IT_OUT, 90.0),
-        "treated": Response((*_HAVE_IT_OUT, "give", "bring_drink"), 120.0),
-        "gifted": Response((*_HAVE_IT_OUT, "give", "bring_drink"), 120.0),
-        "cared_for": Response((*_HAVE_IT_OUT, "give", "bring_drink"), 120.0),
-        "kept_word": Response(_HAVE_IT_OUT, 120.0),
-        "shoved": Response(("talk", "shove", "start_fight"), 60.0),
-    })
-    ```
-
-    No new verb and no new family: every answer is an option the guest already has, aimed at the right person.
-    The hostile verbs keep their own gates (`hostility.hostile_targets`); the table only says that they answer.
-  - `answering(observation, action) -> Thought | None`: the freshest active, unanswered thought whose kind is in
-    `RESPONSES`, whose `about` is the action's target and whose age (`now - (expires_at - THOUGHTS[kind].seconds)`)
-    is at most `within`, when the action's verb is in its `verbs`. A family option answers when any member does.
-    Ties go to the latest thought, then to `RESPONSES` order (say so in a comment).
-  - *A thought is answered once.* `Thought` gains `answered: NotRequired[bool]`. When an answering action is
-    accepted (`world.start_action`), `responses.mark_answered` sets it and records `answered` for the guest:
-    "Calder went to answer Rurik, who beat them at dice" (the `ThoughtKind.reason` words). `thoughts.check_mind`
-    accepts the field. Saved worlds take the next version.
-  - *What the mind sees.* `briefing._marked` adds "(this answers Rurik, who beat them at dice 40 s ago)" after the
-    goal mark; the situation gains "Unanswered: Rurik beat them at dice 40 s ago." for each calling thought about
-    someone in sight. `jev._visitor_view` gains one sentence: an option marked as answering someone is how people
-    respond to what was just done to them; a wrong is taken up or let go according to temper and pride, a kindness
-    is thanked or returned, and letting either pass is natural for the patient and the shy.
-  - *Local policy.* `_score_answers`: an answering option gains `0.1 + 0.3 * temper` for a wrong (a thought with
-    negative mood) and `0.1 + 0.3 * sociability` for a kindness, clamped to 0–1, after `_score_goal`.
-  - *Metrics:* `responses` in `metrics.json`: `called` (thoughts of a kind in `RESPONSES` about someone who was in
-    the hall), `answered` (`answered` events), and `answered_within` per kind.
-  - *Tests first* (`tests/test_responses.py`): the table is sound (kinds in `THOUGHTS`, verbs in `ACTIVITIES`);
-    `answering` cases: a fresh thought and a matching verb; a thought past `within`; the other person; a verb not
-    in `verbs`; an answered thought; two thoughts about one person (the latest); a family with an answering member;
-    no thoughts. `mark_answered` on start and the event; a save round trip with `answered`; a `pytest.raises` block
-    for a saved `answered` that is not a bool. Briefing text cases, and the local bonus for a hot and a calm temper.
-  - *Check:* offline seeds 0–9: `answered_within` before and after, and stuck seconds; live seed 7: what Calder
-    chose within 90 s of each loss to Rurik. Re-measure T8's open question (does a host answer an intrusion within
-    15 s?) and record it in T8's follow-up note.
-  - *If Jev ignores the marks* (answers under 20% of `called` live), propose a `respond` family offered only while a
-    thought calls for an answer, with members whose IDs carry the response (they would duplicate `company`
-    members otherwise). Do not build it in C2.
+- [x] **C2 — Answer what was just done to them.**
+  - `social/responses.py` (new: "Answers to what was just done to a guest"). A table keyed by thought kind
+    (`Response(verbs, within)`): `seat_taken`, `table_intruded`, `line_cut`, `insulted`, `quarrel`, `friend_insulted`,
+    `let_down`, `lost_at_dice` and `shoved` are answered by talking (`talk`, `approach`, `join_conversation`; `shoved`
+    by `talk`, `table_intruded` and `line_cut` by `talk` and `join_conversation`) for 60–120 s; `treated`, `gifted`,
+    `cared_for` by the same and by `give` and `bring_drink`; `kept_word` by talking. **No blow answers anything**
+    (changed while building): with `shove` and `start_fight` in the table the local bonus doubled their scores
+    (0.16 → 0.32), against the hostile design of E20 that `test_hostile_options.py` pins; hostile acts keep their own
+    gates. No new verb or family: every answer is an option the guest already has.
+  - `calling(actor, now)`: the active, unanswered thoughts about someone, of a kind in the table, inside their window.
+    `answering(actor, now, action)`: the freshest of them about the action's target that the action's verb answers; for
+    a family, any member; of two equally fresh, the one the guest had later. `age_of(thought, now)` is the age from the
+    expiry and the kind's `seconds`.
+  - *A thought is answered once.* `Thought.answered: NotRequired[bool]`; `world.start_action` calls
+    `responses.mark_answered` after an accepted start: it sets the flag and logs `answered` ("Calder went to answer
+    Rurik, who beat them at dice (39 s later)"). `thoughts.check_mind` accepts the field and rejects a non-bool.
+    **No `schema_version` bump** (changed while building): the field is optional, so older saves load and the pinned
+    version stays 15.
+  - *What the mind sees.* `briefing._marked` adds "(this answers Rurik, who beat them at dice 40 s ago)" after the goal
+    mark; the situation gains "Unanswered: Rurik, who beat them at dice (40 s ago)." for each calling thought about
+    someone in sight. `jev._visitor_view` gains the sentence about options marked as answering someone.
+  - *Local policy.* `_score_answers`: an answering option gains `0.1 + 0.3 × temper` for a thought that lowers the mood
+    (a wrong) and `0.1 + 0.3 × sociability` for one that does not, clamped to 1, after `_score_goal`.
+  - *Metrics:* `responses` in `metrics.json` (`evening/response_metrics.py`): `answered`, `by_kind` and `mean_delay`
+    from the `answered` events. The `called` count of the first plan was not built: nothing logs a thought as it is
+    made, and deriving it from events would need a map from each event to its thought; the wrongs and kindnesses of an
+    evening are counted from the log by hand below.
+  - *Tests* (`tests/test_responses.py`, `test_response_metrics.py`): the table is sound (kinds, verbs, unique reasons);
+    `answering` cases (fresh, at the edge of the window, past it, other person, a thought about nobody, a verb that
+    answers nothing, answered, expired, no answer called for, two thoughts, a blow, a family); `calling`; starting an
+    answer marks and logs it, once; other actions leave it; briefing and `Unanswered` text, and silence without a
+    thought; the local bonus by temper and by sociability; saves with, without and with a bad `answered`; the metric.
+    No existing test changed.
+  - *Built and measured (2026-10-09).* Offline seeds 0–9: 5 answers in all (`table_intruded` 4, `cared_for` 1,
+    delays 30–88 s), departures 6 in all ten, stuck seconds unchanged but for two seeds (seed 6 +2.0 s, seed 8 −11.9
+    s), conversations 28 → 26 and 24 → 31 in those two. Live seeds 5 and 7: one answer each. Seed 5 had two lost dice
+    games (221 s, 356 s; Edda answered the first after 39 s, and the second came 60 s before closing), seed 7 three
+    intrusions, two taken seats and two remedies given (Edda answered one intrusion after 7 s). So about one call in
+    five or six was answered, near the line of the open question below. Jev's own scores of the marked options were
+    not examined.
+  - *If Jev ignores the marks* (answers under 20% of the calls, live), propose a `respond` family offered only while a
+    thought calls for an answer, with members whose IDs carry the response. Do not build it in C2. Seen here: about
+    17%, on two evenings with nine calls; decide after C8's larger sample.
 
 - [ ] **C3 — Why: an aim for every social option.**
   - A third stage. After the concrete action is chosen (stage one or two), if its verb is `talk`, `approach` or
