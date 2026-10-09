@@ -7,6 +7,7 @@ from typing import Any
 
 from tavern.mind.goals import serving
 from tavern.mind.hall_view import in_use, line_place, steps_to
+from tavern.social.giving import empty_handed_tablemates
 from tavern.social.hostility import urge
 from tavern.social.responses import answering
 from tavern.social.tables import liked
@@ -72,6 +73,9 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
         "cut_in_line": 0.0,  # weighed against the wait in _score_lines
         "give": 0.0,  # weighed gift by gift in _score_gifts
         "bring_drink": 0.0,  # weighed with the gifts, as a trip for someone
+        "stand_a_round": 0.0,  # weighed with the gifts, as trips for several
+        # Another go at someone who just won: the bored and the hot-tempered want it most.
+        "rematch": min(1.0, 0.2 + 0.4 * actor["needs"].get("boredom", 0) / 100 + 0.3 * traits.get("temper", 0.5)),
         # Hostile acts are rare: even the hottest head scores them below a seat to rest in, and only the
         # urge (temper loosened by drink) lifts them; a fight is likelier than a shove only through Jev.
         "shove": 0.1 + 0.3 * min(1.0, urge(observation)),
@@ -95,7 +99,15 @@ def _score_gifts(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
     actor, people = observation["actor"], {item["id"]: item for item in observation.get("people", [])}
     now, needs = observation.get("time", -math.inf), actor["needs"]
     for action in candidates:
-        if action["verb"] not in ("give", "bring_drink"):
+        if action["verb"] not in ("give", "bring_drink", "stand_a_round"):
+            continue
+        if action["verb"] == "stand_a_round":
+            # Fetching for each of the empty-handed at their table, a little more worth the trip for each beyond one.
+            receivers = empty_handed_tablemates(observation)
+            liking = sum(opinion_of(actor, person, now) for person in receivers) / max(1, len(receivers))
+            score = 0.1 + company + 0.25 * liking / 100 + 0.1 * (len(receivers) - 1)
+            score -= 0.3 * max(needs["fatigue"], needs["bladder"]) / 100
+            scores[action["id"]] = min(1.0, max(0.0, score))
             continue
         score = 0.1 + company + 0.25 * opinion_of(actor, action["target_id"], now) / 100
         if action["verb"] == "bring_drink":

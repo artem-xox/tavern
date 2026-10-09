@@ -107,6 +107,22 @@ def empty_handed_company(observation: Mapping[str, Any]) -> list[str]:
                   and not person.get("holding", {}).get("beer", 0) and person["id"] not in busy)
 
 
+def empty_handed_tablemates(observation: Mapping[str, Any]) -> list[str]:
+    """List the people sitting at a guest's own table who visibly hold no mug of ale and are free to be served one.
+
+    Args:
+        observation: The guest's observation, as for `empty_handed_company`.
+
+    Returns:
+        Those of `empty_handed_company` who sit at the table the guest sits at; none for a guest at no table.
+    """
+    seat = next((item for item in observation["objects"] if item["id"] == observation["actor"].get("seat_id")), None)
+    table = seat.get("table_id") if seat else None
+    free = set(empty_handed_company(observation))
+    return [person["id"] for person in observation.get("people", []) if table and person["id"] in free
+            and person.get("table_id") == table]
+
+
 def _near(observation: Mapping[str, Any], person: Mapping[str, Any]) -> bool:
     # The reach of a chat: the same table, or standing side by side (a second copy of `hostility._near`).
     seat = next((item for item in observation["objects"] if item["id"] == observation["actor"].get("seat_id")), None)

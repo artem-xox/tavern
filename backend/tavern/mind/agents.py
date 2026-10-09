@@ -17,7 +17,8 @@ from tavern.mind.observation import known_objects, own_actor
 from tavern.mind.options import aim_text
 from tavern.mind.selection import bounded, drawable, read_aims, read_lean, read_projects, read_temperature, select, spread, worth_asking
 from tavern.social.aims import AIM_VERBS, aim_candidates, offered_aims
-from tavern.social.giving import empty_handed_company, gift_targets
+from tavern.social.giving import empty_handed_company, empty_handed_tablemates, gift_targets
+from tavern.social.responses import calling
 from tavern.social.hostility import HOSTILITY, hostile_targets
 from tavern.social.tables import liked
 
@@ -146,7 +147,8 @@ def _concrete_candidates(observation: Mapping[str, Any]) -> list[Action]:
         actions.extend(_line_options(observation, item, _action(verbs[item["kind"]], item["id"])))
     return [*actions, *_seat_wish(observation, objects), *_views(observation, objects), *_games(objects),
             *_bar_stand(observation, actor, objects), *talks, *_gifts(observation, actor),
-            *_fetches(observation, actor, objects), *_nap(observation, actor), *_settling(observation, actor, objects),
+            *_fetches(observation, actor, objects), *_round(observation, actor, objects),
+            *_rematches(observation, actor, objects), *_nap(observation, actor), *_settling(observation, actor, objects),
             _action("inspect"), _action("wait"), *_hostile(observation)]
 
 
@@ -239,6 +241,28 @@ def _settling(observation: Mapping[str, Any], actor: Mapping[str, Any],
             and actor["id"] not in observation.get("on_errands", []))
     return [_action("settle_in")] if "settle_in" in observation.get("projects", []) and able and stocked \
         and _free_seats(observation, objects) else []
+
+
+def _round(observation: Mapping[str, Any], actor: Mapping[str, Any],
+           objects: Sequence[Mapping[str, Any]]) -> list[Action]:
+    # Standing the whole table a round: a seated guest with a free hand and a tap that has ale, and at least two
+    # tablemates visibly holding no mug (a single one is just brought a drink).
+    able = (actor["inventory"].get("beer", 0) < ITEMS["beer"].hands and actor["id"] not in observation.get("on_errands", [])
+            and any(item["kind"] == "tap" and item.get("stock") for item in objects))
+    return [_action("stand_a_round")] if "stand_a_round" in observation.get("projects", []) and able \
+        and len(empty_handed_tablemates(observation)) >= 2 else []
+
+
+def _rematches(observation: Mapping[str, Any], actor: Mapping[str, Any],
+               objects: Sequence[Mapping[str, Any]]) -> list[Action]:
+    # Asking someone who just beat them at dice for another game: while the loss still calls for an answer, the
+    # winner is in sight and a dice table they know is free as far as they can tell.
+    if "rematch" not in observation.get("projects", []) or actor["id"] in observation.get("on_errands", []):
+        return []
+    free = any(item["kind"] == "dice_table" and len((item.get("game") or {}).get("players", [])) < 2 for item in objects)
+    lost = {item["about"] for item in calling(actor, observation.get("time", -math.inf)) if item["kind"] == "lost_at_dice"}
+    return [_action("rematch", person["id"]) for person in observation.get("people", [])
+            if free and person["id"] in lost and not person.get("post")]
 
 
 def _hostile(observation: Mapping[str, Any]) -> list[Action]:

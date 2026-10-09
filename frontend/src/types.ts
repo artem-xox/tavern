@@ -374,8 +374,10 @@ export interface Project {
   kind: string;
   /** The guest it belongs to. */
   by: string;
-  /** The chair it is about. */
+  /** What it is about: a chair, a table or a guest, by kind. */
   target: string;
+  /** The guests a plan serves in turn (a round), frozen when it began; absent for other kinds. */
+  targets?: string[];
   /** The step reached, from zero, out of `of`. */
   step: number;
   of: number;

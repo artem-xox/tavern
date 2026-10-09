@@ -7,6 +7,7 @@ from typing import Any
 from tavern.body.activities import FAMILIES
 from tavern.body.items import ITEMS
 from tavern.social.aims import aim_words
+from tavern.social.giving import empty_handed_tablemates
 from tavern.social.invitations import known_place
 from tavern.social.tables import liked
 from tavern.mind.hall_view import (company_at, headcount, hosts_words, in_use, known_object, label_of, line_place,
@@ -101,6 +102,20 @@ def _settle(observation: Observation, action: Action) -> str:
     where = f"walk {walk_words(steps_to(observation, tap))} to the tap, get a mug of ale, and take a chair at a table to " \
         "drink it there" if tap else "get a mug of ale and take a chair at a table to drink it there"
     return f"{where} (they choose the chair next)"
+
+
+def _round(observation: Observation, action: Action) -> str:
+    people = {item["id"]: item for item in observation.get("people", [])}
+    names = [label_of(people[item]) for item in empty_handed_tablemates(observation) if item in people]
+    return (f"stand the table a round: fetch {', '.join(names)} an ale each from the tap, one after the other "
+            "(they sit there with empty hands)")
+
+
+def _rematch(observation: Observation, action: Action) -> str:
+    other = next((item for item in observation.get("people", []) if item["id"] == action["target_id"]), None)
+    if other is None:
+        raise ValueError(f"Cannot describe a rematch with {action['target_id']!r}, who is not in sight")
+    return f"go to {label_of(other)}, who beat them at dice, and ask for a rematch"
 
 
 def _drink(observation: Observation, action: Action) -> str:
@@ -300,7 +315,7 @@ def family_text(observation: Observation, option: Action) -> str:
 
 # Each verb's option sentence; a new verb needs an entry here (and one in `activities.ACTIVITIES`).
 _OPTIONS: Mapping[str, Callable[[Observation, Action], str]] = {
-    "take_beer": _pour, "settle_in": _settle, "drink": _drink, "rest": _rest, "seating": _seating, "sit": _sit, "doze": _doze, "talk": _talk,
+    "take_beer": _pour, "settle_in": _settle, "stand_a_round": _round, "rematch": _rematch, "drink": _drink, "rest": _rest, "seating": _seating, "sit": _sit, "doze": _doze, "talk": _talk,
     "approach": _approach, "join_conversation": _join, "play_darts": _darts, "stand_at_bar": _bar, "watch": _watch,
     "watch_dice": _watch_dice,
     "use_toilet": _toilet, "give": _give, "bring_drink": _bring,

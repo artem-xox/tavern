@@ -409,6 +409,17 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              guidance="What a guest does who has just come in thirsty and has no seat: one errand to the tap, then "
                       "they sit down with their drink. A separate decision picks the chair. Pointless with a mug in "
                       "hand, a seat of their own, or when they are not thirsty."),
+    # Plans of several steps, like `settle_in`: the world opens a project when the verb is chosen.
+    Activity(verb="stand_a_round", duration=None, opens_project="stand_a_round", family="fetching",
+             label="Stand a round",
+             what="stand the table a round: fetch each tablemate who has no mug an ale from the tap, one after the other",
+             guidance="A generous thing to do for a table of friends or new acquaintances who sit with empty hands. It "
+                      "costs a walk to the tap for each of them, so it is worth it only for someone who is not "
+                      "pressed by a need of their own. Pointless when only one has no mug (just bring that one a drink)."),
+    Activity(verb="rematch", duration=None, opens_project="rematch", family="company", label="Ask for a rematch",
+             what="go to {target}, who just beat them at dice, and ask for another game",
+             guidance="Natural for someone who has just lost at dice, more so if they are bored or hot-tempered. It is "
+                      "pointless once the loss no longer rankles, or when no dice table is free."),
     # Not a world action of its own: the world reads it as using the place, from the front of its line.
     Activity(verb="cut_in_line", target_kinds=("tap", "toilet", "darts"), duration=None, family="cutting_in",
              label="Cut in line",
@@ -433,7 +444,7 @@ FAMILIES: Mapping[str, str] = MappingProxyType({
     "idling": "wait a moment",
     "going_home": "go home for the night",
     "cutting_in": "push to the front of a line instead of waiting",
-    "fetching": "fetch someone at their table or beside them a drink from the tap",
+    "fetching": "fetch someone at their table or beside them a drink from the tap, or stand the whole table a round",
     "confront": "shove someone who wronged them, or start a fight",
 })
 
