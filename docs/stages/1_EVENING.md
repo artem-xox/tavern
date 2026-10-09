@@ -2860,74 +2860,66 @@ code disagrees):
     thought calls for an answer, with members whose IDs carry the response. Do not build it in C2. Seen here: about
     17%, on two evenings with nine calls; decide after C8's larger sample.
 
-- [ ] **C3 — Why: an aim for every social option.**
+- [x] **C3 — Why: an aim for every social option.**
   - A third stage. After the concrete action is chosen (stage one or two), if its verb is `talk`, `approach` or
-    `join_conversation` and more than one aim is offered, `choose_action` asks `Evaluators.aims` to score the aims;
-    with one aim it is set without a request. The action carries it: `Action.aim: NotRequired[str]`, kept by
-    `actions` and `persistence` as `item` is (H1), and refused on any other verb.
-  - `social/aims.py` (new: "What a guest means by a social option, and what they would say to carry it out"):
-
-    ```python
-    @dataclass(frozen=True)
-    class AimKind:
-        """One kind of aim.
-
-        Attributes:
-            wording: How the briefing and the line writer tell it; `{name}` is the person, `{what}` the detail.
-            acts: Speech acts that carry it out (`conversation.ACTS`); one of them said by the guest keeps the aim.
-            guidance: When the evaluator should find it natural.
-        """
-        wording: str
-        acts: tuple[str, ...]
-        guidance: str
-    ```
-
-    Kinds, each offered from the guest's own observation (`offered_aims(observation, action) -> list[str]`):
-    - `pass_time`: always. Acts `small_talk`, `joke`, `remark`.
-    - `tell_news:<fact_id>`: one per fact the guest holds, at most two (highest `confidence`, then fact ID). Acts
-      `share_news` (with that `fact_id`).
-    - `invite:<kind>`: `darts_together` (darts known), `dice_together` (dice table known with two free chairs when
-      last seen), `buy_drink` (a stocked tap known, a free hand, the person visibly empty-handed), `join_table`
-      (the guest's own table has a free chair and the person is not at it). Act `invite` with that kind.
-    - `win_over`: the person is a stranger or acquaintance and the opinion is 0 or more. Acts `introduce`,
-      `compliment`, `small_talk`.
-    - `needle`: the opinion is at most `conversation.DISLIKED`. Acts `insult`, `complain`, `disagree`.
-    - With C2, for an option that answers a thought: `have_it_out` (a wrong; acts `complain`, `insult`,
-      `disagree`), `thank` (a kindness; acts `compliment`, `agree`) and `rematch` (`lost_at_dice` with the dice
-      table known; act `invite` with `dice_together`).
-    - Not now: `make_amends`. The wrongdoer keeps no record of whom they wronged that the mind could read; it
-      needs one first (an `apologize` act already mends from the other side).
-  - Aim candidates are `{"id": "<aim>@<action id>", "verb", "target_id", "aim"}`; `jev._aim_question` asks "How
-    natural is it for Calder, going over to Rurik, to ask for a rematch at dice?" with the shared rubric and the
-    kind's guidance. `local_policy.local_aim_scores` starts from: `pass_time` 0.4; `tell_news` 0.25 + 0.3 ×
-    curiosity; `invite` by the need it eases (games: 0.2 + 0.5 × boredom; `buy_drink`: 0.2 + 0.4 × opinion / 100);
-    `win_over` 0.2 + 0.4 × sociability; `needle` 0.1 + 0.5 × temper × (−opinion / 100); `have_it_out` 0.2 + 0.5 ×
-    temper; `thank` 0.5; `rematch` 0.2 + 0.4 × boredom + 0.3 × temper. Tune on offline seeds; write each as a
-    why-comment.
-  - *The world keeps it.* `Conversation` gains `aims: dict[str, str]` (member ID to aim), written on arrival by
-    `_open_scene`, `_approach_scene` and `_join_scene`, dropped when the member leaves, checked by
-    `check_saved_scenes`. Saved worlds take the next version.
-  - *The line writer reads it.* `turns.turn_view` gives the speaker `aim` (`id`, `words`, `acts`, `done`: whether
-    they already said one of its acts in this scene). `_nudges` says, while not done: "The speaker came over to ask
-    Rurik for a rematch at dice: do it in their own words, early; acts that fit: invite (dice_together)". The
-    shared prefix gains one rule (once). `scripted.py` uses the aim's act on the speaker's first or second turn
-    when it is offered, so offline evenings show aims.
+    `join_conversation` (`aims.AIM_VERBS`), `choose_action` asks `Evaluators.aims` to score the aims; with one aim it
+    is set without a request and shows no stage. The action carries it: `Action.aim`, kept by `stored_action`, refused
+    on any other verb and for an unknown or malformed aim (`actions.action_error`), and validated in saves
+    (`aims.check_saved_aims`). **A setting** (as C1): `config["aims"]` (`selection.read_aims`, off when absent), on in
+    the shell as `AI_AIMS` (default `true`). With the setting on and a key but no `Evaluators.aims`, `choose_action`
+    raises a `ValueError`.
+  - `social/aims.py` (new: "What a guest means by a social option"). `AIMS` maps a kind to `AimKind(wording, acts,
+    guidance, detail, invitation)`: `pass_time`, `tell_news:<fact>`, `invite:<kind>`, `win_over`, `needle`,
+    `have_it_out`, `thank`, `rematch`. `offered_aims(observation, action)` lists them: `pass_time` first; the two pieces
+    of news the guest believes most; what they could invite the person to as far as they can tell (`darts_together`
+    with the board known, `dice_together` with a dice table known and no game seen, `buy_drink` with a stocked tap, a
+    free hand and a person with empty hands, `join_table` with a free chair at their own table that the person is not at);
+    `win_over` for someone not a friend and not disliked, `needle` for someone at or under `NEEDLED` (-10, pinned to
+    `conversation.DISLIKED`, which this module cannot import: the scenes check aims here); and, while a thought calls for
+    an answer (C2), `have_it_out`, `thank` or `rematch` by `ANSWER_AIMS`. `make_amends` is not built: nothing records
+    whom a guest wronged. `aim_words` tells an aim ("ask Bea for a rematch at dice"), `aim_candidates` makes the
+    options of the stage (`<aim>@<action id>`), `carried_out` says whether the speaker has said one of its acts (for
+    news, naming the fact; for an invitation, the kind).
+  - *The model.* `jev._aim_question` asks "How natural is it for them, right now, to <action>, meaning to <aim>?" with
+    the kind's guidance (`mind.options.aim_text` tells the option; `agents._aim_view` is the same picture of the guest);
+    `jev.evaluate_aims` and `evaluate_aims_metered` score it; the stage is recorded as `aims` in `calls.jsonl`,
+    replayed, traced (`tracing._STAGES`) and wired in `app.py`, `server/runtime.py` and `scripts/evening.py`.
+    `local_policy.local_aim_scores` is the fallback and the offline score: small talk 0.4, news 0.25 + 0.3 × curiosity,
+    games 0.2 + 0.5 × boredom, an ale 0.2 + 0.4 × opinion, a table 0.2 + 0.4 × the wish for company, winning over 0.2
+    + 0.4 × sociability, a needle 0.1 + 0.5 × temper × dislike, having it out 0.2 + 0.5 × temper, thanks 0.5, a rematch
+    0.2 + 0.4 × boredom + 0.3 × temper.
+  - *The world keeps it.* The scene gains `aims`, optional, by speaker: `{aim, about, kept}` (`aims.begin_aim` writes it
+    when the verb's opening runs, and logs `aim_set` "Calder means to invite Rurik to play a game of dice
+    (invite:dice_together)"; `scenes._tidy_aims` drops it with the member or when its person has gone home).
+    **No `schema_version` bump** (changed while building): both fields are optional, so older saves load; the version
+    stays 15.
+  - *The line writer reads it.* `turns.turn_view` gives the speaker `aim` (`id`, `words`, `acts`, `detail`, `done`). The
+    Haiku moment says, while it is not done and not `pass_time`: "The speaker came over to <words>: say so in their own
+    words, early. Acts that fit: <acts> (fact_id fever)"; the shared prefix has rule 18 (say it early with one of the
+    acts, and never offer or promise what the moment does not say). `turns._speak` calls `aims.note_spoken`, which marks
+    the aim kept once and logs `aim_kept`. The scripted writer says it on the speaker's first line after a greeting
+    when an act of the aim is on offer and has lines.
   - *Decision and snapshot.* The decision gains `aim` (`name`, `source`, `scores`, `error`), like `family`;
-    `apply_decision` and `lockstep._record_choices` keep it; `types.ts` gets `AimStage`; the inspector shows it.
-  - *Metrics:* `aims` in `metrics.json`: chosen per kind, and `kept` (the speaker said one of the aim's acts in
-    that scene): a "say and do" for talk, as MIND.md wanted. C0's `depth` counts the third stage.
-  - *Tests first* (`tests/test_aims.py`): `offered_aims` cases: nothing known (only `pass_time`); two facts; three
-    facts (top two by confidence, then ID); a disliked person (`needle`); a stranger (`win_over`); a free dice
-    table; an answered thought (C2) gives no response aim; a malformed fact raises `ValueError`. In
-    `tests/test_agents.py`: one aim asks no model; several ask `aims`; a failing `aims` evaluator falls back to the
-    local scores with the error shown. Arrival writes the scene's aim; the nudge text; the scripted writer's act;
-    a save round trip, and a `pytest.raises` block for an unknown aim and an aim on a `sit`.
-  - *Tests expected to change:* tests that compare a whole decision or action for `talk`, `approach` or
-    `join_conversation` now see an `aim` (grep `choose_action` in `test_approach.py`, `test_social.py`,
-    `test_scene_choices.py`); the pinned version tests. Name each in the commit.
-  - *Check:* live seed 7: aims chosen and kept, aim requests and their cost (expect about 50 requests of about
-    3,000 tokens, under $0.01), and one moment where an aim changed what was said (a rematch asked, news told on
-    purpose). Offline seed 5: news hops before and after (`news` in `metrics.json`).
+    `apply_decision` and `lockstep._record_choices` keep it; `frontend/src/types.ts` gets `AimStage` and `Action.aim`;
+    the inspector shows "Came for" (`frontend/src/aims.ts`, tested).
+  - *Metrics:* `aims` in `metrics.json` (`evening/aim_metrics.py`): set and kept, in all and per kind. C0's `depth.third`
+    counts the stage.
+  - *Tests* (`tests/test_aims.py`, `test_aim_scenes.py`, `test_aim_choice.py`, `test_aim_wiring.py`, `test_aim_lines.py`,
+    `test_aim_metrics.py`, `frontend/tests/aims.test.ts`): offered aims in 20 situations; the table is sound; the action,
+    scene and event lifecycle; the stage with a fake evaluator (asked, lone aim, failure falling back, setting off,
+    non-social action, no key, no evaluator wired); the local scores; the Jev question and adapter; the decision, the
+    recorded choices and the trace; the nudge, the prefix rule and the scripted writer; the metric. No existing test
+    changed.
+  - *Built and measured (2026-10-09).* Offline seeds 0-9, against the C0 baseline: the third stage in 22% of decisions
+    (target 15%), conversations 29.7 → 33.8, conversation turns 73.9 → 82.2, evenings with a news path of two hops 8 →
+    10 of 10, stuck seconds 16.8 → 16.7, every guest gone at closing; 340 aims set and 39 kept (11%): a scripted scene
+    usually ends after two lines, so the starter rarely speaks twice. Live seeds 5 and 7 (replays byte-identical):
+    21 and 25 aims set, 13 and 18 kept; leaving out `pass_time`, which is never nudged, 10 of 14 and 18 of 19 were
+    said in the scene, so Haiku does what the guest came for about nine times in ten. The aim stage asked 23 and 28
+    times (near-best 2.0, so the choice is real), cost $0.005 and $0.007 an evening, and the evenings $0.30 and $0.34.
+    A moment: Calder, whose card gives him dice, asks a different guest for a game eight times in seed 7 (145, 163, 238,
+    292, 306, 318, 357, 370 s); Rurik at 170 s and Toren at 244 s accept and the games are played, Brida declines. Not
+    built, as it argues with character, not a defect: a limit on asking the same person again.
 
 - [ ] **C4 — Temperament in the draw.**
   - Everyone draws from options within 0.15 of their best at temperature 0.25 (`AI_TEMPERATURE`), so a patient
