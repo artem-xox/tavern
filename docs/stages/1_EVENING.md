@@ -93,9 +93,9 @@ barkeep (B0–B6) and E20 (hostile options), all 2026-10-04. Next:
    The saved world did not change (still version 14 then). The live evening and its replay are still to run.
 7. **Tables and manners (T0–T8), built 2026-10-08.** Guests walk over to another table to talk, agree to move to a
    free table together, and upset the hosts of a table they sit down at uninvited; an apology mends it.
-8. **Choice depth (C0–C8), planned 2026-10-09.** A lean first stage, answers to what was just done to a guest, a third
+8. **Choice depth (C0–C8), built 2026-10-09.** A lean first stage, answers to what was just done to a guest, a third
    stage that picks why for social options, temperament in the draw, projects of several steps, and the invitee's
-   own answer to an invitation.
+   own answer to an invitation (off by default: D24). Worlds are saved as version 16.
 
 The door at closing (D02) is fixed: it takes as many leavers at once as it has spots (offline
 seed 5: the last guest left 6.6 s after closing, was 42.8 s; stuck time 27.1 s → 6.1 s). The code now
@@ -3027,47 +3027,95 @@ code disagrees):
     empty-handed): no round and no rematch. Live seeds 5 and 7 before the fix: one rematch reached and played (Calder,
     203 s: "got the rematch") and six failed, the loop above. Rounds: none yet in any evening.
 
-- [ ] **C7 — The invitee decides.**
-  - Today the line writer decides whether an invitation is accepted, by choosing `accept` or `decline` for the
-    invitee's line. The answer becomes the invitee's own choice, scored like any other, and the line only says it.
-  - When an invitation is made (`invitations.invite`), the world asks the invitee's choice layer through the new
-    `Evaluators.answers`. Options: `accept`, `decline`, and `counter:<kind>` for each other kind the invitee could
-    offer the inviter in that scene (`invitations.offered_kinds` with the invitee as speaker). `jev._answer_question`:
-    "How natural is it for Rurik to accept Calder's invitation to a game of dice?"; the local fallback
-    `local_answer_scores` scores `accept` as the invitee's local utility for what the invitation leads to (darts,
-    dice, an ale, a seat, going home) plus `0.25 × opinion / 100`, `decline` as `0.3 + 0.2 × (1 − sociability)`, and
-    a counter as its kind's utility minus 0.1.
-  - The scene's `invitation` gains `answer` (`accept`, `decline`, `counter:<kind>`, or absent while asked);
-    `check_saved_scenes` checks it; saved worlds take the next version. `turns.claim_turns` does not claim the
-    invitee's turn until the answer is in; a failed request answers from the local scores at once, so a scene never
-    waits on a dead request. `MindLoop` sends and applies the request, as for decisions.
-  - With an answer, `conversation.offered_acts` offers the invitee only that act: `accept`, `decline`, or `invite`
-    with the counter's kind. A counter is new: an `invite` from the invitee while an invitation waits for them
-    declines it and leaves theirs pending (`invitation_countered` event: "Rurik turned down darts and offered Calder
-    an ale instead"). `_nudges` says "You have decided to turn down darts and offer an ale instead: say so in your own
-    words." `scripted._answer` follows the answer instead of its own terms.
-  - *Metrics:* `invitations` in `metrics.json`: made, accepted, declined, countered, by kind, and the answer's
-    source. D18 (an `invitation` sent with an `accept`) loses its cause for answered invitations; say so in D18's row.
-  - *Tests first* (`tests/test_invitation_answers.py`): answer options offered (no counter when no other kind is
-    open); the decided act is the only one offered; a counter declines the first and makes the second pending; a
-    counter to a counter; the invitee leaves before answering; a failing evaluator answers from local scores; a save
-    round trip, and a `pytest.raises` block for an unknown answer and a counter of a kind not open.
-  - *Tests expected to change:* tests where the scripted or Haiku writer decides an answer (grep `accept` in
-    `test_invitations.py`, `test_dice_invitation.py`, `test_move_together.py`, `test_scene_choices.py`); the pinned
-    version tests. Name each in the commit.
-  - *Check:* live seeds 5 and 7: invitations made/accepted/declined/countered against the baseline, scene length
-    (turns per scene) and stuck seconds (no scene waits more than a turn's gap), the answer request's cost.
+- [x] **C7 — The invitee decides.** *(built; off by default, see the result)*
+  - Before, the line writer decided whether an invitation was accepted, by choosing `accept` or `decline` for the
+    invitee's line. Now the answer can be the invitee's own choice, scored like any other, and the line only says it.
+  - `invitations.answer_options(world, scene, invitee)`: `accept`, `decline`, and `counter:<kind>` for each kind the
+    invitee could offer in return (`counter_kinds`: `offered_kinds` as if nothing were pending, without the kind asked).
+    `agents.choose_answer(observation, invitation, options, config, rng, evaluators)` scores them through
+    `Evaluators.answers` (Jev: `jev._answer_question`, `evaluate_answers`, recorded as `answers`, replayed, traced, wired
+    in `app.py`, `server/runtime.py` and `scripts/evening.py`) or `local_policy.local_answer_scores`: accepting is what
+    the invitation leads to (a game 0.15 + 0.65 × boredom, an ale 0.4 + 0.5 × thirst, a table 0.2 + 0.6 × the wish for
+    company, going home the leave utility) plus a quarter of the opinion of whoever asks; declining 0.3 + 0.2 × (1 −
+    sociability); a counter its own kind's worth less 0.1. The result is `answer`, `source`, `scores` and `error`.
+  - *The scene waits for it.* `Invitation.answer` is optional (saves stay version 16; `check_invitations` accepts an
+    answer that is `accept`, `decline` or a counter of another kind). `MindLoop` gets an `answer` port (None: nothing
+    changes): when the invitee's line comes next, it claims the scene's turn as a line writer would and asks; the answer
+    is kept on the invitation if the invitation is still the same and the answer one of the options, and the line is
+    claimed next tick; a failed request leaves the answer to the line writer, as before, and an answer is asked once.
+    `conversation.offered_acts` then offers the invitee only the decided act (`invitations.answer_act`), a counter being
+    an `invite` whose kinds are that one; `invitations.invite` answers a waiting invitation with
+    `invitation_countered` ("Rurik turned down an invitation to play a game of dice and invited Calder to play darts
+    together instead"), leaving theirs pending, so a counter can be countered. The scripted writer follows the decided
+    answer, and the Haiku moment says "The speaker has decided to accept ...". `accept` builds its errand from the
+    invitation's kind, sender and receiver only.
+  - **A setting** (`config["answers"]`, `selection.read_answers`; `AI_ANSWERS`), as C1/C3/C5, and **off by default
+    in the shell** after the measurement below.
+  - *Metrics:* `invitations` in `metrics.json` (`evening/invitation_metrics.py`): made, accepted, declined, countered,
+    per kind of invitation asked.
+  - *Tests* (`tests/test_invitation_answers.py`, `test_answer_choice.py`, `test_answer_loop.py`, `test_answer_lines.py`,
+    `test_invitation_metrics.py`): the options in five situations; the act of each answer; the decided act is the only
+    one offered; a counter and a counter of a counter; accepting from a decided answer; saves; the choice with a fake
+    evaluator, its fallback, no key, a missing evaluator; the local scores in seven situations; the Jev question and
+    adapter; the loop (asked before the line, once, kept, a failed request, a stale answer, an answer that is no option,
+    no port, a reset); a headless evening where the invitee's choice is what their line says; the scripted and Haiku
+    writers; the metric. No existing test changed.
+  - **Result (2026-10-09): the mechanism works and makes the evening quieter, so it is off.** Live seeds 5, 7, 1, 2, 3,
+    on the same code but the answer: per evening, accepted invitations fell from 3.6 to 1.0, declined rose from 0.6 to
+    3.6, 2.0 were countered, dice games fell from about 1.6 to 0.4, conversations from 33.8 to 25.6 (stuck seconds 25.5 →
+    20.1, cost $0.35 → $0.30). With a first wording of the question Jev gave `decline` the top score in 31 of 47 answers;
+    a sentence that turning down a friendly offer needs a reason moved it to 19 of 42 (accept 9 → 13, counter 7 → 10)
+    and the outcome only a little (accepted 8 of 47 → 5 of 42). The guests are right by their numbers: in the eight answers read by hand
+    their wish for company is under 10 in six, and they sit in their own chair. Counters can also ping-pong: Rurik and
+    Saye turned each other's offer down four times in 20 s in seed 1 (376-394 s). The mechanism is sound, but the
+    numbers feeding it do not make a tavern sociable enough. Options, each a small task: let a guest's `social` need
+    rise faster; give an invitation an inviter's pull (opinion, a friend's word); or ask for the answer only when the
+    inviter is disliked or a need presses, and let the writer say yes otherwise. Recorded as D24 in PLAN.md.
 
-- [ ] **C8 — Measure.**
-  - Offline seeds 0–9 and live seeds 5 and 7, against C0's baseline: C0's `choice` (near-best size, `decided`,
-    `dead`, `depth`, `repeats`), `responses`, `aims` (chosen and kept), projects by outcome, rounds and rematches,
-    invitations by answer, conversations, news hops, stuck seconds and cost per evening. Replay each live run and
-    `cmp` the events (step 8 of "Working on a task").
-  - Targets to check, tuned here if the evenings argue otherwise: `decided` at the first stage under 35% (51%),
-    `dead` under 15% (31%), a third stage in at least 15% of decisions, most wrongs answered within their
-    window in at least half the evenings, the Jev share of cost under $0.10 per evening.
-  - Record one moment from the log for each: a wrong answered, an aim kept in talk, a project that failed for a
-    reason the world gave, a countered invitation. Add problems left behind to PLAN.md's tech debt.
+- [x] **C8 — Measure.**
+  - Offline seeds 0–9 and live seeds 5, 7, 1, 2, 3, against C0's baseline (the code of `7d161f8` plus the metrics). Every
+    live run was replayed and its `events.jsonl` is byte-identical to the live one; offline, every guest left by closing in
+    all ten evenings, both before and after. The live runs are of the final code with `AI_ANSWERS=false` (the default),
+    run when Jev's credit allowed; the same code with it on, a run before, is the right-hand column.
+
+    | Live, five evenings, mean | C0 baseline | Final | Same with the invitee's own answer |
+    |---|---|---|---|
+    | first-stage options in the near-best set | 1.66 | 1.60 | 1.60 |
+    | decided before the draw (near-best of one) | 55% | 58% | 56% |
+    | first-stage options scored under 0.15 | 27% | 4% | 5% |
+    | decisions followed by a family or seat stage | 42% | 47% | 50% |
+    | decisions followed by an aim stage | 0 | 16% | 14% |
+    | a guest's consecutive actions with the same verb | 29% | 25% | 32% |
+    | conversations / conversation turns | 31.0 / 67.4 | 24.6 / 53.8 | 24.0 / 54.4 |
+    | stuck seconds in all | 25.5 | 31.4 | 20.1 |
+    | accepted invitations / dice sessions begun, logged twice | 3.6 / 3.2 | 4.6 / 4.0 | 1.0 / 0.8 |
+    | cost of an evening | $0.35 | $0.30 | $0.30 |
+
+    Offline: the aim stage in 23% of decisions, conversations 29.7 → 31.4, conversation turns 73.9 → 82.0, the longest
+    news path 1.9 → 2.1 hops, stuck seconds 16.8 → 18.6, 59 `settle_in` plans done and none failed, 327 aims set and 50
+    kept (scenes are short), and three quarrels where there were none (the needle).
+  - Targets, against what the evenings gave: dead slots under 15% (27% → 4%): **met**; a third stage in at least 15% of
+    decisions (16% live, 23% offline): **met**; the Jev share of cost under $0.10 (actions, family, seats and aims come to
+    about $0.05): **met**; decided before the draw under 35% (55% → 58%): **not met**. The near-best window holds 1.6
+    options and a guest is usually clear about their best; the lean request removed dead options, not the clarity of
+    the choice. C4's spread widens it only for the hot and the drunk. Wrongs answered within their window in at least
+    half the evenings: answers were begun in 4 of the 5 evenings (7 in all, against lost games, taken seats,
+    intrusions and kindnesses that nobody counted: D26), which is thin evidence that most calls go unanswered.
+  - What changed, in one line each: C1 and C2 are what C1 and C2 say; C3 gives a social option a purpose that the writer
+    keeps 72% of the time (53 of 74 aims other than small talk, live; the starter says it early); C5 makes arrivals
+    uniform (D25); C6's rematch fails when the world refuses (3 of 3 in these runs: Rurik was pressed, no way to him, no
+    reachable spot), and no round was stood; C7 is off (D24).
+  - Open points: stuck seconds went from 25.5 to 31.4 in the answers-off runs (spread of single evenings 19-35 before,
+    23-39 now): the late arrivals (Calder, Saye) stand 7-9 s on a route that stays blocked, as they did before, so the
+    rise is unexplained and may be noise; `No reachable interaction spot` refusals are 8.8 an evening against 8.0.
+    Conversations fell by a fifth (31 → 25 an evening) while accepted invitations rose: guests talk less to pass the time
+    and more to ask for something. Whether that is a better evening is for the observer to say.
+  - *Moments from the logs:* a wrong answered: "Calder went to answer the lean dark-haired guard with a polished belt
+    buckle, who beat them at dice (17 s later)", seed 2, 243 s; an aim kept: Calder meant to invite the guard to dice at
+    160 s and did so one second later; Rurik accepted at 197 s and they played at 200 s; a project that failed for a
+    reason the world gave: "Calder could not ask for a rematch: rurik has something more pressing to see to" (243 s); a
+    countered invitation: "Rurik turned down an invitation to play darts together and invited Calder to have an ale on
+    them instead" (seed 1, 224 s, with the invitee's answer on).
 
 ## Order
 
