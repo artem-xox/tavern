@@ -2,6 +2,7 @@
 
 from collections.abc import Mapping, Sequence
 import math
+from types import MappingProxyType
 from typing import Any
 
 from tavern.mind.goals import serving
@@ -115,6 +116,12 @@ def _score_approaches(observation: Mapping[str, Any], candidates: Sequence[Mappi
         score = scores[action["id"]] - min(0.15, 0.01 * walk) + 0.25 * opinion_of(actor, action["target_id"], now) / 100
         scores[action["id"]] = min(1.0, max(0.0, score))
 
+
+# The local score at which a fixture is worth a model's slot (`selection.worth_asking`): the guest's state lifts it
+# over the floor when it matters. `inspect` from a need of about 40 with no known relief; `use_toilet` from a bladder
+# of 25 ("mild" in the briefing); `leave` once the evening has given them what they came for, or has gone sour;
+# `wait`, the one way to stay put, unless a need of about 50 presses (its score is then under 0.1).
+ASK_FLOOR: Mapping[str, float] = MappingProxyType({"inspect": 0.3, "wait": 0.1, "use_toilet": 0.25, "leave": 0.25})
 
 # What serving the guest's goal adds to an option's score: enough to tip a near tie, not to outweigh a pressing need.
 GOAL_BONUS = 0.3

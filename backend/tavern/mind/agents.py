@@ -10,9 +10,9 @@ from tavern.body.items import ITEMS
 from tavern.mind.briefing import brief
 from tavern.mind.families import family_scores, group_families
 from tavern.mind.hall_view import in_use, line_place
-from tavern.mind.local_policy import local_scores, local_seat_scores
+from tavern.mind.local_policy import ASK_FLOOR, local_scores, local_seat_scores
 from tavern.mind.observation import known_objects, own_actor
-from tavern.mind.selection import bounded, drawable, read_temperature, select
+from tavern.mind.selection import bounded, drawable, read_lean, read_temperature, select, worth_asking
 from tavern.social.giving import empty_handed_company, gift_targets
 from tavern.social.hostility import HOSTILITY, hostile_targets
 from tavern.social.tables import liked
@@ -358,13 +358,25 @@ def _evaluator_view(observation: Mapping[str, Any], candidates: Sequence[Mapping
     return {**brief(observation, candidates), "self": {key: actor.get(key) for key in keys}}
 
 
+def _in_line(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]]) -> set[str]:
+    # Keeping one's place in a line is never a fixture to drop, however little the place is wanted.
+    places = {item["id"]: item for item in observation["objects"] if "queue_spots" in item}
+    return {action["id"] for action in candidates
+            if action.get("target_id") in places and line_place(observation, places[action["target_id"]])[1]}
+
+
 async def _decide(
     observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]], local: Mapping[str, float], remote: Evaluator,
     config: Mapping[str, Any], rng: Random, temperature: float, limit: int,
 ) -> dict[str, Any]:
+    asks = bool(config.get("typesafe_api_key"))
+    # Only a model's request is made lean, and only when the config says so: the local policy already ranks by these
+    # scores, so a model-less evening draws from the same options as before.
+    if asks and read_lean(config):
+        candidates = worth_asking(candidates, local, ASK_FLOOR, _in_line(observation, candidates))
     candidates = bounded(candidates, local, limit)
     scores, source, error = {action["id"]: local[action["id"]] for action in candidates}, "local", None
-    if config.get("typesafe_api_key"):
+    if asks:
         try:
             scores = await remote(_evaluator_view(observation, candidates), candidates, config)
             source = "jev"

@@ -35,6 +35,7 @@ from tavern.mind.intentions import Intender, intention_writer
 from tavern.mind.model_health import HealthBoard, banner, blocking
 from tavern.mind.questions import Question
 from tavern.mind.scripted import write_scripted_turn
+from tavern.mind.selection import read_switch
 from tavern.social.turns import TurnWriter
 
 DECIDES = {"local": "the local policy (no model)", "live": "Jev, recorded", "replay": "Jev answers replayed"}
@@ -91,7 +92,8 @@ def config(values: Mapping[str, Any], mode: str) -> dict[str, Any]:
     # model and is never sent anywhere.
     key = {"live": values.get("TYPESAFE_API_KEY"), "replay": "replay", "local": None}[mode]
     return {"typesafe_api_key": key, "model": values.get("TYPESAFE_MODEL", "jev-latest"),
-            "timeout": float(values.get("AI_TIMEOUT", "8")), "temperature": float(values.get("AI_TEMPERATURE", "0.25"))}
+            "timeout": float(values.get("AI_TIMEOUT", "8")), "temperature": float(values.get("AI_TEMPERATURE", "0.25")),
+            "lean": read_switch(values.get("AI_LEAN"), True, "AI_LEAN")}
 
 
 def keeper(calls: list[Record], log: Path) -> Callable[[Record], None]:
@@ -309,9 +311,10 @@ def main(root: Path) -> None:
     if tracer is not None:
         # The client uploads in the background; what is still queued must leave before the process ends.
         tracer.client.flush()
-    # A replay matches its recording only with the same seed, pace and temperature, so they are shown.
+    # A replay matches its recording only with the same seed, pace, temperature and lean setting, so they are shown.
     report = {"run": {"mode": mode, "decides": DECIDES[mode], "note": note, "seed": args.seed,
-                      "model": settings["model"], "temperature": settings["temperature"], "step": pace.step,
+                      "model": settings["model"], "temperature": settings["temperature"],
+                      "lean": settings["lean"], "step": pace.step,
                       "model_latency": pace.model_latency, "time_limit": pace.time_limit,
                       "stuck_threshold": args.stuck_threshold, "input_usd_per_million": args.input_price,
                       "writer": writer, "writer_model": CLAUDE_MODEL if writer == "haiku" else None,
