@@ -1,6 +1,7 @@
 """News and guests' copies of it: the scenario's items, who holds them, how they read, and saved copies."""
 
 from collections.abc import Mapping, Sequence
+from random import Random
 from typing import Any, TypedDict
 
 from tavern.hall.memory import log_event
@@ -101,6 +102,28 @@ def _item(data: Any, guests: Sequence[str]) -> News:
     if len(set(holders)) != len(holders) or any(holder not in guests for holder in holders):
         raise ValueError(f"News {data['id']!r} must be known by distinct guests of tonight, not {list(holders)!r}")
     return News(id=data["id"], topic=data["topic"], text=data["text"], known_by=list(holders))
+
+
+def draw_news(news: Sequence[News], count: int, rng: Random) -> tuple[News, ...]:
+    """Pick the news told tonight, each item with a single holder.
+
+    Args:
+        news: The scenario's items, each with the guests who may know it in `known_by`.
+        count: How many items are told, from 1 to `len(news)`.
+        rng: Source of the draw; the same seeded stream gives the same news and holders.
+
+    Returns:
+        `count` items in their listed order, each copied with `known_by` narrowed to one guest drawn from its
+        own list (guests are drawn item by item in listed order, so the order is part of the result).
+
+    Raises:
+        ValueError: `count` is below 1 or above the number of items.
+    """
+    if not 1 <= count <= len(news):
+        raise ValueError(f"Tonight's news must be between 1 and {len(news)} items, not {count}")
+    return tuple(News(id=news[index]["id"], topic=news[index]["topic"], text=news[index]["text"],
+                      known_by=[rng.choice(news[index]["known_by"])])
+                 for index in sorted(rng.sample(range(len(news)), count)))
 
 
 def starting_facts(news: Sequence[News], guest_id: str, now: float) -> dict[str, Fact]:

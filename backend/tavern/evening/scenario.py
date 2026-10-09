@@ -14,7 +14,7 @@ from tavern.hall.state import World
 from tavern.hall.validation import number, unique_ids
 from tavern.hall.world import create_world
 from tavern.mind.cards import Card, parse_card
-from tavern.social.facts import News, parse_news
+from tavern.social.facts import News, draw_news, parse_news
 from tavern.social.ties import OwnTie, Tie, own_ties, parse_own_ties, parse_ties
 
 
@@ -65,7 +65,8 @@ class Scenario:
 
     `ties` are the starting relationships between guests, in listed order: what later
     systems seed opinions and familiarity from. `news` is what the evening's guests start
-    out knowing (see `facts`). `staff` work the evening and are at their posts before the first guest
+    out knowing (see `facts`); with `news_tonight`, only that many items, drawn by the evening's seed, are told,
+    each known by a single guest. `staff` work the evening and are at their posts before the first guest
     comes in. Guests due at opening come in one by one in a random order, evenly from the first to the
     last second of `opening_window`, instead of all at once.
     """
@@ -78,6 +79,7 @@ class Scenario:
     news: tuple[News, ...] = ()
     staff: tuple[StaffMember, ...] = ()
     opening_window: tuple[float, float] | None = None
+    news_tonight: int | None = None
 
 
 def _fields(data: Any, required: set[str], optional: set[str], label: str) -> Mapping[str, Any]:
@@ -162,8 +164,9 @@ def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None,
         data: Decoded scenario with `guests`, `arrival` need ranges (as in a room's `arrival`
             section), `closes_at` in game seconds, an optional integer `seed`, an optional `opening_window`
             [first, last] in game seconds (none by default) and optional
-            starting `relationships` (see `ties.parse_ties`), optional `news` (see `facts.parse_news`)
-            and optional `staff` (see `parse_staff_member`). A guest is either described
+            starting `relationships` (see `ties.parse_ties`), optional `news` (see `facts.parse_news`),
+            an optional `news_tonight` (how many of the news items are told tonight, from 1 to the number of
+            items; every item is told as listed without it) and optional `staff` (see `parse_staff_member`). A guest is either described
             inline with `traits`, or cast from a character card named by ID in `card`, with
             the card's name and sprite; so is a staff member, from the staff cards.
         cards: Character cards by ID. Without them only the schedule is read: guests cast from
@@ -176,10 +179,11 @@ def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None,
         ValueError: A section is missing, unknown or malformed, the opening window is no [first, last] pair
             ending before closing time, there are no guests, guest or staff
             IDs repeat, a guest would arrive at or after closing time, a guest's or staff member's card
-            is unknown or does not match them, or a relationship or news item is invalid.
+            is unknown or does not match them, a relationship or news item is invalid, or `news_tonight` is
+            no whole number from 1 to the number of news items.
     """
-    fields = _fields(data, {"guests", "arrival", "closes_at"}, {"seed", "relationships", "news", "staff", "opening_window"},
-                     "Scenario")
+    fields = _fields(data, {"guests", "arrival", "closes_at"},
+                     {"seed", "relationships", "news", "news_tonight", "staff", "opening_window"}, "Scenario")
     closes_at = number(fields["closes_at"], "Closing time", 0, inf)
     seed = fields.get("seed")
     if seed is not None and type(seed) is not int:
@@ -189,10 +193,19 @@ def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None,
     staff = _staff(fields.get("staff", []), guests, staff_cards)
     ties = parse_ties(fields.get("relationships", []), [item["id"] for item in guests])
     news = parse_news(fields.get("news", []), [item["id"] for item in guests])
+    told = _news_tonight(fields.get("news_tonight"), len(news))
     # `arrival` is a required field above, so its ranges are never None here.
     arrival = cast(dict[str, tuple[float, float]], arrival_ranges(fields))
     return Scenario(guests=_with_ties(guests, ties), arrival=arrival, closes_at=closes_at, seed=seed, ties=ties,
-                    news=news, staff=staff, opening_window=window)
+                    news=news, staff=staff, opening_window=window, news_tonight=told)
+
+
+def _news_tonight(value: Any, items: int) -> int | None:
+    if value is None:
+        return None
+    if type(value) is not int or not 1 <= value <= items:
+        raise ValueError(f"news_tonight must be a whole number from 1 to the {items} news items, not {value!r}")
+    return value
 
 
 def _opening_window(value: Any, closes_at: float) -> tuple[float, float] | None:
@@ -264,8 +277,11 @@ def open_evening(room: Mapping[str, Any], scenario: Scenario, seed: int) -> Worl
     world = create_world({key: value for key, value in room.items() if key not in ("actors", "arrival")}, seed)
     if not any(item["kind"] == "door" for item in world["map"]["objects"]):
         raise ValueError("A scenario needs a door for its guests to come in by")
+    # The news is drawn from a stream of its own, so tonight's needs and the opening order stay as they were.
+    news = scenario.news if scenario.news_tonight is None else draw_news(
+        scenario.news, scenario.news_tonight, Random(f"{seed}:news"))
     world.update({"expected": _expected(scenario, seed), "closes_at": scenario.closes_at,
-                  "news": [News(**item) for item in scenario.news]})
+                  "news": [News(**item) for item in news]})
     take_posts(world, scenario.staff)
     admit_arrivals(world)
     return world

@@ -2915,20 +2915,17 @@ F6 → F7 → F8 → F9. F6 needs F4, F8 needs F7, and F9 comes last. Each task 
     two candles flicker out of phase at the same time.
   - *Check:* `make check` and `make build`. In `make run`, post a screenshot of the whole hall and a 2×
     crop of the privy and the door.
-  - *Built (2026-10-09):* `frontend/src/candles.ts` (`CANDLES`, `candleLight`, `glowRadius`, `drawSconces`,
-    `drawCandles`); `hearth.ts` now exports `flicker(time, phase)` and `HEARTH_GLOW_RADIUS`, and `hearthFacing` takes a
-    `Pick<WorldObject, "x" | "y" | "width">`, so the fire and the candles share one flicker and one wall rule. Sconces
-    are drawn with the furniture, flames and glow on a layer of their own above it. `frontend/tests/candles.test.ts`
-    (12 cases) reads `data/tavern.json`. Checked in the running app: two west windows; a candle in the privy, by the
-    door and on the west and east walls.
-- [ ] **F2 — Full energy on arrival.**
+- [x] **F2 — Full energy on arrival.**
   - *Build:* `first_evening.json`'s arrival `fatigue` [0, 0].
   - *Tests first:* in `tests/test_scenario_cards.py` (or beside the other first-evening checks), every
     guest the first evening expects has `fatigue` 0, for two seeds.
   - *Check:* `make check`. Offline seed 5 (`--writer scripted`), before and after: the time of the first
     `dozed_off` and each guest's `fatigue` on leaving (a scratch script, not committed). Expect no nap
     before 300 s.
-- [ ] **F3 — One item of news, one holder.**
+  - *Built (2026-10-09):* the scenario's arrival `fatigue` is [0, 0].
+    `test_first_evening.py::test_every_guest_comes_in_with_full_energy` (seeds 1 and 7) was red before the data
+    change. Offline seed 5 afterwards: no nap at all (`sleep.naps` 0), guests left with fatigue 28–49.
+- [x] **F3 — One item of news, one holder.**
   - *Build:* `news_tonight` in `parse_scenario` and `Scenario`, `facts.draw_news`, the draw in
     `open_evening`, and `"news_tonight": 1` in the first evening.
   - *Tests first* (`tests/test_facts.py` or a new `tests/test_news_tonight.py`). Parametrized:
@@ -2943,6 +2940,15 @@ F6 → F7 → F8 → F9. F6 needs F4, F8 needs F7, and F9 comes last. Each task 
     with no `news`.
   - *Check:* `make check`. Offline seeds 1–8: the item drawn, its holder, and how many guests held it at
     the end (`news_metrics`). Report any seeded test that fails, as decided above.
+  - *Built (2026-10-09):* `facts.draw_news(news, count, rng)`; `Scenario.news_tonight` and `_news_tonight` in
+    `scenario.py`; `open_evening` draws from `Random(f"{seed}:news")`, so arrival needs are unchanged (pinned by a test).
+    The first evening sets `"news_tonight": 1`. `tests/test_news_tonight.py` (35 cases) is the spec. Over seeds 0–20
+    the drawn item is `margrave_fever` 9 times, `salt_toll` 4, `pass_closing` 4, `cloth_robbery` 3 and `deserters` 1,
+    and the item reached a third guest (two hops) in 15 of 21 evenings played offline with the paraphrasing writer.
+    One seeded test failed, as foreseen: `test_facts.py::test_a_news_item_reaches_a_third_guest_in_other_words[seed-7]`
+    (seed 7 draws `salt_toll` for Calder, who arrives at 110 s and tells nobody). With the user's approval
+    (2026-10-09) seed 7 became seed 0 in that test's parametrization; the assertions did not change. Offline seed 5:
+    `pass_closing`, held by Calder, told to Rurik and overheard by Toren at 172 s.
 - [ ] **F4 — A ten-minute evening and the barkeep's call (the world).**
   - *Build:* `last_call_at` in the scenario, the world and the saves (the schema bump); `call_last_orders`,
     `closing_called`, the event with `line`, the sound; no pouring, `take_beer` or nap after the call;
