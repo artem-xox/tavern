@@ -93,6 +93,9 @@ barkeep (B0–B6) and E20 (hostile options), all 2026-10-04. Next:
    The saved world did not change (still version 14 then). The live evening and its replay are still to run.
 7. **Tables and manners (T0–T8), built 2026-10-08.** Guests walk over to another table to talk, agree to move to a
    free table together, and upset the hosts of a table they sit down at uninvited; an apology mends it.
+8. **Choice depth (C0–C8), planned 2026-10-09.** A lean first stage, answers to what was just done to a guest, a third
+   stage that picks why for social options, temperament in the draw, projects of several steps, and the invitee's
+   own answer to an invitation.
 
 The door at closing (D02) is fixed: it takes as many leavers at once as it has spots (offline
 seed 5: the last guest left 6.6 s after closing, was 42.8 s; stuck time 27.1 s → 6.1 s). The code now
@@ -2687,6 +2690,391 @@ Decisions for every T task (frozen 2026-10-08; change them here first if the cod
   for a follow-up in which the world opens a scene from the host, not built here. Haiku chose `move_together` once in two
   live evenings and `apologize` never, so E28 should count both.
 
+### Choice depth (C0–C8)
+
+Added 2026-10-09 at the user's request. The choice layer (Jev) picks one next step at a time, at most two levels
+deep, and in practice it has fewer branches than it shows. Measured on a live evening (seed 7, commit `7d161f8`,
+442 game s, Jev $0.050 of $0.40), from its `calls.jsonl`:
+
+| Stage | Requests | Options per request | Near-best set (what chance draws from) | Decided before the draw (near-best of 1) |
+|---|---|---|---|---|
+| First (one option per family) | 168 | 7.1 (cap 8 in 42%) | 1.70 | 51% |
+| Family (the action within it) | 61 | 2.9 | 1.21 | 84% |
+| Seats | 7 | 7.7 | 2.43 | 29% |
+
+- **About half of each first-stage request is the same four fixtures.** `inspect` was in 158 of 168 requests and
+  never scored above 0.11. `leave` was in 167 and was never chosen before closing (all six departures came 4–22 s
+  after it). `use_toilet` (155, mean 0.18) and `wait` (153, mean 0.28) were nearly as constant. Of all first-stage
+  options, 31% scored below 0.15, a level the near-best draw never reaches. The local policy ranks
+  these fixtures above low-scored social options when the cap of 8 binds: in an offline evening it trimmed
+  `bring_drink` 27 times before Jev saw it.
+- **The hierarchy is mostly nominal.** Of 13 families, only `company`, `pastime`, `resting` and once `fetching` ever
+  held more than one action; the other nine always stand for one verb. The second stage picks *whom* or *which
+  object*, never *why* or *how*.
+- **No step knows the one before.** The most common consecutive choices were `sit`→`sit` (24), `talk`→`talk` (16)
+  and `play_darts`→`play_darts` (9). Goals reached the choice as a mark in 11 of 168 requests.
+- **What is done to a guest opens no choice.** Calder lost to Rurik at dice at 221 s; they played again (Rurik won
+  again at 355 s) only because Haiku talked them into it at 268 s. Rurik, who loathes Toren, saw Toren walk over and was
+  offered drink 0.97, sit 0.90, wait 0.43: nothing about Toren. T8 saw the same with hosts and intruders.
+
+The block makes the choice deeper where stories come from: a lean first stage (C1), answers to what was just done
+(C2), a third stage that picks *why* for social options (C3), temperament in the draw (C4), projects of several
+steps chosen at once (C5, C6), and the invitee's own choice of an answer (C7). C0 and C8 measure.
+
+Decisions for every C task (proposals: freeze each in its task before coding, and change them here first if the
+code disagrees):
+
+- **What stays.** Jev scores and never picks; the near-best draw; only validated actions change the world; the
+  local policy is the fallback for every stage; a replay is byte-identical to its live run.
+- **A new model stage is a new `Evaluators` field** (`aims` in C3, `answers` in C7), with its own question in
+  `adapters/jev.py`, its own recorded `kind` in `calls.jsonl`, and the local scorer as fallback. It is wired in
+  all three places (`app.create_default_app`, `server/runtime.py`, `scripts/evening.py` including replay; see D09).
+  `Evaluators` keeps defaults so that callers which do not pass the new field still work.
+- **Saves.** C2 (`Thought.answered`), C3 (an action's `aim`, a scene's `aims`), C5 (`world["projects"]`) and C7 (an
+  invitation's `answer`) change the saved world. Each takes the next free `schema_version` (16 at the start) in
+  the order they land, with a check function in the concept module and the pinned-version tests
+  (`test_database.py`, `test_intention_saves.py`) named in the commit.
+- **Snapshot.** C3 (`decision.aim`) and C5 (an actor's `project`) change it; `frontend/src/types.ts` changes in the
+  same commit, and `make build` runs.
+- **Prompts.** A change to `jev._visitor_view` changes every Jev request (no cache to keep). A change to the Haiku
+  prefix (`turn_prompt.shared_prefix`) invalidates its cache once, which is fine; per-moment text goes in `content`.
+- **Whole evenings move.** C1–C7 change which options are drawn, so `test_first_evening.py`, the news-spread test on
+  seed 7 and `test_barkeep_evening.py` may fail for reasons unrelated to a bug. If one does, report the seed and the
+  failure; do not change a seed or an assertion without the user's approval.
+- **Out of scope:** wagers and stakes (Stage 3, the economy); several promise kinds (D22); a guest ordering
+  another away; walking up to someone who stands (T's out-of-scope still holds); any new pose or art.
+
+- [ ] **C0 — Measure the choice.**
+  - `evening/choice_metrics.py` (new: "How wide and how deep the evening's choices were"), pure, from the
+    lockstep's recorded choices. `lockstep._record_choices` keeps, per stage: `time`, `actor_id`, `kind`
+    (`actions`, `family`, `seats`; later `aims`), `source`, `error`, `options` (IDs in request order),
+    `scores` and `chosen` (ID). `choice_metrics(choices, events)` returns `ChoiceCounts` (a `TypedDict`):
+    - per stage: `requests`, `options` (mean), `near_best` (mean size of `selection.drawable`, recomputed from
+      the scores; a family ID and a concrete ID both read their verb as the part before the first `:`),
+      `decided` (share with a near-best set of one);
+    - `dead`: share of first-stage options scored below 0.15 (the dead slots above);
+    - `depth`: share of decisions that reached a second stage, and (after C3) a third;
+    - `repeats`: share of a guest's consecutive chosen actions with the same verb, from `action_started` events.
+    `scripts/evening.py` writes it as `choice` in `metrics.json`, beside `repetition`.
+  - Rounding stays in the presentation (`metrics.json` writer), not in `choice_metrics`.
+  - *Tests first* (`tests/test_choice_metrics.py`): one parametrized block on `ChoiceCounts` from hand-made
+    choices: empty evening (no requests: means are None, not 0), a single request, a request with a tie at the
+    top, a family stage after an action stage, duplicate consecutive verbs in events. A `pytest.raises` block for
+    a choice whose `chosen` is not among its `options`.
+  - *Check:* `make check`; offline seed 5 and live seeds 5 and 7 on `main` give the baseline every later C task
+    compares with (record the table here). The live seed 7 numbers should match the table above within the
+    noise of a live run.
+
+- [ ] **C1 — A lean first stage.**
+  - *Rule:* a fixture verb is put to the model only when the guest's own state makes it worth weighing. A table in
+    `local_policy`, keyed by verb:
+
+    ```python
+    # The local score below which a fixture is not worth a model's slot; the guest's state lifts it when it matters.
+    ASK_FLOOR: Mapping[str, float] = MappingProxyType({"inspect": 0.3, "wait": 0.25, "use_toilet": 0.25,
+                                                       "leave": 0.25})
+    ```
+
+    `selection.worth_asking(candidates, scores, floors) -> list` keeps the options at or above their floor (verbs
+    not in the table always), in candidate order. It never empties a request: when every option is under its
+    floor, all are kept (an empty known world, closing time with two doors). It never drops staying in a line the
+    guest already joined (`line_place(...)[1]`). `agents._decide` calls it before `bounded`, **only when a model is
+    asked**: the local policy already ranks by these scores, so offline evenings stay byte-identical, which is the
+    refactor check.
+  - What the floors mean today: `inspect` is asked while a need of about 40 or more has no known relief, or the WC
+    is unknown and the bladder presses; `use_toilet` from bladder 25 ("mild" in the briefing); `leave` once
+    `_leave_utility` finds the evening content, weary or upset (about two beers after four minutes, a grudge, a dry
+    tap), and at closing; `wait` only when nothing else is left. Write each as a why-comment beside the table.
+  - `jev._visitor_view` drops nothing: the options it describes are just fewer.
+  - *Tests first:* `tests/test_selection.py` (or `test_families.py`, where `bounded` is tested today):
+    `worth_asking` cases: empty, single option under its floor (kept), duplicates, a fixture over its floor, all
+    under (all kept), a joined line under its floor (kept), a verb without a floor. `tests/test_agents.py`: with a
+    key and a fake evaluator, the candidates the evaluator receives omit `inspect` beside a seat on offer, and
+    include it when thirst is 60 and no tap is known.
+  - *Tests expected to change:* none. Tests that pass a key with a hand-made observation of only `inspect` and
+    `wait` (`test_seating.py::test_only_options_close_to_the_best_are_drawn`, `test_agents.py`'s evaluator cases)
+    keep both, since all are under their floors. Any failing test is a surprise: stop and report it.
+  - *Check:* offline seed 5 `cmp` byte-identical; live seed 7: `dead` share (baseline 31%), first-stage input
+    tokens (baseline 5,770), how often `bring_drink` and `give` reach Jev, departures before closing (baseline 0),
+    WC visits and stuck seconds (no worse), every guest gone at closing.
+
+- [ ] **C2 — Answer what was just done to them.**
+  - `social/responses.py` (new: "Which fresh wrongs and kindnesses call for an answer, and which options answer
+    them"). A table keyed by thought kind:
+
+    ```python
+    @dataclass(frozen=True)
+    class Response:
+        """How a fresh thought about someone calls for an answer.
+
+        Attributes:
+            verbs: Verbs that answer it when aimed at the person the thought is about.
+            within: Game seconds after the thought during which it still calls for an answer.
+        """
+        verbs: tuple[str, ...]
+        within: float
+
+    _HAVE_IT_OUT = ("talk", "approach", "join_conversation")
+    RESPONSES: Mapping[str, Response] = MappingProxyType({
+        "seat_taken": Response((*_HAVE_IT_OUT, "shove", "start_fight"), 90.0),
+        "table_intruded": Response(("talk", "join_conversation", "shove"), 90.0),
+        "line_cut": Response(("talk", "join_conversation", "shove", "start_fight"), 60.0),
+        "insulted": Response((*_HAVE_IT_OUT, "shove", "start_fight"), 90.0),
+        "quarrel": Response((*_HAVE_IT_OUT, "shove", "start_fight"), 90.0),
+        "friend_insulted": Response(_HAVE_IT_OUT, 90.0),
+        "let_down": Response(_HAVE_IT_OUT, 120.0),
+        "lost_at_dice": Response(_HAVE_IT_OUT, 90.0),
+        "treated": Response((*_HAVE_IT_OUT, "give", "bring_drink"), 120.0),
+        "gifted": Response((*_HAVE_IT_OUT, "give", "bring_drink"), 120.0),
+        "cared_for": Response((*_HAVE_IT_OUT, "give", "bring_drink"), 120.0),
+        "kept_word": Response(_HAVE_IT_OUT, 120.0),
+        "shoved": Response(("talk", "shove", "start_fight"), 60.0),
+    })
+    ```
+
+    No new verb and no new family: every answer is an option the guest already has, aimed at the right person.
+    The hostile verbs keep their own gates (`hostility.hostile_targets`); the table only says that they answer.
+  - `answering(observation, action) -> Thought | None`: the freshest active, unanswered thought whose kind is in
+    `RESPONSES`, whose `about` is the action's target and whose age (`now - (expires_at - THOUGHTS[kind].seconds)`)
+    is at most `within`, when the action's verb is in its `verbs`. A family option answers when any member does.
+    Ties go to the latest thought, then to `RESPONSES` order (say so in a comment).
+  - *A thought is answered once.* `Thought` gains `answered: NotRequired[bool]`. When an answering action is
+    accepted (`world.start_action`), `responses.mark_answered` sets it and records `answered` for the guest:
+    "Calder went to answer Rurik, who beat them at dice" (the `ThoughtKind.reason` words). `thoughts.check_mind`
+    accepts the field. Saved worlds take the next version.
+  - *What the mind sees.* `briefing._marked` adds "(this answers Rurik, who beat them at dice 40 s ago)" after the
+    goal mark; the situation gains "Unanswered: Rurik beat them at dice 40 s ago." for each calling thought about
+    someone in sight. `jev._visitor_view` gains one sentence: an option marked as answering someone is how people
+    respond to what was just done to them; a wrong is taken up or let go according to temper and pride, a kindness
+    is thanked or returned, and letting either pass is natural for the patient and the shy.
+  - *Local policy.* `_score_answers`: an answering option gains `0.1 + 0.3 * temper` for a wrong (a thought with
+    negative mood) and `0.1 + 0.3 * sociability` for a kindness, clamped to 0–1, after `_score_goal`.
+  - *Metrics:* `responses` in `metrics.json`: `called` (thoughts of a kind in `RESPONSES` about someone who was in
+    the hall), `answered` (`answered` events), and `answered_within` per kind.
+  - *Tests first* (`tests/test_responses.py`): the table is sound (kinds in `THOUGHTS`, verbs in `ACTIVITIES`);
+    `answering` cases: a fresh thought and a matching verb; a thought past `within`; the other person; a verb not
+    in `verbs`; an answered thought; two thoughts about one person (the latest); a family with an answering member;
+    no thoughts. `mark_answered` on start and the event; a save round trip with `answered`; a `pytest.raises` block
+    for a saved `answered` that is not a bool. Briefing text cases, and the local bonus for a hot and a calm temper.
+  - *Check:* offline seeds 0–9: `answered_within` before and after, and stuck seconds; live seed 7: what Calder
+    chose within 90 s of each loss to Rurik. Re-measure T8's open question (does a host answer an intrusion within
+    15 s?) and record it in T8's follow-up note.
+  - *If Jev ignores the marks* (answers under 20% of `called` live), propose a `respond` family offered only while a
+    thought calls for an answer, with members whose IDs carry the response (they would duplicate `company`
+    members otherwise). Do not build it in C2.
+
+- [ ] **C3 — Why: an aim for every social option.**
+  - A third stage. After the concrete action is chosen (stage one or two), if its verb is `talk`, `approach` or
+    `join_conversation` and more than one aim is offered, `choose_action` asks `Evaluators.aims` to score the aims;
+    with one aim it is set without a request. The action carries it: `Action.aim: NotRequired[str]`, kept by
+    `actions` and `persistence` as `item` is (H1), and refused on any other verb.
+  - `social/aims.py` (new: "What a guest means by a social option, and what they would say to carry it out"):
+
+    ```python
+    @dataclass(frozen=True)
+    class AimKind:
+        """One kind of aim.
+
+        Attributes:
+            wording: How the briefing and the line writer tell it; `{name}` is the person, `{what}` the detail.
+            acts: Speech acts that carry it out (`conversation.ACTS`); one of them said by the guest keeps the aim.
+            guidance: When the evaluator should find it natural.
+        """
+        wording: str
+        acts: tuple[str, ...]
+        guidance: str
+    ```
+
+    Kinds, each offered from the guest's own observation (`offered_aims(observation, action) -> list[str]`):
+    - `pass_time`: always. Acts `small_talk`, `joke`, `remark`.
+    - `tell_news:<fact_id>`: one per fact the guest holds, at most two (highest `confidence`, then fact ID). Acts
+      `share_news` (with that `fact_id`).
+    - `invite:<kind>`: `darts_together` (darts known), `dice_together` (dice table known with two free chairs when
+      last seen), `buy_drink` (a stocked tap known, a free hand, the person visibly empty-handed), `join_table`
+      (the guest's own table has a free chair and the person is not at it). Act `invite` with that kind.
+    - `win_over`: the person is a stranger or acquaintance and the opinion is 0 or more. Acts `introduce`,
+      `compliment`, `small_talk`.
+    - `needle`: the opinion is at most `conversation.DISLIKED`. Acts `insult`, `complain`, `disagree`.
+    - With C2, for an option that answers a thought: `have_it_out` (a wrong; acts `complain`, `insult`,
+      `disagree`), `thank` (a kindness; acts `compliment`, `agree`) and `rematch` (`lost_at_dice` with the dice
+      table known; act `invite` with `dice_together`).
+    - Not now: `make_amends`. The wrongdoer keeps no record of whom they wronged that the mind could read; it
+      needs one first (an `apologize` act already mends from the other side).
+  - Aim candidates are `{"id": "<aim>@<action id>", "verb", "target_id", "aim"}`; `jev._aim_question` asks "How
+    natural is it for Calder, going over to Rurik, to ask for a rematch at dice?" with the shared rubric and the
+    kind's guidance. `local_policy.local_aim_scores` starts from: `pass_time` 0.4; `tell_news` 0.25 + 0.3 ×
+    curiosity; `invite` by the need it eases (games: 0.2 + 0.5 × boredom; `buy_drink`: 0.2 + 0.4 × opinion / 100);
+    `win_over` 0.2 + 0.4 × sociability; `needle` 0.1 + 0.5 × temper × (−opinion / 100); `have_it_out` 0.2 + 0.5 ×
+    temper; `thank` 0.5; `rematch` 0.2 + 0.4 × boredom + 0.3 × temper. Tune on offline seeds; write each as a
+    why-comment.
+  - *The world keeps it.* `Conversation` gains `aims: dict[str, str]` (member ID to aim), written on arrival by
+    `_open_scene`, `_approach_scene` and `_join_scene`, dropped when the member leaves, checked by
+    `check_saved_scenes`. Saved worlds take the next version.
+  - *The line writer reads it.* `turns.turn_view` gives the speaker `aim` (`id`, `words`, `acts`, `done`: whether
+    they already said one of its acts in this scene). `_nudges` says, while not done: "The speaker came over to ask
+    Rurik for a rematch at dice: do it in their own words, early; acts that fit: invite (dice_together)". The
+    shared prefix gains one rule (once). `scripted.py` uses the aim's act on the speaker's first or second turn
+    when it is offered, so offline evenings show aims.
+  - *Decision and snapshot.* The decision gains `aim` (`name`, `source`, `scores`, `error`), like `family`;
+    `apply_decision` and `lockstep._record_choices` keep it; `types.ts` gets `AimStage`; the inspector shows it.
+  - *Metrics:* `aims` in `metrics.json`: chosen per kind, and `kept` (the speaker said one of the aim's acts in
+    that scene): a "say and do" for talk, as MIND.md wanted. C0's `depth` counts the third stage.
+  - *Tests first* (`tests/test_aims.py`): `offered_aims` cases: nothing known (only `pass_time`); two facts; three
+    facts (top two by confidence, then ID); a disliked person (`needle`); a stranger (`win_over`); a free dice
+    table; an answered thought (C2) gives no response aim; a malformed fact raises `ValueError`. In
+    `tests/test_agents.py`: one aim asks no model; several ask `aims`; a failing `aims` evaluator falls back to the
+    local scores with the error shown. Arrival writes the scene's aim; the nudge text; the scripted writer's act;
+    a save round trip, and a `pytest.raises` block for an unknown aim and an aim on a `sit`.
+  - *Tests expected to change:* tests that compare a whole decision or action for `talk`, `approach` or
+    `join_conversation` now see an `aim` (grep `choose_action` in `test_approach.py`, `test_social.py`,
+    `test_scene_choices.py`); the pinned version tests. Name each in the commit.
+  - *Check:* live seed 7: aims chosen and kept, aim requests and their cost (expect about 50 requests of about
+    3,000 tokens, under $0.01), and one moment where an aim changed what was said (a rematch asked, news told on
+    purpose). Offline seed 5: news hops before and after (`news` in `metrics.json`).
+
+- [ ] **C4 — Temperament in the draw.**
+  - Everyone draws from options within 0.15 of their best at temperature 0.25 (`AI_TEMPERATURE`), so a patient
+    sober guest and a hot-headed drunk one are equally predictable. `selection.spread(actor, temperature) ->
+    Spread` (a frozen dataclass: `window`, `temperature`) widens both for the impulsive and the drunk and narrows
+    them for the patient: `factor = 1 + 0.6 × (temper − patience) + 0.8 × drunkenness`, window `0.15 × factor`
+    clamped to 0.08–0.3, temperature `temperature × factor` clamped to 0.5–2 times the config's. Constants are
+    parameters with why-comments; traits a Stage 0 visitor lacks read as 0.5 and drunkenness as 0.
+  - `drawable` takes `window` (default 0.15, so its tests and other callers keep their meaning); `_decide` passes the
+    guest's spread at every stage.
+  - *Tests first:* `spread` cases: an ordinary sober guest (the config's values), a patient sober guest, a
+    hot-headed drunk (capped), traits missing; a `pytest.raises` block for a trait outside 0–1 and a negative
+    temperature. `drawable` with a window.
+  - *Check:* offline seeds 0–9 and live seed 7: C0's `decided` per guest, distinct verbs per guest, and how many
+    guests make the same first three choices on arrival (the "guests think alike" of MIND.md).
+
+- [ ] **C5 — Projects: a plan of several steps chosen once.**
+  - A project is a short plan the guest takes on with one choice; the world carries out its steps through the
+    ordinary lifecycle, as errands do (`social/errands.py`), and the guest asks for no decision until it ends. It
+    gives a step memory of the last one, holds a guest to what they set out to do, and ends in a logged outcome a
+    story can cite.
+  - `body/projects.py` (new: "Projects: plans of several steps a guest takes on with one choice, and how each step
+    is carried out"):
+
+    ```python
+    class Project(TypedDict):
+        """A plan under way: its kind, whose it is, what it is about, the step reached and since when."""
+        kind: str
+        by: str
+        target: str | None
+        step: int
+        started_at: float
+
+    @dataclass(frozen=True)
+    class Step:
+        """One step: the verb started, and how its target is found when the step begins (None: it cannot be)."""
+        verb: str
+        target: Callable[[Mapping[str, Any], Project], str | None]
+
+    @dataclass(frozen=True)
+    class ProjectKind:
+        """One kind of project: its steps in order, and the game seconds before an unfinished one lapses."""
+        steps: tuple[Step, ...]
+        lasts: float
+    ```
+
+    `world["projects"]: list[Project]`, checked by `check_saved_projects`; saved worlds take the next version.
+    `honor_projects(world, start)` runs each tick beside `honor_invitations`: when the guest is idle, it starts the
+    next step; a refused step ends the project as `failed`; the last step completed ends it as `done`; an interrupt
+    (`attention`) ends it as `dropped`; a guest who left ends it silently; `lasts` passed ends it as `expired`. Each
+    end is one event, `project_done` / `project_failed` / `project_dropped` / `project_expired`, e.g. "Edda could not
+    settle in: the tap had run dry". `decisions.free_to_decide` is false while the guest has a project, as it is
+    while fetching a drink.
+  - *The first kind, `settle_in`*: take an ale at the tap, sit on the chosen chair, drink. A new verb, in the
+    `refreshment` family (the same wish: something to drink), so no first-stage request grows and `refreshment`
+    becomes a real family of two:
+
+    ```python
+    Activity(verb="settle_in", duration=0.5, opens_project=True, effect=_settle_in, family="refreshment",
+             label="Settle in with an ale", doing="getting an ale to take to a table", done="settled in with an ale",
+             what="pour a mug of ale at the tap, then take {target} and drink it there",
+             guidance="What a guest does on coming in thirsty without a seat: one errand to the tap, then they sit "
+                      "with their drink. Pointless with a mug in hand or a seat already their own.")
+    ```
+
+    `Activity.opens_project` is a new flag. Offered (`agents`) when the guest holds no beer, sits nowhere and has no
+    own seat free, knows a stocked tap and a free table chair, and thirst is at least 35 (the tap's existing rule
+    for social guests). Choosing it takes the seat stage, as `seating` does: `Activity.chooses_chair` (new flag, on
+    `seating` and `settle_in`) replaces the `chosen["verb"] == "seating"` test in `choose_action`, and the seat
+    stage returns `settle_in:<chair>`. So one choice runs three levels deep: `refreshment` → `settle_in` → chair.
+    Local utility: `0.1 + 0.8 × thirst − 0.3 × bladder`, a little above `take_beer` for a seatless guest.
+  - *Snapshot:* an actor's `project` (`kind`, `step`, `of`) for the inspector ("Settling in: step 2 of 3"); `types.ts`.
+  - *Tests first* (`tests/test_projects.py`): steps start in order; a refused step fails with its event; an
+    interrupt drops it; a departed guest's project goes; `lasts` expires it; no decision is asked meanwhile; a save
+    round trip, and a `pytest.raises` block for an unknown kind, a step past the last and a missing guest.
+    Candidates: `settle_in` offered and not offered (holding a mug, seated, no free chair, tap dry, thirst 20);
+    `choose_action` returns `settle_in:<chair>` through the seat stage with fake evaluators.
+  - *Check:* offline seed 5 and live seed 7: Jev requests per guest in their first 60 s, `seat_taken` and refused
+    `sit` in the first 60 s, projects done/failed/dropped, stuck seconds.
+
+- [ ] **C6 — Social projects: a round for the table, and a rematch.**
+  - `stand_a_round`: fetch an ale for each empty-handed tablemate in turn. In the `fetching` family (the same wish),
+    which becomes a real family beside `bring_drink`. Offered to a seated guest with a free hand, a stocked tap
+    known, not on an errand, and at least two tablemates visibly holding no mug (`giving.empty_handed_company`
+    restricted to the table). The project freezes its receivers at the start, in seat order, as
+    `targets: list[str]` (a field of this kind only; `check_saved_projects` checks it), and runs one `buy_drink`
+    errand per receiver (`social/errands.py`), the next when the last one ends. Each receiver keeps `treated`, as a
+    gift of a mug does now. It ends `done` with `round_stood` ("Brida stood the Hearth table a round: 3 ales"), or
+    `failed` when the tap runs dry or the guest leaves the table. Local utility as `bring_drink`'s, plus
+    `0.1 × (receivers − 1)`.
+  - `rematch` (needs C2 and C3): offered while `lost_at_dice` about someone calls for an answer (C2), the dice table
+    is known with two free chairs, and that person is in sight. Step one reaches them (`talk`, `approach` or
+    `join_conversation`, whichever reaches them, with the aim `rematch`). Step two waits on the world: `done` when
+    `dice_started` names both, `failed` on `invitation_declined` (the asker keeps `rebuffed`, an existing thought) or
+    when the person leaves, `expired` after 120 s. A step that waits needs `Step.until` (a new optional field:
+    `Callable[[world, Project], str | None]`, returning the outcome once the world shows it).
+  - *Tests first* (`tests/test_round.py`, `tests/test_rematch.py`): a round to two tablemates; a tablemate who
+    leaves mid-round is skipped; the tap runs dry on the second mug; offered and not offered cases. A rematch asked
+    and played; declined (`rebuffed`); the person leaves; it lapses.
+  - *Check:* live seeds 5 and 7: rounds stood, rematches asked, played and refused, and one moment from the log of
+    each, if any. Baseline: live seed 7 had one rematch, talked into by Haiku with no choice behind it.
+
+- [ ] **C7 — The invitee decides.**
+  - Today the line writer decides whether an invitation is accepted, by choosing `accept` or `decline` for the
+    invitee's line. The answer becomes the invitee's own choice, scored like any other, and the line only says it.
+  - When an invitation is made (`invitations.invite`), the world asks the invitee's choice layer through the new
+    `Evaluators.answers`. Options: `accept`, `decline`, and `counter:<kind>` for each other kind the invitee could
+    offer the inviter in that scene (`invitations.offered_kinds` with the invitee as speaker). `jev._answer_question`:
+    "How natural is it for Rurik to accept Calder's invitation to a game of dice?"; the local fallback
+    `local_answer_scores` scores `accept` as the invitee's local utility for what the invitation leads to (darts,
+    dice, an ale, a seat, going home) plus `0.25 × opinion / 100`, `decline` as `0.3 + 0.2 × (1 − sociability)`, and
+    a counter as its kind's utility minus 0.1.
+  - The scene's `invitation` gains `answer` (`accept`, `decline`, `counter:<kind>`, or absent while asked);
+    `check_saved_scenes` checks it; saved worlds take the next version. `turns.claim_turns` does not claim the
+    invitee's turn until the answer is in; a failed request answers from the local scores at once, so a scene never
+    waits on a dead request. `MindLoop` sends and applies the request, as for decisions.
+  - With an answer, `conversation.offered_acts` offers the invitee only that act: `accept`, `decline`, or `invite`
+    with the counter's kind. A counter is new: an `invite` from the invitee while an invitation waits for them
+    declines it and leaves theirs pending (`invitation_countered` event: "Rurik turned down darts and offered Calder
+    an ale instead"). `_nudges` says "You have decided to turn down darts and offer an ale instead: say so in your own
+    words." `scripted._answer` follows the answer instead of its own terms.
+  - *Metrics:* `invitations` in `metrics.json`: made, accepted, declined, countered, by kind, and the answer's
+    source. D18 (an `invitation` sent with an `accept`) loses its cause for answered invitations; say so in D18's row.
+  - *Tests first* (`tests/test_invitation_answers.py`): answer options offered (no counter when no other kind is
+    open); the decided act is the only one offered; a counter declines the first and makes the second pending; a
+    counter to a counter; the invitee leaves before answering; a failing evaluator answers from local scores; a save
+    round trip, and a `pytest.raises` block for an unknown answer and a counter of a kind not open.
+  - *Tests expected to change:* tests where the scripted or Haiku writer decides an answer (grep `accept` in
+    `test_invitations.py`, `test_dice_invitation.py`, `test_move_together.py`, `test_scene_choices.py`); the pinned
+    version tests. Name each in the commit.
+  - *Check:* live seeds 5 and 7: invitations made/accepted/declined/countered against the baseline, scene length
+    (turns per scene) and stuck seconds (no scene waits more than a turn's gap), the answer request's cost.
+
+- [ ] **C8 — Measure.**
+  - Offline seeds 0–9 and live seeds 5 and 7, against C0's baseline: C0's `choice` (near-best size, `decided`,
+    `dead`, `depth`, `repeats`), `responses`, `aims` (chosen and kept), projects by outcome, rounds and rematches,
+    invitations by answer, conversations, news hops, stuck seconds and cost per evening. Replay each live run and
+    `cmp` the events (step 8 of "Working on a task").
+  - Targets to check, tuned here if the evenings argue otherwise: `decided` at the first stage under 35% (51%),
+    `dead` under 15% (31%), a third stage in at least 15% of decisions, most wrongs answered within their
+    window in at least half the evenings, the Jev share of cost under $0.10 per evening.
+  - Record one moment from the log for each: a wrong answered, an aim kept in talk, a project that failed for a
+    reason the world gave, a countered invitation. Add problems left behind to PLAN.md's tech debt.
+
 ## Order
 
 M1 comes first: E01 is a refactor under the existing tests, and E02–E03 make every later
@@ -2729,6 +3117,14 @@ edit the briefing's table notes) and T3 (`welcome` reads the `seating` errand). 
 needs only T6. T8 comes last. It touches `actions.py`, `scenes.py`, `invitations.py` and `errands.py`,
 as E21 does, so do not run the two at once. One task per branch (`claude/stage1-t<n>`), as for every
 task.
+
+Choice depth (C0–C8) was added 2026-10-09 at the user's request. C0 comes first: every later C task compares with
+its baseline. C1 next, so that new options do not land in requests full of dead ones. C2 → C3 is strict (C3's
+response aims read C2's answered thoughts). C4 needs only C0 and may go at any point after it. C5 needs C1 (it
+widens `refreshment`); C6 needs C3 and C5; C7 needs only C0, but goes after C3 if both touch `turns.py` and
+`haiku_turns.py` at once. C8 comes last. C2, C3 and C7 touch `scenes.py`, `turns.py` and the Haiku prefix; C5 and C6
+touch `errands.py`, `actions.py` and the lifecycle, as E21 does, so do not run them beside E21. One task per branch
+(`claude/stage1-c<n>`).
 
 ## Acceptance scenarios
 
