@@ -40,7 +40,7 @@ class Pace:
 
 
 class Choice(TypedDict):
-    """One stage of a decision: `kind` is `actions`, `seats` or `family`, as in recorded calls. `scores` holds
+    """One stage of a decision: `kind` is `actions`, `seats`, `family` or `aims`, as in recorded calls. `scores` holds
     the score of every option asked, by ID, in request order (`evening.choice_metrics` reads it)."""
 
     time: float
@@ -259,7 +259,7 @@ def _record_choices(world: Mapping[str, Any], run: _Run, courier: LockstepCourie
                     asked: list[tuple[str, Any]]) -> None:
     for actor_id, ticket in asked:
         decision = courier.outcome(ticket)()
-        second = [(kind, decision[key]) for kind, key in (("seats", "seat"), ("family", "family")) if key in decision]
+        second = [(kind, decision[key]) for kind, key in (("seats", "seat"), ("family", "family"), ("aims", "aim")) if key in decision]
         stages = [("actions", decision), *second]
         run.choices.extend({"time": world["time"], "actor_id": actor_id, "kind": kind,
                             "source": stage["source"], "error": stage["error"], "scores": stage["scores"]}

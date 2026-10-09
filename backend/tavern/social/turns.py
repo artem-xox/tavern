@@ -18,6 +18,7 @@ from tavern.mind.cards import TEXT_FIELDS
 from tavern.mind.feelings import feelings
 from tavern.mind.portrait import portrait
 from tavern.mind.scripted import scripted_turn
+from tavern.social.aims import aim_view, note_spoken
 from tavern.social.conversation import ACTS, offered_acts
 from tavern.social.facts import carried
 from tavern.social.heard import earlier_lines, hear_line
@@ -119,6 +120,7 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
             "acts": offered_acts(world, scene, speaker), "seed": world["seed"]}
     if on_staff(speaker):
         view["speaker"]["on_duty"] = post_of(world["map"], speaker)["name"]
+    view["speaker"]["aim"] = aim_view(world, scene, speaker)
     _add_invitations(view, world, scene, speaker)
     return view
 
@@ -313,6 +315,7 @@ def _speak(world: World, scene: Conversation, speaker_id: str, result: Mapping[s
                   "next_turn_at": world["time"] + reading_time(result["line"], world["rules"]["conversation"])})
     listener = people[result["addressee"]]["name"] if result["addressee"] else "everyone"
     log_event(world, speaker_id, "turn", f"{people[speaker_id]['name']} to {listener} ({result['act']}): {result['line']}")
+    note_spoken(world, scene, people[speaker_id])
     # Heard before the act takes effect, while the scene still holds everyone who spoke in it.
     hear_line(world, scene, turn)
     overhear_turn(world, scene, turn)

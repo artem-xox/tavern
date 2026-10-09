@@ -8,6 +8,7 @@ from tavern.body.dozing import asleep
 from tavern.hall.room import find_object
 from tavern.hall.staff import on_staff
 from tavern.hall.state import find_actor
+from tavern.social.aims import AIM_VERBS, check_aim
 from tavern.social.giving import gift_error
 from tavern.social.invitations import fetch_error
 from tavern.social.scenes import at_table, conversation_of, pressed, side_by_side, table_of, within_reach
@@ -20,11 +21,20 @@ def stored_action(action: Mapping[str, Any]) -> dict[str, Any]:
         action: Action with an ID, a verb, a target ID, and maybe the item it names.
 
     Returns:
-        The ID, verb and target, plus the item only when the action names one, so other actions keep
-        their plain shape.
+        The ID, verb and target, plus the item only when the action names one and the aim only when it carries
+        one, so other actions keep their plain shape.
     """
     kept = {key: action.get(key) for key in ("id", "verb", "target_id")}
-    return kept if action.get("item") is None else {**kept, "item": action["item"]}
+    kept.update({key: action[key] for key in ("item", "aim") if action.get(key) is not None})
+    return kept
+
+
+def _bad_aim(aim: Any) -> bool:
+    try:
+        check_aim(aim)
+    except ValueError:
+        return True
+    return False
 
 
 def _target(world: Mapping[str, Any], action: Mapping[str, Any]) -> dict[str, Any] | None:
@@ -54,6 +64,8 @@ def action_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Map
         return "This needs a seat at a table"
     if action.get("item") is not None and not activity.names_item:
         return "This action does not take an item"
+    if action.get("aim") is not None and (verb not in AIM_VERBS or _bad_aim(action["aim"])):
+        return "This action does not take that aim"
     if activity.names_item:
         return _give_error(world, actor, action)
     if activity.opens_errand:

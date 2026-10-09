@@ -16,6 +16,7 @@ from tavern.adapters.claude import HAIKU_4_5, ClaudeError, ask_claude
 from tavern.adapters.probes import probes
 from tavern.adapters.tracing import (Scorer, Tracer, open_tracer, traced_intender, traced_question, traced_scores,
                                      traced_writer)
+from tavern.evening.aim_metrics import aim_counts
 from tavern.evening.choice_metrics import choice_counts
 from tavern.evening.lockstep import Pace, evening_mode, run_evening
 from tavern.evening.metrics import (attention_counts, bar_metrics, conversation_counts, dice_metrics, evening_metrics,
@@ -94,7 +95,8 @@ def config(values: Mapping[str, Any], mode: str) -> dict[str, Any]:
     key = {"live": values.get("TYPESAFE_API_KEY"), "replay": "replay", "local": None}[mode]
     return {"typesafe_api_key": key, "model": values.get("TYPESAFE_MODEL", "jev-latest"),
             "timeout": float(values.get("AI_TIMEOUT", "8")), "temperature": float(values.get("AI_TEMPERATURE", "0.25")),
-            "lean": read_switch(values.get("AI_LEAN"), True, "AI_LEAN")}
+            "lean": read_switch(values.get("AI_LEAN"), True, "AI_LEAN"),
+            "aims": read_switch(values.get("AI_AIMS"), True, "AI_AIMS")}
 
 
 def keeper(calls: list[Record], log: Path) -> Callable[[Record], None]:
@@ -131,16 +133,17 @@ def evaluators(mode: str, recording: Path | None, calls: list[Record], keep: Cal
     """
     if mode == "replay":
         calls.extend(parse_records(recording.read_text()))
-        return Evaluators(*(replay_calls(kind, calls, jev.JevError) for kind in ("actions", "seats", "family")))
+        return Evaluators(*(replay_calls(kind, calls, jev.JevError) for kind in ("actions", "seats", "family", "aims")))
     if mode == "local":
         # Without a key the decisions never ask a model; Jev only fills the port.
-        return Evaluators(jev.evaluate_actions, jev.evaluate_seats)
+        return Evaluators(jev.evaluate_actions, jev.evaluate_seats, aims=jev.evaluate_aims)
     def scorer(stage: str, evaluate: Scorer) -> Scorer:
         return evaluate if tracer is None else traced_scores(stage, evaluate, tracer)
     return Evaluators(*(record_calls(stage, scorer(stage, evaluate), keep, time.monotonic, jev.JevError)
                         for stage, evaluate in (("actions", jev.evaluate_actions_metered),
                                                 ("seats", jev.evaluate_seats_metered),
-                                                ("family", jev.evaluate_actions_metered))))
+                                                ("family", jev.evaluate_actions_metered),
+                                                ("aims", jev.evaluate_aims_metered))))
 
 
 def turn_writer(writer: str, mode: str, calls: list[Record], keep: Callable[[Record], None],
@@ -312,10 +315,10 @@ def main(root: Path) -> None:
     if tracer is not None:
         # The client uploads in the background; what is still queued must leave before the process ends.
         tracer.client.flush()
-    # A replay matches its recording only with the same seed, pace, temperature and lean setting, so they are shown.
+    # A replay matches its recording only with the same seed, pace, temperature, lean and aims settings, so they are shown.
     report = {"run": {"mode": mode, "decides": DECIDES[mode], "note": note, "seed": args.seed,
                       "model": settings["model"], "temperature": settings["temperature"],
-                      "lean": settings["lean"], "step": pace.step,
+                      "lean": settings["lean"], "aims": settings["aims"], "step": pace.step,
                       "model_latency": pace.model_latency, "time_limit": pace.time_limit,
                       "stuck_threshold": args.stuck_threshold, "input_usd_per_million": args.input_price,
                       "writer": writer, "writer_model": CLAUDE_MODEL if writer == "haiku" else None,
@@ -323,7 +326,7 @@ def main(root: Path) -> None:
               **evening_metrics(evening, calls, args.input_price, args.stuck_threshold, TARIFFS),
               "intentions": intention_counts(evening), "repetition": repetition_counts(evening.events, ALIKE),
               "choice": choice_counts(evening.choices, evening.events),
-              "responses": response_counts(evening.events),
+              "responses": response_counts(evening.events), "aims": aim_counts(evening.events),
               "goals": goal_counts(evening.events), "promises": promise_counts(evening.events),
               "attention": attention_counts(evening), "conversation": conversation_counts(evening),
               "news": news_metrics(world), "dice": dice_metrics(evening.events),

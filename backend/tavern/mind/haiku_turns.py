@@ -95,7 +95,20 @@ def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequen
         if me["needs"]["boredom"] >= BORED and "dice_together" in invitations else "",
         "The speaker means to join someone here at their table: when saying so, use the promise act addressed to "
         "them, so the game can hold the speaker to it; promise it only if the speaker means to come."
-        if "promise" in acts and me.get("aims_at") in {item["id"] for item in scene["participants"]} else "") if text)
+        if "promise" in acts and me.get("aims_at") in {item["id"] for item in scene["participants"]} else "",
+        _came_for(me.get("aim"), acts)) if text)
+
+
+def _came_for(aim: Mapping[str, Any] | None, acts: Sequence[str]) -> str:
+    # What the speaker came over to do, until they have: the acts that carry it, and the news or invitation to name.
+    # Passing the time needs no nudge, and an aim none of whose acts is offered now waits.
+    fitting = [act for act in (aim["acts"] if aim else []) if act in acts]
+    if aim is None or aim["done"] or aim["id"] == "pass_time" or not fitting:
+        return ""
+    names = {"share_news": "fact_id", "invite": "invitation"}
+    named = f" ({names[fitting[0]]} {aim['detail']})" if fitting[0] in names and aim["detail"] else ""
+    return (f"The speaker came over to {aim['words']}: say so in their own words, early. "
+            f"Acts that fit: {', '.join(fitting)}{named}.")
 
 
 def _scene(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:

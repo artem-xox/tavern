@@ -9,6 +9,7 @@ from tavern.body.drunkenness import drink_beer
 from tavern.body.hearing import Sound
 from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World
+from tavern.social.aims import begin_aim
 from tavern.social.giving import hand_over
 from tavern.social.invitations import begin_errand
 from tavern.social.names import called
@@ -123,12 +124,14 @@ def _open_scene(world: World, actor: Actor, partner: Actor | None) -> None:
     if partner is None:
         raise ValueError("Starting a conversation needs a partner")
     start_conversation(world, actor, partner)
+    begin_aim(world, actor, partner)
 
 
 def _join_scene(world: World, actor: Actor, member: Actor | None) -> None:
     if member is None:
         raise ValueError("Joining a conversation needs a member to join")
     join_conversation(world, actor, member)
+    begin_aim(world, actor, member)
 
 
 def _approach_scene(world: World, actor: Actor, partner: Actor | None) -> None:
@@ -138,6 +141,7 @@ def _approach_scene(world: World, actor: Actor, partner: Actor | None) -> None:
         start_conversation(world, actor, partner)
     else:
         join_conversation(world, actor, partner)
+    begin_aim(world, actor, partner)
 
 
 def _confront(world: World, actor: Actor, victim: Actor | None, event: str, thought: str, act: str) -> None:

@@ -6,6 +6,7 @@ from typing import Any
 
 from tavern.body.activities import FAMILIES
 from tavern.body.items import ITEMS
+from tavern.social.aims import aim_words
 from tavern.social.tables import liked
 from tavern.mind.hall_view import (company_at, headcount, hosts_words, in_use, known_object, label_of, line_place,
                                    place_words, setting_words, steps_to, visible_visitor, walk_words)
@@ -30,6 +31,29 @@ def option_text(observation: Observation, action: Action) -> str:
     if action["verb"] not in _OPTIONS:
         raise ValueError(f"Cannot describe the action verb {action['verb']!r}")
     return _waiting(observation, action) or _OPTIONS[action["verb"]](observation, action)
+
+
+def aim_text(observation: Observation, candidate: Action) -> str:
+    """Describe an aim of a social option in plain words, from the visitor's own view.
+
+    Args:
+        observation: The visitor's observation.
+        candidate: An aim candidate (`aims.aim_candidates`): the social action and its `aim`.
+
+    Returns:
+        The action's sentence and what the visitor means by it, for example "chat with Bea, meaning to ask Bea for a
+        rematch at dice".
+
+    Raises:
+        ValueError: The person is not in sight, or the action cannot be described.
+    """
+    person = next((item for item in [*observation.get("visitors", []), *observation.get("people", [])]
+                   if item["id"] == candidate["target_id"]), None)
+    if person is None:
+        raise ValueError(f"Cannot describe an aim towards {candidate['target_id']!r}, who is not in sight")
+    topics = {fact_id: fact["topic"] for fact_id, fact in observation["actor"].get("knowledge", {}).get("facts", {}).items()}
+    words = aim_words(candidate["aim"], label_of(person), topics)
+    return f"{option_text(observation, candidate)}, meaning to {words}"
 
 
 def _waiting(observation: Observation, action: Action) -> str:

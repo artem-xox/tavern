@@ -83,7 +83,7 @@ def apply_decision(world: World, actor: Actor,
     try:
         decision = outcome()
         actor["decision"] = Decision(source=decision["source"], scores=decision["scores"], error=decision["error"])
-        for stage in ("seat", "family"):
+        for stage in ("seat", "family", "aim"):
             if stage in decision:
                 actor["decision"][stage] = decision[stage]
         result = start_action(world, actor["id"], decision["action"])

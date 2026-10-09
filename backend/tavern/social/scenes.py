@@ -66,6 +66,8 @@ class Conversation(TypedDict):
     writing: Claim | None
     written: "TurnResult | None"
     invitation: dict[str, str] | None
+    # What each member came for (`tavern.social.aims`), by speaker; present only once someone came with an aim.
+    aims: NotRequired[dict[str, Any]]
 
 
 # What a new scene is about, by how many conversations the starter remembers.
@@ -271,6 +273,7 @@ def leave_conversation(world: World, actor: Actor) -> bool:
     _recast(scene)
     scene["participants"].remove(actor["id"])
     _lapse(scene)
+    _tidy_aims(world, scene)
     record_event(world, actor, "left_conversation", f"{actor['name']} left the conversation")
     if len(scene["participants"]) < 2:
         end_conversation(world, scene, pleasant=True)
@@ -315,6 +318,7 @@ def check_conversations(world: World) -> None:
             if scene in world["conversations"] and not _still_there(world, scene, actor):
                 leave_conversation(world, actor)
         _drop_departed(world, scene)
+        _tidy_aims(world, scene)
         _see_off_leaver(world, scene)
         members = [item for item in world["actors"] if item["id"] in scene["participants"]]
         if scene in world["conversations"] and len(scene["turns"]) >= 2 and _heard_out(world, scene) and all(
@@ -365,6 +369,14 @@ def _lapse(scene: Conversation) -> None:
         scene["invitation"] = None
 
 
+def _tidy_aims(world: Mapping[str, Any], scene: Conversation) -> None:
+    # What a member came for is forgotten with them, and when the person it was about has gone home.
+    present = {item["id"] for item in world["actors"]}
+    aims = scene.get("aims", {})
+    for speaker in [key for key, entry in aims.items() if key not in scene["participants"] or entry["about"] not in present]:
+        del aims[speaker]
+
+
 def _recast(scene: Conversation) -> None:
     # A line written for the old company no longer fits the new one.
     scene.update({"writing": None, "written": None})
@@ -393,7 +405,8 @@ def check_saved_scenes(world: Mapping[str, Any], invitation_kinds: Collection[st
             "invitation"}
     taken: list[Any] = []
     for scene in scenes:
-        if not isinstance(scene, dict) or set(scene) != keys or not isinstance(scene["id"], str):
+        # `aims` is optional: a scene nobody came to with an aim keeps its plain shape (checked by `aims.check_saved_aims`).
+        if not isinstance(scene, dict) or set(scene) - {"aims"} != keys or not isinstance(scene["id"], str):
             raise ValueError("Invalid saved conversation")
         _validate_scene(scene, world, invitation_kinds)
         taken.extend(scene["participants"])

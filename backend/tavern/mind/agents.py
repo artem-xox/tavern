@@ -10,9 +10,11 @@ from tavern.body.items import ITEMS
 from tavern.mind.briefing import brief
 from tavern.mind.families import family_scores, group_families
 from tavern.mind.hall_view import in_use, line_place
-from tavern.mind.local_policy import ASK_FLOOR, local_scores, local_seat_scores
+from tavern.mind.local_policy import ASK_FLOOR, local_aim_scores, local_scores, local_seat_scores
 from tavern.mind.observation import known_objects, own_actor
-from tavern.mind.selection import bounded, drawable, read_lean, read_temperature, select, worth_asking
+from tavern.mind.options import aim_text
+from tavern.mind.selection import bounded, drawable, read_aims, read_lean, read_temperature, select, worth_asking
+from tavern.social.aims import AIM_VERBS, aim_candidates, offered_aims
 from tavern.social.giving import empty_handed_company, gift_targets
 from tavern.social.hostility import HOSTILITY, hostile_targets
 from tavern.social.tables import liked
@@ -43,6 +45,8 @@ class Action(TypedDict):
     target_id: str | None
     # The item from the actor's hands that a verb such as `give` names; absent for the others.
     item: NotRequired[str]
+    # What a social verb (`aims.AIM_VERBS`) is for, once the third stage of the choice has picked it.
+    aim: NotRequired[str]
 
 
 # Scores each candidate 0–1 from the evaluator view, the candidates and the AI config;
@@ -56,12 +60,14 @@ class Evaluators:
 
     `actions` scores the first stage, one option per activity family; `seats` the chairs
     after `seating`; `family` the actions within another chosen family. Without `family`,
-    `actions` scores those too: they are ordinary actions.
+    `actions` scores those too: they are ordinary actions. `aims` scores the aims of a chosen social
+    option, when the config asks for them (`selection.read_aims`); a model cannot be asked without it.
     """
 
     actions: Evaluator
     seats: Evaluator
     family: Evaluator | None = None
+    aims: Evaluator | None = None
 
 
 class Decision(TypedDict):
@@ -341,9 +347,29 @@ async def choose_action(
         seat = await _decide(observation, seats, local_seat_scores(observation, seats), evaluators.seats, *draw)
         return {**decision, "action": seat["action"], "seat": _stage(seat)}
     if "members" not in chosen:
-        return decision
+        return await _aimed(observation, decision, evaluators, draw)
     member = await _decide(observation, chosen["members"], local, evaluators.family or evaluators.actions, *draw)
-    return {**decision, "action": member["action"], "family": {"name": chosen["id"], **_stage(member)}}
+    result = {**decision, "action": member["action"], "family": {"name": chosen["id"], **_stage(member)}}
+    return await _aimed(observation, result, evaluators, draw)
+
+
+async def _aimed(observation: Mapping[str, Any], decision: dict[str, Any], evaluators: Evaluators,
+                 draw: tuple[Mapping[str, Any], Random, float, int]) -> dict[str, Any]:
+    # The third stage: a social option is followed by what the guest means by it, when the config asks. One aim is
+    # set without a request, and shows no stage.
+    action, config = decision["action"], draw[0]
+    if action["verb"] not in AIM_VERBS or not read_aims(config):
+        return decision
+    aims = offered_aims(observation, action)
+    if len(aims) == 1:
+        return {**decision, "action": {**action, "aim": aims[0]}}
+    if config.get("typesafe_api_key") and evaluators.aims is None:
+        raise ValueError("The aims setting is on but no evaluator of aims is wired")
+    candidates = aim_candidates(action, aims)
+    stage = await _decide(observation, candidates, local_aim_scores(observation, candidates),
+                          evaluators.aims or _unwired, *draw, view=_aim_view)
+    aim = stage["action"]["aim"]
+    return {**decision, "action": {**action, "aim": aim}, "aim": {"name": aim, **_stage(stage)}}
 
 
 def _stage(decision: Mapping[str, Any]) -> dict[str, Any]:
@@ -365,9 +391,16 @@ def _in_line(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, A
             if action.get("target_id") in places and line_place(observation, places[action["target_id"]])[1]}
 
 
+def _aim_view(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    # The same picture of the guest as for any choice, with each option told as an aim of the action.
+    return {**_evaluator_view(observation, []), "options": {item["id"]: aim_text(observation, item)
+                                                            for item in candidates}}
+
+
 async def _decide(
     observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]], local: Mapping[str, float], remote: Evaluator,
     config: Mapping[str, Any], rng: Random, temperature: float, limit: int,
+    view: Callable[[Mapping[str, Any], Sequence[Mapping[str, Any]]], dict[str, Any]] = _evaluator_view,
 ) -> dict[str, Any]:
     asks = bool(config.get("typesafe_api_key"))
     # Only a model's request is made lean, and only when the config says so: the local policy already ranks by these
@@ -378,7 +411,7 @@ async def _decide(
     scores, source, error = {action["id"]: local[action["id"]] for action in candidates}, "local", None
     if asks:
         try:
-            scores = await remote(_evaluator_view(observation, candidates), candidates, config)
+            scores = await remote(view(observation, candidates), candidates, config)
             source = "jev"
         except EvaluatorError as failure:
             error = str(failure)

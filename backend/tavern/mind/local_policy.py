@@ -148,6 +148,37 @@ def _score_answers(observation: Mapping[str, Any], candidates: Sequence[Mapping[
             scores[action["id"]] = min(1.0, scores[action["id"]] + 0.1 + 0.3 * urge_to_answer)
 
 
+def local_aim_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]]) -> dict[str, float]:
+    """Score the aims of a social option without a model, from the guest's needs, traits and opinion of the person.
+
+    Args:
+        observation: The guest's observation.
+        candidates: Aim candidates (`aims.aim_candidates`), each with its `aim` and the person as `target_id`.
+
+    Returns:
+        A 0-1 score per candidate ID. Each kind's starting point is a guess to be tuned on offline evenings: small talk
+        is the ordinary reason (0.4), news tempts the curious, a game or an invitation the bored or lonely, winning
+        over the sociable, and a needle or a quarrel the hot-tempered against someone they think ill of.
+    """
+    actor, now = observation["actor"], observation.get("time", -math.inf)
+    traits, needs = actor.get("traits", {}), actor["needs"]
+    temper, sociability, curiosity = (traits.get(name, 0.5) for name in ("temper", "sociability", "curiosity"))
+    scores = {}
+    for candidate in candidates:
+        kind, _, detail = candidate["aim"].partition(":")
+        opinion = opinion_of(actor, candidate["target_id"], now) / 100
+        invitation = {"darts_together": 0.2 + 0.5 * needs.get("boredom", 0) / 100,
+                      "dice_together": 0.2 + 0.5 * needs.get("boredom", 0) / 100,
+                      "buy_drink": 0.2 + 0.4 * max(0.0, opinion),
+                      "join_table": 0.2 + 0.4 * needs.get("social", 0) / 100}
+        score = {"pass_time": 0.4, "tell_news": 0.25 + 0.3 * curiosity, "invite": invitation.get(detail, 0.0),
+                 "win_over": 0.2 + 0.4 * sociability, "needle": 0.1 + 0.5 * temper * max(0.0, -opinion),
+                 "have_it_out": 0.2 + 0.5 * temper, "thank": 0.5,
+                 "rematch": 0.2 + 0.4 * needs.get("boredom", 0) / 100 + 0.3 * temper}[kind]
+        scores[candidate["id"]] = min(1.0, max(0.0, score))
+    return scores
+
+
 def _score_lines(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
                  scores: dict[str, float]) -> None:
     # Each person ahead, including whoever uses the place, makes waiting less worthwhile, more so

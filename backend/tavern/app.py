@@ -11,7 +11,8 @@ from typing import Any
 from fastapi import FastAPI
 
 from tavern.adapters.claude import ClaudeError, ask_claude
-from tavern.adapters.jev import evaluate_actions, evaluate_actions_metered, evaluate_seats, evaluate_seats_metered
+from tavern.adapters.jev import (evaluate_actions, evaluate_actions_metered, evaluate_aims, evaluate_aims_metered,
+                                 evaluate_seats, evaluate_seats_metered)
 from tavern.adapters.probes import probes
 from tavern.adapters.tracing import (Scorer, Tracer, open_tracer, traced_intender, traced_question, traced_scores,
                                      traced_writer)
@@ -43,7 +44,8 @@ def create_default_app() -> FastAPI:
               "model": os.environ.get("TYPESAFE_MODEL", "jev-latest"),
               "timeout": float(os.environ.get("AI_TIMEOUT", "8")),
               "temperature": float(os.environ.get("AI_TEMPERATURE", "0.25")),
-              "lean": read_switch(os.environ.get("AI_LEAN"), True, "AI_LEAN")}
+              "lean": read_switch(os.environ.get("AI_LEAN"), True, "AI_LEAN"),
+              "aims": read_switch(os.environ.get("AI_AIMS"), True, "AI_AIMS")}
     board = HealthBoard({"jev": bool(config["typesafe_api_key"]), "claude": bool(os.environ.get("ANTHROPIC_API_KEY"))},
                         log=logging.getLogger("tavern.health").warning)
     # Traces spend LangSmith quota, so only an explicit switch turns them on; one server run is one evening.
@@ -120,7 +122,8 @@ def _jev_chooser(board: HealthBoard, tracer: Tracer | None) -> Chooser:
     # The actions within a family are ordinary actions, scored as the first stage is.
     evaluators = Evaluators(watched(scorer("actions", evaluate_actions, evaluate_actions_metered)),
                             watched(scorer("seats", evaluate_seats, evaluate_seats_metered)),
-                            watched(scorer("family", evaluate_actions, evaluate_actions_metered)))
+                            watched(scorer("family", evaluate_actions, evaluate_actions_metered)),
+                            watched(scorer("aims", evaluate_aims, evaluate_aims_metered)))
 
     async def choose(observation: Mapping[str, Any], config: Mapping[str, Any], rng: Random) -> dict[str, Any]:
         return await choose_action(observation, config, rng, evaluators)

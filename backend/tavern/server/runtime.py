@@ -7,7 +7,7 @@ from random import Random
 from typing import Any, Mapping, Protocol
 
 
-from tavern.adapters.jev import evaluate_actions, evaluate_seats
+from tavern.adapters.jev import evaluate_actions, evaluate_aims, evaluate_seats
 from tavern.adapters.persistence import FileStore
 from tavern.body.activities import ACTIVITIES, client_activities
 from tavern.body.items import client_items
@@ -40,7 +40,7 @@ async def choose_action(observation: Mapping[str, Any], config: Mapping[str, Any
     Raises:
         ValueError: Observation or configuration is malformed.
     """
-    return await agents.choose_action(observation, config, rng, agents.Evaluators(evaluate_actions, evaluate_seats))
+    return await agents.choose_action(observation, config, rng, agents.Evaluators(evaluate_actions, evaluate_seats, aims=evaluate_aims))
 
 
 # Decides a visitor's next action from their observation, the AI config and the runtime's generator.

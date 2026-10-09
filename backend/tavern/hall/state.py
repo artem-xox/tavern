@@ -53,6 +53,7 @@ class Decision(TypedDict):
     error: str | None
     seat: NotRequired[dict[str, Any]]
     family: NotRequired[dict[str, Any]]
+    aim: NotRequired[dict[str, Any]]
 
 
 class Actor(TypedDict):

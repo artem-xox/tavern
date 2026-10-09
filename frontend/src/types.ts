@@ -74,12 +74,19 @@ export interface FamilyStage extends DecisionStage {
   name: string;
 }
 
+/** The third stage after choosing a social option: what the visitor came to talk for, as an aim ID such as `rematch`. */
+export interface AimStage extends DecisionStage {
+  name: string;
+}
+
 export interface Action {
   id: string;
   verb: Verb;
   target_id: string | null;
   /** The kind of item a verb such as `give` hands over; absent for the others. */
   item?: string;
+  /** What a social verb is for (`pass_time`, `tell_news:<fact>`, `invite:<kind>`, ...); absent for the others. */
+  aim?: string;
 }
 
 export interface Actor {
@@ -118,7 +125,7 @@ export interface Actor {
   memory: unknown[];
   /** The lines this visitor spoke or heard tonight, oldest first, the newest 40 kept. */
   heard: Heard[];
-  decision: (DecisionStage & { seat?: DecisionStage; family?: FamilyStage }) | null;
+  decision: (DecisionStage & { seat?: DecisionStage; family?: FamilyStage; aim?: AimStage }) | null;
   /** Where the server turns the visitor; null keeps the seat's, the task's, or the walking direction. */
   facing: Facing | null;
   /** A cell the visitor looks at until a game time, drawn by a stimulus. */

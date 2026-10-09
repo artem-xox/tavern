@@ -24,6 +24,7 @@ from tavern.hall.world import create_world
 from tavern.mind.cards import parse_card
 from tavern.mind.intentions import check_saved_intention
 from tavern.social.dice import check_saved_games
+from tavern.social.aims import check_saved_aims
 from tavern.social.facts import check_saved_news
 from tavern.social.heard import check_heard
 from tavern.social.commitments import check_commitments
@@ -211,6 +212,7 @@ def parse_world(encoded: str) -> World:
         check_saved_stimuli(world)
         check_saved_games(world)
         check_saved_scenes(world, KINDS)
+        check_saved_aims(world)
         check_invitations(world)
         check_commitments(world)
         if not isinstance(world.get("events"), list):

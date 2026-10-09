@@ -113,6 +113,13 @@ def worth_asking(candidates: Sequence[Mapping[str, Any]], scores: Mapping[str, f
     return list(candidates) if all(item["verb"] in _FINAL for item in worth) else worth
 
 
+def _flag(config: Mapping[str, Any], name: str) -> bool:
+    value = config.get(name, False)
+    if not isinstance(value, bool):
+        raise ValueError(f"The {name} setting must be true or false, not {value!r}")
+    return value
+
+
 def read_lean(config: Mapping[str, Any]) -> bool:
     """Read whether requests to a model are made lean (see `worth_asking`) from the AI config.
 
@@ -125,10 +132,22 @@ def read_lean(config: Mapping[str, Any]) -> bool:
     Raises:
         ValueError: The setting is not a bool.
     """
-    lean = config.get("lean", False)
-    if not isinstance(lean, bool):
-        raise ValueError(f"The lean setting must be true or false, not {lean!r}")
-    return lean
+    return _flag(config, "lean")
+
+
+def read_aims(config: Mapping[str, Any]) -> bool:
+    """Read whether a social option is followed by a choice of aim (see `tavern.social.aims`) from the AI config.
+
+    Args:
+        config: AI config, with an `aims` entry or none.
+
+    Returns:
+        The setting; no aim is chosen when the config does not say.
+
+    Raises:
+        ValueError: The setting is not a bool.
+    """
+    return _flag(config, "aims")
 
 
 def read_switch(text: str | None, default: bool, name: str) -> bool:
