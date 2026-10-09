@@ -2978,7 +2978,7 @@ F6 → F7 → F8 → F9. F6 needs F4, F8 needs F7, and F9 comes last. Each task 
     Offline seed 5 (`--writer scripted`): `{"actor_id": "hob", "type": "last_call", "time": 540.0, "message": "Hob
     called out: \"Time, friends! …\""}`; six guests were in at the call, one left before the close (Toren, 547 s) and
     five were seen out at 605–609 s, as before F5.
-- [ ] **F5 — Guests answer the call (the minds).**
+- [x] **F5 — Guests answer the call (the minds).**
   - *Build:* the briefing line, `called` in `_leave_utility`, `leave`'s guidance, the `last_call` trigger
     and the intention prefix, the turn view and turn content and the prefix sentence, and
     `closing_metrics` wired into `scripts/evening.py`.
@@ -2993,13 +2993,32 @@ F6 → F7 → F8 → F9. F6 needs F4, F8 needs F7, and F9 comes last. Each task 
   - *Check:* `make check`. Offline seeds 1–8: `present_at_call`, `left_after_call` and `sent_home` per seed.
     Target: on average at most one guest per evening sent home, and none still in at 630. If it is missed,
     tune `called` (never the tests) and record both runs. Quote one goodbye line said after the call.
-- [ ] **F6 — The barkeep's line on screen (client).**
+  - *Built (2026-10-09):* `briefing._closing` (between the call and the close), `local_policy._leave_utility`
+    (`called` floors the wish to leave at 0.5 at the call and 0.95 forty seconds later, so a pressing need such as a
+    full bladder still comes first), `leave`'s guidance, the `last_call` trigger in `intentions.latest_trigger`
+    (also in `UNMETERED`), `closing_called` in `turns.turn_view`, a nudge in `haiku_turns._nudges`, the scripted
+    writer's goodbye (`scripted.LINES["closing"]`, said once a speaker has answered, never by the barkeep), a sentence
+    each in the two shared prefixes (`turn_prompt` and `data/minds/intention_prefix.md`), and
+    `evening/closing_metrics.py` wired into `scripts/evening.py` as `closing` in `metrics.json`.
+    `tests/test_answering_the_call.py` (28 cases) is the spec. Offline seeds 1–8 (`--writer scripted`): five or six
+    guests were in at the call, all of them went home before closing time (`left_after_call` 5, 5, 5, 5, 5, 5, 6, 5),
+    `sent_home` 0 in every evening, and the last guest left between 557 and 573 s (the close is at 600 s). No nap in any
+    evening. Offline lines are not logged in `events.jsonl`, so no goodbye line is quoted; at the call all five guests
+    of seed 5 logged `interrupted` ("turned toward the barkeep calling closing time"), and Toren, Saye and the rest
+    chose `leave` within seconds. The `last_call` intention trigger needs a key to see; it is pinned by test only.
+- [x] **F6 — The barkeep's line on screen (client).**
   - *Build:* `bubble.callout` and its use in `scene.ts` and `Speech`.
   - *Tests first* (`frontend/tests/bubble.test.ts`), parametrized: no event; another actor's call; the
     call 3 s ago gives the line; 9 s ago gives null; of two calls, the newest; a different event type is
     ignored.
   - *Check:* `make check` and `make build`. In `make run`, raise the speed in the debug panel until 9:00,
     and post a screenshot of Hob's bubble and the guests turning to him.
+  - *Built (2026-10-09):* `bubble.callout`, `bubble.newer` and `bubble.Spoken`; `Speech.tell(line, now)` takes the line
+    to tell instead of a conversation, and `scene.ts` hands it the newer of the guest's own latest conversation line and
+    their call, so a call is told once, in two pieces, and a line spoken after it replaces it. The window is 8 game
+    seconds. `frontend/tests/bubble.test.ts` gained 13 cases. In the running app (8× to 8:50, then 1×, paused at 9:01):
+    Hob's bubble read "Finish your cups and get yourselves home safe." (the second piece) and all five guests showed the
+    alert emote and turned toward the bar.
 - [ ] **F7 — A sick guest and three remedies (the world).**
   - *Build:* `Item.cures`, the `ailment` field and the draw, `Actor.ailing` (and the expected guest's
     field) with the schema bump, `body/ailment.py` with `cure`, the `cured` thought and event, `ailing` in
