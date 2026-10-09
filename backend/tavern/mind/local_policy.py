@@ -4,6 +4,8 @@ from collections.abc import Mapping, Sequence
 import math
 from typing import Any
 
+from tavern.body.ailment import carries_cure
+from tavern.body.items import ITEMS
 from tavern.mind.goals import serving
 from tavern.mind.hall_view import in_use, line_place, steps_to
 from tavern.social.hostility import urge
@@ -13,6 +15,9 @@ from tavern.social.thoughts import THOUGHTS, opinion_of, thought_mood
 
 # How far the most and least sociable guests drift from an ordinary one's taste for company.
 SOCIABLE_PULL = 0.4
+# What a walk over to someone who looks unwell adds for a guest who carries a cure, and how a remedy for them scores.
+SEEKING_THE_SICK = 0.5
+CURE_SCORE = 0.95
 
 
 def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]]) -> dict[str, float]:
@@ -99,12 +104,16 @@ def _score_gifts(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
             empty = not people.get(action["target_id"], {}).get("holding", {}).get("beer", 0)
             score += 0.15 * empty - 0.4 * needs["thirst"] / 100
         scores[action["id"]] = min(1.0, max(0.0, score))
+        # A remedy for someone who looks unwell is what a healer carries it for: little outweighs it.
+        if action["verb"] == "give" and ITEMS[action["item"]].cures and people.get(action["target_id"], {}).get("ailing"):
+            scores[action["id"]] = CURE_SCORE
 
 
 def _score_approaches(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
                       scores: dict[str, float]) -> None:
     # The walk costs a little, a long one more; company they like draws and company they dislike repels.
     actor, now = observation["actor"], observation.get("time", -math.inf)
+    healer = carries_cure(actor["inventory"])
     people = {item["id"]: item for item in [*observation.get("visitors", []), *observation.get("people", [])]}
     objects = {item["id"]: item for item in observation["objects"]}
     for action in candidates:
@@ -113,6 +122,9 @@ def _score_approaches(observation: Mapping[str, Any], candidates: Sequence[Mappi
         table = objects.get(people.get(action["target_id"], {}).get("table_id"))
         walk = steps_to(observation, table) if table else 0
         score = scores[action["id"]] - min(0.15, 0.01 * walk) + 0.25 * opinion_of(actor, action["target_id"], now) / 100
+        # Someone who carries a cure goes to the one who looks unwell (`tavern.body.ailment`) before anyone else.
+        if healer and people.get(action["target_id"], {}).get("ailing"):
+            score += SEEKING_THE_SICK
         scores[action["id"]] = min(1.0, max(0.0, score))
 
 
