@@ -1,7 +1,6 @@
 /** A guest's speech bubble: built once, told line by line in pieces, and drawn whole inside the map. */
 import Phaser from "phaser";
-import { chunkAt, placeBubble, splitLine } from "./bubble";
-import type { Conversation, Turn } from "./types";
+import { chunkAt, placeBubble, splitLine, type Spoken } from "./bubble";
 
 /** Speech bubbles wrap at this many pixels and draw above every guest. */
 const BUBBLE_WRAP = 150;
@@ -28,15 +27,13 @@ export class Speech {
   }
 
   /**
-   * Tell the scene's latest line over its speaker in pieces; the server keeps the scene up while the last one is heard.
+   * Tell the latest line its speaker has to say over them in pieces; the server keeps a scene up while the last one is heard.
    *
-   * @param conversation The scene the speaker is in, if any.
-   * @param speakerId The guest this bubble belongs to.
+   * @param line The speaker's latest line, from their conversation or a call of their own, or null when they have none.
    * @param now Real time in milliseconds, for the piece's start.
    */
-  tell(conversation: Conversation | undefined, speakerId: string, now: number): void {
-    const line: Turn | undefined = conversation?.turns[conversation.turns.length - 1];
-    if (line?.speaker !== speakerId) { this.talk = null; return; }
+  tell(line: Spoken | null, now: number): void {
+    if (line === null) { this.talk = null; return; }
     const key: string = `${line.time}:${line.line}`;
     if (this.talk?.key !== key) this.talk = { key, chunks: splitLine(line.line), start: now };
   }
