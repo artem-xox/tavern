@@ -20,14 +20,14 @@ test("shippedPose: a missing seated pose of a sprite without Seated falls back t
   assert.equal(shippedPose(sheet(["Idle"]), "DrinkingSeated"), "Idle");
 });
 
-test("stills: every character ships a sleeping pose in four views", () => {
+test("stills: every character ships a sleeping pose in eight views", () => {
   const sleeping = stills().filter((item) => item.key.includes("-SleepingSeated-"));
-  assert.equal(sleeping.length % 4, 0);
-  assert.ok(sleeping.length >= 24);
+  assert.equal(sleeping.length % 8, 0);
+  assert.ok(sleeping.length >= 48);
 });
 
-test("stills: every guest loads the six combat poses in four views", () => {
+test("stills: every guest loads the six combat poses in eight views", () => {
   const poses = ["Fighting", "KnockedOut", "Hurt", "HurtSeated", "Shoving", "HelpingUp"];
   const combat = stills().filter((item) => poses.some((pose) => item.key.includes(`-${pose}-`)));
-  assert.equal(combat.length, 6 * poses.length * 4);
+  assert.equal(combat.length, 6 * poses.length * 8);
 });

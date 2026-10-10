@@ -4,18 +4,17 @@ Tested 2026-10-03 with a Tier 1 PixelLab account. Six 68 px character
 groups now supply the tavern's visitors. This document records their source
 IDs, the renderer mapping, and the generation limits found in practice.
 
-**Rule for future generations: four cardinal directions only** (north, south,
-east, west). The game has no need for diagonals. PixelLab Pro Flash currently
-generates eight directions for an exact 68 px character; we export and ship
-only four. Before making another character, look for a true 68 px four-view
-route or agree on a nearby supported size. Do not order eight views simply
-because the current tool defaults to them.
+**Rule for future generations: ship all eight compass directions**: north,
+north-east, east, south-east, south, south-west, west, and north-west.
+PixelLab Pro Flash generates eight directions for an exact 68 px character;
+preserve and export every direction. Before making another character, verify
+the native canvas is 68 × 68.
 
 ## What the game needs
 
 `frontend/src/types.ts` defines eleven action verbs. `backend/tavern/world.py`
-executes them, while `frontend/src/scene.ts` loads four cardinal views for each
-of nine poses. Walking remains interpolated between cells with one still per
+executes them, while `frontend/src/scene.ts` loads all eight views for each of
+nine poses. Walking remains interpolated between cells with one still per
 direction. The beer mug and chat bubble are separate Phaser overlays. The
 pose set below covers every verb without
 making a unique image for actions that look the same.
@@ -67,8 +66,8 @@ Toren's 2026-10-02 retry. Its immediate response claimed 68 × 68; only
 PixelLab. Pro Flash supports one or eight directions, not four; its
 `create_character_state` generates every direction of the base. Do not rely
 on the standard route for exact 68 px until a completed export verifies it.
-For the next cast, test a lower nearby size with four views before buying
-any action states. The older automatic
+For the next cast, test a lower nearby size only if it preserves all eight
+views before buying any action states. The older automatic
 animation tool also has a 64 × 64 maximum, so it does not fit this target.
 [PixelLab automatic animation limits](https://www.pixellab.ai/docs/tools/create-animations-automatic).
 
@@ -76,12 +75,12 @@ Use the same low top-down camera, 68 px canvas, muted medieval palette,
 dark outline, and full-body centered composition for every character. Toren
 used Edda's south sprite as Pro Flash `style_image` with palette, outline,
 shading, and detail options; his south view stayed distinct and broadly
-matched the cast. Four cardinal views should be the first constraint when
+matched the cast. All eight compass views should be the first constraint when
 choosing the next creation method.
 
 ## Tested characters and states
 
-These are PixelLab library assets, with four cardinal PNGs per state copied to
+These are PixelLab library assets, with all eight directional PNGs per state copied to
 `frontend/static/characters/<slug>/`. Use the stable IDs below with
 `get_character`; avoid saving expiring image URLs as source records.
 Each state's `get_character` result includes the shared `group_id`, rotations,
@@ -181,21 +180,20 @@ old Idle-only merchant at 190 seconds, using the generic `visitor` folder.
 Every guest now has these six 68 px states: `Fighting`, `KnockedOut`, `Hurt`,
 `HurtSeated`, `Shoving`, and `HelpingUp`. `Fighting` keeps the right fist
 clear of the torso for the client's future club overlay; `HurtSeated` contains
-no chair, so it can be drawn over the game's existing seat. The state generator
-made standing T-poses for `KnockedOut`, so the shipped `KnockedOut` PNG is instead
-frame 6 of each character's four-direction `falling-back-death` animation.
+no chair, so it can be drawn over the game's existing seat. `KnockedOut` uses
+the current PixelLab state in all eight directions; the client does not ship or
+play a `falling-back-death` animation.
 
-- Edda — `Fighting` `95c7f09b-e938-4b32-b0c7-76a58042a8de`, `Hurt` `05ae4217-a189-4819-935b-c3bc4f233c62`, `HurtSeated` `9094b500-3516-476a-bce4-782f79f84935`, `Shoving` `55ffb173-bd03-465e-b2f6-6263d963918e`, `HelpingUp` `b19f0bc5-6a20-491b-b096-0f2ba47bd8fb`; knockout animation group `ed9b67bc-4b92-4908-b2c0-860fc128b4fe`.
-- Rurik — `Fighting` `0a25ed8e-8432-4ae6-b348-bcabf3f6be2e`, `Hurt` `a6b8cff6-3721-49f4-80c8-e92a3602b58c`, `HurtSeated` `c4cbc834-0a0f-465d-a79f-6d0ae636672a`, `Shoving` `c81c4618-b4c3-453e-85bd-0f4b71ae104c`, `HelpingUp` `b4b6641f-675d-4fc7-b4be-1ab6e47907df`; knockout animation group `3e0c7705-7e3d-425b-9c40-aa9e323d65ba`.
-- Toren — `Fighting` `3adc6714-fca9-4bc6-a9b1-4968ceea163a`, `Hurt` `c4a16d25-5178-460f-9bcd-0ff518ac7138`, `HurtSeated` `a4b34543-71e8-4fb6-ac80-1ca9202c6be8`, `Shoving` `654efbb4-684d-41fa-b4c0-db885510aaf4`, `HelpingUp` `61e12001-f774-4516-a563-def870a6f92b`; knockout animation group `872e208a-12d8-4ed4-8839-5f1bcd66ad2a`.
-- Brida — `Fighting` `a4450d81-3bb7-4198-ae3f-0a4447851dc1`, `Hurt` `ee7d4c8a-c5ad-43e9-b226-597a923e1016`, `HurtSeated` `71a0b821-28f7-44a3-8bb3-ae53cac141eb`, `Shoving` `6c5587b3-0934-4716-a929-f0d017a53f3d`, `HelpingUp` `f6d0786d-a7a0-4ac8-9585-d46d96e79f50`; knockout animation group `b1f6796a-d22b-459d-9d6b-65b305550c9a`.
-- Calder — `Fighting` `824d328f-0439-4975-a64d-01c32ca5a854`, `Hurt` `dd8d2dce-5f3d-42a7-957c-cd41ee9122df`, `HurtSeated` `8d49d27e-5aef-4997-8bc7-6b85a6e49e99`, `Shoving` `463cf86c-9f14-4073-a6b8-767ad4a14e43`, `HelpingUp` `fe1c8cb9-d679-4339-b9a6-2d538faf8193`; knockout animation group `2c3bf0b0-0111-443a-a4f7-322ff0ee92fb`.
-- Saye — `Fighting` `446b7513-3984-4512-a846-67f3944f7874`, `Hurt` `cc7da4d1-679a-423d-8295-e8069d71b9a5`, `HurtSeated` `f0ab2d56-277c-401b-b879-87dfd4a98d4d`, `Shoving` `55e4771e-2398-4b15-8d8a-8836049a777c`, `HelpingUp` `3eb8d2ef-34a6-413a-a29f-17551072d5f8`; knockout animation group `83630774-abd5-4ec1-854c-dd8e93d59d86`.
+- Edda — `Fighting` `95c7f09b-e938-4b32-b0c7-76a58042a8de`, `Hurt` `05ae4217-a189-4819-935b-c3bc4f233c62`, `HurtSeated` `9094b500-3516-476a-bce4-782f79f84935`, `Shoving` `55ffb173-bd03-465e-b2f6-6263d963918e`, `HelpingUp` `b19f0bc5-6a20-491b-b096-0f2ba47bd8fb`, `KnockedOut` `632a31f7-add7-47e0-96c2-8b3e9c3a1994`.
+- Rurik — `Fighting` `0a25ed8e-8432-4ae6-b348-bcabf3f6be2e`, `Hurt` `a6b8cff6-3721-49f4-80c8-e92a3602b58c`, `HurtSeated` `c4cbc834-0a0f-465d-a79f-6d0ae636672a`, `Shoving` `c81c4618-b4c3-453e-85bd-0f4b71ae104c`, `HelpingUp` `b4b6641f-675d-4fc7-b4be-1ab6e47907df`, `KnockedOut` `97599dec-fa61-4f9f-bd1c-cb8987bc97e5`.
+- Toren — `Fighting` `3adc6714-fca9-4bc6-a9b1-4968ceea163a`, `Hurt` `c4a16d25-5178-460f-9bcd-0ff518ac7138`, `HurtSeated` `a4b34543-71e8-4fb6-ac80-1ca9202c6be8`, `Shoving` `654efbb4-684d-41fa-b4c0-db885510aaf4`, `HelpingUp` `61e12001-f774-4516-a563-def870a6f92b`, `KnockedOut` `9d5f5d9d-6743-4dd7-b6e2-c7f6998d09ba`.
+- Brida — `Fighting` `a4450d81-3bb7-4198-ae3f-0a4447851dc1`, `Hurt` `ee7d4c8a-c5ad-43e9-b226-597a923e1016`, `HurtSeated` `71a0b821-28e5-4fb6-ac80-1ca9202c6be8`, `Shoving` `6c5587b3-0934-4716-a929-f0d017a53f3d`, `HelpingUp` `f6d0786d-a7a0-4ac8-9585-d46d96e79f50`, `KnockedOut` `df9c0e72-6f99-4110-8fda-c8387401bd09`.
+- Calder — `Fighting` `824d328f-0439-4975-a64d-01c32ca5a854`, `Hurt` `dd8d2dce-5f3d-42a7-957c-cd41ee9122df`, `HurtSeated` `8d49d27e-5aef-4997-8bc7-6b85a6e49e99`, `Shoving` `463cf86c-9f14-4073-a6b8-767ad4a14e43`, `HelpingUp` `fe1c8cb9-d679-4339-b9a6-2d538faf8193`, `KnockedOut` `f7b4443a-cd52-4a90-bb75-7f9545389246`.
+- Saye — `Fighting` `446b7513-3984-4512-a846-67f3944f7874`, `Hurt` `cc7da4d1-679a-423d-8295-e8069d71b9a5`, `HurtSeated` `f0ab2d56-277c-401b-b879-87dfd4a98d4d`, `Shoving` `55e4771e-2398-4b15-8d8a-8836049a777c`, `HelpingUp` `3eb8d2ef-34a6-413a-a29f-17551072d5f8`, `KnockedOut` `fd5f64bd-0ce9-458a-88e5-f5a65a37b69d`.
 
-The browser ships 96 native 68 px stills: six Idle poses plus 90 action poses.
-Their PixelLab groups have eight rotations each, but only the four cardinal
-rotations are in the browser build. `get_character` confirmed every state is
-in its intended ten-state group. The two discarded
+The browser ships 142 native 68 px poses: 16 bartender poses and 21 poses for
+each of six guests. Each has eight rotations (1,136 PNGs) in the browser build.
+The two discarded
 standard-mode trials, Edda
 `5cc40ea8-affe-4283-a534-81f608009bec` and Rurik
 `7b49907f-3d51-40de-9ee0-2589afd1ceef`, and Toren's trial
@@ -240,15 +238,15 @@ direction. [PixelLab API cost estimates](https://www.pixellab.ai/pixellab-api).
    `override_width` and `override_height` unset to keep 68 × 68. This creates
    a new named sibling in the character group, unlike `save_to_asset`.
 3. Wait for completion with `wait_for_jobs` and `get_character(new_state_id)`.
-   Check `size`, `state_name`, all direction URLs, and `group_id`. Preview
-   south, north, east, and west at 1×. The game does not use diagonals.
+   Check `size`, `state_name`, all direction URLs, and `group_id`. Preview all
+   eight directions at 1×.
 4. If a direction is weak or reversed, correct that **state's** rotation
    with PixelLab's image editor/workbench, then `save_to_asset(image=...,
    target="character:<state_id>:<direction>")`. This replaces one existing
    rotation and offers an undo call; it does **not** create a new state. Do
    not save a new action over Idle.
-5. Download the group from the `download` URL in `get_character`; copy only
-   the four cardinal PNGs per state into the game. Keep its `metadata.json`
+5. Download the group from the `download` URL in `get_character`; copy all
+   eight directional PNGs per state into the game. Keep its `metadata.json`
    and the source IDs in this document. A state result's download bundles
    every sibling state. The PixelLab library retains the full originals.
 
@@ -266,7 +264,7 @@ The original guest IDs remain stable so saved sessions and force-action commands
 stay compatible. Each guest's `sprite` in the scenario
 (`data/scenarios/first_evening.json`) names their folder, and
 `frontend/src/sprites.ts` lists every shipped folder with its display size and
-the poses it has in all four directions. `frontend/src/scene.ts` loads those
+the poses it has in all eight directions. `frontend/src/scene.ts` loads those
 PNGs with nearest-neighbor filtering, drawing this cast at its native 68 px
 size. A pose a sprite lacks is drawn as Idle. Walking status selects
 Walking. Drinking while seated selects DrinkingSeated; seated conversation

@@ -2420,7 +2420,7 @@ own branch (`claude/stage1-z<n>`) and PR.
     includes it. `docs/CHARACTER_ART_PIPELINE.md` gains `doze` → **SleepingSeated**.
   - *Tests:* `frontend/tests/sprites.test.ts` (node:test): the fallback, parametrized (shipped pose,
     missing seated pose, missing standing pose). `tests/test_character_action_assets.py`: a new test
-    that `SleepingSeated` ships in four views for the six guest sprites.
+    that `SleepingSeated` ships in eight views for the six guest sprites.
   - *Check:* `make check` and `make build`. In `make run`, force a nap from the debug panel (or a
     scratch save) and post a screenshot at game scale and a 2× crop: the sleeper is seated with the
     Zzz above, at each of the four seat facings in the hall.
@@ -3712,7 +3712,7 @@ are frozen below; two are still open at the end of this block. Freeze those here
 
 Six poses, cut down on 2026-10-09 at the user's request: no animation of blows in art. A fighter has one stance,
 fists up, and the client makes the fight move. The rules of [CHARACTER_ART_PIPELINE.md](../CHARACTER_ART_PIPELINE.md)
-apply: four cardinal views, 68 px requested, the export size checked before a batch, `create_character_state` on each
+apply: eight compass views, 68 px requested, the export size checked before a batch, `create_character_state` on each
 guest's base character with "same face, outfit, colours and scale; change only the pose",
 `use_color_palette_from_reference=true`, and the user's approval before credits are spent.
 
@@ -3737,8 +3737,8 @@ the pose:"). A fighter faces the opponent.
   shoulders, a wider stance than `Idle`. The right fist must be clear of the body in the east, west and south views,
   since the client puts the cudgel there.
 - **`KnockedOut`**: "lying flat on the back on the floor, out cold: arms splayed, legs loose, eyes shut, head lolled
-  to one side, a bruise on the cheek." The four views are the figure lying with the head to the south, north, east
-  or west; the client picks the one with the head away from the opponent (they fell backwards). A lying figure may
+  to one side, a bruise on the cheek." The eight views cover every compass direction; the client picks the one with
+  the head away from the opponent (they fell backwards). A lying figure may
   export wider than 68 px: it must still rest inside its cell, or get its own offset in `sprites.ts`.
 - **`Hurt`**: "standing battered and unsteady: hunched forward, one hand clutching the ribs, the other pressed to a
   black eye, knees slightly bent, clothes rumpled and a sleeve torn, a bruise on the face." It must differ from `Idle`

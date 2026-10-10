@@ -175,11 +175,12 @@ TypeScript (`frontend/`): no `any`; `types.ts` is the contract with the backend 
 
 ## Character art rule
 
-Generate and ship only four cardinal views for tavern characters: north, south,
-east, and west. Check the actual PixelLab export size before generating poses;
-the standard 68 px request has returned 96 px. If a tool requires eight views
-for a 68 px character, investigate a four-view route before spending credits.
-See `docs/CHARACTER_ART_PIPELINE.md` for the tested workflow and current limit.
+Generate and ship all eight compass views for tavern characters: north,
+north-east, east, south-east, south, south-west, west, and north-west. Check
+the actual PixelLab export size before generating poses; the standard 68 px
+request has returned 96 px. PixelLab Pro Flash's eight-view export is the
+approved route for a 68 px character. See `docs/CHARACTER_ART_PIPELINE.md` for
+the tested workflow and current limit.
 
 ## Working principles
 
