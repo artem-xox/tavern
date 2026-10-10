@@ -6,6 +6,7 @@ from typing import Any
 
 from tavern.body.activities import ACTIVITIES, FAMILIES
 from tavern.body.items import carried_words, held_words
+from tavern.body.wounds import health_of, hurt
 from tavern.hall.room import SEAT_TABLES
 from tavern.mind.feelings import feelings
 from tavern.mind.goals import goal_words, serving
@@ -162,18 +163,32 @@ def _person(observation: Observation, visitor: Mapping[str, Any]) -> str:
         return f"{label_of(visitor)} sits {where}{busy}{_pale(visitor)}"
     doing = visitor.get("doing")
     activity = ACTIVITIES.get(doing) if isinstance(doing, str) else None
+    if visitor.get("fighting"):
+        return f"{label_of(visitor)} is fighting {visitor.get('target') or 'someone'}{_pale(visitor)}"
+    if visitor.get("condition") in ("down", "out"):
+        knocked = "knocked out cold" if visitor["condition"] == "out" else "thrown down"
+        return f"{label_of(visitor)} lies on the floor, {knocked}{_pale(visitor)}"
     if visitor.get("post"):
         return f"{label_of(visitor)}, the barkeep, is {activity.doing if activity and activity.doing else 'tending the bar'}"
     return f"{label_of(visitor)} is {activity.doing if activity and activity.doing else 'standing about'}{_pale(visitor)}"
 
 
 def _pale(visitor: Mapping[str, Any]) -> str:
-    # Anyone can see who came in with a fever (`tavern.body.ailment`).
-    return ", looking pale and feverish" if visitor.get("ailing") else ""
+    # Anyone can see who came in with a fever (`tavern.body.ailment`) and who is hurt (`tavern.body.wounds`).
+    return (", looking pale and feverish" if visitor.get("ailing")
+            else ", battered and hurt" if visitor.get("hurt") else "")
 
 
 def _unwell(observation: Observation) -> str:
-    if not observation["actor"].get("ailing"):
+    actor = observation["actor"]
+    if hurt(actor):
+        healers = [label_of(person) for person in observation.get("people", []) if person.get("healer")]
+        help_at_hand = (f" {' and '.join(healers)} carries remedies and could mend them." if healers
+                        else " Nobody in sight is known to carry a remedy.")
+        return (f"They are hurt (health {round(health_of(actor))} of 100) after a fight. Their first business is to "
+                "mend: a remedy, from the one who carries them, or going home to rest. Another drink, a chat, a "
+                f"game or a seat is not it.{help_at_hand}")
+    if not actor.get("ailing"):
         return ""
     return "They feel feverish and weak tonight; a healer's remedy would help."
 

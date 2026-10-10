@@ -20,5 +20,6 @@
     "tolerance": 0.35,
     "comfort": 0.8,
     "curiosity": 0.3
-  }
+  },
+  "sex": "female"
 }

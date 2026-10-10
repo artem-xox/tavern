@@ -79,7 +79,8 @@ def test_the_snapshot_names_every_kind_of_item(tmp_path: Path) -> None:
     assert runtime.snapshot()["items"] == {
         "beer": {"one": "a mug of ale", "many": "mugs of ale"},
         "remedy": {"one": "a herbal remedy", "many": "herbal remedies"},
-        "keepsake": {"one": "a keepsake", "many": "keepsakes"}}
+        "keepsake": {"one": "a keepsake", "many": "keepsakes"},
+        "cudgel": {"one": "a cudgel", "many": "cudgels"}}
 
 
 def guest_room() -> dict[str, Any]:

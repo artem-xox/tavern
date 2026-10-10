@@ -31,6 +31,8 @@ def gift_error(world: Mapping[str, Any], giver: Mapping[str, Any], receiver: Map
     item = ITEMS.get(kind) if isinstance(kind, str) else None
     if item is None:
         return f"Unknown item {kind!r}"
+    if not item.giftable:
+        return f"{item.one.capitalize()} is not for giving away"
     if giver["inventory"][kind] <= 0:
         return f"No {kind} in inventory"
     if receiver["inventory"][kind] >= item.hands:

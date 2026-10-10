@@ -21,15 +21,17 @@ def carrying(**fields: Any) -> dict[str, Any]:
 
 
 @pytest.mark.parametrize("carries,expected", [
-    pytest.param({"remedy": 2}, {"beer": 0, "remedy": 2, "keepsake": 0}, id="two-remedies"),
-    pytest.param({"keepsake": 1, "beer": 1}, {"beer": 1, "remedy": 0, "keepsake": 1}, id="several-kinds"),
-    pytest.param({}, {"beer": 0, "remedy": 0, "keepsake": 0}, id="nothing"),
+    pytest.param({"remedy": 2}, {"beer": 0, "remedy": 2, "keepsake": 0, "cudgel": 0}, id="two-remedies"),
+    pytest.param({"keepsake": 1, "beer": 1}, {"beer": 1, "remedy": 0, "keepsake": 1, "cudgel": 0}, id="several-kinds"),
+    pytest.param({"cudgel": 1}, {"beer": 0, "remedy": 0, "keepsake": 0, "cudgel": 1}, id="a-cudgel"),
+    pytest.param({}, {"beer": 0, "remedy": 0, "keepsake": 0, "cudgel": 0}, id="nothing"),
 ])
 def test_a_guest_comes_in_with_what_the_scenario_says_they_carry(carries: dict[str, int],
                                                                   expected: dict[str, int]) -> None:
     world = open_evening(LAYOUT, parse_scenario(carrying(carries=carries)), seed=1)
     guests = {item["id"]: item for item in world["actors"]}
-    assert (guests["ada"]["inventory"], guests["bea"]["inventory"]) == (expected, {"beer": 0, "remedy": 0, "keepsake": 0})
+    assert (guests["ada"]["inventory"], guests["bea"]["inventory"]) == (
+        expected, {"beer": 0, "remedy": 0, "keepsake": 0, "cudgel": 0})
 
 
 def test_a_late_guest_brings_what_they_carry_through_the_door() -> None:
@@ -49,8 +51,8 @@ def test_a_scenario_guest_who_carries_something_impossible_is_refused(carries: A
         parse_scenario(carrying(carries=carries))
 
 
-def test_the_first_evening_has_edda_carry_remedies_and_toren_keepsakes() -> None:
+def test_the_first_evening_has_edda_carry_remedies_toren_keepsakes_and_rurik_a_cudgel() -> None:
     cards = parse_cards([json.loads(path.read_text()) for path in sorted((ROOT / "data" / "characters").glob("*.json"))])
     scenario = parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()), cards)
     assert {item["name"]: item["carries"] for item in scenario.guests if "carries" in item} == {
-        "Edda": {"remedy": 3}, "Toren": {"keepsake": 2}}
+        "Edda": {"remedy": 3}, "Toren": {"keepsake": 2}, "Rurik": {"cudgel": 1}}

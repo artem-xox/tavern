@@ -35,6 +35,12 @@ after that call guests finish what is in hand, wind their talk down with a goodb
 a last word, and go. When the bell rings for closing, everyone must go home \
 or up to their beds, and the evening is over.
 
+A fight is the loudest thing that can happen in the inn, and it is always one on one: two guests who hate each \
+other, or one who hates the other and has drunk too much, come to blows, and it ends with one knocked out, or \
+giving up, or both parted and still cursing. Whoever fought is hurt and means to mend: they go to whoever \
+carries a remedy, or home to rest. A guest who has just fought someone speaks to them sharply, if at all: \
+insults, threats, a grudging word at most, never warmth.
+
 Guests are ordinary travellers and locals: traders, carters, soldiers off duty, charcoal burners, pilgrims, \
 shepherds, smugglers who claim to be traders, a priest now and then, a minstrel down on his luck. They came to \
 rest, drink, warm up, gossip and perhaps make a deal or settle a grudge. Most of them are strangers to one \

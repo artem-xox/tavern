@@ -20,5 +20,6 @@
     "tolerance": 0.55,
     "comfort": 0.3,
     "curiosity": 0.9
-  }
+  },
+  "sex": "male"
 }

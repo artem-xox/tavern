@@ -95,9 +95,11 @@ UNMETERED = ("arrival", "last_call", "closing")
 # Remembered events that make a guest take stock, by trigger kind.
 # A scene's end alone is not one: what a talk changed is told by a goal reached, a thought or a fact.
 SALIENT_EVENTS: Mapping[str, str] = MappingProxyType({
-    "interrupted": "interrupted", "woken": "woken", "alerted": "alerted", "dice_won": "dice", "dice_lost": "dice", "goal_done": "goal", "goal_failed": "goal", "goal_expired": "goal"})
+    "interrupted": "interrupted", "woken": "woken", "alerted": "alerted", "dice_won": "dice", "dice_lost": "dice", "goal_done": "goal", "goal_failed": "goal", "goal_expired": "goal",
+    "saw_fight": "fight", "fight_ended": "fight"})
 # Thought kinds that make a guest take stock: a wrong done to them.
-SALIENT_THOUGHTS = ("quarrel", "seat_taken", "table_intruded", "insulted", "shoved", "attacked")
+SALIENT_THOUGHTS = ("quarrel", "seat_taken", "table_intruded", "insulted", "shoved", "attacked", "lost_fight",
+                    "knocked_out_by")
 _LONGEST = 400
 
 # Writes a guest's thought and intention from their view (see `intention_view`); raises on failure.

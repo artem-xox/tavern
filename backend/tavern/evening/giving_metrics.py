@@ -31,7 +31,7 @@ def giving_counts(events: Sequence[Mapping[str, Any]]) -> GivingCounts:
             by its time and words), `fetch_begun`, `fetch_done` and `fetch_failed`.
 
     Returns:
-        Gifts per kind in `ITEMS`, zeros too; refusals; and the errands. An errand still under way at the end
+        Gifts per giftable kind in `ITEMS`, zeros too; refusals; and the errands. An errand still under way at the end
         is begun but neither done nor failed.
 
     Raises:
@@ -42,7 +42,7 @@ def giving_counts(events: Sequence[Mapping[str, Any]]) -> GivingCounts:
     refused = {(event["time"], event["message"]) for event in events if event["type"] == "gift_refused"}
     kinds = Counter(_kind_of(message) for _, message in given)
     errands = Counter(event["type"] for event in events)
-    return {"gifts": {kind: kinds[kind] for kind in ITEMS}, "refused": len(refused),
+    return {"gifts": {kind: kinds[kind] for kind, item in ITEMS.items() if item.giftable}, "refused": len(refused),
             "errands": {"begun": errands["fetch_begun"], "done": errands["fetch_done"],
                         "failed": errands["fetch_failed"]}}
 

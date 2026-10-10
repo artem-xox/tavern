@@ -229,7 +229,7 @@ def _gifts(observation: Mapping[str, Any], actor: Mapping[str, Any]) -> list[Act
     # Handing over what the guest carries is offered to the company near who could take it (`gift_targets`).
     # A thirsty guest drinks their own mug rather than give it away; what is in a pocket is theirs to give.
     thirsty = actor["needs"].get("thirst", 0) >= KEEPS_OWN_MUG
-    return [_action("give", target, kind) for kind in ITEMS if actor["inventory"].get(kind)
+    return [_action("give", target, kind) for kind in ITEMS if actor["inventory"].get(kind) and ITEMS[kind].giftable
             and not (kind == "beer" and thirsty) for target in gift_targets(observation, kind)]
 
 
