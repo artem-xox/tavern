@@ -40,7 +40,7 @@ INVITE_LINES: Mapping[str, str] = MappingProxyType({
     "dice_together": "Care for a game of dice, {name}?",
     "buy_drink": "Let me buy you an ale.", "leave_together": "Shall we walk home together?"})
 
-MAX_LINE = 160  # Characters of a line: the style asks for about 120, and a little over still reads in a bubble.
+MAX_LINE = 200  # Characters of a line: the style asks for under 120; a longer one still reads in a bubble.
 _HEARD_FROM = re.compile(r"^Heard from [^:]*: ")  # A retold version starts like this; it is never nested.
 
 PRESSING = 75.0  # An urgent need this strong (`ailment.urgent_needs`) takes a guest out of any conversation.

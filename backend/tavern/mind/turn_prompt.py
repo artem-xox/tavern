@@ -89,8 +89,9 @@ most about six words, no full sentences.
 
 _STYLE = """STYLE RULES
 
-1. One short line. Usually five to fifteen words, never more than about 120 characters. One or two short \
-sentences at most. People in a noisy hall do not make speeches.
+1. One short line. Usually five to fifteen words, under 120 characters. One or two short sentences at most, \
+never three. People in a noisy hall do not make speeches: say one thing, and leave the rest for the next line. \
+A line over 200 characters is thrown away and something plain is said in its place.
 2. Spoken aloud. Write only the words the speaker says. No narration, no stage directions, no actions, no \
 descriptions of tone. Never use asterisks, brackets or parentheses to describe what someone does, such as \
 *laughs*, (sighs) or [raises mug]. If the speaker would laugh, write the laugh as speech: "Ha!".

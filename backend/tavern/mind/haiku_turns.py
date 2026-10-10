@@ -59,7 +59,7 @@ def turn_content(view: Mapping[str, Any]) -> str:
     earlier = _earlier(view["speaker"].get("earlier") or [])
     return "\n\n".join([_scene(view["conversation"], view["speaker"]), *([earlier] if earlier else []),
                         _self(view["speaker"]), _news(view["speaker"]), *([f"THE MOMENT\n\n{nudges}"] if nudges else []), _offer(view),
-                        "Write the speaker's next line now."])
+                        "Write the speaker's next line now: one or two short sentences, under 120 characters."])
 
 
 def _offer(view: Mapping[str, Any]) -> str:

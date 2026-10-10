@@ -156,7 +156,7 @@ def test_recent_lines_are_in_the_content() -> None:
 @pytest.mark.parametrize("answer", [
     pytest.param(GOOD, id="addressed"),
     pytest.param({**GOOD, "addressee": None}, id="to-everyone"),
-    pytest.param({**GOOD, "line": "x" * 160}, id="longest-line"),
+    pytest.param({**GOOD, "line": "x" * 200}, id="longest-line"),
 ])
 def test_valid_answers_pass(answer: dict[str, Any]) -> None:
     assert parse_turn(view_of(scene_world()), answer) == answer
@@ -177,7 +177,7 @@ def test_known_place_may_be_shared() -> None:
     pytest.param({**GOOD, "addressee": "zed"}, id="addressee-not-present"),
     pytest.param({**GOOD, "addressee": 7}, id="malformed-addressee"),
     pytest.param({**GOOD, "line": "  "}, id="blank-line"),
-    pytest.param({**GOOD, "line": "x" * 161}, id="line-too-long"),
+    pytest.param({**GOOD, "line": "x" * 201}, id="line-too-long"),
     pytest.param({**GOOD, "line": "Salt.\nSalt!"}, id="two-lines"),
     pytest.param({**GOOD, "line": "*sighs* Salt's dear."}, id="stage-direction"),
     pytest.param({**GOOD, "line": "(sighing) Salt's dear."}, id="parenthetical-direction"),
@@ -338,3 +338,8 @@ def test_only_a_real_need_nudges_the_speaker_away(ailing: bool, nudges: list[str
     people(world)["ada"]["needs"]["fatigue"] = 86.0
     content = turn_question(view_of(world))["content"]
     assert [text for text in NUDGES if text in content] == nudges
+
+
+def test_every_turn_ends_by_asking_for_a_short_line() -> None:
+    content = turn_question(view_of(scene_world()))["content"]
+    assert content.endswith("Write the speaker's next line now: one or two short sentences, under 120 characters.")
