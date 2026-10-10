@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from tavern.mind.intentions import (IntentionRules, check_intention, deliver_intention, intention_due,
+from tavern.mind.intentions import (INTENTION_RULES, IntentionRules, check_intention, deliver_intention, intention_due,
                                intention_question, intention_requests, intention_view, intention_writer,
                                stale_intentions)
 from tavern.hall.memory import record_event
@@ -241,3 +241,73 @@ def test_the_writer_asks_the_port_and_checks_the_answer() -> None:
     view = intention_view(world, actor(world, "ada"), intention_due(world, actor(world, "ada"), RULES))
     assert asyncio.run(intention_writer("SHARED PREFIX", ask)(view)) == answer()
     assert questions == [intention_question("SHARED PREFIX", view)]
+
+
+def knowing(world: dict[str, Any], familiarity: str, opinion: float = 0.0) -> dict[str, Any]:
+    """Let Ada know Bea so well, and think this much of her."""
+    actor(world, "ada")["relations"]["bea"] = {"familiarity": familiarity, "opinion": opinion}
+    return world
+
+
+def came(world: dict[str, Any], kind: str, time: float, who: str = "bea") -> dict[str, Any]:
+    """Log that a guest came in or left the inn at a game time, as the world does."""
+    world["events"].append({"time": time, "actor_id": who, "type": kind, "message": f"{who} {kind}"})
+    return world
+
+
+def told(world: dict[str, Any], heard_from: str | None, heard_at: float) -> dict[str, Any]:
+    """Let Ada hold a piece of news she heard at a game time."""
+    actor(world, "ada")["knowledge"]["facts"]["fever"] = {
+        "topic": "fever at the manor", "told_as": "The margrave is abed.", "heard_from": heard_from,
+        "heard_at": heard_at, "confidence": 0.8, "hops": 1 if heard_from else 0, "overheard": False}
+    return world
+
+
+@pytest.mark.parametrize("prepare, expected", [
+    pytest.param(lambda: heard(fresh(), "promise_kept", 15.0), "promise", id="a-promise-kept"),
+    pytest.param(lambda: heard(fresh(), "promise_broken", 15.0), "promise", id="a-promise-broken"),
+    pytest.param(lambda: thought(fresh(), "kept_word", 15.0), "kept_word", id="a-promise-kept-to-them"),
+    pytest.param(lambda: thought(fresh(), "let_down", 15.0), "let_down", id="a-promise-broken-to-them"),
+    pytest.param(lambda: heard(fresh(), "invitation_answered", 15.0), "invitation", id="their-invitation-answered"),
+    pytest.param(lambda: heard(fresh(), "invitation_failed", 15.0), "errand", id="an-errand-for-a-guest-failed"),
+    pytest.param(lambda: heard(fresh(), "fetch_failed", 15.0), "errand", id="an-ale-fetched-was-refused"),
+    pytest.param(lambda: thought(fresh(), "rebuffed", 15.0), "rebuffed", id="a-gift-refused"),
+    pytest.param(lambda: thought(fresh(), "cured", 15.0), "cured", id="cured-of-a-fever"),
+    pytest.param(lambda: thought(fresh(), "tended", 15.0), "tended", id="wounds-seen-to"),
+    pytest.param(lambda: thought(fresh(), "line_cut", 15.0), "line_cut", id="cut-in-line"),
+    pytest.param(lambda: heard(fresh(), "got_up", 15.0), "got_up", id="got-up-after-being-knocked-down"),
+    pytest.param(lambda: told(fresh(), "bea", 15.0), "news", id="news-heard"),
+    pytest.param(lambda: told(fresh(), "bea", 5.0), None, id="news-heard-before-writing-is-old"),
+    pytest.param(lambda: told(fresh(), None, 15.0), None, id="news-they-came-with-is-not-new"),
+    pytest.param(lambda: came(knowing(fresh(), "friend"), "arrival", 15.0), "tie_arrived", id="a-friend-came-in"),
+    pytest.param(lambda: came(knowing(fresh(), "friend"), "departure", 15.0), "tie_departed", id="a-friend-left"),
+    pytest.param(lambda: came(knowing(fresh(), "acquaintance", -30.0), "arrival", 15.0), "tie_arrived",
+                 id="someone-they-dislike-came-in"),
+    pytest.param(lambda: came(knowing(fresh(), "acquaintance", 0.0), "arrival", 15.0), None,
+                 id="an-acquaintance-coming-in-is-nothing"),
+    pytest.param(lambda: came(fresh(), "arrival", 15.0), None, id="a-stranger-coming-in-is-nothing"),
+    pytest.param(lambda: came(knowing(fresh(), "friend"), "arrival", 5.0), None, id="a-friend-came-before-writing"),
+    pytest.param(lambda: came(knowing(fresh(), "friend"), "arrival", 15.0, who="ada"), None,
+                 id="their-own-arrival-is-not-another"),
+])
+def test_a_guest_takes_stock_after_what_happened_among_those_they_know(
+        prepare: Callable[[], dict[str, Any]], expected: str | None) -> None:
+    world = prepare()
+    trigger = intention_due(world, actor(world, "ada"), RULES)
+    assert (trigger and trigger["kind"]) == expected
+
+
+@pytest.mark.parametrize("seconds, expected", [
+    pytest.param(69.0, None, id="a-minute-not-yet"),
+    pytest.param(70.0, "interval", id="a-minute-after-the-last-time"),
+])
+def test_a_guest_takes_stock_every_minute(seconds: float, expected: str | None) -> None:
+    world = at(intended(create_world(hall()), at=10.0), seconds)
+    trigger = intention_due(world, actor(world, "ada"), INTENTION_RULES)
+    assert (trigger and trigger["kind"]) == expected
+
+
+def test_a_guest_is_asked_however_often_they_took_stock_before() -> None:
+    world = at(intended(create_world(hall())), 200.0)
+    requests = intention_requests(world, (), {}, INTENTION_RULES, made={"ada": 40, "bea": 40})
+    assert [actor_id for actor_id, _view in requests] == ["ada", "bea"]

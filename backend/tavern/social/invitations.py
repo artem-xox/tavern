@@ -276,6 +276,14 @@ def accept(world: World, scene: Conversation, speaker: Actor,
     world["invitations"].append(errand)
     record_event(world, speaker, "invitation_accepted", f"{speaker['name']} accepted an invitation to "
                  f"{KINDS[invitation['kind']]} from {_people(world)[invitation['from']]['name']}")
+    _tell_inviter(world, invitation, speaker, "said yes to")
+
+
+def _tell_inviter(world: World, invitation: Invitation, invitee: Actor, said: str) -> None:
+    # The inviter remembers the answer too, so that their mind takes stock of it (`intentions.SALIENT_EVENTS`).
+    inviter = _people(world)[invitation["from"]]
+    record_event(world, inviter, "invitation_answered",
+                 f"{invitee['name']} {said} {inviter['name']}'s invitation to {KINDS[invitation['kind']]}")
 
 
 def begin_errand(world: World, host: Actor, guest: Actor, kind: str, unasked: bool = False) -> None:
@@ -336,6 +344,7 @@ def decline(world: World, scene: Conversation, speaker: Actor,
         scene["invitation"] = None
         record_event(world, speaker, "invitation_declined", f"{speaker['name']} declined an invitation to "
                      f"{KINDS[invitation['kind']]} from {_people(world)[invitation['from']]['name']}")
+        _tell_inviter(world, invitation, speaker, "turned down")
 
 
 def invitations_of(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[dict[str, Any]]:

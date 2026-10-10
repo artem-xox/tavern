@@ -27,9 +27,10 @@ from tavern.mind.briefing import brief
 from tavern.mind.cards import PARAMS, TEXT_FIELDS
 from tavern.mind.goals import GOALS, STATUSES, Goal, check_goal, goal_words
 from tavern.mind.questions import Ask, Question
+from tavern.mind.scripted import DISLIKED
 from tavern.social.heard import earlier_lines
 from tavern.social.names import called
-from tavern.social.thoughts import THOUGHTS, active_thoughts
+from tavern.social.thoughts import THOUGHTS, active_thoughts, familiarity_of, opinion_of
 
 
 RECALLED_LINES = 8  # Lines of tonight's talk a guest's mind is shown when it takes stock.
@@ -86,20 +87,30 @@ class IntentionRules:
             raise ValueError(f"Intention budget must be a nonnegative number of requests or None, not {self.budget!r}")
 
 
-# Every three minutes of game time: twice or three times in a ten-minute evening.
-# Each guest's mind is asked at most four more times after arrival: the evening's turning points, not every scene.
-INTENTION_RULES = IntentionRules(interval=180.0, min_gap=3.0, budget=4)
+# Every minute of game time: a guest's plan follows the evening rather than lagging a few minutes behind it.
+# No guest is capped: what a mind costs is a cent or two an evening, and the evening is what it makes lively.
+INTENTION_RULES = IntentionRules(interval=60.0, min_gap=3.0, budget=None)
 # Triggers the budget never withholds: a guest always plans on arriving, at the barkeep's call and when the inn closes.
 UNMETERED = ("arrival", "last_call", "closing")
 
 # Remembered events that make a guest take stock, by trigger kind.
 # A scene's end alone is not one: what a talk changed is told by a goal reached, a thought or a fact.
 SALIENT_EVENTS: Mapping[str, str] = MappingProxyType({
-    "interrupted": "interrupted", "woken": "woken", "alerted": "alerted", "dice_won": "dice", "dice_lost": "dice", "goal_done": "goal", "goal_failed": "goal", "goal_expired": "goal",
-    "saw_fight": "fight", "fight_ended": "fight"})
-# Thought kinds that make a guest take stock: a wrong done to them.
+    "interrupted": "interrupted", "woken": "woken", "alerted": "alerted", "dice_won": "dice", "dice_lost": "dice",
+    "goal_done": "goal", "goal_failed": "goal", "goal_expired": "goal",
+    "saw_fight": "fight", "fight_ended": "fight",
+    # What came of a promise they made, of an invitation they gave and of an errand they were on.
+    "promise_kept": "promise", "promise_broken": "promise", "invitation_answered": "invitation",
+    "invitation_failed": "errand", "fetch_failed": "errand",
+    # Back on their feet after being knocked down.
+    "got_up": "got_up"})
+# Thought kinds that make a guest take stock: a wrong done to them, a promise to them kept or broken, a gift
+# refused, and care taken of them.
 SALIENT_THOUGHTS = ("quarrel", "seat_taken", "table_intruded", "insulted", "shoved", "attacked", "lost_fight",
-                    "knocked_out_by")
+                    "knocked_out_by", "line_cut", "kept_word", "let_down", "rebuffed", "cured", "tended")
+# The inn's comings and goings that matter to a guest: when someone they know well, or dislike, walks in or out.
+COMINGS: Mapping[str, tuple[str, str]] = MappingProxyType({
+    "arrival": ("tie_arrived", "came in"), "departure": ("tie_departed", "left the inn")})
 _LONGEST = 400
 
 # Writes a guest's thought and intention from their view (see `intention_view`); raises on failure.
@@ -126,8 +137,29 @@ def latest_trigger(world: Mapping[str, Any], actor: Mapping[str, Any], since: fl
         found.append(Trigger(kind="closing", text="The innkeeper called closing time", time=world["closes_at"]))
     found += [Trigger(kind=SALIENT_EVENTS[item["type"]], text=item["message"], time=item["time"])
               for item in actor["memory"] if item["type"] in SALIENT_EVENTS]
+    found += _news_heard(world, actor) + _ties_met(world, actor)
     # A thought's time is derived from its expiry and may carry float error; a tick is far longer.
     return max((item for item in found if item["time"] > since + 1e-6), key=lambda item: item["time"], default=None)
+
+
+def _news_heard(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[Trigger]:
+    # News told to them, or overheard; what they came in knowing is no news.
+    return [Trigger(kind="news", text=f"{actor['name']} heard that {copy['topic']}", time=copy["heard_at"])
+            for copy in actor["knowledge"]["facts"].values() if copy["heard_from"] is not None]
+
+
+def _ties_met(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[Trigger]:
+    # A friend or someone they dislike who came in or left, from the room's log (its latest 200 events).
+    people = {item["id"]: item for item in [*world["actors"], *world["departed"]]}
+    found = []
+    for event in world["events"]:
+        other = people.get(event["actor_id"])
+        if event["type"] not in COMINGS or other is None or other["id"] == actor["id"]:
+            continue
+        if familiarity_of(actor, other["id"]) == "friend" or opinion_of(actor, other["id"], event["time"]) <= DISLIKED:
+            kind, words = COMINGS[event["type"]]
+            found.append(Trigger(kind=kind, text=f"{called(actor, other)} {words}", time=event["time"]))
+    return found
 
 
 def intention_due(world: Mapping[str, Any], actor: Mapping[str, Any], rules: IntentionRules) -> Trigger | None:

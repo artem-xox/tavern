@@ -92,6 +92,13 @@ What prompted the moment matters most. It is one of:
 - a fight: two guests came to blows in the room, or the guest was in one and it has just ended (the
   guest saw it, won it, lost it, was knocked out, or was pulled out of it);
 - the end of a conversation, or leaving one: a talk is over, pleasantly or not;
+- news: someone told them a piece of news, or they overheard one, and it may change what they want;
+- a promise, an invitation or an errand: a promise they made was kept or broken, someone kept or broke
+  their word to them, their invitation was answered, or an errand they were on failed;
+- a kindness or a slight: someone cured them, saw to their wounds, refused what they offered, or cut in
+  line ahead of them;
+- a face they know: a friend, or someone they dislike, has just come in or gone out;
+- getting to their feet after being knocked down;
 - the barkeep's call: he has called closing time aloud, a little before the inn shuts;
 - closing time: the innkeeper is seeing everyone out;
 - a pause: a few minutes have passed since they last took stock, and they check where the evening

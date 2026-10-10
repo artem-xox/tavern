@@ -3974,7 +3974,15 @@ Added 2026-10-10 at the user's request: evenings cost $0.35–0.98 in K12, again
   `claim_turns` from asking. Offline (seeds 1–3, scripted writer through the same claim path): claims beyond the
   lines spoken 49/51/39 of 153/164/135 → 7/5/2 of 166/118/98. What is left is a line recast when someone joins or
   walks off. `evening.py`'s report has `writer.unspoken_calls`.
-- [ ] **L2 — Intentions every 60 s and at more events.**
+- [x] **L2 — Intentions every 60 s and at more events, with no cap.** `INTENTION_RULES` is `interval=60`,
+  `budget=None` (was 180 s and 4). A guest also takes stock when news is told to them or overheard (`news`), a
+  promise they made is kept or broken (`promise`) or one to them is (`kept_word`, `let_down`), their invitation is
+  answered (`invitation`, a new `invitation_answered` memory of the inviter's), an errand fails (`errand`), they
+  are refused (`rebuffed`), cured, tended or cut in line on (`cured`, `tended`, `line_cut`), get up after a knock
+  down (`got_up`), or a friend, or someone they dislike (`DISLIKED`), comes in or leaves (`tie_arrived`,
+  `tie_departed`, read from the room's log). The prefix lists the new prompts. Live (Jev + Haiku 5.5, seed 5, 605
+  game s): 113 intention calls against 33, $0.037 of an evening that cost $0.148 in all (turns $0.048 for 116
+  calls, 3 of them unspoken); no failed call.
 - [ ] **L3 — Stock lines for the moments that recur** (answers to invitations, the bar, goodbyes, greetings), in a
   phrasebook per character.
 - [ ] **L4 — A shorter line-writer context:** one `looks_short` per card, and "On your mind" without repeats.
