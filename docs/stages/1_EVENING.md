@@ -3872,9 +3872,9 @@ candidates out of `agents.py` first (a refactor commit), and K6 puts the `react`
   going three seconds on; witnesses hold `saw_fight`), `test_hostility.py`, `test_hostile_options.py` (a sober furious guest
   only shoves; a fight needs drink or hatred), `test_items.py`, `test_inventory.py`, `test_carries.py`,
   `test_scenario_cards.py` (a cudgel kind, Rurik's cudgel, three ties), and the two version pins.
-- *Still open:* `test_facts.py::test_a_news_item_reaches_a_third_guest_in_other_words[seed-0, seed-4]` fail: the data the
-  user asked for (Rurik's temper, the new ties) changed the seeded first evening, and no news item travels two hops in those
-  two seeds. A seed is not changed without the user's approval (the F3 precedent), so they are left failing and reported.
+- *A seeded test moved:* `test_facts.py::test_a_news_item_reaches_a_third_guest_in_other_words`: the data the user asked for
+  (Rurik's temper, the new ties) changed the seeded first evening, and in seeds 0 and 4 no news item travels two hops
+  (ten of twelve seeds do). With the user's approval (2026-10-10) the seeds became 1 and 2; the assertions did not change.
 - *Measured:* the formula over 500 seeds per case (`test_blows.py`): a strong sober guest beats a weak drunk one in
   100%; equals split 38/39 with 23% parted; a cudgel beats fists 89%; both fall in 3.7% of cudgel duels and 0.2% of fist
   fights. Offline, 20 evenings (seeds 0-19, scripted): **1** fight (seed 4: Calder beat Toren, who yielded; Edda tended
