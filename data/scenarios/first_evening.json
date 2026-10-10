@@ -14,7 +14,8 @@
   "guests": [
     {"id": "edda", "name": "Edda", "color": "#e8a86b", "sprite": "edda", "card": "edda", "arrives_at": 0,
      "carries": {"remedy": 3}},
-    {"id": "rurik", "name": "Rurik", "color": "#81b3c6", "sprite": "rurik", "card": "rurik", "arrives_at": 0},
+    {"id": "rurik", "name": "Rurik", "color": "#81b3c6", "sprite": "rurik", "card": "rurik", "arrives_at": 0,
+     "carries": {"cudgel": 1}},
     {"id": "toren", "name": "Toren", "color": "#b8aa76", "sprite": "toren", "card": "toren", "arrives_at": 0,
      "carries": {"keepsake": 2}},
     {"id": "brida", "name": "Brida", "color": "#b56f5c", "sprite": "cook", "card": "brida", "arrives_at": 40},
@@ -46,7 +47,9 @@
   "relationships": [
     {"a": "edda", "b": "brida", "kind": "old friends",
      "note": "Brida nursed Edda through a winter fever years ago; since then they trade remedies, recipes and gossip."},
-    {"a": "rurik", "b": "toren", "kind": "rivals",
-     "note": "Rurik has searched Toren's bales at the toll gate twice this season and found nothing; each thinks the other is laughing at him."}
+    {"a": "rurik", "b": "toren", "kind": "bad blood",
+     "note": "Rurik has searched Toren's bales at the toll gate twice this season and found nothing, and is now sure Toren runs them past the gate at night; Toren has told half the valley that Rurik takes coin to look the other way. Each has half guessed the other's secret."},
+    {"a": "calder", "b": "toren", "kind": "rivals",
+     "note": "Calder lost a month's pay to Toren at dice in Harrow Ford and swears the dice were weighted."}
   ]
 }

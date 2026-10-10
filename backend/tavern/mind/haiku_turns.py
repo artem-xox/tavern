@@ -98,6 +98,9 @@ def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequen
         if duty else "",
         f"Pressing now: {', '.join(pressing)}. The speaker should excuse themselves and leave the conversation."
         if pressing and not duty else "",
+        f"The speaker has just come to blows with {_names(scene, me.get('just_fought', []))}: they are still angry, and "
+        "the talk is sharp: insults, threats, a grudging word at most, no warmth."
+        if me.get("just_fought") else "",
         "The barkeep has just called closing time: the talk turns to goodbyes and heading home, so the speaker "
         "winds it down and may say goodbye."
         if closing_called and not duty else "",
@@ -113,6 +116,10 @@ def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequen
         "them, so the game can hold the speaker to it; promise it only if the speaker means to come."
         if "promise" in acts and me.get("aims_at") in {item["id"] for item in scene["participants"]} else "",
         _came_for(me.get("aim"), acts), _answering(answer)) if text)
+
+
+def _names(scene: Mapping[str, Any], ids: Sequence[str]) -> str:
+    return " and ".join(item["name"] for item in scene["participants"] if item["id"] in ids)
 
 
 def _answering(answer: str | None) -> str:
@@ -145,7 +152,8 @@ def _scene(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:
     barkeeps = {item["id"] for item in scene["participants"] if item.get("on_duty")}
     present = [f"- {people[item['id']]}{' (the barkeep)' if item['id'] in barkeeps else ''}: "
                f"{_FAMILIARITY[item['familiarity']]}; your opinion of "
-               f"them is {item['opinion']:+.0f} on -100 to 100" + ("; looks pale and feverish" if item.get("ailing") else "")
+               f"them is {item['opinion']:+.0f} on -100 to 100" + ("; looks pale and feverish" if item.get("ailing")
+                                                                 else "; looks battered and hurt" if item.get("hurt") else "")
                + (f"; on your mind: {'; '.join(item['thoughts'])}"
                                                                     if item["thoughts"] else "")
                for item in me["company"]]
@@ -180,7 +188,8 @@ def _self(me: Mapping[str, Any]) -> str:
         "none, so the speaker cannot use share_place"
     goal = me["card"]["goal"] if me["card"] else "to rest and pass a pleasant evening"
     mean = f"\nWhat you mean to do: {me['intention']}" if me.get("intention") else ""
-    unwell = "\nYou feel feverish and weak tonight." if me.get("ailing") else ""
+    unwell = ("\nYou feel feverish and weak tonight." if me.get("ailing")
+              else "\nYou are battered and hurt after a fight and want to mend." if me.get("hurt") else "")
     return (f"THE SPEAKER\n\nYou are {me['name']}.\nHow they feel: {me['feelings']}{unwell}\n"
             f"Drink: {speech_instruction(me['drunkenness']) or 'You are sober.'} "
             f"Beers tonight: {me['visit']['beers']}.\n"

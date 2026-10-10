@@ -34,8 +34,8 @@ def test_peaceful_requests_hold_no_confront_family(observation: dict[str, Any]) 
 
 @pytest.mark.parametrize("observation, expected", [
     pytest.param(view(QUARREL, opinion=-40.0), "shove:bea", id="a-sober-hothead-may-only-shove"),
-    pytest.param(view(QUARREL, opinion=-40.0, temper=1.0), ("confront", ["shove:bea", "start_fight:bea"]),
-                 id="a-furious-guest-may-also-fight"),
+    pytest.param(view(QUARREL, opinion=-50.0, temper=1.0), ("confront", ["shove:bea", "start_fight:bea"]),
+                 id="a-furious-guest-who-hates-her-may-also-fight"),
 ])
 def test_a_grudge_offers_the_hostile_acts_as_one_family(observation: dict[str, Any], expected: Any) -> None:
     assert expected in offered(observation)
@@ -90,7 +90,7 @@ def test_a_guest_beside_the_target_is_told_so() -> None:
 
 
 def test_the_briefing_offers_the_family_in_words() -> None:
-    observation = view(QUARREL, opinion=-40.0, temper=1.0)
+    observation = view(QUARREL, opinion=-50.0, temper=1.0)
     options = build_candidates(observation)
     family = next(option for option in options if option["id"] == "confront")
     text = family_text(observation, family)

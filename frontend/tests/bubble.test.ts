@@ -89,3 +89,9 @@ const newest: { id: string; chat: typeof own | null; called: typeof own | null; 
   { id: "nothing said", chat: null, called: null, said: null },
 ];
 for (const { id, chat, called, said } of newest) test(`newer: ${id}`, () => assert.deepEqual(newer(chat, called), said));
+
+test("callout: the barkeep's shout at a fight shows like his call at closing", () => {
+  const events = [{ time: 10, actor_id: "hob", type: "barkeep_shout", message: "m", line: "Not in my hall!" }];
+  assert.deepEqual(callout(events as never, "hob", 12), { speaker: "hob", line: "Not in my hall!", time: 10 });
+  assert.equal(callout(events as never, "hob", 30), null);
+});

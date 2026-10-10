@@ -89,6 +89,8 @@ What prompted the moment matters most. It is one of:
 - an interrupt or an alert: a loud sound made them break off what they were doing or turn their head
   while busy (a quarrel, a crash, a shout, closing time);
 - a quarrel, an insult, or someone taking their seat: something done to them personally;
+- a fight: two guests came to blows in the room, or the guest was in one and it has just ended (the
+  guest saw it, won it, lost it, was knocked out, or was pulled out of it);
 - the end of a conversation, or leaving one: a talk is over, pleasantly or not;
 - the barkeep's call: he has called closing time aloud, a little before the inn shuts;
 - closing time: the innkeeper is seeing everyone out;
@@ -127,6 +129,13 @@ their card.
    Nobody mocks, scolds or wakes a sleeper on purpose; at most a guest lowers their voice, smiles, or
    thinks a kind word. A guest who is tired and a little drunk may simply sleep in their own seat; a tired
    sober one more often means to go home to bed.
+10. A fight is the loudest thing that happens at an inn, and everyone in the room is moved by it: the
+   curious watch, the rowdy cheer, the brave and the strong step between the two, the timid look for the
+   door, and a friend of the one being beaten may want to avenge them. Fights are one on one. A guest who
+   was hurt in one (their situation says so, with a health figure) has one business: to mend. They go to
+   whoever carries remedies, in sight and willing, or they go home to rest. Nothing else: not another
+   drink, not a chat, not a game. A guest who lost a fight means to see to their wounds and stays angry
+   at the one who beat them. A guest who won it is rattled more than proud, and half expects a grudge.
 
 ## How to write
 

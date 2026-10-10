@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Any, Mapping, cast
 
 from tavern.body.ailment import check_saved_ailing
+from tavern.body.fights import check_saved_fights
+from tavern.body.wounds import check_saved_wounds
 from tavern.body.drunkenness import check_drunkenness
 from tavern.body.activities import ACTIVITIES
 from tavern.body.expression import check_saved_expression
@@ -105,6 +107,7 @@ def _validate_actor_runtime(world: Mapping[str, Any]) -> None:
         check_heard(actor, world["rules"])
         check_drunkenness(actor, world["rules"])
         check_saved_ailing(actor)
+        check_saved_wounds(actor)
         check_saved_expression(actor, world)
         _validate_character(actor)
         check_saved_intention(actor)
@@ -136,6 +139,7 @@ def _validate_departed(world: Mapping[str, Any]) -> None:
         check_heard(item, world["rules"])
         check_drunkenness(item, world["rules"])
         check_saved_ailing(item)
+        check_saved_wounds(item)
         check_saved_intention(item)
         if "left_at" not in item["visit"]:
             raise ValueError("Departed visitor has no departure time")
@@ -202,7 +206,7 @@ def parse_world(encoded: str) -> World:
     """
     try:
         world = json.loads(encoded)
-        if not isinstance(world, dict) or world.get("schema_version") != 18:
+        if not isinstance(world, dict) or world.get("schema_version") != 19:
             raise ValueError("Unsupported snapshot version")
         json.dumps(world, allow_nan=False)
         _validate_clock(world)
@@ -211,6 +215,7 @@ def parse_world(encoded: str) -> World:
         _validate_actor_runtime(world)
         check_saved_lines(world)
         _validate_departed(world)
+        check_saved_fights(world)
         check_saved_staff(world)
         check_saved_expected(world)
         check_saved_last_call(world)

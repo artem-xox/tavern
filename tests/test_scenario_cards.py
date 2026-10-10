@@ -124,4 +124,4 @@ def test_repository_scenario_casts_every_guest_from_a_preset() -> None:
     cards = parse_cards([json.loads(path.read_text()) for path in sorted((ROOT / "data" / "characters").glob("*.json"))])
     parsed = parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()), cards)
     assert all("card" in guest for guest in parsed.guests)
-    assert len(parsed.ties) == 2
+    assert len(parsed.ties) == 3  # Edda and Brida, Rurik and Toren (bad blood), Calder and Toren

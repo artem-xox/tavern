@@ -1,4 +1,4 @@
-"""Shoves and fights as the world runs them (until fight resolution): who may, what it costs, who hears."""
+"""Shoves and fights as the world runs them: who may, what it costs, who hears. (What a fight is: `test_fights.py`.)"""
 
 import asyncio
 from random import Random
@@ -28,12 +28,13 @@ def heard_by_cid(world: dict[str, Any]) -> list[str]:
             if event["actor_id"] == "cid" and event["type"] in ("interrupted", "alerted")]
 
 
-@pytest.mark.parametrize("verb, event, kind, opinion, mood, noun", [
-    pytest.param("shove", "shove", "shoved", -25.0, -8.0, "a scuffle", id="shove"),
-    pytest.param("start_fight", "fight_started", "attacked", -35.0, -10.0, "a brawl", id="start-fight"),
+# A shove is over in a second; a fight is still going three seconds on, with its fighters on the spot.
+@pytest.mark.parametrize("verb, event, kind, opinion, mood, noun, status", [
+    pytest.param("shove", "shove", "shoved", -25.0, -8.0, "a scuffle", "idle", id="shove"),
+    pytest.param("start_fight", "fight_started", "attacked", -35.0, -10.0, "a brawl", "interacting", id="start-fight"),
 ])
 def test_a_hostile_act_is_logged_costs_the_victim_and_is_heard(verb: str, event: str, kind: str, opinion: float,
-                                                               mood: float, noun: str) -> None:
+                                                               mood: float, noun: str, status: str) -> None:
     world = seated()
     assert start_action(world, "ada", command(verb, "bea")) == {"accepted": True, "reason": None}
     advance(world, 3)
@@ -42,16 +43,22 @@ def test_a_hostile_act_is_logged_costs_the_victim_and_is_heard(verb: str, event:
             [item["kind"] for item in bea["thoughts"] if item["about"] == "ada"],
             opinion_of(bea, "ada", world["time"]), thought_mood(bea, world["time"]),
             [item["status"] for item in world["actors"] if item["id"] == "ada"]) == (
-        [event], [kind], opinion, mood, ["idle"])
+        [event], [kind], opinion, mood, [status])
     assert any(noun in message for message in heard_by_cid(world))
 
 
-@pytest.mark.parametrize("verb", [pytest.param("shove", id="shove"), pytest.param("start_fight", id="start-fight")])
-def test_the_one_turned_on_is_the_only_one_who_minds(verb: str) -> None:
+# Only a fight is a spectacle: those who see one begin hold it against whoever started it (`social/bystanders.py`).
+@pytest.mark.parametrize("verb, onlookers", [
+    pytest.param("shove", [[], []], id="shove"),
+    pytest.param("start_fight", [["saw_fight"], ["saw_fight"]], id="start-fight"),
+])
+def test_the_one_turned_on_is_the_only_one_who_minds(verb: str, onlookers: list[list[str]]) -> None:
     world = seated()
     start_action(world, "ada", command(verb, "bea"))
     advance(world, 3)
-    assert [item["thoughts"] for item in world["actors"] if item["id"] in ("ada", "cid", "dan")] == [[], [], []]
+    assert [item["thoughts"] for item in world["actors"] if item["id"] == "ada"] == [[]]
+    assert [[thought["kind"] for thought in item["thoughts"]] for item in world["actors"]
+            if item["id"] in ("cid", "dan")] == onlookers
 
 
 @pytest.mark.parametrize("target, reason", [
@@ -96,6 +103,7 @@ def wronged(world: dict[str, Any], temper: float) -> None:
 def test_a_guest_with_a_grudge_who_is_inclined_to_it_picks_a_fight_in_the_world() -> None:
     world = seated()
     wronged(world, 1.0)
+    actor(world, "ada")["drunkenness"] = 0.5  # fights come by drink or by hatred
     decision = chooses(world, "confront", "start_fight")
     assert (decision["action"]["id"], decision["family"]["name"]) == ("start_fight:bea", "confront")
     assert start_action(world, "ada", decision["action"])["accepted"]

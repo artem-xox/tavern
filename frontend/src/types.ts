@@ -122,6 +122,11 @@ export interface Actor {
   drunkenness: number;
   /** Came in unwell, looking pale and feverish, until a remedy cures them. */
   ailing: boolean;
+  /** 0 to 100: below 70 they are hurt, and their only business is to mend. */
+  health: number;
+  /** The state of their body, and until when: down or out they lie on the floor, groggy they are on their feet again. */
+  condition: Condition;
+  condition_until: number | null;
   path: Cell[];
   knowledge: { objects: Record<string, Record<string, unknown>>; facts: Record<string, Fact> };
   memory: unknown[];
@@ -137,6 +142,30 @@ export interface Actor {
   interrupted_at: number | null;
   /** What the mind last made of the evening; null before the first one, and always offline. */
   intention: Intention | null;
+}
+
+/** One swing of a fight: when, who swung, whether it landed, and the health it took. */
+export interface Exchange {
+  time: number;
+  attacker: string;
+  hit: boolean;
+  damage: number;
+}
+
+/** A fight between two (`a` started it); `outcome` is null while it runs. Bystanders may wait a turn against one of them. */
+export interface Fight {
+  id: string;
+  a: string;
+  b: string;
+  weapons: Record<string, "fists" | "cudgel">;
+  started_at: number;
+  next_exchange_at: number;
+  exchanges: Exchange[];
+  waiting: { id: string; against: string }[];
+  witnessed: boolean;
+  outcome: "knockout" | "double_knockout" | "yielded" | "shouting" | "parted" | "separated" | null;
+  loser: string | null;
+  ended_at: number | null;
 }
 
 /** A line a visitor spoke or heard; `speaker` is what the visitor called the speaker at that moment. */
@@ -174,17 +203,20 @@ export interface CharacterCard {
   params: Record<string, number>;
   /** How strangers see the guest until they learn the name. */
   looks?: string;
+  /** Counts only in how much punishment a fighter takes. */
+  sex?: "female" | "male";
 }
 
 /** A starting relationship as one guest holds it. */
 export interface Tie {
   with: string;
   name: string;
-  kind: "old friends" | "rivals";
+  kind: "old friends" | "rivals" | "bad blood";
   note: string;
 }
 
 export type Facing = "north" | "south" | "east" | "west";
+export type Condition = "ok" | "staggered" | "down" | "out" | "groggy";
 export type Familiarity = "stranger" | "acquaintance" | "friend";
 
 /** A timed thought: its mood change, its opinion change toward `about`, and what caused it. */
@@ -371,6 +403,8 @@ export interface World {
   invitations: Errand[];
   /** Plans under way, at most one per guest. */
   projects: Project[];
+  /** Every fight of the evening, those over too. */
+  fights: Fight[];
   /** The evening's news as first written; visitors' copies are in their `knowledge.facts`. */
   news: News[];
 }

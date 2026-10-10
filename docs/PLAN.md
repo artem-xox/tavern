@@ -19,7 +19,7 @@ the evening and watches. See [Stage 1 tasks](stages/1_EVENING.md).
 
 **Status (2026-10-05):** M1–M3, the refactor R0–R8, D13 (Jev and Claude health markers), U1
 (no labels in the hall), E18b (conversation memory), E19 (facts and retelling), the dice game (G0–G5)
-the barkeep (B0–B6), giving (H0–H5) and E20 of M4 (hostile options) are done. Next: fights (K0–K12, which replace E21–E22).
+the barkeep (B0–B6), giving (H0–H5) and E20 of M4 (hostile options) and fights (K0–K12, which replace E21–E22; built 2026-10-10, live frequency unmeasured) are done.
 The guest's mind was reworked in parallel, by [MIND.md](MIND.md) steps 0–5: the intention reaches
 speech, a guest sets a typed goal the world checks, asks the mind far less often (live seed 7: 56
 intentions became 26–33, goals reached 7 of 30 became 10 of 17), may promise to come over, and the
@@ -33,7 +33,7 @@ there, two guests agree to move to a free table together, sitting down at a held
 Choice depth (C0-C8, 2026-10-09): the choice is lean (the fixtures Jev has no reason to weigh are left out), a guest can answer what
 was just done to them, a social option carries an aim the line writer reads, temperament shapes the draw, and a thirsty
 newcomer, a table's host and a loser at dice can each take on a plan of several steps.
-Saved worlds are version 18. Step 6 (memory between evenings) waits for Stage 4.
+Saved worlds are version 19. Step 6 (memory between evenings) waits for Stage 4.
 **Done when:** recorded live evenings meet the Stage 1 metrics, an observer can retell
 a story from at least one of them, and its chronicle cites only logged events.
 
@@ -87,3 +87,4 @@ next milestone before starting that milestone.
 | D24 | An invitee who chooses their own answer makes the evening quieter | live seeds 5, 7, 1, 2, 3 (2026-10-09), C7: accepted invitations 3.6 → 1.0 an evening, dice games about a quarter, with `AI_ANSWERS=true` | `AI_ANSWERS` is off. Raise the wish for company, give an invitation an inviter's pull, or ask for an answer only when a need presses or the inviter is disliked; then switch it on and rerun C8's table |
 | D25 | Every arrival takes the same three first steps | offline seeds 0-9 (2026-10-09), C5: pairs of guests with the same first three choices per evening 1.9 → 8.2, since `settle_in` covers ale, chair and drink for each thirsty newcomer | Let a guest's character shape the plan (a loner takes the corner, a drinker the bar), or offer `settle_in` to some arrivals only |
 | D26 | The `called` count of C2 is not logged, so how many wrongs go unanswered is counted by hand from the events | C2: `responses` in `metrics.json` has answers only | Log a `called` event when `think` makes a thought of a kind in `RESPONSES` about a guest in the hall |
+| D27 | Offline evenings hold too little hostile material to measure fights: 1 fight in 20 scripted evenings (target 4-7), six live evenings (seeds 5, 4, 1, 2, 3 and a hot one) had none, and not one insult | seeds 0-19 offline and six live (2026-10-10): 4 insults and 8 quarrels in 20 offline evenings, none live; the gates are not what holds fights back, the lack of a cause is (hot gates and no cause needed: 6 of 20 offline) | Let hatred or drink start a fight without a fresh cause, or have the writers insult those with bad blood (the user's call), then count over five live evenings (E28) |
