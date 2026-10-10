@@ -3861,7 +3861,7 @@ candidates out of `agents.py` first (a refactor commit), and K6 puts the `react`
   - `cheer` has no target, so no `cheered_on` thought; `back_away` was not built (a timid guest leaves or watches).
   - `Fight` gains `witnessed` and `cause` (`hatred`, `drink`, `grudge`) for the room's notes and the metrics.
   - The drink gate is **0.3**, not 0.45: in a ten-minute evening guests peak at 0.15-0.45 drunk (offline seeds 0-5), so 0.45
-    would never be met. The hatred line is -70, bad blood -60, and `table_intruded` is a cause. A fight with someone
+    would never be met. The hatred line is -70 and bad blood -60 (`table_intruded` stays no cause, as T6 decided). A fight with someone
     hated scores at least 0.4 locally (`fight_policy.hatred_scores`).
   - A blow is a quiet sound (0.3 loud, reach 40): it turns heads without breaking anything off, so the room does not stop
     and start twice a second. The *start* of a fight is the loud one (1.0, reach 40).
