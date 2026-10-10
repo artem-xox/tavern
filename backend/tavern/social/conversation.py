@@ -14,7 +14,7 @@ from tavern.hall.state import Actor, World
 from tavern.social import commitments, facts, invitations, social_acts
 from tavern.social.names import called
 from tavern.social.scenes import Conversation, end_conversation
-from tavern.social.thoughts import active_thoughts, opinion_of, think
+from tavern.social.thoughts import CHAT, active_thoughts, opinion_of, think
 
 # An act's effect receives the world, the scene, the speaker, and whom they addressed (None for everyone).
 ActEffect = Callable[[World, Conversation, Actor, Actor | None], None]
@@ -49,7 +49,7 @@ def _relieve(world: World, scene: Conversation, speaker: Actor,
     for member in _members(world, scene):
         member["needs"]["social"] = max(0.0, member["needs"]["social"] - world["rules"]["conversation"]["relief"])
         if member["id"] != speaker["id"]:
-            think(member, "chat", world["time"], f"Chatted with {called(member, speaker)} about {scene['topic']}",
+            think(member, "chat", world["time"], CHAT.format(who=called(member, speaker), topic=scene["topic"]),
                   message, about=speaker)
 
 

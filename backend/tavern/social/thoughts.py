@@ -3,6 +3,7 @@
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 import math
+import re
 from types import MappingProxyType
 from typing import Any, NotRequired, TypedDict
 
@@ -119,6 +120,38 @@ class Relation(TypedDict):
     opinion: float
     familiarity: str
     knows_name: NotRequired[bool]
+
+
+# The words of the thought a chat leaves behind, kept in one place so that `words_on_mind` can read it back.
+CHAT = "Chatted with {who} about {topic}"
+_CHAT = re.compile(r"Chatted with .+? about (.+)")
+
+
+def words_on_mind(thoughts: Sequence[Mapping[str, Any]], who: str) -> list[str]:
+    """Word the thoughts a guest holds about one person, for a line writer.
+
+    Args:
+        thoughts: The guest's active thoughts about that person, oldest first.
+        who: How the guest calls them now (`names.called`), which may be a name learnt since a thought was
+            had, when the thought's own words named them by their looks.
+
+    Returns:
+        Each thought's words, except that the chats (`CHAT`) are one line, at the place of the first, naming
+        who and each topic once. A chat in other words is left as it is.
+    """
+    def chat(item: Mapping[str, Any]) -> "re.Match[str] | None":
+        return _CHAT.fullmatch(item["text"]) if item["kind"] == "chat" else None
+    topics = list(dict.fromkeys(match.group(1) for item in thoughts if (match := chat(item))))
+    words: list[str] = []
+    chatted = False
+    for item in thoughts:
+        if not chat(item):
+            words.append(item["text"])
+        elif not chatted:
+            heard = f"{', '.join(topics[:-1])} and {topics[-1]}" if len(topics) > 1 else topics[0]
+            words.append(CHAT.format(who=who, topic=heard))
+            chatted = True
+    return words
 
 
 def think(actor: Actor, kind: str, now: float, text: str, source_event: str,

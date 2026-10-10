@@ -3998,7 +3998,16 @@ Added 2026-10-10 at the user's request: evenings cost $0.35–0.98 in K12, again
   which is data to edit by hand. Live (Jev + Haiku 5.5, seed 5, 569 game s): 83 turns, 15 of them stock (18%), 77
   calls for $0.033, 0 failed; the evening cost $0.143 against $0.148 in L2's run. At Haiku 5.5's prices the saving is
   a half cent an evening; the lines are instant and in the guest's own voice, which is the gain.
-- [ ] **L4 — A shorter line-writer context:** one `looks_short` per card, and "On your mind" without repeats.
+- [x] **L4 — A shorter line-writer context.** The chats a guest has had with one person were one thought, and one line
+  of the view, each: `thoughts.words_on_mind` makes them one ("Chatted with Cid about the road, ale and darts"),
+  naming the person as the guest calls them now (a name learnt since the thought was had replaces the looks), in the
+  writer's `company` and in a guest's intention view. A guest's `looks` in `data/characters` and `data/staff` are
+  the short form (three or four words, "the muddy rider", unique: `tests/test_looks_data.py`); no new field, since
+  `looks` is only ever what strangers are called. Not done, at the user's word: a third cached block for earlier
+  talk. Live (seed 5, Jev + Haiku 5.5, a different evening from L3's, so a rough comparison): fresh input per turn
+  call 2,472 → 2,010 tokens, per intention call 1,688 → 1,510; the evening cost $0.117 (74 turns, 11 of them stock,
+  0 failed, 0 fallbacks). At Haiku 5.5's prices that is hundredths of a cent a call: the gain is a prompt a model
+  reads more easily.
 
 ## Acceptance scenarios
 
