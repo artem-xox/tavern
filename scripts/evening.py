@@ -20,7 +20,7 @@ from tavern.evening.aim_metrics import aim_counts
 from tavern.evening.choice_metrics import choice_counts
 from tavern.evening.lockstep import Pace, evening_mode, run_evening
 from tavern.evening.metrics import (attention_counts, bar_metrics, conversation_counts, dice_metrics, evening_metrics,
-                                    intention_counts, news_metrics, sleep_metrics, writer_stats)
+                                    intention_counts, news_metrics, sleep_metrics, unspoken_calls, writer_stats)
 from tavern.evening.ailment_metrics import ailment_counts
 from tavern.evening.closing_metrics import closing_counts
 from tavern.evening.fight_metrics import fight_counts
@@ -348,7 +348,8 @@ def main(root: Path) -> None:
               "fights": fight_counts(world["fights"], evening.events, {item["id"]: item["name"]
                                                                        for item in [*world["actors"], *world["departed"]]}),
               "bar": bar_metrics(evening.events, [item["id"] for item in world["actors"] if on_staff(item)]),
-              "writer": writer_stats(evening, calls, "turn", HAIKU_5_5)}
+              "writer": {**writer_stats(evening, calls, "turn", HAIKU_5_5),
+                         "unspoken_calls": unspoken_calls(evening, calls, "turn")}}
     (args.out / "events.jsonl").write_text("".join(json.dumps(event, sort_keys=True) + "\n" for event in evening.events))
     (args.out / "metrics.json").write_text(json.dumps(rounded(report), indent=2) + "\n")
     print(json.dumps(rounded(report), indent=2))
