@@ -8,6 +8,7 @@ from typing import Any, TypedDict
 
 from tavern.evening.lockstep import Evening, Spell
 from tavern.evening.recording import KindCost, Record, Tariff, cost_by_kind
+from tavern.mind.phrasebook import Phrasebook, says_from
 from tavern.social.facts import inspected
 
 
@@ -287,19 +288,36 @@ def writer_stats(evening: Evening, calls: Sequence[Record], kind: str, tariff: T
             "usd_per_turn": usd / turns if turns else None}
 
 
-def unspoken_calls(evening: Evening, calls: Sequence[Record], kind: str) -> int:
+def stock_lines(evening: Evening, voices: Mapping[str, Phrasebook]) -> int:
+    """Count the lines guests spoke from their own phrasebooks, which cost no call.
+
+    Args:
+        evening: What the lockstep runner logged; `turn` events carry the speaker and the line.
+        voices: Each guest's stock lines by character ID (`phrasebook`).
+
+    Returns:
+        Turns whose line is one of the speaker's stock lines. A model line that happens to be word for word
+        a stock line counts too, which is rare enough not to matter.
+    """
+    return sum(event["type"] == "turn" and event["actor_id"] in voices
+               and says_from(voices[event["actor_id"]], event["message"].partition("): ")[2])
+               for event in evening.events)
+
+
+def unspoken_calls(evening: Evening, calls: Sequence[Record], kind: str, stocked: int = 0) -> int:
     """Count the writer's calls whose line no scene spoke: it ended, or its company changed, first.
 
     Args:
         evening: What the lockstep runner logged; `turn` events are the lines spoken.
         calls: The evening's model calls; only those of `kind` count.
         kind: Call kind of the writer, e.g. `turn`.
+        stocked: Lines spoken without a call, from phrasebooks (see `stock_lines`).
 
     Returns:
-        Calls beyond the lines spoken, never below 0: a scripted line spoken without a call (a late
-        answer, an unclaimed turn) hides a wasted call, so this is a floor.
+        Calls beyond the lines spoken that were asked for, never below 0: a scripted line spoken without a
+        call (a late answer, an unclaimed turn) hides a wasted call, so this is a floor.
     """
-    spoken = sum(event["type"] == "turn" for event in evening.events)
+    spoken = sum(event["type"] == "turn" for event in evening.events) - stocked
     return max(0, sum(record["kind"] == kind for record in calls) - spoken)
 
 

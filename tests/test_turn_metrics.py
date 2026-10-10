@@ -6,7 +6,7 @@ import pytest
 
 from tavern.adapters.claude import HAIKU_4_5
 from tavern.evening.lockstep import Evening
-from tavern.evening.metrics import evening_metrics, unspoken_calls, writer_stats
+from tavern.evening.metrics import evening_metrics, stock_lines, unspoken_calls, writer_stats
 from tavern.evening.recording import Record, Tariff, request_key
 
 USAGE = {"input_tokens": 500, "output_tokens": 40, "cache_read_input_tokens": 4500, "cache_creation_input_tokens": 0}
@@ -89,3 +89,28 @@ def test_evening_cost_prices_claude_kinds_by_their_tariff() -> None:
 def test_unspoken_calls_count_lines_asked_for_that_no_scene_spoke(night: Evening, calls: list[Record],
                                                                  expected: int) -> None:
     assert unspoken_calls(night, calls, "turn") == expected
+
+
+def spoke(*lines: tuple[str, str]) -> Evening:
+    """An evening log of turn events: (speaker ID, line) each."""
+    events = [{"time": 1.0, "actor_id": actor_id, "type": "turn", "message": f"{actor_id} to Bea (greet): {line}"}
+              for actor_id, line in lines]
+    return Evening(events, [], [], ["ada"], 10.0)
+
+
+VOICES = {"ada": {"greet": ["Well met, {name}."], "closing": ["Good night."]}}
+
+
+@pytest.mark.parametrize("night, expected", [
+    pytest.param(spoke(), 0, id="nothing-spoken"),
+    pytest.param(spoke(("ada", "Well met, Bea."), ("ada", "Good night.")), 2, id="stock-lines-of-the-guest"),
+    pytest.param(spoke(("ada", "Well met, Bea."), ("ada", "Dear, this ale.")), 1, id="a-line-the-model-wrote"),
+    pytest.param(spoke(("bea", "Well met, Ada.")), 0, id="a-guest-with-no-phrasebook"),
+    pytest.param(spoke(("bea", "Good night.")), 0, id="another-guests-line-is-not-theirs"),
+])
+def test_stock_lines_count_what_guests_said_from_their_phrasebooks(night: Evening, expected: int) -> None:
+    assert stock_lines(night, VOICES) == expected
+
+
+def test_lines_spoken_from_a_phrasebook_need_no_call() -> None:
+    assert unspoken_calls(evening(5), [turn_call(1.0) for _ in range(3)], "turn", stocked=2) == 0

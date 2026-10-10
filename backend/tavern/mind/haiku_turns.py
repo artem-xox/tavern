@@ -6,6 +6,7 @@ from typing import Any
 
 from tavern.body.ailment import urgent_needs
 from tavern.body.drunkenness import speech_instruction
+from tavern.mind.phrasebook import Phrasebook, stock_turn
 from tavern.mind.questions import Ask, Question
 from tavern.mind.scripted import BORED, CONTENT, MAX_LINE, PRESSING
 from tavern.mind.turn_prompt import shared_prefix, turn_schema
@@ -262,12 +263,14 @@ def parse_turn(view: Mapping[str, Any], answer: Any) -> TurnResult:
     return result
 
 
-def claude_writer(ask: Ask) -> TurnWriter:
+def claude_writer(ask: Ask, voices: Mapping[str, Phrasebook] | None = None) -> TurnWriter:
     """Make a turn writer (`turns.TurnWriter`) that asks Claude through a port.
 
     Args:
         ask: The Claude port, e.g. `claude.ask_claude` bound to its config, possibly recorded
             or replayed (`recording.record_questions`, `recording.replay_questions`).
+        voices: Each guest's stock lines by character ID (`phrasebook.stock_turn`): a moment they cover is
+            spoken at once in the guest's own words, and the port is not asked. None for no stock lines.
 
     Returns:
         A writer that asks one question per turn and returns the checked line. It ignores the
@@ -275,7 +278,8 @@ def claude_writer(ask: Ask) -> TurnWriter:
         error, after which the runner speaks a scripted line instead.
     """
     async def write(view: Mapping[str, Any], config: Mapping[str, Any]) -> TurnResult:
-        return parse_turn(view, await ask(turn_question(view)))
+        stock = stock_turn(view, (voices or {}).get(view["speaker"]["id"]))
+        return parse_turn(view, stock if stock is not None else await ask(turn_question(view)))
     return write
 
 

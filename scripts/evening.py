@@ -13,6 +13,7 @@ from dotenv import dotenv_values
 
 from tavern.adapters import jev
 from tavern.adapters.claude import HAIKU_5_5, ClaudeError, ask_claude
+from tavern.adapters.voices import load_voices
 from tavern.adapters.probes import probes
 from tavern.adapters.tracing import (Scorer, Tracer, open_tracer, traced_intender, traced_question, traced_scores,
                                      traced_writer)
@@ -20,7 +21,8 @@ from tavern.evening.aim_metrics import aim_counts
 from tavern.evening.choice_metrics import choice_counts
 from tavern.evening.lockstep import Pace, evening_mode, run_evening
 from tavern.evening.metrics import (attention_counts, bar_metrics, conversation_counts, dice_metrics, evening_metrics,
-                                    intention_counts, news_metrics, sleep_metrics, unspoken_calls, writer_stats)
+                                    intention_counts, news_metrics, sleep_metrics, stock_lines, unspoken_calls,
+                                    writer_stats)
 from tavern.evening.ailment_metrics import ailment_counts
 from tavern.evening.closing_metrics import closing_counts
 from tavern.evening.fight_metrics import fight_counts
@@ -38,6 +40,7 @@ from tavern.hall.staff import on_staff
 from tavern.mind.agents import Evaluators
 from tavern.mind.cards import parse_cards
 from tavern.mind.haiku_turns import claude_writer, writer_mode
+from tavern.mind.phrasebook import Phrasebook
 from tavern.mind.intentions import Intender, intention_writer
 from tavern.mind.model_health import HealthBoard, banner, blocking
 from tavern.mind.questions import Question
@@ -66,6 +69,8 @@ def arguments(root: Path) -> argparse.ArgumentParser:
                         help="character cards the scenario casts its guests from")
     parser.add_argument("--staff", type=Path, default=root / "data" / "staff",
                         help="cards the scenario casts its staff from")
+    parser.add_argument("--voices", type=Path, default=root / "data" / "voices",
+                        help="each guest's stock lines, spoken without asking Haiku")
     parser.add_argument("--mode", choices=("local", "live", "replay"),
                         help="default: live when TYPESAFE_API_KEY is in the env file, else local")
     parser.add_argument("--out", type=Path, default=root / "runs" / "evening-0")
@@ -155,7 +160,8 @@ def evaluators(mode: str, recording: Path | None, calls: list[Record], keep: Cal
 
 
 def turn_writer(writer: str, mode: str, calls: list[Record], keep: Callable[[Record], None],
-                values: Mapping[str, Any], tracer: Tracer | None) -> TurnWriter:
+                values: Mapping[str, Any], tracer: Tracer | None,
+                voices: Mapping[str, Phrasebook] | None = None) -> TurnWriter:
     """Wire the conversation line writer.
 
     Args:
@@ -165,22 +171,23 @@ def turn_writer(writer: str, mode: str, calls: list[Record], keep: Callable[[Rec
         keep: Receives each live Haiku call as soon as it ends, recorded as `turn`.
         values: Parsed env file with ANTHROPIC_API_KEY.
         tracer: Traces each live line to LangSmith, or None.
+        voices: Each guest's stock lines (`phrasebook`), spoken without a call; None for none.
     Returns:
         The writer port.
     """
     if writer == "scripted":
         return write_scripted_turn
     if mode == "replay":
-        return claude_writer(replay_questions("turn", calls, ClaudeError))
+        return claude_writer(replay_questions("turn", calls, ClaudeError), voices)
     # One SDK retry at most, so slow calls show in the latency measure rather than hide in retries.
     config = {"anthropic_api_key": values["ANTHROPIC_API_KEY"], "model": CLAUDE_MODEL, "timeout": 30.0, "retries": 1}
 
     async def ask(question: Question) -> Any:
         return await ask_claude(question, config)
     if tracer is None:
-        return claude_writer(record_questions("turn", ask, keep, time.monotonic, ClaudeError))
+        return claude_writer(record_questions("turn", ask, keep, time.monotonic, ClaudeError), voices)
     asked = record_questions("turn", traced_question(ask, CLAUDE_MODEL, tracer), keep, time.monotonic, ClaudeError)
-    return traced_writer(claude_writer(asked), tracer)
+    return traced_writer(claude_writer(asked, voices), tracer)
 
 
 def mind(mode: str, values: Mapping[str, Any], prefix: str, calls: list[Record],
@@ -304,7 +311,8 @@ def main(root: Path) -> None:
         writer, writer_note = writer_mode(args.writer, keyed)
     except ValueError as error:
         parser.error(str(error))
-    lines = turn_writer(writer, mode, calls, keep, values, tracer)
+    voices = load_voices(args.voices) if writer == "haiku" else {}
+    lines = turn_writer(writer, mode, calls, keep, values, tracer, voices)
     room = json.loads((root / "data" / "tavern.json").read_text())
     try:
         cards = parse_cards([json.loads(path.read_text()) for path in sorted(args.characters.glob("*.json"))])
@@ -349,7 +357,8 @@ def main(root: Path) -> None:
                                                                        for item in [*world["actors"], *world["departed"]]}),
               "bar": bar_metrics(evening.events, [item["id"] for item in world["actors"] if on_staff(item)]),
               "writer": {**writer_stats(evening, calls, "turn", HAIKU_5_5),
-                         "unspoken_calls": unspoken_calls(evening, calls, "turn")}}
+                         "stock_lines": stock_lines(evening, voices),
+                         "unspoken_calls": unspoken_calls(evening, calls, "turn", stock_lines(evening, voices))}}
     (args.out / "events.jsonl").write_text("".join(json.dumps(event, sort_keys=True) + "\n" for event in evening.events))
     (args.out / "metrics.json").write_text(json.dumps(rounded(report), indent=2) + "\n")
     print(json.dumps(rounded(report), indent=2))
