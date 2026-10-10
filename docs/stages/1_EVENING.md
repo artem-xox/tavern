@@ -3881,8 +3881,13 @@ candidates out of `agents.py` first (a refactor commit), and K6 puts the `react`
   100%; equals split 38/39 with 23% parted; a cudgel beats fists 89%; both fall in 3.7% of cudgel duels and 0.2% of fist
   fights. Offline, 20 evenings (seeds 0-19, scripted): **1** fight (seed 4: Calder beat Toren, who yielded; Edda tended
   someone) against a target of 4-7: the scripted writer insults too seldom (4 insults, 8 quarrels in 20 evenings), so
-  there is little hostile material. Live (Jev + Haiku, 0 failed calls in both): seed 5, 607 game s, about $0.35, and seed 4, 589 game s, about $0.42: no
-  insult, no fight in either.
+  there is little hostile material. Live (Jev + Haiku, 0 failed calls in all six): seeds 5 and 4 (about $0.35 and $0.42), and, after merging main, seeds 1, 2
+  and 3 ($0.57, $0.81, $0.74) and seed 4 again with the gates turned up (`opinion` -20, `recent` 240 s, urge 0.3/0.5, `drunk`
+  0.15, `hatred` -50, `hatred_urge` 0.3; $0.98): **no fight in any**, and no insult, quarrel or taken seat either, so
+  no hostile option was ever offered (no call to Jev mentions one). The gates are not the bottleneck: live guests give
+  each other no cause. Offline with the same hot gates and **no fresh cause required** (a one-off patch of
+  `hostility._caused`, not committed): 6 fights in 20 evenings (seeds 2, 3, 4, 5, 9, 11; seed 9 three in a row), two by drink and
+  four by hatred, yielded or knocked out, watched by one to four guests, with cheering, helping up and a remedy given.
   Forced in a real browser: Rurik (cudgel) and Toren, then Rurik and Edda; both showed the stance and anger, Toren yielded
   at 16 health and went home, Edda lay knocked out on the floor. How often live guests really come to blows is E28's to
   count; the levers are `HOSTILITY.drunk`, `.hatred`, `.hatred_urge` and the bad-blood opinion.
