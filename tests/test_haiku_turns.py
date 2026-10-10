@@ -326,3 +326,15 @@ def test_a_speaker_who_means_to_join_someone_is_nudged_to_promise_it(goal: Any, 
     world = sat_apart_world(goal)
     content = turn_question(turn_view(world, conversation_of(world, "ada")))["content"]
     assert ("promise act" in content.split("THE MOMENT")[-1]) is nudged
+
+
+@pytest.mark.parametrize("ailing, nudges", [
+    pytest.param(True, [], id="a-feverish-speaker-is-not-pressed-to-leave"),
+    pytest.param(False, ["Pressing now"], id="a-tired-one-is"),
+])
+def test_only_a_real_need_nudges_the_speaker_away(ailing: bool, nudges: list[str]) -> None:
+    world = scene_world()
+    people(world)["ada"].update(ailing=ailing)
+    people(world)["ada"]["needs"]["fatigue"] = 86.0
+    content = turn_question(view_of(world))["content"]
+    assert [text for text in NUDGES if text in content] == nudges

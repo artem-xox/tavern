@@ -11,6 +11,7 @@ from collections.abc import Collection, Mapping
 import math
 from typing import TYPE_CHECKING, Any, NotRequired, TypedDict
 
+from tavern.body.ailment import urgent_needs
 from tavern.hall.closing import inn_closed
 from tavern.hall.memory import record_event
 from tavern.hall.room import find_object
@@ -134,11 +135,11 @@ def pressed(world: Mapping[str, Any], actor: Mapping[str, Any]) -> bool:
         actor: Visitor.
 
     Returns:
-        True when their thirst, tiredness or bladder has reached that level: they decline to
-        talk, and others can see they are in a hurry.
+        True when one of their urgent needs (`ailment.urgent_needs`: thirst, tiredness or bladder, but not an
+        unwell guest's tiredness) has reached that level: they decline to talk, and others can see they are in a hurry.
     """
     limit = world["rules"]["conversation"]["pressing"]
-    return max(actor["needs"][need] for need in ("thirst", "fatigue", "bladder")) >= limit
+    return max(actor["needs"][need] for need in urgent_needs(actor["ailing"])) >= limit
 
 
 def _lines(world: Mapping[str, Any]) -> dict[str, tuple[str, int]]:

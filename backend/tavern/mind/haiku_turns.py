@@ -4,6 +4,7 @@ from collections.abc import Mapping, Sequence
 import re
 from typing import Any
 
+from tavern.body.ailment import urgent_needs
 from tavern.body.drunkenness import speech_instruction
 from tavern.mind.questions import Ask, Question
 from tavern.mind.scripted import BORED, CONTENT, MAX_LINE, PRESSING
@@ -79,7 +80,8 @@ def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequen
     # presses or company is enough; left to itself, the model rarely leaves or shares places.
     # A barkeep's needs read as all at 0, which would send him off for company enough: his nudge says he stays.
     duty = me.get("on_duty")
-    pressing = [f"{label} {me['needs'][key]:.0f}" for key, label in _NEEDS[:3] if me["needs"][key] >= PRESSING]
+    urgent = urgent_needs(me.get("ailing", False))
+    pressing = [f"{label} {me['needs'][key]:.0f}" for key, label in _NEEDS if key in urgent and me["needs"][key] >= PRESSING]
     shared = any(turn["speaker"] == me["id"] and turn["act"] == "share_place" for turn in scene["turns"])
     told = any(turn["speaker"] == me["id"] and turn["act"] == "share_news" for turn in scene["turns"])
     return " ".join(text for text in (
