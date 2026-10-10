@@ -1,0 +1,74 @@
+{
+  "card_hash": "80302d60c04d",
+  "lines": {
+    "greet": [
+      "Ah, {name}, a listening ear at last! Sit, sit, and I shall give you a tale worth the price of your supper.",
+      "Well, well, {name}. Another soul in the firelight, and not a moment too soon.",
+      "Good evening, {name}. Mind the bench, it has a memory for the unwary.",
+      "Hark, {name}! The night is young and the ale is old, and both improve with company.",
+      "Greetings, {name}. The fire is warm and my throat is drier than a widow's wit.",
+      "Ah, {name}. You arrive as the third act begins, which is either fortune or a cruel jest of the gods.",
+      "Good eve, {name}! Shall I be your entertainment, or will you be mine? Both, I hope.",
+      "Oh, {name}, a face that does not turn away. You have made my whole evening, you have."
+    ],
+    "accept": [
+      "Gladly! Lead on, and I shall spin the rest of the way as we go.",
+      "Oh, I am quite willing. Let us see what the evening grants us.",
+      "Yes, yes, I would be delighted. Do not keep me waiting, I beg you.",
+      "Aye, I am with you. A pleasant prospect after so long alone with my own voice.",
+      "Certainly. You have chosen wisely, and I shall tell you so twice before the night is out.",
+      "Done, then! I was hoping someone would ask before I had to ask myself.",
+      "Of course. Fortune favours the bold, and so, I suppose, do I.",
+      "Yes. Show me the way, and I shall fill the silence with something worth hearing.",
+      "Willingly. You have the courtesy of a patron, and I prize it above coin.",
+      "Yes indeed! Lead on, and mind you do not interrupt the good parts."
+    ],
+    "decline": [
+      "No, thank you, {name}. My evening is spoken for by my own tongue.",
+      "I think not, {name}. Some offers are too small for a lady of my stature.",
+      "Alas, {name}, I must refuse. I have a grudge to nurse until morning.",
+      "No. You may ask again when you have something better to offer me.",
+      "Not tonight, {name}. I am in a sulk and sulks are very demanding companions.",
+      "I shall pass, {name}. Do not take it to heart; it is the wind speaking, not I.",
+      "Thank you, but no. The ballads have been calling me, and I must answer them.",
+      "No, {name}. I have set my heart on quiet, and I shall have it.",
+      "Regretfully not. You have a kind face, but I am already promised to the fire.",
+      "I decline, {name}. I am, as they say, out of humour and out of patience."
+    ],
+    "pressed": [
+      "Excuse me a moment, I must attend to something that will not wait.",
+      "Forgive me, I shall return before you have finished frowning.",
+      "Hold my place, I am called away by a matter of some urgency.",
+      "I must step away briefly. Do not let the story die while I am gone.",
+      "Pardon me. Duty, of a most humble and inconvenient kind, calls me away.",
+      "Wait for me, I shall not be long. The night keeps its secrets for a while.",
+      "Excuse me, I am needed elsewhere for a short while, and I hate being needed.",
+      "Be patient, I return presently, with my dignity mostly intact.",
+      "Keep the seat warm; I must go and fetch what is owed to me."
+    ],
+    "content": [
+      "I have said my say for now, and the rest may be saved for another night.",
+      "Enough for one evening. I shall leave you with the best of it unsaid.",
+      "That will do. Good company, but even a storyteller must rest her tongue.",
+      "I have had my fill of talk. Farewell for the present, {name}.",
+      "There, I have given you enough. Go and mull it over with your ale.",
+      "The tale is told as far as it goes tonight. I shall take my leave gracefully.",
+      "My voice is weary and my audience is, I trust, satisfied. Good night to you.",
+      "I have played my part for this hour. I withdraw to the wings.",
+      "Enough, enough. Even the finest tale grows stale when chewed too long.",
+      "I shall go now, {name}, before I say something I shall have to rehearse again."
+    ],
+    "closing": [
+      "The bell has rung, and so must I. Good night, all of you, and sleep well.",
+      "Last call, is it? Then farewell to the fire and the ale and the faces.",
+      "Night falls and so does the curtain. Good night, friends, until the road calls again.",
+      "Closing time, and the tale must end with it. Good night to the lot of you.",
+      "The barkeep has spoken, and who am I to argue with a man holding a lamp? Good night.",
+      "All good things end at the bell, so I bid you good night and fair dreams.",
+      "Well, that is the last of the evening. Good night, and mind the stairs.",
+      "The fire is dying and so is my voice. Good night, one and all.",
+      "Time to take the road to bed. Good night, and keep your buttons close.",
+      "Farewell for tonight. May your dreams be kinder than my ballads were."
+    ]
+  }
+}

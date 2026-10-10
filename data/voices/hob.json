@@ -1,0 +1,74 @@
+{
+  "card_hash": "2ab82cb9e044",
+  "lines": {
+    "greet": [
+      "Ah, {name}. Sit down, the fire's warm.",
+      "Well, {name}. Road treat you kindly?",
+      "{name}. Good to see a face I know.",
+      "Come in out of that, {name}. Nothing's on fire yet.",
+      "{name}, you're looking like a man who's walked too far.",
+      "Hello, {name}. What'll it be tonight?",
+      "There you are, {name}. Pull up a stool.",
+      "Evening, friend. Shout if you want anything.",
+      "Hob's the name, and the ale's the same. What about you, {name}?"
+    ],
+    "accept": [
+      "Aye, I'll have that, {name}. Thank you kindly.",
+      "Go on then, {name}. I've time for that.",
+      "Yes, {name}, I'll take you up on it.",
+      "That's fair of you, {name}. I'll not say no.",
+      "Done, {name}. Lead on.",
+      "Ah, go on, {name}. Why not.",
+      "Aye, {name}. Don't say I never did you a turn.",
+      "Right you are, {name}. Count me in.",
+      "Very well, {name}, I'm not one to refuse a kindness.",
+      "Yes, {name}, and gladly. Be quick about it."
+    ],
+    "decline": [
+      "Not tonight, {name}. Thanks all the same.",
+      "No, {name}, I'll stay where I'm standing.",
+      "I'll pass, {name}. Ask me another time.",
+      "Kind of you, {name}, but no.",
+      "Not for me, {name}. Try the carter by the door.",
+      "No, {name}. Keep your offer for someone with idle hands.",
+      "Ah, {name}, you know I never do that.",
+      "Thanks, {name}, but my mind's on the room."
+    ],
+    "pressed": [
+      "Hold that thought, I'll be back directly.",
+      "Give me a moment, I've got to see to something.",
+      "Excuse me a minute, the matter won't wait.",
+      "Mind the bar a moment for me, would you?",
+      "I'll be back, don't go anywhere.",
+      "A short while, then I'm yours again.",
+      "Pardon me, I've something to see to.",
+      "Keep your seat, I'm stepping out a minute.",
+      "Back in a bit. Mind the mugs.",
+      "Won't be long. Hold your tongue till I'm back."
+    ],
+    "content": [
+      "That's the last of my talk for now, friend. Go easy.",
+      "I've said my piece and I'll leave it there.",
+      "Enough chatter for one night. I'll see you later.",
+      "Right, I've had my fill of company. Take care.",
+      "I'll be about the room if you need me.",
+      "That'll do for now. Mind how you go.",
+      "I'm done talking for the moment. Sleep well.",
+      "Time I got on with things. Good talk, though.",
+      "I've heard enough and said enough. Off I go.",
+      "That's me finished, {name}. Keep the fire in."
+    ],
+    "closing": [
+      "Last call's given. Drink up and mind the step.",
+      "That's the bell. Off you go, home to bed.",
+      "Lamps are down. Good night to the lot of you.",
+      "Closing time, friends. Finish up and go easy.",
+      "Shutters are coming down. Good night, all.",
+      "That's the lot. Out you go, and safe road.",
+      "We're shut now. Goodnight, and no more ale.",
+      "Bar's closed. Mind the lantern on your way out.",
+      "Everyone up and out. The Last Inn's done for the night.",
+      "Goodnight. Go careful on the pass in the dark."
+    ]
+  }
+}

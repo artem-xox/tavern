@@ -17,6 +17,7 @@ from tavern.adapters.probes import probes
 from tavern.adapters.tracing import (Scorer, Tracer, open_tracer, traced_intender, traced_question, traced_scores,
                                      traced_writer)
 from tavern.mind.agents import Evaluator, EvaluatorError, Evaluators, choose_action, choose_answer
+from tavern.adapters.voices import load_voices
 from tavern.mind.haiku_turns import claude_writer
 from tavern.mind.intentions import intention_writer
 from tavern.mind.selection import read_switch
@@ -60,7 +61,7 @@ def create_default_app() -> FastAPI:
     lines: dict[str, Any] = {}
     intender = None
     if ask is not None:
-        writer, intender = claude_writer(ask), intention_writer(
+        writer, intender = claude_writer(ask, load_voices(root / "data" / "voices")), intention_writer(
             (root / "data" / "minds" / "intention_prefix.md").read_text(), ask)
         if tracer is not None:
             writer, intender = traced_writer(writer, tracer), traced_intender(intender, tracer)

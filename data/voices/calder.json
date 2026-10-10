@@ -1,0 +1,75 @@
+{
+  "card_hash": "ab9cc7dc268c",
+  "lines": {
+    "greet": [
+      "Quick word, {name}. I haven't got the time for a long one.",
+      "Ho, {name}. Make it snappy, I'm off within the hour.",
+      "Evening. Don't keep me, I've a letter to get over the pass.",
+      "{name}! You still here? Good, I'll not be long.",
+      "Right then, {name}, what is it? Out with it, I'm listening.",
+      "Friend. Quick now, my horse is already saddled.",
+      "{name}, you're in my way, but go on, say your piece.",
+      "Look sharp, {name}. The road doesn't wait for anyone.",
+      "Hail, {name}. Fast company is the only company I keep.",
+      "Well, {name}. Say it fast, I'm already halfway to the door."
+    ],
+    "accept": [
+      "Done. Be quick about it, I've no patience for dawdling.",
+      "Aye, all right, {name}, and don't you dare slow me down.",
+      "Yes, yes, I'm in. Let's not waste the whole night on it.",
+      "Right you are, {name}. I'll give you until the next bell.",
+      "Agreed. Keep up, mind, I don't stop for stragglers.",
+      "All right, {name}, you've got me. Get on with it then.",
+      "Fine by me, {name}. Sooner started, sooner finished.",
+      "Aye. Hurry, the candle's burning down and so am I.",
+      "Yes. Go on then, {name}, before I think better of it.",
+      "Count me in, {name}, and mind you don't keep me long."
+    ],
+    "decline": [
+      "No, {name}, I've not the time, I'm riding at first light.",
+      "Can't, {name}. Letters don't deliver themselves.",
+      "No. Find someone with the patience for it, {name}.",
+      "Thanks, {name}, but no. I've had my fill of waiting for one day.",
+      "Not a chance, {name}. I'm on the margrave's business.",
+      "Sorry, {name}, I'd rather be on the road than stuck here.",
+      "No, {name}, and don't press me, I've heard enough arguments.",
+      "Pass, {name}. My hands are needed elsewhere, and so are my horses.",
+      "Not now, {name}. Another time, when the roads are quieter."
+    ],
+    "pressed": [
+      "Hold on, I must go out a moment. Don't go anywhere.",
+      "Back in a breath. Mind my letters, I'll be right back.",
+      "Excuse me, I've got to step out. Won't be long.",
+      "Wait here, I must go out. Be back before you've finished.",
+      "Off for a moment. Keep your eye on my gear, {name}.",
+      "Sorry, {name}, I must go. Back in a tick, I swear it.",
+      "Give me a moment, I need to step outside. Quick as I can.",
+      "Hold that thought, {name}. I'll not be a minute.",
+      "Must go, must go. Back shortly, don't start without me."
+    ],
+    "content": [
+      "Right, I've had my say and then some. Off I go, {name}.",
+      "That's enough talk for one night. Good evening to you, {name}.",
+      "I've listened long enough and talked longer. Time I was moving.",
+      "Well, {name}, that's me done for now. Take care of yourself.",
+      "I'll leave you to it, {name}. The road's calling and I answer.",
+      "Enough company for me tonight. Safe travels, {name}.",
+      "That's my piece said. I'm away, {name}, mind how you go.",
+      "I've kept you long enough, {name}. Good night, then.",
+      "Time for me to go, {name}. Some of us have work to do.",
+      "I'm off to the stables, {name}. Be well, and keep your hands warm."
+    ],
+    "closing": [
+      "Bell's rung, so I'm off. Good night to you all.",
+      "Closing time, is it? Good night, then, and don't wait up for me.",
+      "That's the bell. Good night, all, I'm for the road.",
+      "Done for the night. Good night, and mind the cold on the pass.",
+      "Last call, and I'm gone. Good night to the lot of you.",
+      "Time's up, so I'm away. Good night, and sleep sound.",
+      "Right, the lamp's going out. Good night, all, and quick about it.",
+      "Bell's gone, I'm off. Good night, I've a horse waiting.",
+      "Shut up shop, is it? Good night, then, I'm riding at dawn.",
+      "Out with the lamps. Good night to you, I'm away."
+    ]
+  }
+}
