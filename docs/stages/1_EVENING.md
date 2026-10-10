@@ -3879,7 +3879,8 @@ candidates out of `agents.py` first (a refactor commit), and K6 puts the `react`
   100%; equals split 38/39 with 23% parted; a cudgel beats fists 89%; both fall in 3.7% of cudgel duels and 0.2% of fist
   fights. Offline, 20 evenings (seeds 0-19, scripted): **1** fight (seed 4: Calder beat Toren, who yielded; Edda tended
   someone) against a target of 4-7: the scripted writer insults too seldom (4 insults, 8 quarrels in 20 evenings), so
-  there is little hostile material. Live, seed 5 (Jev + Haiku, 607 game s, 0 failed calls, about $0.35): no fight.
+  there is little hostile material. Live (Jev + Haiku, 0 failed calls in both): seed 5, 607 game s, about $0.35, and seed 4, 589 game s, about $0.42: no
+  insult, no fight in either.
   Forced in a real browser: Rurik (cudgel) and Toren, then Rurik and Edda; both showed the stance and anger, Toren yielded
   at 16 health and went home, Edda lay knocked out on the floor. How often live guests really come to blows is E28's to
   count; the levers are `HOSTILITY.drunk`, `.hatred`, `.hatred_urge` and the bad-blood opinion.
