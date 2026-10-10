@@ -7,11 +7,11 @@ export interface SpriteSheet {
   size: number;
   /** Vertical offset that rests the figure's feet on its cell. */
   lift: number;
-  /** Poses shipped in all four directions; any other pose is drawn as Idle. */
+  /** Poses shipped in all eight directions; any other pose is drawn as Idle. */
   poses: readonly string[];
 }
 
-const DIRECTIONS: readonly string[] = ["north", "south", "east", "west"];
+const DIRECTIONS: readonly string[] = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"];
 const ALL_POSES: readonly string[] = ["Idle", "Seated", "Darts", "Bathroom", "Drinking", "DrinkingSeated", "TalkingSeated", "TakeBeer", "Walking", "Talking", "Giving", "GivingSeated", "Receiving", "ReceivingSeated", "SleepingSeated"];
 const FIGHT_POSES: readonly string[] = ["Fighting", "KnockedOut", "Hurt", "HurtSeated", "Shoving", "HelpingUp"];
 const GUEST_POSES: readonly string[] = [...ALL_POSES, ...FIGHT_POSES];

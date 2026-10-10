@@ -73,7 +73,7 @@ export class TavernScene extends Phaser.Scene {
     super("tavern");
   }
 
-  /** Load four cardinal stills for every shipped pose of every character sprite. */
+  /** Load all eight directional stills for every shipped pose of every character sprite. */
   preload(): void {
     for (const still of stills()) this.load.image(still.key, still.url);
   }

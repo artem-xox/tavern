@@ -10,7 +10,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 SCENARIO = ROOT / "data" / "scenarios" / "first_evening.json"
 STATES = ("Idle", "Seated", "Darts", "Bathroom", "Drinking", "DrinkingSeated", "TalkingSeated", "TakeBeer", "Walking", "Talking")
-DIRECTIONS = ("north", "south", "east", "west")
+DIRECTIONS = ("north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west")
 
 
 @pytest.mark.parametrize(

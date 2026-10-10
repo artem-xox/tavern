@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CHARACTERS = ("edda", "rurik", "toren", "cook", "courier", "visitor", "bartender")
-DIRECTIONS = ("north", "south", "east", "west")
+DIRECTIONS = ("north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west")
 FIGHT_POSES = ("Fighting", "KnockedOut", "Hurt", "HurtSeated", "Shoving", "HelpingUp")
 
 
@@ -46,7 +46,7 @@ def test_giving_and_receiving_stills_ship_for_every_character() -> None:
 
 
 def test_sleeping_stills_ship_for_every_character() -> None:
-    """Check the nap at the table, seated and asleep, ships in four views for every character folder."""
+    """Check the nap at the table, seated and asleep, ships in eight views for every character folder."""
     subprocess.run(["npm", "--prefix", "frontend", "run", "build"], cwd=ROOT, check=True, capture_output=True)
     exported = ROOT / "frontend" / "dist" / "characters"
     for character in CHARACTERS:
@@ -56,7 +56,7 @@ def test_sleeping_stills_ship_for_every_character() -> None:
 
 
 def test_fight_stills_ship_for_every_guest() -> None:
-    """Check every guest has the six combat and recovery poses in four views."""
+    """Check every guest has the six combat and recovery poses in eight views."""
     subprocess.run(["npm", "--prefix", "frontend", "run", "build"], cwd=ROOT, check=True, capture_output=True)
     exported = ROOT / "frontend" / "dist" / "characters"
     for character in ("edda", "rurik", "toren", "cook", "courier", "visitor"):
