@@ -175,3 +175,20 @@ def test_the_lonelier_walk_over_more_readily() -> None:
 
 def test_nobody_walks_over_to_someone_they_dislike() -> None:
     assert lonely(90, opinion=-50) < lonely(90)
+
+
+def feverish_cid(world: dict[str, Any]) -> None:
+    """Cid came in unwell: the fever leaves him as tired as a guest ready for bed."""
+    cid = actor(world, "cid")
+    cid["ailing"], cid["needs"]["fatigue"] = True, 80.0
+
+
+@pytest.mark.parametrize("prepare, offered", [
+    pytest.param(feverish_cid, ["approach:cid"], id="a-feverish-guest-has-nothing-pressing"),
+    pytest.param(pressed_cid, [], id="a-guest-who-needs-the-wc-has"),
+])
+def test_only_a_real_need_keeps_a_guest_from_being_walked_over_to(
+        prepare: Callable[[dict[str, Any]], None], offered: list[str]) -> None:
+    world = evening({"ada": "w", "cid": "fw"})
+    prepare(world)
+    assert (approaches(sees(world)), approach(world)["accepted"]) == (offered, bool(offered))

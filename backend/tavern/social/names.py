@@ -1,6 +1,7 @@
 """What guests call each other: a name once it is known, otherwise how the other looks."""
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+import re
 from typing import Any
 
 
@@ -45,3 +46,22 @@ def called(viewer: Mapping[str, Any], other: Mapping[str, Any]) -> str:
     """
     appearance = looks(other)
     return other["name"] if appearance is None or knows_name(viewer, other) else appearance
+
+
+def as_known(viewer: Mapping[str, Any], people: Sequence[Mapping[str, Any]], text: str) -> str:
+    """Rewrite a message so that everyone in it is named the way a guest would name them.
+
+    Args:
+        viewer: Visitor reading the message, with `relations`.
+        people: Everyone who may be named in it, with `id`, `name` and maybe a `card`.
+        text: A message that names people by their names, as the event log does.
+
+    Returns:
+        The text with each whole-word mention of someone else's name replaced by `called`; the viewer's own
+        name stays. One pass, so a replacement is never rewritten again.
+    """
+    labels = {other["name"]: called(viewer, other) for other in people if other["id"] != viewer["id"]}
+    if not labels:
+        return text
+    pattern = re.compile(r"\b(" + "|".join(re.escape(name) for name in labels) + r")\b")
+    return pattern.sub(lambda match: labels[match.group(1)], text)

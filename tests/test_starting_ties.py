@@ -52,5 +52,5 @@ def test_first_evening_opens_with_its_old_friends_and_rivals() -> None:
     scenario = parse_scenario(data, cards)
     world = open_evening(json.loads((ROOT / "data" / "tavern.json").read_text()), scenario, seed=1)
     guests = {item["id"]: item for item in [*world["actors"], *world["expected"]]}
-    assert familiarity_of(guests["ivo"], "nell") == "acquaintance"
-    assert opinion_of(guests["ivo"], "nell", now=0.0) < 0
+    assert familiarity_of(guests["rurik"], "toren") == "acquaintance"
+    assert opinion_of(guests["rurik"], "toren", now=0.0) < 0

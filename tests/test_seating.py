@@ -355,7 +355,7 @@ def test_jev_reads_a_briefing_instead_of_raw_maps() -> None:
         return {action["id"]: 0.5 for action in candidates}
 
     layout = json.loads((Path(__file__).parents[1] / "data" / "tavern.json").read_text())
-    observation = observe_actor(create_world(layout), "mara")
+    observation = observe_actor(create_world(layout), "edda")
     asyncio.run(choose_action(observation, config(typesafe_api_key="test"), Random(0),
                               Evaluators(actions, no_seat_judgement)))
     assert set(sent[0]) == {"situation", "options", "self"}

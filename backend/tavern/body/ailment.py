@@ -72,6 +72,19 @@ def draw_ailing(guests: Sequence[Mapping[str, Any]], rng: Random) -> str:
     return str(rng.choice(choices)["id"])
 
 
+def urgent_needs(ailing: bool) -> tuple[str, ...]:
+    """Name the needs that can press a guest to drop company and see to them.
+
+    Args:
+        ailing: Whether the guest came in unwell.
+
+    Returns:
+        Thirst, tiredness and bladder; for an unwell guest only thirst and bladder, since a fever's
+        weakness is nothing a trip anywhere would fix: they sit it out, and welcome company and a remedy.
+    """
+    return ("thirst", "bladder") if ailing else ("thirst", "fatigue", "bladder")
+
+
 def relieve(receiver: Actor) -> None:
     """Cure an unwell guest who took a remedy.
 

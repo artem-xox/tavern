@@ -14,7 +14,7 @@ def record_event(world: World, actor: Actor, kind: str, message: str) -> None:
 
     Args:
         world: World whose event log keeps the latest 200 events.
-        actor: Visitor who keeps the latest 25 memories.
+        actor: Visitor who keeps the latest 100 memories: about one evening of what they did and what befell them.
         kind: Event type.
         message: Human-readable description.
     """
@@ -24,7 +24,7 @@ def record_event(world: World, actor: Actor, kind: str, message: str) -> None:
     sound_event(world, actor, event)
     emote_event(world, actor, kind)
     del world["events"][:-200]
-    del actor["memory"][:-25]
+    del actor["memory"][:-100]
 
 
 def log_event(world: World, actor_id: str | None, kind: str, message: str) -> None:

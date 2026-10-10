@@ -313,3 +313,22 @@ def test_jev_is_told_what_is_being_given_and_to_whom() -> None:
 def test_jev_will_not_judge_a_gift_with_nothing_sensible_to_give(item: Any) -> None:
     with pytest.raises(ValueError, match="cannot describe the item"):
         asked_about(give(item))
+
+
+def resting_beside_bea() -> dict[str, Any]:
+    """Bea sits in her seat at the near table; Ada, carrying a remedy, rests on the other chair there."""
+    world = create_world(hall(), 4)
+    assert start_action(world, "bea", command("sit", "e"))["accepted"]
+    assert start_action(world, "ada", command("rest", "w"))["accepted"]
+    advance(world, 1)
+    hold(world, "ada", remedy=1)
+    return world
+
+
+@pytest.mark.parametrize("action", [
+    pytest.param(give("remedy"), id="hand-over-a-remedy"),
+    pytest.param(command("talk", "bea"), id="start-a-chat"),
+])
+def test_a_guest_resting_on_a_chair_reaches_those_seated_at_its_table(action: dict[str, Any]) -> None:
+    world = resting_beside_bea()
+    assert (actor(world, "ada")["seat_id"], start_action(world, "ada", action)) == (None, {"accepted": True, "reason": None})

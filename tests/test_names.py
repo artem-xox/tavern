@@ -9,7 +9,7 @@ import pytest
 from tavern.hall.arrival import create_actor
 from tavern.mind.briefing import brief
 from tavern.mind.cards import parse_card
-from tavern.social.names import called
+from tavern.social.names import as_known, called
 from tavern.adapters.persistence import load_world, save_world
 from tavern.social.turns import turn_view
 from tavern.hall.world import observe_actor, observe_people
@@ -129,3 +129,15 @@ def test_malformed_saved_name_knowledge_is_rejected(tmp_path: Path) -> None:
     save_world(world, tmp_path / "save.json")
     with pytest.raises(ValueError):
         load_world(tmp_path / "save.json")
+
+
+@pytest.mark.parametrize("text, expected", [
+    pytest.param("", "", id="empty"),
+    pytest.param("Ada started talking to Bea", f"Ada started talking to {LOOKS['bea']}", id="a-stranger-by-looks"),
+    pytest.param("Bea gave Cid a mug; Bea smiled", f"{LOOKS['bea']} gave {LOOKS['cid']} a mug; {LOOKS['bea']} smiled",
+                 id="each-mention-of-several"),
+    pytest.param("Beatrix and Adam left", "Beatrix and Adam left", id="only-whole-names"),
+])
+def test_a_message_names_people_as_the_guest_knows_them(text: str, expected: str) -> None:
+    world = seated_talk(cards=True)
+    assert as_known(actor(world, "ada"), world["actors"], text) == expected

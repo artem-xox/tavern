@@ -118,6 +118,8 @@ COMPLAINED = [{"speaker": "bea", "addressee": "ada", "line": "This ale is sour."
     pytest.param({}, {"small_talk", "joke"}, id="single-greeting-gets-small-talk"),
     pytest.param({"needs": {"thirst": 20, "fatigue": 20, "bladder": 85, "social": 70, "boredom": 20}},
                  {"leave_conversation"}, id="pressing-need-takes-them-away"),
+    pytest.param({"needs": {"thirst": 20, "fatigue": 86, "bladder": 20, "social": 70, "boredom": 20}, "ailing": True},
+                 {"small_talk", "joke"}, id="a-fever-is-no-pressing-need"),
     pytest.param({"needs": {"thirst": 20, "fatigue": 20, "bladder": 20, "social": 5, "boredom": 20}},
                  {"small_talk", "joke"}, id="content-guest-still-answers-once"),
     pytest.param({"needs": {"thirst": 20, "fatigue": 20, "bladder": 20, "social": 5, "boredom": 20},
