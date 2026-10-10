@@ -66,6 +66,20 @@ THOUGHTS: Mapping[str, ThoughtKind] = MappingProxyType({
     # Held by the victim of a hostile act (`tavern.body.activities`), about whoever did it.
     "shoved": ThoughtKind(-8.0, -25.0, 300.0, 3, "shoved them", acquaints=True),
     "attacked": ThoughtKind(-10.0, -35.0, 300.0, 3, "attacked them", acquaints=True),
+    # Held after a fight (`tavern.social.aftermath`): by the fighters about each other, and by those who saw it begin
+    # about whoever started it.
+    "won_fight": ThoughtKind(5.0, -5.0, 300.0, 2, "lost a fight to them", acquaints=True),
+    "lost_fight": ThoughtKind(-8.0, -30.0, 600.0, 2, "beat them in a fight", acquaints=True),
+    "knocked_out_by": ThoughtKind(-12.0, -40.0, 600.0, 2, "knocked them out", acquaints=True),
+    "fought": ThoughtKind(-3.0, -10.0, 300.0, 2, "came to blows with them", acquaints=True),
+    "saw_fight": ThoughtKind(-3.0, -10.0, 240.0, 2, "started a brawl in front of them"),
+    # Held by a fighter about whoever pulled them apart, and by one helped up off the floor about their helper.
+    "separated_us": ThoughtKind(1.0, 5.0, 300.0, 1, "pulled them apart", acquaints=True),
+    "helped_up": ThoughtKind(4.0, 15.0, 600.0, 1, "helped them up off the floor", acquaints=True),
+    # Held by a fighter about a bystander who cheered them on.
+    "cheered_on": ThoughtKind(2.0, 8.0, 240.0, 1, "cheered them on", acquaints=True),
+    # Held by a guest dosed with a remedy for their wounds, about whoever gave it.
+    "tended": ThoughtKind(5.0, 15.0, 600.0, 1, "saw to their wounds", acquaints=True),
     # Held by the winner and the loser of a game of dice (`tavern.social.dice`), about each other.
     "won_at_dice": ThoughtKind(5.0, 2.0, 300.0, 3, "lost to them at dice", acquaints=True),
     "lost_at_dice": ThoughtKind(-4.0, -6.0, 300.0, 3, "beat them at dice", acquaints=True),
@@ -76,7 +90,8 @@ _BASE_RELATION = {"name", "opinion", "familiarity"}
 
 # Starting relationships a scenario may name, as (base opinion, familiarity), held both ways.
 _STARTING: Mapping[str, tuple[float, str]] = MappingProxyType({
-    "old friends": (50.0, "friend"), "rivals": (-40.0, "acquaintance")})
+    "old friends": (50.0, "friend"), "rivals": (-40.0, "acquaintance"),
+    "bad blood": (-55.0, "acquaintance")})
 
 
 class Thought(TypedDict):
@@ -305,7 +320,7 @@ def seed_relations(pairs: Sequence[Mapping[str, Any]], names: Mapping[str, str])
     """Turn starting relationships into each visitor's base opinions and familiarity.
 
     Args:
-        pairs: Records `{a, b, kind}` with `kind` "old friends" or "rivals"; each holds both ways.
+        pairs: Records `{a, b, kind}` with `kind` of `ties.KINDS`; each holds both ways.
         names: Name of every guest of the evening, by ID.
 
     Returns:

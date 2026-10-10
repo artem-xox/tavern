@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, Literal, NotRequired, TypedDict
 if TYPE_CHECKING:
     from tavern.mind.cards import Card
     from tavern.body.expression import Emote, Gaze
+    from tavern.body.fights import Fight
     from tavern.body.hearing import Stimulus
     from tavern.mind.intentions import Intention
     from tavern.body.projects import Project
@@ -85,6 +86,10 @@ class Actor(TypedDict):
     drunkenness: float
     # Whether they came in unwell (`tavern.body.ailment`): others see it, and a remedy cures it.
     ailing: bool
+    # Their health, 0-100, and the state of their body with the time it lasts to (`tavern.body.wounds`).
+    health: float
+    condition: str
+    condition_until: float | None
     knowledge: Knowledge
     memory: list[dict[str, Any]]
     heard: "list[Heard]"
@@ -249,6 +254,7 @@ class World(TypedDict):
     invitations: "list[Errand]"
     projects: "list[Project]"
     news: "list[News]"
+    fights: "list[Fight]"
     rules: Rules
 
 

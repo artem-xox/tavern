@@ -5,17 +5,22 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any
 
+from tavern.body.blows import shove_result
 from tavern.body.drunkenness import drink_beer
+from tavern.body.fights import fight_of, fighter_of, open_fight, opponent_of, try_separating
 from tavern.body.hearing import Sound
+from tavern.body.items import ITEMS
+from tavern.body.wounds import DOWN_SECONDS, GROGGY_SECONDS, STAGGER_SECONDS, lay_low, treat
+from tavern.hall.chance import roll
 from tavern.hall.memory import record_event
-from tavern.hall.state import Actor, World
+from tavern.hall.state import Actor, World, find_actor
 from tavern.social.aims import begin_aim
 from tavern.social.giving import hand_over
 from tavern.social.invitations import begin_errand
 from tavern.social.names import called
 from tavern.social.scenes import conversation_of, join_conversation, start_conversation
 from tavern.social.tables import intrude
-from tavern.social.thoughts import think
+from tavern.social.thoughts import opinion_of, think
 
 # An effect receives the world, the visitor, and the target: an object, a partner, or None.
 # The target is a place or, for a part in a conversation, the partner.
@@ -35,8 +40,14 @@ class Activity:
         approaches: Whether the part walks first, to a spot at the table the partner sits at, and then joins the
             partner's scene or starts one with them (`tavern.social.scenes`).
         near_person: Whether it targets another visitor at the actor's table or beside them, as a chat does:
-            no scene, no walking, and the timer ends it. Shoving and fighting (`tavern.social.hostility`) are
-            such verbs.
+            no scene, no walking, and the timer ends it. Shoving (`tavern.social.hostility`) is such a verb, and
+            fighting is one that the world ends (`held`).
+        closes_in: Whether it targets another visitor and walks to a spot at the table they sit at unless the actor is
+            already within reach of them, and acts there (`tavern.hall.routes`): stepping between fighters, helping
+            someone up, asking a healer for a remedy. No scene.
+        asks_cure: Whether the visitor it targets must be someone known to carry a cure.
+        held: Whether the world, not this timer, ends it: a fight until it is decided (`tavern.body.fights`), lying where
+            one fell until the condition is up (`tavern.body.wounds`); `duration` is only nominal.
         names_item: Whether the action names an item from the actor's hands in `Action.item`, as giving does.
         opens_errand: Whether it sends the actor off on an errand for the visitor it targets (see
             `tavern.social.errands`); like giving, it needs that visitor near.
@@ -86,6 +97,9 @@ class Activity:
     joins: bool = False
     approaches: bool = False
     near_person: bool = False
+    closes_in: bool = False
+    asks_cure: bool = False
+    held: bool = False
     names_item: bool = False
     opens_errand: bool = False
     opens_project: str | None = None
@@ -152,14 +166,13 @@ def _approach_scene(world: World, actor: Actor, partner: Actor | None) -> None:
     begin_aim(world, actor, partner)
 
 
-def _confront(world: World, actor: Actor, victim: Actor | None, event: str, thought: str, act: str) -> None:
-    # Both remember it, and it is one sound; only the victim holds a grudge for now (E21 resolves the blow).
-    if victim is None:
-        raise ValueError("A hostile act needs someone to turn on")
-    message = f"{actor['name']} {act} {victim['name']}"
-    for member in (actor, victim):
-        record_event(world, member, event, message)
-    think(victim, thought, world["time"], f"{called(victim, actor)} {act} me", message, about=actor)
+def _open_fight(world: World, actor: Actor, target: Any) -> None:
+    # Both fighters carry the fight verb at each other; the one who chose it opens the fight, the other joins it.
+    action = actor["action"]
+    victim = find_actor(world, action["target_id"]) if action else None
+    if victim is None or fight_of(world, actor["id"]) is not None:
+        return
+    open_fight(world, actor, victim)
 
 
 def _give(world: World, actor: Actor, receiver: Actor | None) -> None:
@@ -175,12 +188,71 @@ def _bring_drink(world: World, actor: Actor, receiver: Actor | None) -> None:
     begin_errand(world, actor, receiver, "buy_drink", unasked=True)
 
 
+_SHOVES = {"staggered": ("stumbled back", STAGGER_SECONDS), "down": ("went sprawling", DOWN_SECONDS)}
+
+
 def _shove(world: World, actor: Actor, victim: Actor | None) -> None:
-    _confront(world, actor, victim, "shove", "shoved", "shoved")
+    # Both remember it, and it is one sound; the shoved holds a grudge, and may be staggered or thrown to the floor.
+    if victim is None:
+        raise ValueError("A hostile act needs someone to turn on")
+    message = f"{actor['name']} shoved {victim['name']}"
+    for member in (actor, victim):
+        record_event(world, member, "shove", message)
+    think(victim, "shoved", world["time"], f"{called(victim, actor)} shoved me", message, about=actor)
+    result = shove_result(fighter_of(actor, "fists"), fighter_of(victim, "fists"),
+                          roll(world, "shove", actor["id"], victim["id"]))
+    if result in _SHOVES and fight_of(world, victim["id"]) is None:
+        words, seconds = _SHOVES[result]
+        lay_low(victim, result, world["time"] + seconds)
+        record_event(world, victim, result, f"{victim['name']} {words}")
 
 
-def _start_fight(world: World, actor: Actor, victim: Actor | None) -> None:
-    _confront(world, actor, victim, "fight_started", "attacked", "attacked")
+def _use_remedy(world: World, actor: Actor, target: Any) -> None:
+    actor["inventory"]["remedy"] -= 1
+    treat(actor)
+    record_event(world, actor, "cured", f"{actor['name']} took a remedy and looks better already")
+
+
+def _ask_for_remedy(world: World, actor: Actor, healer: Actor | None) -> None:
+    # The healer hands one over unless they think too ill of the asker, as a receiver refuses a gift from a foe.
+    kind = next((name for name, item in ITEMS.items() if item.cures and healer and healer["inventory"][name] > 0), None)
+    if healer is None or kind is None:
+        name = healer["name"] if healer else "Nobody"
+        record_event(world, actor, "no_remedy", f"{name} had no remedy to give {actor['name']}")
+    elif opinion_of(healer, actor["id"], world["time"]) < world["rules"]["giving"]["refuse_below"]:
+        message = f"{healer['name']} would not give {actor['name']} a remedy"
+        for member in (healer, actor):
+            record_event(world, member, "remedy_refused", message)
+    else:
+        hand_over(world, healer, actor, kind)
+
+
+def _help_up(world: World, actor: Actor, fallen: Actor | None) -> None:
+    if fallen is None or fallen["condition"] not in ("down", "out"):
+        return
+    fallen["condition"], fallen["condition_until"] = "groggy", world["time"] + GROGGY_SECONDS
+    message = f"{actor['name']} helped {fallen['name']} to their feet"
+    for member in (actor, fallen):
+        record_event(world, member, "helped_up", message)
+    think(fallen, "helped_up", world["time"], f"{called(fallen, actor)} helped me up off the floor", message, about=actor)
+
+
+def _intervene(world: World, actor: Actor, fighter: Actor | None) -> None:
+    fight = fight_of(world, fighter["id"]) if fighter else None
+    if fight is None:
+        return
+    other = find_actor(world, opponent_of(fight, fighter["id"])) if fighter else None
+    if fighter is None or other is None or not try_separating(world, fight, actor, (fighter, other)):
+        record_event(world, actor, "brushed_off", f"{actor['name']} tried to part them and was shaken off")
+
+
+def _join_fight(world: World, actor: Actor, target: Actor | None) -> None:
+    # They take their place beside the fight; the next duel is theirs when this one is over (`fights.begin_waiting`).
+    fight = fight_of(world, target["id"]) if target else None
+    if target is None or fight is None or any(item["against"] == target["id"] for item in fight["waiting"]):
+        return
+    fight["waiting"].append({"id": actor["id"], "against": target["id"]})
+    record_event(world, actor, "joined_fray", f"{actor['name']} squared up to wait a turn against {target['name']}")
 
 
 def _go_home(world: World, actor: Actor, door: dict[str, Any] | None) -> None:
@@ -320,13 +392,15 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "ill of) and a short temper, more so with drink in them, would do it. Everyone hears it, the "
                       "one shoved will not forget it, and it may lead to worse. Most guests, even angry ones, "
                       "choose something else."),
-    Activity(verb="start_fight", fatigue_per_second=2.5, near_person=True, duration=2.0, effect=_start_fight, label="Start a fight",
-             status="fighting", doing="starting a fight", done="started a fight", family="confront",
+    Activity(verb="start_fight", fatigue_per_second=2.5, near_person=True, held=True, duration=2.0, on_arrival=_open_fight,
+             label="Start a fight", status="fighting", pose="Fighting", doing="fighting", done="fought", family="confront",
              what="pick a fight with {target}, who sits at their table or stands beside them",
-             guidance="The rarest act of the evening: a fistfight with someone they think ill of after a recent "
-                      "wrong, which only a hot temper, usually helped by plenty of drink, brings a guest to. The "
-                      "whole room hears it, the one attacked will not forget it, and it can end in injury. Even "
-                      "an angry guest almost always chooses something else."),
+             guidance="The rarest act of the evening: a fistfight, one on one, with someone they think ill of after a "
+                      "recent wrong, which only a hot temper brings a guest to: strong drink, or real hatred. The "
+                      "whole room hears it, the one attacked will not forget it, and it ends with one of them "
+                      "knocked out, or giving up, or both parted and still cursing; whoever loses is hurt and has "
+                      "to see to their wounds. A guest who holds a cudgel makes it far more dangerous. Even an angry "
+                      "guest almost always chooses something else."),
     Activity(verb="give", fatigue_per_second=0.25, near_person=True, names_item=True, duration=1.5, effect=_give, label="Give",
              status="giving", pose="Giving", doing="handing something over", done="gave something away",
              family="company", what="hand {item} to {target}, who sits at their table or stands beside them",
@@ -397,6 +471,59 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "drinks naturally dozes off at the table, and the others let them be. A sober, content "
                       "guest who is tired late in the evening usually goes home to bed instead. It is pointless "
                       "when they are not tired."),
+    # Never a candidate: whoever is thrown down by a shove or knocked out in a fight lies where they fell until
+    # `tavern.body.wounds` says they can get up. The world, not the timer, ends it.
+    Activity(verb="recover", duration=1.0, held=True, label="Lie where they fell", status="down", pose="KnockedOut",
+             doing="laid out on the floor", done="got back on their feet", family="hurt",
+             what="lie where they fell until they can get up",
+             guidance="Nobody chooses it: a guest thrown to the floor or knocked out lies there until their time is up."),
+    # What a hurt guest does instead of everything else (see `tavern.mind.agents`): a remedy at hand, a healer to ask,
+    # or the way home to rest.
+    Activity(verb="use_remedy", fatigue_per_second=0.05, requires_item="remedy", duration=2.0, effect=_use_remedy,
+             label="Take a remedy", status="taking a remedy", doing="taking a remedy", done="took a remedy",
+             family="hurt",
+             what="take one of the herbal remedies they carry to mend their hurts",
+             guidance="What a hurt guest who carries a remedy does first: it puts them right at once and is "
+                      "worth more to them than a drink, a chat or a seat."),
+    Activity(verb="seek_remedy", fatigue_per_second=0.1, closes_in=True, asks_cure=True, duration=2.0,
+             effect=_ask_for_remedy, label="Ask for a remedy", status="asking for a remedy", pose="Talking",
+             doing="going to ask for a remedy", done="asked for a remedy", family="hurt",
+             what="go to {target}, a healer who carries remedies, and ask for one to mend their hurts",
+             guidance="What a hurt guest does when someone in the room carries a remedy: beaten or bruised, they "
+                      "go to the healer before anything else, ahead of a drink, a chat or a seat. A healer "
+                      "who thinks ill of them may refuse."),
+    # The room's answer to a fight under way, or to someone lying on the floor (`tavern.social.bystanders`).
+    Activity(verb="watch_fight", fatigue_per_second=0.05, duration=6.0, interruptible=True, label="Watch the fight",
+             status="watching the fight", doing="watching the fight", done="watched the fight", family="react",
+             what="stay where they are and watch the fight, wide-eyed",
+             guidance="The natural thing for the curious and the idle when two fight in the room: everyone's head "
+                      "turns. The timid prefer to watch from where they sit rather than step in."),
+    Activity(verb="cheer", fatigue_per_second=0.1, duration=2.0, interruptible=True, label="Cheer", status="cheering",
+             pose="Talking", sound=Sound("cheer", 0.3, 12.0, "cheering at the fight"), doing="cheering the fight on",
+             done="cheered the fight on", family="react",
+             what="shout and cheer the fighters on",
+             guidance="Rowdy company, the sociable and those with drink in them cheer a fight on. It is not a "
+                      "kindness: the fighters hear it."),
+    Activity(verb="intervene", fatigue_per_second=0.5, closes_in=True, duration=1.5, effect=_intervene, label="Part them",
+             status="stepping between them", pose="Shoving", doing="stepping between the fighters",
+             done="tried to part the fighters", family="react",
+             what="step between {target} and whoever they fight, and try to part them",
+             guidance="The brave and the strong, and friends of one of the two, step in; it may part them or it may "
+                      "not, and the weak and the timid keep out of it. A guest who steps in is not fighting "
+                      "anyone."),
+    Activity(verb="join_fight", fatigue_per_second=0.2, closes_in=True, held=True, duration=15.0,
+             on_arrival=_join_fight, label="Wait to fight", status="waiting to fight", pose="Fighting",
+             doing="squaring up to take a turn", done="waited to fight", family="react",
+             what="square up beside {target}, who is fighting, to take them on as soon as the fight in hand is over",
+             guidance="Only for a guest who hates one of the fighters, or whose friend is the one being beaten, and has "
+                      "the nerve: fights are one on one, so they wait their turn, and take on whoever is left "
+                      "standing."),
+    Activity(verb="help_up", fatigue_per_second=0.25, closes_in=True, duration=2.0, effect=_help_up, label="Help up",
+             status="helping someone up", pose="HelpingUp", doing="helping someone up off the floor",
+             done="helped someone up", family="react",
+             what="help {target}, who lies on the floor, up on their feet",
+             guidance="A kindness for someone thrown down or knocked out, kinder in the sociable and in those who "
+                      "like them. A guest who carries a remedy would rather give it."),
     # A decision step, not a world action: a second evaluation picks the chair to `sit` on.
     Activity(verb="seating", duration=None, chooses_chair=True,
              family="seat_choice",
@@ -451,6 +578,9 @@ FAMILIES: Mapping[str, str] = MappingProxyType({
     "cutting_in": "push to the front of a line instead of waiting",
     "fetching": "fetch someone at their table or beside them a drink from the tap, or stand the whole table a round",
     "confront": "shove someone who wronged them, or start a fight",
+    "hurt": "see to their hurts: take a remedy, ask someone who carries one, or go home to mend",
+    "react": "react to a fight in the room: watch it, cheer, step between the fighters, wait a turn to join, or help "
+             "someone up off the floor",
 })
 
 

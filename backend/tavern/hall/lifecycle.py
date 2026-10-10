@@ -243,7 +243,8 @@ def _begin_interaction(world: World, actor: Actor) -> None:
         actor.update({"status": "interacting", "_move_elapsed": 0.0, "_blocked_for": 0.0})
         activity = ACTIVITIES[action["verb"]]
         if activity.on_arrival:
-            partner = find_actor(world, action["target_id"]) if activity.partner else None
+            partner = find_actor(world, action["target_id"]) if activity.partner or activity.near_person \
+                or activity.closes_in else None
             activity.on_arrival(world, actor, partner or _target(world, action))
         if activity.sound:
             sound_activity(world, actor, activity.sound, activity.doing)
@@ -269,7 +270,8 @@ def _apply_effect(world: World, actor: Actor) -> None:
     if action is None:
         raise ValueError(f"{actor['name']} has no action to finish")
     activity = ACTIVITIES[action["verb"]]
-    target = find_actor(world, action["target_id"]) if activity.partner or activity.near_person else _target(world, action)
+    target = find_actor(world, action["target_id"]) if activity.partner or activity.near_person or activity.closes_in \
+        else _target(world, action)
     if activity.effect:
         activity.effect(world, actor, target)
     for need, change in activity.needs.items():
@@ -293,7 +295,7 @@ def _interact(world: World, actor: Actor, elapsed: float) -> None:
 
 
 def _ends_on_timer(world: Mapping[str, Any], activity: Activity) -> bool:
-    return not (activity.game or (activity.served and tended(world)))
+    return not (activity.game or activity.held or (activity.served and tended(world)))
 
 
 def complete_action(world: World, actor: Actor) -> None:
