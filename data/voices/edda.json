@@ -1,0 +1,70 @@
+{
+  "card_hash": "873e787962d3",
+  "lines": {
+    "greet": [
+      "Evening, {name}. Let me see your eyes. No, sit, I'll look properly.",
+      "Ah, {name}. Still breathing, I see. That's the first good sign tonight.",
+      "Hello, {name}. How are you sleeping these days? Badly, I'd wager, by your face.",
+      "You're {name}, aren't you? Come here where the light is, I want a proper look at you.",
+      "Good evening to you, {name}. Mind the sage in my sleeve, it gets everywhere.",
+      "Hm. {name}. I've patched worse than you, so don't go looking nervous.",
+      "Evening, {name}. I'll not waste your time, and I'll not waste mine either.",
+      "Now then, {name}. Something's been bothering you since the last frost, hasn't it?"
+    ],
+    "accept": [
+      "Yes, I'll come. Somebody has to keep you out of trouble.",
+      "Aye, that'll do. I'm not so proud I'd refuse a kindness.",
+      "Yes. Go on then, I haven't got all night but I've got a bit.",
+      "Right, I'm with you. Mind your elbows, I've my good hands to think of.",
+      "Yes, gladly. It's been a long road and I'm glad of the company.",
+      "Aye, I'll have it. Don't think I'm doing it for your sake, mind.",
+      "Yes. You've asked nicely, which is more than most men manage.",
+      "Well, yes. I can spare a little time before the rain comes in.",
+      "Yes, {name}. Let's see whether you're as good company as you think."
+    ],
+    "decline": [
+      "No, thank you. I've had my fill of wasted evenings for one week.",
+      "Not tonight, {name}. My knuckles are aching and I'd make poor company.",
+      "I'll pass, {name}. Ask me again when you've something worth my time.",
+      "No. Go and bother someone else, I've patients who need me more.",
+      "Not for me, {name}. I've work in the morning, and so have you, by the look of you.",
+      "I think not. You'll forgive me, I hope, I'm tired to the bone.",
+      "No, {name}. I don't go about with men I've only just met.",
+      "Thank you, but no. I've seen enough foolishness for one night.",
+      "Not tonight. My mind's on a fever three villages from here."
+    ],
+    "pressed": [
+      "Excuse me a moment, {name}. I'll be back before you've finished your sneer.",
+      "Mind my things, {name}, I must step outside a while.",
+      "Hold that thought, {name}. I'll not be long, and I'll be back.",
+      "One moment, {name}. I'll be back, and don't you dare get up to anything.",
+      "Give me a breath, {name}. I'm just going out for a moment.",
+      "Sorry, {name}, I must be off a while. Keep my seat warm.",
+      "Forgive me, {name}. I'll not be long. Carry on with your nonsense without me."
+    ],
+    "content": [
+      "There, I've said my piece, {name}. I'll leave you to yours now.",
+      "That's enough talk for one evening. I'm off to my bed, {name}.",
+      "I've had my fill of company tonight, {name}. Take care of yourself.",
+      "I think I've done my good deed for the evening. Goodnight, {name}.",
+      "Right, I'm done. Thank you for the talk, {name}, but I'm away.",
+      "That's all I had to say, {name}. I'll be going now, if you'll excuse me.",
+      "I've heard enough and said enough. I'm off, {name}. Mind yourself.",
+      "Enough for me, {name}. I'll see you when the road brings us together again.",
+      "I'm finished for tonight, {name}. Good evening to you, and mind the cold.",
+      "There, that's me done. I'll take my leave, {name}, and keep my remedies to myself."
+    ],
+    "closing": [
+      "Last call, and I'm off. Good night, all of you, and sleep well.",
+      "Barkeep's shouting, so I'm away. Goodnight to the lot of you.",
+      "Closing time, is it? Then goodnight, and mind the stairs in the dark.",
+      "Right, that's the bell. Good night, and try not to catch anything on the road.",
+      "Time to go, then. Good night, and keep your coughs to yourselves.",
+      "That's closing, so I'm off to my bed. Goodnight to you all.",
+      "The bell's gone, so goodnight. Get some rest, the lot of you look dreadful.",
+      "Lamps out, is it? Then good night. Warm feet and a dry roof to you all.",
+      "Goodnight, then. I'll be up early for the sick, so don't keep me.",
+      "Last drop gone, so I'm off. Good night, and let the rain have its way."
+    ]
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "card_hash": "414f6285eb9b",
+  "lines": {
+    "greet": [
+      "Evening, {name}. Sit if you like, the bench is sound enough.",
+      "Well now, {name}. You've got a face that wants feeding.",
+      "Hm. {name}, is it? Pull up, then, but mind your elbows.",
+      "Good evening, {name}. Don't get in the way of the hearth.",
+      "Ah, {name}. Thought you'd be off somewhere with a bone to chew.",
+      "{name}, is it. Right. Nice to see a face that isn't scowling.",
+      "Evening to you, {name}. Shove over, that's my corner.",
+      "{name}. Aye, you'll do. Pass the salt, would you?"
+    ],
+    "accept": [
+      "Aye, I'll have that. Don't make a fuss about it.",
+      "Go on then, I've a bit of time yet. Thank you kindly.",
+      "Well, I'm not one to say no to a kind offer, am I?",
+      "Right you are. I'll take it, and I'll not owe you a thing back.",
+      "Oh, go on, why not. It's my one night off, after all.",
+      "Yes, all right. Just don't expect me to be chatty.",
+      "Aye, that'll do nicely. Ta, {name}.",
+      "Right, I'm your woman. Let's see what you've got.",
+      "I suppose I can. Tell the lad to bring two, not one."
+    ],
+    "decline": [
+      "No, thanks, {name}. Some of us have an early start.",
+      "Not tonight, {name}. My feet are done for.",
+      "Ah, bless you, but I'll pass. I'm content where I am.",
+      "Not for me, {name}. I've had my fill of such things for one day.",
+      "Thanks, but no. I've seen what your sort of fun does to a body.",
+      "No, {name}. I came for a bite, not a bother.",
+      "Kind of you to ask, but no. I'm keeping my own counsel.",
+      "No. Ask someone with more patience than I've got, {name}.",
+      "Not tonight, {name}. Maybe another week when I've not been on my feet since dawn."
+    ],
+    "pressed": [
+      "Hold that thought, I've got to step out for a moment.",
+      "Pardon me, I'll be back directly. Don't go eating my supper.",
+      "Excuse me, I need to see to something. Won't be long.",
+      "I'll have to go a minute, mind my things while I'm gone.",
+      "Give me a moment, my dear, there's a call I can't ignore.",
+      "Right, I'm off for a bit. Keep the fire going, would you?",
+      "Sorry, I've got to go. Back before you've missed me.",
+      "Shan't be long. Don't let anyone take my place by the hearth.",
+      "Hang on, I must be off for a minute. Watch the bench for me.",
+      "I'll be a minute, love. Don't you dare start without me."
+    ],
+    "content": [
+      "Well, that's my say said. Good company, but I'm away now.",
+      "Right, I've had my fill of talk for the night. Take care.",
+      "That's plenty for me, thanks all. I'll be getting along.",
+      "I'm done for now. You've been decent company, that's all I'll say.",
+      "Enough chatter for one night. Good luck to the lot of you.",
+      "I've said what I came to say, and I'm off to my bed.",
+      "That'll do. I'm heading home before the road gets dark.",
+      "Right, I'm content with that. Ta for the company, all of you.",
+      "Enough's enough. I'll leave you to your dice and your ale.",
+      "I've had my fill and I'm going. Mind yourselves."
+    ],
+    "closing": [
+      "Last call's gone, so I'm off. Good night to you all.",
+      "Bell's rung, I'm away. Night, all, and mind the stairs.",
+      "That's closing time, is it? Right, I'm going. Goodnight.",
+      "Well, the barkeep's done, so so am I. Good night to the lot of you.",
+      "Time's up, so I'll be off. Sleep well, all of you.",
+      "Night, all. The bell's gone and so am I.",
+      "Closing, is it? Fair enough. Good night, then.",
+      "That's the bell. I'm off, and I'll see you next week, maybe.",
+      "Right, last one's gone. Good night and be careful on the road.",
+      "Off I go, then, since they're putting out the lamps. Goodnight."
+    ]
+  }
+}

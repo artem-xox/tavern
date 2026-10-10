@@ -1,0 +1,69 @@
+{
+  "card_hash": "19f9f28231a4",
+  "lines": {
+    "greet": [
+      "Ah, {name}, what a fine coat! Let me guess, Tulan wool? No? Pity, I'd have sold you the lot.",
+      "Well met, {name}! Tell me, do you know what madder fetches this side of the pass?",
+      "{name}! I was just saying to the fire, that is a face with money in it.",
+      "Evening, {name}, sit, sit, you look like a man who appreciates a bargain.",
+      "Hello there, {name}! Cheap wool, dear dye, and the best company in the Inn, all at once.",
+      "Ho, {name}, I'd know that cloak anywhere, or at least I'd know its cousin in Verdan.",
+      "Good evening, {name}! Between us, I've had a dreadful week and a splendid one, both at once.",
+      "Ah, {name}! Come here, feel this sleeve. Feel that? Finest weave on the mountain.",
+      "{name}, you've a shrewd look. I trust you, which is more than I say to most of this room."
+    ],
+    "accept": [
+      "Gladly! I was hoping someone would ask, I'm half broke from waiting for the right company.",
+      "Of course, of course! Nothing like a bit of sport to warm up the cold bones of a trader.",
+      "Aye, I'm yours for the evening. Let's make it a splendid one before the barkeep shuts us out.",
+      "Yes indeed. I'd trade my best mule for a chance like this, and you know I'd be sorry to.",
+      "Certainly, {name}, I'm delighted. Shall we say the usual terms, or shall we invent new ones?"
+    ],
+    "decline": [
+      "Ah, not tonight, {name}, I've a ledger to balance and my sums want quiet.",
+      "No, no, that's too rich a risk for my purse, I'm afraid. Another time, perhaps.",
+      "Sorry, {name}, I'd love to, but the wind has been sharp and I'm mindful of my coin.",
+      "Thanks kindly, {name}, but I've made a rule to decline anything before I've had a proper look.",
+      "I'd rather not, {name}. Too many eyes in this room, and I can't count them all at once.",
+      "No thank you, {name}. I'll keep my money in my boot where it belongs, safe and sound.",
+      "I must pass, {name}, sorry. My feet are wanting rest and my mind is wanting a better offer.",
+      "Not for me this evening, {name}. Ask me again when the price has dropped a little.",
+      "Kindly no, {name}. I'm a trader, not a fool, and you've a glint in your eye I don't trust."
+    ],
+    "pressed": [
+      "Forgive me, I'll be back presently. Keep an eye on my cloth, it's worth more than my life.",
+      "I have to go, I'm afraid. Don't let anyone buy my chair while I'm away!",
+      "Pardon, I need a moment away from the table. Mind the cups, I'll not be long.",
+      "Give me a breath, I must go. My business waits, and so does my patience, which is thinner.",
+      "Sorry, I'm off for a moment. Keep my place warm, won't you? I'll be back to finish our talk.",
+      "Would you excuse me? I shall return. Everyone hold their wagers until then.",
+      "Pardon, I'm going out for a bit. Don't wager on the weather while I'm gone, I'd only lose.",
+      "Right, I must step away. Keep my seat, and if anyone asks, I'm counting my profits.",
+      "Excuse me, I need to go. Back in a trice, friend, and then we'll see who wins."
+    ],
+    "content": [
+      "That's me done for now, friend. A pleasure, truly, but I'm off to find better company.",
+      "Well, I've said my piece and sold my stock of talk for the evening. Good night to you.",
+      "I've had my fill of the fire and the dice tonight. I'll leave you to your own business.",
+      "Enough chatter for one night, I think. I'll take my leave while the deal is still sweet.",
+      "I've spent my words, and I'm wanting some quiet to count my profits. Fare you well.",
+      "That's all my patter for tonight, so I shall go and rest my tongue a while.",
+      "I'll be off now, before I talk myself into buying something I don't need.",
+      "My purse is light and my voice is hoarse, so I think I'll call it done for now.",
+      "Right, I've had my fill of company. You'll forgive me if I go and sit somewhere new.",
+      "I've made my rounds and sold what I could. I'll leave you in peace, friend."
+    ],
+    "closing": [
+      "Last call, is it? Well, good night to you all, and may your coin always be heavy.",
+      "Closing time already? Then I'm off, good night, and mind the cobbles on the way out.",
+      "The barkeep's shutting up, so good night to all, and my thanks for the company.",
+      "That's the bell for bed. Good night, friends, and I'll see you when the road brings me back.",
+      "Time to go, I'm afraid. Good night to everyone, and no hard feelings about the wagers.",
+      "Off to bed with me, then. Good night, and may the next season bring better prices.",
+      "Shutters closing, is it? Good night, friends, and sleep well on your coin.",
+      "That's me, then. Good night to the room, and a safe road to whoever's walking home tonight.",
+      "Well, the fire's dying and so am I. Good night, all, and thank you for the fine evening.",
+      "Good night, the lot of you! I'll be counting my profits by the road tomorrow."
+    ]
+  }
+}

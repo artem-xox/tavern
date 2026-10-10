@@ -1,0 +1,74 @@
+{
+  "card_hash": "3f220bca15af",
+  "lines": {
+    "greet": [
+      "Aye, {name}. Sit where you can see the door.",
+      "Evening, {name}. Quiet night at the gate, so far.",
+      "{name}. You're late off the road, or early on it.",
+      "Friend. Keep your hands where I can see them, and we'll get on.",
+      "{name}. The gate sees more than the road does, you know.",
+      "Evening. Name's Rurik, and yours is?",
+      "Aye. Another face I'll not forget, {name}.",
+      "{name}. Didn't think I'd see you indoors tonight.",
+      "Friend. Eleven years at the toll gate, and I still greet the wind first."
+    ],
+    "accept": [
+      "Aye, {name}. I'm not going anywhere.",
+      "Aye. Go on, then.",
+      "Aye, {name}. Fair enough.",
+      "Aye. I'll have it.",
+      "Aye, {name}. Lead on.",
+      "Aye. That'll do.",
+      "Aye, {name}, I'm in.",
+      "Aye. Count me in, {name}.",
+      "Aye. I've nothing better on.",
+      "Aye, {name}. Let's see what you've got."
+    ],
+    "decline": [
+      "Not tonight, {name}.",
+      "Not for me, {name}. I know my limits.",
+      "No. Ask me another night, {name}.",
+      "Not tonight, {name}. I've the watch in my bones yet.",
+      "No, {name}, and no hard feelings.",
+      "Not for me. Thanks all the same, {name}.",
+      "No, {name}. I'd rather watch than join.",
+      "Not tonight. You'll have to manage without me, {name}.",
+      "No, {name}. Maybe when the road's quieter."
+    ],
+    "pressed": [
+      "Hold that thought, {name}. Back in a moment.",
+      "I'll be a while, {name}. Mind my place.",
+      "Pardon me, {name}, I must step out.",
+      "Keep your seat, {name}. I'll not be long.",
+      "Excuse me, {name}. I'll return.",
+      "Wait there, {name}. I've business outside.",
+      "I'll be back, {name}. Don't let the room get rowdy.",
+      "One moment, {name}. Duty calls, of a sort.",
+      "Off I go, {name}. Keep the fire warm for me."
+    ],
+    "content": [
+      "That's my say, {name}. I'll leave you to it.",
+      "Enough talk for one night. Good evening, {name}.",
+      "I've said what I came to say. Goodnight, {name}.",
+      "Done, {name}. I'll sit quiet awhile now.",
+      "That's me spent, {name}. Take care.",
+      "I've had my fill of company. Off I go.",
+      "Enough words. I'll find another seat, {name}.",
+      "No more from me tonight, {name}.",
+      "I'll leave the rest to you, {name}. Mind yourself.",
+      "That'll do, {name}. I'm going to watch the door a bit."
+    ],
+    "closing": [
+      "Last call. Goodnight to you, and mind the stairs.",
+      "Bell's rung. Night, all of you.",
+      "Time's up. Goodnight, and keep your boots off the bench.",
+      "That's closing, then. Night to you.",
+      "Lamps down. Goodnight, all.",
+      "Aye, closing. Goodnight to the room.",
+      "Out you go. Goodnight, and no trouble on the road.",
+      "Closing time, and I've the gate at dawn. Goodnight.",
+      "Done for the night. Goodnight, all.",
+      "Bolt the door behind you. Goodnight."
+    ]
+  }
+}
