@@ -25,3 +25,9 @@ test("stills: every character ships a sleeping pose in four views", () => {
   assert.equal(sleeping.length % 4, 0);
   assert.ok(sleeping.length >= 24);
 });
+
+test("stills: every guest loads the six combat poses in four views", () => {
+  const poses = ["Fighting", "KnockedOut", "Hurt", "HurtSeated", "Shoving", "HelpingUp"];
+  const combat = stills().filter((item) => poses.some((pose) => item.key.includes(`-${pose}-`)));
+  assert.equal(combat.length, 6 * poses.length * 4);
+});
