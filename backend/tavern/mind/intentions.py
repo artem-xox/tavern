@@ -30,7 +30,7 @@ from tavern.mind.questions import Ask, Question
 from tavern.mind.scripted import DISLIKED
 from tavern.social.heard import earlier_lines
 from tavern.social.names import called
-from tavern.social.thoughts import THOUGHTS, active_thoughts, familiarity_of, opinion_of
+from tavern.social.thoughts import THOUGHTS, active_thoughts, familiarity_of, opinion_of, words_on_mind
 
 
 RECALLED_LINES = 8  # Lines of tonight's talk a guest's mind is shown when it takes stock.
@@ -252,9 +252,19 @@ def intention_view(world: Mapping[str, Any], actor: Mapping[str, Any], trigger: 
             "situation": brief(observation, [])["situation"],
             "duty": post_of(world["map"], actor)["name"] if on_staff(actor) else None,
             "others": {item["id"]: called(actor, item) for item in world["actors"] if item["id"] != actor["id"]},
-            "thoughts": [item["text"] for item in active_thoughts(actor["thoughts"], world["time"])],
+            "thoughts": _thoughts_in_words(world, actor),
             "earlier": earlier_lines(actor, RECALLED_LINES),
             "drink": drunk_stage(actor["drunkenness"]).name}
+
+
+def _thoughts_in_words(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[str]:
+    # What is on their mind, a person at a time (see `thoughts.words_on_mind`), in order of first thought.
+    people = {item["id"]: item for item in [*world["actors"], *world["departed"]]}
+    about: dict[str | None, list[Mapping[str, Any]]] = {}
+    for item in active_thoughts(actor["thoughts"], world["time"]):
+        about.setdefault(item["about"], []).append(item)
+    return [words for person, items in about.items()
+            for words in words_on_mind(items, called(actor, people[person]) if person in people else "someone")]
 
 
 def _card(actor: Mapping[str, Any]) -> str:

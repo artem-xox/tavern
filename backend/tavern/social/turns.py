@@ -29,7 +29,7 @@ from tavern.social.invitations import offered_kinds, pending_for
 from tavern.social.names import as_known, called, knows_name, looks
 from tavern.social.overhearing import overhear_turn
 from tavern.social.scenes import Conversation, Turn, awaits_company_change
-from tavern.social.thoughts import active_thoughts, familiarity_of, opinion_of
+from tavern.social.thoughts import active_thoughts, familiarity_of, opinion_of, words_on_mind
 
 
 class TurnResult(TypedDict):
@@ -178,7 +178,8 @@ def _mind(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str, A
             "company": [{"id": other["id"], "name": other["name"], "ailing": other["ailing"], "hurt": hurt(other),
                          "opinion": opinion_of(speaker, other["id"], now),
                          "familiarity": familiarity_of(speaker, other["id"]),
-                         "thoughts": [item["text"] for item in thoughts if item["about"] == other["id"]]}
+                         "thoughts": words_on_mind([item for item in thoughts if item["about"] == other["id"]],
+                                                   called(speaker, other))}
                         for other in others]}
 
 
