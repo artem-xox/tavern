@@ -15,6 +15,7 @@ from tavern.hall.closing import closing_called
 from tavern.hall.memory import log_event
 from tavern.hall.staff import on_staff, post_of
 from tavern.hall.state import World
+from tavern.mind.briefing import recollections
 from tavern.mind.cards import TEXT_FIELDS
 from tavern.mind.feelings import feelings
 from tavern.mind.portrait import portrait
@@ -51,7 +52,6 @@ TurnWriter = Callable[[Mapping[str, Any], Mapping[str, Any]], Coroutine[Any, Any
 
 _FIELDS = {"line", "act", "addressee", "topic"}
 _OPTIONAL = {"invitation", "fact_id"}
-EARLIER_LINES = 24  # Most lines of other scenes a turn writer is shown: enough to recall, cheap to send.
 
 
 def reading_time(line: str, rules: Mapping[str, Any]) -> float:
@@ -98,10 +98,11 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
 
     Returns:
         `conversation`: ID, topic, index of the turn being written, participants (see
-        `_participants`), the latest eight turns and the pending `invitation`, if any;
+        `_participants`), every turn spoken in it so far and the pending `invitation`, if any;
         `speaker`: their ID, name, needs, traits, visit, the places they could tell about (tap,
-        WC, darts), their `opinions` of the others and `earlier`, what they said and heard in other
-        scenes tonight (`heard.earlier_lines`, the newest 24); `acts`: the meaning of each act offered
+        WC, darts), their `opinions` of the others, `earlier`, everything they still remember saying and hearing
+        in other scenes tonight (`heard.earlier_lines`), and `seen`, what they did and what befell them
+        (`briefing.recollections`); `acts`: the meaning of each act offered
         now (`conversation.offered_acts`); `invitations`: the kinds an `invite` may name;
         `seed`: the evening's seed, for a writer's seeded choices; `closing_called`: whether the barkeep has called
         closing time, so a speaker winds the talk down. Also who they are and how they feel (see `_mind`).
@@ -115,7 +116,7 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
               sorted(speaker["knowledge"]["objects"].items()) if item["kind"] in ("tap", "toilet", "darts")]
     view = {"conversation": {"id": scene["id"], "topic": scene["topic"], "turn": len(scene["turns"]),
                              "participants": _participants(world, scene, speaker),
-                             "turns": deepcopy(scene["turns"][-8:])},
+                             "turns": deepcopy(scene["turns"])},
             "speaker": {"id": speaker["id"], "name": speaker["name"], **deepcopy(
                 {key: speaker[key] for key in ("needs", "traits", "visit")}), "places": places,
                          **_mind(world, scene, speaker)},
@@ -169,7 +170,8 @@ def _mind(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str, A
             "drunkenness": speaker["drunkenness"], "ailing": speaker["ailing"],
             "intention": None if speaker["intention"] is None else speaker["intention"]["intention"],
             "aims_at": _aims_at(speaker),
-            "earlier": earlier_lines(speaker, EARLIER_LINES, scene["id"]),
+            "earlier": earlier_lines(speaker, world["rules"]["conversation"]["recall_lines"], scene["id"]),
+            "seen": recollections(speaker["memory"], now),
             "news": carried(world, speaker),
             "company": [{"id": other["id"], "name": other["name"], "ailing": other["ailing"],
                          "opinion": opinion_of(speaker, other["id"], now),

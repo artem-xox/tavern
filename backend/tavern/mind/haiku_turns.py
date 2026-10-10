@@ -57,7 +57,9 @@ def turn_content(view: Mapping[str, Any]) -> str:
     nudges = _nudges(view["conversation"], view["speaker"], view.get("invitations") or [], view["acts"],
                      view.get("closing_called", False), view.get("answer"))
     earlier = _earlier(view["speaker"].get("earlier") or [])
+    seen = _seen(view["speaker"].get("seen") or [])
     return "\n\n".join([_scene(view["conversation"], view["speaker"]), *([earlier] if earlier else []),
+                        *([seen] if seen else []),
                         _self(view["speaker"]), _news(view["speaker"]), *([f"THE MOMENT\n\n{nudges}"] if nudges else []), _offer(view),
                         "Write the speaker's next line now: one or two short sentences, under 120 characters."])
 
@@ -145,7 +147,7 @@ def _scene(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:
              f"\"{turn['line']}\"" for turn in scene["turns"]]
     said = "\n".join(lines) if lines else "No one has spoken yet: the speaker opens the conversation."
     return (f"THE SCENE\n\nLine {scene['turn'] + 1} of a conversation about {scene['topic']}.\n"
-            f"Present besides the speaker:\n" + "\n".join(present) + f"\n\nRecent lines, oldest first:\n{said}")
+            f"Present besides the speaker:\n" + "\n".join(present) + f"\n\nLines so far, oldest first:\n{said}")
 
 
 def _earlier(scenes: Sequence[Mapping[str, Any]]) -> str:
@@ -156,6 +158,13 @@ def _earlier(scenes: Sequence[Mapping[str, Any]]) -> str:
     blocks = [f"With {', '.join(scene['with']) or 'no one who answered'}:\n" +
               "\n".join(f"- {line['speaker']}: \"{line['line']}\"" for line in scene["lines"]) for scene in scenes]
     return "EARLIER TONIGHT\n\nOther conversations you were in, oldest first.\n" + "\n".join(blocks)
+
+
+def _seen(memories: Sequence[str]) -> str:
+    # What the speaker did and what befell them tonight, so a line can follow from it; empty when nothing did.
+    if not memories:
+        return ""
+    return "WHAT THE SPEAKER DID AND SAW TONIGHT\n\nOldest first.\n" + "\n".join(f"- {item}" for item in memories)
 
 
 def _self(me: Mapping[str, Any]) -> str:

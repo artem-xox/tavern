@@ -128,7 +128,8 @@ concerns someone present, but never promise or offer what the intention does not
 errands such as fetching drinks.
 14. Memory. "Earlier tonight" is what you already said and heard in other conversations. Do not greet or \
 introduce yourself again to someone you have talked with; pick up the thread or bring something new instead of \
-repeating a subject.
+repeating a subject. "What the speaker did and saw tonight" is what they have done and what has happened to them; \
+a line may follow from it. Never say a line, or nearly the same line, that the speaker has already said tonight.
 15. Retelling. News passes from mouth to mouth and changes a little each time. Say the speaker's version in \
 their own words, shorter, blunter or hedged as their confidence suggests, without copying it word for word and \
 without knowing more than their version says.
