@@ -43,16 +43,18 @@ def tend_bar(world: World) -> None:
             first; it takes him out of any conversation. At its end the guest's own `take_beer` completes
             (the stock falls, the mug is theirs); a guest who went away meanwhile gets nothing and the
             stock stays. An idle barkeep with no order, while the inn is open, steps across from a guest at
-            his bar and greets them (see `_greeted`).
+            his bar and greets them (see `_greeted`). He starts neither while a fight is on.
     """
+    # Nobody is served or greeted while a fight is on: the barkeep has his eyes on it (and has called out once).
+    brawl = any(fight["outcome"] is None for fight in world["fights"])
     for barkeep in [actor for actor in world["actors"] if on_staff(actor)]:
         action = barkeep["action"]
         if action is not None and action["verb"] == "pour_beer":
             if barkeep["status"] == "interacting" and barkeep["_remaining"] <= 0:
                 _hand_over(world, barkeep)
-        elif _waiting_guest(world) is not None:
+        elif _waiting_guest(world) is not None and not brawl:
             _start_pouring(world, barkeep)
-        elif action is None and barkeep["status"] == "idle" and not inn_closed(world):
+        elif action is None and barkeep["status"] == "idle" and not inn_closed(world) and not brawl:
             _greet(world, barkeep)
 
 

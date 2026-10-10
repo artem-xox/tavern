@@ -10,11 +10,13 @@ export interface Spoken {
 
 /** How long, in game seconds, a barkeep's call stays over his head: about what its two pieces take to read. */
 const CALLOUT_SECONDS = 8;
+/** The events that carry a call-out: closing time, and the barkeep's shout at a fight. */
+const CALLOUT_TYPES: readonly string[] = ["last_call", "barkeep_shout"];
 
 /**
  * The call a character made while it is still new, to show over their head.
  *
- * @param events The world's event log, oldest first; only a `last_call` event with words counts.
+ * @param events The world's event log, oldest first; only a `last_call` or `barkeep_shout` event with words counts.
  * @param actorId The character.
  * @param worldTime Game time now.
  * @returns The newest call by them, as a line, while it is under `CALLOUT_SECONDS` old; otherwise null.
@@ -22,7 +24,7 @@ const CALLOUT_SECONDS = 8;
 export function callout(events: readonly WorldEvent[], actorId: string, worldTime: number): Spoken | null {
   for (let index: number = events.length - 1; index >= 0; index -= 1) {
     const event: WorldEvent = events[index]!;
-    if (event.type !== "last_call" || event.actor_id !== actorId || event.line === undefined) continue;
+    if (!CALLOUT_TYPES.includes(event.type) || event.actor_id !== actorId || event.line === undefined) continue;
     return worldTime - event.time < CALLOUT_SECONDS ? { speaker: actorId, line: event.line, time: event.time } : null;
   }
   return null;

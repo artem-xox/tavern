@@ -12,6 +12,7 @@ from tavern.evening.decisions import free_to_decide
 from tavern.hall.world import create_world, start_action
 from tavern.social.scenes import conversation_of
 from social_hall import actor, advance, command, hall
+from staff_hall import HOB, hob_of, opened, order_beer
 
 
 def pair(seed: int = 4, strong: str = "ada", beaten_courage: float = 1.0) -> dict[str, Any]:
@@ -156,3 +157,29 @@ def test_two_hot_heads_who_break_apart_go_on_cursing_in_a_scene_of_their_own() -
     assert fight["outcome"] == "shouting"
     scene = conversation_of(world, "ada")
     assert (scene is not None and sorted(scene["participants"]), scene["topic"]) == (["ada", "bea"], "the fight they have just had")
+
+
+def brawl_before_the_barkeep() -> dict[str, Any]:
+    """The repository's hall with Hob, three guests; Ada and Bea sit at the table below the bar and Ada attacks Bea."""
+    world = opened(HOB, guests=3)
+    advance(world, 1)
+    for who, chair in (("ada", "chair-3"), ("bea", "chair-4")):
+        assert start_action(world, who, command("sit", chair))["accepted"]
+    advance(world, 15)
+    assert start_action(world, "ada", command("start_fight", "bea"))["accepted"]
+    return world
+
+
+def test_the_barkeep_calls_out_once_when_a_fight_begins_in_front_of_him() -> None:
+    world = brawl_before_the_barkeep()
+    advance(world, 6)
+    shouts = [item["line"] for item in world["events"] if item["type"] == "barkeep_shout"]
+    assert shouts == ["Not in my hall! Take it outside!"]
+
+
+def test_the_barkeep_pours_nothing_while_a_fight_is_on() -> None:
+    world = brawl_before_the_barkeep()
+    advance(world, 0.5)
+    order_beer(world, "cid")
+    advance(world, 2.0)
+    assert (len(running(world)), hob_of(world)["action"]) == (1, None)

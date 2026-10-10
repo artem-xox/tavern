@@ -12,6 +12,8 @@ from tavern.hall.state import World, find_actor
 from tavern.social.names import called
 from tavern.social.thoughts import opinion_of, think
 
+# What the barkeep calls out when a fight begins in front of him.
+BRAWL_LINE = "Not in my hall! Take it outside!"
 # How hard a guest must dislike a fighter, or how well like the other one, to wait a turn against them.
 GRUDGE = -20.0
 LOYALTY = 40.0
@@ -41,6 +43,10 @@ def note_started(world: World) -> None:
             record_event(world, witness, "saw_fight", f"{witness['name']} saw {message}")
             think(witness, "saw_fight", world["time"], f"{called(witness, attacker)} started a brawl in front of me",
                   message, about=attacker)
+        barkeep = next((actor for actor in world["actors"] if on_staff(actor)), None)
+        if barkeep is not None and line_visible((barkeep["x"], barkeep["y"]), (attacker["x"], attacker["y"]), walls):
+            record_event(world, barkeep, "barkeep_shout", f'{barkeep["name"]} called out: "{BRAWL_LINE}"')
+            world["events"][-1]["line"] = BRAWL_LINE
 
 
 def fighters_in_sight(observation: Mapping[str, Any]) -> dict[str, str]:

@@ -3858,6 +3858,8 @@ candidates out of `agents.py` first (a refactor commit), and K6 puts the `react`
     `Actor` field for it.
   - `Card.sex` is **optional**, not required (many tests build cards without it); no pronouns were added to the texts.
   - Hob's cudgel is flavour in his card (he never fights in Stage 1), not an item in his inventory.
+  - Hob calls out once when a fight begins in his sight (`barkeep_shout`, a bubble like the closing call) and neither
+    pours nor greets while one is on; he never steps in.
   - `cheer` has no target, so no `cheered_on` thought; `back_away` was not built (a timid guest leaves or watches).
   - `Fight` gains `witnessed` and `cause` (`hatred`, `drink`, `grudge`) for the room's notes and the metrics.
   - The drink gate is **0.3**, not 0.45: in a ten-minute evening guests peak at 0.15-0.45 drunk (offline seeds 0-5), so 0.45
