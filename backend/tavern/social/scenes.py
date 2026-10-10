@@ -110,15 +110,20 @@ def at_table(world: Mapping[str, Any], actor: Mapping[str, Any]) -> str | None:
 
     Returns:
         The table ID of their seat, else of the table on one of whose spots they stand, having arrived
-        (the place to stand and talk with those seated there), else None.
+        (the place to stand and talk with those seated there), else of the table whose chair they rest on
+        without making it their seat, else None.
     """
     if actor.get("seat_id"):
         return table_of(world, actor)
     if actor["path"]:
         return None  # Still on the way: passing a spot is not standing at it.
     cell = [actor["x"], actor["y"]]
-    return next((str(item["id"]) for item in world["map"]["objects"]
-                 if item["kind"] == "table" and cell in item["interaction_spots"]), None)
+    # Someone merely passing over or standing on a chair's cell is not at its table; resting on it is.
+    target = (actor.get("action") or {}).get("target_id")
+    return next((str(item["id"]) if item["kind"] == "table" else str(item["table_id"])
+                 for item in world["map"]["objects"]
+                 if (item["kind"] == "table" or (item.get("table_id") and item["id"] == target))
+                 and cell in item["interaction_spots"]), None)
 
 
 def pressed(world: Mapping[str, Any], actor: Mapping[str, Any]) -> bool:
