@@ -70,10 +70,17 @@ def _offer(view: Mapping[str, Any]) -> str:
     kinds = view.get("invitations") or []
     invitations = (f" An invite must name one of these invitations: {', '.join(kinds)}; any other act has "
                    "invitation null." if "invite" in view["acts"] and kinds else " Set invitation to null.")
-    # Guests may know each other only by looks, so the answer must name people by ID.
-    others = [f'"{item["id"]}"' for item in view["conversation"]["participants"] if item["id"] != view["speaker"]["id"]]
+    # People are named as the speaker knows them, by name or by looks (`_labels`); the boundary reads the name back.
+    others = [f'"{label}"' for label in _labels(view)]
     return (f"ALLOWED NOW\n\nActs you may use for this line: {', '.join(view['acts'])}.{invitations} "
-            f"The addressee must be null or one of these ids: {', '.join(others)}.")
+            f"The addressee must be null or one of these, written exactly as here: {', '.join(others)}.")
+
+
+def _labels(view: Mapping[str, Any]) -> dict[str, str]:
+    # The others in the scene, by how the speaker calls them (`names.called`), to their internal IDs, which the
+    # model never sees.
+    return {item["name"]: item["id"] for item in view["conversation"]["participants"]
+            if item["id"] != view["speaker"]["id"]}
 
 
 def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequence[str], acts: Sequence[str],
@@ -136,7 +143,7 @@ def _came_for(aim: Mapping[str, Any] | None, acts: Sequence[str]) -> str:
 def _scene(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:
     people = {item["id"]: item["name"] for item in scene["participants"]}
     barkeeps = {item["id"] for item in scene["participants"] if item.get("on_duty")}
-    present = [f"- {item['name']}{' (the barkeep)' if item['id'] in barkeeps else ''} (id \"{item['id']}\"): "
+    present = [f"- {people[item['id']]}{' (the barkeep)' if item['id'] in barkeeps else ''}: "
                f"{_FAMILIARITY[item['familiarity']]}; your opinion of "
                f"them is {item['opinion']:+.0f} on -100 to 100" + ("; looks pale and feverish" if item.get("ailing") else "")
                + (f"; on your mind: {'; '.join(item['thoughts'])}"
@@ -174,7 +181,7 @@ def _self(me: Mapping[str, Any]) -> str:
     goal = me["card"]["goal"] if me["card"] else "to rest and pass a pleasant evening"
     mean = f"\nWhat you mean to do: {me['intention']}" if me.get("intention") else ""
     unwell = "\nYou feel feverish and weak tonight." if me.get("ailing") else ""
-    return (f"THE SPEAKER\n\nYou are {me['name']} (id \"{me['id']}\").\nHow they feel: {me['feelings']}{unwell}\n"
+    return (f"THE SPEAKER\n\nYou are {me['name']}.\nHow they feel: {me['feelings']}{unwell}\n"
             f"Drink: {speech_instruction(me['drunkenness']) or 'You are sober.'} "
             f"Beers tonight: {me['visit']['beers']}.\n"
             f"Needs (0 calm, 100 desperate; 75 or more presses hard): {needs}.\n"
@@ -230,6 +237,9 @@ def parse_turn(view: Mapping[str, Any], answer: Any) -> TurnResult:
         # invite and share_news.
         given = ({key: value for key, value in answer.items() if key not in ("invitation", "fact_id") or value is not None}
                  if isinstance(answer, Mapping) else answer)
+        if isinstance(given, Mapping) and isinstance(given.get("addressee"), str):
+            # Named as listed; anything else is checked as it stands, so a stray id still means its guest.
+            given = {**given, "addressee": _labels(view).get(given["addressee"], given["addressee"])}
         result = check_turn(view, given)
     except ValueError as error:
         raise RejectedTurn(str(error)) from error

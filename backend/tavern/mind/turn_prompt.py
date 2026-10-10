@@ -78,9 +78,10 @@ _FIELDS = """THE ANSWER
 Answer with a JSON object with exactly these fields:
 - line: the words the speaker says aloud, and nothing else.
 - act: one speech act name from the list above.
-- addressee: the id of the one other person present whom the line is mainly addressed to, or null when it is \
-addressed to everyone in the conversation. Use only ids from the "Present" list, and never the speaker's own \
-id. Answering a question goes to whoever asked it. A greeting to a newcomer goes to the newcomer.
+- addressee: the one other person present whom the line is mainly addressed to, written exactly as the "Present" \
+list names them (a name, or how they look when the speaker does not know their name), or null when it is \
+addressed to everyone in the conversation. Never the speaker. Answering a question goes to whoever asked it. A \
+greeting to a newcomer goes to the newcomer.
 - topic: a few words naming what the conversation is about after this line, such as "the snow on the pass", \
 "Bren's war stories" or "the price of salt". Keep the current topic unless the line changes the subject. At \
 most about six words, no full sentences.
@@ -149,37 +150,37 @@ _EXAMPLES = """EXAMPLES
 Each example gives a situation, a good answer, and a bad answer with what is wrong with it.
 
 Example 1. Bren, a gruff old soldier, opens a conversation with Toren, a young carter he does not know.
-Good: {"line": "Evening, boy. That seat's warm, sit.", "act": "greet", "addressee": "toren", \
+Good: {"line": "Evening, boy. That seat's warm, sit.", "act": "greet", "addressee": "Toren", \
 "topic": "the seat by the fire"}
 Bad: {"line": "*nods gruffly* Greetings, young traveller, and welcome to this humble inn on the mountain pass!", \
-"act": "greet", "addressee": "toren", "topic": "greetings"}
+"act": "greet", "addressee": "Toren", "topic": "greetings"}
 Why bad: a stage direction, far too long, no soldier's voice, and the topic says nothing.
 
 Example 2. Toren answers Bren's greeting. Toren is in a good mood and curious.
-Good: {"line": "Thanks. You've the look of a soldier. The fort?", "act": "small_talk", "addressee": "bren", \
+Good: {"line": "Thanks. You've the look of a soldier. The fort?", "act": "small_talk", "addressee": "Bren", \
 "topic": "Bren's soldiering"}
 Bad: {"line": "Toren: Thank you kindly, sir. I am in a good mood tonight.", "act": "small_talk", \
-"addressee": "bren", "topic": "mood"}
+"addressee": "Bren", "topic": "mood"}
 Why bad: a speaker label, and the mood is announced instead of shown.
 
 Example 3. Saye, a pilgrim, knows where the WC is. Her tablemate Edda has just arrived and looks around.
-Good: {"line": "If you need the privy, it's past the tables.", "act": "share_place", "addressee": "edda", \
+Good: {"line": "If you need the privy, it's past the tables.", "act": "share_place", "addressee": "Edda", \
 "topic": "finding your way around"}
-Bad: {"line": "The darts board is upstairs and the tap is outside.", "act": "share_place", "addressee": "edda", \
+Bad: {"line": "The darts board is upstairs and the tap is outside.", "act": "share_place", "addressee": "Edda", \
 "topic": "the inn"}
 Why bad: Saye does not know those places, and the inn has no upstairs hall or outdoor tap.
 
 Example 4. Calder, a trader, has no known places but wants to share one.
-Good: {"line": "No idea where they keep the ale. You?", "act": "small_talk", "addressee": "ysolde", \
+Good: {"line": "No idea where they keep the ale. You?", "act": "small_talk", "addressee": "Ysolde", \
 "topic": "finding the ale"}
-Bad: {"line": "The tap's by the bar.", "act": "share_place", "addressee": "ysolde", "topic": "the tap"}
+Bad: {"line": "The tap's by the bar.", "act": "share_place", "addressee": "Ysolde", "topic": "the tap"}
 Why bad: share_place from someone whose list of known places is empty.
 
 Example 5. Rurik, impatient and on his third beer, dislikes Bren, who took his seat earlier.
-Good: {"line": "You'd know about stealing seats, old man.", "act": "complain", "addressee": "bren", \
+Good: {"line": "You'd know about stealing seats, old man.", "act": "complain", "addressee": "Bren", \
 "topic": "the stolen seat"}
 Bad: {"line": "I feel annoyed because you took my seat, and my opinion of you is now minus fifteen.", \
-"act": "small_talk", "addressee": "bren", "topic": "opinions"}
+"act": "small_talk", "addressee": "Bren", "topic": "opinions"}
 Why bad: numbers from the game leak into speech, the feeling is explained, and a grumble is labelled small talk.
 
 Example 6. Ysolde is joking with two friends at the fire. Nobody is addressed in particular.
@@ -188,17 +189,17 @@ Bad: {"line": "LOL this beer is literally the worst, guys.", "act": "joke", "add
 Why bad: modern words and internet tone.
 
 Example 7. Edda's bladder is nearly bursting while she talks with Calder.
-Good: {"line": "Hold that thought, I'll be right back.", "act": "leave_conversation", "addressee": "calder", \
+Good: {"line": "Hold that thought, I'll be right back.", "act": "leave_conversation", "addressee": "Calder", \
 "topic": "the price of wool"}
 Bad: {"line": "I must leave now to use the WC because my bladder need is at 85.", "act": "leave_conversation", \
-"addressee": "calder", "topic": "needs"}
+"addressee": "Calder", "topic": "needs"}
 Why bad: game numbers, and nobody explains a trip to the privy in such detail.
 
 Example 8. Bren is drunk and talking to his old friend Toren. His card says he deserted in the war.
 Good: {"line": "The second war, boy... some of us didn't stay to the end.", "act": "small_talk", \
-"addressee": "toren", "topic": "the second war"}
+"addressee": "Toren", "topic": "the second war"}
 Bad: {"line": "I confess I deserted in the second war and have lied ever since!", "act": "small_talk", \
-"addressee": "toren", "topic": "Bren's desertion"}
+"addressee": "Toren", "topic": "Bren's desertion"}
 Why bad: a drunk speaker may hint at a secret, but never confesses it outright.
 
 Example 9. Brida, a sober shepherd, has had enough company and wants her bed.
@@ -208,9 +209,9 @@ Bad: {"line": "Good night.", "act": "small_talk", "addressee": null, "topic": "n
 Why bad: the words say goodbye but the act does not, so she would never actually leave.
 
 Example 10. Calder answers a question Saye asked about the pass.
-Good: {"line": "Snow to the knees past the shrine, they say.", "act": "small_talk", "addressee": "saye", \
+Good: {"line": "Snow to the knees past the shrine, they say.", "act": "small_talk", "addressee": "Saye", \
 "topic": "snow on the pass"}
-Bad: {"line": "Snow to the knees past the shrine, they say.", "act": "small_talk", "addressee": "calder", \
+Bad: {"line": "Snow to the knees past the shrine, they say.", "act": "small_talk", "addressee": "Calder", \
 "topic": "snow on the pass"}
 Why bad: the speaker addressed himself. The addressee is someone else present, or null.
 
@@ -222,84 +223,84 @@ Bad: {"line": "Thsi iz the bset nite evr myy frendz hic hic hic", "act": "small_
 Why bad: slurring overdone into a line nobody can read.
 
 Example 12. Saye, a devout and gentle pilgrim, is greeted by Rurik, a rough smuggler she distrusts.
-Good: {"line": "Evening. I'll keep to my prayers, thank you.", "act": "small_talk", "addressee": "rurik", \
+Good: {"line": "Evening. I'll keep to my prayers, thank you.", "act": "small_talk", "addressee": "Rurik", \
 "topic": "Saye's pilgrimage"}
-Bad: {"line": "Evening, dear friend! How wonderful to see you!", "act": "greet", "addressee": "rurik", \
+Bad: {"line": "Evening, dear friend! How wonderful to see you!", "act": "greet", "addressee": "Rurik", \
 "topic": "friendship"}
 Why bad: her opinion of Rurik is cool, and the line pretends a warmth she does not feel.
 
 Example 13. Ysolde, a minstrel whose goal is to earn a few coins, chats with a trader.
-Good: {"line": "A song for a penny? Cheaper than this ale.", "act": "joke", "addressee": "calder", \
+Good: {"line": "A song for a penny? Cheaper than this ale.", "act": "joke", "addressee": "Calder", \
 "topic": "Ysolde's songs"}
 Bad: {"line": "My goal tonight is to earn coins by singing, so please pay me.", "act": "small_talk", \
-"addressee": "calder", "topic": "goals"}
+"addressee": "Calder", "topic": "goals"}
 Why bad: the goal is recited instead of steering the talk naturally.
 
 Example 14. Three people talk; the last line was Brida asking everyone whether the road was safe.
-Good: {"line": "Safe enough by day. I'd not walk it after dark.", "act": "small_talk", "addressee": "brida", \
+Good: {"line": "Safe enough by day. I'd not walk it after dark.", "act": "small_talk", "addressee": "Brida", \
 "topic": "bandits on the lower road"}
 Bad: {"line": "The road is safe. Also, did you know the darts board is new? And the fire is warm.", \
-"act": "small_talk", "addressee": "brida", "topic": "many things"}
+"act": "small_talk", "addressee": "Brida", "topic": "many things"}
 Why bad: three subjects crammed into one line, and the topic is vague.
 
 Example 15. Rurik complained about the ale to Edda; she is sober and patient.
-Good: {"line": "It's ale at a mountain inn. Drink it or don't.", "act": "small_talk", "addressee": "rurik", \
+Good: {"line": "It's ale at a mountain inn. Drink it or don't.", "act": "small_talk", "addressee": "Rurik", \
 "topic": "the inn's ale"}
-Bad: {"line": "(rolls her eyes) Whatever you say.", "act": "small_talk", "addressee": "rurik", \
+Bad: {"line": "(rolls her eyes) Whatever you say.", "act": "small_talk", "addressee": "Rurik", \
 "topic": "the inn's ale"}
 Why bad: a stage direction in parentheses. Only spoken words belong in the line.
 
 Example 16. Calder has just joined Bren and Toren at their table. Toren greets him first.
-Good: {"line": "Pull up a chair, friend. Bren's on his war again.", "act": "greet", "addressee": "calder", \
+Good: {"line": "Pull up a chair, friend. Bren's on his war again.", "act": "greet", "addressee": "Calder", \
 "topic": "Bren's war stories"}
 Bad: {"line": "Hello Calder, I am Toren, a carter, and this is Bren, an old soldier who burns charcoal.", \
-"act": "greet", "addressee": "calder", "topic": "introductions"}
+"act": "greet", "addressee": "Calder", "topic": "introductions"}
 Why bad: nobody recites a biography; the line reads like a character sheet.
 
 Example 17. Brida and Saye are old friends who have not met for a year. Brida speaks first.
-Good: {"line": "Saye! A whole year, and you've not aged a day.", "act": "greet", "addressee": "saye", \
+Good: {"line": "Saye! A whole year, and you've not aged a day.", "act": "greet", "addressee": "Saye", \
 "topic": "a year apart"}
-Bad: {"line": "Good evening, stranger. May I sit here?", "act": "greet", "addressee": "saye", \
+Bad: {"line": "Good evening, stranger. May I sit here?", "act": "greet", "addressee": "Saye", \
 "topic": "the seat"}
 Why bad: old friends do not greet each other like strangers; the relationship must show.
 
 Example 18. Rurik and Bren are rivals; Rurik is sober and patient tonight and keeps it cold.
-Good: {"line": "Bren. Still losing at darts, I hear.", "act": "small_talk", "addressee": "bren", \
+Good: {"line": "Bren. Still losing at darts, I hear.", "act": "small_talk", "addressee": "Bren", \
 "topic": "darts"}
 Bad: {"line": "Bren, my dearest companion, let us drink together all night!", "act": "small_talk", \
-"addressee": "bren", "topic": "drinking together"}
+"addressee": "Bren", "topic": "drinking together"}
 Why bad: the warmth contradicts a rivalry and a low opinion.
 
 Example 19. Edda is tired and in a sour mood; Toren asked her where she is headed.
-Good: {"line": "Down the other side. If my feet last.", "act": "small_talk", "addressee": "toren", \
+Good: {"line": "Down the other side. If my feet last.", "act": "small_talk", "addressee": "Toren", \
 "topic": "Edda's journey"}
 Bad: {"line": "Oh, what a delightful question! I am going on a wonderful journey to the lowlands, where I \
-hope to meet many interesting people and see the famous markets.", "act": "small_talk", "addressee": "toren", \
+hope to meet many interesting people and see the famous markets.", "act": "small_talk", "addressee": "Toren", \
 "topic": "Edda's journey"}
 Why bad: far too long and far too cheerful for a tired, sour speaker.
 
 Example 20. Bren and Toren talked at the table earlier tonight (it is listed under "Earlier tonight"), and now \
 they meet again at the fire. Bren speaks first.
-Good: {"line": "You again, boy. Did that wheel ever get mended?", "act": "small_talk", "addressee": "toren", \
+Good: {"line": "You again, boy. Did that wheel ever get mended?", "act": "small_talk", "addressee": "Toren", \
 "topic": "Toren's cart wheel"}
 Bad: {"line": "Evening, stranger! Allow me to introduce myself, I am Bren.", "act": "greet", \
-"addressee": "toren", "topic": "introductions"}
+"addressee": "Toren", "topic": "introductions"}
 Why bad: they already talked, so Bren greets and introduces himself again as if they had never met, instead of \
 picking up the thread.
 
 Example 21. Calder, a post rider, carries the news "salt_toll", which he heard from Rurik as: "They doubled the \
 salt toll at the gate. Carters are turning back." He is fairly sure of it, and tells Brida, who is at the table.
 Good: {"line": "Salt will cost you more, Brida. The gate toll's doubled, Rurik says, and carters turn back.", \
-"act": "share_news", "addressee": "brida", "topic": "the salt toll", "fact_id": "salt_toll"}
+"act": "share_news", "addressee": "Brida", "topic": "the salt toll", "fact_id": "salt_toll"}
 Bad: {"line": "The margrave doubled the salt toll to four pennies a sack because his purse is empty.", \
-"act": "share_news", "addressee": "brida", "topic": "the salt toll", "fact_id": "salt_toll"}
+"act": "share_news", "addressee": "Brida", "topic": "the salt toll", "fact_id": "salt_toll"}
 Why bad: the margrave, the four pennies and the empty purse are not in Calder's version; a retelling may trim \
 and colour the news but never adds to it.
 
 Example 22. Toren has no news on his list. He talks with Edda, who just asked what is new.
 Good: {"line": "Nothing worth the telling. My mule sulked all the way up.", "act": "small_talk", \
-"addressee": "edda", "topic": "Toren's mule", "fact_id": null}
-Bad: {"line": "Haven't you heard? The fort burned down last night.", "act": "share_news", "addressee": "edda", \
+"addressee": "Edda", "topic": "Toren's mule", "fact_id": null}
+Bad: {"line": "Haven't you heard? The fort burned down last night.", "act": "share_news", "addressee": "Edda", \
 "topic": "the fort", "fact_id": "fort_fire"}
 Why bad: Toren holds no such news, so "fort_fire" is not on his list and the story is invented. Without news, \
 talk about yourself, the road or the room.
@@ -307,22 +308,22 @@ talk about yourself, the road or the room.
 Example 23. Brida is bored and bold; the dice table by the fire stands free, and she is talking with Edda, whom \
 she likes. The invitations on offer include dice_together.
 Good: {"line": "The dice table's free, Edda. A round to see whose luck holds?", "act": "invite", \
-"addressee": "edda", "topic": "a game of dice", "invitation": "dice_together"}
+"addressee": "Edda", "topic": "a game of dice", "invitation": "dice_together"}
 
 Example 24. Hob is the barkeep on duty behind the bar. Calder, a post rider, leans on the bar and has just said \
 he came over the pass that morning.
 Good: {"line": "Over the pass this morning? They say it's snowed in past the shrine. Did you see it?", \
-"act": "small_talk", "addressee": "calder", "topic": "the pass", "fact_id": null}
-Bad: {"line": "Well, I must be going, the road won't wait.", "act": "leave_conversation", "addressee": "calder", \
+"act": "small_talk", "addressee": "Calder", "topic": "the pass", "fact_id": null}
+Bad: {"line": "Well, I must be going, the road won't wait.", "act": "leave_conversation", "addressee": "Calder", \
 "topic": "the road", "fact_id": null}
 Why bad: the barkeep is at work behind the bar, so he stays while the guest does and never takes his leave.
 
 Example 25. Edda stands talking with Brida at the bar; the moment says Edda means to join Brida at her table by \
 the fire, and the promise act is allowed.
 Good: {"line": "I'll bring my ale over to your fire in a moment, Brida. Keep me a chair.", "act": "promise", \
-"addressee": "brida", "topic": "the fire table", "fact_id": null}
+"addressee": "Brida", "topic": "the fire table", "fact_id": null}
 Bad: {"line": "I'll sit by the fire if you'll have me. Unless you've other plans.", "act": "small_talk", \
-"addressee": "brida", "topic": "the fire table", "fact_id": null}
+"addressee": "Brida", "topic": "the fire table", "fact_id": null}
 Why bad: the speaker is saying what they will do, so it is a promise the game can hold them to; as small talk it \
 binds nobody, and nobody can tell it was meant."""
 
@@ -359,7 +360,7 @@ def turn_schema(acts: Mapping[str, str], invitations: tuple[str, ...]) -> dict[s
         "line": {"type": "string", "description": "The words spoken aloud; one short line, no stage directions."},
         "act": {"type": "string", "enum": list(acts), "description": "The speech act the line performs."},
         "addressee": {"anyOf": [{"type": "string"}, {"type": "null"}],
-                      "description": "ID of the one other person present addressed, or null for everyone."},
+                      "description": "The one other person present addressed, as the Present list names them, or null for everyone."},
         "topic": {"type": "string", "description": "What the conversation is about now, in a few words."},
         "invitation": {"anyOf": [{"type": "string", "enum": list(invitations)}, {"type": "null"}],
                        "description": "For an invite, the invitation offered; otherwise null."},

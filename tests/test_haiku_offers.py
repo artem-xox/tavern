@@ -58,6 +58,6 @@ def test_an_answer_outside_the_offer_is_rejected(acts: list[str], invitations: l
         parse_turn(view(acts, invitations), given)
 
 
-def test_the_moment_names_the_ids_an_answer_may_address() -> None:
+def test_the_moment_names_the_people_an_answer_may_address() -> None:
     content = turn_question(view(["small_talk"], []))["content"]
-    assert 'addressee must be null or one of these ids: "bea"' in content
+    assert 'addressee must be null or one of these, written exactly as here: "Bea".' in content

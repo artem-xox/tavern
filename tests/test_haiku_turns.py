@@ -16,6 +16,7 @@ from tavern.mind.scripted import scripted_turn
 from tavern.social.thoughts import think
 from tavern.social.turns import claim_turns, deliver_turn, turn_view
 from tavern.hall.world import create_world, start_action
+from social_hall import seated_talk
 
 ADA = {"id": "ada", "sprite": "visitor", "name": "Ada", "occupation": "salt trader",
        "background": "Ada drives salt over the pass.", "temperament": "Warm but shrewd.",
@@ -107,7 +108,7 @@ def test_card_goes_in_the_second_cached_block() -> None:
 
 
 @pytest.mark.parametrize("prepare, expected", [
-    pytest.param(lambda world: None, ["No one has spoken yet", "Bea (id \"bea\")", "You are sober.",
+    pytest.param(lambda world: None, ["No one has spoken yet", "- Bea: ", "You are sober.",
                                       "Sell her last sack of salt.", "Places you know: none"], id="opening-line"),
     pytest.param(lambda world: people(world)["ada"].update(drunkenness=0.5), ["They are drunk"], id="drunk-speech"),
     pytest.param(lambda world: think(people(world)["ada"], "quarrel", 0.0, "Quarreled with Bea about salt",
@@ -343,3 +344,32 @@ def test_only_a_real_need_nudges_the_speaker_away(ailing: bool, nudges: list[str
 def test_every_turn_ends_by_asking_for_a_short_line() -> None:
     content = turn_question(view_of(scene_world()))["content"]
     assert content.endswith("Write the speaker's next line now: one or two short sentences, under 120 characters.")
+
+
+def stranger_scene() -> dict[str, Any]:
+    """Ada has just started talking to Bea, whose name she does not know: to Ada she is her looks."""
+    world = seated_talk(cards=True)
+    return turn_view(world, conversation_of(world, "ada"))
+
+
+@pytest.mark.parametrize("view", [
+    pytest.param(view_of(scene_world()), id="people-known-by-name"),
+    pytest.param(stranger_scene(), id="a-stranger-known-by-looks"),
+])
+def test_the_question_never_shows_anyone_s_internal_id(view: dict[str, Any]) -> None:
+    question = turn_question(view)
+    text = "\n".join([*question["system"][1:], question["content"]])
+    assert [marker for marker in ('"ada"', '"bea"', 'id "') if marker in text] == []
+
+
+def test_a_stranger_is_listed_by_looks_and_not_by_a_name_the_speaker_does_not_know() -> None:
+    content = turn_question(stranger_scene())["content"]
+    assert ("- the stout woman with a pipe:" in content, "Bea" in content) == (True, False)
+
+
+@pytest.mark.parametrize("view, addressee", [
+    pytest.param(view_of(scene_world()), "Bea", id="by-name"),
+    pytest.param(stranger_scene(), "the stout woman with a pipe", id="by-looks"),
+])
+def test_the_addressee_is_named_as_listed_and_read_back_as_an_id(view: dict[str, Any], addressee: str) -> None:
+    assert parse_turn(view, {**GOOD, "addressee": addressee})["addressee"] == "bea"
