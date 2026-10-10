@@ -150,3 +150,14 @@ def test_a_decided_answer_survives_a_save(tmp_path: Any) -> None:
 def test_a_saved_answer_that_is_not_one_is_rejected(tmp_path: Any, answer: Any) -> None:
     with pytest.raises(ValueError):
         load_world(saved(tmp_path, lambda data: data["conversations"][0]["invitation"].update(answer=answer)))
+
+
+@pytest.mark.parametrize("act, words", [
+    pytest.param("accept", "Bea said yes to Ada's invitation to play a game of dice", id="accepted"),
+    pytest.param("decline", "Bea turned down Ada's invitation to play a game of dice", id="declined"),
+])
+def test_whoever_invited_is_told_the_answer_in_their_memory(act: str, words: str) -> None:
+    world = inviting("dice_together")
+    say(world, act, "Well now.")
+    answered = [item["message"] for item in actor(world, "ada")["memory"] if item["type"] == "invitation_answered"]
+    assert answered == [words]
