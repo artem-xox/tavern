@@ -20,15 +20,13 @@ def _name(observation: Observation, person_id: Any) -> str:
 
 
 def _fighters(observation: Observation) -> str:
-    # "Rurik and Toren" for the pair in sight, or "everyone's blows" when the pair is not told apart.
-    people = {item["id"]: item for item in observation.get("people", []) if item.get("fighting")}
-    named: list[str] = []
-    for person_id, other in people.items():
-        if other in people and other in named:
-            continue
-        named.append(person_id)
-    pairs = [f"{label_of(people[item])} and {_name(observation, people[item]['fighting'])}" for item in named]
-    return " and ".join(pairs) or "the fighters"
+    # "Rurik and Toren" for each pair in sight, told once however many of the two are in view; "the fighters" if none.
+    pairs: list[tuple[str, str]] = []
+    for person in observation.get("people", []):
+        if person.get("fighting") and not any(person["id"] in pair for pair in pairs):
+            pairs.append((person["id"], person["fighting"]))
+    told = [f"{_name(observation, first)} and {_name(observation, second)}" for first, second in pairs]
+    return " and also ".join(told) or "the fighters"
 
 
 def _watch(observation: Observation, action: Action) -> str:

@@ -11,10 +11,13 @@ from tavern.hall.chance import roll
 from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World, find_actor
 from tavern.social.aftermath import bout_ended
+from tavern.social.hostility import HOSTILITY
 from tavern.social.names import called
 from tavern.social.scenes import within_reach
-from tavern.social.thoughts import think
+from tavern.social.thoughts import opinion_of, think
 
+# What may have brought someone to start a fight.
+CAUSES = ("hatred", "drink", "grudge")
 # The verb both fighters carry for as long as the fight lasts: the world, not a timer, ends it.
 FIGHT = "start_fight"
 # What a fight may end in: the formula's endings, or a bystander pulling the two apart.
@@ -45,7 +48,8 @@ class Waiting(TypedDict):
 class Fight(TypedDict):
     """A fight between two. `a` started it; `weapons` is what each holds by ID. `outcome` is one of `ENDINGS` once it
     is over (with the `loser`, where there is one, and when it `ended_at`) and None while it runs. `witnessed` is
-    whether the room has taken note of how it began (`tavern.social.bystanders`)."""
+    whether the room has taken note of how it began (`tavern.social.bystanders`). `cause` is what brought the one who
+    started it to it: `hatred` (they thought that ill of the other), `drink` (they were drunk) or `grudge`."""
 
     id: str
     a: str
@@ -56,6 +60,7 @@ class Fight(TypedDict):
     exchanges: list[Exchange]
     waiting: list[Waiting]
     witnessed: bool
+    cause: str
     outcome: str | None
     loser: str | None
     ended_at: float | None
@@ -170,7 +175,7 @@ def open_fight(world: World, attacker: Actor, victim: Actor) -> Fight:
     now = world["time"]
     fight = Fight(id=f"fight-{len(world['fights']) + 1}", a=attacker["id"], b=victim["id"],
                   weapons={member["id"]: weapon_of(member) for member in (attacker, victim)},
-                  started_at=now, next_exchange_at=now + EXCHANGE_SECONDS, exchanges=[], waiting=[], witnessed=False, outcome=None,
+                  started_at=now, next_exchange_at=now + EXCHANGE_SECONDS, exchanges=[], waiting=[], witnessed=False, cause=_cause(attacker, victim, now), outcome=None,
                   loser=None, ended_at=None)
     world["fights"].append(fight)
     message = f"{attacker['name']} attacked {victim['name']}"
@@ -182,6 +187,13 @@ def open_fight(world: World, attacker: Actor, victim: Actor) -> Fight:
             member["inventory"]["beer"] = 0
             record_event(world, member, "spilled", f"{member['name']}'s mug went flying")
     return fight
+
+
+def _cause(attacker: Mapping[str, Any], victim: Mapping[str, Any], now: float) -> str:
+    # What brought them to it, for the record: hatred before drink, and a plain grudge (or a forced fight) otherwise.
+    if opinion_of(attacker, victim["id"], now) <= HOSTILITY.hatred:
+        return "hatred"
+    return "drink" if attacker["drunkenness"] >= HOSTILITY.drunk else "grudge"
 
 
 def engage_defenders(world: World, activate: Activate) -> None:
@@ -341,6 +353,8 @@ def check_saved_fights(world: Mapping[str, Any]) -> None:
             raise ValueError("A saved fight's weapons must name its two fighters and kinds the game has")
         if type(fight["witnessed"]) is not bool:
             raise ValueError("A saved fight's witnessed flag must be true or false")
+        if fight["cause"] not in CAUSES:
+            raise ValueError(f"A saved fight's cause must be one of {', '.join(CAUSES)}")
         _check_times(fight, world["time"])
         _check_outcome(fight, busy)
         for entry in fight["waiting"] if isinstance(fight["waiting"], list) else [None]:

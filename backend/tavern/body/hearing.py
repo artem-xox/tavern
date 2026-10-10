@@ -69,7 +69,11 @@ EVENT_SOUNDS: Mapping[str, Sound] = MappingProxyType({
     "action_failed": Sound("grumble", 0.2, 4.0, "a muttered complaint"),
     # A blow is as loud as a quarrel, and carries as far or further: the whole room turns to look.
     "shove": Sound("scuffle", 1.0, 24.0, "a scuffle"),
-    "fight_started": Sound("brawl", 1.0, 30.0, "a brawl"),
+    # A fight is the loudest thing in an evening: its start carries across the whole hall, breaks off whatever can be
+    # broken off and wakes every sleeper. Each blow after it turns heads again without breaking anything off, so the
+    # room does not stop and start twice a second.
+    "fight_started": Sound("brawl", 1.0, 40.0, "a brawl"),
+    "blow": Sound("brawl", 0.3, 40.0, "blows landing"),
     # Below the interrupt level: it turns heads without breaking off what anyone is doing.
     "dice_won": Sound("cheer", 0.3, 12.0, "a whoop at the dice table"),
 })

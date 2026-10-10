@@ -1,3 +1,4 @@
+import { STAND_INS } from "./fightview.ts";
 import type { Actor } from "./types";
 
 /** How one character sprite under /characters is drawn. */
@@ -37,10 +38,13 @@ export function spriteOf(actor: Actor): { name: string; sheet: SpriteSheet } {
 }
 
 /**
- * The pose to draw: the wanted one when the sprite ships it. A seated pose it lacks falls back to Seated, so a
- * guest stays in their chair; anything else to Idle rather than a missing image.
+ * The pose to draw: the wanted one when the sprite ships it. A fight or wound pose it lacks is stood in for by
+ * a pose it has (`STAND_INS`); a seated pose falls back to Seated, so a guest stays in their chair; anything else
+ * to Idle rather than a missing image.
  */
 export function shippedPose(sheet: SpriteSheet, wanted: string): string {
   if (sheet.poses.includes(wanted)) return wanted;
+  const standIn: string | undefined = (STAND_INS[wanted] ?? []).find((pose: string): boolean => sheet.poses.includes(pose));
+  if (standIn) return standIn;
   return wanted.endsWith("Seated") && sheet.poses.includes("Seated") ? "Seated" : "Idle";
 }

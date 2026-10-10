@@ -72,7 +72,7 @@ function header(actor: Actor, ctx: InspectorContext, mind: Mind | undefined): Te
   return html`<div class="who" style="--visitor:${ctx.color}">
     <div class="portrait"><img alt="" src="/characters/${spriteOf(actor).name}/Idle/rotations/south.png"></div>
     <div><h2>${actor.name}</h2><p class="doing">${sentence(ctx.status)}</p>
-      ${mind ? html`<div class="chips"><span class="chip ${tone}" title="mood ${signed(mind.mood)}">${sentence(mind.mood_words)}</span><span class="chip" title="drunkenness ${Math.round(mind.drunkenness * 100)}%">${sentence(mind.stage)}</span>${actor.ailing ? html`<span class="chip bad" title="came in with a fever; a herbal remedy would cure them">Unwell</span>` : ""}</div>` : ""}</div></div>`;
+      ${mind ? html`<div class="chips"><span class="chip ${tone}" title="mood ${signed(mind.mood)}">${sentence(mind.mood_words)}</span><span class="chip" title="drunkenness ${Math.round(mind.drunkenness * 100)}%">${sentence(mind.stage)}</span>${actor.ailing ? html`<span class="chip bad" title="came in with a fever; a herbal remedy would cure them">Unwell</span>` : ""}${actor.health < 70 || actor.condition !== "ok" ? html`<span class="chip bad" title="health ${Math.round(actor.health)} of 100; a remedy or a bed would mend them">${actor.condition === "out" ? "Knocked out" : actor.condition === "down" ? "Thrown down" : actor.condition === "groggy" ? "Groggy" : "Hurt"} ${Math.round(actor.health)}</span>` : ""}</div>` : ""}</div></div>`;
 }
 
 /** What the guest is doing and where, the thought behind it in their own words, and what they intend. */

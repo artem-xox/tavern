@@ -17,7 +17,8 @@ class Hostility:
         opinion: Opinion of the target at or below which they may be turned on.
         recent: Seconds a cause stays fresh, counted from when its thought formed.
         urge: Urge (temper times the loosening of drink) a guest needs for each hostile verb.
-        drunk: Drunkenness (0-1) from which drink alone brings a guest to a fight: really drunk, not merely tipsy.
+        drunk: Drunkenness (0-1) from which drink alone brings a guest to a fight: well into the evening's ale,
+            which in a ten-minute evening is as drunk as a guest gets (they peak at 0.15-0.45).
         hatred: Opinion of the target at or below which a guest may fight sober, with `hatred_urge` of urge.
         hatred_urge: Urge a guest who hates the target needs to fight: a hot head is enough, drunk or not.
     """
@@ -33,10 +34,10 @@ class Hostility:
 # A fight takes a hotter head than a shove: a sober hothead shoves, only drink or fury fights.
 # A fight comes by two roads: strong drink (the `drunk` stage) in a hot head, or real hatred in a hot enough one.
 HOSTILITY = Hostility(opinion=-30.0, recent=120.0, urge=MappingProxyType({"shove": 0.45, "start_fight": 0.85}),
-                      drunk=0.45, hatred=-70.0, hatred_urge=0.5)
+                      drunk=0.3, hatred=-70.0, hatred_urge=0.5)
 
 # The thoughts that give a grudge a reason to be acted on.
-HOSTILE_CAUSES = ("insulted", "quarrel", "seat_taken", "friend_insulted", "line_cut")
+HOSTILE_CAUSES = ("insulted", "quarrel", "seat_taken", "friend_insulted", "line_cut", "table_intruded")
 
 
 def urge(observation: Mapping[str, Any]) -> float:

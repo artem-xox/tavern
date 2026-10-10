@@ -10,6 +10,7 @@ from tavern.body.blows import MIN_SECONDS
 from tavern.body.fights import OUTCOMES, fight_of, running
 from tavern.evening.decisions import free_to_decide
 from tavern.hall.world import create_world, start_action
+from tavern.social.scenes import conversation_of
 from social_hall import actor, advance, command, hall
 
 
@@ -144,3 +145,14 @@ def test_a_malformed_fight_or_wound_fails_loudly_on_load(damage: Any) -> None:
     damage(world)
     with pytest.raises(ValueError):
         parse_world(json.dumps(world))
+
+
+def test_two_hot_heads_who_break_apart_go_on_cursing_in_a_scene_of_their_own() -> None:
+    world = pair()
+    for who in ("ada", "bea"):
+        actor(world, who)["traits"].update(strength=0.3, brawling=0.3, courage=1.0, temper=0.8)
+    brawl(world)
+    fight = finish(world, 40.0)
+    assert fight["outcome"] == "shouting"
+    scene = conversation_of(world, "ada")
+    assert (scene is not None and sorted(scene["participants"]), scene["topic"]) == (["ada", "bea"], "the fight they have just had")

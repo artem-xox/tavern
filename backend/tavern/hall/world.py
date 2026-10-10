@@ -12,7 +12,7 @@ from tavern.body.dozing import nodding_off, show_sleep
 from tavern.body.drunkenness import wear_off
 from tavern.body.energy import tire
 from tavern.body.expression import update_expression
-from tavern.body.fights import begin_waiting, engage_defenders, run_fights
+from tavern.body.fights import Fight, begin_waiting, engage_defenders, run_fights
 from tavern.body.projects import honor_projects, open_project
 from tavern.body.queues import check_lines, cut_in, line_of, must_wait
 from tavern.body.wounds import RECOVER, step_wounds
@@ -157,7 +157,7 @@ def step_world(world: World, dt: float) -> None:
     engage_defenders(world, activate)
     for actor in world["actors"]:
         step_actor(world, actor, elapsed)
-    _fall_and_rise(world)
+    cursing = _fall_and_rise(world)
     _see_off(world)
     call_last_orders(world, since)
     call_closing(world, since)
@@ -175,6 +175,9 @@ def step_world(world: World, dt: float) -> None:
         clear_action(world, actor)
     for actor in attend(world):
         clear_action(world, actor)
+    # Two who broke apart still hot go on cursing, once this tick's sounds have drawn their glances.
+    for fight in cursing:
+        keep_cursing(world, fight)
     wear_off(world, elapsed)
     tire(world, elapsed)
     for actor in nodding_off(world, elapsed):
@@ -184,17 +187,16 @@ def step_world(world: World, dt: float) -> None:
     show_sleep(world)
 
 
-def _fall_and_rise(world: World) -> None:
+def _fall_and_rise(world: World) -> list[Fight]:
     # Fights run their exchanges and end, and their next duel (a bystander waiting a turn) begins; then whoever is laid
     # low goes down, whoever is up again stands, and whoever was knocked out and left untreated slips away home.
+    # Returns the fights that ended in shouting.
     bouts = run_fights(world)
     for actor in bouts.released:
         clear_action(world, actor)
     begin_waiting(world, activate, bouts.ended)
     engage_defenders(world, activate)
     note_started(world)
-    for fight in bouts.shouting:
-        keep_cursing(world, fight)
     stepped = step_wounds(world)
     for actor in stepped.released:
         clear_action(world, actor)
@@ -205,6 +207,7 @@ def _fall_and_rise(world: World) -> None:
         if door is not None and actor["action"] is None:
             record_event(world, actor, "limped_home", f"{actor['name']}, battered, slipped out of the inn to go home")
             start_action(world, actor["id"], {"id": f"leave:{door['id']}", "verb": "leave", "target_id": door["id"]})
+    return bouts.shouting
 
 
 def _see_off(world: World) -> None:

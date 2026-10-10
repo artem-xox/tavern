@@ -8,7 +8,7 @@ from typing import Any
 from tavern.body.ailment import carries_cure
 from tavern.body.items import ITEMS
 from tavern.body.wounds import health_of, hurt
-from tavern.mind.fight_policy import utilities as fight_utilities
+from tavern.mind.fight_policy import hatred_scores, utilities as fight_utilities
 from tavern.mind.goals import serving
 from tavern.mind.hall_view import in_use, line_place, steps_to
 from tavern.social.giving import empty_handed_tablemates
@@ -96,6 +96,7 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
     _score_approaches(observation, candidates, scores)
     _score_goal(observation, candidates, scores)
     _score_answers(observation, candidates, scores)
+    hatred_scores(observation, candidates, scores)
     return scores
 
 

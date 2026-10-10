@@ -1,11 +1,28 @@
 """What a guest would score each reaction to a fight or a hurt without a model, from their traits and drink."""
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from tavern.body.wounds import health_of
 from tavern.social.bystanders import friends_of_fighters
-from tavern.social.hostility import urge
+from tavern.social.hostility import HOSTILITY, urge
+from tavern.social.thoughts import opinion_of
+
+
+def hatred_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
+                  scores: dict[str, float]) -> None:
+    """Lift the score of a fight with someone the guest hates, as a guest who wants it scores it.
+
+    Args:
+        observation: The guest's observation.
+        candidates: Concrete actions.
+        scores: Their scores, updated in place: a `start_fight` against someone thought of at or below the line of
+            hatred (`hostility.HOSTILITY.hatred`) is worth at least 0.4, and more to a hotter head.
+    """
+    actor, now = observation["actor"], observation.get("time", float("-inf"))
+    for action in candidates:
+        if action["verb"] == "start_fight" and opinion_of(actor, action["target_id"], now) <= HOSTILITY.hatred:
+            scores[action["id"]] = max(scores[action["id"]], 0.4 + 0.3 * min(1.0, urge(observation)))
 
 
 def utilities(observation: Mapping[str, Any]) -> dict[str, float]:

@@ -6,7 +6,7 @@ from random import Random
 import pytest
 
 from tavern.body.blows import (ENDINGS, EXCHANGE_SECONDS, KNOCKOUT, MAX_SECONDS, MIN_SECONDS, Ending, Fighter,
-                               damage, ending, hit_chance, swing, toughness, yield_line)
+                               damage, ending, hit_chance, shove_result, swing, toughness, yield_line)
 
 
 def fighter(strength: float = 0.5, brawling: float = 0.5, courage: float = 0.5, temper: float = 0.4,
@@ -184,3 +184,16 @@ def test_a_fight_lasts_at_least_the_minimum_and_ends_in_a_known_way(seed: int) -
 
 def test_a_seeded_fight_replays_identically() -> None:
     assert bout(STRONG_SOBER, WEAK_DRUNK, 3) == bout(STRONG_SOBER, WEAK_DRUNK, 3)
+
+
+@pytest.mark.parametrize("shover, shoved, roll, expected", [
+    pytest.param(fighter(strength=0.9), fighter(strength=0.1), 0.05, "down", id="a-strong-shove-of-the-frail-throws-them"),
+    pytest.param(fighter(strength=0.9), fighter(strength=0.1), 0.5, "staggered", id="or-staggers-them"),
+    pytest.param(fighter(strength=0.9), fighter(strength=0.1), 0.95, "nothing", id="or-misses-its-mark"),
+    pytest.param(fighter(strength=0.1), fighter(strength=0.9), 0.3, "nothing", id="a-weak-shove-of-the-strong-does-nothing"),
+    pytest.param(fighter(), fighter(drunkenness=0.9), 0.3, "staggered", id="a-drunk-holds-their-feet-worse"),
+    pytest.param(fighter(), fighter(drunkenness=0.0), 0.3, "staggered", id="equals-sometimes-stagger"),
+    pytest.param(fighter(), fighter(), 0.9, "nothing", id="and-mostly-do-nothing"),
+])
+def test_what_a_shove_does_to_the_one_shoved(shover: Fighter, shoved: Fighter, roll: float, expected: str) -> None:
+    assert shove_result(shover, shoved, roll) == expected

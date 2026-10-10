@@ -41,7 +41,7 @@ def test_peaceful_guests_get_no_hostile_targets(observation: dict[str, Any], ver
     pytest.param(view(QUARREL, opinion=-40.0, temper=1.0), ["bea"], [], id="sober-furious-guest-who-dislikes-her-shoves"),
     pytest.param(view(QUARREL, opinion=-50.0, temper=1.0), ["bea"], ["bea"], id="sober-furious-guest-who-hates-her-fights"),
     pytest.param(view(QUARREL, opinion=-50.0, temper=0.4), [], [], id="hatred-needs-a-hot-enough-head"),
-    pytest.param(view(QUARREL, opinion=-40.0, temper=1.0, drunkenness=0.3), ["bea"], [], id="tipsy-is-not-drunk-enough"),
+    pytest.param(view(QUARREL, opinion=-40.0, temper=1.0, drunkenness=0.25), ["bea"], [], id="tipsy-is-not-drunk-enough"),
     pytest.param(view(QUARREL, opinion=-40.0, people=[person("bea", fighting="cid")], temper=1.0, drunkenness=DRUNK),
                  [], [], id="not-someone-already-fighting"),
     pytest.param(view(QUARREL, opinion=-40.0, people=[person("bea", condition="out")], temper=1.0, drunkenness=DRUNK),

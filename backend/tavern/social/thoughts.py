@@ -91,7 +91,7 @@ _BASE_RELATION = {"name", "opinion", "familiarity"}
 # Starting relationships a scenario may name, as (base opinion, familiarity), held both ways.
 _STARTING: Mapping[str, tuple[float, str]] = MappingProxyType({
     "old friends": (50.0, "friend"), "rivals": (-40.0, "acquaintance"),
-    "bad blood": (-55.0, "acquaintance")})
+    "bad blood": (-60.0, "acquaintance")})
 
 
 class Thought(TypedDict):
