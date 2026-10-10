@@ -103,6 +103,7 @@ def wronged(world: dict[str, Any], temper: float) -> None:
 def test_a_guest_with_a_grudge_who_is_inclined_to_it_picks_a_fight_in_the_world() -> None:
     world = seated()
     wronged(world, 1.0)
+    actor(world, "ada")["drunkenness"] = 0.5  # fights come by drink or by hatred
     decision = chooses(world, "confront", "start_fight")
     assert (decision["action"]["id"], decision["family"]["name"]) == ("start_fight:bea", "confront")
     assert start_action(world, "ada", decision["action"])["accepted"]

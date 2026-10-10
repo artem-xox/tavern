@@ -210,7 +210,7 @@ def _shove(world: World, actor: Actor, victim: Actor | None) -> None:
 def _use_remedy(world: World, actor: Actor, target: Any) -> None:
     actor["inventory"]["remedy"] -= 1
     treat(actor)
-    record_event(world, actor, "cured", f"{actor['name']} took a remedy and looks better already")
+    record_event(world, actor, "tended", f"{actor['name']} took a remedy and looks better already")
 
 
 def _ask_for_remedy(world: World, actor: Actor, healer: Actor | None) -> None:

@@ -17,15 +17,23 @@ class Hostility:
         opinion: Opinion of the target at or below which they may be turned on.
         recent: Seconds a cause stays fresh, counted from when its thought formed.
         urge: Urge (temper times the loosening of drink) a guest needs for each hostile verb.
+        drunk: Drunkenness (0-1) from which drink alone brings a guest to a fight: really drunk, not merely tipsy.
+        hatred: Opinion of the target at or below which a guest may fight sober, with `hatred_urge` of urge.
+        hatred_urge: Urge a guest who hates the target needs to fight: a hot head is enough, drunk or not.
     """
 
     opinion: float
     recent: float
     urge: Mapping[str, float]
+    drunk: float
+    hatred: float
+    hatred_urge: float
 
 
 # A fight takes a hotter head than a shove: a sober hothead shoves, only drink or fury fights.
-HOSTILITY = Hostility(opinion=-30.0, recent=120.0, urge=MappingProxyType({"shove": 0.45, "start_fight": 0.85}))
+# A fight comes by two roads: strong drink (the `drunk` stage) in a hot head, or real hatred in a hot enough one.
+HOSTILITY = Hostility(opinion=-30.0, recent=120.0, urge=MappingProxyType({"shove": 0.45, "start_fight": 0.85}),
+                      drunk=0.45, hatred=-70.0, hatred_urge=0.5)
 
 # The thoughts that give a grudge a reason to be acted on.
 HOSTILE_CAUSES = ("insulted", "quarrel", "seat_taken", "friend_insulted", "line_cut")
@@ -67,12 +75,24 @@ def hostile_targets(observation: Mapping[str, Any], verb: str) -> list[str]:
     if verb not in HOSTILITY.urge:
         raise ValueError(f"{verb!r} is not a hostile verb")
     now, actor = observation.get("time"), observation["actor"]
-    if now is None or urge(observation) < HOSTILITY.urge[verb]:
+    if now is None or urge(observation) < min(HOSTILITY.urge[verb], HOSTILITY.hatred_urge if verb == "start_fight"
+                                              else HOSTILITY.urge[verb]):
         return []
     return sorted({person["id"] for person in observation.get("people", [])
                    if person["id"] != actor["id"] and not person.get("post") and not person.get("asleep")
-                   and _near(observation, person) and opinion_of(actor, person["id"], now) <= HOSTILITY.opinion
+                   and not person.get("fighting") and person.get("condition", "ok") not in ("down", "out")
+                   and _near(observation, person) and _willing(observation, person["id"], verb, now)
                    and _caused(actor, person["id"], now)})
+
+
+def _willing(observation: Mapping[str, Any], other_id: str, verb: str, now: float) -> bool:
+    # A shove needs a grudge and a temper. A fight comes by drink (a hot head, really drunk, who thinks ill of them) or
+    # by hatred (a head hot enough, drunk or sober).
+    actor, opinion, hot = observation["actor"], opinion_of(observation["actor"], other_id, now), urge(observation)
+    if verb == "shove":
+        return opinion <= HOSTILITY.opinion
+    drunk = actor.get("drunkenness", 0.0) >= HOSTILITY.drunk and hot >= HOSTILITY.urge["start_fight"]
+    return (opinion <= HOSTILITY.opinion and drunk) or (opinion <= HOSTILITY.hatred and hot >= HOSTILITY.hatred_urge)
 
 
 def _near(observation: Mapping[str, Any], person: Mapping[str, Any]) -> bool:

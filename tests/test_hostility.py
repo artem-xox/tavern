@@ -37,7 +37,15 @@ def test_peaceful_guests_get_no_hostile_targets(observation: dict[str, Any], ver
 @pytest.mark.parametrize("observation, shove, fight", [
     pytest.param(view(QUARREL, opinion=-40.0), ["bea"], [], id="sober-hothead-shoves-but-does-not-fight"),
     pytest.param(view(QUARREL, opinion=-10.0), ["bea"], [], id="opinion-exactly-at-the-line"),
-    pytest.param(view(QUARREL, opinion=-40.0, temper=1.0), ["bea"], ["bea"], id="sober-furious-guest-fights"),
+    # Fights come by drink or by hatred (opinion -70 with a slight counted in), so a sober grudge is only a shove.
+    pytest.param(view(QUARREL, opinion=-40.0, temper=1.0), ["bea"], [], id="sober-furious-guest-who-dislikes-her-shoves"),
+    pytest.param(view(QUARREL, opinion=-50.0, temper=1.0), ["bea"], ["bea"], id="sober-furious-guest-who-hates-her-fights"),
+    pytest.param(view(QUARREL, opinion=-50.0, temper=0.4), [], [], id="hatred-needs-a-hot-enough-head"),
+    pytest.param(view(QUARREL, opinion=-40.0, temper=1.0, drunkenness=0.3), ["bea"], [], id="tipsy-is-not-drunk-enough"),
+    pytest.param(view(QUARREL, opinion=-40.0, people=[person("bea", fighting="cid")], temper=1.0, drunkenness=DRUNK),
+                 [], [], id="not-someone-already-fighting"),
+    pytest.param(view(QUARREL, opinion=-40.0, people=[person("bea", condition="out")], temper=1.0, drunkenness=DRUNK),
+                 [], [], id="not-someone-already-on-the-floor"),
     pytest.param(view(QUARREL, opinion=-40.0, drunkenness=DRUNK), ["bea"], ["bea"], id="drink-loosens-restraint"),
     pytest.param(view(QUARREL, opinion=-40.0, temper=0.3, drunkenness=DRUNK), ["bea"], [], id="drunk-and-calm"),
     pytest.param(view([thought("insulted", "bea", 30.0)], opinion=-30.0), ["bea"], [], id="insult-is-a-cause"),

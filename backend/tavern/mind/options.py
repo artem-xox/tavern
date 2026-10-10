@@ -6,6 +6,7 @@ from typing import Any
 
 from tavern.body.activities import FAMILIES
 from tavern.body.items import ITEMS
+from tavern.mind.fight_words import TEXTS as FIGHT_TEXTS
 from tavern.social.aims import aim_words
 from tavern.social.giving import empty_handed_tablemates
 from tavern.social.invitations import KINDS, known_place
@@ -234,7 +235,8 @@ def _approach(observation: Observation, action: Action) -> str:
     partner = _someone(observation, action["target_id"])
     name = label_of(partner) if partner else action["target_id"]
     table = known_object(observation, partner.get("table_id")) if partner else None
-    pale = f" ({name} looks pale and feverish)" if partner and partner.get("ailing") else ""
+    pale = (f" ({name} looks pale and feverish)" if partner and partner.get("ailing")
+            else f" ({name} is battered and hurt)" if partner and partner.get("hurt") else "")
     if table is None:
         return f"walk over to {name}'s table and talk with them{pale}, standing beside it"
     return (f"walk {walk_words(steps_to(observation, table))} over to the {label_of(table)} and talk with {name}{pale}, "
@@ -262,7 +264,9 @@ def _give(observation: Observation, action: Action) -> str:
     name = label_of(receiver) if receiver else action["target_id"]
     where = _placed(observation, receiver)
     item = ITEMS[action["item"]]
-    cure = "they look pale and feverish: this would cure them; " if item.cures and receiver and receiver.get("ailing") else ""
+    cure = ("they look pale and feverish: this would cure them; " if item.cures and receiver and receiver.get("ailing")
+            else "they are battered and hurt: this would mend them; " if item.cures and receiver and receiver.get("hurt")
+            else "")
     return (f"hand {item.one} they are carrying to {name}, who {where} ({cure}it is theirs to give up, "
             f"and {name} may refuse it if there is bad blood between them)")
 
@@ -350,4 +354,5 @@ _OPTIONS: Mapping[str, Callable[[Observation, Action], str]] = {
     "approach": _approach, "join_conversation": _join, "play_darts": _darts, "stand_at_bar": _bar, "watch": _watch,
     "watch_dice": _watch_dice,
     "use_toilet": _toilet, "give": _give, "bring_drink": _bring,
-    "inspect": _inspect, "wait": _wait, "leave": _leave, "cut_in_line": _cut, "shove": _shove, "start_fight": _fight}
+    "inspect": _inspect, "wait": _wait, "leave": _leave, "cut_in_line": _cut, "shove": _shove, "start_fight": _fight,
+    **FIGHT_TEXTS}
