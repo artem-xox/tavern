@@ -3983,8 +3983,21 @@ Added 2026-10-10 at the user's request: evenings cost $0.35–0.98 in K12, again
   `tie_departed`, read from the room's log). The prefix lists the new prompts. Live (Jev + Haiku 5.5, seed 5, 605
   game s): 113 intention calls against 33, $0.037 of an evening that cost $0.148 in all (turns $0.048 for 116
   calls, 3 of them unspoken); no failed call.
-- [ ] **L3 — Stock lines for the moments that recur** (answers to invitations, the bar, goodbyes, greetings), in a
-  phrasebook per character.
+- [x] **L3 — Stock lines for the moments that recur.** Every place found where the act is already decided by the game
+  and only the words are left (`phrasebook.STOCK_KINDS`, the keys of `scripted.LINES`): the opening `greet`, a decided
+  `accept` or `decline` of an invitation (`view["answer"]`), and the three goodbyes `pressed`, `content` and `closing`.
+  A guest's phrasebook is `data/voices/<character id>.json` (`card_hash`, `lines`), read by `adapters/voices.py` and
+  spoken by `claude_writer(ask, voices)` through `phrasebook.stock_turn` without a call, for a sober, healthy guest who
+  has not just fought and did not come over to do something; otherwise, and for every other act, the model writes the
+  line. The act is `scripted.planned_act`, so the game's decisions do not change; a line already said tonight is not
+  said twice. `scripts/voices.py` writes the files from `data/minds/voice_prompt.md` (default model
+  `claude-haiku-5-5`; the adapter switches thinking off, which Sonnet 5.5 rejects), only those whose card changed
+  (`voice_question.card_hash`, which `tests/test_voice_data.py` pins). Lines that name a game, a drink or a seat in a yes
+  or a no, the need that presses, or a family the card does not give are left out and counted. A new guest, real or
+  not, needs `make`-free steps only: their card, then `python scripts/voices.py --only <id>`, then a look at the file,
+  which is data to edit by hand. Live (Jev + Haiku 5.5, seed 5, 569 game s): 83 turns, 15 of them stock (18%), 77
+  calls for $0.033, 0 failed; the evening cost $0.143 against $0.148 in L2's run. At Haiku 5.5's prices the saving is
+  a half cent an evening; the lines are instant and in the guest's own voice, which is the gain.
 - [ ] **L4 — A shorter line-writer context:** one `looks_short` per card, and "On your mind" without repeats.
 
 ## Acceptance scenarios
