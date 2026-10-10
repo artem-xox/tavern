@@ -16,12 +16,12 @@ DIRECTIONS = ("north", "south", "east", "west")
 @pytest.mark.parametrize(
     ("character", "actor_id", "display_name"),
     [
-        pytest.param("edda", "mara", "Edda", id="healer"),
-        pytest.param("rurik", "ivo", "Rurik", id="guard"),
-        pytest.param("toren", "nell", "Toren", id="trader"),
-        pytest.param("cook", "brannoc", "Brida", id="cook"),
-        pytest.param("courier", "wenna", "Calder", id="courier"),
-        pytest.param("visitor", "osric", "Saye", id="storyteller"),
+        pytest.param("edda", "edda", "Edda", id="healer"),
+        pytest.param("rurik", "rurik", "Rurik", id="guard"),
+        pytest.param("toren", "toren", "Toren", id="trader"),
+        pytest.param("cook", "brida", "Brida", id="cook"),
+        pytest.param("courier", "calder", "Calder", id="courier"),
+        pytest.param("visitor", "saye", "Saye", id="storyteller"),
     ],
 )
 def test_character_group_is_ready_for_tavern(character: str, actor_id: str, display_name: str) -> None:

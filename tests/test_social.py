@@ -252,9 +252,9 @@ def test_obstacle_editor_protects_entire_counter(tmp_path: Path) -> None:
 def test_common_table_has_a_view_of_the_beer_tap() -> None:
     data = json.loads((Path(__file__).parents[1] / "data/tavern.json").read_text())
     world = create_world(data)
-    assert start_action(world, "mara", command("sit", "chair-1"))["accepted"]
+    assert start_action(world, "edda", command("sit", "chair-1"))["accepted"]
     advance(world, 20)
-    assert "tap" in {item["id"] for item in observe_actor(world, "mara")["objects"]}
+    assert "tap" in {item["id"] for item in observe_actor(world, "edda")["objects"]}
 
 
 def test_conversation_can_share_a_known_beer_location() -> None:
