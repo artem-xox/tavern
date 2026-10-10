@@ -1,6 +1,6 @@
 """Scripted conversation lines: the offline turn writer, choosing a speech act by a seeded rule."""
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from random import Random
 import re
 from types import MappingProxyType
@@ -55,7 +55,28 @@ BORED = 50.0  # A guest this bored asks for a game, of darts or of dice.
 BOLD = 0.5  # A guest this brave (courage trait) prefers dice, a game of chance, to darts.
 
 
-def scripted_turn(view: Mapping[str, Any]) -> "TurnResult":
+def planned_act(view: Mapping[str, Any]) -> tuple[str, str]:
+    """Tell which act the scripted rule would speak, and which lines would voice it.
+
+    Args:
+        view: Scene view of `turns.turn_view`.
+
+    Returns:
+        The speech act, and the kind of line that voices it: a key of `LINES`, or the invitation's kind
+        for an `invite`, which is the same as `scripted_turn` would choose.
+
+    Raises:
+        KeyError: The view lacks a field the rule reads.
+    """
+    return _act(view, _draw(view))
+
+
+def _draw(view: Mapping[str, Any]) -> Random:
+    # Seeded by the evening, the scene and the turn index, so a replay writes the same line.
+    return Random(f"{view['seed']}:{view['conversation']['id']}:{view['conversation']['turn']}")
+
+
+def scripted_turn(view: Mapping[str, Any], lines: Mapping[str, Sequence[str]] = LINES) -> "TurnResult":
     """Write the next line of a scene by a seeded rule, without a model.
 
     The first line greets. An invitee answers a pending invitation first (see `_answer`). A
@@ -69,6 +90,8 @@ def scripted_turn(view: Mapping[str, Any]) -> "TurnResult":
 
     Args:
         view: Scene view of `turns.turn_view`.
+        lines: The words of each kind of line (`LINES`'s keys); a guest's own phrasebook may stand in
+            for the kinds it holds, and a kind the rule chooses must be there.
 
     Returns:
         A turn result (`turns.TurnResult`) addressing the next participant in the circle (the
@@ -79,7 +102,7 @@ def scripted_turn(view: Mapping[str, Any]) -> "TurnResult":
         KeyError: The view lacks a field the rule reads.
     """
     scene, me = view["conversation"], view["speaker"]
-    rng = Random(f"{view['seed']}:{scene['id']}:{scene['turn']}")
+    rng = _draw(view)
     act, kind = _act(view, rng)
     addressee = _addressee(scene, me, act)
     name = addressee["name"] if addressee.get("known", True) else "friend"
@@ -91,7 +114,7 @@ def scripted_turn(view: Mapping[str, Any]) -> "TurnResult":
     elif act == "invite":
         line = INVITE_LINES[kind]
     else:
-        line = rng.choice(LINES[kind])
+        line = rng.choice(lines[kind])
     result: "TurnResult" = {"line": line.format(name=name, me=me["name"]), "act": act,
                             "addressee": addressee["id"], "topic": scene["topic"]}
     if act == "invite":
