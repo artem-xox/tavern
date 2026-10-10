@@ -3,9 +3,9 @@
 from collections.abc import Mapping
 from typing import Any
 
-from tavern.body.ailment import relieve
 from tavern.body.expression import show_emote
 from tavern.body.items import ITEMS
+from tavern.body.wounds import needs_cure, treat
 from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World
 from tavern.social.names import called
@@ -31,6 +31,8 @@ def gift_error(world: Mapping[str, Any], giver: Mapping[str, Any], receiver: Map
     item = ITEMS.get(kind) if isinstance(kind, str) else None
     if item is None:
         return f"Unknown item {kind!r}"
+    if not item.giftable:
+        return f"{item.one.capitalize()} is not for giving away"
     if giver["inventory"][kind] <= 0:
         return f"No {kind} in inventory"
     if receiver["inventory"][kind] >= item.hands:
@@ -44,7 +46,7 @@ def gift_error(world: Mapping[str, Any], giver: Mapping[str, Any], receiver: Map
 
 
 # What a guest keeps when someone gave them something, whatever it was.
-RECEIVED = (*(item.received for item in ITEMS.values()), "cured")
+RECEIVED = (*(item.received for item in ITEMS.values()), "cured", "tended")
 
 
 def formed_since(holder: Mapping[str, Any], about_id: str, kinds: tuple[str, ...], since: float) -> bool:
@@ -149,17 +151,20 @@ def hand_over(world: World, giver: Actor, receiver: Actor, kind: str) -> None:
               about=receiver)
         return
     giver["inventory"][kind] -= 1
-    # A remedy given to a guest who came in unwell is used on the spot, so they never hold it.
-    cured = item.cures and receiver["ailing"]
+    # A remedy given to a guest who came in unwell, or who is hurt, is used on the spot, so they never hold it.
+    cured = item.cures and needs_cure(receiver)
+    fever = cured and receiver["ailing"]
     if cured:
-        relieve(receiver)
+        treat(receiver)
     else:
         receiver["inventory"][kind] += 1
     message = (f"{receiver['name']} took {giver['name']}'s {item.one.removeprefix('a ')} and looks better already" if cured
                else f"{giver['name']} gave {receiver['name']} {item.one}")
+    # Only a fever is "cured" (the evening's one sick guest is read from those events); a mended wound is "tended".
+    event = "cured" if fever else "tended" if cured else "gave"
     for member in (giver, receiver):
-        record_event(world, member, "cured" if cured else "gave", message)
-    think(receiver, "cured" if cured else item.received, now, f"{called(receiver, giver)} gave me {item.one}", message,
+        record_event(world, member, event, message)
+    think(receiver, event if cured else item.received, now, f"{called(receiver, giver)} gave me {item.one}", message,
           about=giver)
     think(giver, "generous", now, f"I gave {called(giver, receiver)} {item.one}", message, about=receiver)
     show_emote(receiver, "affection", now + world["rules"]["emote_seconds"]["affection"])

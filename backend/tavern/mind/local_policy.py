@@ -7,6 +7,8 @@ from typing import Any
 
 from tavern.body.ailment import carries_cure
 from tavern.body.items import ITEMS
+from tavern.body.wounds import health_of, hurt
+from tavern.mind.fight_policy import hatred_scores, utilities as fight_utilities
 from tavern.mind.goals import serving
 from tavern.mind.hall_view import in_use, line_place, steps_to
 from tavern.social.giving import empty_handed_tablemates
@@ -85,6 +87,7 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
         # urge (temper loosened by drink) lifts them; a fight is likelier than a shove only through Jev.
         "shove": 0.1 + 0.3 * min(1.0, urge(observation)),
         "start_fight": 0.05 + 0.2 * min(1.0, urge(observation)),
+        **fight_utilities(observation),
     }
     scores = {action["id"]: utility[action["verb"]] for action in candidates}
     _score_seats(observation, candidates, scores)
@@ -93,6 +96,7 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
     _score_approaches(observation, candidates, scores)
     _score_goal(observation, candidates, scores)
     _score_answers(observation, candidates, scores)
+    hatred_scores(observation, candidates, scores)
     return scores
 
 
@@ -122,8 +126,13 @@ def _score_gifts(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
             score += 0.15 * empty - 0.4 * needs["thirst"] / 100
         scores[action["id"]] = min(1.0, max(0.0, score))
         # A remedy for someone who looks unwell is what a healer carries it for: little outweighs it.
-        if action["verb"] == "give" and ITEMS[action["item"]].cures and people.get(action["target_id"], {}).get("ailing"):
+        if action["verb"] == "give" and ITEMS[action["item"]].cures and _unwell(people.get(action["target_id"], {})):
             scores[action["id"]] = CURE_SCORE
+
+
+def _unwell(person: Mapping[str, Any]) -> bool:
+    # Someone who came in with a fever, or is hurt, whom a healer's remedy would help.
+    return bool(person.get("ailing") or person.get("hurt"))
 
 
 def _score_approaches(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
@@ -140,7 +149,7 @@ def _score_approaches(observation: Mapping[str, Any], candidates: Sequence[Mappi
         walk = steps_to(observation, table) if table else 0
         score = scores[action["id"]] - min(0.15, 0.01 * walk) + 0.25 * opinion_of(actor, action["target_id"], now) / 100
         # Someone who carries a cure goes to the one who looks unwell (`tavern.body.ailment`) before anyone else.
-        if healer and people.get(action["target_id"], {}).get("ailing"):
+        if healer and _unwell(people.get(action["target_id"], {})):
             score += SEEKING_THE_SICK
         scores[action["id"]] = min(1.0, max(0.0, score))
 
@@ -282,6 +291,12 @@ def _leave_utility(observation: Mapping[str, Any]) -> float:
     weary = (min(1.0, max(0.0, (needs["fatigue"] / 100 - 0.6) / 0.3)) * (1 - 0.6 * actor.get("drunkenness", 0.0))
              * min(1.0, seconds / 180))
     wish = 0.05 + 0.75 * max(content, weary, upset * min(1.0, seconds / 60))
+    # A hurt guest means to go home and mend (a healer in sight scores higher, see `fight_policy`); a timid one
+    # has little wish to stay where a fight is on.
+    if hurt(actor):
+        wish = max(wish, 0.55 + 0.4 * (1 - health_of(actor) / 100))
+    if any(person.get("fighting") for person in observation.get("people", [])):
+        wish = max(wish, 0.15 + 0.5 * (1 - actor.get("traits", {}).get("courage", 0.5)))
     # Once the barkeep has called closing time everyone means to go: at first a guest finishes their mug or their
     # chat, 40 s on nothing but a pressing need outweighs the door (a full bladder scores 1.0). 0.95 is as strong as
     # walking home with someone.

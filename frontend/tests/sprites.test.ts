@@ -26,6 +26,18 @@ test("stills: every character ships a sleeping pose in four views", () => {
   assert.ok(sleeping.length >= 24);
 });
 
+test("shippedPose: a fight pose a sprite lacks stands in for by what it has", () => {
+  assert.equal(shippedPose(sheet(["Idle", "Talking"]), "Fighting"), "Talking");
+  assert.equal(shippedPose(sheet(["Idle", "Seated", "SleepingSeated"]), "KnockedOut"), "SleepingSeated");
+  assert.equal(shippedPose(sheet(["Idle"]), "Hurt"), "Idle");
+  assert.equal(shippedPose(sheet(["Idle", "Seated"]), "HurtSeated"), "Seated");
+  assert.equal(shippedPose(sheet(["Idle", "Giving"]), "Shoving"), "Giving");
+});
+
+test("shippedPose: the fight poses are used when a sprite ships them", () => {
+  assert.equal(shippedPose(sheet(["Idle", "Talking", "Fighting"]), "Fighting"), "Fighting");
+});
+
 test("stills: every guest loads the six combat poses in four views", () => {
   const poses = ["Fighting", "KnockedOut", "Hurt", "HurtSeated", "Shoving", "HelpingUp"];
   const combat = stills().filter((item) => poses.some((pose) => item.key.includes(`-${pose}-`)));

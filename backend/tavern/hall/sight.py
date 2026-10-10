@@ -5,8 +5,11 @@ from copy import deepcopy
 import math
 from typing import Any
 
+from tavern.body.ailment import carries_cure
 from tavern.body.dozing import asleep
+from tavern.body.fights import fight_of, opponent_of
 from tavern.body.items import ITEMS
+from tavern.body.wounds import hurt, laid_out
 from tavern.hall.room import OBJECT_KINDS, find_object
 from tavern.hall.staff import on_staff, post_of
 from tavern.hall.state import Actor, find_actor
@@ -103,8 +106,9 @@ def people_in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[
 
     Returns:
         Public facts about each visible person (see `world.observe_people`): ID, name as the
-        viewer calls them, cell, seat and table, whether they are free to talk (not a sleeper), whether
-        they are asleep, whether they look unwell (`ailing`), their conversation, whether they are within reach of the viewer (at one table or side by
+        viewer calls them, cell, seat and table, whether they are free to talk (not a sleeper, not fighting nor on the
+        floor), whether they are asleep, whether they look unwell (`ailing`) or hurt, their condition (`wounds`),
+        whom they are fighting (`fighting`), whether they are known to carry a remedy (`healer`), their conversation, whether they are within reach of the viewer (at one table or side by
         side), their current verb and target name, and
         what is in their hands (`holding`, counts of the kinds others can see); for staff also `post`, the name of the bar they work at.
     """
@@ -120,11 +124,14 @@ def people_in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[
         target = find_object(world["map"], action.get("target_id")) or find_actor(world, action.get("target_id"))
         # A stranger is known by their looks until the viewer learns their name.
         people.append({**{key: visitor[key] for key in ("id", "x", "y", "seat_id")}, "name": called(actor, visitor)})
-        scene = conversation_of(world, visitor["id"])
+        scene, fight = conversation_of(world, visitor["id"]), fight_of(world, visitor["id"])
         sleeping = asleep(visitor)
         people[-1].update(table_id=seat.get("table_id") if seat else None,
-                          available=scene is None and not sleeping and not pressed(world, visitor), asleep=sleeping,
-                          ailing=visitor["ailing"],
+                          available=(scene is None and not sleeping and not pressed(world, visitor) and fight is None
+                                     and not laid_out(visitor)), asleep=sleeping,
+                          ailing=visitor["ailing"], hurt=hurt(visitor), condition=visitor["condition"],
+                          fighting=opponent_of(fight, visitor["id"]) if fight else None,
+                          healer=carries_cure(visitor["inventory"]),
                           conversation=scene["id"] if scene else None,
                           beside=within_reach(world, actor, visitor),
                           doing=action.get("verb"), target=target["name"] if target else None,

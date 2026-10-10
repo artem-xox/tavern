@@ -4,7 +4,10 @@ from collections.abc import Mapping
 from typing import Any
 
 from tavern.body.activities import ACTIVITIES
+from tavern.body.ailment import carries_cure
 from tavern.body.dozing import asleep
+from tavern.body.fights import fight_of, opponent_of
+from tavern.body.wounds import laid_out
 from tavern.hall.room import find_object
 from tavern.hall.staff import on_staff
 from tavern.hall.state import find_actor
@@ -70,6 +73,8 @@ def action_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Map
         return _give_error(world, actor, action)
     if activity.opens_errand:
         return _fetch_error(world, actor, action)
+    if activity.closes_in:
+        return _closes_in_error(world, actor, action)
     if activity.approaches:
         return _approach_error(world, actor, action)
     if activity.partner:
@@ -110,6 +115,8 @@ def _talk_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapp
         return "Choose another visitor to talk to"
     if asleep(partner):
         return _asleep(partner)
+    if _incapable(world, partner):
+        return _incapable(world, partner)
     if conversation_of(world, actor["id"]) is not None:
         # Someone already talking carries on with their part for as long as their scene lasts.
         current = actor.get("action")
@@ -134,6 +141,8 @@ def _approach_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: 
         return f"{partner['name']} works behind the bar"
     if asleep(partner):
         return _asleep(partner)
+    if _incapable(world, partner):
+        return _incapable(world, partner)
     current = actor.get("action")
     underway = current is not None and current.get("id") == action["id"]
     if underway and conversation_of(world, actor["id"]) is not None:
@@ -151,9 +160,18 @@ def _approach_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: 
     return f"{partner['name']} has something more pressing to see to" if pressed(world, partner) else None
 
 
+def _incapable(world: Mapping[str, Any], person: Mapping[str, Any]) -> str | None:
+    # Nobody talks to someone lying on the floor, or brings them a drink, and nobody has a word for a fighter.
+    if laid_out(person):
+        return f"{person['name']} is on the floor"
+    if fight_of(world, person["id"]) is not None:
+        return f"{person['name']} is fighting"
+    return None
+
+
 def _confront_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any]) -> str | None:
     # Within reach is the reach of a chat. Whether the grudge is enough is for the decision to weigh,
-    # as with any other verb: the world checks only what is possible.
+    # as with any other verb: the world checks only what is possible. Two who are fighting carry on wherever they stand.
     victim = find_actor(world, action.get("target_id"))
     if victim is None or victim["id"] == actor["id"]:
         return "Choose another visitor to confront"
@@ -161,6 +179,11 @@ def _confront_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: 
         return f"{victim['name']} works behind the bar and is not to be fought"
     if asleep(victim):
         return _asleep(victim)
+    mine = fight_of(world, actor["id"])
+    if mine is not None:
+        return None if victim["id"] == opponent_of(mine, actor["id"]) else "They are already in a fight"
+    if _incapable(world, victim):
+        return _incapable(world, victim)
     return None if within_reach(world, actor, victim) else "Visitors must sit at one table or stand side by side"
 
 
@@ -172,6 +195,8 @@ def _give_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapp
         return f"{receiver['name']} works behind the bar and takes no gifts"
     if asleep(receiver):
         return _asleep(receiver)
+    if fight_of(world, receiver["id"]) is not None:
+        return f"{receiver['name']} is fighting"
     if not within_reach(world, actor, receiver):
         return "Visitors must sit at one table or stand side by side"
     return gift_error(world, actor, receiver, action.get("item"))
@@ -185,6 +210,8 @@ def _fetch_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Map
         return f"{receiver['name']} works behind the bar and needs no drink brought"
     if asleep(receiver):
         return _asleep(receiver)
+    if _incapable(world, receiver):
+        return _incapable(world, receiver)
     return fetch_error(world, actor, receiver) or (
         None if within_reach(world, actor, receiver) else "Visitors must sit at one table or stand side by side")
 
@@ -198,3 +225,37 @@ def _join_error(world: Mapping[str, Any], actor: Mapping[str, Any], member: Mapp
     if scene["table_id"] is not None:
         return None if at_table(world, actor) == scene["table_id"] else "Join a conversation at your own table"
     return None if side_by_side(world, actor, member) else "Stand beside someone in the conversation to join it"
+
+
+def _closes_in_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any]) -> str | None:
+    # Stepping between fighters, waiting a turn, helping someone up, asking a healer: each needs its person to be one for
+    # it, and the actor within reach of them, or able to walk to the table they sit at.
+    verb, target = action["verb"], find_actor(world, action.get("target_id"))
+    if target is None or target["id"] == actor["id"]:
+        return "Choose another visitor to go to"
+    if on_staff(target):
+        return f"{target['name']} works behind the bar"
+    reason = _person_error(world, actor, ACTIVITIES[verb], verb, target)
+    if reason:
+        return reason
+    if within_reach(world, actor, target):
+        return None
+    current = actor.get("action")
+    if current is not None and current.get("id") == action["id"] and actor["status"] == "interacting":
+        return f"{target['name']} is no longer within reach"
+    return None if table_of(world, target) is not None else "Go to someone who sits at a table or stands beside you"
+
+
+def _person_error(world: Mapping[str, Any], actor: Mapping[str, Any], activity: Any, verb: str,
+                  target: Mapping[str, Any]) -> str | None:
+    if activity.asks_cure:
+        if asleep(target) or laid_out(target):
+            return f"{target['name']} cannot see to anyone now"
+        return None if carries_cure(target["inventory"]) else f"{target['name']} carries no remedy"
+    if verb == "help_up":
+        return None if laid_out(target) and fight_of(world, target["id"]) is None else f"{target['name']} is not on the floor"
+    if fight_of(world, target["id"]) is None:
+        return f"{target['name']} is not fighting"
+    if fight_of(world, actor["id"]) is not None and verb == "join_fight":
+        return "They are fighting already"
+    return None

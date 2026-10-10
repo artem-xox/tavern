@@ -11,6 +11,7 @@ from tavern.body.items import ITEMS
 from tavern.body.projects import PROJECTS
 from tavern.mind.briefing import brief
 from tavern.mind.families import family_scores, group_families
+from tavern.mind.fight_candidates import is_hurt, room_reactions, treatments
 from tavern.mind.hall_view import in_use, line_place
 from tavern.mind.local_policy import ASK_FLOOR, local_aim_scores, local_answer_scores, local_scores, local_seat_scores
 from tavern.mind.observation import known_objects, own_actor
@@ -136,6 +137,9 @@ def _concrete_candidates(observation: Mapping[str, Any]) -> list[Action]:
     talks = _social_candidates(observation, actor, objects)  # also validates the visible visitors
     if _closed(observation):
         return _going_home(observation, objects)
+    if is_hurt(observation):
+        # A hurt guest's business is to mend: a remedy, a healer to ask, or home to bed; nothing else is offered.
+        return [*(_action(verb, target) for verb, target in treatments(observation)), *_going_home(observation, objects)]
     # A mug is carried to a seat and drunk there, unless there is no seat to be had.
     seatless = not actor.get("seat_id") and not _free_seats(observation, objects)
     actions = [_action("drink")] if actor["inventory"]["beer"] and (actor.get("seat_id") or seatless) else []
@@ -152,7 +156,8 @@ def _concrete_candidates(observation: Mapping[str, Any]) -> list[Action]:
             *_bar_stand(observation, actor, objects), *talks, *_gifts(observation, actor),
             *_fetches(observation, actor, objects), *_round(observation, actor, objects),
             *_rematches(observation, actor, objects), *_nap(observation, actor), *_settling(observation, actor, objects),
-            _action("inspect"), _action("wait"), *_hostile(observation)]
+            _action("inspect"), _action("wait"), *_hostile(observation),
+            *(_action(verb, target) for verb, target in room_reactions(observation))]
 
 
 def _line_options(observation: Mapping[str, Any], item: Mapping[str, Any], action: Action) -> list[Action]:
@@ -224,7 +229,7 @@ def _gifts(observation: Mapping[str, Any], actor: Mapping[str, Any]) -> list[Act
     # Handing over what the guest carries is offered to the company near who could take it (`gift_targets`).
     # A thirsty guest drinks their own mug rather than give it away; what is in a pocket is theirs to give.
     thirsty = actor["needs"].get("thirst", 0) >= KEEPS_OWN_MUG
-    return [_action("give", target, kind) for kind in ITEMS if actor["inventory"].get(kind)
+    return [_action("give", target, kind) for kind in ITEMS if actor["inventory"].get(kind) and ITEMS[kind].giftable
             and not (kind == "beer" and thirsty) for target in gift_targets(observation, kind)]
 
 

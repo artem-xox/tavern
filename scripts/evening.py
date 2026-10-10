@@ -23,6 +23,7 @@ from tavern.evening.metrics import (attention_counts, bar_metrics, conversation_
                                     intention_counts, news_metrics, sleep_metrics, writer_stats)
 from tavern.evening.ailment_metrics import ailment_counts
 from tavern.evening.closing_metrics import closing_counts
+from tavern.evening.fight_metrics import fight_counts
 from tavern.evening.giving_metrics import giving_counts
 from tavern.evening.manner_metrics import manner_counts
 from tavern.evening.goal_metrics import goal_counts, promise_counts
@@ -344,6 +345,8 @@ def main(root: Path) -> None:
               "closing": closing_counts(world["departed"], world["last_call_at"], world["closes_at"]),
               "ailment": ailment_counts(evening.events, {item["id"]: item["name"]
                                                          for item in [*world["actors"], *world["departed"]]}),
+              "fights": fight_counts(world["fights"], evening.events, {item["id"]: item["name"]
+                                                                       for item in [*world["actors"], *world["departed"]]}),
               "bar": bar_metrics(evening.events, [item["id"] for item in world["actors"] if on_staff(item)]),
               "writer": writer_stats(evening, calls, "turn", HAIKU_4_5)}
     (args.out / "events.jsonl").write_text("".join(json.dumps(event, sort_keys=True) + "\n" for event in evening.events))

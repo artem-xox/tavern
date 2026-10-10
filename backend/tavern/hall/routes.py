@@ -8,6 +8,7 @@ from tavern.hall.navigation import find_path, select_interaction_spot
 from tavern.hall.room import find_object, impassable_cells
 from tavern.hall.staff import off_limits
 from tavern.hall.state import Actor, find_actor
+from tavern.social.scenes import within_reach
 
 
 def reserved_spots(world: Mapping[str, Any], actor_id: str) -> list[tuple[int, int]]:
@@ -50,6 +51,8 @@ def plan_route(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mappi
         return _inspection_plan(world, actor, obstacles)
     if ACTIVITIES[action["verb"]].approaches:
         return _approach_plan(world, actor, action, obstacles)
+    if ACTIVITIES[action["verb"]].closes_in:
+        return _closing_plan(world, actor, action, obstacles)
     target = find_object(world_map, action.get("target_id"))
     if target is None:
         return None, []
@@ -71,6 +74,15 @@ def _approach_plan(world: Mapping[str, Any], actor: Mapping[str, Any], action: M
     selected = select_interaction_spot((actor["x"], actor["y"]), spots, world_map["width"], world_map["height"],
                                        obstacles)
     return ([*selected[0]], [list(cell) for cell in selected[1][1:]]) if selected else None
+
+
+def _closing_plan(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any],
+                  obstacles: list[tuple[int, int]]) -> tuple[list[int] | None, list[list[int]]] | None:
+    # Someone already within reach acts where they stand; otherwise they walk to a free spot at the table the person sits at.
+    person = find_actor(world, action.get("target_id"))
+    if person is not None and within_reach(world, actor, person):
+        return None, []
+    return _approach_plan(world, actor, action, obstacles)
 
 
 def _inspection_plan(world: Mapping[str, Any], actor: Mapping[str, Any], obstacles: list[tuple[int, int]]) -> tuple[list[int] | None, list[list[int]]]:

@@ -8,6 +8,7 @@ from tavern.hall.validation import number, unique_ids
 PARAMS = ("patience", "temper", "sociability", "courage", "strength", "brawling", "tolerance", "comfort",
           "curiosity")
 TEXT_FIELDS = ("name", "occupation", "background", "temperament", "speech", "quirks", "secret", "goal")
+SEXES = ("female", "male")
 # A player's card is sent to a model as-is, so each field is bounded to keep a call's cost bounded.
 _MAX_TEXT = 2000
 # Looks name a stranger in every briefing and line about them, so they stay a short phrase.
@@ -31,13 +32,15 @@ class Card(CardText):
     """A complete card: `id`, the `sprite` it is drawn with, its words, and `params` (each of PARAMS, 0–1).
 
     `looks` is how strangers see the guest, such as "the grey-bearded man in a green cloak"
-    (see `tavern.social.names`); a guest whose card has none is known by name to everyone.
+    (see `tavern.social.names`); a guest whose card has none is known by name to everyone. `sex` is `female` or
+    `male`, and counts only in how much punishment a fighter takes (`tavern.body.blows`).
     """
 
     id: str
     sprite: str
     params: dict[str, float]
     looks: NotRequired[str]
+    sex: NotRequired[str]
 
 
 def _exact_fields(data: Any, fields: set[str], label: str) -> Mapping[str, Any]:
@@ -90,23 +93,27 @@ def parse_card(data: Any) -> Card:
 
     Args:
         data: Mapping with exactly `id`, `sprite`, the TEXT_FIELDS and `params`, and optionally
-            `looks` (nonempty text of at most 200 characters).
+            `looks` (nonempty text of at most 200 characters) and `sex` (one of SEXES).
     Returns:
         The card.
     Raises:
         ValueError: A field is missing, unknown or malformed.
     """
-    optional = {"looks"} & set(data) if isinstance(data, Mapping) else set()
+    optional = {"looks", "sex"} & set(data) if isinstance(data, Mapping) else set()
     fields = _exact_fields(data, {"id", "sprite", "params", *TEXT_FIELDS, *optional}, "Card")
     words = parse_card_text({key: fields[key] for key in TEXT_FIELDS})
     for key in ("id", "sprite"):
         if not isinstance(fields[key], str) or not fields[key]:
             raise ValueError(f"Card {key} must be a nonempty string")
     card = Card(id=fields["id"], sprite=fields["sprite"], **words, params=parse_params(fields["params"]))
-    if optional:
+    if "looks" in optional:
         if len(_text(fields["looks"], "looks")) > _MAX_LOOKS:
             raise ValueError(f"Card looks must be at most {_MAX_LOOKS} characters")
         card["looks"] = fields["looks"]
+    if "sex" in optional:
+        if fields["sex"] not in SEXES:
+            raise ValueError(f"Card sex must be one of {', '.join(SEXES)}, not {fields['sex']!r}")
+        card["sex"] = fields["sex"]
     return card
 
 

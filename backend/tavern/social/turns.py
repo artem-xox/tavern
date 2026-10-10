@@ -11,6 +11,7 @@ from collections.abc import Callable, Coroutine, Mapping
 from copy import deepcopy
 from typing import Any, NotRequired, TypedDict
 
+from tavern.body.wounds import hurt
 from tavern.hall.closing import closing_called
 from tavern.hall.memory import log_event
 from tavern.hall.staff import on_staff, post_of
@@ -167,17 +168,26 @@ def _mind(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str, A
     return {"card": None if card is None else {key: card[key] for key in TEXT_FIELDS},
             "portrait": portrait(speaker),
             "feelings": feelings({"actor": {**speaker, "drunkenness": 0.0}, "time": now}),
-            "drunkenness": speaker["drunkenness"], "ailing": speaker["ailing"],
+            "drunkenness": speaker["drunkenness"], "ailing": speaker["ailing"], "hurt": hurt(speaker),
+            "just_fought": _just_fought(world, speaker, others),
             "intention": None if speaker["intention"] is None else speaker["intention"]["intention"],
             "aims_at": _aims_at(speaker),
             "earlier": earlier_lines(speaker, world["rules"]["conversation"]["recall_lines"], scene["id"]),
             "seen": [as_known(speaker, [*world["actors"], *world["departed"]], item) for item in recollections(speaker["memory"], now)],
             "news": carried(world, speaker),
-            "company": [{"id": other["id"], "name": other["name"], "ailing": other["ailing"],
+            "company": [{"id": other["id"], "name": other["name"], "ailing": other["ailing"], "hurt": hurt(other),
                          "opinion": opinion_of(speaker, other["id"], now),
                          "familiarity": familiarity_of(speaker, other["id"]),
                          "thoughts": [item["text"] for item in thoughts if item["about"] == other["id"]]}
                         for other in others]}
+
+
+def _just_fought(world: Mapping[str, Any], speaker: Mapping[str, Any], others: list[Mapping[str, Any]]) -> list[str]:
+    # The IDs, in the scene's order, of those here whom the speaker fought within the last two minutes.
+    ids = {other["id"] for other in others}
+    return [other["id"] for other in others if any(
+        fight["outcome"] is not None and speaker["id"] in (fight["a"], fight["b"]) and other["id"] in (fight["a"], fight["b"])
+        and other["id"] in ids and world["time"] - fight["ended_at"] <= 120.0 for fight in world["fights"])]
 
 
 def _aims_at(speaker: Mapping[str, Any]) -> str | None:

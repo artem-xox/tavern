@@ -12,8 +12,10 @@ from tavern.body.dozing import nodding_off, show_sleep
 from tavern.body.drunkenness import wear_off
 from tavern.body.energy import tire
 from tavern.body.expression import update_expression
+from tavern.body.fights import Fight, begin_waiting, engage_defenders, run_fights
 from tavern.body.projects import honor_projects, open_project
 from tavern.body.queues import check_lines, cut_in, line_of, must_wait
+from tavern.body.wounds import RECOVER, step_wounds
 from tavern.hall.arrival import admit_arrivals, arrival_ranges, arriving, create_actor
 from tavern.hall.closing import call_closing, call_last_orders, closing_called, inn_closed, since_last_call
 from tavern.hall.lifecycle import (activate, clear_action, complete_action, finish_parts, line_up, look, notice_target,
@@ -26,6 +28,8 @@ from tavern.hall.sight import look_around, people_in_sight, visible_cells
 from tavern.hall.staff import check_staff_cells, on_staff
 from tavern.hall.state import World, find_actor
 from tavern.hall.validation import number, unique_ids
+from tavern.social.aftermath import keep_cursing
+from tavern.social.bystanders import note_started
 from tavern.social.dice import settle_games
 from tavern.social.commitments import promises_of, settle_commitments
 from tavern.social.errands import honor_invitations
@@ -67,10 +71,10 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> World:
     if type(manners) is not bool:
         raise ValueError(f"The layout's table_manners must be true or false, not {manners!r}")
     rules["manners"]["table_intrusion"] = manners
-    world = World(schema_version=18, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
+    world = World(schema_version=19, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
                   map=world_map, actors=actors, departed=[], expected=[], closes_at=None, last_call_at=None,
                   events=[], stimuli=[], next_stimulus_id=0, conversations=[], next_conversation_id=0,
-                  commitments=[], invitations=[], projects=[], news=[], rules=rules)
+                  commitments=[], invitations=[], projects=[], news=[], fights=[], rules=rules)
     check_lines(world)
     for actor in actors:
         look(world, actor)
@@ -150,8 +154,10 @@ def step_world(world: World, dt: float) -> None:
     world["time"] += elapsed
     world["tick"] += 1
     forget_expired(world)
+    engage_defenders(world, activate)
     for actor in world["actors"]:
         step_actor(world, actor, elapsed)
+    cursing = _fall_and_rise(world)
     _see_off(world)
     call_last_orders(world, since)
     call_closing(world, since)
@@ -169,6 +175,9 @@ def step_world(world: World, dt: float) -> None:
         clear_action(world, actor)
     for actor in attend(world):
         clear_action(world, actor)
+    # Two who broke apart still hot go on cursing, once this tick's sounds have drawn their glances.
+    for fight in cursing:
+        keep_cursing(world, fight)
     wear_off(world, elapsed)
     tire(world, elapsed)
     for actor in nodding_off(world, elapsed):
@@ -176,6 +185,29 @@ def step_world(world: World, dt: float) -> None:
     finish_parts(world)
     update_expression(world)
     show_sleep(world)
+
+
+def _fall_and_rise(world: World) -> list[Fight]:
+    # Fights run their exchanges and end, and their next duel (a bystander waiting a turn) begins; then whoever is laid
+    # low goes down, whoever is up again stands, and whoever was knocked out and left untreated slips away home.
+    # Returns the fights that ended in shouting.
+    bouts = run_fights(world)
+    for actor in bouts.released:
+        clear_action(world, actor)
+    begin_waiting(world, activate, bouts.ended)
+    engage_defenders(world, activate)
+    note_started(world)
+    stepped = step_wounds(world)
+    for actor in stepped.released:
+        clear_action(world, actor)
+    for actor in stepped.fallen:
+        activate(world, actor, {"id": RECOVER, "verb": RECOVER, "target_id": None}, (None, []))
+    door = next((item for item in world["map"]["objects"] if item["kind"] == "door"), None)
+    for actor in stepped.sent_home:
+        if door is not None and actor["action"] is None:
+            record_event(world, actor, "limped_home", f"{actor['name']}, battered, slipped out of the inn to go home")
+            start_action(world, actor["id"], {"id": f"leave:{door['id']}", "verb": "leave", "target_id": door["id"]})
+    return bouts.shouting
 
 
 def _see_off(world: World) -> None:

@@ -98,8 +98,8 @@ barkeep (B0–B6) and E20 (hostile options), all 2026-10-04. Next:
    candles, and a sick guest whom Edda seeks out with a remedy.
 9. **Choice depth (C0–C8), built 2026-10-09.** A lean first stage, answers to what was just done to a guest, a third
    stage that picks why for social options, temperament in the draw, projects of several steps, and the invitee's
-   own answer to an invitation (off by default: D24). Worlds are saved as version 18 (16 and 17 came from the F tasks and C5).
-10. **Fights (K0–K12), planned 2026-10-09.** One-on-one fights from drink or hatred, a formula over strength, skill,
+   own answer to an invitation (off by default: D24). Worlds were saved as version 18 (16 and 17 came from the F tasks and C5); fights made it 19.
+10. **Fights (K0–K12), built 2026-10-10.** One-on-one fights from drink or hatred, a formula over strength, skill,
     weapon (fists or a cudgel) and drink, five ways to end, a room that watches, cheers, steps in or joins, hurt guests
     who show it and go for a remedy or home, and six new poses. It replaces E21 and E22.
 
@@ -3780,7 +3780,7 @@ branch (`claude/stage1-k<n>`) and PR. `agents.py` has 523 lines and `activities.
 candidates out of `agents.py` first (a refactor commit), and K6 puts the `react` verbs' effects in `bystanders.py`, not
 `activities.py`.
 
-- [ ] **K0 — The formula, alone (`body/fights.py`, pure).**
+- [x] **K0 — The formula, alone (`body/fights.py`, pure).**
   - *Build:* `WEAPONS`, `hit_chance`, `damage`, `yield_line`, `exchange(fight, fighters, rolls)`,
     `outcome(fight, fighters, now)` and `shove_result`. No world, no wiring: inputs are two fighter records
     (`strength`, `sex`, `brawling`, `courage`, `temper`, `drunkenness`, `health`, `fatigue`, `weapon`) and the rolls.
@@ -3791,7 +3791,7 @@ candidates out of `agents.py` first (a refactor commit), and K6 puts the `react`
     a knockout; a double knockout happens in 1–8% of cudgel-against-cudgel fights and under 3% with fists; drunk guests
     yield less often than sober ones. The six guests' pairs in a table (printed by a scratch script, not committed) go in
     the result.
-- [ ] **K1 — A fight in the world.**
+- [x] **K1 — A fight in the world.**
   - *Build:* `world.fights`, `Actor.health/condition/condition_until`, `start_fight`'s effect opens a fight instead of
     logging, `step_world` runs exchanges and conditions (`out` → `groggy` → `ok`), fighters locked
     (`decisions.free_to_decide`), facing each other, the loud `blow`/`fight_ended` events, the spilled beer. Saves 19;
@@ -3799,50 +3799,98 @@ candidates out of `agents.py` first (a refactor commit), and K6 puts the `react`
   - *Tests first:* a forced fight runs at least 3 s and ends in one of the outcomes; nobody is in two fights; locked
     fighters get no decisions; a knocked-out guest lies, gets up groggy, keeps their thoughts; a seeded fight replays
     byte-identically; saves round-trip and a bad fight, health or condition fails loudly.
-- [ ] **K2 — The shove lands.** `shove_result` applied: stagger or down, with the `Staggered`/`KnockedOut` condition;
+- [x] **K2 — The shove lands.** `shove_result` applied: stagger or down, with the `Staggered`/`KnockedOut` condition;
   a guest `down` cannot act until they get up. *Tests:* parametrized by strength and drink.
-- [ ] **K3 — Who comes to blows.** The hatred road in `hostility.py`; `briefing` and `options` say what the guest has
+- [x] **K3 — Who comes to blows.** The hatred road in `hostility.py`; `briefing` and `options` say what the guest has
   against the target; Jev guidance for `start_fight` names both roads and that it is rare; the Haiku turn view of a
   guest with a fresh hostile cause allows `insult` → threat. *Tests:* the E20 peaceful cases stay peaceful unchanged; new
   positive cases for hatred (sober) and drink; a tipsy hothead gets `shove` but not `start_fight`; a lockstep evening
   with two forced enemies reaches a fight.
   - *Data:* the bad-blood ties and Rurik's card above; `bad blood` in `ties.KINDS`,
     `thoughts` and `portrait`.
-- [ ] **K4 — The cudgel and sex.** The item; Rurik's and Hob's `carries`; `Card.sex`, `names.pronoun`; the weapon and
+- [x] **K4 — The cudgel and sex.** The item; Rurik's and Hob's `carries`; `Card.sex`, `names.pronoun`; the weapon and
   toughness in K0's
   formula, the briefing's and options' words, Jev guidance. Client: the cudgel drawn in the hand of whoever holds one
   (an overlay, never art). *Tests:* a guest holding a cudgel fights with it; hands 1; saves.
-- [ ] **K5 — They go on cursing.** `shouting` opens a scene between the two with a hostile topic; their turns are
+- [x] **K5 — They go on cursing.** `shouting` opens a scene between the two with a hostile topic; their turns are
   insults and threats until one leaves or the scene ends; Haiku's turn view says "you have just fought X"; the scripted
   writer insults. A `shouting` scene can turn into a second fight under K3's gate. *Tests:* the scene opens; the acts
   offered; the scripted lines.
-- [ ] **K6 — The room reacts.** `bystanders.py`, the `react` family (watch, cheer, intervene, back away, help up),
+- [x] **K6 — The room reacts.** `bystanders.py`, the `react` family (watch, cheer, intervene, back away, help up),
   the ring cells, `brawl` above every sound in `attention`, the barkeep's rule (questions), the local utilities by
   courage, strength, sociability and ties to the fighters, the options' sentences, Jev guidance. *Tests:* parametrized
   by traits (brave and strong intervene more, timid back away or leave, friends of a fighter cheer or step in); a
   forced fight in a seeded evening draws at least two kinds of reaction; separation ends a fight as `separated`.
-- [ ] **K7 — Others join in, one on one.** `join_fight`, the wait in the ring, the next fight starting as the first
+- [x] **K7 — Others join in, one on one.** `join_fight`, the wait in the ring, the next fight starting as the first
   ends, a failed `intervene` that turns on the intervener, a cheerer for the other side as a cause (`provoked`).
   *Tests:* a third guest never fights two at once; a chain of two fights in one evening; at most one waiting per fighter.
-- [ ] **K8 — Hurt, and the road to a remedy.** `hurt`/`battered`, the restricted candidates of a hurt guest
+- [x] **K8 — Hurt, and the road to a remedy.** `hurt`/`battered`, the restricted candidates of a hurt guest
   (`seek_remedy`, `use_remedy`, `leave`), the `seek_remedy` project, a cure for wounds in a new `body/wounds.py`
   (the potion is Edda's `remedy`, answered: no new item, no stock behind the bar), F8's carrier bonuses extended to the hurt, the words for Jev, the intention prefix and the turn view.
   The knockout rule above (`limp_home`) belongs here. *Tests:* a knocked-out guest with no help limps home after
   `GROGGY_SECONDS`; a remedy before that keeps them in; a hurt guest is offered nothing else; a remedy heals 40; a project that finds no carrier ends `failed` and
   the guest is offered `leave`; Edda walks to the hurt; the guidance text says it.
-- [ ] **K9 — What it leaves behind.** The thoughts, the witnesses' opinions by side, the memory events the chronicle
+- [x] **K9 — What it leaves behind.** The thoughts, the witnesses' opinions by side, the memory events the chronicle
   cites, `fight_metrics.py`. *Tests:* each thought by role; the metric from a fixed event log.
-- [ ] **K10 — The client: a fight you can read.** A pure `frontend/src/fightview.ts` (pose of a fighter at a time,
+- [x] **K10 — The client: a fight you can read.** A pure `frontend/src/fightview.ts` (pose of a fighter at a time,
   lunge offset, flash and shake, stars, limp bob, tint by health) tested with `node:test`; `scene.ts` wires it; the
   inspector's health bar; the ring highlight. Fallback poses until K11. *Check:* `make build`, screenshots of each
   outcome from a forced fight.
-- [ ] **K11 — The art.** The six poses above through PixelLab, Toren's `Fighting` and `KnockedOut` first, after the
-  user approves the credits.
+- [x] **K11 — The art.** The six poses above through PixelLab, Toren's `Fighting` and `KnockedOut` first, after the
+  user approves the credits. *Done by the user (PR #83, 2026-10-10): all six poses ship for the six guests, in four
+  views; the barkeep has none, and `STAND_INS` draws him in what he has.*
   `sprites.ts` `ALL_POSES` grows with each pose that ships for every sheet.
-- [ ] **K12 — Measure.** Offline seeds 0–19 and two live evenings, plus five forced fights: fights per evening, how
+- [x] **K12 — Measure.** Offline seeds 0–19 and two live evenings, plus five forced fights: fights per evening, how
   they started (drink or hatred), outcomes, weapons, reactions, joins, treatment and its delay, stuck seconds, cost.
   The target is the frequency decided above (4–7 of 20 offline evenings, mostly drunk) and acceptance scenario 4
   (not every fight a knockout). Also report knockouts: how many got a remedy and stayed, how many limped home.
+
+**Built (2026-10-10, one branch `claude/stage1-fights`, K0–K10 and K12 offline; K11's art came from the user).**
+
+- *Modules:* `body/blows.py` (the formula), `body/fights.py` (`world["fights"]`, exchanges, endings, waiting turns, saves),
+  `body/wounds.py` (health, condition, treat, `step_wounds`), `social/aftermath.py` (thoughts and events after a fight, the
+  cursing scene), `social/bystanders.py` (witnesses, the reactions), `mind/fight_candidates.py`, `fight_words.py`,
+  `fight_policy.py`, `evening/fight_metrics.py` (`metrics.json` `fights`), and in the client `fightview.ts` and
+  `woundview.ts`. Saved worlds are version 19.
+- *Changed from the plan while building:*
+  - The two fighters **stay in their chairs**. `start_fight` is the whole fight (`Activity.held`): both carry it at each
+    other until the world ends it, and the loser of a knockout lies in `recover` (`held` too). No standing up, no new
+    `Actor` field for it.
+  - `Card.sex` is **optional**, not required (many tests build cards without it); no pronouns were added to the texts.
+  - Hob's cudgel is flavour in his card (he never fights in Stage 1), not an item in his inventory.
+  - Hob calls out once when a fight begins in his sight (`barkeep_shout`, a bubble like the closing call) and neither
+    pours nor greets while one is on; he never steps in.
+  - `cheer` has no target, so no `cheered_on` thought; `back_away` was not built (a timid guest leaves or watches).
+  - `Fight` gains `witnessed` and `cause` (`hatred`, `drink`, `grudge`) for the room's notes and the metrics.
+  - The drink gate is **0.3**, not 0.45: in a ten-minute evening guests peak at 0.15-0.45 drunk (offline seeds 0-5), so 0.45
+    would never be met. The hatred line is -70 and bad blood -60 (`table_intruded` stays no cause, as T6 decided). A fight with someone
+    hated scores at least 0.4 locally (`fight_policy.hatred_scores`).
+  - A blow is a quiet sound (0.3 loud, reach 40): it turns heads without breaking anything off, so the room does not stop
+    and start twice a second. The *start* of a fight is the loud one (1.0, reach 40).
+  - A remedy mends **60** (`MENDS`), enough that even a knocked-out guest ends over the line of being hurt.
+  - `help_up`, `intervene`, `join_fight` and `seek_remedy` walk to the table of the one they go to unless within reach
+    (`Activity.closes_in`, `routes._closing_plan`).
+- *Tests changed because the user asked for the behaviour (each named in its commit):* `test_confront.py` (a fight is still
+  going three seconds on; witnesses hold `saw_fight`), `test_hostility.py`, `test_hostile_options.py` (a sober furious guest
+  only shoves; a fight needs drink or hatred), `test_items.py`, `test_inventory.py`, `test_carries.py`,
+  `test_scenario_cards.py` (a cudgel kind, Rurik's cudgel, three ties), and the two version pins.
+- *A seeded test moved:* `test_facts.py::test_a_news_item_reaches_a_third_guest_in_other_words`: the data the user asked for
+  (Rurik's temper, the new ties) changed the seeded first evening, and in seeds 0 and 4 no news item travels two hops
+  (ten of twelve seeds do). With the user's approval (2026-10-10) the seeds became 1 and 2; the assertions did not change.
+- *Measured:* the formula over 500 seeds per case (`test_blows.py`): a strong sober guest beats a weak drunk one in
+  100%; equals split 38/39 with 23% parted; a cudgel beats fists 89%; both fall in 3.7% of cudgel duels and 0.2% of fist
+  fights. Offline, 20 evenings (seeds 0-19, scripted): **1** fight (seed 4: Calder beat Toren, who yielded; Edda tended
+  someone) against a target of 4-7: the scripted writer insults too seldom (4 insults, 8 quarrels in 20 evenings), so
+  there is little hostile material. Live (Jev + Haiku, 0 failed calls in all six): seeds 5 and 4 (about $0.35 and $0.42), and, after merging main, seeds 1, 2
+  and 3 ($0.57, $0.81, $0.74) and seed 4 again with the gates turned up (`opinion` -20, `recent` 240 s, urge 0.3/0.5, `drunk`
+  0.15, `hatred` -50, `hatred_urge` 0.3; $0.98): **no fight in any**, and no insult, quarrel or taken seat either, so
+  no hostile option was ever offered (no call to Jev mentions one). The gates are not the bottleneck: live guests give
+  each other no cause. Offline with the same hot gates and **no fresh cause required** (a one-off patch of
+  `hostility._caused`, not committed): 6 fights in 20 evenings (seeds 2, 3, 4, 5, 9, 11; seed 9 three in a row), two by drink and
+  four by hatred, yielded or knocked out, watched by one to four guests, with cheering, helping up and a remedy given.
+  Forced in a real browser: Rurik (cudgel) and Toren, then Rurik and Edda; both showed the stance and anger, Toren yielded
+  at 16 health and went home, Edda lay knocked out on the floor. How often live guests really come to blows is E28's to
+  count; the levers are `HOSTILITY.drunk`, `.hatred`, `.hatred_urge` and the bad-blood opinion.
 
 Questions asked 2026-10-09, all answered and frozen above: sex is an explicit card field; the cudgel is Rurik's own
 and one under Hob's bar; the potion is Edda's remedy; the barkeep shouts and watches;

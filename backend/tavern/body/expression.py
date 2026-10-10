@@ -30,7 +30,7 @@ EMOTES = ("alert", "confused", "angry", "affection", "sleep", "waiting")
 
 EVENT_EMOTES: Mapping[str, str] = MappingProxyType({
     "action_failed": "confused", "quarrel": "angry", "seat_taken": "angry",
-    "table_intruded": "angry"})
+    "table_intruded": "angry", "fight_started": "angry"})
 
 
 def facing_toward(origin: Sequence[int], target: Sequence[int]) -> str | None:

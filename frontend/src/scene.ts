@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { callout, newer } from "./bubble";
 import { drawCandles, drawSconces } from "./candles";
 import { EMOTE_KINDS, EMOTE_WORDS, emoteFrame, emoteFrames, emoteMotion, emotePalette } from "./emotes";
+import { fightPose } from "./fightview";
 import { drawFloor } from "./floor";
 import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawTable, drawTap, drawToilet, drawWindow } from "./furniture";
 import { drawFireplace, drawFlames, drawHearthGlow } from "./hearth";
@@ -9,11 +10,12 @@ import { mapParts, type MapParts } from "./mapview";
 import { Speech } from "./speech";
 import { shippedPose, spriteOf, stills } from "./sprites";
 import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Mind, Turn, Verb, World, WorldObject } from "./types";
+import { animateWounds, createWounds, makeCudgelTexture, readWounds, type Wounds } from "./woundview";
 
 /** The seated version of a standing pose, for a visitor who does it from their seat. */
 const SEATED_POSES: Readonly<Record<string, string>> = { Drinking: "DrinkingSeated", Talking: "TalkingSeated", Giving: "GivingSeated", Receiving: "ReceivingSeated" };
 /** Poses drawn low on the cell, as a seated figure sits. */
-const LOW_POSES: readonly string[] = ["Seated", "SleepingSeated", "Bathroom", ...Object.values(SEATED_POSES)];
+const LOW_POSES: readonly string[] = ["Seated", "SleepingSeated", "Bathroom", "HurtSeated", "KnockedOut", ...Object.values(SEATED_POSES)];
 /** Even a sober guest fidgets a little; drink adds to it. */
 const IDLE_SWAY = 0.12;
 
@@ -43,6 +45,8 @@ interface ActorView {
   direction: string;
   /** How far drink sways the sprite, 0–1, as the server derives it. */
   sway: number;
+  /** A fight's and a wound's marks on the figure: the cudgel in hand, stars, lunge and tint. */
+  wounds: Wounds;
 }
 
 /** Render server snapshots; interpolation changes display coordinates only. */
@@ -78,6 +82,7 @@ export class TavernScene extends Phaser.Scene {
   create(): void {
     for (const still of stills()) this.textures.get(still.key).setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.makeEmoteTextures();
+    makeCudgelTexture(this);
     this.floor = this.add.graphics();
     this.hearthGlow = this.add.graphics();
     this.furniture = this.add.graphics();
@@ -122,8 +127,7 @@ export class TavernScene extends Phaser.Scene {
     for (const view of this.visitors.values()) {
       view.container.x += (view.targetX - view.container.x) * blend;
       view.container.y += (view.targetY - view.container.y) * blend;
-      // Everyone fidgets and drunk guests sway more; each at their own pace, so a table of drinkers does not rock in step.
-      view.sprite.setAngle(Math.max(view.sway, IDLE_SWAY) * 8 * Math.sin(time / 420 + view.cellX * 1.7 + view.cellY));
+      animateWounds(view.wounds, view.sprite, Math.max(view.sway, IDLE_SWAY) * 8 * Math.sin(time / 420 + view.cellX * 1.7 + view.cellY), time, view.direction);
       this.animateEmote(view, time);
       view.speech.place(view.container.x, view.container.y, this.time.now, this.scale);
     }
@@ -186,8 +190,9 @@ export class TavernScene extends Phaser.Scene {
     const name: Phaser.GameObjects.Text = this.add.text(0, -53, actor.name, { fontFamily: "system-ui", fontSize: "11px", color: "#fff4dc", stroke: "#322b24", strokeThickness: 3 }).setOrigin(0.5);
     const speech: Speech = new Speech(this);
     const emote: Phaser.GameObjects.Image = this.add.image(0, EMOTE_Y, "emote-alert-0").setVisible(false);
-    const container: Phaser.GameObjects.Container = this.add.container(0, 0, [shadow, selection, sprite, name, emote]);
-    return { container, sprite, name, selection, speech, emote, emoteKind: null, emoteSince: 0, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south", sway: 0 };
+    const wounds: Wounds = createWounds(this, sheet.lift);
+    const container: Phaser.GameObjects.Container = this.add.container(0, 0, [shadow, selection, sprite, wounds.cudgel, name, emote, ...wounds.stars]);
+    return { container, sprite, name, selection, speech, emote, emoteKind: null, emoteSince: 0, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south", sway: 0, wounds };
   }
 
   private updateVisitor(view: ActorView, actor: Actor, size: number, reset: boolean): void {
@@ -199,11 +204,15 @@ export class TavernScene extends Phaser.Scene {
       view.direction = actor.facing ?? seat?.facing ?? (target && actor.status === "interacting" ? target.facing ?? this.facingTarget(actor, target, view.direction) : view.direction);
     }
     const { name: character, sheet } = spriteOf(actor);
-    const pose: string = shippedPose(sheet, this.actorPose(actor));
+    let wanted: string = this.actorPose(actor);
+    // A hurt guest on the move walks bent, or simply limps in their usual walk while the bent pose is not drawn yet.
+    if (wanted === "Hurt" && actor.status === "walking" && !sheet.poses.includes("Hurt")) wanted = "Walking";
+    const pose: string = shippedPose(sheet, wanted);
     const texture: string = `${character}-${pose}-${view.direction}`;
     if (view.sprite.texture.key !== texture) view.sprite.setTexture(texture);
     view.sprite.setDisplaySize(sheet.size, sheet.size);
-    view.sprite.setY(sheet.lift + (LOW_POSES.includes(pose) ? 3 : 0));
+    view.wounds.baseY = sheet.lift + (LOW_POSES.includes(pose) ? 3 : 0);
+    readWounds(view.wounds, view.container, actor, this.world?.fights ?? [], this.world?.time ?? 0, wanted, pose, view.direction);
     view.cellX = actor.x;
     view.cellY = actor.y;
     const x: number = (actor.x + 0.5) * size;
@@ -246,6 +255,8 @@ export class TavernScene extends Phaser.Scene {
   }
 
   private actorPose(actor: Actor): string {
+    const wound: string | null = fightPose(actor);
+    if (wound) return wound;
     if (actor.status === "walking") return "Walking";
     // Someone handing this visitor something holds it out to them; they reach for it, whatever they were doing.
     const offered: boolean = this.world?.actors.some((giver: Actor): boolean => giver.status === "interacting" && giver.action?.verb === "give" && giver.action.target_id === actor.id) ?? false;
