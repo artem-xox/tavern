@@ -326,10 +326,40 @@ def check_conversations(world: World) -> None:
         _drop_departed(world, scene)
         _tidy_aims(world, scene)
         _see_off_leaver(world, scene)
-        members = [item for item in world["actors"] if item["id"] in scene["participants"]]
-        if scene in world["conversations"] and len(scene["turns"]) >= 2 and _heard_out(world, scene) and all(
-                item["needs"]["social"] < world["rules"]["conversation"]["satisfied"] for item in members):
+        if scene in world["conversations"] and has_run_its_course(world, scene) and _heard_out(world, scene):
             end_conversation(world, scene, pleasant=True)
+
+
+def awaits_company_change(world: Mapping[str, Any], scene: Conversation) -> bool:
+    """Tell whether a line asked for now would be written for company that is about to change.
+
+    A scene that has run its course ends, and one whose last line was a goodbye loses that guest, both
+    `rules.conversation.linger` seconds after the last line, which is sooner than the next line is due
+    (`rules.conversation.min_gap`): a line asked for in between is never spoken.
+
+    Args:
+        world: Current world.
+        scene: Scene to judge.
+
+    Returns:
+        True while the scene is about to end (`has_run_its_course`) or its last speaker is about to leave.
+    """
+    return has_run_its_course(world, scene) or _saying_goodbye(scene) is not None
+
+
+def has_run_its_course(world: Mapping[str, Any], scene: Conversation) -> bool:
+    """Tell whether a scene has had its exchange and everyone in it has had enough company.
+
+    Args:
+        world: Current world, whose actors' needs and `rules.conversation.satisfied` decide it.
+        scene: Scene to judge.
+
+    Returns:
+        True once at least two lines were spoken and every member's wish for company is below `satisfied`.
+    """
+    members = [item for item in world["actors"] if item["id"] in scene["participants"]]
+    return len(scene["turns"]) >= 2 and all(
+        item["needs"]["social"] < world["rules"]["conversation"]["satisfied"] for item in members)
 
 
 def _heard_out(world: Mapping[str, Any], scene: Conversation) -> bool:
@@ -342,10 +372,17 @@ def _see_off_leaver(world: World, scene: Conversation) -> None:
     # `min_gap`, so no other line comes in between.
     if scene not in world["conversations"] or not scene["turns"] or not _heard_out(world, scene):
         return
-    last = scene["turns"][-1]
-    leaver = next((item for item in world["actors"] if item["id"] == last["speaker"]), None)
-    if last["act"] == "leave_conversation" and leaver is not None and leaver["id"] in scene["participants"]:
+    leaver = next((item for item in world["actors"] if item["id"] == _saying_goodbye(scene)), None)
+    if leaver is not None:
         leave_conversation(world, leaver)
+
+
+def _saying_goodbye(scene: Conversation) -> str | None:
+    # The ID of the guest whose last line was a goodbye and who is still in the scene, or None.
+    last = scene["turns"][-1] if scene["turns"] else None
+    if last is None or last["act"] != "leave_conversation" or last["speaker"] not in scene["participants"]:
+        return None
+    return last["speaker"]
 
 
 def _drop_departed(world: World, scene: Conversation) -> None:

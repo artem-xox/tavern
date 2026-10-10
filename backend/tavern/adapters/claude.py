@@ -13,6 +13,8 @@ from tavern.mind.questions import Question
 
 # Claude Haiku 4.5, USD per million tokens: input, output, cache reads, 5-minute cache writes.
 HAIKU_4_5 = Tariff(input=1.0, output=5.0, cache_read=0.10, cache_write=1.25)
+# Claude Haiku 5.5 for prompts up to 100,000 tokens (ours are about 8,000); above that every price is five times this.
+HAIKU_5_5 = Tariff(input=0.10, output=0.50, cache_read=0.01, cache_write=0.125)
 # The API allows at most four cache breakpoints per request; every system block takes one.
 _MAX_BREAKPOINTS = 4
 # How much of the API's own error message an HTTP failure carries: enough to name the cause (an unknown

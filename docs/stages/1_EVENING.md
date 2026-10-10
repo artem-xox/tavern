@@ -3959,6 +3959,26 @@ Fights (K0–K12) were added 2026-10-09 at the user's request and replace E21–
 of their block. K1 bumps `schema_version` to 19, and K1–K9 touch the lifecycle, actions and local policy, so do not run
 them beside each other or beside another backend block. K0, K10 and K11 can run beside anything.
 
+## Haiku cost (L0–L4)
+
+Added 2026-10-10 at the user's request: evenings cost $0.35–0.98 in K12, against $0.19 in E19, and Haiku 5.5
+($0.10 in, $0.01 cached, $0.50 out per million tokens up to 100,000) is a tenth of Haiku 4.5's price. One PR per row.
+
+- [x] **L0 — Haiku 5.5 in `make evening`.** `evening.py` still asked and priced `claude-haiku-4-5`, while `app.py` asks
+  `claude-haiku-5-5`; both use `claude.HAIKU_5_5` and one `CLAUDE_MODEL` now. Old recordings priced afresh read as
+  Haiku 5.5 would have cost.
+- [x] **L1 — No line is asked for that its scene would not speak.** In the recorded evening `runs/jev-0` (Haiku 4.5)
+  33 of the writer's 90 calls (37%) produced a line nobody spoke: 24 were the third line, claimed the moment the
+  second was spoken, in a scene that ends `linger` (2.0 s) after it, before the next line is due (`min_gap` 2.5 s).
+  `scenes.awaits_company_change` (a scene that `has_run_its_course`, or whose last line is a goodbye) keeps
+  `claim_turns` from asking. Offline (seeds 1–3, scripted writer through the same claim path): claims beyond the
+  lines spoken 49/51/39 of 153/164/135 → 7/5/2 of 166/118/98. What is left is a line recast when someone joins or
+  walks off. `evening.py`'s report has `writer.unspoken_calls`.
+- [ ] **L2 — Intentions every 60 s and at more events.**
+- [ ] **L3 — Stock lines for the moments that recur** (answers to invitations, the bar, goodbyes, greetings), in a
+  phrasebook per character.
+- [ ] **L4 — A shorter line-writer context:** one `looks_short` per card, and "On your mind" without repeats.
+
 ## Acceptance scenarios
 
 Initial targets, to be tuned in E28:
