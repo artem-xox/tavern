@@ -315,14 +315,24 @@ def _memory(memory: Mapping[str, Any]) -> str:
     return memory["message"]
 
 
+def recollections(memory: Sequence[Mapping[str, Any]], now: float) -> list[str]:
+    """Word a visitor's memories of what they did and what befell them, for a model.
+
+    Args:
+        memory: The visitor's remembered events (`memory.record_event`), oldest first.
+        now: Current game time.
+
+    Returns:
+        "<how long ago>, <what happened>" per memory, oldest first. Bare choices, glances and interruptions
+        are left out, and so is a finished chat, which is already remembered as the conversation itself.
+    """
+    kept = [item for item in memory if item["type"] not in ("action_started", "interrupted", "alerted")
+            and not (item["type"] == "action_completed" and item["message"].endswith(" talk"))]
+    return [f"{_ago(now - item['time'])}, {_memory(item)}" for item in kept]
+
+
 def _recent(observation: Observation) -> str:
     now = observation.get("time")
-    # A finished chat is already remembered as the conversation itself.
-    memories = [item for item in observation.get("memory", [])
-                if item["type"] not in ("action_started", "interrupted", "alerted")
-                and not (item["type"] == "action_completed" and item["message"].endswith(" talk"))][-5:]
-    if now is None or not memories:
-        return ""
-    parts = [f"{_ago(now - item['time'])}, {_memory(item)}" for item in memories]
-    return f"Recently: {'; '.join(parts)}."
+    parts = recollections(observation.get("memory", []), now)[-5:] if now is not None else []
+    return f"Recently: {'; '.join(parts)}." if parts else ""
 

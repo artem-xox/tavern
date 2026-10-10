@@ -6,6 +6,8 @@ import re
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
+from tavern.body.ailment import urgent_needs
+
 if TYPE_CHECKING:  # turns imports this module, so the types cross the cycle only for the checker.
     from tavern.social.turns import TurnResult
 
@@ -38,10 +40,10 @@ INVITE_LINES: Mapping[str, str] = MappingProxyType({
     "dice_together": "Care for a game of dice, {name}?",
     "buy_drink": "Let me buy you an ale.", "leave_together": "Shall we walk home together?"})
 
-MAX_LINE = 160  # Characters of a line: the style asks for about 120, and a little over still reads in a bubble.
+MAX_LINE = 200  # Characters of a line: the style asks for under 120; a longer one still reads in a bubble.
 _HEARD_FROM = re.compile(r"^Heard from [^:]*: ")  # A retold version starts like this; it is never nested.
 
-PRESSING = 75.0  # A thirst, tiredness or bladder this strong takes a guest out of any conversation.
+PRESSING = 75.0  # An urgent need this strong (`ailment.urgent_needs`) takes a guest out of any conversation.
 CONTENT = 25.0  # Below this wish for company, a guest has had enough talk.
 JOKES = 0.3  # Share of friendly lines that are jokes.
 WARM = 0.1  # Share of friendly lines that are compliments, and again that agree.
@@ -135,7 +137,7 @@ def _act(view: Mapping[str, Any], rng: Random) -> tuple[str, str]:
         answer = _answer(scene["invitation"]["kind"], me)
         return answer, answer
     needs = me["needs"]
-    if max(needs["thirst"], needs["fatigue"], needs["bladder"]) >= PRESSING:
+    if max(needs[need] for need in urgent_needs(me.get("ailing", False))) >= PRESSING:
         return "leave_conversation", "pressed"
     aimed = _aimed(view)
     if aimed:

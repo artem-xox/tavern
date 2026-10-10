@@ -12,15 +12,15 @@
     }
   },
   "guests": [
-    {"id": "mara", "name": "Edda", "color": "#e8a86b", "sprite": "edda", "card": "edda", "arrives_at": 0,
+    {"id": "edda", "name": "Edda", "color": "#e8a86b", "sprite": "edda", "card": "edda", "arrives_at": 0,
      "carries": {"remedy": 3}},
-    {"id": "ivo", "name": "Rurik", "color": "#81b3c6", "sprite": "rurik", "card": "rurik", "arrives_at": 0,
+    {"id": "rurik", "name": "Rurik", "color": "#81b3c6", "sprite": "rurik", "card": "rurik", "arrives_at": 0,
      "carries": {"cudgel": 1}},
-    {"id": "nell", "name": "Toren", "color": "#b8aa76", "sprite": "toren", "card": "toren", "arrives_at": 0,
+    {"id": "toren", "name": "Toren", "color": "#b8aa76", "sprite": "toren", "card": "toren", "arrives_at": 0,
      "carries": {"keepsake": 2}},
-    {"id": "brannoc", "name": "Brida", "color": "#b56f5c", "sprite": "cook", "card": "brida", "arrives_at": 40},
-    {"id": "wenna", "name": "Calder", "color": "#7fae7a", "sprite": "courier", "card": "calder", "arrives_at": 110},
-    {"id": "osric", "name": "Saye", "color": "#9d8fc4", "sprite": "visitor", "card": "saye", "arrives_at": 190}
+    {"id": "brida", "name": "Brida", "color": "#b56f5c", "sprite": "cook", "card": "brida", "arrives_at": 40},
+    {"id": "calder", "name": "Calder", "color": "#7fae7a", "sprite": "courier", "card": "calder", "arrives_at": 110},
+    {"id": "saye", "name": "Saye", "color": "#9d8fc4", "sprite": "visitor", "card": "saye", "arrives_at": 190}
   ],
   "staff": [
     {"id": "hob", "name": "Hob", "color": "#c98f4a", "sprite": "bartender", "card": "hob", "post": "bar"}
@@ -30,26 +30,26 @@
   "news": [
     {"id": "salt_toll", "topic": "the salt toll",
      "text": "The margrave has doubled the salt toll at the border post, and carters are turning back rather than pay it.",
-     "known_by": ["ivo", "wenna"]},
+     "known_by": ["rurik", "calder"]},
     {"id": "cloth_robbery", "topic": "the robbery at Wolf's Bend",
      "text": "A cloth merchant's wagon was robbed at Wolf's Bend two nights ago; the thieves took the dyes and left the silk.",
-     "known_by": ["nell", "osric"]},
+     "known_by": ["toren", "saye"]},
     {"id": "margrave_fever", "topic": "the margrave's fever",
      "text": "The margrave has been abed with a fever for a week, and the manor kitchen is told to send up nothing but broth.",
-     "known_by": ["brannoc", "mara"]},
+     "known_by": ["brida", "edda"]},
     {"id": "pass_closing", "topic": "closing the pass",
      "text": "The fort captain means to close the pass to wagons at the first hard snow; riders and walkers will still get through.",
-     "known_by": ["wenna"]},
+     "known_by": ["calder"]},
     {"id": "deserters", "topic": "the deserters from the fort",
      "text": "Three men deserted from the fort last week and are thought to be hiding in the charcoal burners' huts below the pass.",
-     "known_by": ["ivo"]}
+     "known_by": ["rurik"]}
   ],
   "relationships": [
-    {"a": "mara", "b": "brannoc", "kind": "old friends",
+    {"a": "edda", "b": "brida", "kind": "old friends",
      "note": "Brida nursed Edda through a winter fever years ago; since then they trade remedies, recipes and gossip."},
-    {"a": "ivo", "b": "nell", "kind": "bad blood",
+    {"a": "rurik", "b": "toren", "kind": "bad blood",
      "note": "Rurik has searched Toren's bales at the toll gate twice this season and found nothing, and is now sure Toren runs them past the gate at night; Toren has told half the valley that Rurik takes coin to look the other way. Each has half guessed the other's secret."},
-    {"a": "wenna", "b": "nell", "kind": "rivals",
+    {"a": "calder", "b": "toren", "kind": "rivals",
      "note": "Calder lost a month's pay to Toren at dice in Harrow Ford and swears the dice were weighted."}
   ]
 }

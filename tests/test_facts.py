@@ -569,8 +569,8 @@ def test_a_scripted_speaker_does_not_tell_back_what_was_just_told_in_the_scene()
     pytest.param("The toll is doubled.", "cid", "Heard from Cid: The toll is doubled.", id="names-the-teller"),
     pytest.param("Heard from Edda: The toll is doubled.", "cid", "Heard from Cid: The toll is doubled.",
                  id="prefixes-do-not-nest"),
-    pytest.param("x" * 300, "cid", ("Heard from Cid: " + "x" * 300)[:160], id="cut-to-160-characters"),
-    pytest.param("x" * 300, None, "x" * 160, id="first-holder-cut-to-160-characters"),
+    pytest.param("x" * 300, "cid", ("Heard from Cid: " + "x" * 300)[:200], id="cut-to-200-characters"),
+    pytest.param("x" * 300, None, "x" * 200, id="first-holder-cut-to-200-characters"),
 ])
 def test_the_scripted_line_retells_the_speakers_own_version(told_as: str, heard_from: str | None, line: str) -> None:
     world = after_a_greeting()

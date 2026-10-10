@@ -112,7 +112,7 @@ def main(root: Path) -> None:
         root: Repository directory.
     """
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--actor", default="mara")
+    parser.add_argument("--actor", default="edda")
     parser.add_argument("--seconds", type=int, default=60)
     parser.add_argument("--input-price", type=float, default=0.042,
                         help="USD per million input tokens; verified 2026-10-01")

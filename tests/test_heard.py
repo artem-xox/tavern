@@ -10,6 +10,7 @@ from tavern.adapters.persistence import load_world, save_world
 from tavern.hall.world import start_action
 from tavern.mind.haiku_turns import turn_question
 from tavern.mind.intentions import intention_question, intention_view
+from tavern.social.heard import hear_line
 from tavern.social.turns import turn_view
 from social_hall import LOOKS, actor, advance, command, say, scene_of, seated_talk
 
@@ -160,10 +161,33 @@ def test_the_turn_view_groups_earlier_lines_by_scene_and_leaves_out_the_current_
     assert earlier_of(remembering(*lines)) == expected
 
 
-def test_the_turn_view_caps_earlier_lines_at_the_newest_24() -> None:
+def test_the_turn_view_shows_every_line_the_guest_remembers() -> None:
     lines = [said("old-1", "bea", f"Line {number}") for number in range(1, 31)]
     shown = [item["line"] for scene in earlier_of(remembering(*lines)) for item in scene["lines"]]
-    assert shown == [f"Line {number}" for number in range(7, 31)]
+    assert shown == [f"Line {number}" for number in range(1, 31)]
+
+
+def test_the_turn_writer_sees_the_whole_current_scene() -> None:
+    world = seated_talk(social=100.0)
+    scene_of(world)["turns"] = [{"speaker": ("ada", "bea")[number % 2], "addressee": None, "line": f"Line {number}",
+                                 "act": "small_talk", "time": float(number)} for number in range(1, 13)]
+    content = turn_question(turn_view(world, scene_of(world)))["content"]
+    assert [f'"Line {number}"' in content for number in range(1, 13)] == [True] * 12
+
+
+@pytest.mark.parametrize("memory, present, absent", [
+    pytest.param([{"time": 0.0, "actor_id": "ada", "type": "gave", "message": "Bea gave Ada a mug of ale"}],
+                 ["WHAT THE SPEAKER DID AND SAW TONIGHT", "Bea gave Ada a mug of ale"], [], id="an-event-shown"),
+    pytest.param([{"time": 0.0, "actor_id": "ada", "type": "action_started", "message": "Ada chose sit"}],
+                 [], ["WHAT THE SPEAKER DID AND SAW TONIGHT"], id="a-bare-choice-is-not-news"),
+    pytest.param([], [], ["WHAT THE SPEAKER DID AND SAW TONIGHT"], id="nothing-remembered-no-heading"),
+])
+def test_the_question_content_holds_what_the_speaker_did_and_saw(memory: list[dict[str, Any]], present: list[str],
+                                                                 absent: list[str]) -> None:
+    world = seated_talk(social=100.0)
+    actor(world, "ada")["memory"] = memory
+    content = turn_question(turn_view(world, scene_of(world)))["content"]
+    assert [text in content for text in present + absent] == [True] * len(present) + [False] * len(absent)
 
 
 def test_the_intention_view_holds_the_latest_8_lines_current_scene_included() -> None:
@@ -194,3 +218,11 @@ def test_the_intention_question_holds_the_lines_they_heard(lines: list[dict[str,
     view = intention_view(world, actor(world, "ada"), {"kind": "scene_ended", "text": "Talk ended", "time": 0.0})
     content = intention_question("Shared rules.", view)["content"]
     assert ('Bea: "Snow on the pass."' in content) is expected
+
+
+def test_a_guest_remembers_a_whole_evening_of_talk_by_default() -> None:
+    world = seated_talk(social=100.0)
+    for number in range(1, 151):
+        hear_line(world, scene_of(world), {"speaker": "bea", "addressee": "ada", "line": f"Line {number}",
+                                           "act": "small_talk", "time": float(number)})
+    assert lines_of(world, "ada") == [f"Line {number}" for number in range(1, 151)]

@@ -648,8 +648,8 @@ which G0 extracts from the `Random(f"{seed}:{tick}:…")` pattern before the dic
   - *Frozen shape (2026-10-04, before coding):*
     - *Module:* `social/facts.py` owns `parse_news`, `starting_facts`, `tell`, `overhear`, `chain`,
       `check_facts` and the news metrics; tests are in `tests/test_facts.py`.
-    - *Ids:* `known_by` holds scenario guest IDs, not names: Edda `mara`, Rurik `ivo`, Toren `nell`,
-      Brida `brannoc`, Calder `wenna`, Saye `osric`.
+    - *Ids:* `known_by` holds scenario guest IDs, not names: Edda `edda`, Rurik `rurik`, Toren `toren`,
+      Brida `brida`, Calder `calder`, Saye `saye`.
     - *Where copies start:* `open_evening` stores `world["news"]` (the originals; `[]` for a world
       without a scenario); `arrival.admit_arrivals` fills `knowledge["facts"]` from it by `known_by`
       when a guest comes in, so the scenario's `Guest` and `ExpectedGuest` keep their shape.

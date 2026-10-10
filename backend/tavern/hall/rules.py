@@ -47,7 +47,7 @@ def default_rules() -> Rules:
             "conversation": {"opening": 0.5, "min_gap": 2.5, "linger": 2.0, "chars_per_second": 15.0,
                              "turn_timeout": 10.0,
                              "relief": 25.0, "satisfied": 25.0, "max_participants": 4, "reach": 2,
-                             "pressing": 75.0, "recall_lines": 40},
+                             "pressing": 75.0, "recall_lines": 200},
             # News (`tavern.social.facts`): how far a listener believes what a teller says, by how well they
             # know the teller (friends are believed most), and the share of that belief kept by a guest who only
             # overheard it.

@@ -69,7 +69,7 @@ def test_a_dice_table_is_not_rated_for_appeal_like_a_table_to_sit_at() -> None:
 
 def test_guests_see_the_dice_table_and_never_offer_its_chairs_to_themselves() -> None:
     world = create_world(LAYOUT)
-    observation = {**observe_actor(world, "mara"), "people": []}
+    observation = {**observe_actor(world, "edda"), "people": []}
     known = {item["id"] for item in known_objects(observation)}
     assert {"dice-table", "dice-chair-1", "dice-chair-2"} <= known
     options = [item for option in build_candidates(observation) for item in option.get("members", [option])]
@@ -109,7 +109,7 @@ def test_the_dice_table_is_named_as_a_place() -> None:
 ])
 def test_nobody_sits_or_rests_on_a_dice_chair(verb: str) -> None:
     world = create_world(LAYOUT)
-    result = start_action(world, "mara", {"id": f"{verb}:dice-chair-1", "verb": verb, "target_id": "dice-chair-1"})
+    result = start_action(world, "edda", {"id": f"{verb}:dice-chair-1", "verb": verb, "target_id": "dice-chair-1"})
     assert result == {"accepted": False, "reason": "Target does not support this action"}
 
 

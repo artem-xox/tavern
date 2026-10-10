@@ -798,7 +798,7 @@
   },
   "actors": [
     {
-      "id": "mara",
+      "id": "edda",
       "name": "Edda",
       "color": "#e8a86b",
       "traits": {
@@ -810,7 +810,7 @@
       "y": 12
     },
     {
-      "id": "ivo",
+      "id": "rurik",
       "name": "Rurik",
       "color": "#81b3c6",
       "traits": {
@@ -822,7 +822,7 @@
       "y": 11
     },
     {
-      "id": "nell",
+      "id": "toren",
       "name": "Toren",
       "color": "#b8aa76",
       "traits": {
