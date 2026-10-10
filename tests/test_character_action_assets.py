@@ -7,6 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CHARACTERS = ("edda", "rurik", "toren", "cook", "courier", "visitor", "bartender")
 DIRECTIONS = ("north", "south", "east", "west")
+FIGHT_POSES = ("Fighting", "KnockedOut", "Hurt", "HurtSeated", "Shoving", "HelpingUp")
 
 
 def test_action_stills_ship_with_browser_build() -> None:
@@ -52,3 +53,14 @@ def test_sleeping_stills_ship_for_every_character() -> None:
         for direction in DIRECTIONS:
             path = exported / character / "SleepingSeated" / "rotations" / f"{direction}.png"
             assert path.is_file(), f"Missing browser asset: {path}"
+
+
+def test_fight_stills_ship_for_every_guest() -> None:
+    """Check every guest has the six combat and recovery poses in four views."""
+    subprocess.run(["npm", "--prefix", "frontend", "run", "build"], cwd=ROOT, check=True, capture_output=True)
+    exported = ROOT / "frontend" / "dist" / "characters"
+    for character in ("edda", "rurik", "toren", "cook", "courier", "visitor"):
+        for direction in DIRECTIONS:
+            for pose in FIGHT_POSES:
+                path = exported / character / pose / "rotations" / f"{direction}.png"
+                assert path.is_file(), f"Missing browser asset: {path}"
