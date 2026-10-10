@@ -176,7 +176,23 @@ old Idle-only merchant at 190 seconds, using the generic `visitor` folder.
 - Walking: `51dbc70e-56ab-40eb-b4a3-a388f250b062` (regenerated for a consistent storyteller silhouette)
 - Talking: `cb3a5e4f-8bcc-4079-835d-e130705f0766`
 
-All 60 native assets (six Idle plus 54 action states) completed at 68 × 68.
+### Fight poses (2026-10-10)
+
+Every guest now has these six 68 px states: `Fighting`, `KnockedOut`, `Hurt`,
+`HurtSeated`, `Shoving`, and `HelpingUp`. `Fighting` keeps the right fist
+clear of the torso for the client's future club overlay; `HurtSeated` contains
+no chair, so it can be drawn over the game's existing seat. The state generator
+made standing T-poses for `KnockedOut`, so the shipped `KnockedOut` PNG is instead
+frame 6 of each character's four-direction `falling-back-death` animation.
+
+- Edda — `Fighting` `95c7f09b-e938-4b32-b0c7-76a58042a8de`, `Hurt` `05ae4217-a189-4819-935b-c3bc4f233c62`, `HurtSeated` `9094b500-3516-476a-bce4-782f79f84935`, `Shoving` `55ffb173-bd03-465e-b2f6-6263d963918e`, `HelpingUp` `b19f0bc5-6a20-491b-b096-0f2ba47bd8fb`; knockout animation group `ed9b67bc-4b92-4908-b2c0-860fc128b4fe`.
+- Rurik — `Fighting` `0a25ed8e-8432-4ae6-b348-bcabf3f6be2e`, `Hurt` `a6b8cff6-3721-49f4-80c8-e92a3602b58c`, `HurtSeated` `c4cbc834-0a0f-465d-a79f-6d0ae636672a`, `Shoving` `c81c4618-b4c3-453e-85bd-0f4b71ae104c`, `HelpingUp` `b4b6641f-675d-4fc7-b4be-1ab6e47907df`; knockout animation group `3e0c7705-7e3d-425b-9c40-aa9e323d65ba`.
+- Toren — `Fighting` `3adc6714-fca9-4bc6-a9b1-4968ceea163a`, `Hurt` `c4a16d25-5178-460f-9bcd-0ff518ac7138`, `HurtSeated` `a4b34543-71e8-4fb6-ac80-1ca9202c6be8`, `Shoving` `654efbb4-684d-41fa-b4c0-db885510aaf4`, `HelpingUp` `61e12001-f774-4516-a563-def870a6f92b`; knockout animation group `872e208a-12d8-4ed4-8839-5f1bcd66ad2a`.
+- Brida — `Fighting` `a4450d81-3bb7-4198-ae3f-0a4447851dc1`, `Hurt` `ee7d4c8a-c5ad-43e9-b226-597a923e1016`, `HurtSeated` `71a0b821-28f7-44a3-8bb3-ae53cac141eb`, `Shoving` `6c5587b3-0934-4716-a929-f0d017a53f3d`, `HelpingUp` `f6d0786d-a7a0-4ac8-9585-d46d96e79f50`; knockout animation group `b1f6796a-d22b-459d-9d6b-65b305550c9a`.
+- Calder — `Fighting` `824d328f-0439-4975-a64d-01c32ca5a854`, `Hurt` `dd8d2dce-5f3d-42a7-957c-cd41ee9122df`, `HurtSeated` `8d49d27e-5aef-4997-8bc7-6b85a6e49e99`, `Shoving` `463cf86c-9f14-4073-a6b8-767ad4a14e43`, `HelpingUp` `fe1c8cb9-d679-4339-b9a6-2d538faf8193`; knockout animation group `2c3bf0b0-0111-443a-a4f7-322ff0ee92fb`.
+- Saye — `Fighting` `446b7513-3984-4512-a846-67f3944f7874`, `Hurt` `cc7da4d1-679a-423d-8295-e8069d71b9a5`, `HurtSeated` `f0ab2d56-277c-401b-b879-87dfd4a98d4d`, `Shoving` `55e4771e-2398-4b15-8d8a-8836049a777c`, `HelpingUp` `3eb8d2ef-34a6-413a-a29f-17551072d5f8`; knockout animation group `83630774-abd5-4ec1-854c-dd8e93d59d86`.
+
+The browser ships 96 native 68 px stills: six Idle poses plus 90 action poses.
 Their PixelLab groups have eight rotations each, but only the four cardinal
 rotations are in the browser build. `get_character` confirmed every state is
 in its intended ten-state group. The two discarded

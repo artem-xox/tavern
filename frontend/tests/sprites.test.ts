@@ -37,3 +37,9 @@ test("shippedPose: a fight pose a sprite lacks stands in for by what it has", ()
 test("shippedPose: the fight poses are used when a sprite ships them", () => {
   assert.equal(shippedPose(sheet(["Idle", "Talking", "Fighting"]), "Fighting"), "Fighting");
 });
+
+test("stills: every guest loads the six combat poses in four views", () => {
+  const poses = ["Fighting", "KnockedOut", "Hurt", "HurtSeated", "Shoving", "HelpingUp"];
+  const combat = stills().filter((item) => poses.some((pose) => item.key.includes(`-${pose}-`)));
+  assert.equal(combat.length, 6 * poses.length * 4);
+});

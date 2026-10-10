@@ -13,15 +13,17 @@ export interface SpriteSheet {
 
 const DIRECTIONS: readonly string[] = ["north", "south", "east", "west"];
 const ALL_POSES: readonly string[] = ["Idle", "Seated", "Darts", "Bathroom", "Drinking", "DrinkingSeated", "TalkingSeated", "TakeBeer", "Walking", "Talking", "Giving", "GivingSeated", "Receiving", "ReceivingSeated", "SleepingSeated"];
+const FIGHT_POSES: readonly string[] = ["Fighting", "KnockedOut", "Hurt", "HurtSeated", "Shoving", "HelpingUp"];
+const GUEST_POSES: readonly string[] = [...ALL_POSES, ...FIGHT_POSES];
 
 /** Character stills shipped under /characters; an unknown guest looks like Saye. */
 const SPRITES: Readonly<Record<string, SpriteSheet>> = {
-  edda: { size: 68, lift: -16, poses: ALL_POSES },
-  rurik: { size: 68, lift: -16, poses: ALL_POSES },
-  toren: { size: 68, lift: -16, poses: ALL_POSES },
-  cook: { size: 68, lift: -16, poses: ALL_POSES },
-  courier: { size: 68, lift: -16, poses: ALL_POSES },
-  visitor: { size: 68, lift: -16, poses: ALL_POSES },
+  edda: { size: 68, lift: -16, poses: GUEST_POSES },
+  rurik: { size: 68, lift: -16, poses: GUEST_POSES },
+  toren: { size: 68, lift: -16, poses: GUEST_POSES },
+  cook: { size: 68, lift: -16, poses: GUEST_POSES },
+  courier: { size: 68, lift: -16, poses: GUEST_POSES },
+  visitor: { size: 68, lift: -16, poses: GUEST_POSES },
   bartender: { size: 68, lift: -16, poses: [...ALL_POSES, "PouringBeer"] },
 };
 
