@@ -24,7 +24,7 @@ from tavern.mind.scripted import scripted_turn
 from tavern.social.aims import aim_view, note_spoken
 from tavern.social.conversation import ACTS, offered_acts
 from tavern.social.facts import carried
-from tavern.social.heard import earlier_lines, hear_line
+from tavern.social.heard import earlier_lines, hear_line, said_lines
 from tavern.social.invitations import offered_kinds, pending_for
 from tavern.social.names import as_known, called, knows_name, looks
 from tavern.social.overhearing import overhear_turn
@@ -102,7 +102,8 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
         `_participants`), every turn spoken in it so far and the pending `invitation`, if any;
         `speaker`: their ID, name, needs, traits, visit, the places they could tell about (tap,
         WC, darts), their `opinions` of the others, `earlier`, everything they still remember saying and hearing
-        in other scenes tonight (`heard.earlier_lines`), and `seen`, what they did and what befell them
+        in other scenes tonight (`heard.earlier_lines`), `said`, every line of their own they remember, this scene's
+        included (`heard.said_lines`), and `seen`, what they did and what befell them
         (`briefing.recollections`, naming people as they know them); `acts`: the meaning of each act offered
         now (`conversation.offered_acts`); `invitations`: the kinds an `invite` may name;
         `seed`: the evening's seed, for a writer's seeded choices; `closing_called`: whether the barkeep has called
@@ -173,6 +174,7 @@ def _mind(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str, A
             "intention": None if speaker["intention"] is None else speaker["intention"]["intention"],
             "aims_at": _aims_at(speaker),
             "earlier": earlier_lines(speaker, world["rules"]["conversation"]["recall_lines"], scene["id"]),
+            "said": said_lines(speaker),
             "seen": [as_known(speaker, [*world["actors"], *world["departed"]], item) for item in recollections(speaker["memory"], now)],
             "news": carried(world, speaker),
             "company": [{"id": other["id"], "name": other["name"], "ailing": other["ailing"], "hurt": hurt(other),
