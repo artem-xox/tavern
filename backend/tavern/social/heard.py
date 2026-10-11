@@ -54,6 +54,18 @@ def hear_line(world: World, scene: Conversation, turn: Turn) -> None:
         del listener["heard"][:-keep]
 
 
+def said_lines(actor: Mapping[str, Any]) -> list[str]:
+    """List the lines a guest still remembers saying tonight, in any scene.
+
+    Args:
+        actor: Guest with `heard` lines; their own are among them (`hear_line`).
+
+    Returns:
+        Their own lines, oldest first, repeats included.
+    """
+    return [item["line"] for item in actor["heard"] if item["speaker_id"] == actor["id"]]
+
+
 def earlier_lines(actor: Mapping[str, Any], limit: int, excluding: str | None = None) -> list[EarlierScene]:
     """Show a guest's latest remembered lines, grouped by the scene they were spoken in.
 

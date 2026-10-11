@@ -1,6 +1,7 @@
 """The Haiku turn writer: a conversation line asked of Claude, laid out for caching and checked at the boundary."""
 
 from collections.abc import Mapping, Sequence
+from difflib import SequenceMatcher
 import re
 from typing import Any
 
@@ -21,11 +22,22 @@ _NEEDS = (("thirst", "thirst"), ("fatigue", "tiredness"), ("bladder", "bladder")
           ("boredom", "boredom"))
 # How the speaker holds a piece of news, by confidence: the writer is shown words, never the number.
 _BELIEF = ((0.85, "you are sure of it"), (0.55, "you believe it"), (0.0, "a rumour you half believe"))
+# How alike two lines may be, as `difflib` ratio of their lowercased words, before the later one repeats the earlier.
+# Tuned on recorded evenings: copies and near copies scored 0.76-1.00, lines that only share a phrase 0.73 or less.
+REPEAT_SIMILARITY = 0.75
 _FAMILIARITY = {"stranger": "a stranger to you", "acquaintance": "an acquaintance", "friend": "an old friend"}
 
 
 class RejectedTurn(ValueError):
     """The model's line broke the answer's rules, so a scripted line stands in."""
+
+
+class RepeatedLine(RejectedTurn):
+    """The model's line nearly repeats one the speaker already said tonight (`earlier`); it may be asked again."""
+
+    def __init__(self, line: str, earlier: str) -> None:
+        super().__init__(f"{line!r} nearly repeats a line the speaker already said tonight: {earlier!r}")
+        self.line, self.earlier = line, earlier
 
 
 def card_block(speaker: Mapping[str, Any]) -> str:
@@ -56,7 +68,7 @@ def turn_content(view: Mapping[str, Any]) -> str:
     """
     nudges = _nudges(view["conversation"], view["speaker"], view.get("invitations") or [], view["acts"],
                      view.get("closing_called", False), view.get("answer"))
-    earlier = _earlier(view["speaker"].get("earlier") or [])
+    earlier = _earlier(view["speaker"].get("earlier") or [], view["speaker"]["name"], view["speaker"].get("said") or [])
     seen = _seen(view["speaker"].get("seen") or [])
     return "\n\n".join([_scene(view["conversation"], view["speaker"]), *([earlier] if earlier else []),
                         *([seen] if seen else []),
@@ -165,14 +177,24 @@ def _scene(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:
             f"Present besides the speaker:\n" + "\n".join(present) + f"\n\nLines so far, oldest first:\n{said}")
 
 
-def _earlier(scenes: Sequence[Mapping[str, Any]]) -> str:
+def _earlier(scenes: Sequence[Mapping[str, Any]], name: str, said: Sequence[str]) -> str:
     # What the speaker already said and heard in other conversations tonight; the style rules say
-    # not to greet those people again or repeat a subject. Empty when nothing was heard.
+    # not to greet those people again or repeat a subject. Their own lines are marked, with how often they said
+    # them, right where a model would copy them from. Empty when nothing was heard.
     if not scenes:
         return ""
     blocks = [f"With {', '.join(scene['with']) or 'no one who answered'}:\n" +
-              "\n".join(f"- {line['speaker']}: \"{line['line']}\"" for line in scene["lines"]) for scene in scenes]
-    return "EARLIER TONIGHT\n\nOther conversations you were in, oldest first.\n" + "\n".join(blocks)
+              "\n".join(f"- {line['speaker']}: \"{line['line']}\"{_mark(line, name, said)}" for line in scene["lines"])
+              for scene in scenes]
+    reminder = (" Lines marked (yours) are what you said: never say them, or nearly them, again."
+                if any(_mark(line, name, said) for scene in scenes for line in scene["lines"]) else "")
+    return f"EARLIER TONIGHT\n\nOther conversations you were in, oldest first.{reminder}\n" + "\n".join(blocks)
+
+
+def _mark(line: Mapping[str, Any], name: str, said: Sequence[str]) -> str:
+    # The speaker's own lines go by their own name (`names.called`) and are among what they said.
+    times = said.count(line["line"]) if line["speaker"] == name else 0
+    return "" if times == 0 else " (yours)" if times == 1 else f" (yours, said {times} times)"
 
 
 def _seen(memories: Sequence[str]) -> str:
@@ -240,6 +262,7 @@ def parse_turn(view: Mapping[str, Any], answer: Any) -> TurnResult:
         RejectedTurn: It is not exactly a line, act, addressee and topic (see `turns.check_turn`);
             the line is longer than MAX_LINE characters, spans lines or holds a stage direction;
             the topic is longer than MAX_TOPIC; or the speaker shares places while knowing none.
+        RepeatedLine: The line nearly repeats one the speaker already said tonight (`REPEAT_SIMILARITY`).
     """
     try:
         # The schema always asks for an invitation and a fact; null means none, as for every act but
@@ -259,7 +282,21 @@ def parse_turn(view: Mapping[str, Any], answer: Any) -> TurnResult:
         raise RejectedTurn(f"A topic is a few words, not {result['topic']!r}")
     if result["act"] == "share_place" and not view["speaker"]["places"]:
         raise RejectedTurn(f"{view['speaker']['name']} knows no places to share")
+    earlier = _repeated(view["speaker"].get("said") or [], line)
+    if earlier is not None:
+        raise RepeatedLine(line, earlier)
     return result
+
+
+def _repeated(said: Sequence[str], line: str) -> str | None:
+    # The first of the speaker's own lines that the new one nearly repeats, or None; case and punctuation do not count.
+    words = _words(line)
+    return next((item for item in said if SequenceMatcher(None, _words(item), words).ratio() >= REPEAT_SIMILARITY),
+                None)
+
+
+def _words(line: str) -> str:
+    return " ".join(re.findall(r"[a-z0-9']+", line.lower()))
 
 
 def claude_writer(ask: Ask) -> TurnWriter:
@@ -270,12 +307,18 @@ def claude_writer(ask: Ask) -> TurnWriter:
             or replayed (`recording.record_questions`, `recording.replay_questions`).
 
     Returns:
-        A writer that asks one question per turn and returns the checked line. It ignores the
-        runner's AI config (the port holds Claude's) and raises RejectedTurn or the port's
-        error, after which the runner speaks a scripted line instead.
+        A writer that asks one question per turn and returns the checked line. A line that repeats one the speaker
+        already said is asked for once more, with the reason. It ignores the runner's AI config (the port holds
+        Claude's) and raises RejectedTurn or the port's error, after which the runner speaks a scripted line instead.
     """
     async def write(view: Mapping[str, Any], config: Mapping[str, Any]) -> TurnResult:
-        return parse_turn(view, await ask(turn_question(view)))
+        question = turn_question(view)
+        try:
+            return parse_turn(view, await ask(question))
+        except RepeatedLine as error:
+            again = (f"\n\nYour last answer, \"{error.line}\", nearly repeats what the speaker already said tonight: "
+                     f"\"{error.earlier}\". Write a different line that moves the talk on.")
+            return parse_turn(view, await ask({**question, "content": question["content"] + again}))
     return write
 
 

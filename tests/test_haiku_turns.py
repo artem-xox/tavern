@@ -373,3 +373,57 @@ def test_a_stranger_is_listed_by_looks_and_not_by_a_name_the_speaker_does_not_kn
 ])
 def test_the_addressee_is_named_as_listed_and_read_back_as_an_id(view: dict[str, Any], addressee: str) -> None:
     assert parse_turn(view, {**GOOD, "addressee": addressee})["addressee"] == "bea"
+
+
+def ada_once_said(*lines: str) -> dict[str, Any]:
+    """Ada's next-turn view, with the lines she said earlier tonight in another scene."""
+    world = scene_world()
+    people(world)["ada"]["heard"] = [{"time": 0.0, "scene_id": "old", "speaker_id": "ada", "speaker": "Ada",
+                                      "line": line, "act": "small_talk"} for line in lines]
+    return view_of(world)
+
+
+SAID = "Salt's dear this year, Bea."
+
+
+@pytest.mark.parametrize("said, line", [
+    pytest.param([], SAID, id="nothing-said-yet"),
+    pytest.param(["Snow on the pass tonight."], SAID, id="something-else-said"),
+    pytest.param(["Salt's dear, and the road is worse."], SAID, id="a-shared-word-is-no-repeat"),
+])
+def test_a_line_unlike_the_speakers_own_earlier_lines_passes(said: list[str], line: str) -> None:
+    assert parse_turn(ada_once_said(*said), {**GOOD, "line": line})["line"] == line
+
+
+@pytest.mark.parametrize("said, line", [
+    pytest.param([SAID], SAID, id="the-same-line"),
+    pytest.param([SAID, SAID], "salt's DEAR this year, Bea!", id="the-same-words-said-twice-before"),
+    pytest.param(["Snow on the pass.", SAID], "Salt's so dear this year, Bea.", id="nearly-the-same-line"),
+])
+def test_a_line_the_speaker_nearly_said_before_is_rejected(said: list[str], line: str) -> None:
+    with pytest.raises(RejectedTurn, match="already said"):
+        parse_turn(ada_once_said(*said), {**GOOD, "line": line})
+
+
+def test_a_repeated_line_is_asked_again_once_with_the_reason() -> None:
+    view = ada_once_said(SAID)
+    fresh = {**GOOD, "line": "Bea, the miller wants paying."}
+    ask = asking(GOOD, fresh)
+    assert asyncio.run(claude_writer(ask)(view, {})) == fresh
+    assert [SAID in question["content"].rpartition("Write the speaker's next line now")[2]
+            for question in ask.asked] == [False, True]
+
+
+def test_a_line_repeated_twice_falls_back() -> None:
+    with pytest.raises(RejectedTurn, match="already said"):
+        asyncio.run(claude_writer(asking(GOOD, GOOD))(ada_once_said(SAID), {}))
+
+
+@pytest.mark.parametrize("said, present, absent", [
+    pytest.param([SAID], [f'Ada: "{SAID}" (yours)', "Lines marked (yours)"], ["said 2 times"], id="said-once"),
+    pytest.param([SAID, SAID], [f'Ada: "{SAID}" (yours, said 2 times)'], [], id="said-twice"),
+    pytest.param([], [], ["(yours", "Lines marked (yours)"], id="nothing-said-no-reminder"),
+])
+def test_the_speakers_own_earlier_lines_are_marked(said: list[str], present: list[str], absent: list[str]) -> None:
+    content = turn_question(ada_once_said(*said))["content"]
+    assert [text in content for text in present + absent] == [True] * len(present) + [False] * len(absent)

@@ -19,6 +19,7 @@ from tavern.hall.validation import number
 from tavern.social.dice import open_chairs
 from tavern.social.names import called
 from tavern.social.scenes import Conversation
+from tavern.social.thoughts import active_thoughts, think
 
 # Each kind and how it is told: "{inviter} invited {invitee} to ...".
 KINDS: Mapping[str, str] = MappingProxyType({
@@ -144,7 +145,8 @@ def offered_kinds(world: Mapping[str, Any], scene: Mapping[str, Any], speaker: M
         speaker: Visitor about to speak.
 
     Returns:
-        Kinds in `KINDS` order: `join_table` when their table has a free chair and someone in
+        Kinds in `KINDS` order, none while someone in the scene has lately turned the speaker down
+        (`turned_down_by`): `join_table` when their table has a free chair and someone in
         the scene sits elsewhere; `move_together` when a free table exists for them and someone in the scene
         (see `free_table`); the others when they know darts, a tap with ale, or a door. None
         for staff, or when everyone else in the scene is staff.
@@ -152,6 +154,8 @@ def offered_kinds(world: Mapping[str, Any], scene: Mapping[str, Any], speaker: M
     if scene["invitation"] is not None:
         return []
     table, people = home_table(world, speaker), _people(world)
+    if any(turned_down_by(speaker, item, world["time"]) for item in scene["participants"]):
+        return []
     # Staff are at work behind the bar: they invite nobody, and nobody invites them away from it.
     if on_staff(speaker) or all(on_staff(people[item]) for item in scene["participants"] if item != speaker["id"]):
         return []
@@ -328,14 +332,32 @@ def decline(world: World, scene: Conversation, speaker: Actor,
     Args:
         world: World whose log records it.
         scene: Speaker's scene.
-        speaker: Invitee answering.
+        speaker: Invitee answering; the inviter keeps a `turned_down` thought about them.
         addressee: Unused.
     """
     invitation = pending_for(scene, speaker["id"])
     if invitation is not None:
         scene["invitation"] = None
-        record_event(world, speaker, "invitation_declined", f"{speaker['name']} declined an invitation to "
-                     f"{KINDS[invitation['kind']]} from {_people(world)[invitation['from']]['name']}")
+        inviter = _people(world)[invitation["from"]]
+        message = f"{speaker['name']} declined an invitation to {KINDS[invitation['kind']]} from {inviter['name']}"
+        record_event(world, speaker, "invitation_declined", message)
+        think(inviter, "turned_down", world["time"],
+              f"{called(inviter, speaker)} turned down my invitation to {KINDS[invitation['kind']]}", message, about=speaker)
+
+
+def turned_down_by(inviter: Mapping[str, Any], other_id: str, now: float) -> bool:
+    """Tell whether someone has lately turned down a guest's invitation, so the guest asks them nothing yet.
+
+    Args:
+        inviter: Guest with `thoughts` (a hand-made one may lack them).
+        other_id: Person who may have declined.
+        now: Current game time.
+
+    Returns:
+        True while the guest's `turned_down` thought about them lasts.
+    """
+    return any(item["kind"] == "turned_down" and item["about"] == other_id
+               for item in active_thoughts(inviter.get("thoughts", []), now))
 
 
 def invitations_of(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[dict[str, Any]]:
