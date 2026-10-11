@@ -62,6 +62,15 @@ and creates a new situation for the player.
 
 Expand property, the yard, and lodging after this loop works.
 
+## Character catalog and authoring
+
+Planned: [a single character catalog and the `add-npc` skill](CHARACTER_CATALOG.md).
+Move profiles, default relationships and inventory, and all eight-view game art
+under `characters/<id>/`, including Hob with an explicit bartender role. Require
+complete art before registration and keep `secret` available to models but out of
+browser data. The plan defines four implementation tasks and their checks;
+evening setup (E26) and scenario overrides remain separate future work.
+
 ## Tech debt
 
 Known problems that no current task owns. When a task leaves one behind, add it here
