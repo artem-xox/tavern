@@ -17,7 +17,7 @@ from tavern.hall.state import Actor, World, find_actor
 from tavern.mind.hall_view import home_table_of, in_use
 from tavern.mind.observation import known_objects
 from tavern.social.giving import empty_handed_company
-from tavern.social.invitations import KINDS
+from tavern.social.invitations import KINDS, turned_down_by
 from tavern.social.names import called
 from tavern.social.responses import answering
 from tavern.social.scenes import Conversation, conversation_of
@@ -126,7 +126,10 @@ def _answers(observation: Mapping[str, Any], action: Mapping[str, Any], now: flo
     if thought is None:
         return []
     aim = ANSWER_AIMS[thought["kind"]]
-    return [aim] if aim != "rematch" or _free_dice(observation) else []
+    # A rematch is an invitation: it needs a free dice table and no fresh refusal from that person.
+    if aim == "rematch" and (not _free_dice(observation) or turned_down_by(observation["actor"], action["target_id"], now)):
+        return []
+    return [aim]
 
 
 def _free_dice(observation: Mapping[str, Any]) -> bool:
@@ -137,7 +140,10 @@ def _free_dice(observation: Mapping[str, Any]) -> bool:
 
 def _invitations(observation: Mapping[str, Any], other: str) -> list[str]:
     # What they could ask this person to do, as far as they can tell; the scene decides whether it may be said.
+    # Nothing, while that person's refusal is fresh.
     actor, objects = observation["actor"], known_objects(observation)
+    if turned_down_by(actor, other, observation.get("time", -math.inf)):
+        return []
     known = {item["kind"] for item in objects}
     home = home_table_of(observation)
     person: Mapping[str, Any] = next((item for item in observation.get("people", []) if item["id"] == other), {})

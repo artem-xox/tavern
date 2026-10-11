@@ -63,6 +63,9 @@ THOUGHTS: Mapping[str, ThoughtKind] = MappingProxyType({
     "generous": ThoughtKind(1.0, 0.0, 300.0, 2, "accepted a gift from them"),
     # Held by a giver whose gift was refused, about the one who refused it.
     "rebuffed": ThoughtKind(-3.0, -8.0, 180.0, 2, "refused what they offered"),
+    # Held by an inviter whose invitation was declined (`tavern.social.invitations`), about the one who declined it:
+    # while it lasts they ask that person nothing again.
+    "turned_down": ThoughtKind(-1.0, 0.0, 180.0, 1, "turned down their invitation", acquaints=True),
     # Held by the victim of a hostile act (`tavern.body.activities`), about whoever did it.
     "shoved": ThoughtKind(-8.0, -25.0, 300.0, 3, "shoved them", acquaints=True),
     "attacked": ThoughtKind(-10.0, -35.0, 300.0, 3, "attacked them", acquaints=True),
