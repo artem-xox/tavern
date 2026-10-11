@@ -27,7 +27,8 @@ never the complete world snapshot.
 One hall and a toilet room connected by a doorway, three visitors, a beer tap, and
 several chairs. Initial map: 20 × 14 cells, rendered at 32 pixels per cell.
 
-Movement uses four-way grid paths with smooth visual interpolation. Objects expose
+Movement uses eight-way grid paths (a diagonal step takes the square root of 2 longer, and no one
+cuts a corner past an obstacle) with smooth visual interpolation. Objects expose
 explicit interaction spots. Choose spots by reachable route length. Reserve an
 interaction spot while approaching or using it, and release it on completion,
 failure, or cancellation. Handle occupied routes with waiting and replanning.

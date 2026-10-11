@@ -5,7 +5,7 @@ import { EMOTE_KINDS, EMOTE_WORDS, emoteFrame, emoteFrames, emoteMotion, emotePa
 import { fightPose } from "./fightview";
 import { drawFloor } from "./floor";
 import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawTable, drawTap, drawToilet, drawWindow } from "./furniture";
-import { headingToObject } from "./heading";
+import { headingOf, headingToObject } from "./heading";
 import { drawFireplace, drawFlames, drawHearthGlow } from "./hearth";
 import { mapParts, type MapParts } from "./mapview";
 import { Speech } from "./speech";
@@ -199,7 +199,7 @@ export class TavernScene extends Phaser.Scene {
   private updateVisitor(view: ActorView, actor: Actor, size: number, reset: boolean): void {
     const seat: WorldObject | undefined = this.world?.map.objects.find((object: WorldObject): boolean => object.id === actor.seat_id);
     const target: WorldObject | undefined = this.world?.map.objects.find((object: WorldObject): boolean => object.id === actor.action?.target_id);
-    view.direction = actor.x > view.cellX ? "east" : actor.x < view.cellX ? "west" : actor.y > view.cellY ? "south" : actor.y < view.cellY ? "north" : view.direction;
+    view.direction = headingOf(actor.x - view.cellX, actor.y - view.cellY) ?? view.direction;
     if (actor.status !== "walking") {
       // The server turns heads toward sounds and partners; otherwise the seat or the task decides.
       view.direction = actor.facing ?? seat?.facing ?? (target && actor.status === "interacting" ? target.facing ?? headingToObject(actor, target) ?? view.direction : view.direction);
