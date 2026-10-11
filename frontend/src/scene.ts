@@ -5,11 +5,12 @@ import { EMOTE_KINDS, EMOTE_WORDS, emoteFrame, emoteFrames, emoteMotion, emotePa
 import { fightPose } from "./fightview";
 import { drawFloor } from "./floor";
 import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawTable, drawTap, drawToilet, drawWindow } from "./furniture";
+import { headingOf, headingToObject } from "./heading";
 import { drawFireplace, drawFlames, drawHearthGlow } from "./hearth";
 import { mapParts, type MapParts } from "./mapview";
 import { Speech } from "./speech";
 import { shippedPose, spriteOf, stills } from "./sprites";
-import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Mind, Turn, Verb, World, WorldObject } from "./types";
+import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Facing, Mind, Turn, Verb, World, WorldObject } from "./types";
 import { animateWounds, createWounds, makeCudgelTexture, readWounds, type Wounds } from "./woundview";
 
 /** The seated version of a standing pose, for a visitor who does it from their seat. */
@@ -42,7 +43,7 @@ interface ActorView {
   targetY: number;
   cellX: number;
   cellY: number;
-  direction: string;
+  direction: Facing;
   /** How far drink sways the sprite, 0–1, as the server derives it. */
   sway: number;
   /** A fight's and a wound's marks on the figure: the cudgel in hand, stars, lunge and tint. */
@@ -198,10 +199,10 @@ export class TavernScene extends Phaser.Scene {
   private updateVisitor(view: ActorView, actor: Actor, size: number, reset: boolean): void {
     const seat: WorldObject | undefined = this.world?.map.objects.find((object: WorldObject): boolean => object.id === actor.seat_id);
     const target: WorldObject | undefined = this.world?.map.objects.find((object: WorldObject): boolean => object.id === actor.action?.target_id);
-    view.direction = actor.x > view.cellX ? "east" : actor.x < view.cellX ? "west" : actor.y > view.cellY ? "south" : actor.y < view.cellY ? "north" : view.direction;
+    view.direction = headingOf(actor.x - view.cellX, actor.y - view.cellY) ?? view.direction;
     if (actor.status !== "walking") {
       // The server turns heads toward sounds and partners; otherwise the seat or the task decides.
-      view.direction = actor.facing ?? seat?.facing ?? (target && actor.status === "interacting" ? target.facing ?? this.facingTarget(actor, target, view.direction) : view.direction);
+      view.direction = actor.facing ?? seat?.facing ?? (target && actor.status === "interacting" ? target.facing ?? headingToObject(actor, target) ?? view.direction : view.direction);
     }
     const { name: character, sheet } = spriteOf(actor);
     let wanted: string = this.actorPose(actor);
@@ -264,14 +265,6 @@ export class TavernScene extends Phaser.Scene {
     if (pose) return actor.seat_id ? SEATED_POSES[pose] ?? pose : pose;
     const chatting: boolean = this.world?.conversations.some((scene: Conversation): boolean => scene.participants.includes(actor.id)) ?? false;
     return actor.seat_id ? chatting ? "TalkingSeated" : "Seated" : "Idle";
-  }
-
-  private facingTarget(actor: Actor, target: WorldObject, fallback: string): string {
-    const dx: number = target.x + (target.width ?? 1) / 2 - (actor.x + 0.5);
-    const dy: number = target.y + (target.height ?? 1) / 2 - (actor.y + 0.5);
-    if (Math.abs(dx) >= Math.abs(dy) && dx !== 0) return dx > 0 ? "east" : "west";
-    if (dy !== 0) return dy > 0 ? "south" : "north";
-    return fallback;
   }
 
   private drawRoute(): void {

@@ -10,6 +10,7 @@ from tavern.body.activities import ACTIVITIES, Activity
 from tavern.body.hearing import sound_activity
 from tavern.body.queues import join_line, leave_line, line_full, line_of, stay_in_line, step_line
 from tavern.hall.memory import record_event
+from tavern.hall.navigation import step_length
 from tavern.hall.room import find_object, impassable_cells
 from tavern.hall.routes import gives_way, occupied_cells, replan, reserved_spots
 from tavern.hall.sight import refresh_knowledge, visible_cells
@@ -202,17 +203,22 @@ def _yield_idle_occupant(world: World, actor: Actor, next_cell: tuple[int, int])
         activate(world, occupant, {"id": "yield", "verb": "wait", "target_id": None}, ([*free], [[*free]]))
 
 
+def _step_seconds(world: World, actor: Actor) -> float:
+    # A step across a corner covers more floor, so it takes longer than a straight one by the same factor.
+    return world["rules"]["move_seconds"] * step_length((actor["x"], actor["y"]), actor["path"][0])
+
+
 def _move(world: World, actor: Actor, elapsed: float) -> None:
     actor["_move_elapsed"] += elapsed
-    while actor["path"] and actor["_move_elapsed"] >= world["rules"]["move_seconds"]:
+    while actor["path"] and actor["_move_elapsed"] >= _step_seconds(world, actor):
         next_cell = tuple(actor["path"][0])
         blocked = impassable_cells(world["map"]) + occupied_cells(world, actor) + reserved_spots(world, actor["id"])
         if next_cell in blocked:
             _yield_idle_occupant(world, actor, next_cell)
             _wait_for_route(world, actor, elapsed)
             return
+        actor["_move_elapsed"] -= _step_seconds(world, actor)
         actor["x"], actor["y"] = actor["path"].pop(0)
-        actor["_move_elapsed"] -= world["rules"]["move_seconds"]
         actor.update({"status": "walking", "_blocked_for": 0.0})
     if not actor["path"]:
         _begin_interaction(world, actor)
@@ -377,7 +383,7 @@ def check_saved_progress(actor: Mapping[str, Any], world_map: Mapping[str, Any])
     previous = [actor["x"], actor["y"]]
     for cell in path:
         saved_cell(cell, world_map)
-        if abs(cell[0] - previous[0]) + abs(cell[1] - previous[1]) != 1:
+        if max(abs(cell[0] - previous[0]), abs(cell[1] - previous[1])) != 1:
             raise ValueError("Saved route contains a nonadjacent step")
         previous = cell
     if actor.get("_spot") is not None:

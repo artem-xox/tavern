@@ -64,7 +64,12 @@ export interface Motion {
   angle: number;
 }
 
-const STEP: Readonly<Record<Facing, readonly [number, number]>> = { north: [0, -1], south: [0, 1], east: [1, 0], west: [-1, 0] };
+// A diagonal lunge is as long as a straight one, so each of its two parts is the diagonal's share.
+const SHARE: number = Math.SQRT1_2;
+const STEP: Readonly<Record<Facing, readonly [number, number]>> = {
+  north: [0, -1], south: [0, 1], east: [1, 0], west: [-1, 0],
+  "north-east": [SHARE, -SHARE], "south-east": [SHARE, SHARE], "south-west": [-SHARE, SHARE], "north-west": [-SHARE, -SHARE],
+};
 
 /**
  * A fighter's motion at `ms`: circling a little, and a lunge of up to 4 pixels toward the opponent that comes round
@@ -115,6 +120,11 @@ const HANDS: Readonly<Record<Facing, Hand>> = {
   north: { x: -17, y: -8, angle: -25, behind: true },
   east: { x: 18, y: -9, angle: 35, behind: false },
   west: { x: -18, y: -9, angle: -35, behind: false },
+  // On a diagonal the cudgel is held on the side the figure faces, as at east and west; one turned away hides it.
+  "south-east": { x: 18, y: -9, angle: 30, behind: false },
+  "south-west": { x: -18, y: -9, angle: -30, behind: false },
+  "north-east": { x: 16, y: -9, angle: 30, behind: true },
+  "north-west": { x: -16, y: -9, angle: -30, behind: true },
 };
 
 /** Where the cudgel of a guest who holds one is drawn, by the way they face; raised higher in a fighter's stance. */

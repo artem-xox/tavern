@@ -49,7 +49,12 @@ def seated(world: dict[str, Any]) -> None:
     pytest.param((3, 1), (0, 0), "west", id="west"),
     pytest.param((2, 2), (2, 5), "south", id="south-is-down-the-map"),
     pytest.param((2, 5), (2, 2), "north", id="north"),
-    pytest.param((0, 0), (2, 2), "east", id="diagonal-tie-turns-sideways"),
+    pytest.param((0, 0), (2, 2), "south-east", id="diagonal-faces-the-corner"),
+    pytest.param((2, 2), (0, 0), "north-west", id="north-west"),
+    pytest.param((2, 2), (4, 0), "north-east", id="north-east"),
+    pytest.param((2, 2), (0, 4), "south-west", id="south-west"),
+    pytest.param((0, 0), (2, 1), "south-east", id="two-across-one-down-is-diagonal"),
+    pytest.param((0, 0), (1, 3), "south", id="one-across-three-down-is-south"),
     pytest.param((1, 1), (1, 1), None, id="same-cell"),
 ])
 def test_facing_toward_a_cell(origin: tuple[int, int], target: tuple[int, int], expected: str | None) -> None:
@@ -95,9 +100,9 @@ def walking(world: dict[str, Any]) -> None:
     pytest.param(seated, "ada", None, id="seated-keeps-the-chair-facing"),
     pytest.param(glance_west, "ada", "west", id="glancing-at-a-sound"),
     pytest.param(glance_over, "ada", None, id="glance-has-passed"),
-    pytest.param(bea_talks_to_ada, "ada", "south", id="listener-faces-the-speaker"),
-    pytest.param(bea_talks_to_ada, "bea", "north", id="speaker-faces-the-partner"),
-    pytest.param(ada_talks_to_bea, "bea", "north", id="partner-faces-the-speaker"),
+    pytest.param(bea_talks_to_ada, "ada", "south-east", id="listener-faces-the-speaker"),
+    pytest.param(bea_talks_to_ada, "bea", "north-west", id="speaker-faces-the-partner"),
+    pytest.param(ada_talks_to_bea, "bea", "north-west", id="partner-faces-the-speaker"),
     pytest.param(glance_during_chat, "ada", "west", id="a-sound-turns-heads-mid-chat"),
     pytest.param(walking, "ada", None, id="walkers-face-their-steps"),
 ])

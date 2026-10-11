@@ -43,6 +43,14 @@ test("fightMotion: a lunge south moves down the screen and north up", () => {
   assert.ok(fightMotion(100, "north", 0).y < -2);
 });
 
+test("fightMotion: a lunge on a diagonal moves across and down or up together, no farther than a straight one", () => {
+  const down = fightMotion(100, "south-east", 0);
+  const up = fightMotion(100, "north-west", 0);
+  assert.ok(down.x > 1.5 && down.y > 1.5, "south-east moves right and down");
+  assert.ok(up.x < -1 && up.y < -1.5, "north-west moves left and up");
+  assert.ok(Math.hypot(down.x, down.y) < Math.hypot(fightMotion(100, "east", 0).x, fightMotion(100, "east", 0).y) + 1);
+});
+
 test("fightMotion: between lunges they only circle", () => {
   const still = fightMotion(700, "east", 0);
   assert.ok(Math.abs(still.x) < 2 && Math.abs(still.y) < 1.5);
@@ -67,7 +75,7 @@ test("starsOrbit: three stars, a third of a turn apart", () => {
 });
 
 test("cudgelHand: held on the side the guest faces, higher and tilted more in a stance", () => {
-  for (const facing of ["north", "south", "east", "west"] as const) {
+  for (const facing of ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"] as const) {
     const hand = cudgelHand(facing, false);
     const raised = cudgelHand(facing, true);
     assert.ok(raised.y < hand.y);
@@ -75,6 +83,9 @@ test("cudgelHand: held on the side the guest faces, higher and tilted more in a 
   }
   assert.equal(cudgelHand("north", false).behind, true);
   assert.equal(cudgelHand("south", false).behind, false);
+  assert.equal(cudgelHand("north-east", false).behind, true);
+  assert.equal(cudgelHand("south-west", false).behind, false);
+  assert.ok(cudgelHand("south-west", false).x < 0 && cudgelHand("south-east", false).x > 0, "held on the side they face");
 });
 
 test("showsCudgel: not on one lying down or asleep", () => {

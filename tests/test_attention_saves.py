@@ -77,6 +77,18 @@ def ada(world: dict[str, Any]) -> dict[str, Any]:
     return world["actors"][0]
 
 
+@pytest.mark.parametrize("facing", [
+    pytest.param("north-east", id="north-east"),
+    pytest.param("north-west", id="north-west"),
+    pytest.param("south-east", id="south-east"),
+    pytest.param("south-west", id="south-west"),
+])
+def test_a_diagonal_facing_survives_a_save(facing: str) -> None:
+    world = expressive_world()
+    ada(world).update(facing=facing)
+    assert parse_world(json.dumps(world)) == world
+
+
 @pytest.mark.parametrize("damage", [
     pytest.param(lambda world: ada(world).update(facing="up"), id="unknown-facing"),
     pytest.param(lambda world: ada(world).pop("gaze"), id="missing-gaze"),
