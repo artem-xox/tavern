@@ -287,6 +287,22 @@ def writer_stats(evening: Evening, calls: Sequence[Record], kind: str, tariff: T
             "usd_per_turn": usd / turns if turns else None}
 
 
+def unspoken_calls(evening: Evening, calls: Sequence[Record], kind: str) -> int:
+    """Count the writer's calls whose line no scene spoke: it ended, or its company changed, first.
+
+    Args:
+        evening: What the lockstep runner logged; `turn` events are the lines spoken.
+        calls: The evening's model calls; only those of `kind` count.
+        kind: Call kind of the writer, e.g. `turn`.
+
+    Returns:
+        Calls beyond the lines spoken, never below 0: a scripted line spoken without a call (a late
+        answer, an unclaimed turn) hides a wasted call, so this is a floor.
+    """
+    spoken = sum(event["type"] == "turn" for event in evening.events)
+    return max(0, sum(record["kind"] == kind for record in calls) - spoken)
+
+
 def _nearest_rank(values: Sequence[float], share: float) -> float | None:
     # The smallest value with at least `share` of the values at or below it; None for none.
     ordered = sorted(values)

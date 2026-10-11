@@ -311,6 +311,46 @@ def test_a_scene_that_has_had_enough_ends_after_its_last_line_is_heard(seconds: 
     assert len(world["conversations"]) == scenes
 
 
+def exchanged(world: dict[str, Any], lines: int, social: Mapping[str, float]) -> None:
+    """Give Ada's scene some lines already spoken, and each guest the given wish for company (the rest 0)."""
+    scene = world["conversations"][0]
+    scene["turns"] += [{"speaker": "ada", "addressee": "bea", "line": "Aye.", "act": "remark",
+                        "time": world["time"]}] * lines
+    for item in world["actors"]:
+        item["needs"]["social"] = social.get(item["id"], 0.0)
+
+
+@pytest.mark.parametrize("lines, social, asked", [
+    pytest.param(2, {}, 0, id="two-lines-and-everyone-content-asks-no-line-that-would-never-be-spoken"),
+    pytest.param(1, {}, 1, id="one-line-is-too-few-to-end-a-scene"),
+    pytest.param(2, {"bea": 90.0}, 1, id="someone-still-lonely"),
+    pytest.param(2, {"ada": 25.0, "bea": 25.0}, 1, id="wish-at-the-threshold-wants-more"),
+    pytest.param(5, {}, 0, id="a-long-scene-is-no-different"),
+])
+def test_a_scene_about_to_end_asks_the_writer_for_no_further_line(lines: int, social: dict[str, float],
+                                                                  asked: int) -> None:
+    world = talking()
+    exchanged(world, lines, social)
+    assert len(claim_turns(world)) == asked
+
+
+def test_a_scene_whose_guest_is_lonely_again_asks_for_its_line_after_all() -> None:
+    world = talking()
+    exchanged(world, 2, {})
+    assert claim_turns(world) == []
+    actor(world, "bea")["needs"]["social"] = 90.0
+    assert len(claim_turns(world)) == 1
+
+
+def test_a_goodbye_being_seen_off_asks_for_no_line_for_the_company_that_is_about_to_change() -> None:
+    world = talking("cid")
+    spoken(world, "leave_conversation", "I must be off.")
+    assert claim_turns(world) == []
+    advance(world, 2.0)
+    assert [item for item in conversation_of(world, "bea")["participants"]] == ["bea", "cid"]
+    assert len(claim_turns(world)) == 1
+
+
 def keyed_writer(calls: list[float], clock: Callable[[], float]) -> Callable[..., Any]:
     """A fake turn writer: scripted lines marked as written, noting the game time of each request."""
     async def write(seen: Mapping[str, Any], config: Mapping[str, Any]) -> dict[str, Any]:

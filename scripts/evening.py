@@ -12,7 +12,7 @@ from typing import Any, Callable, Mapping
 from dotenv import dotenv_values
 
 from tavern.adapters import jev
-from tavern.adapters.claude import HAIKU_4_5, ClaudeError, ask_claude
+from tavern.adapters.claude import HAIKU_5_5, ClaudeError, ask_claude
 from tavern.adapters.probes import probes
 from tavern.adapters.tracing import (Scorer, Tracer, open_tracer, traced_intender, traced_question, traced_scores,
                                      traced_writer)
@@ -20,7 +20,7 @@ from tavern.evening.aim_metrics import aim_counts
 from tavern.evening.choice_metrics import choice_counts
 from tavern.evening.lockstep import Pace, evening_mode, run_evening
 from tavern.evening.metrics import (attention_counts, bar_metrics, conversation_counts, dice_metrics, evening_metrics,
-                                    intention_counts, news_metrics, sleep_metrics, writer_stats)
+                                    intention_counts, news_metrics, sleep_metrics, unspoken_calls, writer_stats)
 from tavern.evening.ailment_metrics import ailment_counts
 from tavern.evening.closing_metrics import closing_counts
 from tavern.evening.fight_metrics import fight_counts
@@ -46,8 +46,8 @@ from tavern.mind.selection import read_switch
 from tavern.social.turns import TurnWriter
 
 DECIDES = {"local": "the local policy (no model)", "live": "Jev, recorded", "replay": "Jev answers replayed"}
-CLAUDE_MODEL = "claude-haiku-4-5"
-TARIFFS = {"turn": HAIKU_4_5, "card": HAIKU_4_5, "intention": HAIKU_4_5}
+CLAUDE_MODEL = "claude-haiku-5-5"  # The model `app.py` asks too: a measured evening costs what the server's would.
+TARIFFS = {"turn": HAIKU_5_5, "card": HAIKU_5_5, "intention": HAIKU_5_5}
 
 
 def arguments(root: Path) -> argparse.ArgumentParser:
@@ -203,7 +203,7 @@ def mind(mode: str, values: Mapping[str, Any], prefix: str, calls: list[Record],
         return intention_writer(prefix, replay_questions("intention", calls, ClaudeError)), "Claude answers replayed"
     if mode == "local" or not values.get("ANTHROPIC_API_KEY"):
         return None, f"offline: {'local mode' if mode == 'local' else 'no ANTHROPIC_API_KEY'}, so no intentions"
-    claude = {"anthropic_api_key": values["ANTHROPIC_API_KEY"], "model": "claude-haiku-4-5", "timeout": 30.0,
+    claude = {"anthropic_api_key": values["ANTHROPIC_API_KEY"], "model": CLAUDE_MODEL, "timeout": 30.0,
               "retries": 1}
 
     async def metered(question: Question) -> tuple[dict[str, Any], Mapping[str, int]]:
@@ -216,10 +216,10 @@ def mind(mode: str, values: Mapping[str, Any], prefix: str, calls: list[Record],
             lines.write(format_record(record))
     if tracer is None:
         asked = record_questions("intention", metered, keep, time.monotonic, ClaudeError)
-        return intention_writer(prefix, asked), "Claude Haiku 4.5 (claude-haiku-4-5), recorded"
+        return intention_writer(prefix, asked), f"Claude Haiku 5.5 ({CLAUDE_MODEL}), recorded"
     asked = record_questions("intention", traced_question(metered, CLAUDE_MODEL, tracer), keep, time.monotonic,
                              ClaudeError)
-    return traced_intender(intention_writer(prefix, asked), tracer), "Claude Haiku 4.5 (claude-haiku-4-5), recorded"
+    return traced_intender(intention_writer(prefix, asked), tracer), f"Claude Haiku 5.5 ({CLAUDE_MODEL}), recorded"
 
 
 def rounded(value: Any) -> Any:
@@ -348,7 +348,8 @@ def main(root: Path) -> None:
               "fights": fight_counts(world["fights"], evening.events, {item["id"]: item["name"]
                                                                        for item in [*world["actors"], *world["departed"]]}),
               "bar": bar_metrics(evening.events, [item["id"] for item in world["actors"] if on_staff(item)]),
-              "writer": writer_stats(evening, calls, "turn", HAIKU_4_5)}
+              "writer": {**writer_stats(evening, calls, "turn", HAIKU_5_5),
+                         "unspoken_calls": unspoken_calls(evening, calls, "turn")}}
     (args.out / "events.jsonl").write_text("".join(json.dumps(event, sort_keys=True) + "\n" for event in evening.events))
     (args.out / "metrics.json").write_text(json.dumps(rounded(report), indent=2) + "\n")
     print(json.dumps(rounded(report), indent=2))

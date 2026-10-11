@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from tavern.adapters.claude import HAIKU_4_5, ClaudeError
+from tavern.adapters.claude import HAIKU_4_5, HAIKU_5_5, ClaudeError
 from tavern.mind.questions import Question
 from tavern.evening.recording import (Record, Tariff, cost_by_kind, format_record, parse_records, record_questions,
                               replay_questions, request_key)
@@ -156,3 +156,13 @@ def test_invalid_claude_tariff_fails_loudly(tariff: Tariff) -> None:
 def test_records_never_hold_the_key() -> None:
     records, _answers = record([question()])
     assert "test-secret" not in json.dumps(records)
+
+
+@pytest.mark.parametrize("used, usd", [
+    pytest.param(tokens(1_000_000, 0, 0, 0), 0.10, id="input"),
+    pytest.param(tokens(0, 1_000_000, 0, 0), 0.50, id="output"),
+    pytest.param(tokens(0, 0, 1_000_000, 0), 0.01, id="cache-read"),
+    pytest.param(tokens(0, 0, 0, 1_000_000), 0.125, id="cache-write"),
+])
+def test_haiku_5_5_calls_cost_a_tenth_of_haiku_4_5(used: dict[str, int], usd: float) -> None:
+    assert cost_by_kind([call("turn", used)], 0.042, {"turn": HAIKU_5_5})["turn"]["usd"] == pytest.approx(usd)

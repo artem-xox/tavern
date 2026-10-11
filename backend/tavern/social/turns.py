@@ -28,7 +28,7 @@ from tavern.social.heard import earlier_lines, hear_line
 from tavern.social.invitations import offered_kinds, pending_for
 from tavern.social.names import as_known, called, knows_name, looks
 from tavern.social.overhearing import overhear_turn
-from tavern.social.scenes import Conversation, Turn
+from tavern.social.scenes import Conversation, Turn, awaits_company_change
 from tavern.social.thoughts import active_thoughts, familiarity_of, opinion_of
 
 
@@ -267,7 +267,8 @@ def claim_turns(world: Mapping[str, Any]) -> list[tuple[str, int, dict[str, Any]
     """
     claims = []
     for scene in world["conversations"]:
-        if scene["writing"] is None and scene["written"] is None:
+        # A line for a scene that is about to end, or to lose a guest, would never be spoken; none is asked for.
+        if scene["writing"] is None and scene["written"] is None and not awaits_company_change(world, scene):
             view = turn_view(world, scene)
             scene["writing"] = {"turn": view["conversation"]["turn"], "speaker": view["speaker"]["id"],
                                 "since": world["time"]}

@@ -6,7 +6,7 @@ import pytest
 
 from tavern.adapters.claude import HAIKU_4_5
 from tavern.evening.lockstep import Evening
-from tavern.evening.metrics import evening_metrics, writer_stats
+from tavern.evening.metrics import evening_metrics, unspoken_calls, writer_stats
 from tavern.evening.recording import Record, Tariff, request_key
 
 USAGE = {"input_tokens": 500, "output_tokens": 40, "cache_read_input_tokens": 4500, "cache_creation_input_tokens": 0}
@@ -76,3 +76,16 @@ def test_evening_cost_prices_claude_kinds_by_their_tariff() -> None:
     metrics = evening_metrics(evening(1), [turn_call(0.5)], 0.042, 3.0, {"turn": HAIKU_4_5})
     assert metrics["cost"]["turn"]["usd"] == pytest.approx(per_call(USAGE))
     assert metrics["cost"]["turn"]["cache_read_input_tokens"] == 4500
+
+
+@pytest.mark.parametrize("night, calls, expected", [
+    pytest.param(evening(0), [], 0, id="no-calls"),
+    pytest.param(evening(3), [turn_call(1.0) for _ in range(5)], 2, id="two-lines-asked-for-were-never-spoken"),
+    pytest.param(evening(3), [turn_call(1.0) for _ in range(3)], 0, id="every-line-asked-for-was-spoken"),
+    pytest.param(evening(4), [turn_call(1.0)], 0, id="scripted-lines-need-no-call"),
+    pytest.param(evening(2), [turn_call(1.0), turn_call(1.0, kind="card"), turn_call(1.0, kind="card")], 0,
+                 id="other-kinds-are-not-lines"),
+])
+def test_unspoken_calls_count_lines_asked_for_that_no_scene_spoke(night: Evening, calls: list[Record],
+                                                                 expected: int) -> None:
+    assert unspoken_calls(night, calls, "turn") == expected
