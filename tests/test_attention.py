@@ -73,7 +73,7 @@ def events(world: Mapping[str, Any], kind: str) -> list[str]:
                  id="watching-breaks-off"),
     pytest.param((17, 3), lambda world: start(world, "use_toilet", "toilet"), ((12, 3), (11, 3)), "west",
                  "use_toilet", id="wc-finishes-first"),
-    pytest.param((6, 3), lambda world: start(world, "take_beer", "tap"), ((8, 7), (9, 7)), "south", "take_beer",
+    pytest.param((6, 3), lambda world: start(world, "take_beer", "tap"), ((8, 7), (9, 7)), "south-east", "take_beer",
                  id="pouring-finishes-first"),
 ])
 def test_a_shout_turns_heads_at_once_and_stops_what_can_stop(

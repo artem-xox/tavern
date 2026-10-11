@@ -215,7 +215,8 @@ export interface Tie {
   note: string;
 }
 
-export type Facing = "north" | "south" | "east" | "west";
+/** The eight ways a visitor can face; a chair or a bar looks only one of the four straight ones. */
+export type Facing = "north" | "north-east" | "east" | "south-east" | "south" | "south-west" | "west" | "north-west";
 export type Condition = "ok" | "staggered" | "down" | "out" | "groggy";
 export type Familiarity = "stranger" | "acquaintance" | "friend";
 

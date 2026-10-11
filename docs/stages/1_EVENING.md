@@ -202,7 +202,7 @@ Write tests first for all business logic, as in [AGENTS.md](../../AGENTS.md).
   activities (sit, rest, drink, watch, darts, wait, inspect) end and the guest turns to the
   source; the WC, pouring, talking, and leaving carry on. Pending decisions asked before the
   interrupt are dropped in both runners, and the briefing leads with what happened.
-- [x] **E08 — Gaze and emotes.** `expression.py`: facing follows a gaze, then the
+- [x] **E08 — Gaze and emotes.** `expression.py`: facing, one of eight compass directions (`COMPASS`), follows a gaze, then the
   conversation partner; emotes for alert, confusion, anger, and long waits (affection and
   sleep wait for E12 and E13). The scene turns sprites and draws a glyph above the head.
 - [x] **E09 — Bounded choices.** `families.py`, `selection.py`: Jev first chooses among
@@ -1027,7 +1027,7 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
     lies ahead) is at least `since`.
     `types.ts` gets `WorldObject.game?: DiceGame | null`.
   - *Client:* a guest interacting with a target that has a `facing` faces that way
-    (`updateVisitor`: `target.facing ?? facingTarget(...)`), so players face each other. The
+    (`updateVisitor`: `target.facing ?? headingToObject(...)`), so players face each other. The
     hover line adds "· Rurik and Edda playing" for a dice table with a game.
   - *Tests (`tests/test_dice.py`, with a small hall helper):* `win_chance` cases (equal guests,
     a drunk opponent, sharp against dull at the cap, missing traits as 0.5, and

@@ -33,23 +33,27 @@ EVENT_EMOTES: Mapping[str, str] = MappingProxyType({
     "table_intruded": "angry", "fight_started": "angry"})
 
 
+# The eight ways a visitor can face, east first and clockwise on the map (y grows southward): a sector of
+# 45 degrees each, so `COMPASS[round(angle / 45) % 8]` names the way to an angle measured from east.
+COMPASS = ("east", "south-east", "south", "south-west", "west", "north-west", "north", "north-east")
+
+
 def facing_toward(origin: Sequence[int], target: Sequence[int]) -> str | None:
-    """Tell which cardinal direction faces a cell.
+    """Tell which of the eight compass directions faces a cell.
 
     Args:
         origin: Viewer's cell.
         target: Cell looked at; y grows southward, down the map.
 
     Returns:
-        `north`, `south`, `east` or `west` along the longer axis, sideways on a diagonal tie
-        (as the client faces interaction targets), or None for the viewer's own cell.
+        One of `COMPASS`, the 45-degree sector the cell lies in (so a cell two across and one down is
+        `south-east`, and one three across and one down `east`), or None for the viewer's own cell.
+        No two integer offsets sit exactly on the boundary between sectors, so there is no tie to break.
     """
     dx, dy = target[0] - origin[0], target[1] - origin[1]
-    if dx != 0 and abs(dx) >= abs(dy):
-        return "east" if dx > 0 else "west"
-    if dy != 0:
-        return "south" if dy > 0 else "north"
-    return None
+    if dx == 0 and dy == 0:
+        return None
+    return COMPASS[round(math.degrees(math.atan2(dy, dx)) / 45) % 8]
 
 
 def look_at(actor: Actor, cell: Sequence[int], until: float, stimulus_id: int) -> None:
@@ -164,7 +168,7 @@ def check_saved_expression(actor: Mapping[str, Any], world: Mapping[str, Any]) -
     Raises:
         ValueError: One of them is malformed or out of range.
     """
-    if actor.get("facing") not in (None, "north", "south", "east", "west"):
+    if actor.get("facing") not in (None, *COMPASS):
         raise ValueError("Invalid saved facing")
     gaze, emote, interrupted_at = actor["gaze"], actor["emote"], actor["interrupted_at"]
     if gaze is not None:

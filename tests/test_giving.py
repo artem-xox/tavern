@@ -110,8 +110,8 @@ def cid_talks_to_ada() -> dict[str, Any]:
 
 @pytest.mark.parametrize("prepare, giver, receiver, watched, expected", [
     pytest.param(seated, "ada", "bea", "bea", "west", id="receiver-faces-the-giver"),
-    pytest.param(cid_talks_to_ada, "ada", "bea", "ada", "east", id="giver-turns-from-the-chat"),
-    pytest.param(cid_talks_to_ada, "bea", "ada", "ada", "east", id="receiver-turns-from-the-chat"),
+    pytest.param(cid_talks_to_ada, "ada", "bea", "ada", "south-east", id="giver-turns-from-the-chat"),
+    pytest.param(cid_talks_to_ada, "bea", "ada", "ada", "south-east", id="receiver-turns-from-the-chat"),
 ])
 def test_a_hand_over_turns_both_to_each_other(prepare: Any, giver: str, receiver: str, watched: str,
                                                expected: str) -> None:

@@ -42,7 +42,7 @@ export function createWounds(scene: Phaser.Scene, baseY: number): Wounds {
  * pose asked for and `pose` the one drawn, which differs where the sprite has no art for it yet.
  */
 export function readWounds(wounds: Wounds, container: Phaser.GameObjects.Container, actor: Actor, fights: readonly Fight[],
-  time: number, wanted: string, pose: string, direction: string): void {
+  time: number, wanted: string, pose: string, direction: Facing): void {
   const fight: Fight | undefined = fights.find((item: Fight): boolean => item.outcome === null && (item.a === actor.id || item.b === actor.id));
   wounds.fighting = wanted === "Fighting";
   wounds.phase = fight && fight.b === actor.id ? 1 : 0;
@@ -56,18 +56,18 @@ export function readWounds(wounds: Wounds, container: Phaser.GameObjects.Contain
   const holds: boolean = (actor.inventory.cudgel ?? 0) > 0 && showsCudgel(wanted);
   wounds.cudgel.setVisible(holds);
   if (!holds) return;
-  const hand = cudgelHand(direction as Facing, wounds.fighting);
+  const hand = cudgelHand(direction, wounds.fighting);
   wounds.cudgel.setPosition(hand.x, hand.y + wounds.baseY + 20).setAngle(hand.angle);
   if (hand.behind) container.sendToBack(wounds.cudgel); else container.bringToTop(wounds.cudgel);
 }
 
 /** Per frame: the sway, a fighter's lunge, the shake and red flash of a blow, a limp, the stars and the tint. */
-export function animateWounds(wounds: Wounds, sprite: Phaser.GameObjects.Image, sway: number, time: number, direction: string): void {
+export function animateWounds(wounds: Wounds, sprite: Phaser.GameObjects.Image, sway: number, time: number, direction: Facing): void {
   let angle: number = sway;
   let x: number = 0;
   let y: number = wounds.baseY;
   if (wounds.fighting) {
-    const motion = fightMotion(time, direction as Facing, wounds.phase);
+    const motion = fightMotion(time, direction, wounds.phase);
     x += motion.x; y += motion.y; angle += motion.angle;
   }
   const since: number = wounds.lastBlow === null ? -1 : wounds.worldTime - wounds.lastBlow;

@@ -125,8 +125,8 @@ def test_conversation_options_are_briefed(prepare: Callable[[], dict[str, Any]],
 
 @pytest.mark.parametrize("actor_id, facing", [
     pytest.param("ada", "east", id="listener-faces-the-speaker"),
-    pytest.param("bea", "west", id="speaker-faces-the-addressee"),
-    pytest.param("cid", "east", id="addressee-faces-the-speaker"),
+    pytest.param("bea", "north-west", id="speaker-faces-the-addressee"),
+    pytest.param("cid", "south-east", id="addressee-faces-the-speaker"),
 ])
 def test_everyone_in_a_scene_faces_the_current_speaker(actor_id: str, facing: str) -> None:
     world = seated("cid")
