@@ -8,6 +8,7 @@ from typing import Any
 import pytest
 
 from tavern.evening.scenario import open_evening, parse_scenario
+from tavern.adapters.characters import load_catalog
 from tavern.hall.staff import guests
 from tavern.hall.world import step_world
 from tavern.social.facts import News, draw_news
@@ -145,7 +146,8 @@ def test_telling_news_with_no_news_listed_fails_loudly() -> None:
 def first_evening_world(seed: int) -> dict[str, Any]:
     """Open the repository's first evening at a seed."""
     room = json.loads((ROOT / "data" / "tavern.json").read_text())
-    return open_evening(room, parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text())), seed)
+    return open_evening(room, parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()),
+                                             catalog=load_catalog(ROOT / "characters")), seed)
 
 
 def test_the_first_evening_tells_one_item_and_the_seed_picks_it() -> None:

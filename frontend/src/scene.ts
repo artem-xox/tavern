@@ -9,7 +9,7 @@ import { headingOf, headingToObject } from "./heading";
 import { drawFireplace, drawFlames, drawHearthGlow } from "./hearth";
 import { mapParts, type MapParts } from "./mapview";
 import { Speech } from "./speech";
-import { shippedPose, spriteOf, stills } from "./sprites";
+import { shippedPose, spriteOf, stills, type SpriteRegistry } from "./sprites";
 import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Facing, Mind, Turn, Verb, World, WorldObject } from "./types";
 import { animateWounds, createWounds, makeCudgelTexture, readWounds, type Wounds } from "./woundview";
 
@@ -70,18 +70,18 @@ export class TavernScene extends Phaser.Scene {
   private editing: boolean = false;
   private ready: boolean = false;
 
-  constructor(private readonly callbacks: SceneCallbacks) {
+  constructor(private readonly callbacks: SceneCallbacks, private readonly sprites: SpriteRegistry) {
     super("tavern");
   }
 
   /** Load all eight directional stills for every shipped pose of every character sprite. */
   preload(): void {
-    for (const still of stills()) this.load.image(still.key, still.url);
+    for (const still of stills(this.sprites)) this.load.image(still.key, still.url);
   }
 
   /** Create rendering layers and map pointer events to server cell coordinates. */
   create(): void {
-    for (const still of stills()) this.textures.get(still.key).setFilter(Phaser.Textures.FilterMode.NEAREST);
+    for (const still of stills(this.sprites)) this.textures.get(still.key).setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.makeEmoteTextures();
     makeCudgelTexture(this);
     this.floor = this.add.graphics();
@@ -186,7 +186,7 @@ export class TavernScene extends Phaser.Scene {
   private createVisitor(actor: Actor): ActorView {
     const shadow: Phaser.GameObjects.Ellipse = this.add.ellipse(0, 9, 25, 12, 0x191815, 0.4);
     const selection: Phaser.GameObjects.Arc = this.add.circle(0, 0, 16).setStrokeStyle(2, 0xffe0a3).setVisible(actor.id === this.selectedId);
-    const { name: character, sheet } = spriteOf(actor);
+    const { name: character, sheet } = spriteOf(actor, this.sprites);
     const sprite: Phaser.GameObjects.Image = this.add.image(0, sheet.lift, `${character}-Idle-south`).setDisplaySize(sheet.size, sheet.size);
     const name: Phaser.GameObjects.Text = this.add.text(0, -53, actor.name, { fontFamily: "system-ui", fontSize: "11px", color: "#fff4dc", stroke: "#322b24", strokeThickness: 3 }).setOrigin(0.5);
     const speech: Speech = new Speech(this);
@@ -204,7 +204,7 @@ export class TavernScene extends Phaser.Scene {
       // The server turns heads toward sounds and partners; otherwise the seat or the task decides.
       view.direction = actor.facing ?? seat?.facing ?? (target && actor.status === "interacting" ? target.facing ?? headingToObject(actor, target) ?? view.direction : view.direction);
     }
-    const { name: character, sheet } = spriteOf(actor);
+    const { name: character, sheet } = spriteOf(actor, this.sprites);
     let wanted: string = this.actorPose(actor);
     // A hurt guest on the move walks bent, or simply limps in their usual walk while the bent pose is not drawn yet.
     if (wanted === "Hurt" && actor.status === "walking" && !sheet.poses.includes("Hurt")) wanted = "Walking";

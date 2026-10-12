@@ -6,7 +6,7 @@ from typing import Any
 
 from tavern.evening.scenario import open_evening, parse_scenario
 from tavern.hall.world import observe_actor, observe_people, start_action, step_world
-from tavern.mind.cards import parse_cards
+from tavern.adapters.characters import load_catalog
 
 ROOT = Path(__file__).parents[1]
 LAYOUT = json.loads((ROOT / "data" / "tavern.json").read_text())
@@ -19,7 +19,9 @@ TAKE_BEER = {"id": "take_beer:tap", "verb": "take_beer", "target_id": "tap"}
 
 def cards(folder: str) -> dict[str, Any]:
     """The repository's character cards of a folder, by ID."""
-    return parse_cards([json.loads(path.read_text()) for path in sorted((ROOT / "data" / folder).glob("*.json"))])
+    role = "guest" if folder == "characters" else "bartender"
+    return {character_id: item["card"] for character_id, item in load_catalog(ROOT / "characters").characters.items()
+            if item["role"] == role}
 
 
 def plan(*staff: dict[str, Any], guests: int = 2, **fields: Any) -> dict[str, Any]:

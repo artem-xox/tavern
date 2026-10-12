@@ -2,16 +2,13 @@ import Phaser from "phaser";
 import { WorldConnection } from "./connection";
 import { Dashboard } from "./dashboard";
 import { TavernScene } from "./scene";
-import type { Cell, Snapshot, World } from "./types";
+import { spriteSheets } from "./sprites";
+import type { Cell, CharacterCatalog, Snapshot, World } from "./types";
 import "./style.css";
 
 const root: HTMLElement | null = document.querySelector("#app");
 if (!root) throw new Error("The app container is missing.");
-
-let world: World | null = null;
-let selectedId: string | null = null;
-let editing: boolean = false;
-let connection: WorldConnection;
+const application: HTMLElement = root;
 
 /** Return this device's private session ID, kept across visits when storage allows. */
 function deviceSession(): string {
@@ -28,6 +25,15 @@ function deviceSession(): string {
   }
 }
 
+async function start(): Promise<void> {
+  const response: Response = await fetch("/api/characters");
+  if (!response.ok) throw new Error(`Could not load the character catalog (${response.status}).`);
+  const sprites = spriteSheets(await response.json() as CharacterCatalog);
+  let world: World | null = null;
+  let selectedId: string | null = null;
+  let editing: boolean = false;
+  let connection: WorldConnection;
+
 function selectVisitor(id: string): void {
   selectedId = id;
   scene.select(id);
@@ -42,12 +48,13 @@ function editCell(x: number, y: number): void {
 
 const scene: TavernScene = new TavernScene(
   { select: selectVisitor, cell: editCell, hover: (message: string): void => dashboard.hover(message) },
+  sprites,
 );
-const dashboard: Dashboard = new Dashboard(root, {
+const dashboard: Dashboard = new Dashboard(application, {
   command: (command): void => connection.send(command),
   select: selectVisitor,
   edit: (enabled: boolean): void => { editing = enabled; scene.setEditing(enabled); },
-});
+}, sprites);
 
 const game: Phaser.Game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -79,3 +86,8 @@ connection = new WorldConnection(deviceSession(), {
 });
 
 window.addEventListener("pagehide", (): void => { connection.dispose(); game.destroy(true); });
+}
+
+void start().catch((error: unknown): void => {
+  application.textContent = `Could not open the tavern: ${String(error)}`;
+});

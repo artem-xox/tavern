@@ -68,8 +68,7 @@ def create_default_app() -> FastAPI:
     choosers = _jev_choosers(board, tracer)
     return create_app(root / "data" / "tavern.json", root / "saves", config,
                       database_url=database_url, seed=Random().randrange(1 << 30),
-                      scenario_path=root / "data" / "scenarios" / "first_evening.json",
-                      characters_dir=root / "data" / "characters", staff_dir=root / "data" / "staff",
+                      scenario_path=root / "data" / "scenarios" / "first_evening.json", catalog_dir=root / "characters",
                       ask=ask, intender=intender,
                       choose=choosers[0], answer=choosers[1], health=board, probes=probes(config, os.environ.get("ANTHROPIC_API_KEY")),
                       **lines)

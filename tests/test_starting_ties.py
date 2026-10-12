@@ -43,13 +43,12 @@ def test_unknown_tie_kind_fails_loudly() -> None:
 
 
 def test_first_evening_opens_with_its_old_friends_and_rivals() -> None:
-    from tavern.mind.cards import parse_cards
+    from tavern.adapters.characters import load_catalog
     from tavern.evening.scenario import open_evening, parse_scenario
-    cards = parse_cards([json.loads(path.read_text()) for path in sorted((ROOT / "data" / "characters").glob("*.json"))])
     # The opening window is left out: the guests due at opening are then all in the hall, with their relations.
     data = {key: value for key, value in json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()).items()
             if key != "opening_window"}
-    scenario = parse_scenario(data, cards)
+    scenario = parse_scenario(data, catalog=load_catalog(ROOT / "characters"))
     world = open_evening(json.loads((ROOT / "data" / "tavern.json").read_text()), scenario, seed=1)
     guests = {item["id"]: item for item in [*world["actors"], *world["expected"]]}
     assert familiarity_of(guests["rurik"], "toren") == "acquaintance"

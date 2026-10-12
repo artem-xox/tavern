@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CHARACTERS = ("edda", "rurik", "toren", "cook", "courier", "visitor", "bartender")
+CHARACTERS = ("edda", "rurik", "toren", "brida", "calder", "saye", "hob")
 
 
 def test_character_stills_ship_with_browser_build() -> None:

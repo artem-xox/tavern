@@ -5,7 +5,7 @@ import { clock } from "./clock";
 import { iconPixels } from "./icons";
 import { projectLabel } from "./projects";
 import { mergeThoughts, NEED_PIPS, needPips, needTone, needWord, opinionBar, type MergedThought } from "./mindview";
-import { spriteOf } from "./sprites";
+import { spriteOf, type SpriteRegistry } from "./sprites";
 import type { ActivityView, Actor, ItemView, Mind, NewsCopy, Verb, World, WorldObject } from "./types";
 
 /** What the panel needs besides the visitor: the snapshot's tables and the dashboard's wording for this visitor. */
@@ -20,6 +20,7 @@ export interface InspectorContext {
   /** The visitor's status in words, and their colour as a safe CSS value. */
   status: string;
   color: string;
+  sprites: SpriteRegistry;
 }
 
 /** The needs in the order they are shown, with the word for each; the server's `fatigue` is energy and `boredom` is fun. */
@@ -70,7 +71,7 @@ export function renderDebug(readout: HTMLElement, actor: Actor, ctx: InspectorCo
 function header(actor: Actor, ctx: InspectorContext, mind: Mind | undefined): TemplateResult {
   const tone: string = !mind ? "" : mind.mood >= 3 ? "good" : mind.mood <= -3 ? "bad" : "";
   return html`<div class="who" style="--visitor:${ctx.color}">
-    <div class="portrait"><img alt="" src="/characters/${spriteOf(actor).name}/Idle/rotations/south.png"></div>
+    <div class="portrait"><img alt="" src="/characters/${spriteOf(actor, ctx.sprites).name}/Idle/rotations/south.png"></div>
     <div><h2>${actor.name}</h2><p class="doing">${sentence(ctx.status)}</p>
       ${mind ? html`<div class="chips"><span class="chip ${tone}" title="mood ${signed(mind.mood)}">${sentence(mind.mood_words)}</span><span class="chip" title="drunkenness ${Math.round(mind.drunkenness * 100)}%">${sentence(mind.stage)}</span>${actor.ailing ? html`<span class="chip bad" title="came in with a fever; a herbal remedy would cure them">Unwell</span>` : ""}${actor.health < 70 || actor.condition !== "ok" ? html`<span class="chip bad" title="health ${Math.round(actor.health)} of 100; a remedy or a bed would mend them">${actor.condition === "out" ? "Knocked out" : actor.condition === "down" ? "Thrown down" : actor.condition === "groggy" ? "Groggy" : "Hurt"} ${Math.round(actor.health)}</span>` : ""}</div>` : ""}</div></div>`;
 }

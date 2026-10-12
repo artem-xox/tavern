@@ -15,6 +15,7 @@ from tavern.hall.state import World
 from tavern.hall.validation import number, unique_ids
 from tavern.hall.world import create_world
 from tavern.mind.cards import Card, parse_card
+from tavern.mind.characters import Catalog
 from tavern.social.facts import News, draw_news, parse_news
 from tavern.social.ties import OwnTie, Tie, own_ties, parse_own_ties, parse_ties
 
@@ -168,7 +169,7 @@ def _matching_card(person: Mapping[str, Any], data: Any) -> Card:
 
 
 def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None,
-                   staff_cards: Mapping[str, Card] | None = None) -> Scenario:
+                   staff_cards: Mapping[str, Card] | None = None, catalog: Catalog | None = None) -> Scenario:
     """Validate a scenario read from outside the game.
 
     Args:
@@ -205,9 +206,11 @@ def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None,
     if seed is not None and type(seed) is not int:
         raise ValueError("Scenario seed must be an integer")
     window = _opening_window(fields.get("opening_window"), closes_at)
-    guests = _guests(fields["guests"], closes_at, cards)
-    staff = _staff(fields.get("staff", []), guests, staff_cards)
-    ties = parse_ties(fields.get("relationships", []), [item["id"] for item in guests])
+    guests = _guests(fields["guests"], closes_at, cards, catalog)
+    staff = _staff(fields.get("staff", []), guests, staff_cards, catalog)
+    guest_ids = [item["id"] for item in guests]
+    defaults = [] if catalog is None else [item for item in catalog.ties if item["a"] in guest_ids and item["b"] in guest_ids]
+    ties = parse_ties([*defaults, *fields.get("relationships", [])], guest_ids)
     news = parse_news(fields.get("news", []), [item["id"] for item in guests])
     told = _news_tonight(fields.get("news_tonight"), len(news))
     ailing = _ailing_fatigue(fields.get("ailment"), guests)
@@ -254,10 +257,10 @@ def _opening_window(value: Any, closes_at: float) -> tuple[float, float] | None:
     return first, last
 
 
-def _guests(value: Any, closes_at: float, cards: Mapping[str, Card] | None) -> tuple[Guest, ...]:
+def _guests(value: Any, closes_at: float, cards: Mapping[str, Card] | None, catalog: Catalog | None) -> tuple[Guest, ...]:
     if not isinstance(value, Sequence) or isinstance(value, str) or not value:
         raise ValueError("Scenario guests must be a nonempty list")
-    guests = tuple(parse_guest(_cast(item, cards)) for item in value)
+    guests = tuple(parse_guest(_cast(item, cards, catalog, "guest")) for item in value)
     unique_ids(guests, "guest")
     late = [item["id"] for item in guests if item["arrives_at"] >= closes_at]
     if late:
@@ -265,15 +268,28 @@ def _guests(value: Any, closes_at: float, cards: Mapping[str, Card] | None) -> t
     return guests
 
 
-def _staff(value: Any, guests: Sequence[Guest], cards: Mapping[str, Card] | None) -> tuple[StaffMember, ...]:
+def _staff(value: Any, guests: Sequence[Guest], cards: Mapping[str, Card] | None, catalog: Catalog | None) -> tuple[StaffMember, ...]:
     if not isinstance(value, Sequence) or isinstance(value, str):
         raise ValueError("Scenario staff must be a list")
-    staff = tuple(parse_staff_member(_cast(item, cards)) for item in value)
+    staff = tuple(parse_staff_member(_cast(item, cards, catalog, "bartender")) for item in value)
     unique_ids([*guests, *staff], "guests and staff")
     return staff
 
 
-def _cast(entry: Any, cards: Mapping[str, Card] | None) -> Any:
+def _cast(entry: Any, cards: Mapping[str, Card] | None, catalog: Catalog | None, role: str) -> Any:
+    if isinstance(entry, Mapping) and "character" in entry:
+        if catalog is None:
+            raise ValueError("A scenario character needs a character catalog")
+        expected = {"character", "arrives_at"} if role == "guest" else {"character", "post"}
+        if set(entry) != expected or not isinstance(entry["character"], str):
+            raise ValueError(f"A scenario {role} has exactly {', '.join(sorted(expected))}")
+        profile = catalog.guest(entry["character"]) if role == "guest" else catalog.bartender(entry["character"])
+        person = {"id": profile["id"], "name": profile["name"], "color": profile["color"], "sprite": profile["id"],
+                  "traits": dict(profile["card"]["params"]), "card": profile["card"]}
+        if role == "guest":
+            return {**person, **({"carries": dict(profile["carries"])} if profile["carries"] else {}),
+                    "arrives_at": entry["arrives_at"]}
+        return {**person, "post": entry["post"]}
     # A scenario names a guest's card by ID; the guest record carries the card itself.
     if not isinstance(entry, Mapping) or "card" not in entry:
         return entry

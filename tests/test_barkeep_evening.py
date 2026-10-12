@@ -10,9 +10,10 @@ import pytest
 from tavern.evening.lockstep import Evening, Pace, run_evening
 from tavern.evening.metrics import bar_metrics
 from tavern.evening.scenario import open_evening, parse_scenario
+from tavern.adapters.characters import load_catalog
 from tavern.hall.staff import guests, on_staff
 from tavern.mind.agents import Evaluators
-from staff_hall import LAYOUT, ROOT, cards, hob_of
+from staff_hall import LAYOUT, ROOT, hob_of
 
 CONFIG = {"model": "jev-latest", "timeout": 1.0, "temperature": 0.25, "typesafe_api_key": None}
 
@@ -25,7 +26,7 @@ async def never_asked(*arguments: Any) -> dict[str, float]:
 def first_evening(seed: int) -> dict[str, Any]:
     """The repository's first evening, opened with its guests and its barkeep."""
     data = json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text())
-    return open_evening(LAYOUT, parse_scenario(data, cards("characters"), cards("staff")), seed)
+    return open_evening(LAYOUT, parse_scenario(data, catalog=load_catalog(ROOT / "characters")), seed)
 
 
 def play(world: dict[str, Any], seed: int, until: float = 1200.0) -> Evening:

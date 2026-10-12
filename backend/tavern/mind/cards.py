@@ -121,7 +121,7 @@ def parse_cards(records: Sequence[Any]) -> dict[str, Card]:
     """Validate a library of cards.
 
     Args:
-        records: Card records, e.g. one per file under `data/characters/`.
+        records: Card records supplied by a content adapter.
     Returns:
         Cards by ID.
     Raises:

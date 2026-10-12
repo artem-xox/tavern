@@ -80,8 +80,9 @@ choosing the next creation method.
 
 ## Tested characters and states
 
-These are PixelLab library assets, with all eight directional PNGs per state copied to
-`frontend/static/characters/<slug>/`. Use the stable IDs below with
+These are PixelLab library assets, with all eight directional PNGs per state stored in
+`characters/<id>/art/`. The frontend copies only those art directories while building.
+Use the stable IDs below with
 `get_character`; avoid saving expiring image URLs as source records.
 Each state's `get_character` result includes the shared `group_id`, rotations,
 and a group download. They are native named siblings, unlike the old

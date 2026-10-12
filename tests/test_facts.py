@@ -10,12 +10,12 @@ from typing import Any
 import pytest
 
 from tavern.adapters.persistence import load_world, save_world
+from tavern.adapters.characters import load_catalog
 from tavern.evening.lockstep import Pace, run_evening
 from tavern.evening.metrics import news_metrics
 from tavern.evening.scenario import open_evening, parse_scenario
 from tavern.hall.world import step_world
 from tavern.mind.agents import Evaluators
-from tavern.mind.cards import parse_cards
 from tavern.mind.feelings import minds
 from tavern.mind.haiku_turns import RejectedTurn, parse_turn, turn_question
 from tavern.mind.scripted import scripted_turn
@@ -188,7 +188,8 @@ def test_corrupt_news_is_rejected(tmp_path: Path, corrupt: Callable[[dict[str, A
 
 
 def test_the_first_evening_has_four_to_six_news_items_each_held_by_a_guest() -> None:
-    parsed = parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()))
+    parsed = parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()),
+                            catalog=load_catalog(ROOT / "characters"))
     assert 4 <= len(parsed.news) <= 6
     assert {holder for entry in parsed.news for holder in entry["known_by"]} <= {guest["id"] for guest in parsed.guests}
 
@@ -764,9 +765,8 @@ async def paraphrasing_writer(view: Mapping[str, Any], config: Mapping[str, Any]
 def first_evening_played(seed: int) -> dict[str, Any]:
     """Play the repository's first evening offline in lockstep with the paraphrasing writer; return its world."""
     room = json.loads((ROOT / "data" / "tavern.json").read_text())
-    cards = parse_cards([json.loads(path.read_text()) for path in sorted((ROOT / "data" / "characters").glob("*.json"))])
     data = json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text())
-    world = open_evening(room, parse_scenario(data, cards), seed)
+    world = open_evening(room, parse_scenario(data, catalog=load_catalog(ROOT / "characters")), seed)
     config = {"model": "jev-latest", "timeout": 1.0, "temperature": 0.25, "typesafe_api_key": None}
     asyncio.run(run_evening(world, config, Random(seed), Evaluators(never_asked, never_asked),
                             Pace(step=0.25, model_latency=1.0, time_limit=1200.0), paraphrasing_writer))

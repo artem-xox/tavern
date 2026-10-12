@@ -1,7 +1,7 @@
 # Character catalog and NPC authoring plan
 
-Agreed 2026-10-11. This document plans the work; the catalog migration and
-authoring skill are not implemented yet.
+Agreed 2026-10-11 and implemented in the character-catalog migration. This
+document records the agreed architecture and acceptance checks.
 
 ## Goal
 

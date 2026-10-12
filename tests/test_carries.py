@@ -6,8 +6,8 @@ from typing import Any
 
 import pytest
 
+from tavern.adapters.characters import load_catalog
 from tavern.evening.scenario import open_evening, parse_scenario
-from tavern.mind.cards import parse_cards
 from staff_hall import LAYOUT, plan
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -52,7 +52,7 @@ def test_a_scenario_guest_who_carries_something_impossible_is_refused(carries: A
 
 
 def test_the_first_evening_has_edda_carry_remedies_toren_keepsakes_and_rurik_a_cudgel() -> None:
-    cards = parse_cards([json.loads(path.read_text()) for path in sorted((ROOT / "data" / "characters").glob("*.json"))])
-    scenario = parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()), cards)
+    scenario = parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()),
+                              catalog=load_catalog(ROOT / "characters"))
     assert {item["name"]: item["carries"] for item in scenario.guests if "carries" in item} == {
         "Edda": {"remedy": 3}, "Toren": {"keepsake": 2}, "Rurik": {"cudgel": 1}}

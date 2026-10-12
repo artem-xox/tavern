@@ -9,6 +9,7 @@ from typing import Any, Mapping
 import pytest
 
 from tavern.mind.agents import choose_action
+from tavern.adapters.characters import load_catalog
 from tavern.evening.scenario import Scenario, open_evening, parse_scenario
 from tavern.hall.staff import guests
 from tavern.hall.world import observe_actor, observe_people, start_action, step_world
@@ -19,7 +20,8 @@ ROOT = Path(__file__).parents[1]
 def first_evening() -> tuple[dict[str, Any], Scenario]:
     """Load the repository's room and its first-evening scenario."""
     room = json.loads((ROOT / "data" / "tavern.json").read_text())
-    return room, parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()))
+    return room, parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()),
+                                catalog=load_catalog(ROOT / "characters"))
 
 
 def listening(world: Mapping[str, Any], actor: Mapping[str, Any]) -> bool:

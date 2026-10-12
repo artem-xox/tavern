@@ -1,12 +1,12 @@
 """Names: strangers are known by their looks until introduced, by old ties, or by an overheard name."""
 
-import json
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 from tavern.hall.arrival import create_actor
+from tavern.adapters.characters import load_catalog
 from tavern.mind.briefing import brief
 from tavern.mind.cards import parse_card
 from tavern.social.names import as_known, called
@@ -55,8 +55,8 @@ def test_card_looks_are_short_text(looks: Any, valid: bool) -> None:
 
 
 def test_every_preset_card_has_looks() -> None:
-    root = Path(__file__).parents[1] / "data" / "characters"
-    looks = [parse_card(json.loads(path.read_text())).get("looks") for path in sorted(root.glob("*.json"))]
+    catalog = load_catalog(Path(__file__).parents[1] / "characters")
+    looks = [item["card"].get("looks") for item in catalog.characters.values() if item["role"] == "guest"]
     assert looks and all(looks) and len(set(looks)) == len(looks)
 
 

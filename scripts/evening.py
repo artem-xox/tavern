@@ -36,7 +36,7 @@ from tavern.evening.recording import (Record, format_record, parse_records, reco
 from tavern.evening.scenario import open_evening, parse_scenario
 from tavern.hall.staff import on_staff
 from tavern.mind.agents import Evaluators
-from tavern.mind.cards import parse_cards
+from tavern.adapters.characters import load_catalog
 from tavern.mind.haiku_turns import claude_writer, writer_mode
 from tavern.mind.intentions import Intender, intention_writer
 from tavern.mind.model_health import HealthBoard, banner, blocking
@@ -62,10 +62,8 @@ def arguments(root: Path) -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--scenario", type=Path, default=root / "data" / "scenarios" / "first_evening.json",
                         help="who comes tonight, when, and when the inn closes")
-    parser.add_argument("--characters", type=Path, default=root / "data" / "characters",
-                        help="character cards the scenario casts its guests from")
-    parser.add_argument("--staff", type=Path, default=root / "data" / "staff",
-                        help="cards the scenario casts its staff from")
+    parser.add_argument("--characters", type=Path, default=root / "characters",
+                        help="complete character catalog the scenario casts from")
     parser.add_argument("--mode", choices=("local", "live", "replay"),
                         help="default: live when TYPESAFE_API_KEY is in the env file, else local")
     parser.add_argument("--out", type=Path, default=root / "runs" / "evening-0")
@@ -307,9 +305,8 @@ def main(root: Path) -> None:
     lines = turn_writer(writer, mode, calls, keep, values, tracer)
     room = json.loads((root / "data" / "tavern.json").read_text())
     try:
-        cards = parse_cards([json.loads(path.read_text()) for path in sorted(args.characters.glob("*.json"))])
-        staff_cards = parse_cards([json.loads(path.read_text()) for path in sorted(args.staff.glob("*.json"))])
-        world = open_evening(room, parse_scenario(json.loads(args.scenario.read_text()), cards, staff_cards),
+        catalog = load_catalog(args.characters)
+        world = open_evening(room, parse_scenario(json.loads(args.scenario.read_text()), catalog=catalog),
                              args.seed)
     except (OSError, ValueError) as error:
         parser.error(f"cannot open the evening: {error}")
