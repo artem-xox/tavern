@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CHARACTERS = ("edda", "rurik", "toren", "cook", "courier", "visitor", "bartender")
+CHARACTERS = ("edda", "rurik", "toren", "brida", "calder", "saye", "hob")
 DIRECTIONS = ("north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west")
 FIGHT_POSES = ("Fighting", "KnockedOut", "Hurt", "HurtSeated", "Shoving", "HelpingUp")
 
@@ -27,10 +27,10 @@ def test_pouring_beer_still_is_bartender_only() -> None:
     subprocess.run(["npm", "--prefix", "frontend", "run", "build"], cwd=ROOT, check=True, capture_output=True)
     exported = ROOT / "frontend" / "dist" / "characters"
     for direction in DIRECTIONS:
-        path = exported / "bartender" / "PouringBeer" / "rotations" / f"{direction}.png"
+        path = exported / "hob" / "PouringBeer" / "rotations" / f"{direction}.png"
         assert path.is_file(), f"Missing bartender asset: {path}"
     for character in CHARACTERS:
-        if character != "bartender":
+        if character != "hob":
             assert not (exported / character / "PouringBeer").exists()
 
 
@@ -59,7 +59,7 @@ def test_fight_stills_ship_for_every_guest() -> None:
     """Check every guest has the six combat and recovery poses in eight views."""
     subprocess.run(["npm", "--prefix", "frontend", "run", "build"], cwd=ROOT, check=True, capture_output=True)
     exported = ROOT / "frontend" / "dist" / "characters"
-    for character in ("edda", "rurik", "toren", "cook", "courier", "visitor"):
+    for character in ("edda", "rurik", "toren", "brida", "calder", "saye"):
         for direction in DIRECTIONS:
             for pose in FIGHT_POSES:
                 path = exported / character / pose / "rotations" / f"{direction}.png"

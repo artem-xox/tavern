@@ -11,7 +11,7 @@ import pytest
 from tavern.evening.lockstep import Pace, run_evening
 from tavern.evening.scenario import open_evening, parse_scenario
 from tavern.mind.agents import Evaluators
-from tavern.mind.cards import parse_cards
+from tavern.adapters.characters import load_catalog
 
 ROOT = Path(__file__).parents[1]
 CLOSES_AT = 600
@@ -35,8 +35,7 @@ def healer_and_patient() -> dict[str, Any]:
 def cures(seed: int) -> list[str]:
     """Play the evening offline and list who was cured, by the cure events' actors."""
     room = json.loads((ROOT / "data" / "tavern.json").read_text())
-    cards = parse_cards([json.loads(path.read_text()) for path in sorted((ROOT / "data" / "characters").glob("*.json"))])
-    world = open_evening(room, parse_scenario(healer_and_patient(), cards), seed)
+    world = open_evening(room, parse_scenario(healer_and_patient(), catalog=load_catalog(ROOT / "characters")), seed)
     evening = asyncio.run(run_evening(world, {"temperature": 0.25}, Random(seed), Evaluators(unasked, unasked),
                                       Pace(step=0.25, model_latency=1.0, time_limit=CLOSES_AT)))
     return sorted({item["actor_id"] for item in evening.events if item["type"] == "cured"})

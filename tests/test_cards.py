@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 
+from tavern.adapters.characters import load_catalog
 from tavern.mind.cards import PARAMS, parse_card, parse_card_text, parse_cards
 
 ROOT = Path(__file__).parents[1]
@@ -83,7 +84,8 @@ def test_player_text_keeps_every_field() -> None:
 
 def presets() -> dict[str, Any]:
     """Read the repository's preset cards."""
-    return parse_cards([json.loads(path.read_text()) for path in sorted((ROOT / "data" / "characters").glob("*.json"))])
+    return {character_id: item["card"] for character_id, item in load_catalog(ROOT / "characters").characters.items()
+            if item["role"] == "guest"}
 
 
 def test_six_presets_with_distinct_temperaments_and_goals() -> None:
@@ -95,5 +97,4 @@ def test_six_presets_with_distinct_temperaments_and_goals() -> None:
 
 
 def test_presets_use_shipped_sprites() -> None:
-    shipped = {path.name for path in (ROOT / "frontend" / "static" / "characters").iterdir() if path.is_dir()}
-    assert {item["sprite"] for item in presets().values()} <= shipped
+    assert {item["sprite"] for item in presets().values()} == set(presets())

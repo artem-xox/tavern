@@ -11,6 +11,7 @@ from typing import Any
 import pytest
 
 from tavern.adapters.persistence import parse_world
+from tavern.adapters.characters import load_catalog
 from tavern.evening.decisions import decision_requests
 from tavern.evening.lockstep import Pace, run_evening
 from tavern.evening.scenario import open_evening, parse_scenario
@@ -152,10 +153,10 @@ def test_guests_have_no_post() -> None:
 
 def test_the_repository_evening_starts_with_hob_cast_from_his_card() -> None:
     data = json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text())
-    world = open_evening(LAYOUT, parse_scenario(data, cards("characters"), cards("staff")), seed=1)
+    world = open_evening(LAYOUT, parse_scenario(data, catalog=load_catalog(ROOT / "characters")), seed=1)
     hob = hob_of(world)
     assert (hob["card"]["id"], hob["traits"]["patience"], hob["sprite"], (hob["x"], hob["y"])) == (
-        "hob", 0.8, "bartender", (5, 1))
+        "hob", 0.8, "hob", (5, 1))
 
 
 @pytest.mark.parametrize("staff, message", [

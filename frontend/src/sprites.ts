@@ -1,48 +1,39 @@
 import { STAND_INS } from "./fightview.ts";
-import type { Actor } from "./types";
+import type { Actor, CharacterCatalog } from "./types";
 
-/** How one character sprite under /characters is drawn. */
+/** How one catalog character's sprites are drawn. */
 export interface SpriteSheet {
-  /** Display size in pixels. */
   size: number;
-  /** Vertical offset that rests the figure's feet on its cell. */
   lift: number;
-  /** Poses shipped in all eight directions; any other pose is drawn as Idle. */
   poses: readonly string[];
 }
 
+export type SpriteRegistry = Readonly<Record<string, SpriteSheet>>;
+
 const DIRECTIONS: readonly string[] = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"];
-const ALL_POSES: readonly string[] = ["Idle", "Seated", "Darts", "Bathroom", "Drinking", "DrinkingSeated", "TalkingSeated", "TakeBeer", "Walking", "Talking", "Giving", "GivingSeated", "Receiving", "ReceivingSeated", "SleepingSeated"];
-const FIGHT_POSES: readonly string[] = ["Fighting", "KnockedOut", "Hurt", "HurtSeated", "Shoving", "HelpingUp"];
-const GUEST_POSES: readonly string[] = [...ALL_POSES, ...FIGHT_POSES];
+const LEGACY_SPRITES: Readonly<Record<string, string>> = { cook: "brida", courier: "calder", visitor: "saye", bartender: "hob" };
 
-/** Character stills shipped under /characters; an unknown guest looks like Saye. */
-const SPRITES: Readonly<Record<string, SpriteSheet>> = {
-  edda: { size: 68, lift: -16, poses: GUEST_POSES },
-  rurik: { size: 68, lift: -16, poses: GUEST_POSES },
-  toren: { size: 68, lift: -16, poses: GUEST_POSES },
-  cook: { size: 68, lift: -16, poses: GUEST_POSES },
-  courier: { size: 68, lift: -16, poses: GUEST_POSES },
-  visitor: { size: 68, lift: -16, poses: GUEST_POSES },
-  bartender: { size: 68, lift: -16, poses: [...ALL_POSES, "PouringBeer"] },
-};
-
-/** Every still to load: one texture per sprite, shipped pose and direction. */
-export function stills(): { key: string; url: string }[] {
-  return Object.entries(SPRITES).flatMap(([sprite, sheet]: [string, SpriteSheet]) => sheet.poses.flatMap((pose: string) =>
-    DIRECTIONS.map((direction: string) => ({ key: `${sprite}-${pose}-${direction}`, url: `/characters/${sprite}/${pose}/rotations/${direction}.png` }))));
+/** Build the rendering registry from the server's public character catalog. */
+export function spriteSheets(catalog: CharacterCatalog): SpriteRegistry {
+  return Object.fromEntries(catalog.characters.map((character) => [character.sprite, character.visuals]));
 }
 
-/** The guest's own sprite when it ships, otherwise the generic visitor. */
-export function spriteOf(actor: Actor): { name: string; sheet: SpriteSheet } {
-  const name: string = Object.hasOwn(SPRITES, actor.sprite) ? actor.sprite : "visitor";
-  return { name, sheet: SPRITES[name]! };
+/** Every still to load: one texture per sprite, shipped pose and direction. */
+export function stills(sprites: SpriteRegistry): { key: string; url: string }[] {
+  return Object.entries(sprites).flatMap(([sprite, sheet]) => sheet.poses.flatMap((pose) =>
+    DIRECTIONS.map((direction) => ({ key: `${sprite}-${pose}-${direction}`, url: `/characters/${sprite}/${pose}/rotations/${direction}.png` }))));
+}
+
+/** Find catalog art, translating only sprite names persisted by earlier saves. */
+export function spriteOf(actor: Actor, sprites: SpriteRegistry): { name: string; sheet: SpriteSheet } {
+  const name: string = LEGACY_SPRITES[actor.sprite] ?? actor.sprite;
+  const sheet: SpriteSheet | undefined = sprites[name];
+  if (!sheet) throw new Error(`No catalog art for character ${actor.sprite}`);
+  return { name, sheet };
 }
 
 /**
- * The pose to draw: the wanted one when the sprite ships it. A fight or wound pose it lacks is stood in for by
- * a pose it has (`STAND_INS`); a seated pose falls back to Seated, so a guest stays in their chair; anything else
- * to Idle rather than a missing image.
+ * The pose to draw: the wanted one when the sprite ships it, or an old-save fallback.
  */
 export function shippedPose(sheet: SpriteSheet, wanted: string): string {
   if (sheet.poses.includes(wanted)) return wanted;

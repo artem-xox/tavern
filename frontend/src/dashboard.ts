@@ -2,6 +2,7 @@ import { clock } from "./clock";
 import { html, render } from "lit-html";
 import { repeat } from "lit-html/directives/repeat.js";
 import { renderDebug, renderInspector } from "./inspector";
+import type { SpriteRegistry } from "./sprites";
 import type { ActivityView, Actor, Command, Conversation, ItemView, Mind, ServiceHealth, Snapshot, Verb, World, WorldEvent, WorldObject } from "./types";
 
 interface Handlers {
@@ -30,7 +31,7 @@ export class Dashboard {
   private targetSignature: string = "";
   private noticeTimer: ReturnType<typeof setTimeout> | undefined;
 
-  constructor(private readonly root: HTMLElement, private readonly handlers: Handlers) {
+  constructor(private readonly root: HTMLElement, private readonly handlers: Handlers, private readonly sprites: SpriteRegistry) {
     this.root.innerHTML = this.layout();
     this.bindControls();
     this.renderEvents([]);
@@ -211,7 +212,7 @@ export class Dashboard {
     element(this.root, "#inspector-empty").hidden = true;
     const context = {
       world: this.world, activities: this.activities, items: this.items, minds: this.minds, intentions: this.intentions,
-      departed: this.departed(actor), status: this.activity(actor), color: this.actorColor(actor),
+      departed: this.departed(actor), status: this.activity(actor), color: this.actorColor(actor), sprites: this.sprites,
     };
     renderInspector(element(this.root, "#inspector"), actor, context);
     renderDebug(element(this.root, "#debug-readout"), actor, context);

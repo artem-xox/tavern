@@ -222,8 +222,8 @@ changes the behavior `test_closing.py` specifies, so it needs a decision.
   temperaments and goals, plus two starting relationships. Done: invalid cards fail
   loudly; the briefing includes the goal and temperament. `cards.py` validates a card
   (`id`, `name`, `sprite`, eight text fields, nine params in `params`); presets are in
-  `data/characters/`. A scenario guest names its card (`"card": "edda"`), keeps its
-  name, sprite and color, and takes the card's params as `traits`, so the trait names
+  `characters/<id>/character.json`. A scenario references its profile (`"character": "edda"`),
+  then takes its name, sprite, color, params and inventory defaults, so the trait names
   the local policy reads still work. Starting `relationships` (`old friends`, `rivals`,
   with a note) live in the scenario (`ties.py`, `Scenario.ties` for E12) and each guest
   holds its side; the briefing adds occupation, temperament, goal and ties
@@ -1187,7 +1187,7 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
 
 Added 2026-10-04 at the user's request; it comes before E20 (see Order). The barkeep, Hob, works
 behind the bar all evening. He keeps to four staff cells behind the counter and pours every mug
-himself in the `PouringBeer` pose (the art is in `frontend/static/characters/bartender/`). He also
+himself in the `PouringBeer` pose (the art is in `characters/hob/art/`). He also
 chats with guests who lean on the bar, but serving always comes first. He is a person in the hall
 like any guest: he is seen, heard, talked to and remembered. No model decides for him, though: a
 pure routine does, so he costs no Jev calls. For the central test he is a fixed point that every
@@ -1223,11 +1223,9 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
   thirsty). `world.start_action` refuses every action for staff ("Hob works behind the bar"), which
   also covers forced actions and invitations. Only `bartending.tend_bar` moves them, through
   `lifecycle.activate`.
-- **The card** lives in `data/staff/hob.json` (the card schema of E10), not among the guest
-  presets: `test_cards.py` pins six presets, and E26 must not offer the barkeep as a guest.
-  `parse_scenario(data, cards=None, staff_cards=None)`: without staff cards, a staff member comes
-  with no card and middling traits, as a guest does without the card library. Tests that load
-  only `data/characters` keep working. The card's substance: Hob, "barkeep of the Last Inn"; looks
+- **The card** lives in `characters/hob/character.json`, beside Hob's art and default relationships.
+  His `bartender` role prevents use as a guest. `parse_scenario(..., catalog=...)` resolves the
+  complete profile. The card's substance: Hob, "barkeep of the Last Inn"; looks
   "the bearded barkeep in a red waistcoat and green apron"; calm, watchful, slow to anger; few
   words and a dry humour, passing on what he hears with "they say"; polishes the same mug over and
   over, remembers everyone's usual; secret: he waters the ale when the cellar runs low; goal: keep
@@ -1308,7 +1306,7 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     `main`'s, as it should be for floor alone.
 - [x] **B2 — The barkeep on duty.** He stands behind the bar; guests still pour their own.
   - *Scenario:* `first_evening.json` gets
-    `"staff": [{"id": "hob", "name": "Hob", "color": "#c98f4a", "sprite": "bartender", "card": "hob", "post": "bar"}]`.
+    `"staff": [{"character": "hob", "post": "bar"}]`.
     `parse_scenario` reads this optional section into `Scenario.staff: tuple[StaffMember, ...] = ()`.
     A `StaffMember` has id, name, color, sprite, traits, post and an optional card. It gets a
     guest's checks except `arrives_at`. IDs are unique across guests and staff. Staff are not in
@@ -1317,7 +1315,7 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     `admit_arrivals`. Each member becomes an actor (`create_actor`, all needs 0) on their post's
     pour cell, with `post` set. The arrival is logged as `on_duty` ("Hob took his place behind the
     Oak bar"), and the barkeep looks around. A post must be a bar with staff cells, with one member
-    per bar. The card is `data/staff/hob.json`, as above.
+    per bar. Hob's profile comes from the character catalog, as above.
   - *Actor:* `Actor.post: str | None`; `create_actor` reads `post`, which defaults to None.
   - *Staff rules* (one `on_staff` check each): `world.start_action` refuses;
     `decisions.free_to_decide` is False (no decisions, and no lockstep stalls);
@@ -1334,9 +1332,9 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     - each post has one member;
     - no guest stands on a staff cell.
   - *Shell:* `app.create_default_app` (through `server/api.create_app`) and `scripts/evening.py`
-    load `data/staff/*.json` as `staff_cards` (`--staff`, default `data/staff`).
-  - *Client:* in `types.ts`, `Actor.post: string | null`. `sprites.ts` adds
-    `bartender: { size: 68, lift: -16, poses: [...ALL_POSES, "PouringBeer"] }`.
+    load the shared `characters/` catalog.
+  - *Client:* in `types.ts`, `Actor.post: string | null`. `sprites.ts` derives the
+    `PouringBeer` pose and all sprite sheets from the public catalog.
   - *Test edit approved by the user (2026-10-04), and no other:* `tests/test_first_evening.py`'s
     `play` decides for every idle actor, and the test requires an empty hall at the end. With a
     barkeep who never leaves, `play` must skip staff (as `free_to_decide` does) and run while guests
@@ -1359,8 +1357,8 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     `staff.py` as drafted: it builds actors with `create_actor`, and `arrival` already imports `routes`, which
     imports `staff`, so the other way round would be a cycle. `scenario.StaffMember`, `parse_staff_member`
     and `Scenario.staff` hold the section; `parse_scenario(data, cards, staff_cards)` casts staff from their
-    own cards (`data/staff/hob.json`, `--staff` in `scripts/evening.py`, `staff_dir` in `create_app`), so
-    `test_cards.py` still sees six presets. A staff member is refused every action by `start_action` ("Hob
+    own catalog profiles (`characters/hob/character.json`, `--characters` in `scripts/evening.py`, `catalog_dir` in
+    `create_app`), so `test_cards.py` still sees six guest presets. A staff member is refused every action by `start_action` ("Hob
     works behind the bar"), is never `free_to_decide`, gets no intention request and no needs; the
     lockstep runner ends the evening and tracks stalls by `guests(world)`; `expression._facing` falls back to
     the post's `staff_facing`. Saves are `schema_version` 9, with the bump named in the commit
@@ -2290,8 +2288,8 @@ Decisions for every Z task (frozen 2026-10-08; change them here first if the cod
   `min(1, max(0, 2.2·(fatigue − 0.6)) + 0.9·drunkenness)` (the first draft had 0.45 on drink, which
   gave a nap in 6 of 8 seeds; 0.9 gives one in 7 of 8) and `_leave_utility` takes
   `weary = clamp((fatigue − 0.6)/0.3) · (1 − 0.6·drunkenness) · min(1, seconds/180)` in its `max`. `doze`'s `guidance` and `leave`'s say so in words (Z4).
-- **The pose is `SleepingSeated`**, drawn by the user: `frontend/static/characters/<sprite>/
-  SleepingSeated/rotations/{north,south,east,west}.png` at 68 px. The user made all seven sprites
+- **The pose is `SleepingSeated`**, drawn by the user: `characters/<id>/art/
+  SleepingSeated/rotations/{north,north-east,east,south-east,south,south-west,west,north-west}.png` at 68 px. The user made all seven sprites
   (including the bartender, who never sleeps), so every sheet lists the same poses; the files come
   from the user's commit `f04e6a8` on `codex/giving-receiving-poses`. No `metadata.json` entry (the
   other poses added since the first export have none either). A sprite without it is drawn `Seated`,

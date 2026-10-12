@@ -1,8 +1,5 @@
 {
-  "id": "rurik",
-  "name": "Rurik",
-  "sprite": "rurik",
-  "looks": "the lean dark-haired guard with a polished belt buckle",
+  "id": "rurik", "role": "guest", "name": "Rurik", "color": "#81b3c6", "looks": "the lean dark-haired guard with a polished belt buckle",
   "occupation": "gate guard at the border post",
   "background": "Rurik has stood the night watch at the toll gate for eleven years. He knows every carter by name and most smugglers by their boots.",
   "temperament": "Slow to anger and steady as a wall; he likes order and long, unhurried evenings, and would rather watch the room than join it. Drink turns him mean late at night, and he carries a short cudgel.",
@@ -10,16 +7,6 @@
   "quirks": "Always sits facing the door; polishes his belt buckle with his thumb; falls asleep sitting upright.",
   "secret": "He takes a coin now and then to look the other way, and the captain is starting to suspect.",
   "goal": "Drink in peace after a double watch, mostly alone with his back to the wall, and keep an eye on any stranger who asks about the gate.",
-  "params": {
-    "patience": 0.8,
-    "temper": 0.4,
-    "sociability": 0.2,
-    "courage": 0.75,
-    "strength": 0.8,
-    "brawling": 0.7,
-    "tolerance": 0.75,
-    "comfort": 0.9,
-    "curiosity": 0.6
-  },
-  "sex": "male"
+  "params": {"patience": 0.8, "temper": 0.4, "sociability": 0.2, "courage": 0.75, "strength": 0.8, "brawling": 0.7, "tolerance": 0.75, "comfort": 0.9, "curiosity": 0.6},
+  "sex": "male", "carries": {"cudgel": 1}
 }

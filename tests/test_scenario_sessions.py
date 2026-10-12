@@ -144,8 +144,7 @@ def test_default_app_opens_the_repository_scenario() -> None:
     guests = [*world["actors"], *world["expected"]]
     # Hob the barkeep is at his bar before the guests come in, the first ones over the opening minute.
     assert (len(world["actors"]), len(world["expected"])) == (1, 6)
-    assert {item["sprite"] for item in guests} == {"edda", "rurik", "toren", "cook", "courier", "visitor",
-                                                   "bartender"}
+    assert {item["sprite"] for item in guests} == {"edda", "rurik", "toren", "brida", "calder", "saye", "hob"}
 
 
 @pytest.mark.parametrize("content", [

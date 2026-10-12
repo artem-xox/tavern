@@ -4,7 +4,7 @@ from collections.abc import Callable, Coroutine, Sequence
 from copy import deepcopy
 from pathlib import Path
 from random import Random
-from typing import Any, Mapping, Protocol
+from typing import Any, Mapping, Protocol, cast
 
 
 from tavern.adapters.jev import evaluate_actions, evaluate_aims, evaluate_answers, evaluate_seats
@@ -25,6 +25,23 @@ from tavern.mind.model_health import HealthBoard
 from tavern.mind.scripted import write_scripted_turn
 from tavern.server.controls import forced_action, refill_tap, set_paused, set_speed, toggle_block
 from tavern.social.turns import TurnWriter
+
+
+def _public_world(world: World) -> dict[str, Any]:
+    """Copy a world for the browser without model-only character secrets.
+
+    Args:
+        world: Authoritative state retained for saves and model prompts.
+    Returns:
+        A copy whose current, expected, and departed cards omit `secret`.
+    """
+    public = cast(dict[str, Any], deepcopy(world))
+    for group in (public["actors"], public["expected"], public["departed"]):
+        for actor in group:
+            card = actor.get("card")
+            if card is not None:
+                cast(dict[str, Any], card).pop("secret", None)
+    return public
 
 
 async def choose_action(observation: Mapping[str, Any], config: Mapping[str, Any], rng: Random) -> dict[str, Any]:
@@ -135,7 +152,7 @@ class TavernRuntime:
         """
         configured = bool(self.ai_config.get("typesafe_api_key"))
         health = {} if self.health is None else {"health": self.health.snapshot()}
-        return {"type": "snapshot", "state": deepcopy(self.world), "ai": {
+        return {"type": "snapshot", "state": _public_world(self.world), "ai": {
             "mode": "jev" if configured else "local", "configured": configured,
             "model": self.ai_config["model"], "writer": self.writer_label, "intentions": self.intender is not None,
             **health,

@@ -198,13 +198,32 @@ export interface CharacterCard {
   temperament: string;
   speech: string;
   quirks: string;
-  secret: string;
   goal: string;
   params: Record<string, number>;
   /** How strangers see the guest until they learn the name. */
   looks?: string;
   /** Counts only in how much punishment a fighter takes. */
   sex?: "female" | "male";
+}
+
+/** Public rendering data returned by the server's character catalog. */
+export interface CharacterVisuals {
+  size: number;
+  lift: number;
+  poses: string[];
+}
+
+export interface PublicCharacter {
+  id: string;
+  role: "guest" | "bartender";
+  name: string;
+  color: string;
+  sprite: string;
+  visuals: CharacterVisuals;
+}
+
+export interface CharacterCatalog {
+  characters: PublicCharacter[];
 }
 
 /** A starting relationship as one guest holds it. */

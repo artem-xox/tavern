@@ -9,9 +9,11 @@ from typing import Any, AsyncIterator, Mapping
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 
+from tavern.adapters.characters import load_catalog
 from tavern.adapters.database import DatabaseStore, initialize_database
 from tavern.evening.scenario import parse_scenario
 from tavern.mind.cards import parse_cards
+from tavern.mind.characters import Catalog
 from tavern.mind.intentions import Intender
 from tavern.mind.model_health import HealthBoard
 from tavern.mind.questions import Ask
@@ -73,7 +75,7 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
                store_for: Callable[[str], Store] | None = None, choose: Chooser | None = None,
                health: HealthBoard | None = None,
                probes: Mapping[str, Callable[[], Awaitable[object]]] | None = None,
-               answer: Answerer | None = None) -> FastAPI:
+               answer: Answerer | None = None, catalog_dir: Path | None = None) -> FastAPI:
     """Construct the local server with explicit paths and AI configuration.
 
     Args:
@@ -90,6 +92,8 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
             casts its guests from.
         staff_dir: Optional folder of the staff's cards (one JSON file each), kept apart from the
             guests' so that no staff member is offered as a guest.
+        catalog_dir: Optional root of complete character directories. When set, it supplies every
+            scenario participant and default relationship, and is published at `/api/characters`.
         ask: Optional Claude port bound to the server's key, for the card compiler; without
             it the compiler runs its labeled offline mode.
         writer: Turn writer of every session's conversation lines; scripted by default.
@@ -111,11 +115,12 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
         ValueError: The scenario file or a character card is malformed.
     """
     map_data = json.loads(map_path.read_text())
+    catalog: Catalog | None = load_catalog(catalog_dir) if catalog_dir else None
     cards = (parse_cards([json.loads(path.read_text()) for path in sorted(characters_dir.glob("*.json"))])
              if characters_dir else None)
     staff_cards = (parse_cards([json.loads(path.read_text()) for path in sorted(staff_dir.glob("*.json"))])
                    if staff_dir else None)
-    scenario = (parse_scenario(json.loads(scenario_path.read_text()), cards, staff_cards)
+    scenario = (parse_scenario(json.loads(scenario_path.read_text()), cards, staff_cards, catalog)
                 if scenario_path else None)
     if database_url and store_for is None:
         initialize_database(database_url)
@@ -136,12 +141,13 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
         await sessions.close()
     app = FastAPI(title="The Last Inn", lifespan=lifespan)
     app.state.sessions = sessions
-    _register_routes(app, sessions, health)
+    app.state.catalog = catalog
+    _register_routes(app, sessions, health, catalog)
     app.include_router(card_routes(ask))
     return app
 
 
-def _register_routes(app: FastAPI, sessions: TavernSessions, board: HealthBoard | None) -> None:
+def _register_routes(app: FastAPI, sessions: TavernSessions, board: HealthBoard | None, catalog: Catalog | None) -> None:
     @app.get("/health")
     async def health() -> dict[str, Any]:
         # Always 200 while the server runs, so the deploy check passes; the models are reported beside it.
@@ -152,6 +158,11 @@ def _register_routes(app: FastAPI, sessions: TavernSessions, board: HealthBoard 
         if runtime is None:
             raise HTTPException(status_code=404, detail="Session is not open")
         return runtime.snapshot()
+    @app.get("/api/characters")
+    async def characters() -> dict[str, list[dict[str, object]]]:
+        if catalog is None:
+            raise HTTPException(status_code=404, detail="No character catalog is configured")
+        return catalog.public()
     @app.websocket("/ws")
     async def websocket(socket: WebSocket) -> None:
         await _serve_socket(socket, sessions)

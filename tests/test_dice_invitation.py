@@ -10,12 +10,12 @@ from typing import Any
 import pytest
 
 from tavern.adapters.persistence import load_world, save_world
+from tavern.adapters.characters import load_catalog
 from tavern.evening.lockstep import Pace, run_evening
 from tavern.evening.metrics import dice_metrics
 from tavern.evening.scenario import open_evening, parse_scenario
 from tavern.hall.world import create_world, start_action
 from tavern.mind.agents import Evaluators
-from tavern.mind.cards import parse_cards
 from tavern.mind.haiku_turns import turn_content, turn_question
 from tavern.mind.scripted import scripted_turn
 from tavern.social.dice import open_chairs
@@ -230,8 +230,8 @@ async def dicing_writer(view: dict[str, Any], config: dict[str, Any]) -> dict[st
 @pytest.mark.parametrize("seed", [pytest.param(1, id="seed-1"), pytest.param(2, id="seed-2")])
 def test_a_game_invited_to_in_the_first_evening_reaches_a_result(seed: int) -> None:
     room = json.loads((ROOT / "data" / "tavern.json").read_text())
-    cards = parse_cards([json.loads(path.read_text()) for path in sorted((ROOT / "data" / "characters").glob("*.json"))])
-    scenario = parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()), cards)
+    scenario = parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()),
+                              catalog=load_catalog(ROOT / "characters"))
     world = open_evening(room, scenario, seed)
     config = {"model": "jev-latest", "timeout": 1.0, "temperature": 0.25, "typesafe_api_key": None}
     evening = asyncio.run(run_evening(world, config, Random(seed), Evaluators(never_asked, never_asked),

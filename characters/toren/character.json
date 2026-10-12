@@ -1,8 +1,5 @@
 {
-  "id": "toren",
-  "name": "Toren",
-  "sprite": "toren",
-  "looks": "the pedlar with dye-stained hands",
+  "id": "toren", "role": "guest", "name": "Toren", "color": "#b8aa76", "looks": "the pedlar with dye-stained hands",
   "occupation": "travelling trader in cloth and dyes",
   "background": "Toren crosses the border twice a season with a mule train of wool and madder dye, buying cheap on one side and selling dear on the other.",
   "temperament": "Restless and endlessly curious; friendly to everyone because everyone might be a customer.",
@@ -10,16 +7,6 @@
   "quirks": "Fingers the cloth of everyone's sleeve; never sits in the same seat twice; keeps a ledger in his boot; will wager on anything, from dice to the weather.",
   "secret": "Half his bales are carried past the toll gate at night without paying.",
   "goal": "Learn which roads are watched this month, talk someone into a deal (or a wager) before the inn closes, and chat up everyone in the room.",
-  "params": {
-    "patience": 0.5,
-    "temper": 0.35,
-    "sociability": 0.95,
-    "courage": 0.4,
-    "strength": 0.4,
-    "brawling": 0.2,
-    "tolerance": 0.55,
-    "comfort": 0.3,
-    "curiosity": 0.9
-  },
-  "sex": "male"
+  "params": {"patience": 0.5, "temper": 0.35, "sociability": 0.95, "courage": 0.4, "strength": 0.4, "brawling": 0.2, "tolerance": 0.55, "comfort": 0.3, "curiosity": 0.9},
+  "sex": "male", "carries": {"keepsake": 2}
 }
