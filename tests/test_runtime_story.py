@@ -4,10 +4,24 @@ import asyncio
 from pathlib import Path
 from typing import Any
 
+from tavern.evening.scenario import Scenario, parse_scenario
 from tavern.server.runtime import TavernRuntime
-from tests.test_scenario_sessions import hall, plan
 
 RETOLD = {"title": "The Nap of Ada 💤", "text": "Ada dozed off at the table. 🍺"}
+
+
+def hall() -> dict[str, Any]:
+    """Build a 9×6 hall with a door in the bottom wall and a tap."""
+    return {"width": 9, "height": 6, "blocked": [[x, 5] for x in range(9) if x != 4], "objects": [
+        {"id": "door", "kind": "door", "name": "Door", "x": 4, "y": 5, "interaction_spots": [[4, 4]]},
+        {"id": "tap", "kind": "tap", "name": "Tap", "x": 1, "y": 0, "interaction_spots": [[1, 1]], "stock": 5},
+    ]}
+
+
+def plan() -> Scenario:
+    """Expect one guest, Ada, at once, before closing at 300 s."""
+    guest = {"id": "ada", "name": "Ada", "color": "#a08060", "sprite": "visitor", "traits": {}, "arrives_at": 0}
+    return parse_scenario({"guests": [guest], "arrival": {"needs": {"thirst": [40, 80]}}, "closes_at": 300})
 
 
 def storyteller(answer: Any) -> Any:
@@ -21,7 +35,7 @@ def storyteller(answer: Any) -> Any:
 
 def runtime(tmp_path: Path, ask: Any = None) -> TavernRuntime:
     """Open a running scenario evening with one guest."""
-    opened = TavernRuntime(hall(), tmp_path / "save.json", {"typesafe_api_key": None}, scenario=plan(0), storyteller=ask)
+    opened = TavernRuntime(hall(), tmp_path / "save.json", {"typesafe_api_key": None}, scenario=plan(), storyteller=ask)
     opened.world["paused"] = False
     return opened
 
