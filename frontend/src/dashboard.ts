@@ -10,6 +10,7 @@ interface Handlers {
   command: (command: Command) => void;
   select: (id: string) => void;
   edit: (enabled: boolean) => void;
+  lineup: () => void;
 }
 
 function element<T extends HTMLElement>(root: HTMLElement, selector: string): T {
@@ -132,7 +133,7 @@ export class Dashboard {
           </section>
           <section class="control-card" aria-label="Shape the evening">
             <div class="controls-row"><button id="evening" data-evening data-control class="primary">▶ Start the evening</button><button id="pause" data-control>Pause</button><label class="speed-label">Speed<select id="speed" data-control aria-label="Simulation speed"><option value="0.5">½×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
-              <span class="controls-spacer"></span><button id="refill" data-control>Refill beer</button><button id="edit" data-control aria-pressed="false">Edit obstacles</button><button id="save" data-control>Save</button><button id="load" data-control>Load</button></div>
+              <span class="controls-spacer"></span><button id="new-lineup">Change guests</button><button id="refill" data-control>Refill beer</button><button id="edit" data-control aria-pressed="false">Edit obstacles</button><button id="save" data-control>Save</button><button id="load" data-control>Load</button></div>
             <p id="edit-hint" class="helper">Refill adds 10 servings. Obstacle mode toggles a clicked cell. The server keeps your saved world.</p>
           </section>
           <section class="events-card"><div class="section-heading"><h3>Story of the evening</h3><span id="story-score" class="muted"></span></div><div id="story"></div></section>
@@ -150,6 +151,7 @@ export class Dashboard {
       const target: HTMLElement | null = (event.target as HTMLElement).closest("button");
       if (!target) return;
       if (target.dataset.actor) { this.handlers.select(target.dataset.actor); return; }
+      if (target.id === "new-lineup") { this.handlers.lineup(); return; }
       if (!this.world) return;
       if (target.dataset.evening !== undefined) this.startOrRestart();
       if (target.id === "pause") this.handlers.command({ type: "pause", paused: !this.world.paused });
@@ -240,7 +242,7 @@ export class Dashboard {
     render(mode === "told" && recap
       ? html`<p class="recap-text">${recap.text}</p><p class="story-chips">${momentChips(story).map((chip: string) => html`<span class="small-tag">${chip}</span> `)}</p>`
       : html`<p class="recap-text">⏳ We are preparing the retelling of your evening…</p>`, element(this.root, "#recap-body"));
-    render(mode === "told" ? html`<button @click=${(): void => { this.recapDismissed = true; element(this.root, "#recap-window").hidden = true; }}>Close</button><button class="primary" @click=${(): void => this.startOrRestart()}>↻ New evening</button>` : nothing, element(this.root, "#recap-actions"));
+    render(mode === "told" ? html`<button @click=${(): void => { this.recapDismissed = true; element(this.root, "#recap-window").hidden = true; }}>Close</button><button @click=${(): void => this.handlers.lineup()}>Change guests</button><button class="primary" @click=${(): void => this.startOrRestart()}>↻ New evening</button>` : nothing, element(this.root, "#recap-actions"));
   }
 
   /** Show the story score and, once the evening is over and retold, the storyteller's recap. */

@@ -1,9 +1,10 @@
 import Phaser from "phaser";
 import { WorldConnection } from "./connection";
 import { Dashboard } from "./dashboard";
+import { LineupScreen } from "./lineupscreen";
 import { TavernScene } from "./scene";
 import { spriteSheets } from "./sprites";
-import type { Cell, CharacterCatalog, Snapshot, World } from "./types";
+import type { Cast, Cell, CharacterCatalog, Snapshot, World } from "./types";
 import "./style.css";
 
 const root: HTMLElement | null = document.querySelector("#app");
@@ -29,6 +30,9 @@ async function start(): Promise<void> {
   const response: Response = await fetch("/api/characters");
   if (!response.ok) throw new Error(`Could not load the character catalog (${response.status}).`);
   const sprites = spriteSheets(await response.json() as CharacterCatalog);
+  const casts: Response = await fetch("/api/casts");
+  if (!casts.ok) throw new Error(`Could not load the casts (${casts.status}).`);
+  const offered: Cast[] = await casts.json() as Cast[];
   let world: World | null = null;
   let selectedId: string | null = null;
   let editing: boolean = false;
@@ -54,7 +58,11 @@ const dashboard: Dashboard = new Dashboard(application, {
   command: (command): void => connection.send(command),
   select: selectVisitor,
   edit: (enabled: boolean): void => { editing = enabled; scene.setEditing(enabled); },
+  lineup: (): void => lineup.open(true),
 }, sprites);
+const lineupHost: HTMLElement = document.createElement("div");
+application.append(lineupHost);
+const lineup: LineupScreen = new LineupScreen(lineupHost, offered, (command): void => connection.send(command));
 
 const game: Phaser.Game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -68,7 +76,10 @@ const game: Phaser.Game = new Phaser.Game({
 });
 
 function applySnapshot(snapshot: Snapshot): void {
+  const first: boolean = world === null;
   world = snapshot.state;
+  // The screen greets a page that has just opened; an evening restored from a save can be resumed from it.
+  if (first) lineup.open(world.tick > 0);
   scene.setWorld(world, snapshot.activities, snapshot.minds);
   dashboard.apply(snapshot);
   // Departed visitors stay selectable, so their evening can still be inspected.

@@ -91,6 +91,10 @@ Answerer = Callable[[Mapping[str, Any], Mapping[str, Any], Sequence[str], Mappin
                     Coroutine[Any, Any, dict[str, Any]]]
 
 
+# Builds the evening of a cast for the guests picked on the start screen: cast, guest IDs, minutes.
+Lineup = Callable[[Any, Any, Any], Scenario]
+
+
 class Store(Protocol):
     """Where one session's worlds are kept, by slot: `manual` or `auto`."""
 
@@ -114,9 +118,12 @@ class TavernRuntime:
                  writer_label: str = "scripted",
                  intender: Intender | None = None, intention_rules: IntentionRules = INTENTION_RULES,
                  choose: Chooser = choose_action, health: HealthBoard | None = None,
-                 answer: Answerer = choose_invitation_answer, storyteller: Ask | None = None) -> None:
+                 answer: Answerer = choose_invitation_answer, storyteller: Ask | None = None,
+                 lineup: Lineup | None = None) -> None:
         self.map_data = deepcopy(dict(map_data))
         self.scenario = scenario
+        # Makes the evening of a `start` command; None where the start screen is not offered.
+        self.lineup = lineup
         self.world = self._open(seed)
         # Retells the evening when it is over; None offline: the score still counts, nothing is retold.
         self.storyteller = storyteller
@@ -284,6 +291,13 @@ class TavernRuntime:
         self.world = restored
         self._follow_story()
 
+    def _start(self, command: Mapping[str, Any]) -> None:
+        # The picked lineup becomes the scenario, so a later restart replays it.
+        if self.lineup is None:
+            raise ValueError("No lineups are offered")
+        self.scenario = self.lineup(command.get("cast"), command.get("guests"), command.get("minutes"))
+        self._reset(command)
+
     def command(self, command: Mapping[str, Any]) -> None:
         """Validate and apply an operator command atomically.
 
@@ -296,7 +310,7 @@ class TavernRuntime:
                     "speed": lambda item: set_speed(self.world, item),
                     "refill": lambda item: refill_tap(self.world, item),
                     "block": self._block, "force_action": self._force_action,
-                    "save": self._save, "load": self._load, "reset": self._reset}
+                    "save": self._save, "load": self._load, "reset": self._reset, "start": self._start}
         if not isinstance(command, Mapping) or not isinstance(command.get("type"), str):
             raise ValueError("Expected a command with a type")
         handler = handlers.get(command["type"])
