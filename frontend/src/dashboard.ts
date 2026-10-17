@@ -232,10 +232,10 @@ export class Dashboard {
 
   /** The window after closing: ask to wait while the recap is written, then show it with a way back. */
   private renderRecapWindow(snapshot: Snapshot): void {
-    const over: boolean = snapshot.state.actors.length === 0 && snapshot.state.expected.length === 0 && snapshot.state.departed.length > 0;
-    // A new evening forgets the closed window, so its recap opens again.
-    if (!over) this.recapDismissed = false;
-    const mode = over ? recapWindow(snapshot.telling, snapshot.recap, this.recapDismissed) : "hidden";
+    // The server knows when the evening is over (it starts the telling then); the staff never leave the hall,
+    // so the roster cannot say. A new evening has no recap, so it forgets the closed window.
+    if (!snapshot.telling && !snapshot.recap) this.recapDismissed = false;
+    const mode = recapWindow(snapshot.telling, snapshot.recap, this.recapDismissed);
     element(this.root, "#recap-window").hidden = mode === "hidden";
     const { recap, story } = snapshot;
     element(this.root, "#recap-heading").textContent = mode === "told" && recap ? recap.title : "Please wait";
