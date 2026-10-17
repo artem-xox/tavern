@@ -23,7 +23,7 @@ story an observer can retell, with every cause visible in the event log.
 ## Engine
 
 Layers, rules, and the “models decide what, the game decides how” boundary are in
-[DESIGN.md](../DESIGN.md#how-a-guest-thinks). Stage 0 parts that stay: the
+[DESIGN.md](../../DESIGN.md#how-a-guest-thinks). Stage 0 parts that stay: the
 authoritative server world, A*, reservations, sessions and saves, the briefing, Jev
 scoring with the near-best draw, stale-decision rejection, and the local policy.
 Parts that are replaced: the scripted 8-second `talk`, the `grievances` list (by
@@ -60,7 +60,7 @@ Exact fields are frozen in each task before implementation; this is the outline.
 ### Determinism and cost
 
 Stage 1 changes the saved-world format and adds the `anthropic` SDK; both need the
-user's approval before the first task that does so ([AGENTS.md](../../AGENTS.md)).
+user's approval before the first task that does so ([AGENTS.md](../../../AGENTS.md)).
 
 Every model call goes through one gateway that records request, response, and usage.
 Headless evenings run in lockstep with fixed virtual model latency, so a recorded
@@ -111,7 +111,7 @@ lives in packages (`backend/tavern/hall`, `body`, `social`, `mind`, `evening`, `
 
 ## Working on a task
 
-The steps every task follows. [AGENTS.md](../../AGENTS.md) has the rules behind them.
+The steps every task follows. [AGENTS.md](../../../AGENTS.md) has the rules behind them.
 
 1. **Read first.** Read the task below, the test file of every module you will touch
    (the tests are the spec), and the modules the task names. Grep for the concept before
@@ -147,13 +147,13 @@ The steps every task follows. [AGENTS.md](../../AGENTS.md) has the rules behind 
    built (modules, fields, rules), the offline and live numbers (scenes, turns, stuck
    seconds, cost per evening and per call, cache hits), and one moment from the log that
    shows the feature. Tick the box. Add any problem you leave behind to the tech-debt
-   table in [PLAN.md](../PLAN.md#tech-debt).
+   table in [PLAN.md](../TECH_DEBT.md).
 10. **Done** means `make check` passes and its output is pasted, plus `make build` if the
     frontend changed.
 
 ## Tasks
 
-Write tests first for all business logic, as in [AGENTS.md](../../AGENTS.md).
+Write tests first for all business logic, as in [AGENTS.md](../../../AGENTS.md).
 
 ### M1 — Foundations
 
@@ -1157,7 +1157,7 @@ Decisions for every G task (frozen 2026-10-04; change them here first if the cod
     Record games, abandoned games, onlookers, each winner with their chance, stuck time, the
     cost per evening against E19's $0.19, and one moment from the log (an invitation, the walk,
     the whoop, an onlooker's memory). Tick the boxes and update the status here and in
-    [PLAN.md](../PLAN.md).
+    [PLAN.md](../README.md).
   - *Result (2026-10-04):* `metrics.dice_metrics` (games, abandoned, onlookers, wins per guest) is in
     `metrics.json` as `dice`; `intentions.SALIENT_EVENTS` maps `dice_won` and `dice_lost` to a `dice`
     trigger, so players take stock after a game and a save holding that trigger loads back. The lockstep
@@ -1562,7 +1562,7 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
     - the cost per evening against E19's $0.19;
     - one moment from the log.
 
-    Tick the boxes and update the status here and in [PLAN.md](../PLAN.md).
+    Tick the boxes and update the status here and in [PLAN.md](../README.md).
   - *Built (2026-10-04):* `metrics.bar_metrics(events, staff)` (a `BarCounts`: `served`, `opened`,
     `lines`, `news_told`, counted from the events whose actor is on staff; a chat a guest opens with the
     barkeep is not one he opened) is in `metrics.json` as `bar` (`scripts/evening.py` takes the staff IDs from
@@ -1591,7 +1591,7 @@ Decisions for every B task (frozen 2026-10-04; change them here first if the cod
 
 Added 2026-10-05 at the user's request. Any guest can hand anything they carry to another guest:
 a mug of ale, a herbal remedy or a keepsake now, and coins once the economy exists (Stage 3). Step 0
-of [MIND.md](../MIND.md) found the need: in five of seven recorded live evenings, 17 intentions ask to
+of [MIND.md](../../MIND.md) found the need: in five of seven recorded live evenings, 17 intentions ask to
 bring someone a drink, and no activity can. `buy_drink` exists only as an invitation, and its ale
 jumps from the tap into the invitee's hand. Giving is also the first compound action a guest can
 choose: fetch an ale, carry it over, hand it on. The guest chooses it once, the body carries it
@@ -1816,7 +1816,7 @@ Decisions for every H task (frozen 2026-10-05; change them here first if the cod
 
 - [ ] **E23 — New poses.** Generate fight stance, punch, shove, hit, knocked out,
   getting up, cheer, and asleep at the table through the
-  [character pipeline](../CHARACTER_ART_PIPELINE.md). Done: each pose is reviewed at
+  [character pipeline](../../CHARACTER_ART_PIPELINE.md). Done: each pose is reviewed at
   game scale for every guest sprite.
 - [ ] **E24 — Living room rendering.** Facing, emotes, real-line bubbles, drunk sway,
   visible queues, and a fight ring. Done: a browser check of a recorded evening.
@@ -1837,7 +1837,7 @@ Added 2026-10-08 at the user's request, from six complaints with screenshots: bu
 mid-sentence, a black mat at the door and a fireplace that does not read as one, buttons that do
 not respond on an iPhone, inspector sections that will not fold on desktop, emotes on a white
 box that say nothing, and an inspector that is hard to read. The design reference for U8–U10 is
-[docs/mockups/inspector.html](../mockups/inspector.html): open it in a browser.
+[docs/mockups/inspector.html](../../mockups/inspector.html): open it in a browser.
 
 What was measured before writing these tasks (2026-10-08, offline evening, seed 5, by script; nothing
 was changed):
@@ -1886,7 +1886,7 @@ matters on the phone.
   - *Check:* `make check` and `make build`. Run `make run`, then compare the opening room (paused,
     tick 0) before and after at the same window size. Start the evening and watch one conversation:
     bubbles still sit over their speaker, stay inside the map and split as before. Remove the D01 row
-    from [PLAN.md](../PLAN.md#tech-debt) in the same commit.
+    from [PLAN.md](../TECH_DEBT.md) in the same commit.
 
   - *Result (2026-10-08):* `scene.ts` 405 → 300 lines. `floor.ts` (57) holds `drawFloor`, `drawRoomDetails`
     and `drawWall`, moved without a logic change (`this.floor` became a parameter). `speech.ts` (82) holds
@@ -3709,7 +3709,7 @@ are frozen below; two are still open at the end of this block. Freeze those here
 #### New poses
 
 Six poses, cut down on 2026-10-09 at the user's request: no animation of blows in art. A fighter has one stance,
-fists up, and the client makes the fight move. The rules of [CHARACTER_ART_PIPELINE.md](../CHARACTER_ART_PIPELINE.md)
+fists up, and the client makes the fight move. The rules of [CHARACTER_ART_PIPELINE.md](../../CHARACTER_ART_PIPELINE.md)
 apply: eight compass views, 68 px requested, the export size checked before a batch, `create_character_state` on each
 guest's base character with "same face, outfit, colours and scale; change only the pose",
 `use_color_palette_from_reference=true`, and the user's approval before credits are spent.
