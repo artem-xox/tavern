@@ -13,7 +13,7 @@ from tavern.mind.intentions import Intender
 from tavern.mind.model_health import HealthBoard
 from tavern.mind.questions import Ask
 from tavern.mind.scripted import write_scripted_turn
-from tavern.server.runtime import Answerer, Chooser, Store, TavernRuntime, choose_action, choose_invitation_answer
+from tavern.server.runtime import Answerer, Chooser, Lineup, Store, TavernRuntime, choose_action, choose_invitation_answer
 from tavern.social.turns import TurnWriter
 
 
@@ -29,7 +29,8 @@ class TavernSessions:
                  writer: TurnWriter = write_scripted_turn, writer_label: str = "scripted",
                  intender: Intender | None = None, store_for: Callable[[str], Store] | None = None,
                  choose: Chooser | None = None, health: HealthBoard | None = None,
-                 answer: Answerer | None = None, storyteller: Ask | None = None) -> None:
+                 answer: Answerer | None = None, storyteller: Ask | None = None,
+                 lineup: Lineup | None = None) -> None:
         self.map_data = deepcopy(dict(map_data))
         self.writer, self.writer_label = writer, writer_label
         self.save_dir = save_dir
@@ -42,6 +43,8 @@ class TavernSessions:
         self.choose, self.health, self.answer = choose, health, answer
         # Retells each evening at closing (Claude Sonnet); None offline.
         self.storyteller = storyteller
+        # Builds the evening of a start-screen lineup; None where the screen is not offered.
+        self.lineup = lineup
         self.scenario = scenario
         self.rng = Random(seed)
         self.runtimes: dict[str, TavernRuntime] = {}
@@ -73,7 +76,8 @@ class TavernSessions:
                                 self.store_for(session_id) if self.store_for else None, self.scenario,
                                 self.writer, self.writer_label, intender=self.intender,
                                 choose=self.choose or choose_action, health=self.health,
-                                answer=self.answer or choose_invitation_answer, storyteller=self.storyteller)
+                                answer=self.answer or choose_invitation_answer, storyteller=self.storyteller,
+                                lineup=self.lineup)
         if not runtime.restore():
             # A new evening waits at the door until someone presses Start.
             runtime.world["paused"] = True

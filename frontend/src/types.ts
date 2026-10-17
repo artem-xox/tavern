@@ -228,6 +228,20 @@ export interface CharacterCatalog {
   characters: PublicCharacter[];
 }
 
+/** A guest's face on the start screen: the name and the card's occupation. */
+export interface CastMember {
+  id: string;
+  name: string;
+  description: string;
+}
+
+/** A cast the player can pick the evening's guests from (`/api/casts`). */
+export interface Cast {
+  id: string;
+  title: string;
+  characters: CastMember[];
+}
+
 /** A starting relationship as one guest holds it. */
 export interface Tie {
   with: string;
@@ -484,4 +498,5 @@ export type Command =
   | { type: "refill"; object_id: string; amount: number }
   | { type: "block"; x: number; y: number; blocked: boolean }
   | { type: "force_action"; actor_id: string; action: Action }
+  | { type: "start"; cast: string; guests: string[]; minutes: number }
   | { type: "save" | "load" | "reset" };

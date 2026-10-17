@@ -20,7 +20,7 @@ Known problems that no task owns are in [TECH_DEBT.md](TECH_DEBT.md).
 |----|------|-------|--------|
 | S2-00 | [The Story Tavern](2_story_evenings/00_story_tavern.md): new name and setting in the UI, prompts and skill | — | doing |
 | S2-01 | [Two casts](2_story_evenings/01_casts.md): `characters/locals/`, `characters/guests/`, the barkeep as staff | — | done |
-| S2-02 | [Lineup screen](2_story_evenings/02_lineup_screen.md): pick Locals or Guests before the evening | 01 | todo |
+| S2-02 | [Lineup screen](2_story_evenings/02_lineup_screen.md): pick Locals or Guests, then 1–6 faces, before the evening | 01 | done |
 | S2-03 | [Persona cards](2_story_evenings/03_persona_cards.md): public persona, catchphrases, obsessions, mute characters, parody names | 01 | todo |
 | S2-04 | [First guests](2_story_evenings/04_first_guests.md): three famous guests with full art and a scenario | 01, 03 | todo |
 | S2-05 | [Story score](2_story_evenings/05_story_score.md): count what is worth retelling in every evening | — | done |
