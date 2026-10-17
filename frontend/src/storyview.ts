@@ -1,6 +1,6 @@
 /** How the story score reads on the screen: one chip per kind of moment that happened. */
 
-import type { Story } from "./types.ts";
+import type { Recap, Story } from "./types.ts";
 
 const MARKS: Record<string, string> = {
   quarrel: "😡", fight: "👊", knockout: "💫", played_together: "🎲", gift: "🎁", fell_asleep: "💤", limped_home: "🩹",
@@ -12,4 +12,13 @@ export function momentChips(story: Story): string[] {
     .filter(([, count]) => count > 0)
     .sort(([, a], [, b]) => b - a)
     .map(([kind, count]) => `${MARKS[kind] ?? "✨"} ${kind.replaceAll("_", " ")} ×${count}`);
+}
+
+/** What the recap window shows: nothing, a request to wait while the storyteller works, or the finished recap. */
+export type RecapWindow = "hidden" | "waiting" | "told";
+
+/** Waiting cannot be closed (the guest has nothing else to read); a told recap stays closed once dismissed. */
+export function recapWindow(telling: boolean, recap: Recap | null, dismissed: boolean): RecapWindow {
+  if (telling) return "waiting";
+  return recap !== null && !dismissed ? "told" : "hidden";
 }

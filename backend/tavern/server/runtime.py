@@ -198,7 +198,8 @@ class TavernRuntime:
             "model": self.ai_config["model"], "writer": self.writer_label, "intentions": self.intender is not None,
             **health,
         }, "activities": client_activities(ACTIVITIES), "items": client_items(), "minds": minds(self.world),
-                "story": story_score(self.moments, WEIGHTS), "recap": self.recap}
+                "story": story_score(self.moments, WEIGHTS), "recap": self.recap,
+                "telling": self._telling is not None and not self._telling.done()}
 
     def _event(self, message: str) -> None:
         log_control(self.world, message)

@@ -462,6 +462,8 @@ export interface Snapshot {
   story: Story;
   /** The storyteller's retelling of the evening, once it is over; null until then, and offline. */
   recap: Recap | null;
+  /** Whether the storyteller is writing the recap right now. */
+  telling: boolean;
 }
 
 /** The server's story score: moments counted per kind, and their weighted total. */

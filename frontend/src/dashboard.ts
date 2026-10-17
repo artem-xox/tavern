@@ -3,7 +3,7 @@ import { html, nothing, render } from "lit-html";
 import { repeat } from "lit-html/directives/repeat.js";
 import { renderDebug, renderInspector } from "./inspector";
 import type { SpriteRegistry } from "./sprites";
-import { momentChips } from "./storyview";
+import { momentChips, recapWindow } from "./storyview";
 import type { ActivityView, Actor, Command, Conversation, ItemView, Mind, ServiceHealth, Snapshot, Verb, World, WorldEvent, WorldObject } from "./types";
 
 interface Handlers {
@@ -27,13 +27,14 @@ export class Dashboard {
   private intentions = false;
   private verbSignature: string = "";
   private selectedId: string | null = null;
+  private recapDismissed = false;
   private connected: boolean = false;
   private editing: boolean = false;
   private targetSignature: string = "";
   private noticeTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(private readonly root: HTMLElement, private readonly handlers: Handlers, private readonly sprites: SpriteRegistry) {
-    this.root.innerHTML = this.layout();
+    this.root.innerHTML = this.layout() + this.recapMarkup();
     this.bindControls();
     this.renderEvents([]);
   }
@@ -64,6 +65,7 @@ export class Dashboard {
     this.renderInspector();
     this.renderEvents(world.events);
     this.renderStory(snapshot);
+    this.renderRecapWindow(snapshot);
     this.updateTargets();
     this.updateControlAvailability();
   }
@@ -220,6 +222,25 @@ export class Dashboard {
     renderInspector(element(this.root, "#inspector"), actor, context);
     renderDebug(element(this.root, "#debug-readout"), actor, context);
     element(this.root, "#debug-cell").textContent = `cell ${actor.x}, ${actor.y}`;
+  }
+
+  private recapMarkup(): string {
+    return `<div id="recap-window" class="recap-window" role="dialog" aria-modal="true" aria-labelledby="recap-heading" hidden><div class="recap-card"><h3 id="recap-heading" class="recap-title"></h3><div id="recap-body"></div><div class="recap-actions" id="recap-actions"></div></div></div>`;
+  }
+
+  /** The window after closing: ask to wait while the recap is written, then show it with a way back. */
+  private renderRecapWindow(snapshot: Snapshot): void {
+    const over: boolean = snapshot.state.actors.length === 0 && snapshot.state.expected.length === 0 && snapshot.state.departed.length > 0;
+    // A new evening forgets the closed window, so its recap opens again.
+    if (!over) this.recapDismissed = false;
+    const mode = over ? recapWindow(snapshot.telling, snapshot.recap, this.recapDismissed) : "hidden";
+    element(this.root, "#recap-window").hidden = mode === "hidden";
+    const { recap, story } = snapshot;
+    element(this.root, "#recap-heading").textContent = mode === "told" && recap ? recap.title : "Please wait";
+    render(mode === "told" && recap
+      ? html`<p class="recap-text">${recap.text}</p><p class="story-chips">${momentChips(story).map((chip: string) => html`<span class="small-tag">${chip}</span> `)}</p>`
+      : html`<p class="recap-text">⏳ We are preparing the retelling of your evening…</p>`, element(this.root, "#recap-body"));
+    render(mode === "told" ? html`<button @click=${(): void => { this.recapDismissed = true; element(this.root, "#recap-window").hidden = true; }}>Close</button><button class="primary" @click=${(): void => this.startOrRestart()}>↻ New evening</button>` : nothing, element(this.root, "#recap-actions"));
   }
 
   /** Show the story score and, once the evening is over and retold, the storyteller's recap. */

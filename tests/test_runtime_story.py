@@ -73,10 +73,11 @@ def test_the_storyteller_retells_the_evening_when_it_is_over(tmp_path: Path) -> 
         opened = runtime(tmp_path, storyteller(RETOLD))
         last_guest_leaves(opened)
         before = opened.snapshot()["recap"]
+        waiting = opened.snapshot()["telling"]
         await opened.await_recap()
-        return before, opened.snapshot()["recap"]
+        return before, waiting, opened.snapshot()["telling"], opened.snapshot()["recap"]
 
-    assert asyncio.run(evening()) == (None, RETOLD)
+    assert asyncio.run(evening()) == (None, True, False, RETOLD)
 
 
 def test_a_storyteller_that_fails_leaves_the_evening_unretold_and_says_so(tmp_path: Path) -> None:
@@ -97,3 +98,12 @@ def test_without_a_storyteller_the_evening_ends_unretold(tmp_path: Path) -> None
         return opened.snapshot()["recap"]
 
     assert asyncio.run(evening()) is None
+
+
+def test_the_evening_is_not_being_retold_before_it_ends(tmp_path: Path) -> None:
+    async def evening() -> bool:
+        opened = runtime(tmp_path, storyteller(RETOLD))
+        opened.advance(0.1)
+        return opened.snapshot()["telling"]
+
+    assert asyncio.run(evening()) is False
