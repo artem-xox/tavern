@@ -458,6 +458,24 @@ export interface Snapshot {
   items: Record<string, ItemView>;
   /** Inner state per visitor ID, the departed included. */
   minds: Record<string, Mind>;
+  /** The evening's story score so far. */
+  story: Story;
+  /** The storyteller's retelling of the evening, once it is over; null until then, and offline. */
+  recap: Recap | null;
+  /** Whether the storyteller is writing the recap right now. */
+  telling: boolean;
+}
+
+/** The server's story score: moments counted per kind, and their weighted total. */
+export interface Story {
+  moments: Record<string, number>;
+  score: number;
+}
+
+/** An evening retold: a catchy title and a short text with emoji. */
+export interface Recap {
+  title: string;
+  text: string;
 }
 
 export type Command =

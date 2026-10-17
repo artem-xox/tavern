@@ -75,7 +75,8 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
                store_for: Callable[[str], Store] | None = None, choose: Chooser | None = None,
                health: HealthBoard | None = None,
                probes: Mapping[str, Callable[[], Awaitable[object]]] | None = None,
-               answer: Answerer | None = None, catalog_dir: Path | None = None) -> FastAPI:
+               answer: Answerer | None = None, catalog_dir: Path | None = None,
+               storyteller: Ask | None = None) -> FastAPI:
     """Construct the local server with explicit paths and AI configuration.
 
     Args:
@@ -126,7 +127,7 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
         initialize_database(database_url)
         store_for = lambda session_id: DatabaseStore(database_url, session_id)
     sessions = TavernSessions(map_data, save_dir, ai_config, seed, database_url, scenario, writer, writer_label,
-                              intender, store_for, choose, health, answer)
+                              intender, store_for, choose, health, answer, storyteller)
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         ticker = asyncio.create_task(_run_world(sessions, 0.1)) if run_loop else None

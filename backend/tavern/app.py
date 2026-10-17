@@ -66,19 +66,21 @@ def create_default_app() -> FastAPI:
             writer, intender = traced_writer(writer, tracer), traced_intender(intender, tracer)
         lines = {"writer": writer, "writer_label": "haiku"}
     choosers = _jev_choosers(board, tracer)
+    # A stronger model retells the evening once, at closing: a few cents an evening.
+    storyteller = _claude_port(os.environ.get("ANTHROPIC_API_KEY"), board, tracer, "claude-sonnet-5-5")
     return create_app(root / "data" / "tavern.json", root / "saves", config,
                       database_url=database_url, seed=Random().randrange(1 << 30),
                       scenario_path=root / "data" / "scenarios" / "locals.json", catalog_dir=root / "characters",
                       ask=ask, intender=intender,
-                      choose=choosers[0], answer=choosers[1], health=board, probes=probes(config, os.environ.get("ANTHROPIC_API_KEY")),
+                      choose=choosers[0], answer=choosers[1], storyteller=storyteller, health=board, probes=probes(config, os.environ.get("ANTHROPIC_API_KEY")),
                       **lines)
 
 
-def _claude_port(key: str | None, board: HealthBoard, tracer: Tracer | None) -> Ask | None:
+def _claude_port(key: str | None, board: HealthBoard, tracer: Tracer | None,
+                 model: str = "claude-haiku-5-5") -> Ask | None:
     # The key stays on the server; without one the card compiler runs offline.
     if not key:
         return None
-    model = "claude-haiku-5-5"
     config = {"anthropic_api_key": key, "model": model, "timeout": 30.0, "retries": 1}
 
     async def metered(question: Question) -> tuple[dict[str, Any], Mapping[str, Any]]:
