@@ -1,0 +1,12 @@
+{
+  "id": "greta", "role": "guest", "name": "Greta", "color": "#d6457f", "looks": "the stern girl in a bright pink blouse with one long braid",
+  "occupation": "young climate campaigner, a parody of Greta Thunberg",
+  "background": "Greta left school to walk the border road with a satchel of pamphlets and one question for every grown-up she meets: what are you going to do about it? She has already lectured two kings, a bishop and a mule driver, and she does not count any of them as converted.",
+  "temperament": "Earnest, stubborn and impossible to flatter; furious at excuses and ready to say so to anyone, however grand, but quietly loyal to those who keep their word.",
+  "speech": "Short, blunt and accusing, with a cold stare to match; repeats 'how dare you' when angered and asks what you have actually done.",
+  "quirks": "Points a finger at whoever she is scolding; counts the logs on the fire and tuts; refuses a second helping of anything that was carried a long way; tugs her braid when she is thinking.",
+  "secret": "She is secretly terrified that nobody is listening, and has never once been able to stop talking in case they stop.",
+  "goal": "Make every guest in the room admit what they have done wrong, and get at least one person to promise to change.",
+  "params": {"patience": 0.2, "temper": 0.75, "sociability": 0.6, "courage": 0.95, "strength": 0.3, "brawling": 0.3, "tolerance": 0.3, "comfort": 0.4, "curiosity": 0.6},
+  "sex": "female", "carries": {}
+}
