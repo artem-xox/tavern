@@ -1,0 +1,616 @@
+{
+  "group_id": "4361869a-254b-4d51-a1ba-2d4fb341cc43",
+  "states": [
+    {
+      "character": {
+        "id": "34d66c0e-931d-4c6d-b71b-4ebe95f80a4c",
+        "name": "Idle",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T19:31:28.330626+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "8ca76f5e-aa32-49bc-8eb8-fad309269464",
+        "name": "Seated",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T19:57:55.958702+00:00"
+      },
+      "folder": "Seated",
+      "frames": {
+        "rotations": {
+          "south": "Seated/rotations/south.png",
+          "south-east": "Seated/rotations/south-east.png",
+          "east": "Seated/rotations/east.png",
+          "north-east": "Seated/rotations/north-east.png",
+          "north": "Seated/rotations/north.png",
+          "north-west": "Seated/rotations/north-west.png",
+          "west": "Seated/rotations/west.png",
+          "south-west": "Seated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "cadfeac1-3f5f-4f0d-a752-9672c6849d2c",
+        "name": "Darts",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T19:58:06.158579+00:00"
+      },
+      "folder": "Darts",
+      "frames": {
+        "rotations": {
+          "south": "Darts/rotations/south.png",
+          "south-east": "Darts/rotations/south-east.png",
+          "east": "Darts/rotations/east.png",
+          "north-east": "Darts/rotations/north-east.png",
+          "north": "Darts/rotations/north.png",
+          "north-west": "Darts/rotations/north-west.png",
+          "west": "Darts/rotations/west.png",
+          "south-west": "Darts/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "3ce2c827-36d0-4c96-8b1c-72b79ec30f58",
+        "name": "Bathroom",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T19:58:10.223256+00:00"
+      },
+      "folder": "Bathroom",
+      "frames": {
+        "rotations": {
+          "south": "Bathroom/rotations/south.png",
+          "south-east": "Bathroom/rotations/south-east.png",
+          "east": "Bathroom/rotations/east.png",
+          "north-east": "Bathroom/rotations/north-east.png",
+          "north": "Bathroom/rotations/north.png",
+          "north-west": "Bathroom/rotations/north-west.png",
+          "west": "Bathroom/rotations/west.png",
+          "south-west": "Bathroom/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "a6e14736-dcec-4acd-843c-6340150263b5",
+        "name": "Drinking",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T19:58:15.946393+00:00"
+      },
+      "folder": "Drinking",
+      "frames": {
+        "rotations": {
+          "south": "Drinking/rotations/south.png",
+          "south-east": "Drinking/rotations/south-east.png",
+          "east": "Drinking/rotations/east.png",
+          "north-east": "Drinking/rotations/north-east.png",
+          "north": "Drinking/rotations/north.png",
+          "north-west": "Drinking/rotations/north-west.png",
+          "west": "Drinking/rotations/west.png",
+          "south-west": "Drinking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "5cad4ac1-4b08-45be-8f90-b04f57a15836",
+        "name": "DrinkingSeated",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T19:58:17.143660+00:00"
+      },
+      "folder": "DrinkingSeated",
+      "frames": {
+        "rotations": {
+          "south": "DrinkingSeated/rotations/south.png",
+          "south-east": "DrinkingSeated/rotations/south-east.png",
+          "east": "DrinkingSeated/rotations/east.png",
+          "north-east": "DrinkingSeated/rotations/north-east.png",
+          "north": "DrinkingSeated/rotations/north.png",
+          "north-west": "DrinkingSeated/rotations/north-west.png",
+          "west": "DrinkingSeated/rotations/west.png",
+          "south-west": "DrinkingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "a45f900b-4a4d-4d9c-8bf0-4d4ba71b38ac",
+        "name": "TalkingSeated",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T19:58:18.316771+00:00"
+      },
+      "folder": "TalkingSeated",
+      "frames": {
+        "rotations": {
+          "south": "TalkingSeated/rotations/south.png",
+          "south-east": "TalkingSeated/rotations/south-east.png",
+          "east": "TalkingSeated/rotations/east.png",
+          "north-east": "TalkingSeated/rotations/north-east.png",
+          "north": "TalkingSeated/rotations/north.png",
+          "north-west": "TalkingSeated/rotations/north-west.png",
+          "west": "TalkingSeated/rotations/west.png",
+          "south-west": "TalkingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "def7a0ce-ff21-4085-8512-b89f71fc9a6b",
+        "name": "TakeBeer",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T19:58:21.128689+00:00"
+      },
+      "folder": "TakeBeer",
+      "frames": {
+        "rotations": {
+          "south": "TakeBeer/rotations/south.png",
+          "south-east": "TakeBeer/rotations/south-east.png",
+          "east": "TakeBeer/rotations/east.png",
+          "north-east": "TakeBeer/rotations/north-east.png",
+          "north": "TakeBeer/rotations/north.png",
+          "north-west": "TakeBeer/rotations/north-west.png",
+          "west": "TakeBeer/rotations/west.png",
+          "south-west": "TakeBeer/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "ec2fc231-7081-4b6e-a9ec-dcf7bc4c6337",
+        "name": "Walking",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T19:58:24.451212+00:00"
+      },
+      "folder": "Walking",
+      "frames": {
+        "rotations": {
+          "south": "Walking/rotations/south.png",
+          "south-east": "Walking/rotations/south-east.png",
+          "east": "Walking/rotations/east.png",
+          "north-east": "Walking/rotations/north-east.png",
+          "north": "Walking/rotations/north.png",
+          "north-west": "Walking/rotations/north-west.png",
+          "west": "Walking/rotations/west.png",
+          "south-west": "Walking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "5f65caac-8fa1-49a5-b4d1-80c5d8df8b3d",
+        "name": "Talking",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T19:58:32.206525+00:00"
+      },
+      "folder": "Talking",
+      "frames": {
+        "rotations": {
+          "south": "Talking/rotations/south.png",
+          "south-east": "Talking/rotations/south-east.png",
+          "east": "Talking/rotations/east.png",
+          "north-east": "Talking/rotations/north-east.png",
+          "north": "Talking/rotations/north.png",
+          "north-west": "Talking/rotations/north-west.png",
+          "west": "Talking/rotations/west.png",
+          "south-west": "Talking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "ccb0781a-73fd-4686-b03f-a59f6040df42",
+        "name": "Giving",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T19:58:38.357000+00:00"
+      },
+      "folder": "Giving",
+      "frames": {
+        "rotations": {
+          "south": "Giving/rotations/south.png",
+          "south-east": "Giving/rotations/south-east.png",
+          "east": "Giving/rotations/east.png",
+          "north-east": "Giving/rotations/north-east.png",
+          "north": "Giving/rotations/north.png",
+          "north-west": "Giving/rotations/north-west.png",
+          "west": "Giving/rotations/west.png",
+          "south-west": "Giving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "73661c2c-890e-4246-9b74-6c9e85fc3afa",
+        "name": "Receiving",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T20:01:03.545016+00:00"
+      },
+      "folder": "Receiving",
+      "frames": {
+        "rotations": {
+          "south": "Receiving/rotations/south.png",
+          "south-east": "Receiving/rotations/south-east.png",
+          "east": "Receiving/rotations/east.png",
+          "north-east": "Receiving/rotations/north-east.png",
+          "north": "Receiving/rotations/north.png",
+          "north-west": "Receiving/rotations/north-west.png",
+          "west": "Receiving/rotations/west.png",
+          "south-west": "Receiving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "1fef9853-c9d1-492c-be8b-76feeb19542b",
+        "name": "GivingSeated",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T20:01:42.132600+00:00"
+      },
+      "folder": "GivingSeated",
+      "frames": {
+        "rotations": {
+          "south": "GivingSeated/rotations/south.png",
+          "south-east": "GivingSeated/rotations/south-east.png",
+          "east": "GivingSeated/rotations/east.png",
+          "north-east": "GivingSeated/rotations/north-east.png",
+          "north": "GivingSeated/rotations/north.png",
+          "north-west": "GivingSeated/rotations/north-west.png",
+          "west": "GivingSeated/rotations/west.png",
+          "south-west": "GivingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "f3e8428c-8c69-4d8e-89db-bd6809c84528",
+        "name": "ReceivingSeated",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T20:03:00.901249+00:00"
+      },
+      "folder": "ReceivingSeated",
+      "frames": {
+        "rotations": {
+          "south": "ReceivingSeated/rotations/south.png",
+          "south-east": "ReceivingSeated/rotations/south-east.png",
+          "east": "ReceivingSeated/rotations/east.png",
+          "north-east": "ReceivingSeated/rotations/north-east.png",
+          "north": "ReceivingSeated/rotations/north.png",
+          "north-west": "ReceivingSeated/rotations/north-west.png",
+          "west": "ReceivingSeated/rotations/west.png",
+          "south-west": "ReceivingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "682e38fa-f208-41c0-847b-0d8a212f9187",
+        "name": "SleepingSeated",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T20:03:22.180968+00:00"
+      },
+      "folder": "SleepingSeated",
+      "frames": {
+        "rotations": {
+          "south": "SleepingSeated/rotations/south.png",
+          "south-east": "SleepingSeated/rotations/south-east.png",
+          "east": "SleepingSeated/rotations/east.png",
+          "north-east": "SleepingSeated/rotations/north-east.png",
+          "north": "SleepingSeated/rotations/north.png",
+          "north-west": "SleepingSeated/rotations/north-west.png",
+          "west": "SleepingSeated/rotations/west.png",
+          "south-west": "SleepingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "dcb9fd56-d947-48ad-ba07-1bb70ec7957f",
+        "name": "KnockedOut",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T20:03:29.177465+00:00"
+      },
+      "folder": "KnockedOut",
+      "frames": {
+        "rotations": {
+          "south": "KnockedOut/rotations/south.png",
+          "south-east": "KnockedOut/rotations/south-east.png",
+          "east": "KnockedOut/rotations/east.png",
+          "north-east": "KnockedOut/rotations/north-east.png",
+          "north": "KnockedOut/rotations/north.png",
+          "north-west": "KnockedOut/rotations/north-west.png",
+          "west": "KnockedOut/rotations/west.png",
+          "south-west": "KnockedOut/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "1db6e6b0-30aa-42eb-b3ad-ea0f7bf54fcb",
+        "name": "Fighting",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T20:03:33.577844+00:00"
+      },
+      "folder": "Fighting",
+      "frames": {
+        "rotations": {
+          "south": "Fighting/rotations/south.png",
+          "south-east": "Fighting/rotations/south-east.png",
+          "east": "Fighting/rotations/east.png",
+          "north-east": "Fighting/rotations/north-east.png",
+          "north": "Fighting/rotations/north.png",
+          "north-west": "Fighting/rotations/north-west.png",
+          "west": "Fighting/rotations/west.png",
+          "south-west": "Fighting/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "6d8a4713-c11b-45b4-b41b-6507c2fec19f",
+        "name": "HurtSeated",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T20:04:23.889041+00:00"
+      },
+      "folder": "HurtSeated",
+      "frames": {
+        "rotations": {
+          "south": "HurtSeated/rotations/south.png",
+          "south-east": "HurtSeated/rotations/south-east.png",
+          "east": "HurtSeated/rotations/east.png",
+          "north-east": "HurtSeated/rotations/north-east.png",
+          "north": "HurtSeated/rotations/north.png",
+          "north-west": "HurtSeated/rotations/north-west.png",
+          "west": "HurtSeated/rotations/west.png",
+          "south-west": "HurtSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "6d2f2315-ae1a-4a76-8b5f-eced7d0d6029",
+        "name": "Shoving",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T20:04:28.133849+00:00"
+      },
+      "folder": "Shoving",
+      "frames": {
+        "rotations": {
+          "south": "Shoving/rotations/south.png",
+          "south-east": "Shoving/rotations/south-east.png",
+          "east": "Shoving/rotations/east.png",
+          "north-east": "Shoving/rotations/north-east.png",
+          "north": "Shoving/rotations/north.png",
+          "north-west": "Shoving/rotations/north-west.png",
+          "west": "Shoving/rotations/west.png",
+          "south-west": "Shoving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "659c2b7f-a7bd-4949-95e6-f5dd31842af3",
+        "name": "HelpingUp",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T20:04:31.110048+00:00"
+      },
+      "folder": "HelpingUp",
+      "frames": {
+        "rotations": {
+          "south": "HelpingUp/rotations/south.png",
+          "south-east": "HelpingUp/rotations/south-east.png",
+          "east": "HelpingUp/rotations/east.png",
+          "north-east": "HelpingUp/rotations/north-east.png",
+          "north": "HelpingUp/rotations/north.png",
+          "north-west": "HelpingUp/rotations/north-west.png",
+          "west": "HelpingUp/rotations/west.png",
+          "south-west": "HelpingUp/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "5488904b-621f-46f7-af69-3de6f1fd283d",
+        "name": "Hurt",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T20:08:49.152601+00:00"
+      },
+      "folder": "Hurt",
+      "frames": {
+        "rotations": {
+          "south": "Hurt/rotations/south.png",
+          "south-east": "Hurt/rotations/south-east.png",
+          "east": "Hurt/rotations/east.png",
+          "north-east": "Hurt/rotations/north-east.png",
+          "north": "Hurt/rotations/north.png",
+          "north-west": "Hurt/rotations/north-west.png",
+          "west": "Hurt/rotations/west.png",
+          "south-west": "Hurt/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-17T20:12:13.476689"
+}

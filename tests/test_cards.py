@@ -88,12 +88,12 @@ def presets() -> dict[str, Any]:
             if item["role"] == "guest"}
 
 
-def test_six_presets_with_distinct_temperaments_and_goals() -> None:
+def test_seven_presets_with_distinct_temperaments_and_goals() -> None:
     cards = presets()
-    assert len(cards) == 6
-    assert len({item["temperament"] for item in cards.values()}) == 6
-    assert len({item["goal"] for item in cards.values()}) == 6
-    assert len({tuple(item["params"].values()) for item in cards.values()}) == 6
+    assert len(cards) == 7
+    assert len({item["temperament"] for item in cards.values()}) == 7
+    assert len({item["goal"] for item in cards.values()}) == 7
+    assert len({tuple(item["params"].values()) for item in cards.values()}) == 7
 
 
 def test_presets_use_shipped_sprites() -> None:
