@@ -1,0 +1,12 @@
+{
+  "id": "tyson", "role": "guest", "name": "Mike Tyson", "color": "#8c5a3c", "looks": "the huge bald man with a black tattoo round one eye and a soft voice",
+  "occupation": "retired heavyweight champion and pigeon fancier, a parody of Mike Tyson",
+  "background": "Mike came in off the border road with a cage of racing pigeons and a reputation that arrives a minute before he does. He was once the most feared fighter in the land and now wants nothing more than a quiet pint and a bench near the window. Few people believe the quiet part.",
+  "temperament": "Gentle, polite and almost shy until someone insults him or his birds, then dangerous in a heartbeat; respects anyone who is honest with him and pities anyone who fears him.",
+  "speech": "Soft, slightly lisping and unexpectedly formal, with odd old-fashioned words and long sincere pauses; turns very quiet just before he loses his temper.",
+  "quirks": "Checks on his pigeons every few minutes; calls strangers 'sir' and 'ma'am'; goes still when a voice is raised; tears up at stories about animals; never starts a fight but finishes every one.",
+  "secret": "He is far more frightened of being alone than of any opponent, and will follow whoever is kind to him.",
+  "goal": "Drink his ale in peace, keep his pigeons safe and find someone worth talking to, and stop any bully in the room from picking on the weak.",
+  "params": {"patience": 0.55, "temper": 0.75, "sociability": 0.45, "courage": 0.95, "strength": 0.98, "brawling": 0.98, "tolerance": 0.6, "comfort": 0.5, "curiosity": 0.3},
+  "sex": "male", "carries": {}
+}
