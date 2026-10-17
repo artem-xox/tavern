@@ -1,8 +1,9 @@
 import { clock } from "./clock";
-import { html, render } from "lit-html";
+import { html, nothing, render } from "lit-html";
 import { repeat } from "lit-html/directives/repeat.js";
 import { renderDebug, renderInspector } from "./inspector";
 import type { SpriteRegistry } from "./sprites";
+import { momentChips } from "./storyview";
 import type { ActivityView, Actor, Command, Conversation, ItemView, Mind, ServiceHealth, Snapshot, Verb, World, WorldEvent, WorldObject } from "./types";
 
 interface Handlers {
@@ -62,6 +63,7 @@ export class Dashboard {
     this.renderRoster(world);
     this.renderInspector();
     this.renderEvents(world.events);
+    this.renderStory(snapshot);
     this.updateTargets();
     this.updateControlAvailability();
   }
@@ -131,6 +133,7 @@ export class Dashboard {
             <p id="edit-hint" class="helper">Refill adds 10 servings. Obstacle mode toggles a clicked cell.</p>
             <div class="controls-row persistence"><button id="save" data-control>Save</button><button id="load" data-control>Load</button><span class="muted">The server keeps your saved world.</span></div>
           </section>
+          <section class="events-card"><div class="section-heading"><h3>Story of the evening</h3><span id="story-score" class="muted"></span></div><div id="story"></div></section>
           <section class="events-card"><div class="section-heading"><h3>From the room</h3><span class="muted">Recent world events</span></div><ol id="events" class="event-list"></ol></section>
         </div>
         <aside class="sidebar"><section class="inspector-card"><div class="section-heading"><h3>Inside a visitor's mind</h3><span class="small-tag">INSPECTOR</span></div><p id="inspector-empty" class="empty">Select a visitor in the room.</p><div id="inspector"></div>
@@ -217,6 +220,15 @@ export class Dashboard {
     renderInspector(element(this.root, "#inspector"), actor, context);
     renderDebug(element(this.root, "#debug-readout"), actor, context);
     element(this.root, "#debug-cell").textContent = `cell ${actor.x}, ${actor.y}`;
+  }
+
+  /** Show the story score and, once the evening is over and retold, the storyteller's recap. */
+  private renderStory(snapshot: Snapshot): void {
+    const { story, recap } = snapshot;
+    const chips = momentChips(story);
+    element(this.root, "#story-score").textContent = `Score ${story.score}`;
+    render(html`${recap ? html`<h4 class="recap-title">${recap.title}</h4><p class="recap-text">${recap.text}</p>` : nothing}
+      <p class="story-chips">${chips.length ? chips.map((chip: string) => html`<span class="small-tag">${chip}</span> `) : "Nothing worth retelling yet."}</p>`, element(this.root, "#story"));
   }
 
   private renderEvents(events: WorldEvent[]): void {

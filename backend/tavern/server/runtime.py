@@ -1,5 +1,6 @@
 """The live runtime of one session: its world, the requests in flight, the operator's commands and saves."""
 
+import asyncio
 from collections.abc import Callable, Coroutine, Sequence
 from copy import deepcopy
 from pathlib import Path
@@ -7,18 +8,22 @@ from random import Random
 from typing import Any, Mapping, Protocol, cast
 
 
+from tavern.adapters.claude import ClaudeError
 from tavern.adapters.jev import evaluate_actions, evaluate_aims, evaluate_answers, evaluate_seats
 from tavern.adapters.persistence import FileStore
 from tavern.body.activities import ACTIVITIES, client_activities
 from tavern.body.items import client_items
 from tavern.evening.decisions import log_control
 from tavern.evening.mind_loop import MindLoop, TaskCourier
+from tavern.evening.recap import Recap, retell
 from tavern.evening.scenario import Scenario, open_evening
+from tavern.evening.story_score import WEIGHTS, Moment, story_moments, story_score
 from tavern.hall.staff import guests
 from tavern.hall.state import World
 from tavern.hall.world import create_world, step_world
 from tavern.mind import agents
 from tavern.mind.feelings import minds
+from tavern.mind.questions import Ask
 from tavern.mind.selection import read_answers
 from tavern.mind.intentions import INTENTION_RULES, Intender, IntentionRules
 from tavern.mind.model_health import HealthBoard
@@ -109,10 +114,14 @@ class TavernRuntime:
                  writer_label: str = "scripted",
                  intender: Intender | None = None, intention_rules: IntentionRules = INTENTION_RULES,
                  choose: Chooser = choose_action, health: HealthBoard | None = None,
-                 answer: Answerer = choose_invitation_answer) -> None:
+                 answer: Answerer = choose_invitation_answer, storyteller: Ask | None = None) -> None:
         self.map_data = deepcopy(dict(map_data))
         self.scenario = scenario
         self.world = self._open(seed)
+        # Retells the evening when it is over; None offline: the score still counts, nothing is retold.
+        self.storyteller = storyteller
+        self._telling: asyncio.Task[None] | None = None
+        self._follow_story()
         # Without a store the worlds go to JSON files: the manual save at `save_path`, the autosave beside it.
         self.store: Store = store or FileStore(save_path)
         self.ai_config = {"model": "jev-latest", "timeout": 8.0, "temperature": 0.25, **ai_config}
@@ -135,6 +144,38 @@ class TavernRuntime:
         """The decisions in flight, per visitor: the task and the revision it was asked at."""
         return self.mind.pending
 
+    def _follow_story(self) -> None:
+        # A new world starts a new story: what its log already holds is the start, and nothing is retold yet.
+        if self._telling is not None:
+            self._telling.cancel()
+        self.chronicle: list[dict[str, Any]] = list(self.world["events"])
+        self.moments: list[Moment] = story_moments(self.chronicle)
+        self.recap: Recap | None = None
+        self._telling = None
+
+    def _note_story(self) -> None:
+        # The world keeps only its latest 200 events, so the story is gathered tick by tick: what follows the
+        # last event seen is new (an event is told apart by identity, as equal events do repeat).
+        events = self.world["events"]
+        seen = next((index for index in range(len(events) - 1, -1, -1) if events[index] is self.chronicle[-1]), -1) \
+            if self.chronicle else -1
+        fresh = events[seen + 1:]
+        self.chronicle.extend(fresh)
+        self.moments.extend(story_moments(fresh))
+
+    async def _tell(self) -> None:
+        score = story_score(self.moments, WEIGHTS)
+        try:
+            assert self.storyteller is not None
+            self.recap = await retell(self.chronicle, score, self.storyteller)
+        except (ClaudeError, ValueError) as error:
+            self._event(f"The evening could not be retold: {error}")
+
+    async def await_recap(self) -> None:
+        """Wait until the storyteller has finished retelling the evening; at once if it was never asked."""
+        if self._telling is not None:
+            await self._telling
+
     def _open(self, seed: int) -> World:
         # A scenario says who comes tonight; without one, the room's own visitors are already in.
         if self.scenario is None:
@@ -156,7 +197,8 @@ class TavernRuntime:
             "mode": "jev" if configured else "local", "configured": configured,
             "model": self.ai_config["model"], "writer": self.writer_label, "intentions": self.intender is not None,
             **health,
-        }, "activities": client_activities(ACTIVITIES), "items": client_items(), "minds": minds(self.world)}
+        }, "activities": client_activities(ACTIVITIES), "items": client_items(), "minds": minds(self.world),
+                "story": story_score(self.moments, WEIGHTS), "recap": self.recap}
 
     def _event(self, message: str) -> None:
         log_control(self.world, message)
@@ -168,10 +210,14 @@ class TavernRuntime:
             dt: Real seconds since the previous simulation tick.
         """
         step_world(self.world, dt)
+        self._note_story()
         if not self.world["paused"] and self.world["closes_at"] is not None and not _anyone_to_come(self.world):
             # Staff stay at their bars all night, so only guests, present or expected, keep an evening going.
             self.world["paused"] = True
             self._event("The last guest has left: the evening is over")
+            self._note_story()
+            if self.storyteller is not None and self._telling is None:
+                self._telling = asyncio.get_running_loop().create_task(self._tell())
         if not self.world["paused"]:
             self.mind.tick(self.world)
 
@@ -194,6 +240,7 @@ class TavernRuntime:
             raise ValueError("No saved world exists")
         self._invalidate_requests()
         self.world = restored
+        self._follow_story()
 
     def autosave(self) -> None:
         """Store the current world in the session's autosave slot.
@@ -226,6 +273,7 @@ class TavernRuntime:
         # Nobody watched the inn while it was stored, so it waits for the operator to resume.
         restored["paused"] = True
         self.world = restored
+        self._follow_story()
         return True
 
     def _reset(self, command: Mapping[str, Any]) -> None:
@@ -233,6 +281,7 @@ class TavernRuntime:
         restored = self._open(self.rng.randrange(1 << 30))
         self._invalidate_requests()
         self.world = restored
+        self._follow_story()
 
     def command(self, command: Mapping[str, Any]) -> None:
         """Validate and apply an operator command atomically.
@@ -257,4 +306,6 @@ class TavernRuntime:
 
     async def close(self) -> None:
         """Cancel and drain model requests when the server stops."""
+        if self._telling is not None:
+            self._telling.cancel()
         await self.mind.close()
