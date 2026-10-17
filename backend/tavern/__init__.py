@@ -1,1 +1,1 @@
-"""The Last Inn's authoritative simulation and autonomous agents."""
+"""The Story Tavern's authoritative simulation and autonomous agents."""

@@ -1,6 +1,6 @@
 ---
 name: add-npc
-description: Add a playable Last Inn NPC to the authoritative characters catalog, including a complete profile, relationships, 68px directional PixelLab art, validation, and scenario references. Use when adding or changing a tavern guest or bartender.
+description: Add a playable Story Tavern NPC to the authoritative characters catalog, including a complete profile, relationships, 68px directional PixelLab art, validation, and scenario references. Use when adding or changing a tavern guest or bartender.
 ---
 
 # Add an NPC

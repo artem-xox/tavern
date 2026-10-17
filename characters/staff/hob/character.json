@@ -1,7 +1,7 @@
 {
   "id": "hob", "role": "bartender", "name": "Hob", "color": "#c98f4a", "looks": "the bearded barkeep in a red waistcoat and green apron",
-  "occupation": "barkeep of the Last Inn",
-  "background": "Hob has poured ale at the Last Inn for twenty winters and knows every carter, soldier and drover on the border road by their usual. He keeps the peace with a level voice and a bar towel, and a heavy arm when he must. A cudgel hangs under the bar, and he has never needed it more than twice a winter.",
+  "occupation": "barkeep of the Story Tavern",
+  "background": "Hob has poured ale at the Story Tavern for twenty winters and knows every carter, soldier and drover on the border road by their usual. He keeps the peace with a level voice and a bar towel, and a heavy arm when he must. A cudgel hangs under the bar, and he has never needed it more than twice a winter.",
   "temperament": "Calm, watchful and slow to anger; he lets a quarrel burn down before he steps in, and never takes a side in front of the room.",
   "speech": "Few words and a dry humour; passes on what he hears with a 'they say' and a shrug, and asks after people's roads.",
   "quirks": "Polishes the same mug over and over; remembers everyone's usual drink; hums when the room is loud; keeps one ear on the dice table and knows who has lost what.",
