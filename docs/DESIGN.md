@@ -1,42 +1,63 @@
-# The Last Inn — Design
+# The Story Tavern — Design
 
-This document defines what we are building and why. The current prototype tests whether
-model-driven guests make a tavern evening believable and produce stories worth retelling.
+This document defines what we are building and why. The plan of how is in [plan/](plan/README.md).
 
 ## Concept
 
-A life simulation of a border inn: a hybrid of a light economic simulation and a story
-generator. Stories come from believable characters whose choices are made by neural
-models rather than scripts or fixed decision trees. RimWorld is the reference for
-legible, systemic drama: simple visible rules, characters with moods and opinions,
-and incidents that grow out of their interaction.
+A tavern between worlds where famous people walk in for a drink: presidents, pop stars, film heroes,
+characters from books and games. Nobody scripts them. Each one is played by language models from a
+card of who they are, what they always want tonight, and what is in their backpack, and the evening
+happens on its own. Putin's parody sets up his own table at the far end of the hall so no one gets close;
+Trump's parody signs a decree that elves now pay a 145% toll; Zelensky's parody deals the cards; two
+oil-hunters go from table to table asking who has any.
 
-Guests come in to relax, drink, talk, and argue. They react to the room, share news,
-make friends and enemies, get drunk, fall asleep, or start a fight. The player sees why.
+The game is a story generator first. Chaos is the feature: drinking, shouting matches, brawls, petty
+schemes and absurd alliances. RimWorld is the reference for how: simple visible rules, characters with
+moods and opinions, and incidents that grow out of their interaction, so the player can see *why* it
+happened. At closing the evening is retold as a short story the player wants to share.
+
+## Tone
+
+- **Satire with no brakes.** Guests play up their public image. Rivals insult each other, fight and scheme.
+  Political figures are here to be laughed at, all of them.
+- **The world keeps the rules.** A model chooses what a guest wants and says; the game decides what
+  happens. A brawl is resolved by the fight formula, not by a model.
+- **Known limitation: real people.** Characters based on real people carry risks around likeness, names
+  and platform rules. Cards keep the person parodied (`inspired_by`) apart from the name shown, so any
+  guest can be renamed to a parody name (for example "Hutin", "Tromb") in one field. Decide the names
+  before anything is published.
 
 ## Player role
 
-**Now:** an observer acting as the inn's administrator. Before an evening the player
-chooses the guests (presets or characters they wrote), and the news of the day. During
-the evening the player watches and inspects; there is no direct in-world intervention.
-Debug controls (pause, speed, refill, block, forced actions) remain developer tools.
+**Now (Stage 2):** an observer. Before the evening the player picks who is drinking tonight: the
+**Guests** (famous characters) or the **Locals** (the original border folk, kept for tests and experiments).
+During the evening the player watches and inspects; debug controls stay in a debug panel.
 
-**Later:** tavern staff (barkeep, cook, bouncer) who take the player's commands, then
-the inn's economy: prices, supplies, money, and rooms.
+**Next (Stage 3):** the player walks into the same room as a character and talks to the guests in typed
+lines. The guests answer, remember it, and act on it.
 
-## Guests
+## Characters
 
-Each guest has a character card: name, occupation, background, temperament, values,
-speech style, quirks, an optional secret, and a goal for the evening (“came to forget”,
-“looking for work”, “waiting for someone”). Cards come from presets or are written by
-the player. A model extracts the numeric parameters the simulation needs (patience,
-temper, sociability, strength, alcohol tolerance, money) from the text once; the game
-validates them. The text goes to the dialogue model; the numbers drive the body and
-choices, so an authored character behaves as written, not only speaks that way.
+Every character lives in the catalog under `characters/` ([CHARACTER_CATALOG.md](CHARACTER_CATALOG.md)),
+grouped into casts: `guests/`, `locals/`, and `staff/` (the barkeep, the only staff member).
 
-At runtime a guest has needs, drunkenness, mood made of RimWorld-style thoughts
-(timed mood and opinion effects such as “insulted by Bren”), relationships, and
-individual knowledge. Guests learn only by seeing, hearing, and talking.
+A card has:
+
+- **Who:** name, looks, occupation, background, temperament, speech, quirks, a secret.
+- **Persona** (famous characters): the person or character parodied, whether real or fictional, the
+  public image to play up, and a few catchphrases.
+- **Obsessions:** one to three things they want tonight ("keep everyone at a distance", "get someone
+  else to pay", "find out who has oil"). They become the guest's goals and intentions.
+- **Backpack:** a signature item and the act it unlocks (a folding table, a deck of cards, a golden pen).
+- **Numbers** the body and choices use: patience, temper, sociability, courage, strength, brawling,
+  alcohol tolerance, comfort, curiosity. The text goes to the models; the numbers make a character
+  behave as written, not only speak that way.
+- **Relationships** with other characters: rivals, allies, grudges with a reason.
+- **Mute** characters (the hero of GTA III) never speak; they act and emote.
+
+At runtime a guest has needs (thirst, bladder, energy, company, boredom), drunkenness, mood made of
+RimWorld-style thoughts ("insulted by X"), relationships, and their own knowledge. Guests learn only by
+seeing, hearing, and talking.
 
 ## How a guest thinks
 
@@ -50,91 +71,64 @@ attention: salience × temperament × distance × current activity
    │
    ├─ every tick ─────────► body (code): queue, wait, step aside, turn to a sound
    ├─ event / task done ──► choice (Jev, ~1 s): score the legal next activities
-   └─ asynchronously ─────► mind (Claude Haiku 4.5, 1–3 s): lines, intentions, reflection
+   └─ asynchronously ─────► mind (Claude Haiku 5.5, 1–3 s): lines, intentions, goals
 ```
 
-- **Body** executes *how*: queuing, waiting, routing, facing a speaker or a noise.
-  It never decides what to do.
-- **Choice** decides *what next*: Jev scores the legal activities from the guest's
-  own briefing, as in Stage 0. It is asked on events, not every tick.
-- **Mind** decides *what to say and intend*: conversation turns with a speech act,
-  a short intention after salient events, and the card compiler.
+- **Body** executes *how*: queuing, waiting, routing, facing a speaker or a noise. It never decides.
+- **Choice** decides *what next*: Jev scores the legal activities from the guest's own briefing.
+- **Mind** decides *what to say and intend*: conversation turns with a speech act, and intentions that
+  name an obsession and a typed goal the world can check.
 
-The body buys time for thought: when a fight starts, a guest stops and turns to it at
-once, which reads as “looking and thinking” while the choice and the mind respond.
-
-Models decide *what* and *why*; the game decides *whether* and *how*. Text alone never
-changes the world: only validated actions and speech acts have effects.
-
-Where this split falls short among guests who meet all evening, and the steps to change it,
-are in [MIND.md](MIND.md).
+Models decide *what* and *why*; the game decides *whether* and *how*. Text alone never changes the
+world: only validated actions and speech acts have effects. Details are in [MIND.md](MIND.md).
 
 ## Actions
 
-Activities are defined as data: roles (alone, pair, group), preconditions, steps and
-duration, effects, interruptibility, the stimulus they emit, and their pose. Objects
-and people offer activities; the choice layer scores the legal ones.
+Activities are data (`body/activities.py`): targets, preconditions, timing, effects, wording, pose,
+and how much fun they are. Objects, people and carried items offer activities; the choice layer scores
+the legal ones.
 
 - **Needs:** drink, use the WC, sit, warm up by the fire, doze at a table.
-- **Good:** introduce oneself, chat, join a table, buy someone a drink, toast, play darts
-  together, play dice (the winner drawn from traits, drink and chance), help someone up,
-  leave together.
-- **Bad:** insult, cut in line, shove, start a fight.
-- **Reactions:** glance, watch (a game of dice or a fight), cheer, intervene, back away, leave.
+- **Together:** introduce oneself, chat, join a table, buy someone a drink, give something, toast,
+  darts, dice, cards, leave together.
+- **Hostile:** insult, shout, cut in line, sit at someone's table uninvited, shove, fight.
+- **Reactions:** glance, watch, cheer, step in, help up, back away, leave.
+- **Signature acts:** what a guest's item unlocks: set up a private table, deal cards, sign a decree.
 
-Joint activities start as invitations: one guest proposes, the other accepts or declines,
-and the game validates. Later the same protocol carries persistent agreements.
+Joint activities start as invitations: one guest proposes, the other accepts or declines, the game
+validates.
 
-## Reacting to the room
+## Fun and chaos
 
-Shared resources (tap, WC, darts) have capacity and a queue. Joining a queue is body
-work; giving up is a choice driven by patience and urgency; cutting in line is a source
-of conflict. Events emit stimuli with loudness; walls dampen them. Attention decides
-between a glance and an interrupt that pauses the current activity and asks for a new
-choice with the cause in the briefing.
-
-## Conversation and news
-
-A conversation is a scene with participants, a topic, and turns; others can join it,
-leave it, or overhear it. Each turn is a line plus a speech act (share news, ask, joke,
-boast, complain, flirt, insult, invite, accept, decline, leave). Only acts have effects:
-thoughts, opinions, names learned, knowledge passed on, invitations.
-
-The evening has news from outside: tolls, robberies, border rumors. Guests know some of
-it from their background and pass it on in their own words, so a story drifts as it
-travels. Strangers are known by appearance until they introduce themselves.
-
-## Conflict
-
-Insults, grievances, drunkenness, and temper unlock hostile options; the choice layer
-still has to pick them. A shove can stagger or knock someone down. A fight is resolved
-in seeded exchanges from strength, brawling, drunkenness, and chance until someone
-yields, is separated, or is knocked out. Bystanders watch, cheer, intervene, back away,
-or help the fallen up. Everyone involved and every witness keeps thoughts about it.
+Guests do not only meet needs: they seek fun. Watching a fight, playing together, using their signature
+item and serving an obsession are fun; nursing a mug alone is not. Rivals start the evening with grudges,
+so a cause for a quarrel is in the room from the first minute. A quarrel can turn into a shouting match
+the whole hall turns to, and a drunk one into a brawl.
 
 ## Looking alive
 
-Guests face whoever speaks and turn to noises, show emotes (`!`, `?`, anger, heart,
-`zzz`, music), speak in short bubbles with their actual lines, sway when drunk, stand in
-visible queues, and form a ring around a fight. Idling over a mug is a valid activity.
+Guests face whoever speaks and turn to noises, show emotes, speak in short bubbles with their actual
+lines, sway when drunk, stand in visible queues, and form a ring around a fight.
 
 ## Stories
 
-The event log is the source of truth. After closing, a model writes a short chronicle
-of the evening that cites logged events, so the story can be checked against what
-happened. Every decision keeps its trigger, scores, and intention for the inspector.
+The event log is the source of truth. A **story score** counts the moments worth retelling: someone got
+drunk, a quarrel, a fight, a game played together, a signature act, a gift, a guest who stormed out. It
+is the main metric of every change.
 
-## Current prototype
+At closing a strong model **retells** the evening as a short story in a few chapters. Every sentence cites
+the logged events behind it, so the story can be checked against what happened. The closing screen shows
+it with the faces of who was involved.
 
-One hall, one evening, four to six guests, an observer player. See
-[Stage 1](stages/1_EVENING.md).
+## Scope now
 
-**Central test:** does an evening with four to six model-driven guests look believable
-to an observer, and does it produce at least one story they can retell, with causes
-visible in the event log?
+One hall, one evening, three to six guests from one cast, one barkeep, an observer player. See
+[Stage 2](plan/2_story_evenings/README.md).
+
+**Central test:** do famous guests produce evenings with many more retellable moments than the locals,
+and does the retelling make an observer want to share it?
 
 ## Later
 
-Staff and commands; the inn's economy; agreements that outlive a conversation;
-several evenings with regulars, memory, and reputation; a storyteller that paces
-incidents; the yard and property improvements.
+The player in the room (Stage 3). More guests and signature items. Not planned: economy, more staff,
+agreements and memory between evenings.

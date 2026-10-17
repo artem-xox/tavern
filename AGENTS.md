@@ -5,10 +5,11 @@ line must prevent a mistake an agent would otherwise make.
 
 ## Project
 
-The Last Inn is a sandbox game about running a border inn alongside autonomous NPCs.
-Build a small prototype to test whether model-driven guests make a believable evening
-that produces retellable stories. Follow `docs/DESIGN.md` and `docs/PLAN.md` (current
-stage: `docs/stages/1_EVENING.md`); keep the scope small until that loop works.
+The Story Tavern is a story generator: famous people, real and fictional, spend an evening
+in a tavern as model-driven NPCs, and the chaos they make is retold at closing. Follow
+`docs/DESIGN.md` and the plan index `docs/plan/README.md` (current stage:
+`docs/plan/2_story_evenings/`). Read the index and your one task file, not the archives;
+keep the scope to the task.
 
 ## Commands
 
@@ -85,7 +86,7 @@ Rules:
 
 ## Extending
 
-- A new game system (agreements, inventory, money, cooking) is a new module named for
+- A new game system (signature items, fun, retelling) is a new module named for
   the concept: pure, tested alone, wired in with one small edit. Do not grow files over
   ~400 lines (`scene.ts` today); split first, as a separate step.
 - Adding a verb means one `Activity` in `activities.py` (targets, timing, preconditions,
@@ -111,7 +112,7 @@ SOLID, applied only where it earns its keep:
 
 ## Navigability
 
-- Name files, functions and tests for the domain concept (`agreements.py`, `find_path`).
+- Name files, functions and tests for the domain concept (`story_score.py`, `find_path`).
   Never `utils`, `helpers`, `common`, `manager` or `base`.
 - Open every module with a one-line docstring saying what it owns. Read a module's test
   file first: it is the spec.

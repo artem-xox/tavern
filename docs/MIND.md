@@ -1,4 +1,4 @@
-# The Last Inn — Mind
+# The Story Tavern — Mind
 
 How a guest thinks, where the current fast/slow split falls short among guests who meet all
 evening, what others have learned building such agents, and the steps toward a mind that works
@@ -62,7 +62,7 @@ recorded on 2026-10-04:
 5. **The slow mind is not slow.** Asked after every scene's end, it ran six to eight times per
    guest in each evening of seven to eight minutes. That is chasing events, not reflecting on them.
 6. **Inside one evening there is little past to reflect on.** Reflection over memories in the
-   style of Generative Agents pays off across evenings (Stage 4). Within an evening the mind's
+   style of Generative Agents pays off across evenings (not planned). Within an evening the mind's
    job is to appraise what happened and to keep or drop goals.
 
 ## What research says
@@ -153,7 +153,7 @@ Separate who from where:
 ## Steps
 
 Each step is small and checked against the baseline of step 0. Steps 0–5 were built on 2026-10-05
-(see PLAN.md for what is left over: D22, D23); step 6 is Stage 4.
+(see [TECH_DEBT.md](plan/TECH_DEBT.md) for what is left over: D22, D23); step 6 was dropped with the old Stage 4.
 
 - [x] **0. Measure.** `evening/repetition.py` counts restated intentions and repeated lines;
   `scripts/evening.py` writes them as `repetition` in `metrics.json`. A text counts as the same
@@ -238,14 +238,14 @@ Each step is small and checked against the baseline of step 0. Steps 0–5 were 
   pouring"), none about games or money, and none of his 12 lines offers darts, a wager or a coin (D19's
   examples). Still true: six of his lines open with the same "Evening. What'll it be?" formula, which
   D19 also records. Not done: the evening as a social practice with roles as data (duties and norms per
-  role, a bouncer), which waits for Stage 2's second staff member; the barkeep's duty is a flag on goals
+  role, a bouncer), which is not planned (the barkeep is the only staff member); the barkeep's duty is a flag on goals
   and a sentence in the prompt for now.
-- [ ] **6. Between evenings (Stage 4): not started on purpose.** Each guest's evening is summarized into memories and
+- [ ] **6. Between evenings: dropped (2026-10-17).** Each guest's evening is summarized into memories and
   opinions that carry over, dropping what repeats, as Lyfe's summarize-and-forget does.
 
 Missing verbs found on the way go to their own tasks. The first is "buy someone a drink"
 (DESIGN.md, Actions), which 17 intentions in five of the seven evenings asked for. It became
-[Giving (H0–H5)](stages/1_EVENING.md#giving--from-hand-to-hand-h0h5), built on 2026-10-05: anything a guest
+[Giving (H0–H5)](plan/1_evening/archive.md#giving--from-hand-to-hand-h0h5), built on 2026-10-05: anything a guest
 carries can be handed to another, and fetching a drink for someone is one chosen errand.
 
 ## Sources

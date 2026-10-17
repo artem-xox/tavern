@@ -3,6 +3,14 @@
 Agreed 2026-10-11 and implemented in the character-catalog migration. This
 document records the agreed architecture and acceptance checks.
 
+**Changes planned for Stage 2.** Characters move into casts: `characters/guests/`
+(famous characters), `characters/locals/` (the six characters below) and
+`characters/staff/` (Hob) in [S2-01](plan/2_story_evenings/01_casts.md). Cards gain
+persona fields (`inspired_by`, `origin`, `persona`, `catchphrases`, `obsessions`,
+`mute`) in [S2-03](plan/2_story_evenings/03_persona_cards.md), and signature items in
+[S2-08](plan/2_story_evenings/08_signature_items.md). The layout below is the one
+in use until those tasks land; each task updates this document.
+
 ## Goal
 
 Keep everything authored for an NPC under the repository-root
