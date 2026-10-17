@@ -1,0 +1,616 @@
+{
+  "group_id": "7252bf3e-d6e5-4395-a78c-e7125aefe4be",
+  "states": [
+    {
+      "character": {
+        "id": "768e9466-b054-4165-a44d-73db07ac4a18",
+        "name": "Idle",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T20:54:32.773552+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "a7d3c388-fabb-42eb-967f-bc41ada373e3",
+        "name": "Seated",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T21:30:05.708015+00:00"
+      },
+      "folder": "Seated",
+      "frames": {
+        "rotations": {
+          "south": "Seated/rotations/south.png",
+          "south-east": "Seated/rotations/south-east.png",
+          "east": "Seated/rotations/east.png",
+          "north-east": "Seated/rotations/north-east.png",
+          "north": "Seated/rotations/north.png",
+          "north-west": "Seated/rotations/north-west.png",
+          "west": "Seated/rotations/west.png",
+          "south-west": "Seated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "ddb34766-7274-43b6-a990-815ea32d7977",
+        "name": "Darts",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T21:30:22.102653+00:00"
+      },
+      "folder": "Darts",
+      "frames": {
+        "rotations": {
+          "south": "Darts/rotations/south.png",
+          "south-east": "Darts/rotations/south-east.png",
+          "east": "Darts/rotations/east.png",
+          "north-east": "Darts/rotations/north-east.png",
+          "north": "Darts/rotations/north.png",
+          "north-west": "Darts/rotations/north-west.png",
+          "west": "Darts/rotations/west.png",
+          "south-west": "Darts/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "4c289b05-9866-4871-a994-d165ea30c2a3",
+        "name": "Bathroom",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T21:30:34.890131+00:00"
+      },
+      "folder": "Bathroom",
+      "frames": {
+        "rotations": {
+          "south": "Bathroom/rotations/south.png",
+          "south-east": "Bathroom/rotations/south-east.png",
+          "east": "Bathroom/rotations/east.png",
+          "north-east": "Bathroom/rotations/north-east.png",
+          "north": "Bathroom/rotations/north.png",
+          "north-west": "Bathroom/rotations/north-west.png",
+          "west": "Bathroom/rotations/west.png",
+          "south-west": "Bathroom/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "ea916bfb-7fcf-46bc-8299-c9891bc41090",
+        "name": "Drinking",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T21:31:31.543018+00:00"
+      },
+      "folder": "Drinking",
+      "frames": {
+        "rotations": {
+          "south": "Drinking/rotations/south.png",
+          "south-east": "Drinking/rotations/south-east.png",
+          "east": "Drinking/rotations/east.png",
+          "north-east": "Drinking/rotations/north-east.png",
+          "north": "Drinking/rotations/north.png",
+          "north-west": "Drinking/rotations/north-west.png",
+          "west": "Drinking/rotations/west.png",
+          "south-west": "Drinking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "a7857e9f-007e-42e5-82ec-5a1b225346b8",
+        "name": "TalkingSeated",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T21:33:30.839417+00:00"
+      },
+      "folder": "TalkingSeated",
+      "frames": {
+        "rotations": {
+          "south": "TalkingSeated/rotations/south.png",
+          "south-east": "TalkingSeated/rotations/south-east.png",
+          "east": "TalkingSeated/rotations/east.png",
+          "north-east": "TalkingSeated/rotations/north-east.png",
+          "north": "TalkingSeated/rotations/north.png",
+          "north-west": "TalkingSeated/rotations/north-west.png",
+          "west": "TalkingSeated/rotations/west.png",
+          "south-west": "TalkingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "83b70052-cfa4-4813-9840-081a67280cfc",
+        "name": "Walking",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T21:34:30.954911+00:00"
+      },
+      "folder": "Walking",
+      "frames": {
+        "rotations": {
+          "south": "Walking/rotations/south.png",
+          "south-east": "Walking/rotations/south-east.png",
+          "east": "Walking/rotations/east.png",
+          "north-east": "Walking/rotations/north-east.png",
+          "north": "Walking/rotations/north.png",
+          "north-west": "Walking/rotations/north-west.png",
+          "west": "Walking/rotations/west.png",
+          "south-west": "Walking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "74ee1e3f-9714-4b7d-be8f-928c81e1af4b",
+        "name": "Talking",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T21:34:49.805343+00:00"
+      },
+      "folder": "Talking",
+      "frames": {
+        "rotations": {
+          "south": "Talking/rotations/south.png",
+          "south-east": "Talking/rotations/south-east.png",
+          "east": "Talking/rotations/east.png",
+          "north-east": "Talking/rotations/north-east.png",
+          "north": "Talking/rotations/north.png",
+          "north-west": "Talking/rotations/north-west.png",
+          "west": "Talking/rotations/west.png",
+          "south-west": "Talking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "9b5aacfe-d3f7-4788-ab00-d530a03caf83",
+        "name": "Giving",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T21:34:59.345975+00:00"
+      },
+      "folder": "Giving",
+      "frames": {
+        "rotations": {
+          "south": "Giving/rotations/south.png",
+          "south-east": "Giving/rotations/south-east.png",
+          "east": "Giving/rotations/east.png",
+          "north-east": "Giving/rotations/north-east.png",
+          "north": "Giving/rotations/north.png",
+          "north-west": "Giving/rotations/north-west.png",
+          "west": "Giving/rotations/west.png",
+          "south-west": "Giving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "eb329c46-d23a-4469-89b1-ae22630a47ca",
+        "name": "DrinkingSeated",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T21:35:28.208313+00:00"
+      },
+      "folder": "DrinkingSeated",
+      "frames": {
+        "rotations": {
+          "south": "DrinkingSeated/rotations/south.png",
+          "south-east": "DrinkingSeated/rotations/south-east.png",
+          "east": "DrinkingSeated/rotations/east.png",
+          "north-east": "DrinkingSeated/rotations/north-east.png",
+          "north": "DrinkingSeated/rotations/north.png",
+          "north-west": "DrinkingSeated/rotations/north-west.png",
+          "west": "DrinkingSeated/rotations/west.png",
+          "south-west": "DrinkingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "24afd576-cdef-4170-a429-ef7f0eabf37b",
+        "name": "Receiving",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T21:35:30.634281+00:00"
+      },
+      "folder": "Receiving",
+      "frames": {
+        "rotations": {
+          "south": "Receiving/rotations/south.png",
+          "south-east": "Receiving/rotations/south-east.png",
+          "east": "Receiving/rotations/east.png",
+          "north-east": "Receiving/rotations/north-east.png",
+          "north": "Receiving/rotations/north.png",
+          "north-west": "Receiving/rotations/north-west.png",
+          "west": "Receiving/rotations/west.png",
+          "south-west": "Receiving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "0c88ebbf-dcca-4e1b-b842-cff5bedcbae7",
+        "name": "GivingSeated",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T21:35:34.529945+00:00"
+      },
+      "folder": "GivingSeated",
+      "frames": {
+        "rotations": {
+          "south": "GivingSeated/rotations/south.png",
+          "south-east": "GivingSeated/rotations/south-east.png",
+          "east": "GivingSeated/rotations/east.png",
+          "north-east": "GivingSeated/rotations/north-east.png",
+          "north": "GivingSeated/rotations/north.png",
+          "north-west": "GivingSeated/rotations/north-west.png",
+          "west": "GivingSeated/rotations/west.png",
+          "south-west": "GivingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "4f683079-748c-418c-87aa-1bb45241defe",
+        "name": "KnockedOut",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T21:37:16.859326+00:00"
+      },
+      "folder": "KnockedOut",
+      "frames": {
+        "rotations": {
+          "south": "KnockedOut/rotations/south.png",
+          "south-east": "KnockedOut/rotations/south-east.png",
+          "east": "KnockedOut/rotations/east.png",
+          "north-east": "KnockedOut/rotations/north-east.png",
+          "north": "KnockedOut/rotations/north.png",
+          "north-west": "KnockedOut/rotations/north-west.png",
+          "west": "KnockedOut/rotations/west.png",
+          "south-west": "KnockedOut/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "2d25e389-bf91-4f09-adc6-8ae6f4f173bc",
+        "name": "Fighting",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T21:38:11.139888+00:00"
+      },
+      "folder": "Fighting",
+      "frames": {
+        "rotations": {
+          "south": "Fighting/rotations/south.png",
+          "south-east": "Fighting/rotations/south-east.png",
+          "east": "Fighting/rotations/east.png",
+          "north-east": "Fighting/rotations/north-east.png",
+          "north": "Fighting/rotations/north.png",
+          "north-west": "Fighting/rotations/north-west.png",
+          "west": "Fighting/rotations/west.png",
+          "south-west": "Fighting/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "7f0738e8-dc7c-47f8-b342-e299f4a454e0",
+        "name": "Hurt",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T21:38:34.784197+00:00"
+      },
+      "folder": "Hurt",
+      "frames": {
+        "rotations": {
+          "south": "Hurt/rotations/south.png",
+          "south-east": "Hurt/rotations/south-east.png",
+          "east": "Hurt/rotations/east.png",
+          "north-east": "Hurt/rotations/north-east.png",
+          "north": "Hurt/rotations/north.png",
+          "north-west": "Hurt/rotations/north-west.png",
+          "west": "Hurt/rotations/west.png",
+          "south-west": "Hurt/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "b6845713-3b52-477c-8c56-6c11f89ba66e",
+        "name": "Shoving",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T21:39:59.389233+00:00"
+      },
+      "folder": "Shoving",
+      "frames": {
+        "rotations": {
+          "south": "Shoving/rotations/south.png",
+          "south-east": "Shoving/rotations/south-east.png",
+          "east": "Shoving/rotations/east.png",
+          "north-east": "Shoving/rotations/north-east.png",
+          "north": "Shoving/rotations/north.png",
+          "north-west": "Shoving/rotations/north-west.png",
+          "west": "Shoving/rotations/west.png",
+          "south-west": "Shoving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "c0e3f38e-9264-4d8f-815f-7bb28875731a",
+        "name": "HelpingUp",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T21:40:02.966584+00:00"
+      },
+      "folder": "HelpingUp",
+      "frames": {
+        "rotations": {
+          "south": "HelpingUp/rotations/south.png",
+          "south-east": "HelpingUp/rotations/south-east.png",
+          "east": "HelpingUp/rotations/east.png",
+          "north-east": "HelpingUp/rotations/north-east.png",
+          "north": "HelpingUp/rotations/north.png",
+          "north-west": "HelpingUp/rotations/north-west.png",
+          "west": "HelpingUp/rotations/west.png",
+          "south-west": "HelpingUp/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "8eac4b1f-81d7-4771-b3a0-404871cd372a",
+        "name": "TakeBeer",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T21:51:44.476646+00:00"
+      },
+      "folder": "TakeBeer",
+      "frames": {
+        "rotations": {
+          "south": "TakeBeer/rotations/south.png",
+          "south-east": "TakeBeer/rotations/south-east.png",
+          "east": "TakeBeer/rotations/east.png",
+          "north-east": "TakeBeer/rotations/north-east.png",
+          "north": "TakeBeer/rotations/north.png",
+          "north-west": "TakeBeer/rotations/north-west.png",
+          "west": "TakeBeer/rotations/west.png",
+          "south-west": "TakeBeer/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "2953387a-5c4a-4694-9807-4cc9bff4db8a",
+        "name": "ReceivingSeated",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T21:51:54.773585+00:00"
+      },
+      "folder": "ReceivingSeated",
+      "frames": {
+        "rotations": {
+          "south": "ReceivingSeated/rotations/south.png",
+          "south-east": "ReceivingSeated/rotations/south-east.png",
+          "east": "ReceivingSeated/rotations/east.png",
+          "north-east": "ReceivingSeated/rotations/north-east.png",
+          "north": "ReceivingSeated/rotations/north.png",
+          "north-west": "ReceivingSeated/rotations/north-west.png",
+          "west": "ReceivingSeated/rotations/west.png",
+          "south-west": "ReceivingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "9508a073-bf28-4406-978e-7c2c63b7f327",
+        "name": "HurtSeated",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T21:51:57.461686+00:00"
+      },
+      "folder": "HurtSeated",
+      "frames": {
+        "rotations": {
+          "south": "HurtSeated/rotations/south.png",
+          "south-east": "HurtSeated/rotations/south-east.png",
+          "east": "HurtSeated/rotations/east.png",
+          "north-east": "HurtSeated/rotations/north-east.png",
+          "north": "HurtSeated/rotations/north.png",
+          "north-west": "HurtSeated/rotations/north-west.png",
+          "west": "HurtSeated/rotations/west.png",
+          "south-west": "HurtSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "401a113f-de62-4c79-b97b-5f693594041a",
+        "name": "SleepingSeated",
+        "prompt": "Mike Tyson, recognizable middle-aged American male public figure and former heavyweight boxer: clean-shaven bald head, dark complexion, very thick muscular neck and broad powerful shoulders, short stocky build, a black tribal tattoo around his left eye, calm heavy-lidded expression. Wear a plain fitted black t-shirt, dark grey sweatpants and black sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the face tattoo and the thick neck especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T21:52:19.634048+00:00"
+      },
+      "folder": "SleepingSeated",
+      "frames": {
+        "rotations": {
+          "south": "SleepingSeated/rotations/south.png",
+          "south-east": "SleepingSeated/rotations/south-east.png",
+          "east": "SleepingSeated/rotations/east.png",
+          "north-east": "SleepingSeated/rotations/north-east.png",
+          "north": "SleepingSeated/rotations/north.png",
+          "north-west": "SleepingSeated/rotations/north-west.png",
+          "west": "SleepingSeated/rotations/west.png",
+          "south-west": "SleepingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-17T21:59:20.923000"
+}

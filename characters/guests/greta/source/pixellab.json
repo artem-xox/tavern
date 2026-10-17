@@ -206,35 +206,6 @@
     },
     {
       "character": {
-        "id": "def7a0ce-ff21-4085-8512-b89f71fc9a6b",
-        "name": "TakeBeer",
-        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
-        "size": {
-          "width": 68,
-          "height": 68
-        },
-        "template_id": "mannequin",
-        "directions": 8,
-        "view": "low top-down",
-        "created_at": "2026-10-17T19:58:21.128689+00:00"
-      },
-      "folder": "TakeBeer",
-      "frames": {
-        "rotations": {
-          "south": "TakeBeer/rotations/south.png",
-          "south-east": "TakeBeer/rotations/south-east.png",
-          "east": "TakeBeer/rotations/east.png",
-          "north-east": "TakeBeer/rotations/north-east.png",
-          "north": "TakeBeer/rotations/north.png",
-          "north-west": "TakeBeer/rotations/north-west.png",
-          "west": "TakeBeer/rotations/west.png",
-          "south-west": "TakeBeer/rotations/south-west.png"
-        },
-        "animations": {}
-      }
-    },
-    {
-      "character": {
         "id": "ec2fc231-7081-4b6e-a9ec-dcf7bc4c6337",
         "name": "Walking",
         "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
@@ -609,8 +580,37 @@
         },
         "animations": {}
       }
+    },
+    {
+      "character": {
+        "id": "0576b146-6711-4aca-a81c-c935b0581168",
+        "name": "TakeBeer",
+        "prompt": "Full-body pixel art game sprite of Greta, a young Swedish climate activist at a medieval border inn. Brown hair parted in the middle and pulled back into ONE long thick braid hanging over the front of her right shoulder down to her waist. Fierce stern scowling face with furrowed brows. Bright hot-pink magenta loose pleated collarless blouse with a V-neck and a row of small buttons, long sleeves, plain dark brown trousers and simple brown boots. Empty hands, standing upright, centered with margins. Low top-down view for a 32px tile tavern game. Crisp hand-placed pixels, muted medieval palette except the pink blouse, dark umber single-color outline, basic shading, transparent background. Keep clothes and face distinct for future action poses. No text, signs, scenery, weapons or floor.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-17T22:00:55.034912+00:00"
+      },
+      "folder": "TakeBeer",
+      "frames": {
+        "rotations": {
+          "south": "TakeBeer/rotations/south.png",
+          "south-east": "TakeBeer/rotations/south-east.png",
+          "east": "TakeBeer/rotations/east.png",
+          "north-east": "TakeBeer/rotations/north-east.png",
+          "north": "TakeBeer/rotations/north.png",
+          "north-west": "TakeBeer/rotations/north-west.png",
+          "west": "TakeBeer/rotations/west.png",
+          "south-west": "TakeBeer/rotations/south-west.png"
+        },
+        "animations": {}
+      }
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-10-17T20:12:13.476689"
+  "export_date": "2026-10-17T22:07:12.988638"
 }

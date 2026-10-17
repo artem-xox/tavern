@@ -23,6 +23,14 @@ evenings with them work.
     campaigner in a hot-pink blouse with one long braid; wants every guest to admit what they have done
     wrong and one of them to promise to change; carries nothing yet. She scolds with "how dare you" and a
     pointing finger, and secretly fears nobody is listening. Natural foil for the Trump parody.
+  - an Elon Musk parody, `characters/guests/musk/` (art and card done, 21 poses x 8 views): a pale founder in
+    a black t-shirt and jeans who pitches a faster way to do everything and sketches machines on beer mats;
+    wants one backer for his big idea and to outshine whoever talks loudest; carries nothing yet. Secretly
+    never finishes a pint. Rival for the Trump parody's stage.
+  - a Mike Tyson parody, `characters/guests/tyson/` (art and card done, 21 poses x 8 views): a huge, gentle,
+    soft-spoken retired champion with a face tattoo and a cage of racing pigeons; wants a quiet pint and to
+    stop any bully picking on the weak; carries nothing yet (the pigeons are a later item). Never starts a
+    fight but finishes every one: the room's natural peacemaker and enforcer.
 - In: their starting relationships (rivalries, grudges) and a `guests.json` scenario with all three plus
   two locals as bystanders.
 - Out: what their items do (S2-08); further guests. The next candidates are a Bush parody (hunting for
