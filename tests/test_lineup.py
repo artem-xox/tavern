@@ -171,3 +171,12 @@ def test_the_api_has_no_casts_without_scenarios(tmp_path: Path) -> None:
                      catalog_dir=ROOT / "characters")
     with TestClient(app) as connection:
         assert connection.get("/api/casts").status_code == 404
+
+
+@pytest.mark.parametrize("cast, ids, pairs", [
+    pytest.param("guests", ["greta", "trump"], [{"greta", "trump"}], id="famous-guests-know-each-other"),
+    pytest.param("guests", ["trump"], [], id="a-lone-guest-has-nobody-to-know"),
+    pytest.param("locals", ["edda", "rurik"], [], id="locals-start-as-strangers"),
+])
+def test_famous_guests_start_out_knowing_each_other_by_name(cast: str, ids: list[str], pairs: list[set[str]]) -> None:
+    assert [{tie["a"], tie["b"]} for tie in lineup(cast, ids).ties] == pairs
