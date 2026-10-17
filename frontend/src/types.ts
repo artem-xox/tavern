@@ -475,8 +475,8 @@ export interface Snapshot {
   /** The evening's story score so far. */
   story: Story;
   /** The storyteller's retelling of the evening, once it is over; null until then, and offline. */
-  recap: Recap | null;
-  /** Whether the storyteller is writing the recap right now. */
+  retelling: Retelling | null;
+  /** Whether the storyteller is writing the retelling right now. */
   telling: boolean;
 }
 
@@ -486,10 +486,17 @@ export interface Story {
   score: number;
 }
 
-/** An evening retold: a catchy title and a short text with emoji. */
-export interface Recap {
-  title: string;
+/** One chapter of a retelling: its text, the log positions it cites, and the IDs of the guests who did those things. */
+export interface Chapter {
   text: string;
+  events: number[];
+  actors: string[];
+}
+
+/** An evening retold: a catchy title and a few cited chapters. */
+export interface Retelling {
+  title: string;
+  chapters: Chapter[];
 }
 
 export type Command =

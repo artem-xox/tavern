@@ -1,10 +1,10 @@
 import { clock } from "./clock";
-import { html, nothing, render } from "lit-html";
+import { html, nothing, render, type TemplateResult } from "lit-html";
 import { repeat } from "lit-html/directives/repeat.js";
 import { renderDebug, renderInspector } from "./inspector";
-import type { SpriteRegistry } from "./sprites";
-import { momentChips, recapWindow } from "./storyview";
-import type { ActivityView, Actor, Command, Conversation, ItemView, Mind, ServiceHealth, Snapshot, Verb, World, WorldEvent, WorldObject } from "./types";
+import { spriteOf, type SpriteRegistry } from "./sprites";
+import { momentChips, retellingWindow } from "./storyview";
+import type { ActivityView, Actor, Chapter, Command, Conversation, ItemView, Mind, ServiceHealth, Snapshot, Verb, World, WorldEvent, WorldObject } from "./types";
 
 interface Handlers {
   command: (command: Command) => void;
@@ -28,14 +28,14 @@ export class Dashboard {
   private intentions = false;
   private verbSignature: string = "";
   private selectedId: string | null = null;
-  private recapDismissed = false;
+  private retellingDismissed = false;
   private connected: boolean = false;
   private editing: boolean = false;
   private targetSignature: string = "";
   private noticeTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(private readonly root: HTMLElement, private readonly handlers: Handlers, private readonly sprites: SpriteRegistry) {
-    this.root.innerHTML = this.layout() + this.recapMarkup();
+    this.root.innerHTML = this.layout() + this.retellingMarkup();
     this.bindControls();
     this.renderEvents([]);
   }
@@ -66,7 +66,7 @@ export class Dashboard {
     this.renderInspector();
     this.renderEvents(world.events);
     this.renderStory(snapshot);
-    this.renderRecapWindow(snapshot);
+    this.renderRetellingWindow(snapshot);
     this.updateTargets();
     this.updateControlAvailability();
   }
@@ -226,31 +226,39 @@ export class Dashboard {
     element(this.root, "#debug-cell").textContent = `cell ${actor.x}, ${actor.y}`;
   }
 
-  private recapMarkup(): string {
+  private retellingMarkup(): string {
     return `<div id="recap-window" class="recap-window" role="dialog" aria-modal="true" aria-labelledby="recap-heading" hidden><div class="recap-card"><h3 id="recap-heading" class="recap-title"></h3><div id="recap-body"></div><div class="recap-actions" id="recap-actions"></div></div></div>`;
   }
 
-  /** The window after closing: ask to wait while the recap is written, then show it with a way back. */
-  private renderRecapWindow(snapshot: Snapshot): void {
-    // The server knows when the evening is over (it starts the telling then); the staff never leave the hall,
-    // so the roster cannot say. A new evening has no recap, so it forgets the closed window.
-    if (!snapshot.telling && !snapshot.recap) this.recapDismissed = false;
-    const mode = recapWindow(snapshot.telling, snapshot.recap, this.recapDismissed);
-    element(this.root, "#recap-window").hidden = mode === "hidden";
-    const { recap, story } = snapshot;
-    element(this.root, "#recap-heading").textContent = mode === "told" && recap ? recap.title : "Please wait";
-    render(mode === "told" && recap
-      ? html`<p class="recap-text">${recap.text}</p><p class="story-chips">${momentChips(story).map((chip: string) => html`<span class="small-tag">${chip}</span> `)}</p>`
-      : html`<p class="recap-text">⏳ We are preparing the retelling of your evening…</p>`, element(this.root, "#recap-body"));
-    render(mode === "told" ? html`<button @click=${(): void => { this.recapDismissed = true; element(this.root, "#recap-window").hidden = true; }}>Close</button><button @click=${(): void => this.handlers.lineup()}>Change guests</button><button class="primary" @click=${(): void => this.startOrRestart()}>↻ New evening</button>` : nothing, element(this.root, "#recap-actions"));
+  /** A chapter of the retelling: the faces of the guests it is about, then its text. */
+  private chapterView(chapter: Chapter): TemplateResult {
+    const faces = chapter.actors
+      .map((id: string): Actor | undefined => [...(this.world?.actors ?? []), ...(this.world?.departed ?? [])].find((actor: Actor): boolean => actor.id === id))
+      .filter((actor: Actor | undefined): actor is Actor => actor !== undefined);
+    return html`<div class="chapter"><div class="faces">${faces.map((actor: Actor) => html`<span class="face" title=${actor.name}><img alt=${actor.name} src="/characters/${spriteOf(actor, this.sprites).name}/Idle/rotations/south.png"></span>`)}</div><p class="recap-text">${chapter.text}</p></div>`;
   }
 
-  /** Show the story score and, once the evening is over and retold, the storyteller's recap. */
+  /** The window after closing: ask to wait while the retelling is written, then show it with a way back. */
+  private renderRetellingWindow(snapshot: Snapshot): void {
+    // The server knows when the evening is over (it starts the telling then); the staff never leave the hall,
+    // so the roster cannot say. A new evening has no retelling, so it forgets the closed window.
+    if (!snapshot.telling && !snapshot.retelling) this.retellingDismissed = false;
+    const mode = retellingWindow(snapshot.telling, snapshot.retelling, this.retellingDismissed);
+    element(this.root, "#recap-window").hidden = mode === "hidden";
+    const { retelling, story } = snapshot;
+    element(this.root, "#recap-heading").textContent = mode === "told" && retelling ? retelling.title : "Please wait";
+    render(mode === "told" && retelling
+      ? html`${retelling.chapters.map((chapter: Chapter) => this.chapterView(chapter))}<p class="story-chips">${momentChips(story).map((chip: string) => html`<span class="small-tag">${chip}</span> `)}</p>`
+      : html`<p class="recap-text">⏳ We are preparing the retelling of your evening…</p>`, element(this.root, "#recap-body"));
+    render(mode === "told" ? html`<button @click=${(): void => { this.retellingDismissed = true; element(this.root, "#recap-window").hidden = true; }}>Close</button><button @click=${(): void => this.handlers.lineup()}>Change guests</button><button class="primary" @click=${(): void => this.startOrRestart()}>↻ New evening</button>` : nothing, element(this.root, "#recap-actions"));
+  }
+
+  /** Show the story score and, once the evening is over and retold, the storyteller's retelling. */
   private renderStory(snapshot: Snapshot): void {
-    const { story, recap } = snapshot;
+    const { story, retelling } = snapshot;
     const chips = momentChips(story);
     element(this.root, "#story-score").textContent = `Score ${story.score}`;
-    render(html`${recap ? html`<h4 class="recap-title">${recap.title}</h4><p class="recap-text">${recap.text}</p>` : nothing}
+    render(html`${retelling ? html`<h4 class="recap-title">${retelling.title}</h4>${retelling.chapters.map((chapter: Chapter) => this.chapterView(chapter))}` : nothing}
       <p class="story-chips">${chips.length ? chips.map((chip: string) => html`<span class="small-tag">${chip}</span> `) : "Nothing worth retelling yet."}</p>`, element(this.root, "#story"));
   }
 

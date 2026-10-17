@@ -28,7 +28,7 @@ from tavern.evening.giving_metrics import giving_counts
 from tavern.evening.manner_metrics import manner_counts
 from tavern.evening.goal_metrics import goal_counts, promise_counts
 from tavern.evening.repetition import ALIKE, repetition_counts
-from tavern.evening.recap import retell
+from tavern.evening.retelling import retell
 from tavern.evening.response_metrics import response_counts
 from tavern.evening.story_score import WEIGHTS, story_moments, story_score
 from tavern.evening.invitation_metrics import invitation_counts
@@ -48,7 +48,7 @@ from tavern.mind.selection import read_switch
 from tavern.social.turns import TurnWriter
 
 DECIDES = {"local": "the local policy (no model)", "live": "Jev, recorded", "replay": "Jev answers replayed"}
-RECAP_MODEL = "claude-sonnet-5-5"  # Tells the evening at the end: one call, so a stronger model costs cents.
+RETELLING_MODEL = "claude-sonnet-5-5"  # Tells the evening at the end: one call, so a stronger model costs cents.
 CLAUDE_MODEL = "claude-haiku-5-5"  # The model `app.py` asks too: a measured evening costs what the server's would.
 CASTS_WITH_SCENARIOS = ("locals", "guests")
 TARIFFS = {"turn": HAIKU_5_5, "card": HAIKU_5_5, "intention": HAIKU_5_5}
@@ -241,31 +241,33 @@ def rounded(value: Any) -> Any:
     return value
 
 
-def write_recap(out: Path, events: list[dict[str, Any]], story: Mapping[str, Any], mode: str,
-                values: Mapping[str, Any]) -> None:
-    """Have Claude Sonnet retell the evening and write `recap.md`; say so when it cannot.
+def write_retelling(out: Path, events: list[dict[str, Any]], story: Mapping[str, Any], mode: str,
+                    values: Mapping[str, Any]) -> None:
+    """Have Claude Sonnet retell the evening and write `retelling.md`; say so when it cannot.
 
     Args:
         out: Output directory.
-        events: The evening's event log.
+        events: The evening's event log; a chapter cites events by their position in it.
         story: Its story score.
-        mode: Evening mode; a replay asks nobody, so it writes no recap.
-        values: Parsed env file; the recap needs `ANTHROPIC_API_KEY`.
+        mode: Evening mode; a replay asks nobody, so it writes no retelling.
+        values: Parsed env file; the retelling needs `ANTHROPIC_API_KEY`.
     """
     if mode == "replay" or not values.get("ANTHROPIC_API_KEY"):
-        print("no recap: " + ("a replay asks no model" if mode == "replay" else "no ANTHROPIC_API_KEY"))
+        print("no retelling: " + ("a replay asks no model" if mode == "replay" else "no ANTHROPIC_API_KEY"))
         return
-    claude = {"anthropic_api_key": values["ANTHROPIC_API_KEY"], "model": RECAP_MODEL, "timeout": 60.0, "retries": 1}
+    claude = {"anthropic_api_key": values["ANTHROPIC_API_KEY"], "model": RETELLING_MODEL, "timeout": 60.0, "retries": 1}
 
     async def ask(question: Question) -> dict[str, Any]:
         return (await ask_claude(question, claude))[0]
     try:
-        recap = asyncio.run(retell(events, story, ask))  # type: ignore[arg-type]
+        retelling = asyncio.run(retell(events, story, ask))  # type: ignore[arg-type]
     except (ClaudeError, ValueError) as error:
-        print(f"no recap: {error}")
+        print(f"no retelling: {error}")
         return
-    (out / "recap.md").write_text(f"# {recap['title']}\n\n{recap['text']}\n")
-    print(f"recap by {RECAP_MODEL}: {recap['title']}")
+    chapters = "".join(f"{chapter['text']}\n\n> told from events {', '.join(f'#{index}' for index in chapter['events'])}\n\n"
+                       for chapter in retelling["chapters"])
+    (out / "retelling.md").write_text(f"# {retelling['title']}\n\n{chapters}")
+    print(f"retelling by {RETELLING_MODEL}: {retelling['title']}")
 
 
 def announce_health(parser: argparse.ArgumentParser, mode: str, writer: str, settings: Mapping[str, Any],
@@ -385,7 +387,7 @@ def main(root: Path) -> None:
     (args.out / "events.jsonl").write_text("".join(json.dumps(event, sort_keys=True) + "\n" for event in evening.events))
     (args.out / "metrics.json").write_text(json.dumps(rounded(report), indent=2) + "\n")
     print(json.dumps(rounded(report), indent=2))
-    write_recap(args.out, evening.events, report["story"], mode, values)
+    write_retelling(args.out, evening.events, report["story"], mode, values)
     print(f"{mode} evening, seed {args.seed}, {writer} lines: {round(evening.end_time)} game s in {wall:.1f} "
           f"wall s{''.join(f' ({text})' for text in (note, writer_note) if text)}; wrote {args.out}")
     if tracer is not None:

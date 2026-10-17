@@ -28,7 +28,7 @@ Known problems that no task owns are in [TECH_DEBT.md](TECH_DEBT.md).
 | S2-07 | [Fun](2_story_evenings/07_fun.md): a need that chaos, games and signature acts fill | 05 | todo |
 | S2-08 | [Signature items](2_story_evenings/08_signature_items.md): what is in the backpack, and the act it unlocks | 03, 05 | todo |
 | S2-09 | [Chaos](2_story_evenings/09_chaos.md): rivals, shouting, quarrels that escalate into fights | 04, 05 | todo |
-| S2-10 | [Retelling](2_story_evenings/10_retelling.md): a strong model retells the log; a closing screen shows it | 05 | todo |
+| S2-10 | [Retelling](2_story_evenings/10_retelling.md): a strong model retells the log; a closing screen shows it | 05 | doing |
 | S2-11 | [Acceptance](2_story_evenings/11_acceptance.md): live Guest evenings meet the story targets | all | todo |
 
 Order: 00, 01 and 05 can run in parallel. 05 lands before 06–09 so that each of them is measured
