@@ -10,7 +10,7 @@ from tavern.server.api import create_app
 def test_catalog_and_snapshot_hide_secrets_but_the_world_keeps_them(tmp_path: Path) -> None:
     root = Path(__file__).resolve().parents[1]
     app = create_app(root / "data" / "tavern.json", tmp_path / "saves", {}, run_loop=False,
-                     scenario_path=root / "data" / "scenarios" / "first_evening.json", catalog_dir=root / "characters")
+                     scenario_path=root / "data" / "scenarios" / "locals.json", catalog_dir=root / "characters")
     runtime = app.state.sessions.open("public-character-test")
     with TestClient(app) as connection:
         catalog = connection.get("/api/characters")

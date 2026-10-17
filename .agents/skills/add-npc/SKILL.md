@@ -5,7 +5,9 @@ description: Add a playable Last Inn NPC to the authoritative characters catalog
 
 # Add an NPC
 
-`characters/<id>/` is the source of truth for a person. Do not add a character to
+`characters/<cast>/<id>/` is the source of truth for a person. The cast is the folder:
+`locals` (the Stage 1 regulars), `guests` (famous characters) or `staff` (bartenders only, and
+nothing but bartenders). Never write the cast in `character.json`; an id is unique across casts. Do not add a character to
 `data/`, a frontend registry, or a scenario as a copy of their profile.
 
 ## 1. Write the profile
@@ -13,7 +15,7 @@ description: Add a playable Last Inn NPC to the authoritative characters catalog
 Create these files before using the character in a scenario:
 
 ```
-characters/<id>/
+characters/<cast>/<id>/
   character.json
   relationships.json
   visuals.json
@@ -55,7 +57,8 @@ error, not a fallback.
 
 ## 3. Put the NPC in an evening
 
-Reference defaults only:
+Add the person to the cast's scenario, `data/scenarios/<cast>.json`, and play it with
+`make evening CAST=<cast>`. Reference defaults only:
 
 ```json
 { "character": "new_id", "arrives_at": 0 }

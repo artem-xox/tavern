@@ -230,7 +230,7 @@ async def dicing_writer(view: dict[str, Any], config: dict[str, Any]) -> dict[st
 @pytest.mark.parametrize("seed", [pytest.param(1, id="seed-1"), pytest.param(2, id="seed-2")])
 def test_a_game_invited_to_in_the_first_evening_reaches_a_result(seed: int) -> None:
     room = json.loads((ROOT / "data" / "tavern.json").read_text())
-    scenario = parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()),
+    scenario = parse_scenario(json.loads((ROOT / "data" / "scenarios" / "locals.json").read_text()),
                               catalog=load_catalog(ROOT / "characters"))
     world = open_evening(room, scenario, seed)
     config = {"model": "jev-latest", "timeout": 1.0, "temperature": 0.25, "typesafe_api_key": None}

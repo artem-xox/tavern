@@ -20,7 +20,7 @@ ROOT = Path(__file__).parents[1]
 def first_evening() -> tuple[dict[str, Any], Scenario]:
     """Load the repository's room and its first-evening scenario."""
     room = json.loads((ROOT / "data" / "tavern.json").read_text())
-    return room, parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()),
+    return room, parse_scenario(json.loads((ROOT / "data" / "scenarios" / "locals.json").read_text()),
                                 catalog=load_catalog(ROOT / "characters"))
 
 

@@ -146,7 +146,7 @@ def test_telling_news_with_no_news_listed_fails_loudly() -> None:
 def first_evening_world(seed: int) -> dict[str, Any]:
     """Open the repository's first evening at a seed."""
     room = json.loads((ROOT / "data" / "tavern.json").read_text())
-    return open_evening(room, parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()),
+    return open_evening(room, parse_scenario(json.loads((ROOT / "data" / "scenarios" / "locals.json").read_text()),
                                              catalog=load_catalog(ROOT / "characters")), seed)
 
 

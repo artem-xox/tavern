@@ -3,9 +3,12 @@
 Agreed 2026-10-11 and implemented in the character-catalog migration. This
 document records the agreed architecture and acceptance checks.
 
-**Changes planned for Stage 2.** Characters move into casts: `characters/guests/`
-(famous characters), `characters/locals/` (the six characters below) and
-`characters/staff/` (Hob) in [S2-01](plan/2_story_evenings/01_casts.md). Cards gain
+**Casts (S2-01, done).** Characters live in casts: `characters/guests/` (famous characters),
+`characters/locals/` (the six characters below) and `characters/staff/` (Hob), i.e.
+`characters/<cast>/<id>/`. The folder is the cast: the loader adds `cast` to each character and
+never reads it from `character.json`; a bartender lives only in `staff/`, and an id is unique across
+casts. Everywhere below, `characters/<id>/` means `characters/<cast>/<id>/`. Each cast has a scenario,
+`data/scenarios/<cast>.json`. **Still planned for Stage 2.** Cards gain
 persona fields (`inspired_by`, `origin`, `persona`, `catchphrases`, `obsessions`,
 `mute`) in [S2-03](plan/2_story_evenings/03_persona_cards.md), and signature items in
 [S2-08](plan/2_story_evenings/08_signature_items.md). The layout below is the one
