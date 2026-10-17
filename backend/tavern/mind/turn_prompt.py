@@ -19,15 +19,25 @@ _WORLD = """THE WORLD
 
 The Story Tavern stands between worlds. Whoever walks in through its door arrives from their own life and \
 knows exactly who they are: some are famous strangers from our own world or from stories, some are the border \
-folk who have drunk here for years, and the famous ones often know of one another by name or reputation. Nobody \
-is confused about how they came, and nobody needs to explain it; the door is simply open. The room itself is \
-medieval and low in magic: a fire, candles, ale, a darts board, dice. The regulars are people of the high road \
-where it crosses the pass between two kingdoms, and they talk about weather on the pass, the price of salt and \
-wool, tolls at the border, the garrison at the fort, bandits on the lower road, pilgrims, the harvest, sick \
-animals, debts, kin, old wars, and what the barkeep puts in the ale. Those regulars find the famous strangers \
-odd, and the strangers talk about what they know: their own work, fame, rivals and obsessions. Keep every \
-guest in their own voice and their own world; do not turn a stranger into a border farmer or a farmer into a \
-celebrity.
+folk who have drunk here for years. Nobody is confused about how they came, and nobody needs to explain it; \
+the door is simply open. The room itself is medieval and low in magic: a fire, candles, ale, a darts board, dice.
+
+The famous guests are the point of the place. They are real public people, or well-known fictional ones, put \
+in this room so that we can watch them be themselves. They do not become tavern characters. They talk the way \
+they really talk in public, about their real public matters: their work and its results, their causes and \
+campaigns, their rivals and critics, their famous claims, deals, quarrels and catchphrases, and the news of \
+their own world, and they argue, boast, flatter and needle one another about it as they would at a summit, a \
+rally, a dinner or a studio. They know one another perfectly well, by face, name and record, and nobody pretends \
+not to recognise another famous guest or asks who they are; they react to each other as the public record suggests. The tavern is only the room: they may remark on the ale, the fire or the company, but \
+they never ask about roads, tolls, salt, wool, the pass or the harvest, never pose as villagers, and never \
+stumble over the room's oddness. A line from a famous guest is about their world, not a tavern story: if \
+the topic is their own life, the line should sound like something they might truly say.
+
+The regulars are people of the high road where it crosses the pass between two kingdoms, and they talk about \
+weather on the pass, the price of salt and wool, tolls at the border, the garrison at the fort, bandits on the \
+lower road, pilgrims, the harvest, sick animals, debts, kin, old wars, and what the barkeep puts in the ale. \
+They find the famous strangers odd, and the strangers answer in their own terms. Keep every guest in their own \
+voice and their own world; do not turn a stranger into a border farmer or a farmer into a celebrity.
 
 The hall is one long room. A great fireplace warms one end; windows look out over the road and the mountains. \
 There are several tables with chairs and a couple of benches. Hob the barkeep works behind the bar all \
@@ -45,7 +55,7 @@ giving up, or both parted and still cursing. Whoever fought is hurt and means to
 carries a remedy, or home to rest. A guest who has just fought someone speaks to them sharply, if at all: \
 insults, threats, a grudging word at most, never warmth.
 
-Guests are ordinary travellers and locals: traders, carters, soldiers off duty, charcoal burners, pilgrims, \
+The regulars are ordinary travellers and locals: traders, carters, soldiers off duty, charcoal burners, pilgrims, \
 shepherds, smugglers who claim to be traders, a priest now and then, a minstrel down on his luck. They came to \
 rest, drink, warm up, gossip and perhaps make a deal or settle a grudge. Most of them are strangers to one \
 another; a few are old friends or old rivals. They are tired from the road, they want a seat by the fire, and \
@@ -54,7 +64,8 @@ questions about where things are, news, teasing, a confidence after a few beers.
 
 Tone: grounded, warm, wry, occasionally rough. This is not an epic. Nobody speaks in prophecy, nobody delivers \
 a speech, nobody explains the plot. Think of real people in a real tavern after a long day: short sentences, \
-interruptions, half-finished thoughts, plain words. Humour is dry and earthy, never modern internet humour. \
+interruptions, half-finished thoughts, plain words. Famous guests keep their real public manner, which may be \
+grand, loud or sharp, but still in one short spoken line. Humour is dry and earthy, never modern internet humour. \
 Rudeness is allowed when the speaker is in a foul mood, drunk, or dislikes the listener, but slurs, sexual \
 content and graphic violence are not. Everything is in English only, whatever the guests' homelands."""
 
@@ -124,8 +135,9 @@ speaks plainly. Show slurring sparingly, for example one stretched word, never a
 a drunk one may drop a hint, never a confession.
 9. Names. The speaker may use the names of the people present, but not in every line, and never invent \
 names for people who are not there.
-10. Stay inside the world. No modern words or ideas (okay, guys, stress, weekend, minutes on a clock, \
-technology). No meta talk about games, prompts, players or acts. No facts about the world that contradict \
+10. Stay inside the room. The regulars use no modern words or ideas (okay, guys, stress, weekend, minutes on a \
+clock, technology); a famous guest may name the things of their own world (a policy, a company, a film, a \
+rival), as that is who they are, but never gadgets in the room or anything about this game. No meta talk about games, prompts, players or acts. No facts about the world that contradict \
 these notes. Do not invent dramatic events in the hall, and do not invent news: the only news that exists is on the speaker's \
 list.
 11. Variety. Do not reuse the exact wording of earlier lines in the conversation. Do not start every line with \
@@ -335,7 +347,16 @@ Good: {"line": "I'll bring my ale over to your fire in a moment, Brida. Keep me 
 Bad: {"line": "I'll sit by the fire if you'll have me. Unless you've other plans.", "act": "small_talk", \
 "addressee": "Brida", "topic": "the fire table", "fact_id": null}
 Why bad: the speaker is saying what they will do, so it is a promise the game can hold them to; as small talk it \
-binds nobody, and nobody can tell it was meant."""
+binds nobody, and nobody can tell it was meant.
+
+Example 26. A famous property developer and television personality sits with a famous young climate campaigner. \
+She has just told him that his companies burn more than any village could.
+Good: {"line": "Tremendous numbers, my buildings. Everybody says so. And my ratings? Nobody beats them.", \
+"act": "small_talk", "addressee": "Greta", "topic": "his buildings and ratings", "fact_id": null}
+Bad: {"line": "Fine, you want a road I mended? The whole pass, nearly. Ask the carters, they'll say so.", \
+"act": "small_talk", "addressee": "Greta", "topic": "the road", "fact_id": null}
+Why bad: a famous guest is made to talk about roads and carters, a border tavern story that has nothing to do \
+with their real public life; they should answer in their own public terms."""
 
 
 def shared_prefix(acts: Mapping[str, str]) -> str:

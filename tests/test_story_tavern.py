@@ -32,3 +32,20 @@ def test_text_a_player_or_model_reads_names_the_story_tavern(text: str) -> None:
 def test_the_prefixes_place_the_tavern_between_worlds_and_keep_the_locals(text: str) -> None:
     assert "between worlds" in text
     assert "border" in text
+
+
+@pytest.mark.parametrize("text", [
+    pytest.param(shared_prefix(ACTS), id="line-writer-prefix"),
+    pytest.param(intention_prefix(), id="intention-prefix"),
+])
+def test_the_prefixes_let_famous_guests_talk_about_their_own_public_life(text: str) -> None:
+    assert "their real public" in text
+    assert "not a tavern story" in text
+
+
+@pytest.mark.parametrize("text", [
+    pytest.param(shared_prefix(ACTS), id="line-writer-prefix"),
+    pytest.param(intention_prefix(), id="intention-prefix"),
+])
+def test_the_prefixes_say_famous_guests_know_one_another(text: str) -> None:
+    assert "know one another perfectly well" in text

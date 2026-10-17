@@ -3,7 +3,7 @@
 from collections.abc import Mapping, Sequence
 from typing import Any, TypedDict, cast
 
-KINDS = ("old friends", "rivals", "bad blood")
+KINDS = ("old friends", "rivals", "bad blood", "well known")
 
 
 class Tie(TypedDict):
