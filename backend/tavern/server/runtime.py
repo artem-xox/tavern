@@ -15,7 +15,7 @@ from tavern.body.activities import ACTIVITIES, client_activities
 from tavern.body.items import client_items
 from tavern.evening.decisions import log_control
 from tavern.evening.mind_loop import MindLoop, TaskCourier
-from tavern.evening.recap import Recap, retell
+from tavern.evening.retelling import Retelling, retell
 from tavern.evening.scenario import Scenario, open_evening
 from tavern.evening.story_score import WEIGHTS, Moment, story_moments, story_score
 from tavern.hall.staff import guests
@@ -157,7 +157,7 @@ class TavernRuntime:
             self._telling.cancel()
         self.chronicle: list[dict[str, Any]] = list(self.world["events"])
         self.moments: list[Moment] = story_moments(self.chronicle)
-        self.recap: Recap | None = None
+        self.retelling: Retelling | None = None
         self._telling = None
 
     def _note_story(self) -> None:
@@ -174,11 +174,11 @@ class TavernRuntime:
         score = story_score(self.moments, WEIGHTS)
         try:
             assert self.storyteller is not None
-            self.recap = await retell(self.chronicle, score, self.storyteller)
+            self.retelling = await retell(self.chronicle, score, self.storyteller)
         except (ClaudeError, ValueError) as error:
             self._event(f"The evening could not be retold: {error}")
 
-    async def await_recap(self) -> None:
+    async def await_retelling(self) -> None:
         """Wait until the storyteller has finished retelling the evening; at once if it was never asked."""
         if self._telling is not None:
             await self._telling
@@ -205,7 +205,7 @@ class TavernRuntime:
             "model": self.ai_config["model"], "writer": self.writer_label, "intentions": self.intender is not None,
             **health,
         }, "activities": client_activities(ACTIVITIES), "items": client_items(), "minds": minds(self.world),
-                "story": story_score(self.moments, WEIGHTS), "recap": self.recap,
+                "story": story_score(self.moments, WEIGHTS), "retelling": self.retelling,
                 "telling": self._telling is not None and not self._telling.done()}
 
     def _event(self, message: str) -> None:

@@ -65,10 +65,10 @@ Built:
   got drunk, signature act, leaving in anger.
 - `story` in `metrics.json`; the live snapshot has `story` and `recap` (`types.ts` with it); a "Story of the
   evening" card in the dashboard.
-- Added on request: `evening/recap.py` asks a storyteller model (Claude Sonnet 5.5) for a short, playful retelling
+- Added on request: `evening/recap.py` (now `retelling.py`) asks a storyteller model (Claude Sonnet 5.5) for a short, playful retelling
   with emoji: `{ "title", "text" }`, checked in `parse_recap`. Headless evenings with `ANTHROPIC_API_KEY` write
-  `recap.md`; the live server retells once, when the last guest leaves. A failed retelling is said in the event
-  log and the score stays. S2-10 (cited chapters, closing screen) builds on this and replaces it.
+  `recap.md`; the live server retells once, when the last guest leaves. S2-10 replaced it with cited chapters,
+  `retelling.md` and the closing window.
 
 Baseline, Locals, offline (`--mode local --writer scripted`), seeds 0–9: score 3, 5, 2, 2, 4, 3, 4, 3, 2, 7; mean 3.5.
 Every evening has a nap; only seed 9 has quarrels (3); nobody fights. Live seed 5 is not recorded: no Jev or

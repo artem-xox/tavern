@@ -1,13 +1,13 @@
 """The live runtime keeps the evening's story score and, when the last guest leaves, has the storyteller retell it."""
 
 import asyncio
+import re
 from pathlib import Path
 from typing import Any
 
 from tavern.evening.scenario import Scenario, parse_scenario
 from tavern.server.runtime import TavernRuntime
 
-RETOLD = {"title": "The Nap of Ada 💤", "text": "Ada dozed off at the table. 🍺"}
 
 
 def hall() -> dict[str, Any]:
@@ -24,12 +24,16 @@ def plan() -> Scenario:
     return parse_scenario({"guests": [guest], "arrival": {"needs": {"thirst": [40, 80]}}, "closes_at": 300})
 
 
-def storyteller(answer: Any) -> Any:
-    """A fake storyteller port: answers with the given object, or raises it when it is an exception."""
+def storyteller(failure: Exception | None = None) -> Any:
+    """A fake storyteller port: it cites the first line it is shown (and keeps that number as `cited`), or raises."""
+    cited: list[int] = []
+
     async def ask(question: Any) -> Any:
-        if isinstance(answer, Exception):
-            raise answer
-        return answer
+        if failure is not None:
+            raise failure
+        cited.append(int(re.search(r"\[#(\d+)", question["content"]).group(1)))  # type: ignore[union-attr]
+        return {"title": "The Nap of Ada 💤", "chapters": [{"text": "Ada came in. 🍺", "events": cited[-1:]}]}
+    ask.cited = cited  # type: ignore[attr-defined]
     return ask
 
 
@@ -79,44 +83,49 @@ def test_a_new_evening_starts_a_new_score(tmp_path: Path) -> None:
         return opened.snapshot()
 
     snapshot = asyncio.run(evening())
-    assert snapshot["story"]["score"] == 0.0 and snapshot["recap"] is None
+    assert snapshot["story"]["score"] == 0.0 and snapshot["retelling"] is None
 
 
 def test_the_storyteller_retells_the_evening_when_it_is_over(tmp_path: Path) -> None:
     async def evening() -> Any:
-        opened = runtime(tmp_path, storyteller(RETOLD))
+        ask = storyteller()
+        opened = runtime(tmp_path, ask)
         last_guest_leaves(opened)
-        before = opened.snapshot()["recap"]
+        before = opened.snapshot()["retelling"]
         waiting = opened.snapshot()["telling"]
-        await opened.await_recap()
-        return before, waiting, opened.snapshot()["telling"], opened.snapshot()["recap"]
+        await opened.await_retelling()
+        who = [opened.chronicle[ask.cited[0]]["actor_id"]]
+        return before, waiting, opened.snapshot()["telling"], opened.snapshot()["retelling"], ask.cited[0], who
 
-    assert asyncio.run(evening()) == (None, True, False, RETOLD)
+    before, waiting, telling, retelling, cited, who = asyncio.run(evening())
+    assert (before, waiting, telling) == (None, True, False)
+    assert retelling == {"title": "The Nap of Ada 💤", "chapters": [
+        {"text": "Ada came in. 🍺", "events": [cited], "actors": [actor for actor in who if actor is not None]}]}
 
 
 def test_a_storyteller_that_fails_leaves_the_evening_unretold_and_says_so(tmp_path: Path) -> None:
     async def evening() -> tuple[Any, str]:
-        opened = runtime(tmp_path, storyteller(ValueError("A recap's title and text must be nonempty strings")))
+        opened = runtime(tmp_path, storyteller(ValueError("A retelling's title must be a nonempty string")))
         last_guest_leaves(opened)
-        await opened.await_recap()
-        return opened.snapshot()["recap"], opened.world["events"][-1]["message"]
+        await opened.await_retelling()
+        return opened.snapshot()["retelling"], opened.world["events"][-1]["message"]
 
-    recap, said = asyncio.run(evening())
-    assert recap is None and "could not be retold" in said and "nonempty strings" in said
+    retelling, said = asyncio.run(evening())
+    assert retelling is None and "could not be retold" in said and "nonempty string" in said
 
 
 def test_without_a_storyteller_the_evening_ends_unretold(tmp_path: Path) -> None:
     async def evening() -> Any:
         opened = runtime(tmp_path)
         last_guest_leaves(opened)
-        return opened.snapshot()["recap"]
+        return opened.snapshot()["retelling"]
 
     assert asyncio.run(evening()) is None
 
 
 def test_the_evening_is_not_being_retold_before_it_ends(tmp_path: Path) -> None:
     async def evening() -> bool:
-        opened = runtime(tmp_path, storyteller(RETOLD))
+        opened = runtime(tmp_path, storyteller())
         opened.advance(0.1)
         return opened.snapshot()["telling"]
 
