@@ -8,6 +8,10 @@ const destination = join(frontend, "static", "characters");
 
 rmSync(destination, { recursive: true, force: true });
 mkdirSync(destination, { recursive: true });
-for (const entry of readdirSync(source, { withFileTypes: true })) {
-  if (entry.isDirectory()) cpSync(join(source, entry.name, "art"), join(destination, entry.name), { recursive: true });
+// characters/<cast>/<id>/art is published as /characters/<id>/: ids are unique across casts.
+for (const cast of readdirSync(source, { withFileTypes: true })) {
+  if (!cast.isDirectory()) continue;
+  for (const entry of readdirSync(join(source, cast.name), { withFileTypes: true })) {
+    if (entry.isDirectory()) cpSync(join(source, cast.name, entry.name, "art"), join(destination, entry.name), { recursive: true });
+  }
 }

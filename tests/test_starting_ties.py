@@ -46,7 +46,7 @@ def test_first_evening_opens_with_its_old_friends_and_rivals() -> None:
     from tavern.adapters.characters import load_catalog
     from tavern.evening.scenario import open_evening, parse_scenario
     # The opening window is left out: the guests due at opening are then all in the hall, with their relations.
-    data = {key: value for key, value in json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()).items()
+    data = {key: value for key, value in json.loads((ROOT / "data" / "scenarios" / "locals.json").read_text()).items()
             if key != "opening_window"}
     scenario = parse_scenario(data, catalog=load_catalog(ROOT / "characters"))
     world = open_evening(json.loads((ROOT / "data" / "tavern.json").read_text()), scenario, seed=1)

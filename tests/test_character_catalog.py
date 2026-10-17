@@ -13,6 +13,7 @@ def profile(character_id: str, role: str = "guest", **changes: Any) -> dict[str,
     return {
         "id": character_id,
         "role": role,
+        "cast": "staff" if role == "bartender" else "locals",
         "name": character_id.title(),
         "color": "#a08060",
         "looks": f"the traveler named {character_id.title()}",
@@ -41,7 +42,7 @@ def test_catalog_resolves_defaults_and_hides_a_secret_from_public_data() -> None
     assert (ada["card"]["id"], ada["carries"], catalog.ties) == (
         "ada", {}, ({"a": "ada", "b": "bea", "kind": "old friends", "note": "They shared a winter camp."},))
     assert catalog.public()["characters"][0] == {
-        "id": "ada", "role": "guest", "name": "Ada", "color": "#a08060", "sprite": "ada",
+        "id": "ada", "role": "guest", "cast": "locals", "name": "Ada", "color": "#a08060", "sprite": "ada",
         "visuals": {"size": 68, "lift": -16, "poses": [
             "Idle", "Seated", "Darts", "Bathroom", "Drinking", "DrinkingSeated", "TalkingSeated",
             "TakeBeer", "Walking", "Talking", "Giving", "GivingSeated", "Receiving", "ReceivingSeated",

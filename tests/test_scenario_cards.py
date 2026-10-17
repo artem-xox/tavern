@@ -122,7 +122,7 @@ def test_guest_without_a_card_has_none() -> None:
 
 
 def test_repository_scenario_casts_every_guest_from_the_catalog() -> None:
-    parsed = parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()),
+    parsed = parse_scenario(json.loads((ROOT / "data" / "scenarios" / "locals.json").read_text()),
                             catalog=load_catalog(ROOT / "characters"))
     assert all("card" in guest for guest in parsed.guests)
     assert len(parsed.ties) == 3  # Edda and Brida, Rurik and Toren (bad blood), Calder and Toren

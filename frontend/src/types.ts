@@ -216,6 +216,8 @@ export interface CharacterVisuals {
 export interface PublicCharacter {
   id: string;
   role: "guest" | "bartender";
+  /** The folder the character lives in: locals, famous guests, or the bar's staff. */
+  cast: "locals" | "guests" | "staff";
   name: string;
   color: string;
   sprite: string;

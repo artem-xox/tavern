@@ -83,9 +83,9 @@ def test_player_text_keeps_every_field() -> None:
 
 
 def presets() -> dict[str, Any]:
-    """Read the repository's preset cards."""
+    """Read the six locals' preset cards."""
     return {character_id: item["card"] for character_id, item in load_catalog(ROOT / "characters").characters.items()
-            if item["role"] == "guest"}
+            if item["cast"] == "locals"}
 
 
 def test_six_presets_with_distinct_temperaments_and_goals() -> None:

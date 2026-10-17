@@ -52,7 +52,7 @@ def test_a_scenario_guest_who_carries_something_impossible_is_refused(carries: A
 
 
 def test_the_first_evening_has_edda_carry_remedies_toren_keepsakes_and_rurik_a_cudgel() -> None:
-    scenario = parse_scenario(json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text()),
+    scenario = parse_scenario(json.loads((ROOT / "data" / "scenarios" / "locals.json").read_text()),
                               catalog=load_catalog(ROOT / "characters"))
     assert {item["name"]: item["carries"] for item in scenario.guests if "carries" in item} == {
         "Edda": {"remedy": 3}, "Toren": {"keepsake": 2}, "Rurik": {"cudgel": 1}}

@@ -47,6 +47,7 @@ from tavern.social.turns import TurnWriter
 
 DECIDES = {"local": "the local policy (no model)", "live": "Jev, recorded", "replay": "Jev answers replayed"}
 CLAUDE_MODEL = "claude-haiku-5-5"  # The model `app.py` asks too: a measured evening costs what the server's would.
+CASTS_WITH_SCENARIOS = ("locals", "guests")
 TARIFFS = {"turn": HAIKU_5_5, "card": HAIKU_5_5, "intention": HAIKU_5_5}
 
 
@@ -60,8 +61,10 @@ def arguments(root: Path) -> argparse.ArgumentParser:
     """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--scenario", type=Path, default=root / "data" / "scenarios" / "first_evening.json",
-                        help="who comes tonight, when, and when the inn closes")
+    parser.add_argument("--cast", choices=CASTS_WITH_SCENARIOS, default="locals",
+                        help="which cast's scenario to play: data/scenarios/<cast>.json")
+    parser.add_argument("--scenario", type=Path,
+                        help="who comes tonight, when, and when the inn closes; default: the --cast scenario")
     parser.add_argument("--characters", type=Path, default=root / "characters",
                         help="complete character catalog the scenario casts from")
     parser.add_argument("--mode", choices=("local", "live", "replay"),
@@ -305,8 +308,9 @@ def main(root: Path) -> None:
     lines = turn_writer(writer, mode, calls, keep, values, tracer)
     room = json.loads((root / "data" / "tavern.json").read_text())
     try:
+        scenario_path = args.scenario or root / "data" / "scenarios" / f"{args.cast}.json"
         catalog = load_catalog(args.characters)
-        world = open_evening(room, parse_scenario(json.loads(args.scenario.read_text()), catalog=catalog),
+        world = open_evening(room, parse_scenario(json.loads(scenario_path.read_text()), catalog=catalog),
                              args.seed)
     except (OSError, ValueError) as error:
         parser.error(f"cannot open the evening: {error}")

@@ -10,6 +10,7 @@ from tavern.social.ties import Tie, parse_ties
 
 
 ROLES = ("guest", "bartender")
+CASTS = ("locals", "guests", "staff")
 COMMON_POSES = ("Idle", "Seated", "Darts", "Bathroom", "Drinking", "DrinkingSeated", "TalkingSeated", "TakeBeer",
                 "Walking", "Talking", "Giving", "GivingSeated", "Receiving", "ReceivingSeated", "SleepingSeated")
 ROLE_POSES = {
@@ -30,6 +31,7 @@ class Character(TypedDict):
 
     id: str
     role: Literal["guest", "bartender"]
+    cast: Literal["locals", "guests", "staff"]
     name: str
     color: str
     card: Card
@@ -95,7 +97,7 @@ class Catalog:
             Alphabetically ordered public records without the model-only card text.
         """
         return {"characters": [
-            {"id": item["id"], "role": item["role"], "name": item["name"], "color": item["color"],
+            {"id": item["id"], "role": item["role"], "cast": item["cast"], "name": item["name"], "color": item["color"],
              "sprite": item["id"], "visuals": {**item["visuals"], "poses": list(ROLE_POSES[item["role"]])}}
             for item in sorted(self.characters.values(), key=lambda character: character["id"])
         ]}
@@ -125,7 +127,7 @@ def parse_catalog(records: Sequence[Any]) -> Catalog:
 def _character(data: Any) -> tuple[Character, list[dict[str, Any]]]:
     if not isinstance(data, Mapping):
         raise ValueError("Character must be a mapping")
-    required = {"id", "role", "color", "carries", "relationships", "visuals", *TEXT_FIELDS, "sex", "params"}
+    required = {"id", "role", "cast", "color", "carries", "relationships", "visuals", *TEXT_FIELDS, "sex", "params"}
     optional = {"looks"}
     missing, unknown = required - data.keys(), data.keys() - required - optional
     if missing or unknown:
@@ -136,6 +138,11 @@ def _character(data: Any) -> tuple[Character, list[dict[str, Any]]]:
     role = data["role"]
     if role not in ROLES:
         raise ValueError(f"Character role must be one of {', '.join(ROLES)}, not {role!r}")
+    cast = data["cast"]
+    if cast not in CASTS:
+        raise ValueError(f"Character cast must be one of {', '.join(CASTS)}, not {cast!r}")
+    if (role == "bartender") != (cast == "staff"):
+        raise ValueError(f"Character {character_id!r} is a {role} in the {cast} cast: bartenders live only in staff")
     color = data["color"]
     if not isinstance(color, str) or not color.startswith("#") or len(color) != 7:
         raise ValueError(f"Character color must be a #RRGGBB string, not {color!r}")
@@ -147,7 +154,7 @@ def _character(data: Any) -> tuple[Character, list[dict[str, Any]]]:
     if "looks" in data:
         card_data["looks"] = data["looks"]
     card = parse_card(card_data)
-    return (Character(id=character_id, role=role, name=card["name"], color=color, card=card,
+    return (Character(id=character_id, role=role, cast=cast, name=card["name"], color=color, card=card,
                       carries=parse_carries(data["carries"]), visuals=visuals), relationships)
 
 

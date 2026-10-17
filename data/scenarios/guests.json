@@ -1,0 +1,22 @@
+{
+  "closes_at": 600,
+  "last_call_at": 540,
+  "opening_window": [1, 30],
+  "arrival": {
+    "needs": {
+      "thirst": [55, 90],
+      "fatigue": [0, 0],
+      "bladder": [0, 25],
+      "social": [15, 65],
+      "boredom": [5, 35]
+    }
+  },
+  "guests": [
+    {"character": "trump", "arrives_at": 0}
+  ],
+  "staff": [
+    {"character": "hob", "post": "bar"}
+  ],
+  "news": [],
+  "relationships": []
+}

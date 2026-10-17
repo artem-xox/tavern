@@ -5,7 +5,7 @@ import struct
 from pathlib import Path
 from typing import Any
 
-from tavern.mind.characters import Catalog, ROLE_POSES, parse_catalog
+from tavern.mind.characters import CASTS, Catalog, ROLE_POSES, parse_catalog
 
 
 DIRECTIONS = ("north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west")
@@ -18,16 +18,17 @@ def load_catalog(root: Path) -> Catalog:
     """Read, validate, and resolve every character directory below a catalog root.
 
     Args:
-        root: Directory containing one profile directory per character.
+        root: Directory with one folder per cast (locals, guests, staff), each holding one profile directory
+            per character. The folder is the character's cast.
     Returns:
         A validated catalog ready for scenario casting and browser publication.
     Raises:
-        ValueError: The root, JSON data, directory name, role-specific art, or a PNG is invalid.
+        ValueError: The root, a cast folder, JSON data, directory name, role-specific art, or a PNG is invalid.
         OSError: A required catalog file cannot be read.
     """
     if not root.is_dir():
         raise ValueError(f"Character catalog directory is missing: {root}")
-    folders = sorted(path for path in root.iterdir() if path.is_dir())
+    folders = sorted(folder for cast in _cast_folders(root) for folder in cast.iterdir() if folder.is_dir())
     if not folders:
         raise ValueError("Character catalog has no character directories")
     records = [_record(folder) for folder in folders]
@@ -38,6 +39,14 @@ def load_catalog(root: Path) -> Catalog:
     return catalog
 
 
+def _cast_folders(root: Path) -> list[Path]:
+    folders = sorted(path for path in root.iterdir() if path.is_dir())
+    unknown = next((folder.name for folder in folders if folder.name not in CASTS), None)
+    if unknown is not None:
+        raise ValueError(f"Unknown cast folder {unknown!r} in {root}: expected {', '.join(CASTS)}")
+    return folders
+
+
 def _record(folder: Path) -> dict[str, Any]:
     character = _json(folder / "character.json")
     if not isinstance(character, dict):
@@ -46,7 +55,8 @@ def _record(folder: Path) -> dict[str, Any]:
         raise ValueError(f"Character ID {character.get('id')!r} does not match directory {folder.name!r}")
     relationships = _json(folder / "relationships.json")
     visuals = _json(folder / "visuals.json")
-    return {**character, "relationships": relationships, "visuals": visuals}
+    # The folder is the cast; character.json never says it, so a card cannot disagree with where it lives.
+    return {**character, "cast": folder.parent.name, "relationships": relationships, "visuals": visuals}
 
 
 def _json(path: Path) -> Any:
