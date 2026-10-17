@@ -25,7 +25,7 @@ async def never_asked(*arguments: Any) -> dict[str, float]:
 
 def first_evening(seed: int) -> dict[str, Any]:
     """The repository's first evening, opened with its guests and its barkeep."""
-    data = json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text())
+    data = json.loads((ROOT / "data" / "scenarios" / "locals.json").read_text())
     return open_evening(LAYOUT, parse_scenario(data, catalog=load_catalog(ROOT / "characters")), seed)
 
 

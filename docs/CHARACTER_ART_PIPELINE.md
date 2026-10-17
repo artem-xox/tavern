@@ -81,7 +81,7 @@ choosing the next creation method.
 ## Tested characters and states
 
 These are PixelLab library assets, with all eight directional PNGs per state stored in
-`characters/<id>/art/`. The frontend copies only those art directories while building.
+`characters/<cast>/<id>/art/`. The frontend copies only those art directories while building.
 Use the stable IDs below with
 `get_character`; avoid saving expiring image URLs as source records.
 Each state's `get_character` result includes the shared `group_id`, rotations,
@@ -263,7 +263,7 @@ The first evening now has six 68 px guests: Edda, Rurik, and Toren arrive at
 opening; Brida, Calder, and Saye replace the old Idle-only later arrivals.
 The original guest IDs remain stable so saved sessions and force-action commands
 stay compatible. Each guest's `sprite` in the scenario
-(`data/scenarios/first_evening.json`) names their folder, and
+(`data/scenarios/locals.json`) names their folder, and
 `frontend/src/sprites.ts` lists every shipped folder with its display size and
 the poses it has in all eight directions. `frontend/src/scene.ts` loads those
 PNGs with nearest-neighbor filtering, drawing this cast at its native 68 px

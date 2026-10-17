@@ -28,7 +28,9 @@ from tavern.evening.giving_metrics import giving_counts
 from tavern.evening.manner_metrics import manner_counts
 from tavern.evening.goal_metrics import goal_counts, promise_counts
 from tavern.evening.repetition import ALIKE, repetition_counts
+from tavern.evening.recap import retell
 from tavern.evening.response_metrics import response_counts
+from tavern.evening.story_score import WEIGHTS, story_moments, story_score
 from tavern.evening.invitation_metrics import invitation_counts
 from tavern.evening.project_metrics import project_counts
 from tavern.evening.recording import (Record, format_record, parse_records, record_calls, record_questions, replay_calls,
@@ -46,7 +48,9 @@ from tavern.mind.selection import read_switch
 from tavern.social.turns import TurnWriter
 
 DECIDES = {"local": "the local policy (no model)", "live": "Jev, recorded", "replay": "Jev answers replayed"}
+RECAP_MODEL = "claude-sonnet-5-5"  # Tells the evening at the end: one call, so a stronger model costs cents.
 CLAUDE_MODEL = "claude-haiku-5-5"  # The model `app.py` asks too: a measured evening costs what the server's would.
+CASTS_WITH_SCENARIOS = ("locals", "guests")
 TARIFFS = {"turn": HAIKU_5_5, "card": HAIKU_5_5, "intention": HAIKU_5_5}
 
 
@@ -60,8 +64,10 @@ def arguments(root: Path) -> argparse.ArgumentParser:
     """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--scenario", type=Path, default=root / "data" / "scenarios" / "first_evening.json",
-                        help="who comes tonight, when, and when the inn closes")
+    parser.add_argument("--cast", choices=CASTS_WITH_SCENARIOS, default="locals",
+                        help="which cast's scenario to play: data/scenarios/<cast>.json")
+    parser.add_argument("--scenario", type=Path,
+                        help="who comes tonight, when, and when the inn closes; default: the --cast scenario")
     parser.add_argument("--characters", type=Path, default=root / "characters",
                         help="complete character catalog the scenario casts from")
     parser.add_argument("--mode", choices=("local", "live", "replay"),
@@ -235,6 +241,33 @@ def rounded(value: Any) -> Any:
     return value
 
 
+def write_recap(out: Path, events: list[dict[str, Any]], story: Mapping[str, Any], mode: str,
+                values: Mapping[str, Any]) -> None:
+    """Have Claude Sonnet retell the evening and write `recap.md`; say so when it cannot.
+
+    Args:
+        out: Output directory.
+        events: The evening's event log.
+        story: Its story score.
+        mode: Evening mode; a replay asks nobody, so it writes no recap.
+        values: Parsed env file; the recap needs `ANTHROPIC_API_KEY`.
+    """
+    if mode == "replay" or not values.get("ANTHROPIC_API_KEY"):
+        print("no recap: " + ("a replay asks no model" if mode == "replay" else "no ANTHROPIC_API_KEY"))
+        return
+    claude = {"anthropic_api_key": values["ANTHROPIC_API_KEY"], "model": RECAP_MODEL, "timeout": 60.0, "retries": 1}
+
+    async def ask(question: Question) -> dict[str, Any]:
+        return (await ask_claude(question, claude))[0]
+    try:
+        recap = asyncio.run(retell(events, story, ask))  # type: ignore[arg-type]
+    except (ClaudeError, ValueError) as error:
+        print(f"no recap: {error}")
+        return
+    (out / "recap.md").write_text(f"# {recap['title']}\n\n{recap['text']}\n")
+    print(f"recap by {RECAP_MODEL}: {recap['title']}")
+
+
 def announce_health(parser: argparse.ArgumentParser, mode: str, writer: str, settings: Mapping[str, Any],
                     values: Mapping[str, Any]) -> None:
     """Probe the services this run will ask, print how they are doing, and stop a run none could serve.
@@ -305,8 +338,9 @@ def main(root: Path) -> None:
     lines = turn_writer(writer, mode, calls, keep, values, tracer)
     room = json.loads((root / "data" / "tavern.json").read_text())
     try:
+        scenario_path = args.scenario or root / "data" / "scenarios" / f"{args.cast}.json"
         catalog = load_catalog(args.characters)
-        world = open_evening(room, parse_scenario(json.loads(args.scenario.read_text()), catalog=catalog),
+        world = open_evening(room, parse_scenario(json.loads(scenario_path.read_text()), catalog=catalog),
                              args.seed)
     except (OSError, ValueError) as error:
         parser.error(f"cannot open the evening: {error}")
@@ -344,12 +378,14 @@ def main(root: Path) -> None:
                                                          for item in [*world["actors"], *world["departed"]]}),
               "fights": fight_counts(world["fights"], evening.events, {item["id"]: item["name"]
                                                                        for item in [*world["actors"], *world["departed"]]}),
+              "story": story_score(story_moments(evening.events), WEIGHTS),
               "bar": bar_metrics(evening.events, [item["id"] for item in world["actors"] if on_staff(item)]),
               "writer": {**writer_stats(evening, calls, "turn", HAIKU_5_5),
                          "unspoken_calls": unspoken_calls(evening, calls, "turn")}}
     (args.out / "events.jsonl").write_text("".join(json.dumps(event, sort_keys=True) + "\n" for event in evening.events))
     (args.out / "metrics.json").write_text(json.dumps(rounded(report), indent=2) + "\n")
     print(json.dumps(rounded(report), indent=2))
+    write_recap(args.out, evening.events, report["story"], mode, values)
     print(f"{mode} evening, seed {args.seed}, {writer} lines: {round(evening.end_time)} game s in {wall:.1f} "
           f"wall s{''.join(f' ({text})' for text in (note, writer_note) if text)}; wrote {args.out}")
     if tracer is not None:

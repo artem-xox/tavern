@@ -1,9 +1,9 @@
 ---
 id: S2-05
 title: Story score
-status: todo
+status: done
 needs: []
-touches: [evening/metrics.py, evening/story_score.py (new), scripts/evening.py, server/runtime.py]
+touches: [evening/story_score.py (new), evening/recap.py (new), scripts/evening.py, server/runtime.py, frontend/src/]
 ---
 
 # S2-05 — Story score
@@ -51,3 +51,27 @@ Moments counted (event kinds named when frozen), each with a weight in one table
 - `make check` passes; `metrics.json` has `story`; the baseline is recorded below.
 
 ## Results
+
+Built:
+
+- `evening/story_score.py`: `story_moments(events)` picks the moments, `story_score(moments, weights)` counts
+  them per kind and weighs them. Weights are `WEIGHTS`, passed as an argument.
+- Moments counted, from events logged today: `quarrel` (2; the `quarrel` event, an `insulted` beside it is not
+  counted again), `fight` (4; `fight_started`), `knockout` (3 extra; `fight_ended` whose words say someone was
+  knocked out), `played_together` (1; `dice_won`), `gift` (1; `gave`), `fell_asleep` (2; `dozed_off`),
+  `limped_home` (2; battered and gone). A quarrel, fight or gift logs one event per participant: same type, time
+  and message count once.
+- Not counted, because nothing logs them yet (the task that adds the behavior adds one weight and one rule):
+  got drunk, signature act, leaving in anger.
+- `story` in `metrics.json`; the live snapshot has `story` and `recap` (`types.ts` with it); a "Story of the
+  evening" card in the dashboard.
+- Added on request: `evening/recap.py` asks a storyteller model (Claude Sonnet 5.5) for a short, playful retelling
+  with emoji: `{ "title", "text" }`, checked in `parse_recap`. Headless evenings with `ANTHROPIC_API_KEY` write
+  `recap.md`; the live server retells once, when the last guest leaves. A failed retelling is said in the event
+  log and the score stays. S2-10 (cited chapters, closing screen) builds on this and replaces it.
+
+Baseline, Locals, offline (`--mode local --writer scripted`), seeds 0–9: score 3, 5, 2, 2, 4, 3, 4, 3, 2, 7; mean 3.5.
+Every evening has a nap; only seed 9 has quarrels (3); nobody fights. Live seed 5 is not recorded: no Jev or
+Claude key was available in the session that built this.
+
+Not run: the Sonnet call itself (no key); it is covered by a fake port, and `ask_claude` by its own tests.

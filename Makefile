@@ -2,6 +2,7 @@
 .PHONY: help install run test check build benchmark evening
 
 SEED ?= 0
+CAST ?= locals
 MODE ?=
 OUT ?= runs/evening-$(SEED)
 CALLS ?=
@@ -17,7 +18,7 @@ help:
 	@printf 'make build    Build the browser client\n'
 	@printf 'make benchmark Measure one NPC minute using real Jev requests\n'
 	@printf 'make evening  Play a headless evening; writes events.jsonl, metrics.json (+ calls.jsonl live) to OUT\n'
-	@printf '              SEED=0 OUT=runs/evening-SEED LIMIT=1200 game seconds\n'
+	@printf '              CAST=locals|guests SEED=0 OUT=runs/evening-SEED LIMIT=1200 game seconds\n'
 	@printf '              MODE=live (default when .env has TYPESAFE_API_KEY), local, or replay CALLS=path/calls.jsonl\n'
 	@printf '              (a replay needs the SEED, LIMIT and .env AI settings of the recorded run)\n'
 	@printf '              TRACE=true traces live calls to LangSmith, one thread per character\n'
@@ -46,5 +47,5 @@ benchmark:
 	.venv/bin/python scripts/benchmark_cost.py
 
 evening:
-	.venv/bin/python scripts/evening.py --seed $(SEED) --out $(OUT) --time-limit $(LIMIT) \
+	.venv/bin/python scripts/evening.py --cast $(CAST) --seed $(SEED) --out $(OUT) --time-limit $(LIMIT) \
 		$(if $(MODE),--mode $(MODE)) $(if $(CALLS),--calls $(CALLS)) $(if $(filter true,$(TRACE)),--trace)

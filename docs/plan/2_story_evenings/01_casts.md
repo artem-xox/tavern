@@ -1,7 +1,7 @@
 ---
 id: S2-01
 title: Two casts
-status: todo
+status: done
 needs: []
 touches: [characters/, adapters/characters.py, mind/characters.py, data/scenarios/, scripts/evening.py, .agents/skills/add-npc, docs/CHARACTER_CATALOG.md]
 ---
@@ -43,3 +43,10 @@ want to run an evening of either, and to add a guest without touching the locals
   before the move.
 
 ## Results
+
+Done. The loader reads `characters/<cast>/<id>/` and adds `cast` to every character and to the public
+catalog; `types.ts` has it. A bartender outside `staff/`, a guest inside it, an unknown cast folder and one
+id in two casts are each a `ValueError` naming it. Scenarios: `locals.json` (was `first_evening.json`) and
+`guests.json`; `make evening CAST=locals|guests`. `guests.json` holds Trump (the first famous guest, art
+from PixelLab group `47ceec70`, 21 poses × 8 views) instead of an empty list, because a scenario needs at
+least one guest. Saves are unchanged.

@@ -152,7 +152,7 @@ def test_guests_have_no_post() -> None:
 
 
 def test_the_repository_evening_starts_with_hob_cast_from_his_card() -> None:
-    data = json.loads((ROOT / "data" / "scenarios" / "first_evening.json").read_text())
+    data = json.loads((ROOT / "data" / "scenarios" / "locals.json").read_text())
     world = open_evening(LAYOUT, parse_scenario(data, catalog=load_catalog(ROOT / "characters")), seed=1)
     hob = hob_of(world)
     assert (hob["card"]["id"], hob["traits"]["patience"], hob["sprite"], (hob["x"], hob["y"])) == (

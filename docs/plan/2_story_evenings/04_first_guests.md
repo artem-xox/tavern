@@ -19,7 +19,7 @@ evenings with them work.
   - a Putin parody: wants to keep his distance; carries a folding table.
   - a Zelensky parody: wants a seat at the table; carries a deck of cards.
   - a Trump parody: wants others to pay; carries a golden pen.
-  - a Greta Thunberg parody, `characters/greta/` (art and card done, 21 poses x 8 views): a stern young
+  - a Greta Thunberg parody, `characters/guests/greta/` (art and card done, 21 poses x 8 views): a stern young
     campaigner in a hot-pink blouse with one long braid; wants every guest to admit what they have done
     wrong and one of them to promise to change; carries nothing yet. She scolds with "how dare you" and a
     pointing finger, and secretly fears nobody is listening. Natural foil for the Trump parody.
