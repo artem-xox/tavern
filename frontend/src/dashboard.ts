@@ -49,9 +49,9 @@ export class Dashboard {
     const { state: world, ai } = snapshot;
     this.renderVerbs();
     element(this.root, "#world-time").textContent = clock(world.time);
-    element(this.root, "#world-tick").textContent = world.closes_at === null ? `TICK ${world.tick}`
-      : world.time >= world.closes_at ? "CLOSED · GUESTS GOING HOME" : `CLOSES AT ${clock(world.closes_at)}`;
-    element(this.root, "#pause").textContent = world.paused ? "▶ Resume" : "Ⅱ Pause";
+    element(this.root, "#world-tick").textContent = world.closes_at === null ? `Tick ${world.tick}`
+      : world.time >= world.closes_at ? "Closed · guests going home" : `Closes at ${clock(world.closes_at)}`;
+    element(this.root, "#pause").textContent = world.paused ? "Resume" : "Pause";
     element<HTMLSelectElement>(this.root, "#speed").value = String(world.speed);
     element(this.root, "#ai-mode").textContent = ai.mode === "jev" ? "Jev configured" : "Local · offline policy";
     element(this.root, "#ai-mode").dataset.mode = ai.mode;
@@ -78,7 +78,7 @@ export class Dashboard {
       badge.hidden = report === undefined;
       if (!report) continue;
       badge.dataset.health = report.status;
-      badge.textContent = `${service.toUpperCase()} ${report.status.replace("_", " ").toUpperCase()}`;
+      badge.textContent = `${service === "jev" ? "Jev" : "Claude"} · ${report.status.replace("_", " ")}`;
       badge.title = report.reason || `${service} is ${report.status.replace("_", " ")}`;
     }
   }
@@ -118,31 +118,31 @@ export class Dashboard {
   private layout(): string {
     return `
       <header class="masthead">
-        <div class="brand"><span class="brand-mark" aria-hidden="true">✦</span><div><p class="eyebrow">A PLACE BETWEEN WORLDS</p><h1>The Last Inn</h1></div></div>
-        <div class="header-status"><span class="stage-tag">STAGE 0 / TAVERN DEMO</span><span id="connection" class="connection" data-connected="false">Connecting…</span><span class="health-row"><span id="health-jev" class="health-badge" data-health="checking">JEV</span><span id="health-claude" class="health-badge" data-health="checking">CLAUDE</span></span></div>
+        <div class="brand"><span class="brand-mark" aria-hidden="true">✦</span><div><h1>The Story Tavern</h1><p class="tagline">A tavern between worlds</p></div></div>
+        <div class="header-status"><span id="connection" class="connection" data-connected="false">Connecting…</span><span class="health-row"><span id="health-jev" class="health-badge" data-health="checking">Jev</span><span id="health-claude" class="health-badge" data-health="checking">Claude</span></span></div>
       </header>
       <div id="notice" class="notice" role="alert" hidden></div>
       <div class="workspace">
         <div class="main-column">
           <section class="scene-card">
-            <div class="scene-heading"><div><p class="eyebrow">THE COMMON ROOM</p><h2>Pull up a chair. Stay a while.</h2></div><div class="world-clock"><strong id="world-time">00:00</strong><span id="world-tick">WAITING FOR WORLD</span></div></div>
+            <div class="scene-heading"><div><h2>The common room</h2><p class="tagline">Pull up a chair. Stay a while.</p></div><div class="world-clock"><strong id="world-time">00:00</strong><span id="world-tick">Waiting for the world</span></div></div>
             <div id="roster" class="roster" aria-label="Select a visitor"></div>
             <div class="game-surround"><div id="game" aria-label="Top-down tavern. Click a visitor to inspect them."></div><div id="curtain" class="curtain" hidden><div class="curtain-card"><p id="curtain-title" class="curtain-title"></p><p id="curtain-text" class="curtain-text"></p><button data-evening data-control class="primary"></button></div></div><div id="loading" class="loading">Waiting for the tavern server<span>Start the backend on port 8000.</span></div></div>
             <div class="scene-footer"><span><i class="legend-dot"></i> Seats · ale · company</span><span id="scene-hint">Click a visitor to inspect their next move.</span></div>
           </section>
-          <section class="control-card"><div class="section-heading"><h3>Shape the evening</h3><span class="muted">Change the world. Watch them adapt.</span></div>
-            <div class="controls-row"><button id="evening" data-evening data-control class="primary">▶ Start the evening</button><button id="pause" data-control>Ⅱ Pause</button><label class="speed-label">Speed<select id="speed" data-control aria-label="Simulation speed"><option value="0.5">½×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label><button id="refill" data-control>+ Refill beer</button><button id="edit" data-control aria-pressed="false">Edit obstacles</button></div>
-            <p id="edit-hint" class="helper">Refill adds 10 servings. Obstacle mode toggles a clicked cell.</p>
-            <div class="controls-row persistence"><button id="save" data-control>Save</button><button id="load" data-control>Load</button><span class="muted">The server keeps your saved world.</span></div>
+          <section class="control-card" aria-label="Shape the evening">
+            <div class="controls-row"><button id="evening" data-evening data-control class="primary">▶ Start the evening</button><button id="pause" data-control>Pause</button><label class="speed-label">Speed<select id="speed" data-control aria-label="Simulation speed"><option value="0.5">½×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+              <span class="controls-spacer"></span><button id="refill" data-control>Refill beer</button><button id="edit" data-control aria-pressed="false">Edit obstacles</button><button id="save" data-control>Save</button><button id="load" data-control>Load</button></div>
+            <p id="edit-hint" class="helper">Refill adds 10 servings. Obstacle mode toggles a clicked cell. The server keeps your saved world.</p>
           </section>
           <section class="events-card"><div class="section-heading"><h3>Story of the evening</h3><span id="story-score" class="muted"></span></div><div id="story"></div></section>
-          <section class="events-card"><div class="section-heading"><h3>From the room</h3><span class="muted">Recent world events</span></div><ol id="events" class="event-list"></ol></section>
+          <section class="events-card"><div class="section-heading"><h3>From the room</h3><span class="muted">Recent events</span></div><ol id="events" class="event-list"></ol></section>
         </div>
-        <aside class="sidebar"><section class="inspector-card"><div class="section-heading"><h3>Inside a visitor's mind</h3><span class="small-tag">INSPECTOR</span></div><p id="inspector-empty" class="empty">Select a visitor in the room.</p><div id="inspector"></div>
+        <aside class="sidebar"><section class="inspector-card"><div class="section-heading"><h3>Inside a visitor's mind</h3><span class="small-tag">Inspector</span></div><p id="inspector-empty" class="empty">Select a visitor in the room.</p><div id="inspector"></div>
           <details id="debug-detail"><summary><span>Debug</span><span id="debug-cell"></span></summary><div class="detail-body"><div id="debug-readout"></div>
           <div class="force-action"><label for="force-verb">Give this visitor an action</label><div class="force-row"><select id="force-verb" data-control></select><button id="force" data-control>Go →</button></div><select id="force-target" data-control aria-label="Action target"></select><select id="force-item" data-control aria-label="Item to hand over" hidden></select><p class="helper">The server checks the route, availability, and resources.</p></div></div></details>
         </section><div class="ai-card"><span id="ai-mode" class="ai-badge">Local · offline policy</span> <span id="ai-writer" class="ai-badge">Scripted lines</span><p id="mode-caption">Waiting for the decision engine.</p></div></aside>
-      </div><footer class="page-footer"><span>THE LAST INN <b>✦</b> AN AUTONOMOUS TAVERN</span><span>Observe → decide → walk → act</span></footer>`;
+      </div><footer class="page-footer"><span>The Story Tavern</span><span>Observe → decide → walk → act</span></footer>`;
   }
 
   private bindControls(): void {
@@ -302,7 +302,7 @@ export class Dashboard {
     const button: HTMLButtonElement = element(this.root, "#edit");
     button.setAttribute("aria-pressed", String(this.editing));
     button.textContent = this.editing ? "✓ Editing obstacles" : "Edit obstacles";
-    element(this.root, "#edit-hint").textContent = this.editing ? "Click a floor cell to block it, or an obstacle to unblock it. Server rules still apply." : "Refill adds 10 servings. Obstacle mode toggles a clicked cell.";
+    element(this.root, "#edit-hint").textContent = this.editing ? "Click a floor cell to block it, or an obstacle to unblock it. Server rules still apply." : "Refill adds 10 servings. Obstacle mode toggles a clicked cell. The server keeps your saved world.";
     this.handlers.edit(this.editing);
   }
 
