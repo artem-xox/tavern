@@ -140,7 +140,7 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
             with suppress(asyncio.CancelledError):
                 await task
         await sessions.close()
-    app = FastAPI(title="The Last Inn", lifespan=lifespan)
+    app = FastAPI(title="The Story Tavern", lifespan=lifespan)
     app.state.sessions = sessions
     app.state.catalog = catalog
     _register_routes(app, sessions, health, catalog)

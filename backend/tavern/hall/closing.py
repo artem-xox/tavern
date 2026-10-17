@@ -11,7 +11,7 @@ from tavern.hall.state import World
 from tavern.hall.validation import number
 
 # What the barkeep says aloud at the call; the client shows it over his head (`WorldEvent.line`).
-LAST_CALL_LINE = "Time, friends! The Last Inn is closing for the night. Finish your cups and get yourselves home safe."
+LAST_CALL_LINE = "Time, friends! The Story Tavern is closing for the night. Finish your cups and get yourselves home safe."
 
 
 def inn_closed(world: Mapping[str, Any]) -> bool:

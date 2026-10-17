@@ -1,7 +1,7 @@
 ---
 id: S2-00
 title: The Story Tavern
-status: todo
+status: doing
 needs: []
 touches: [mind/turn_prompt.py, data/minds/intention_prefix.md, hall/closing.py, server/api.py, frontend/index.html, frontend/src/dashboard.ts, .agents/skills/add-npc]
 ---
@@ -42,3 +42,8 @@ No data changes. The prefixes keep their structure and stay above 4,096 tokens.
 - Nothing visible to a player says "The Last Inn".
 
 ## Results
+
+Steps 1–2 done: the name and the between-worlds setting are in the UI, API, closing call, skill and both
+prefixes (`tests/test_story_tavern.py`); `make check` (3,580 backend tests, 194 frontend tests) and `make build` pass.
+The client shell was also restyled (calmer surfaces, type from 12 px, grouped controls).
+Step 3 (a live Locals evening, `make evening SEED=5`) is not run: it needs a Jev key.

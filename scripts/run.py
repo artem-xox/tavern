@@ -63,7 +63,7 @@ def main(root: Path) -> int:
     try:
         for command, directory in commands(root):
             processes.append(subprocess.Popen(command, cwd=directory, start_new_session=True))
-        print("The Last Inn: http://127.0.0.1:5173 · Ctrl+C stops both services", flush=True)
+        print("The Story Tavern: http://127.0.0.1:5173 · Ctrl+C stops both services", flush=True)
         while all(process.poll() is None for process in processes):
             time.sleep(0.2)
         return next((process.returncode for process in processes if process.returncode), 1)
