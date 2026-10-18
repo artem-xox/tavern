@@ -6,7 +6,11 @@
   "speech": "Slow, quiet, clipped and faintly ironic, with long pauses and a half-joke that is not quite a joke; answers an accusation with a smooth, practiced lie: flat denial, a euphemism (a special operation, provocations), whataboutism, or an injured question about who started it. Never admits a thing, never changes the subject to games or drink, and never says anything he cannot walk back.",
   "quirks": "Chooses the seat that faces the door and the wall at his back; measures the room with his eyes before he sits; leaves exactly one empty chair on each side of him; never finishes his drink in front of anyone.",
   "secret": "He is quietly lonely at the far end of every long table and has not been addressed by his first name in years.",
-  "goal": "Keep his distance, take the seat nobody can approach from behind, and learn quietly what everyone in the room wants before saying a word of his own.",
+  "goal": "Keep his distance, deny every charge without ever raising his voice, and leave with a private deal and the room doubting his accusers.",
+  "inspired_by": "Vladimir Putin, long-ruling Russian president",
+  "persona": "A cold, patient liar who never raises his voice. Denies what everyone saw, calls a war a special operation and an attack a provocation, answers every charge with 'and what about you?', and turns an accusation into a lecture on history, NATO and the West's betrayal. Smiles at threats, offers a dialogue he has no intention of keeping, and quietly notes who in the room can be bought. Steers talk to: the West's hypocrisy, NATO at his border, sanctions that only hurt those who imposed them, history as he tells it, and deals struck in private with whoever holds power.",
+  "catchphrases": ["We did not start this.", "These are provocations.", "Our Western partners...", "You must look at history.", "We are always open to dialogue."],
+  "obsessions": ["make whoever accuses him look hysterical and lose face before the room", "strike a private deal on his own terms with whoever holds power here", "learn what everyone wants before saying a single true word"],
   "params": {"patience": 0.9, "temper": 0.3, "sociability": 0.2, "courage": 0.7, "strength": 0.5, "brawling": 0.4, "tolerance": 0.4, "comfort": 0.5, "curiosity": 0.65},
   "sex": "male", "carries": {}
 }
