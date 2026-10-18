@@ -238,3 +238,24 @@ def test_nobody_invites_someone_they_loathe(opinion: float, offered_invite: bool
     know(world, "ada", "tap")
     actor(world, "ada")["relations"]["bea"] = {"name": "Bea", "opinion": opinion, "familiarity": "acquaintance"}
     assert ("invite" in offered(world)) == offered_invite
+
+
+def test_the_insulted_remember_the_words_they_heard() -> None:
+    world = seated_talk()
+    hated(world)
+    say(world, "insult", "You smell of the stable.")
+    texts = [item["text"] for item in actor(world, "bea")["thoughts"] if item["kind"] == "insulted"]
+    assert texts == ["Ada insulted me: “You smell of the stable.”"]
+
+
+@pytest.mark.parametrize("opinion", [
+    pytest.param(-10.0, id="answered-insult-keeps-the-scene"),
+    pytest.param(0.0, id="unanswered-insult-keeps-it"),
+])
+def test_an_insult_keeps_the_scene_so_its_words_stay_with_the_speaker_over_it(opinion: float) -> None:
+    world = seated_talk()
+    hated(world)
+    actor(world, "bea")["relations"]["ada"] = {"name": "Ada", "opinion": opinion, "familiarity": "acquaintance"}
+    say(world, "insult", "You drunken sot.")
+    turn = next(event for event in world["events"] if event["type"] == "turn")
+    assert (scene_of(world) is None, turn.get("line")) == (False, None)

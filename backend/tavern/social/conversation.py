@@ -78,7 +78,8 @@ def _insult(world: World, scene: Conversation, speaker: Actor,
     answers_back = opinion_of(target, speaker["id"], world["time"]) <= DISLIKED
     message = f"{speaker['name']} insulted {target['name']}"
     record_event(world, target, "insulted", message)
-    think(target, "insulted", world["time"], f"{called(target, speaker)} insulted me", message, about=speaker)
+    words = scene["turns"][-1]["line"]  # `_speak` appends the turn before its act takes effect.
+    think(target, "insulted", world["time"], f"{called(target, speaker)} insulted me: “{words}”", message, about=speaker)
     for member in others:
         social_acts.take_offence(world, member, speaker, target)
     if answers_back:

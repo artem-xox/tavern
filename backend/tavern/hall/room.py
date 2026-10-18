@@ -124,8 +124,8 @@ def _validate_footprint(item: Mapping[str, Any], world_map: Mapping[str, Any]) -
         coordinate(y, world_map["height"])
     if type(item.get("walkable", False)) is not bool:
         raise ValueError("Furniture walkability must be a boolean")
-    if item.get("walkable") and item.get("kind") not in SEAT_TABLES:
-        raise ValueError("Only seats may be walkable furniture")
+    if item.get("walkable") and item.get("kind") not in (*SEAT_TABLES, "stage"):
+        raise ValueError("Only seats and the stage may be walkable furniture")
 
 
 def _validate_objects(world_map: dict[str, Any]) -> None:

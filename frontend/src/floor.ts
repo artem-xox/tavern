@@ -39,7 +39,8 @@ function drawRoomDetails(floor: Phaser.GameObjects.Graphics, size: number): void
       floor.fillStyle(0x625a49, 0.45).fillRect((x + 0.3 + 0.1 * ((x + y) % 3)) * size, (y + 0.65) * size, 3, 2);
     }
   }
-  floor.fillStyle(0xddd1aa, 0.35).fillRect(2.3 * size, 8.2 * size, 3, size * 0.6);
+  // The throw line in front of each of the two dart boards, on rows 8 and 9.
+  for (const row of [8, 9]) floor.fillStyle(0xddd1aa, 0.35).fillRect(2.3 * size, (row + 0.2) * size, 3, size * 0.6);
   for (const [x, y] of [[2, 2], [10, 2]]) {
     for (let radius: number = 3; radius > 0; radius -= 1) {
       floor.fillStyle(0xf5ce82, 0.025).fillCircle((x! + 0.5) * size, (y! + 0.5) * size, radius * size);

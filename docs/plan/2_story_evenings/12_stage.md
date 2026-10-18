@@ -28,9 +28,10 @@ guests a verb that turns heads, splits the room into cheers and groans, and is a
 
 ## Shape
 
-- `OBJECT_KINDS` gains `stage`. The hall has one, `stage`, at (17, 9) with its spot at (16, 9).
-- `Activity(verb="give_speech", target_kinds=("stage",), family="company", fun=0.8, duration=6.0)`; its effect
-  is `speeches.give_speech`.
+- `OBJECT_KINDS` gains `stage`. The hall has one, `stage`, at (17, 9), walkable, facing west; its one spot is its own cell, so the speaker climbs onto it, faces the room and is drawn 8 px higher (`frontend/src/stage.ts`).
+- `Activity(verb="give_speech", target_kinds=("stage",), family="company", fun=0.8, duration=9.0)`; the speech is given on arrival (`on_arrival`), and the speaker stays on the stage for the rest of the nine seconds.
+- A performer (card `persona`) climbs up only with something to say: an intention that serves an obsession, or the goal `address_room`. The speech voices the first sentence of that thought.
+- Listeners remember it at once (`heard_speech` in their memory, beside `heard`) and look at the speaker.
 - Event `gave_speech` (the speaker's, with `line`); sound `EVENT_SOUNDS["gave_speech"]`, loudness 0.6, reach 30:
   between `dice_won` (0.3) and a brawl (1.0).
 - Everyone awake who hears it at `HEARD_FROM` or louder keeps the lines in `heard` (scene id `speech-<time>`,

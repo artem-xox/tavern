@@ -6,6 +6,7 @@ import { drawDicePlay, rollLunge } from "./diceplay.ts";
 import { EMOTE_KINDS, EMOTE_WORDS, emoteFrame, emoteFrames, emoteMotion, emotePalette } from "./emotes";
 import { fightPose } from "./fightview";
 import { drawFloor } from "./floor";
+import { stageLift } from "./stage";
 import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawStage, drawTable, drawTap, drawToilet, drawWindow } from "./furniture";
 import { headingOf, headingToObject } from "./heading";
 import { drawFireplace, drawFlames, drawHearthGlow } from "./hearth";
@@ -249,7 +250,7 @@ export class TavernScene extends Phaser.Scene {
     // On the pot the visitor sits in the privy's own cell, not in the spot they walked to.
     const spot: { x: number; y: number } = this.onPot(actor) && target ? target : actor;
     const x: number = (spot.x + 0.5) * size;
-    const y: number = (spot.y + 0.5) * size;
+    const y: number = (spot.y + 0.5) * size - stageLift(actor, target);
     if (reset || view.targetX === 0 || Math.hypot(x - view.container.x, y - view.container.y) > size * 3) view.container.setPosition(x, y);
     view.targetX = x;
     view.targetY = y;
