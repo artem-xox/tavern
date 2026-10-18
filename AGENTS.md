@@ -20,6 +20,7 @@ make test      # all backend tests
 make check     # tests + frontend typecheck; CI runs this plus `make build`
 make build     # frontend production build
 make evening   # headless scenario evening (Jev with a .env key); SEED, MODE, OUT, LIMIT
+make eval      # local only, live models: dialogue eval of two famous guests (data/evals/); after a prompt or mind change
 .venv/bin/python -m pytest tests/test_navigation.py -k path -x   # one behavior, fast
 ```
 

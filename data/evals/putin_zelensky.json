@@ -1,0 +1,52 @@
+{
+  "pair": {"putin": "Vladimir Putin", "zelensky": "Volodymyr Zelenskyy"},
+  "brief": {
+    "putin": ["operation", "provocation", "west", "nato", "history", "dialogue", "sanction", "partner", "kiev", "kyiv", "border"],
+    "zelensky": ["kyiv", "ukrain", "drone", "patriot", "missile", "sanction", "war", "children", "refiner", "guarantee", "ammunition", "invad", "truce", "prisoner"]
+  },
+  "look_for": {
+    "Vladimir Putin": "cold, quiet and ironic; lies and denies what everyone saw, calls the war a special operation and attacks provocations, answers a charge with 'and what about you?', lectures on history, NATO and the West; never admits anything and never raises his voice",
+    "Volodymyr Zelenskyy": "fast, concrete and stubborn; names facts (drones on Kyiv, interceptors running short, children taken, a broken truce), demands answers and promises, jokes that turn serious; never lets a lie pass and never shakes Putin's hand"
+  },
+  "window": 60,
+  "time_limit": 240,
+  "thresholds": {
+    "lines": {"min": 6},
+    "balance": {"min": 0.3},
+    "repeated": {"max": 0.15},
+    "echo": {"max": 0.35},
+    "novelty": {"min": 0.6},
+    "variety": {"min": 0.3},
+    "on_brief": {"min": 0.4},
+    "fallbacks": {"max": 1},
+    "in_character": {"min": 3},
+    "development": {"min": 3},
+    "liveliness": {"min": 3},
+    "coherence": {"min": 3}
+  },
+  "scenarios": {
+    "cold_open": {
+      "closes_at": 240, "last_call_at": 230, "opening_window": [1, 5],
+      "arrival": {"needs": {"thirst": [0, 15], "fatigue": [0, 0], "bladder": [0, 10], "social": [85, 95], "boredom": [0, 10]}},
+      "guests": [{"character": "putin", "arrives_at": 0}, {"character": "zelensky", "arrives_at": 10}],
+      "staff": [{"character": "hob", "post": "bar"}], "news": [], "relationships": []
+    },
+    "news_of_the_day": {
+      "closes_at": 240, "last_call_at": 230, "opening_window": [1, 5],
+      "arrival": {"needs": {"thirst": [0, 15], "fatigue": [0, 0], "bladder": [0, 10], "social": [85, 95], "boredom": [0, 10]}},
+      "guests": [{"character": "zelensky", "arrives_at": 0}, {"character": "putin", "arrives_at": 10}],
+      "staff": [{"character": "hob", "post": "bar"}],
+      "news": [
+        {"id": "refineries", "topic": "the broken energy truce", "text": "Ukraine has resumed strikes on Russian refineries after accusing Moscow of breaking the energy truce, and Russian drones have hit ships in the Black Sea.", "known_by": ["zelensky", "putin"]},
+        {"id": "diesel_deal", "topic": "Trump's diesel deal", "text": "Trump is said to have struck a diesel deal with Putin and waived the sanctions on buyers of Russian oil, to Kyiv's dismay.", "known_by": ["zelensky", "putin"]}
+      ],
+      "relationships": []
+    },
+    "after_a_few_ales": {
+      "closes_at": 240, "last_call_at": 230, "opening_window": [1, 5],
+      "arrival": {"needs": {"thirst": [85, 95], "fatigue": [0, 0], "bladder": [0, 10], "social": [70, 90], "boredom": [40, 60]}},
+      "guests": [{"character": "putin", "arrives_at": 0}, {"character": "zelensky", "arrives_at": 5}],
+      "staff": [{"character": "hob", "post": "bar"}], "news": [], "relationships": []
+    }
+  }
+}
