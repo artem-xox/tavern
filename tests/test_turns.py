@@ -469,3 +469,17 @@ def test_a_later_scene_does_not_open_with_a_greeting(change: dict[str, Any], act
     scene["acts"] = [*scene["acts"], "insult"]
     scene["speaker"].setdefault("opinions", {"ada": 0.0})
     assert scripted_turn(scene)["act"] == act
+
+
+@pytest.mark.parametrize("speed, real_seconds, scripted", [
+    pytest.param(1.0, 10.0, False, id="normal-speed-still-waiting-at-the-timeout"),
+    pytest.param(2.0, 7.0, False, id="fast-forward-gives-the-model-the-same-real-seconds"),
+    pytest.param(2.0, 11.0, True, id="fast-forward-still-scripts-a-line-that-never-comes"),
+])
+def test_the_model_gets_the_timeout_in_real_seconds_at_any_speed(speed: float, real_seconds: float,
+                                                                 scripted: bool) -> None:
+    world = talking()
+    world["speed"] = speed
+    claim_turns(world)
+    advance(world, real_seconds)
+    assert any(event["type"] == "turn" for event in world["events"]) == scripted
