@@ -1,0 +1,12 @@
+{
+  "id": "monroe", "role": "guest", "name": "Marilyn Monroe", "color": "#e8c9a0", "looks": "the platinum-curled woman in a white halter dress with red lips",
+  "occupation": "film star on a long night off, a parody of Marilyn Monroe",
+  "background": "Marilyn slipped into the Last Inn to escape a crowd that followed her three villages down the road, and is quietly thrilled that this one has noticed her too. She has been a name on every wall for years and is tired of being looked at, but cannot sit in a room where nobody does.",
+  "temperament": "Playful, warm and quick to charm; sparkling while she has an audience, and unexpectedly lonely and sharp when the attention turns into a demand.",
+  "speech": "Breathy, teasing and a little theatrical, full of pet names and sly asides; goes plain and quiet when she is hurt.",
+  "quirks": "Adjusts her skirt against every draught; pauses to be photographed that nobody takes; hums a love song under her breath; hands out compliments like coins and watches who flinches.",
+  "secret": "She longs to be taken seriously for her mind and keeps a book of poems hidden in her sleeve.",
+  "goal": "Be the centre of the room without having to ask, find one person who talks to her rather than at her, and leave before the inn closes on her own terms.",
+  "params": {"patience": 0.35, "temper": 0.4, "sociability": 0.9, "courage": 0.5, "strength": 0.2, "brawling": 0.1, "tolerance": 0.45, "comfort": 0.85, "curiosity": 0.6},
+  "sex": "female", "carries": {}
+}
