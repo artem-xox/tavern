@@ -55,13 +55,14 @@ select { border: 0; border-radius: 8px; color: var(--ink); background: var(--rai
 .world-clock { text-align: right; flex-shrink: 0; }
 .world-clock strong { display: block; font-size: 32px; line-height: 1; color: var(--gold); font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
 .world-clock span { display: block; margin-top: 6px; font-size: var(--t-label); color: var(--muted); }
-.roster { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 24px 18px; }
-.visitor-chip { display: flex; align-items: center; gap: 8px; font-size: var(--t-small); padding: 7px 12px; min-height: 36px; background: var(--raised); border-radius: 999px; }
+.roster { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; padding: 0 24px 18px; }
+.visitor-chip { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 8px; align-items: center; text-align: left; font-size: var(--t-small); padding: 7px 12px; height: 52px; min-width: 0; background: var(--raised); border-radius: 999px; }
 .visitor-chip.selected { background: var(--gold); color: var(--on-gold); font-weight: 600; }
 .visitor-chip.selected .visitor-status { color: #4a4128; }
 .visitor-chip.departed { opacity: .55; }
 .visitor-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-.visitor-status { color: var(--muted); font-size: var(--t-label); font-weight: 400; }
+.visitor-name, .visitor-status { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.visitor-status { grid-column: 2; color: var(--muted); font-size: var(--t-label); font-weight: 400; }
 
 .game-surround { position: relative; background: #2b2620; padding: 14px; }
 #game { width: 100%; aspect-ratio: 10 / 7; position: relative; border-radius: 4px; overflow: hidden; background: #332d29; }
