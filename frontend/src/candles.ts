@@ -9,7 +9,7 @@ export interface Candle {
 }
 
 /** One in the privy, one beside the front door, and one each on the west and east walls. */
-export const CANDLES: readonly Candle[] = [{ x: 19, y: 2 }, { x: 11, y: 13 }, { x: 0, y: 9 }, { x: 19, y: 9 }];
+export const CANDLES: readonly Candle[] = [{ x: 19, y: 2 }, { x: 11, y: 13 }, { x: 0, y: 6 }, { x: 19, y: 9 }];
 
 /** Where a candle's light enters the room: the middle of the wall cell's room-side edge, and the way it shines. */
 export interface Light {

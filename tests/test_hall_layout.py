@@ -29,9 +29,9 @@ def test_the_fireplace_is_in_the_north_wall_straight_across_from_the_door() -> N
     assert (fireplace["y"], middle(fireplace)) == (0, middle(door))
 
 
-def test_the_darts_hang_on_the_west_wall_on_the_dice_tables_row() -> None:
-    darts, dice = only("darts"), only("dice_table")
-    assert (darts["x"], darts["y"]) == (1, dice["y"])
+def test_the_darts_hang_on_the_west_wall_from_the_dice_tables_row_down_two_boards() -> None:
+    boards = sorted((item["x"], item["y"]) for item in create_world(LAYOUT)["map"]["objects"] if item["kind"] == "darts")
+    assert boards == [(1, only("dice_table")["y"]), (1, only("dice_table")["y"] + 1)]
 
 
 def test_the_hall_is_walled_all_round() -> None:
