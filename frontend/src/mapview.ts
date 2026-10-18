@@ -13,6 +13,11 @@ export interface MapParts {
   furniture: string;
 }
 
+/** Whether a dice table's game is under way with both players seated: the resting dice leave the table and thrown ones take their place. */
+export function diceInPlay(object: HallMap["objects"][number]): boolean {
+  return object.game?.ends_at != null;
+}
+
 /**
  * Fingerprint the parts of the map's picture.
  *
@@ -27,6 +32,6 @@ export function mapParts(map: HallMap): MapParts {
   return {
     size: JSON.stringify([map.width, map.height, map.tile_size]),
     floor: JSON.stringify([map.width, map.height, map.tile_size, map.blocked, placed]),
-    furniture: JSON.stringify([map.tile_size, map.objects.map((object, index) => [placed[index], object.facing ?? null, object.reserved_by])]),
+    furniture: JSON.stringify([map.tile_size, map.objects.map((object, index) => [placed[index], object.facing ?? null, object.reserved_by, diceInPlay(object)])]),
   };
 }
