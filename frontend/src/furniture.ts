@@ -170,7 +170,8 @@ function drawMug(g: Phaser.GameObjects.Graphics, x: number, y: number): void {
 }
 
 export function drawDarts(g: Phaser.GameObjects.Graphics, x: number, y: number): void {
-  g.fillStyle(0x3b2b22).fillRoundedRect(x - 15, y - 16, 30, 33, 4);
+  // The panel fills its cell, so two boards on neighbouring cells read as one backboard two cells wide.
+  g.fillStyle(0x3b2b22).fillRect(x - 15, y - 16, 30, 32);
   g.fillStyle(0xb69769).fillCircle(x, y, 13);
   g.fillStyle(0x243a31).fillCircle(x, y, 11);
   g.lineStyle(2, 0xbb6954).strokeCircle(x, y, 8);

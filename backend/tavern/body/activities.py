@@ -15,6 +15,7 @@ from tavern.hall.chance import roll
 from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World, find_actor
 from tavern.social.aims import begin_aim
+from tavern.social.darts import settle_match
 from tavern.social.giving import hand_over
 from tavern.social.invitations import begin_errand
 from tavern.social.names import called
@@ -361,7 +362,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
     Activity(verb="play_darts", fatigue_per_second=0.4, target_kinds=("darts",), duration=10.0, leaves_seat=True,
              needs=MappingProxyType({"boredom": -65}), label="Play darts", status="darts", pose="Darts", interruptible=True,
              sound=Sound("thud", 0.25, 10.0, "darts thudding into the board"),
-             doing="playing darts", done="played darts",
+             doing="playing darts", done="played darts", effect=settle_match,
              family="pastime",
              what="play a round of darts at {target}",
              guidance="A lively pastime for a bored guest; it means leaving their seat for a while."),

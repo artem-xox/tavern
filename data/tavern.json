@@ -399,6 +399,33 @@
       ]
     },
     {
+      "id": "darts-2",
+      "kind": "darts",
+      "name": "Darts (second board)",
+      "x": 1,
+      "y": 9,
+      "interaction_spots": [
+        [
+          2,
+          9
+        ]
+      ],
+      "queue_spots": [
+        [
+          3,
+          9
+        ],
+        [
+          4,
+          9
+        ],
+        [
+          5,
+          9
+        ]
+      ]
+    },
+    {
       "id": "door",
       "kind": "door",
       "name": "Front door",
