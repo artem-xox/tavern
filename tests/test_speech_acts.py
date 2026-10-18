@@ -259,3 +259,28 @@ def test_an_insult_keeps_the_scene_so_its_words_stay_with_the_speaker_over_it(op
     say(world, "insult", "You drunken sot.")
     turn = next(event for event in world["events"] if event["type"] == "turn")
     assert (scene_of(world) is None, turn.get("line")) == (False, None)
+
+
+def test_someone_who_says_goodbye_in_a_quarrel_is_not_called_straight_back_to_it() -> None:
+    world = seated_talk()
+    hated(world)
+    actor(world, "bea")["relations"]["ada"] = {"name": "Ada", "opinion": -40.0, "familiarity": "acquaintance"}
+    say(world, "insult", "You drunken sot.")
+    assert calling(actor(world, "bea"), world["time"])
+    say(world, "leave_conversation", "I've had enough of you.")
+    advance(world, 3)
+    assert (scene_of(world), calling(actor(world, "bea"), world["time"])) == (None, [])
+
+
+@pytest.mark.parametrize("ada_knows, bea_knows, offered_place", [
+    pytest.param((), (), False, id="the-speaker-knows-no-place"),
+    pytest.param(("tap",), (), True, id="the-listener-does-not-know-it"),
+    pytest.param(("tap",), ("tap",), False, id="the-listener-already-knows-it"),
+    pytest.param(("tap", "darts"), ("tap",), True, id="one-place-is-still-news"),
+])
+def test_places_are_shared_only_while_someone_lacks_one(ada_knows: tuple[str, ...], bea_knows: tuple[str, ...],
+                                                        offered_place: bool) -> None:
+    world = seated_talk()
+    know(world, "ada", *ada_knows)
+    know(world, "bea", *bea_knows)
+    assert ("share_place" in offered(world)) == offered_place

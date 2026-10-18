@@ -320,7 +320,8 @@ def speak_turns(world: World) -> None:
         if scene not in world["conversations"] or world["time"] < scene["next_turn_at"]:
             continue
         awaited = scene["writing"] is not None and scene["written"] is None
-        if awaited and world["time"] < scene["next_turn_at"] + rules["turn_timeout"]:
+        # The model answers in real seconds, so a faster world waits proportionally more game seconds for it.
+        if awaited and world["time"] < scene["next_turn_at"] + rules["turn_timeout"] * world["speed"]:
             continue
         view = turn_view(world, scene)
         _speak(world, scene, view["speaker"]["id"], scene["written"] or scripted_turn(view))

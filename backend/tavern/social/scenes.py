@@ -18,6 +18,7 @@ from tavern.hall.room import find_object
 from tavern.hall.staff import on_staff
 from tavern.hall.state import Actor, World
 from tavern.hall.validation import number
+from tavern.social.responses import calling
 
 if TYPE_CHECKING:  # turns imports this module, so the type crosses the cycle only for the checker.
     from tavern.social.turns import TurnResult
@@ -374,6 +375,11 @@ def _see_off_leaver(world: World, scene: Conversation) -> None:
         return
     leaver = next((item for item in world["actors"] if item["id"] == _saying_goodbye(scene)), None)
     if leaver is not None:
+        # Walking out on someone settles what they said: the grievances about those still there no longer call the
+        # leaver back to them, or they would say goodbye and start the same quarrel again at once.
+        for thought in calling(leaver, world["time"]):
+            if thought["about"] in scene["participants"]:
+                thought["answered"] = True
         leave_conversation(world, leaver)
 
 

@@ -199,7 +199,7 @@ def _opening_up(view: Mapping[str, Any], said: set[str], rng: Random) -> tuple[s
         return "apologize", "apologize"
     if "share_news" in acts and "share_news" not in said and _untold(view["conversation"], me):
         return "share_news", "share_news"
-    if "share_place" not in said and me["places"]:
+    if "share_place" in acts and "share_place" not in said and me["places"]:
         return "share_place", "share_place"
     kind = _invitation(view)
     if kind and "invite" not in said and said and rng.random() < INVITES:

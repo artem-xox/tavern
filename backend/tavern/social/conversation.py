@@ -167,6 +167,8 @@ def offered_acts(world: Mapping[str, Any], scene: Conversation, speaker: Mapping
         "insult": any(opinion_of(speaker, item["id"], now) <= DISLIKED for item in others),
         "apologize": any(thought["about"] == speaker["id"] and thought["opinion"] < 0
                          for item in others for thought in active_thoughts(item["thoughts"], now)),
+        # Places are news only to someone who lacks one: told again, they are the same line to a listener who knows.
+        "share_place": any(_untold_places(speaker, item) for item in others),
         "share_news": bool(speaker["knowledge"]["facts"]),
         "invite": bool(invitations.offered_kinds(world, scene, speaker))
                   and all(opinion_of(speaker, item["id"], now) > LOATHED for item in others),
@@ -186,8 +188,12 @@ def _quarrel(world: World, actor: Actor, partner: Actor, topic: str) -> None:
         thought["answered"] = visitor is actor
 
 
+def _untold_places(speaker: Mapping[str, Any], listener: Mapping[str, Any]) -> dict[str, Any]:
+    # The tap, WC and darts the speaker knows and the listener does not, by object ID.
+    return {identifier: known for identifier, known in speaker["knowledge"]["objects"].items()
+            if known["kind"] in ("tap", "toilet", "darts") and identifier not in listener["knowledge"]["objects"]}
+
+
 def _share_places(speaker: Mapping[str, Any], listener: Actor) -> None:
-    for identifier, known in speaker["knowledge"]["objects"].items():
-        if known["kind"] not in ("tap", "toilet", "darts") or identifier in listener["knowledge"]["objects"]:
-            continue
+    for identifier, known in _untold_places(speaker, listener).items():
         listener["knowledge"]["objects"][identifier] = {**deepcopy(known), "heard_from": speaker["id"]}
