@@ -5,7 +5,9 @@ from typing import Any
 
 # How a guest's side of each tie kind reads: "<name> is <phrase> of theirs".
 _TIE_PHRASES = {"old friends": "an old friend", "rivals": "a rival", "bad blood": "someone they have bad blood with",
-                "well known": "someone they know by reputation"}
+                "well known": "someone they know by reputation", "adored": "someone they adore",
+                "admired": "someone they admire", "looked down on": "someone they look down on",
+                "disliked": "someone they dislike", "loathed": "someone they loathe"}
 
 
 def portrait(actor: Mapping[str, Any]) -> str:

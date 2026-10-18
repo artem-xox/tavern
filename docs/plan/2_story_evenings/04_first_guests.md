@@ -93,3 +93,7 @@ Greta "what have you actually done"; Tyson "sir, a quiet pint"). Open problems: 
 guest recite "darts and the WC"; quarrels loop on one charge; Tyson never steps in; Trump's "others pay" has no
 act; the retelling call fails (`thinking: disabled` is refused by `claude-sonnet-5-5`, S2-10).
 
+
+Starting regard: `characters/guests/relationships.json` is a one-sided matrix of what each guest thinks of each
+other guest (adored down to loathed), read into every lineup; a test fails when a new guest is missing from it
+(see [CHARACTER_CATALOG.md](../../CHARACTER_CATALOG.md) and `add-npc`).
