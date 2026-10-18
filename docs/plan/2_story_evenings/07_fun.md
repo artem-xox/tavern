@@ -51,10 +51,13 @@ What shipped:
   guest, a fight to watch, a table that is drinking together. Nothing for a guest who is closing up, hurt or wasted.
 - Model-facing text: Jev's system prompt, the `take_beer` and `drink` guidance and the intention prefix now say
   that in lively company a refill comes before the mug is dry, and that games and `treat` are goals worth setting.
-- Rates (`rules.py`): thirst 0.18 → 0.22 a second, drink wears off 0.0005 → 0.0002 a second. Three beers now
+- Rates (`rules.py`): thirst 0.18 → 0.20 a second, drink wears off 0.0005 → 0.0002 a second. Three beers now
   make a middling drinker drunk for most of a ten-minute evening (they stay above the 0.45 floor), four make
   them wasted. Thirst 0.25 was tried and refused: by 200 s everyone is too thirsty to be spoken to
-  (`test_turned_down`), so 0.22 is the highest rate that keeps the existing evenings valid.
+  (`test_turned_down`). 0.22, which the live evenings below ran at, broke `test_facts` seed 1 once main's
+  darts were merged (a news item no longer travels two hops: chaos, not a rule), so the final value is 0.20, the
+  lowest rate that still gives thirst 60 after five minutes. The live numbers below were measured at 0.22 and
+  were not repeated at 0.20 (the Jev account is out of credit).
 - Events `got_drunk` and `got_wasted` (crossing into the stage, once each); metrics `drink` (who, and every
   guest's beers). They are **not** story-score moments: the weights stay as in S2-05, so the score is comparable.
 
@@ -109,7 +112,7 @@ offline ones are too few to tell fights apart from luck), and "at least two gues
 evenings. Next: a five-evening live sample for both casts, and a look at the wear-off rate and the thirst rate
 (`rules.py` `per_second`, `need_rates`) if guests are to reach `wasted`.
 
-Live Guests evenings at the final rates (thirst 0.22, wear-off 0.0002), five seeds 1–5, Jev + Haiku 5.5:
+Live Guests evenings at thirst 0.22 and wear-off 0.0002, five seeds 1–5, Jev + Haiku 5.5:
 
 | seed | story score | drunk | wasted | beers (4 guests) | dice games | goals set / done / expired |
 |------|-------------|-------|--------|------------------|------------|-----------------------------|
