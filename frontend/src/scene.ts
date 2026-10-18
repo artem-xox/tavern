@@ -9,6 +9,7 @@ import { headingOf, headingToObject } from "./heading";
 import { drawFireplace, drawFlames, drawHearthGlow } from "./hearth";
 import { mapParts, type MapParts } from "./mapview";
 import { Speech } from "./speech";
+import { aura, auraPhase, type Haze } from "./aura";
 import { shippedPose, spriteOf, stills, type SpriteRegistry } from "./sprites";
 import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Facing, Mind, Turn, Verb, World, WorldObject } from "./types";
 import { animateWounds, createWounds, makeCudgelTexture, readWounds, type Wounds } from "./woundview";
@@ -46,6 +47,11 @@ interface ActorView {
   direction: Facing;
   /** How far drink sways the sprite, 0–1, as the server derives it. */
   sway: number;
+  /** The stage of drink, and the haze it draws: a glow behind the figure, bubbles in front, with the guest's own offset. */
+  stage: Mind["stage"];
+  glow: Phaser.GameObjects.Graphics;
+  bubbles: Phaser.GameObjects.Graphics;
+  phase: number;
   /** A fight's and a wound's marks on the figure: the cudgel in hand, stars, lunge and tint. */
   wounds: Wounds;
 }
@@ -130,6 +136,7 @@ export class TavernScene extends Phaser.Scene {
       view.container.y += (view.targetY - view.container.y) * blend;
       animateWounds(view.wounds, view.sprite, Math.max(view.sway, IDLE_SWAY) * 8 * Math.sin(time / 420 + view.cellX * 1.7 + view.cellY), time, view.direction);
       this.animateEmote(view, time);
+      drawAura(view.glow, view.bubbles, aura(view.stage, time, view.phase));
       view.speech.place(view.container.x, view.container.y, this.time.now, this.scale);
     }
     if (this.world) {
@@ -192,8 +199,10 @@ export class TavernScene extends Phaser.Scene {
     const speech: Speech = new Speech(this);
     const emote: Phaser.GameObjects.Image = this.add.image(0, EMOTE_Y, "emote-alert-0").setVisible(false);
     const wounds: Wounds = createWounds(this, sheet.lift);
-    const container: Phaser.GameObjects.Container = this.add.container(0, 0, [shadow, selection, sprite, wounds.cudgel, name, emote, ...wounds.stars]);
-    return { container, sprite, name, selection, speech, emote, emoteKind: null, emoteSince: 0, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south", sway: 0, wounds };
+    const glow: Phaser.GameObjects.Graphics = this.add.graphics();
+    const bubbles: Phaser.GameObjects.Graphics = this.add.graphics();
+    const container: Phaser.GameObjects.Container = this.add.container(0, 0, [shadow, glow, selection, sprite, bubbles, wounds.cudgel, name, emote, ...wounds.stars]);
+    return { container, sprite, name, selection, speech, emote, emoteKind: null, emoteSince: 0, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south", sway: 0, stage: "sober", glow, bubbles, phase: auraPhase(actor.id), wounds };
   }
 
   private updateVisitor(view: ActorView, actor: Actor, size: number, reset: boolean): void {
@@ -226,9 +235,10 @@ export class TavernScene extends Phaser.Scene {
     view.targetY = y;
     view.name.setText(actor.name);
     view.sway = this.minds[actor.id]?.sway ?? 0;
+    view.stage = this.minds[actor.id]?.stage ?? "sober";
     const talk: Conversation | undefined = this.world?.conversations.find((item: Conversation): boolean => item.participants.includes(actor.id));
     const turn: Turn | undefined = talk?.turns[talk.turns.length - 1];
-    view.speech.tell(newer(turn?.speaker === actor.id ? turn : null, callout(this.world?.events ?? [], actor.id, this.world?.time ?? 0)), this.time.now);
+    view.speech.tell(newer(turn?.speaker === actor.id ? turn : null, callout(this.world?.events ?? [], actor.id, this.world?.time ?? 0)), this.time.now, view.stage);
     this.showEmote(view, actor);
     view.container.setDepth(10 + y / 1000);
   }
@@ -344,4 +354,14 @@ export class TavernScene extends Phaser.Scene {
     const details: string = stock + players + (object?.appeal !== undefined ? ` · appeal ${object.appeal.toFixed(2)}${object.comforts?.length ? ` (${object.comforts.join(", ")})` : ""}` : "");
     this.callbacks.hover(object ? `${object.name} · ${object.reserved_by ? "reserved" : "available"}${owner ? ` · ${owner.name}'s seat` : ""}${details} · cell ${x}, ${y}` : `${this.editing ? "Click to toggle obstacle" : "Click a visitor to inspect"} · cell ${x}, ${y}`);
   }
+}
+
+/** Draw a drunk guest's haze: a soft amber glow at the feet and pale bubbles rising past the head. */
+function drawAura(glow: Phaser.GameObjects.Graphics, bubbles: Phaser.GameObjects.Graphics, haze: Haze): void {
+  glow.clear();
+  bubbles.clear();
+  if (haze.glow <= 0) return;
+  glow.fillStyle(0xf2b544, haze.glow).fillEllipse(0, 6, 40, 18);
+  glow.fillStyle(0xf2b544, haze.glow * 0.5).fillEllipse(0, 6, 54, 24);
+  for (const mote of haze.motes) bubbles.fillStyle(0xfff3b0, mote.alpha).fillCircle(mote.x, mote.y, mote.radius);
 }
