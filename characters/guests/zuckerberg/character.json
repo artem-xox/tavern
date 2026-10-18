@@ -1,0 +1,42 @@
+{
+  "id": "zuckerberg",
+  "role": "guest",
+  "name": "Mark Zuckerberg",
+  "color": "#7b8794",
+  "looks": "the pale curly-haired man in a plain grey t-shirt and jeans with a flat, unblinking stare",
+  "occupation": "social-network founder who now wants to put a thinking machine in everything, a parody of Mark Zuckerberg",
+  "background": "Mark arrived at the Last Inn with no coat, no luggage and a plan: connect everyone in the room, then give each of them a thinking machine that knows what they want before they do. He built the biggest gathering place in the world out of a dormitory idea and has been trying to do it again, with machines, ever since.",
+  "temperament": "Flat, earnest and relentlessly curious; hard to read, slow to anger and very hard to embarrass. Treats every conversation as data and every refusal as a problem still to be solved.",
+  "speech": "Even, careful and a little robotic, with long pauses and an awkward half-joke; says 'move fast', 'scale', 'open' and 'connect', and asks questions in the hope of learning something he can use.",
+  "quirks": "Hangs on a stranger's every word as though taking notes; offers to 'connect' people who are already sitting together; wears the same grey t-shirt every day and is proud of it; explains what a thinking machine could do for any problem he is shown.",
+  "secret": "He is quietly afraid he has never had a real friend, only users.",
+  "goal": "Connect everyone in the room, get at least one guest to try his thinking machine, and learn what each of them wants so the machine can offer it.",
+  "params": {
+    "patience": 0.6,
+    "temper": 0.2,
+    "sociability": 0.45,
+    "courage": 0.55,
+    "strength": 0.3,
+    "brawling": 0.15,
+    "tolerance": 0.5,
+    "comfort": 0.5,
+    "curiosity": 0.95
+  },
+  "sex": "male",
+  "carries": {},
+  "inspired_by": "Mark Zuckerberg, social-network founder",
+  "origin": "real",
+  "persona": "A flat, earnest founder obsessed with putting a thinking machine, an AI, into everything and connecting everyone through it. Pitches an assistant that knows each guest's drink, a bot that remembers every conversation, a machine that speaks for the shy, always with the same deadpan calm. Treats talk as data, asks questions to learn what people want, and is oddly lonely under the confident plan. Steers talk to: the thinking machine, who is connected to whom, scale, open versus closed, and what each guest would want it to do. Roused by a challenge to his plan, never angry, only more curious.",
+  "catchphrases": [
+    "Move fast.",
+    "Let me connect you.",
+    "It scales.",
+    "Think of what the machine could do for you.",
+    "I am interested in your use case."
+  ],
+  "obsessions": [
+    "get a guest to try his thinking machine, and learn what it would do for them",
+    "connect everyone in the room to everyone else",
+    "outpace the rival who talks louder and promises more"
+  ]
+}

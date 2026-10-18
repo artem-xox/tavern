@@ -1,0 +1,616 @@
+{
+  "group_id": "7a2b488a-d241-4734-b2b5-0c70f84382f3",
+  "states": [
+    {
+      "character": {
+        "id": "e11be8a9-e7f1-4828-94fb-8815287714b4",
+        "name": "Idle",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:33:11.914504+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "abb08326-e848-4dc8-a3c0-0802188c70b6",
+        "name": "Seated",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:43:26.233862+00:00"
+      },
+      "folder": "Seated",
+      "frames": {
+        "rotations": {
+          "south": "Seated/rotations/south.png",
+          "south-east": "Seated/rotations/south-east.png",
+          "east": "Seated/rotations/east.png",
+          "north-east": "Seated/rotations/north-east.png",
+          "north": "Seated/rotations/north.png",
+          "north-west": "Seated/rotations/north-west.png",
+          "west": "Seated/rotations/west.png",
+          "south-west": "Seated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "05b7ef80-e9d4-476b-a29d-810ea4d2d9e2",
+        "name": "Darts",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:43:31.384990+00:00"
+      },
+      "folder": "Darts",
+      "frames": {
+        "rotations": {
+          "south": "Darts/rotations/south.png",
+          "south-east": "Darts/rotations/south-east.png",
+          "east": "Darts/rotations/east.png",
+          "north-east": "Darts/rotations/north-east.png",
+          "north": "Darts/rotations/north.png",
+          "north-west": "Darts/rotations/north-west.png",
+          "west": "Darts/rotations/west.png",
+          "south-west": "Darts/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "bb39a36d-40f8-4e2a-8a2e-2a808a0a4db5",
+        "name": "Bathroom",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:43:32.812098+00:00"
+      },
+      "folder": "Bathroom",
+      "frames": {
+        "rotations": {
+          "south": "Bathroom/rotations/south.png",
+          "south-east": "Bathroom/rotations/south-east.png",
+          "east": "Bathroom/rotations/east.png",
+          "north-east": "Bathroom/rotations/north-east.png",
+          "north": "Bathroom/rotations/north.png",
+          "north-west": "Bathroom/rotations/north-west.png",
+          "west": "Bathroom/rotations/west.png",
+          "south-west": "Bathroom/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "5e921304-c57c-4a7c-927f-0e18e8bc695c",
+        "name": "Drinking",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:43:37.689676+00:00"
+      },
+      "folder": "Drinking",
+      "frames": {
+        "rotations": {
+          "south": "Drinking/rotations/south.png",
+          "south-east": "Drinking/rotations/south-east.png",
+          "east": "Drinking/rotations/east.png",
+          "north-east": "Drinking/rotations/north-east.png",
+          "north": "Drinking/rotations/north.png",
+          "north-west": "Drinking/rotations/north-west.png",
+          "west": "Drinking/rotations/west.png",
+          "south-west": "Drinking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "d4b67c86-1a30-4de4-8dd9-964cb52ad013",
+        "name": "DrinkingSeated",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:43:39.782364+00:00"
+      },
+      "folder": "DrinkingSeated",
+      "frames": {
+        "rotations": {
+          "south": "DrinkingSeated/rotations/south.png",
+          "south-east": "DrinkingSeated/rotations/south-east.png",
+          "east": "DrinkingSeated/rotations/east.png",
+          "north-east": "DrinkingSeated/rotations/north-east.png",
+          "north": "DrinkingSeated/rotations/north.png",
+          "north-west": "DrinkingSeated/rotations/north-west.png",
+          "west": "DrinkingSeated/rotations/west.png",
+          "south-west": "DrinkingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "443d13e9-b738-4e55-816c-602324be4f4b",
+        "name": "TalkingSeated",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:45:31.524870+00:00"
+      },
+      "folder": "TalkingSeated",
+      "frames": {
+        "rotations": {
+          "south": "TalkingSeated/rotations/south.png",
+          "south-east": "TalkingSeated/rotations/south-east.png",
+          "east": "TalkingSeated/rotations/east.png",
+          "north-east": "TalkingSeated/rotations/north-east.png",
+          "north": "TalkingSeated/rotations/north.png",
+          "north-west": "TalkingSeated/rotations/north-west.png",
+          "west": "TalkingSeated/rotations/west.png",
+          "south-west": "TalkingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "46eb2a27-387f-44bb-93d3-574439b86c1a",
+        "name": "TakeBeer",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:45:41.109045+00:00"
+      },
+      "folder": "TakeBeer",
+      "frames": {
+        "rotations": {
+          "south": "TakeBeer/rotations/south.png",
+          "south-east": "TakeBeer/rotations/south-east.png",
+          "east": "TakeBeer/rotations/east.png",
+          "north-east": "TakeBeer/rotations/north-east.png",
+          "north": "TakeBeer/rotations/north.png",
+          "north-west": "TakeBeer/rotations/north-west.png",
+          "west": "TakeBeer/rotations/west.png",
+          "south-west": "TakeBeer/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "81995638-7f56-4a6a-a8ff-2d95b70f51d3",
+        "name": "Walking",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:45:49.282318+00:00"
+      },
+      "folder": "Walking",
+      "frames": {
+        "rotations": {
+          "south": "Walking/rotations/south.png",
+          "south-east": "Walking/rotations/south-east.png",
+          "east": "Walking/rotations/east.png",
+          "north-east": "Walking/rotations/north-east.png",
+          "north": "Walking/rotations/north.png",
+          "north-west": "Walking/rotations/north-west.png",
+          "west": "Walking/rotations/west.png",
+          "south-west": "Walking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "cba19f0c-4e09-4ad7-b35a-08b4f3975d97",
+        "name": "Talking",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:46:38.734109+00:00"
+      },
+      "folder": "Talking",
+      "frames": {
+        "rotations": {
+          "south": "Talking/rotations/south.png",
+          "south-east": "Talking/rotations/south-east.png",
+          "east": "Talking/rotations/east.png",
+          "north-east": "Talking/rotations/north-east.png",
+          "north": "Talking/rotations/north.png",
+          "north-west": "Talking/rotations/north-west.png",
+          "west": "Talking/rotations/west.png",
+          "south-west": "Talking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "545068ea-ed2a-46a3-b5fe-7b4ba781263c",
+        "name": "Giving",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:46:42.492206+00:00"
+      },
+      "folder": "Giving",
+      "frames": {
+        "rotations": {
+          "south": "Giving/rotations/south.png",
+          "south-east": "Giving/rotations/south-east.png",
+          "east": "Giving/rotations/east.png",
+          "north-east": "Giving/rotations/north-east.png",
+          "north": "Giving/rotations/north.png",
+          "north-west": "Giving/rotations/north-west.png",
+          "west": "Giving/rotations/west.png",
+          "south-west": "Giving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "f98d3294-f748-48c7-b033-ab02e5c3b400",
+        "name": "Receiving",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:47:49.757980+00:00"
+      },
+      "folder": "Receiving",
+      "frames": {
+        "rotations": {
+          "south": "Receiving/rotations/south.png",
+          "south-east": "Receiving/rotations/south-east.png",
+          "east": "Receiving/rotations/east.png",
+          "north-east": "Receiving/rotations/north-east.png",
+          "north": "Receiving/rotations/north.png",
+          "north-west": "Receiving/rotations/north-west.png",
+          "west": "Receiving/rotations/west.png",
+          "south-west": "Receiving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "2ca290fa-50d2-40f3-b2b3-514fb25b8ae8",
+        "name": "ReceivingSeated",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:49:07.111130+00:00"
+      },
+      "folder": "ReceivingSeated",
+      "frames": {
+        "rotations": {
+          "south": "ReceivingSeated/rotations/south.png",
+          "south-east": "ReceivingSeated/rotations/south-east.png",
+          "east": "ReceivingSeated/rotations/east.png",
+          "north-east": "ReceivingSeated/rotations/north-east.png",
+          "north": "ReceivingSeated/rotations/north.png",
+          "north-west": "ReceivingSeated/rotations/north-west.png",
+          "west": "ReceivingSeated/rotations/west.png",
+          "south-west": "ReceivingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "fbbcc515-e32c-4a87-a6ce-f581038d2b99",
+        "name": "SleepingSeated",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:49:16.408429+00:00"
+      },
+      "folder": "SleepingSeated",
+      "frames": {
+        "rotations": {
+          "south": "SleepingSeated/rotations/south.png",
+          "south-east": "SleepingSeated/rotations/south-east.png",
+          "east": "SleepingSeated/rotations/east.png",
+          "north-east": "SleepingSeated/rotations/north-east.png",
+          "north": "SleepingSeated/rotations/north.png",
+          "north-west": "SleepingSeated/rotations/north-west.png",
+          "west": "SleepingSeated/rotations/west.png",
+          "south-west": "SleepingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "9c47c696-c036-46b2-9060-1a478e6c3e76",
+        "name": "KnockedOut",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:49:36.180670+00:00"
+      },
+      "folder": "KnockedOut",
+      "frames": {
+        "rotations": {
+          "south": "KnockedOut/rotations/south.png",
+          "south-east": "KnockedOut/rotations/south-east.png",
+          "east": "KnockedOut/rotations/east.png",
+          "north-east": "KnockedOut/rotations/north-east.png",
+          "north": "KnockedOut/rotations/north.png",
+          "north-west": "KnockedOut/rotations/north-west.png",
+          "west": "KnockedOut/rotations/west.png",
+          "south-west": "KnockedOut/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "b7b0622d-6d8f-4920-929b-43559571f81b",
+        "name": "Fighting",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:50:32.558333+00:00"
+      },
+      "folder": "Fighting",
+      "frames": {
+        "rotations": {
+          "south": "Fighting/rotations/south.png",
+          "south-east": "Fighting/rotations/south-east.png",
+          "east": "Fighting/rotations/east.png",
+          "north-east": "Fighting/rotations/north-east.png",
+          "north": "Fighting/rotations/north.png",
+          "north-west": "Fighting/rotations/north-west.png",
+          "west": "Fighting/rotations/west.png",
+          "south-west": "Fighting/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "b244090f-d3de-48a1-add8-79d89ead1655",
+        "name": "Hurt",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:50:40.663942+00:00"
+      },
+      "folder": "Hurt",
+      "frames": {
+        "rotations": {
+          "south": "Hurt/rotations/south.png",
+          "south-east": "Hurt/rotations/south-east.png",
+          "east": "Hurt/rotations/east.png",
+          "north-east": "Hurt/rotations/north-east.png",
+          "north": "Hurt/rotations/north.png",
+          "north-west": "Hurt/rotations/north-west.png",
+          "west": "Hurt/rotations/west.png",
+          "south-west": "Hurt/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "2a050ca9-150f-4343-8c1c-dd93830632f4",
+        "name": "HurtSeated",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:50:41.567107+00:00"
+      },
+      "folder": "HurtSeated",
+      "frames": {
+        "rotations": {
+          "south": "HurtSeated/rotations/south.png",
+          "south-east": "HurtSeated/rotations/south-east.png",
+          "east": "HurtSeated/rotations/east.png",
+          "north-east": "HurtSeated/rotations/north-east.png",
+          "north": "HurtSeated/rotations/north.png",
+          "north-west": "HurtSeated/rotations/north-west.png",
+          "west": "HurtSeated/rotations/west.png",
+          "south-west": "HurtSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "44941c84-3edc-4f31-8658-42ad12d641e9",
+        "name": "Shoving",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:50:51.582710+00:00"
+      },
+      "folder": "Shoving",
+      "frames": {
+        "rotations": {
+          "south": "Shoving/rotations/south.png",
+          "south-east": "Shoving/rotations/south-east.png",
+          "east": "Shoving/rotations/east.png",
+          "north-east": "Shoving/rotations/north-east.png",
+          "north": "Shoving/rotations/north.png",
+          "north-west": "Shoving/rotations/north-west.png",
+          "west": "Shoving/rotations/west.png",
+          "south-west": "Shoving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "e6fd1ad9-314e-434c-a569-cdb60ad76d64",
+        "name": "HelpingUp",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:51:35.034307+00:00"
+      },
+      "folder": "HelpingUp",
+      "frames": {
+        "rotations": {
+          "south": "HelpingUp/rotations/south.png",
+          "south-east": "HelpingUp/rotations/south-east.png",
+          "east": "HelpingUp/rotations/east.png",
+          "north-east": "HelpingUp/rotations/north-east.png",
+          "north": "HelpingUp/rotations/north.png",
+          "north-west": "HelpingUp/rotations/north-west.png",
+          "west": "HelpingUp/rotations/west.png",
+          "south-west": "HelpingUp/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "65e7a547-7cb7-4bc7-a451-b65416097a3e",
+        "name": "GivingSeated",
+        "prompt": "Mark Zuckerberg, recognizable middle-aged American male tech-founder public figure, drawn with a distinctive face: very short curly sandy-blond hair, a high rounded forehead, wide-set pale eyes with a flat stare, a small straight mouth and a faint rigid half-smile, upright stiff posture and a slim build. Wear a plain grey crew-neck t-shirt, plain blue jeans and plain grey sneakers; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sandy curly hair and the flat unblinking stare especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:55:14.622127+00:00"
+      },
+      "folder": "GivingSeated",
+      "frames": {
+        "rotations": {
+          "south": "GivingSeated/rotations/south.png",
+          "south-east": "GivingSeated/rotations/south-east.png",
+          "east": "GivingSeated/rotations/east.png",
+          "north-east": "GivingSeated/rotations/north-east.png",
+          "north": "GivingSeated/rotations/north.png",
+          "north-west": "GivingSeated/rotations/north-west.png",
+          "west": "GivingSeated/rotations/west.png",
+          "south-west": "GivingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-18T15:57:57.616806"
+}

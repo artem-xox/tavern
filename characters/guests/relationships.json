@@ -27,6 +27,14 @@
     "zelensky": {
       "kind": "admired",
       "note": "He stands up to the powerful, which is more than most grown-ups do."
+    },
+    "zuckerberg": {
+      "kind": "disliked",
+      "note": "Billions connected and a planet still on fire, and he has no answer for that."
+    },
+    "kardashian": {
+      "kind": "disliked",
+      "note": "A brand built on private jets and fast fashion, and she would like to see the footprint."
     }
   },
   "monroe": {
@@ -61,6 +69,14 @@
     "zelensky": {
       "kind": "admired",
       "note": "A fellow entertainer who walked onto a far bigger stage."
+    },
+    "zuckerberg": {
+      "kind": "well known",
+      "note": "An odd young man who connects everyone and seems lonely himself."
+    },
+    "kardashian": {
+      "kind": "admired",
+      "note": "She understands the camera better than most, and the age of the feed."
     }
   },
   "musk": {
@@ -91,6 +107,14 @@
     "zelensky": {
       "kind": "well known",
       "note": "His satellites keep Zelensky's army online, and neither forgets it."
+    },
+    "zuckerberg": {
+      "kind": "disliked",
+      "note": "A rival who copies his ideas and talks like a quarterly report."
+    },
+    "kardashian": {
+      "kind": "well known",
+      "note": "She turns attention into money better than any rocket."
     }
   },
   "putin": {
@@ -125,6 +149,14 @@
     "zelensky": {
       "kind": "loathed",
       "note": "The man his war is against, whom he will not name without contempt."
+    },
+    "zuckerberg": {
+      "kind": "well known",
+      "note": "A man who holds everyone's attention and lets nobody walk away."
+    },
+    "kardashian": {
+      "kind": "looked down on",
+      "note": "A frivolous woman and her phone, and not worth his time."
     }
   },
   "queen": {
@@ -159,6 +191,14 @@
     "zelensky": {
       "kind": "admired",
       "note": "A leader who stayed in his capital when it counted."
+    },
+    "zuckerberg": {
+      "kind": "well known",
+      "note": "An industrious young man, though she has never found a use for his invention."
+    },
+    "kardashian": {
+      "kind": "looked down on",
+      "note": "Far too many photographs, and not a word of hers worth keeping."
     }
   },
   "thatcher": {
@@ -193,6 +233,14 @@
     "zelensky": {
       "kind": "admired",
       "note": "He stands against tyranny, and she would stand beside him."
+    },
+    "zuckerberg": {
+      "kind": "disliked",
+      "note": "No books she can audit and no taxes she can find; she wants to know where the money goes."
+    },
+    "kardashian": {
+      "kind": "looked down on",
+      "note": "Wealth without work, as she sees it, and an appalling lack of discipline."
     }
   },
   "trump": {
@@ -219,6 +267,14 @@
     "zelensky": {
       "kind": "looked down on",
       "note": "A politician who always arrives asking for something."
+    },
+    "zuckerberg": {
+      "kind": "disliked",
+      "note": "A man who once shut off his megaphone, and he has not forgotten."
+    },
+    "kardashian": {
+      "kind": "admired",
+      "note": "Famous for being famous, and he respects the way she gets paid for it."
     }
   },
   "tyson": {
@@ -253,6 +309,14 @@
     "zelensky": {
       "kind": "admired",
       "note": "A small man holding a big line; he understands that."
+    },
+    "zuckerberg": {
+      "kind": "well known",
+      "note": "A young man who never goes out in the sun, and Mike would like to teach him how."
+    },
+    "kardashian": {
+      "kind": "well known",
+      "note": "A friendly person who is always on camera; he is polite and keeps his distance."
     }
   },
   "zelensky": {
@@ -287,6 +351,98 @@
     "tyson": {
       "kind": "admired",
       "note": "A champion who is gentle; there are not many of them."
+    },
+    "zuckerberg": {
+      "kind": "well known",
+      "note": "A platform that carried his message to the world, and a man to stay on good terms with."
+    },
+    "kardashian": {
+      "kind": "well known",
+      "note": "A famous person with an enormous audience, who could be persuaded to listen."
+    }
+  },
+  "zuckerberg": {
+    "greta": {
+      "kind": "disliked",
+      "note": "She wants everyone to log off, and he cannot see the growth in that."
+    },
+    "kardashian": {
+      "kind": "admired",
+      "note": "A reach of millions that he can only respect."
+    },
+    "monroe": {
+      "kind": "well known",
+      "note": "A legend of the old media, from before there were feeds."
+    },
+    "musk": {
+      "kind": "disliked",
+      "note": "A rival with a bigger rocket and a louder account, and a cage match he does not quite want."
+    },
+    "putin": {
+      "kind": "well known",
+      "note": "A man whose feed nobody dares to moderate."
+    },
+    "queen": {
+      "kind": "admired",
+      "note": "Seventy years of consistency, with never a change to the algorithm."
+    },
+    "thatcher": {
+      "kind": "disliked",
+      "note": "She would regulate him in an afternoon."
+    },
+    "trump": {
+      "kind": "well known",
+      "note": "The best engagement on any feed, and the biggest headache to moderate."
+    },
+    "tyson": {
+      "kind": "well known",
+      "note": "A gentle giant with a fan base nobody can model."
+    },
+    "zelensky": {
+      "kind": "admired",
+      "note": "A former comedian who grew an audience of the whole world."
+    }
+  },
+  "kardashian": {
+    "greta": {
+      "kind": "looked down on",
+      "note": "No photographs, no brand, and an outfit that has not been updated in a year."
+    },
+    "monroe": {
+      "kind": "adored",
+      "note": "The original, and the one every feed still borrows from."
+    },
+    "musk": {
+      "kind": "well known",
+      "note": "His posts get more attention than most celebrities, and she respects the engagement."
+    },
+    "putin": {
+      "kind": "disliked",
+      "note": "A man who never smiles for a photograph, and she cannot work with that."
+    },
+    "queen": {
+      "kind": "admired",
+      "note": "Photographed for seventy years and never once caught off guard."
+    },
+    "thatcher": {
+      "kind": "disliked",
+      "note": "Corrects everybody and has never once asked what is trending."
+    },
+    "trump": {
+      "kind": "well known",
+      "note": "A fellow performer of the loud and the lucrative, seated at the same tables before."
+    },
+    "tyson": {
+      "kind": "well known",
+      "note": "Famous in a different way, with a following that is not on her feed."
+    },
+    "zelensky": {
+      "kind": "admired",
+      "note": "A comedian who became a leader; she respects anyone who can hold a camera that long."
+    },
+    "zuckerberg": {
+      "kind": "well known",
+      "note": "The platform she lives on, and the man who is rarely seen smiling."
     }
   }
 }
