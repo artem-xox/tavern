@@ -213,3 +213,24 @@ def test_scripted_stranger_introduces_themselves_after_greeting() -> None:
     world = seated_talk(cards=True)
     say(world, "greet")
     assert scripted_turn(turn_view(world, scene_of(world)))["act"] == "introduce"
+
+
+def test_the_insulted_remember_the_words_they_heard() -> None:
+    world = seated_talk()
+    hated(world)
+    say(world, "insult", "You smell of the stable.")
+    texts = [item["text"] for item in actor(world, "bea")["thoughts"] if item["kind"] == "insulted"]
+    assert texts == ["Ada insulted me: “You smell of the stable.”"]
+
+
+@pytest.mark.parametrize("opinion, ended", [
+    pytest.param(-10.0, True, id="answered-insult-ends-the-scene"),
+    pytest.param(0.0, False, id="unanswered-insult-keeps-it"),
+])
+def test_an_insult_that_ends_the_scene_leaves_its_words_in_the_log_for_the_bubble(opinion: float, ended: bool) -> None:
+    world = seated_talk()
+    hated(world)
+    actor(world, "bea")["relations"]["ada"] = {"name": "Ada", "opinion": opinion, "familiarity": "acquaintance"}
+    say(world, "insult", "You drunken sot.")
+    turn = next(event for event in world["events"] if event["type"] == "turn")
+    assert (scene_of(world) is None, turn.get("line")) == (ended, "You drunken sot." if ended else None)
