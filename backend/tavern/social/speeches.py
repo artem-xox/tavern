@@ -1,8 +1,10 @@
 """Speeches from the stage: the words a speaker says, who in the hall hears them, and what the room makes of it."""
 
 from collections.abc import Mapping
+import re
 from typing import Any
 
+from tavern.body.expression import look_at
 from tavern.body.hearing import EVENT_SOUNDS, emit, heard_loudness
 from tavern.hall.chance import roll
 from tavern.hall.memory import log_event, record_event
@@ -12,6 +14,10 @@ from tavern.social.thoughts import THOUGHTS, active_thoughts, opinion_of, think
 
 # The loudness, 0–1, from which a listener makes out a speech; a quieter one is only a murmur from the stage.
 HEARD_FROM = 0.1
+# Game seconds a listener keeps their eyes on the speaker, about as long as the speech lasts.
+LISTENS_FOR = 8.0
+# The longest part of a speaker's thought they voice, in characters: about two lines of a bubble.
+MAX_THOUGHT = 160
 # What the speaker opens with; the card's first catchphrase, when there is one, closes the speech.
 OPENERS = ("Quiet, everyone! Hear me out!", "Friends, patrons, whoever is still sober! A word!",
            "Everybody listen! I have something to say!")
@@ -30,11 +36,18 @@ def speech_lines(world: Mapping[str, Any], speaker: Mapping[str, Any]) -> str:
         speaker: Guest speaking; their card's first catchphrase closes the speech.
 
     Returns:
-        Two lines: an opener and a catchphrase (or a plain closer for a guest without one).
+        An opener, the first sentence of the speaker's current thought (their intention's, up to `MAX_THOUGHT`
+        characters; what they have to say), and a catchphrase (or a plain closer for a guest without one).
     """
     opener = OPENERS[int(roll(world, "speech", speaker["id"]) * len(OPENERS))]
     catchphrases = ((speaker.get("card") or {}).get("catchphrases")) or []
-    return f"{opener} {catchphrases[0] if catchphrases else PLAIN_CLOSER}"
+    closer = catchphrases[0] if catchphrases else PLAIN_CLOSER
+    intention = speaker.get("intention")
+    if not intention:
+        return f"{opener} {closer}"
+    thought = intention["thought"].strip()
+    sentence = (re.match(r".*?[.!?](?=\s|$)", thought) or [thought])[0]
+    return f"{opener} {sentence[:MAX_THOUGHT].rstrip()} {closer}"
 
 
 def _admires(listener: Mapping[str, Any], speaker: Mapping[str, Any], now: float) -> bool:
@@ -75,6 +88,11 @@ def give_speech(world: World, speaker: Actor, stage: Any) -> None:
             kind = "speech_admired" if _admires(listener, speaker, world["time"]) else "speech_tiresome"
             text = f"{called(listener, speaker)} gave a speech from the stage"
             think(listener, kind, world["time"], text, message, about=speaker)
+            # They remember it the moment it is said, and turn to look at the speaker for as long as it lasts.
+            listener["memory"].append({"time": world["time"], "actor_id": listener["id"], "type": "heard_speech",
+                                       "message": f'{listener["name"]} heard {called(listener, speaker)} say: "{line}"'})
+            del listener["memory"][:-100]
+            look_at(listener, [speaker["x"], speaker["y"]], world["time"] + LISTENS_FOR, stimulus["id"])
             taken[kind] += 1
     log_event(world, speaker["id"], "speech_reaction",
               f"{speaker['name']}'s speech: {taken['speech_admired']} admired it, {taken['speech_tiresome']} groaned")
@@ -111,13 +129,19 @@ def spoke_lately(observation: Mapping[str, Any]) -> bool:
 
 
 def performs(observation: Mapping[str, Any]) -> bool:
-    """Tell whether a guest is the kind who gets up to speak: a famous guest with a public persona on their card.
+    """Tell whether a guest gets up to speak: a famous guest with a public persona who has something to say.
 
     Args:
-        observation: The guest's observation, with their `card` or None.
+        observation: The guest's observation, with their `card` and the mind's latest `intention`.
 
     Returns:
-        True when the card has a `persona`; an ordinary local never climbs the stage by themselves.
+        True when the card has a `persona` and the intention serves one of their obsessions or holds the goal to
+        address the room; an ordinary local, or one with nothing on their mind, never climbs the stage.
     """
-    card = observation["actor"].get("card")
-    return bool(card and card.get("persona"))
+    actor = observation["actor"]
+    card, intention = actor.get("card"), actor.get("intention")
+    if not (card and card.get("persona") and intention):
+        return False
+    goal = intention.get("goal")
+    return intention.get("obsession") is not None or bool(
+        goal and goal["kind"] == "address_room" and goal["status"] == "active")
