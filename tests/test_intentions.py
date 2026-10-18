@@ -359,3 +359,33 @@ def test_the_evening_metrics_can_still_read_an_intention_that_chases_an_obsessio
     view["obsessions"] = ["get someone else to pay", "have an audience"]
     deliver_intention(world, "ada", view, lambda: {**answer(), "obsession": 0}, RULES)
     assert repetition_counts(world["events"], 0.8) == {"restated": 0, "repeated": 0}
+
+
+def talked(lines: int, since: float = 12.0) -> dict[str, Any]:
+    """Ada and Bea in a scene of a number of lines, one a second from a game time; Ada took stock at 10 s."""
+    world = fresh()
+    world["conversations"].append({"id": "conversation-0", "participants": ["ada", "bea"], "topic": "the war",
+                                   "turns": [{"speaker": ("ada", "bea")[index % 2], "addressee": None, "line": "Well.",
+                                              "act": "remark", "time": since + index} for index in range(lines)]})
+    return world
+
+
+@pytest.mark.parametrize("prepare, expected", [
+    pytest.param(lambda: talked(5), "talk", id="five-lines-since-taking-stock"),
+    pytest.param(lambda: talked(4), None, id="four-lines-are-not-yet-enough"),
+    pytest.param(lambda: talked(5, since=7.0), None, id="lines-before-taking-stock-do-not-count"),
+    pytest.param(lambda: talked(0), None, id="a-scene-with-no-lines"),
+    # A quarrel inside the talk is part of the stretch: it does not make them take stock line by line.
+    pytest.param(lambda: thought(talked(2), "quarrel", 15.0), None, id="a-quarrel-with-the-one-they-talk-to-waits"),
+    pytest.param(lambda: thought(talked(5), "insulted", 15.0), "talk", id="an-insult-is-weighed-with-the-talk"),
+])
+def test_a_guest_takes_stock_again_after_a_stretch_of_talk(prepare: Callable[[], dict[str, Any]],
+                                                           expected: str | None) -> None:
+    world = prepare()
+    trigger = intention_due(world, actor(world, "ada"), RULES)
+    assert (trigger and trigger["kind"]) == expected
+
+
+def test_a_stretch_of_talk_names_who_they_talked_with() -> None:
+    world = talked(5)
+    assert "Bea" in intention_due(world, actor(world, "ada"), RULES)["text"]
