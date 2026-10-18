@@ -20,9 +20,9 @@ test("momentChips: a kind the client does not know still shows, with a plain mar
   assert.deepEqual(momentChips(story({ stampede: 2 })), ["✨ stampede ×2"]);
 });
 
-import { recapWindow } from "../src/storyview.ts";
+import { retellingWindow } from "../src/storyview.ts";
 
-const told = { title: "T", text: "S" };
+const told = { title: "T", chapters: [{ text: "S", events: [0], actors: ["ada"] }] };
 
 for (const [name, telling, recap, dismissed, expected] of [
   ["nothing is being told: no window", false, null, false, "hidden"],
@@ -31,7 +31,7 @@ for (const [name, telling, recap, dismissed, expected] of [
   ["the recap is ready and was closed: stay closed", false, told, true, "hidden"],
   ["waiting cannot be closed away", true, null, true, "waiting"],
 ] as const) {
-  test(`recapWindow: ${name}`, () => {
-    assert.equal(recapWindow(telling, recap, dismissed), expected);
+  test(`retellingWindow: ${name}`, () => {
+    assert.equal(retellingWindow(telling, recap, dismissed), expected);
   });
 }
