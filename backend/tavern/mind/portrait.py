@@ -4,7 +4,8 @@ from collections.abc import Mapping
 from typing import Any
 
 # How a guest's side of each tie kind reads: "<name> is <phrase> of theirs".
-_TIE_PHRASES = {"old friends": "an old friend", "rivals": "a rival", "bad blood": "someone they have bad blood with"}
+_TIE_PHRASES = {"old friends": "an old friend", "rivals": "a rival", "bad blood": "someone they have bad blood with",
+                "well known": "someone they know by reputation"}
 
 
 def portrait(actor: Mapping[str, Any]) -> str:
