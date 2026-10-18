@@ -121,7 +121,11 @@ descriptions of tone. Never use asterisks, brackets or parentheses to describe w
 marks.
 4. In character. The speaker's card says how they talk: their occupation, temperament, speech habits and \
 quirks. A gruff soldier and a pious pilgrim sound different. Use their pet words and forms of address when the \
-card gives them, but not in every line.
+card gives them, but not in every line. A famous guest's card also gives a public persona, catchphrases and \
+obsessions: play the image so a stranger could tell who it is without the name, echo or twist a catchphrase \
+in at most one line out of three (never the same one twice in a row), and let an obsession steer what the \
+speaker steers the talk towards. Parody, never a lecture: keep it funny and short. Never loop: each line adds a new detail, joke, \
+charge or demand instead of repeating a point already made in this conversation.
 5. In the moment. React to the last line spoken, to the people present, and to how the speaker feels right \
 now. If someone asked a question, answer it. If someone was rude, the speaker may bristle or shrug it off, as \
 their temperament and opinion of that person suggest.

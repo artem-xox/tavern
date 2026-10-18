@@ -180,3 +180,12 @@ def test_the_api_has_no_casts_without_scenarios(tmp_path: Path) -> None:
 ])
 def test_famous_guests_start_out_knowing_each_other_by_name(cast: str, ids: list[str], pairs: list[set[str]]) -> None:
     assert [{tie["a"], tie["b"]} for tie in lineup(cast, ids).ties] == pairs
+
+
+@pytest.mark.parametrize("ids, kinds", [
+    pytest.param(["trump", "greta"], ["bad blood"], id="a-catalog-feud-replaces-knowing-by-name"),
+    pytest.param(["greta", "tyson"], ["well known"], id="an-untied-pair-know-each-other-by-name"),
+    pytest.param(["trump", "greta", "tyson"], ["bad blood", "well known", "well known"], id="mixed-trio"),
+])
+def test_a_catalog_tie_is_not_doubled_by_knowing_by_name(ids: list[str], kinds: list[str]) -> None:
+    assert sorted(tie["kind"] for tie in lineup("guests", ids).ties) == sorted(kinds)

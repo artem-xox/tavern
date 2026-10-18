@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Literal, TypedDict
 
 from tavern.body.items import parse_carries
-from tavern.mind.cards import Card, TEXT_FIELDS, parse_card
+from tavern.mind.cards import Card, PERSONA_LISTS, PERSONA_TEXT, TEXT_FIELDS, parse_card
 from tavern.social.ties import Tie, parse_ties
 
 
@@ -128,7 +128,7 @@ def _character(data: Any) -> tuple[Character, list[dict[str, Any]]]:
     if not isinstance(data, Mapping):
         raise ValueError("Character must be a mapping")
     required = {"id", "role", "cast", "color", "carries", "relationships", "visuals", *TEXT_FIELDS, "sex", "params"}
-    optional = {"looks"}
+    optional = {"looks", "origin", *PERSONA_TEXT, *PERSONA_LISTS}
     missing, unknown = required - data.keys(), data.keys() - required - optional
     if missing or unknown:
         raise ValueError(f"Character is missing {sorted(missing)} or has unknown {sorted(unknown)}")
@@ -151,8 +151,7 @@ def _character(data: Any) -> tuple[Character, list[dict[str, Any]]]:
     if not isinstance(relationships, list):
         raise ValueError("Character relationships must be a list")
     card_data = {key: data[key] for key in (*TEXT_FIELDS, "sex", "params")} | {"id": character_id, "sprite": character_id}
-    if "looks" in data:
-        card_data["looks"] = data["looks"]
+    card_data |= {key: data[key] for key in optional if key in data}
     card = parse_card(card_data)
     return (Character(id=character_id, role=role, cast=cast, name=card["name"], color=color, card=card,
                       carries=parse_carries(data["carries"]), visuals=visuals), relationships)

@@ -427,3 +427,12 @@ def test_a_line_repeated_twice_falls_back() -> None:
 def test_the_speakers_own_earlier_lines_are_marked(said: list[str], present: list[str], absent: list[str]) -> None:
     content = turn_question(ada_once_said(*said))["content"]
     assert [text in content for text in present + absent] == [True] * len(present) + [False] * len(absent)
+
+
+def test_the_voiced_card_carries_the_persona() -> None:
+    world = scene_world()
+    world["actors"][0]["card"] = {**ADA, "persona": "Loud and proud.", "catchphrases": ["Tremendous!", "Believe me."],
+                                  "obsessions": ["get someone else to pay"], "inspired_by": "A tycoon"}
+    block = turn_question(view_of(world))["system"][1]
+    assert all(phrase in block for phrase in (
+        "Loud and proud.", "Tremendous!", "Believe me.", "get someone else to pay", "A tycoon"))

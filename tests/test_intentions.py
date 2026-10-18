@@ -241,3 +241,12 @@ def test_the_writer_asks_the_port_and_checks_the_answer() -> None:
     view = intention_view(world, actor(world, "ada"), intention_due(world, actor(world, "ada"), RULES))
     assert asyncio.run(intention_writer("SHARED PREFIX", ask)(view)) == answer()
     assert questions == [intention_question("SHARED PREFIX", view)]
+
+
+def test_the_card_block_carries_the_persona() -> None:
+    world = card_world()
+    actor(world, "ada")["card"] = {**CARD, "persona": "Loud and proud.", "catchphrases": ["Tremendous!"],
+                                   "obsessions": ["get someone else to pay"], "inspired_by": "A tycoon"}
+    view = intention_view(world, actor(world, "ada"), intention_due(world, actor(world, "ada"), RULES))
+    block = intention_question("SHARED PREFIX", view)["system"][1]
+    assert all(phrase in block for phrase in ("Loud and proud.", "Tremendous!", "get someone else to pay", "A tycoon"))

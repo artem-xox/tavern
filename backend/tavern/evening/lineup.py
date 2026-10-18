@@ -51,7 +51,9 @@ def lineup_scenario(templates: Mapping[str, Mapping[str, Any]], catalog: Catalog
             "last_call_at": length * LAST_CALL_SHARE,
             "guests": [{"character": item, "arrives_at": 0} for item in ids], **_news_for(templates[cast], ids)}
     if cast in FAMOUS_CASTS:
-        data["relationships"] = [*data.get("relationships", []), *_well_known(ids, data.get("relationships", []))]
+        # A tie the catalog already gives a pair (a feud, say) stands in for knowing each other by name.
+        held = [*data.get("relationships", []), *({"a": tie["a"], "b": tie["b"]} for tie in catalog.ties)]
+        data["relationships"] = [*data.get("relationships", []), *_well_known(ids, held)]
     # An unwell guest must carry no cure; a lone healer, say, has nobody to fall ill, so they come in well.
     if not eligible([{"carries": catalog.character(item)["carries"]} for item in ids]):
         data.pop("ailment", None)

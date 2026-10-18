@@ -24,7 +24,7 @@ from tavern.hall.staff import on_staff, post_of
 from tavern.hall.state import World, find_actor
 from tavern.hall.world import observe_actor, observe_people
 from tavern.mind.briefing import brief
-from tavern.mind.cards import PARAMS, TEXT_FIELDS
+from tavern.mind.cards import PARAMS, TEXT_FIELDS, persona_words
 from tavern.mind.goals import GOALS, STATUSES, Goal, check_goal, goal_words
 from tavern.mind.questions import Ask, Question
 from tavern.social.heard import earlier_lines
@@ -229,7 +229,8 @@ def _card(actor: Mapping[str, Any]) -> str:
     card = actor["card"]
     if card is None:
         return f"The guest: {actor['name']}. They have no character card; judge them from the situation alone."
-    words = "\n".join(f"{field}: {card[field]}" for field in TEXT_FIELDS)
+    words = "\n".join([*(f"{field}: {card[field]}" for field in TEXT_FIELDS),
+                       *(f"{label}: {text}" for label, text in persona_words(card).items())])
     params = ", ".join(f"{name} {card['params'][name]}" for name in PARAMS)
     return f"The guest's character card.\n{words}\nTraits from 0 to 1 (0.5 is ordinary): {params}."
 

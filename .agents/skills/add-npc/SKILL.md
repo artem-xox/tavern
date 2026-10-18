@@ -30,6 +30,12 @@ Write the prose in English, in concrete playable terms. Reuse the existing param
 names and item kinds. Keep `secret` in this file: it is supplied to the model but never
 to the browser API or UI.
 
+A famous guest also gets the optional persona fields, all model-only: `inspired_by` (who is
+parodied), `origin` (`real` or `fictional`), `persona` (two to four sentences: the public image,
+plus the topics they steer to, so talk does not loop), `catchphrases` (1–5 short lines),
+and `obsessions` (1–3 wishes for tonight). Write the persona so a stranger could name the
+guest from three lines. Then run a live evening (`make evening CAST=guests`) and read it.
+
 `relationships.json` is a list of `{ "with", "kind", "note" }`. Write each pair
 once, under either participant. The runtime makes the relation symmetric. Start with
 `[]` when there is none. `visuals.json` is `{ "size": 68, "lift": -16 }` unless the

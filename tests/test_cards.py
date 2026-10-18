@@ -98,3 +98,34 @@ def test_six_presets_with_distinct_temperaments_and_goals() -> None:
 
 def test_presets_use_shipped_sprites() -> None:
     assert {item["sprite"] for item in presets().values()} == set(presets())
+
+
+def persona(**fields: Any) -> dict[str, Any]:
+    """Build the optional persona fields of a famous guest."""
+    return {"inspired_by": "Captain Ahab", "origin": "fictional", "persona": "Hunts one whale and mentions it often.",
+            "catchphrases": ["Call me Ada.", "There she blows."], "obsessions": ["find the white whale"], **fields}
+
+
+def test_persona_fields_are_kept_as_written() -> None:
+    parsed = parse_card(card(**persona()))
+    assert (parsed["inspired_by"], parsed["origin"], parsed["catchphrases"], parsed["obsessions"]) == (
+        "Captain Ahab", "fictional", ["Call me Ada.", "There she blows."], ["find the white whale"])
+
+
+def test_a_card_without_persona_fields_has_none() -> None:
+    assert not {"inspired_by", "origin", "persona", "catchphrases", "obsessions"} & set(parse_card(card()))
+
+
+@pytest.mark.parametrize("fields", [
+    pytest.param({"origin": "legendary"}, id="unknown-origin"),
+    pytest.param({"catchphrases": ["a", "b", "c", "d", "e", "f"]}, id="six-catchphrases"),
+    pytest.param({"catchphrases": "Call me Ada."}, id="catchphrases-not-a-list"),
+    pytest.param({"catchphrases": [""]}, id="blank-catchphrase"),
+    pytest.param({"obsessions": []}, id="no-obsessions"),
+    pytest.param({"obsessions": ["a", "b", "c", "d"]}, id="four-obsessions"),
+    pytest.param({"obsessions": [7]}, id="malformed-obsession"),
+    pytest.param({"persona": ""}, id="blank-persona"),
+])
+def test_invalid_persona_fails_loudly(fields: dict[str, Any]) -> None:
+    with pytest.raises(ValueError):
+        parse_card(card(**persona(**fields)))
