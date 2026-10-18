@@ -1,0 +1,616 @@
+{
+  "group_id": "2cede815-ddd9-4042-8b96-96901ad06240",
+  "states": [
+    {
+      "character": {
+        "id": "cdf738de-002c-4744-81bc-fa82bdeb10e4",
+        "name": "Idle",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:35:49.828924+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "23b0f803-bc0a-4ed6-b825-a215277db3b8",
+        "name": "Seated",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:48:04.257163+00:00"
+      },
+      "folder": "Seated",
+      "frames": {
+        "rotations": {
+          "south": "Seated/rotations/south.png",
+          "south-east": "Seated/rotations/south-east.png",
+          "east": "Seated/rotations/east.png",
+          "north-east": "Seated/rotations/north-east.png",
+          "north": "Seated/rotations/north.png",
+          "north-west": "Seated/rotations/north-west.png",
+          "west": "Seated/rotations/west.png",
+          "south-west": "Seated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "208b9050-49c7-4fed-8b37-e68e72e45854",
+        "name": "Darts",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:48:04.569865+00:00"
+      },
+      "folder": "Darts",
+      "frames": {
+        "rotations": {
+          "south": "Darts/rotations/south.png",
+          "south-east": "Darts/rotations/south-east.png",
+          "east": "Darts/rotations/east.png",
+          "north-east": "Darts/rotations/north-east.png",
+          "north": "Darts/rotations/north.png",
+          "north-west": "Darts/rotations/north-west.png",
+          "west": "Darts/rotations/west.png",
+          "south-west": "Darts/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "9cc4bcba-6ec8-4700-b9dd-f973170091a4",
+        "name": "Bathroom",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:48:04.787613+00:00"
+      },
+      "folder": "Bathroom",
+      "frames": {
+        "rotations": {
+          "south": "Bathroom/rotations/south.png",
+          "south-east": "Bathroom/rotations/south-east.png",
+          "east": "Bathroom/rotations/east.png",
+          "north-east": "Bathroom/rotations/north-east.png",
+          "north": "Bathroom/rotations/north.png",
+          "north-west": "Bathroom/rotations/north-west.png",
+          "west": "Bathroom/rotations/west.png",
+          "south-west": "Bathroom/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "c7497e03-6959-4c97-bc3f-cdb7fd23e692",
+        "name": "Drinking",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:48:05.195957+00:00"
+      },
+      "folder": "Drinking",
+      "frames": {
+        "rotations": {
+          "south": "Drinking/rotations/south.png",
+          "south-east": "Drinking/rotations/south-east.png",
+          "east": "Drinking/rotations/east.png",
+          "north-east": "Drinking/rotations/north-east.png",
+          "north": "Drinking/rotations/north.png",
+          "north-west": "Drinking/rotations/north-west.png",
+          "west": "Drinking/rotations/west.png",
+          "south-west": "Drinking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "db50439a-6ba7-43a7-8016-990f5016d9f4",
+        "name": "DrinkingSeated",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:48:05.453212+00:00"
+      },
+      "folder": "DrinkingSeated",
+      "frames": {
+        "rotations": {
+          "south": "DrinkingSeated/rotations/south.png",
+          "south-east": "DrinkingSeated/rotations/south-east.png",
+          "east": "DrinkingSeated/rotations/east.png",
+          "north-east": "DrinkingSeated/rotations/north-east.png",
+          "north": "DrinkingSeated/rotations/north.png",
+          "north-west": "DrinkingSeated/rotations/north-west.png",
+          "west": "DrinkingSeated/rotations/west.png",
+          "south-west": "DrinkingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "97bf9f95-6591-434d-afa5-0841649aa704",
+        "name": "TalkingSeated",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:48:05.710685+00:00"
+      },
+      "folder": "TalkingSeated",
+      "frames": {
+        "rotations": {
+          "south": "TalkingSeated/rotations/south.png",
+          "south-east": "TalkingSeated/rotations/south-east.png",
+          "east": "TalkingSeated/rotations/east.png",
+          "north-east": "TalkingSeated/rotations/north-east.png",
+          "north": "TalkingSeated/rotations/north.png",
+          "north-west": "TalkingSeated/rotations/north-west.png",
+          "west": "TalkingSeated/rotations/west.png",
+          "south-west": "TalkingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "ba6b3a80-d638-404e-8e7d-e3394715df23",
+        "name": "TakeBeer",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:48:05.911712+00:00"
+      },
+      "folder": "TakeBeer",
+      "frames": {
+        "rotations": {
+          "south": "TakeBeer/rotations/south.png",
+          "south-east": "TakeBeer/rotations/south-east.png",
+          "east": "TakeBeer/rotations/east.png",
+          "north-east": "TakeBeer/rotations/north-east.png",
+          "north": "TakeBeer/rotations/north.png",
+          "north-west": "TakeBeer/rotations/north-west.png",
+          "west": "TakeBeer/rotations/west.png",
+          "south-west": "TakeBeer/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "7e00964f-66f3-46b3-81c3-49de715e408c",
+        "name": "Walking",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:48:06.322766+00:00"
+      },
+      "folder": "Walking",
+      "frames": {
+        "rotations": {
+          "south": "Walking/rotations/south.png",
+          "south-east": "Walking/rotations/south-east.png",
+          "east": "Walking/rotations/east.png",
+          "north-east": "Walking/rotations/north-east.png",
+          "north": "Walking/rotations/north.png",
+          "north-west": "Walking/rotations/north-west.png",
+          "west": "Walking/rotations/west.png",
+          "south-west": "Walking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "a86ae049-79fb-4388-a056-6313b438dccf",
+        "name": "Talking",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:49:31.607160+00:00"
+      },
+      "folder": "Talking",
+      "frames": {
+        "rotations": {
+          "south": "Talking/rotations/south.png",
+          "south-east": "Talking/rotations/south-east.png",
+          "east": "Talking/rotations/east.png",
+          "north-east": "Talking/rotations/north-east.png",
+          "north": "Talking/rotations/north.png",
+          "north-west": "Talking/rotations/north-west.png",
+          "west": "Talking/rotations/west.png",
+          "south-west": "Talking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "6c21adae-95a6-439a-9c55-ed640d4fd951",
+        "name": "Giving",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:49:52.402097+00:00"
+      },
+      "folder": "Giving",
+      "frames": {
+        "rotations": {
+          "south": "Giving/rotations/south.png",
+          "south-east": "Giving/rotations/south-east.png",
+          "east": "Giving/rotations/east.png",
+          "north-east": "Giving/rotations/north-east.png",
+          "north": "Giving/rotations/north.png",
+          "north-west": "Giving/rotations/north-west.png",
+          "west": "Giving/rotations/west.png",
+          "south-west": "Giving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "fc267ddb-20ac-48d9-8d7d-393a09b878c5",
+        "name": "Receiving",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:49:53.113382+00:00"
+      },
+      "folder": "Receiving",
+      "frames": {
+        "rotations": {
+          "south": "Receiving/rotations/south.png",
+          "south-east": "Receiving/rotations/south-east.png",
+          "east": "Receiving/rotations/east.png",
+          "north-east": "Receiving/rotations/north-east.png",
+          "north": "Receiving/rotations/north.png",
+          "north-west": "Receiving/rotations/north-west.png",
+          "west": "Receiving/rotations/west.png",
+          "south-west": "Receiving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "5bad11d3-efd9-45c2-8532-74b3c1364772",
+        "name": "GivingSeated",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:49:53.428806+00:00"
+      },
+      "folder": "GivingSeated",
+      "frames": {
+        "rotations": {
+          "south": "GivingSeated/rotations/south.png",
+          "south-east": "GivingSeated/rotations/south-east.png",
+          "east": "GivingSeated/rotations/east.png",
+          "north-east": "GivingSeated/rotations/north-east.png",
+          "north": "GivingSeated/rotations/north.png",
+          "north-west": "GivingSeated/rotations/north-west.png",
+          "west": "GivingSeated/rotations/west.png",
+          "south-west": "GivingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "4a087853-3e93-4d13-877b-9f8da2eea849",
+        "name": "ReceivingSeated",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:49:53.997737+00:00"
+      },
+      "folder": "ReceivingSeated",
+      "frames": {
+        "rotations": {
+          "south": "ReceivingSeated/rotations/south.png",
+          "south-east": "ReceivingSeated/rotations/south-east.png",
+          "east": "ReceivingSeated/rotations/east.png",
+          "north-east": "ReceivingSeated/rotations/north-east.png",
+          "north": "ReceivingSeated/rotations/north.png",
+          "north-west": "ReceivingSeated/rotations/north-west.png",
+          "west": "ReceivingSeated/rotations/west.png",
+          "south-west": "ReceivingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "f0bd45b9-ec73-4ce6-8fbe-42a573c1129d",
+        "name": "SleepingSeated",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:49:54.249874+00:00"
+      },
+      "folder": "SleepingSeated",
+      "frames": {
+        "rotations": {
+          "south": "SleepingSeated/rotations/south.png",
+          "south-east": "SleepingSeated/rotations/south-east.png",
+          "east": "SleepingSeated/rotations/east.png",
+          "north-east": "SleepingSeated/rotations/north-east.png",
+          "north": "SleepingSeated/rotations/north.png",
+          "north-west": "SleepingSeated/rotations/north-west.png",
+          "west": "SleepingSeated/rotations/west.png",
+          "south-west": "SleepingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "075f1eec-7ef9-4abd-a04b-832995299879",
+        "name": "KnockedOut",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:50:30.419076+00:00"
+      },
+      "folder": "KnockedOut",
+      "frames": {
+        "rotations": {
+          "south": "KnockedOut/rotations/south.png",
+          "south-east": "KnockedOut/rotations/south-east.png",
+          "east": "KnockedOut/rotations/east.png",
+          "north-east": "KnockedOut/rotations/north-east.png",
+          "north": "KnockedOut/rotations/north.png",
+          "north-west": "KnockedOut/rotations/north-west.png",
+          "west": "KnockedOut/rotations/west.png",
+          "south-west": "KnockedOut/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "27b49832-b5ba-449b-b425-0dc3140307c8",
+        "name": "Fighting",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:50:30.641205+00:00"
+      },
+      "folder": "Fighting",
+      "frames": {
+        "rotations": {
+          "south": "Fighting/rotations/south.png",
+          "south-east": "Fighting/rotations/south-east.png",
+          "east": "Fighting/rotations/east.png",
+          "north-east": "Fighting/rotations/north-east.png",
+          "north": "Fighting/rotations/north.png",
+          "north-west": "Fighting/rotations/north-west.png",
+          "west": "Fighting/rotations/west.png",
+          "south-west": "Fighting/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "73fbf0af-1624-4bac-8a13-19cf734415c7",
+        "name": "Hurt",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:51:33.766590+00:00"
+      },
+      "folder": "Hurt",
+      "frames": {
+        "rotations": {
+          "south": "Hurt/rotations/south.png",
+          "south-east": "Hurt/rotations/south-east.png",
+          "east": "Hurt/rotations/east.png",
+          "north-east": "Hurt/rotations/north-east.png",
+          "north": "Hurt/rotations/north.png",
+          "north-west": "Hurt/rotations/north-west.png",
+          "west": "Hurt/rotations/west.png",
+          "south-west": "Hurt/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "f293c1b8-4aa3-4e38-8945-348f4827e057",
+        "name": "HurtSeated",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:51:34.368499+00:00"
+      },
+      "folder": "HurtSeated",
+      "frames": {
+        "rotations": {
+          "south": "HurtSeated/rotations/south.png",
+          "south-east": "HurtSeated/rotations/south-east.png",
+          "east": "HurtSeated/rotations/east.png",
+          "north-east": "HurtSeated/rotations/north-east.png",
+          "north": "HurtSeated/rotations/north.png",
+          "north-west": "HurtSeated/rotations/north-west.png",
+          "west": "HurtSeated/rotations/west.png",
+          "south-west": "HurtSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "ceefa949-1d6c-4029-8a76-86d418f14d01",
+        "name": "Shoving",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:51:56.793879+00:00"
+      },
+      "folder": "Shoving",
+      "frames": {
+        "rotations": {
+          "south": "Shoving/rotations/south.png",
+          "south-east": "Shoving/rotations/south-east.png",
+          "east": "Shoving/rotations/east.png",
+          "north-east": "Shoving/rotations/north-east.png",
+          "north": "Shoving/rotations/north.png",
+          "north-west": "Shoving/rotations/north-west.png",
+          "west": "Shoving/rotations/west.png",
+          "south-west": "Shoving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "27a91d28-a5eb-4ef8-b640-ad19ea69f102",
+        "name": "HelpingUp",
+        "prompt": "Queen Elizabeth II, recognizable elderly British female monarch: short neatly set white-grey curled hair, pale complexion, a small polite closed-lip smile, composed upright dignified bearing. Wear a bright turquoise wool coat dress with a matching small turquoise hat, a single strand of pearls with pearl earrings, and black low-heeled court shoes; no crown, no handbag. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the white curled hair, the small turquoise hat and the turquoise coat especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T10:51:57.116557+00:00"
+      },
+      "folder": "HelpingUp",
+      "frames": {
+        "rotations": {
+          "south": "HelpingUp/rotations/south.png",
+          "south-east": "HelpingUp/rotations/south-east.png",
+          "east": "HelpingUp/rotations/east.png",
+          "north-east": "HelpingUp/rotations/north-east.png",
+          "north": "HelpingUp/rotations/north.png",
+          "north-west": "HelpingUp/rotations/north-west.png",
+          "west": "HelpingUp/rotations/west.png",
+          "south-west": "HelpingUp/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-18T10:54:12.348717"
+}

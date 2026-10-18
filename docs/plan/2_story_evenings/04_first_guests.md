@@ -41,6 +41,11 @@ evenings with them work.
     for a round she did not order; carries nothing yet (the handbag is a later item). Opens with "let me be
     absolutely clear" and corrects grammar. Natural foil for the Trump parody and the one guest who can
     out-argue Greta.
+  - a Queen Elizabeth II parody, `characters/guests/queen/` (art and card done, 21 poses x 8 views): a small
+    upright old queen in a turquoise coat, matching hat and pearls, quietly taking tea and noting every breach of
+    manners; wants the room's manners to hold and to deliver one dry verdict on whoever behaves worst; carries
+    nothing yet (the corgi is a later item). "One is not amused." Calm judge for the loud guests, foil for the
+    Trump parody's manners and for Thatcher.
 - In: their starting relationships (rivalries, grudges) and a `guests.json` scenario with all three plus
   two locals as bystanders.
 - Out: what their items do (S2-08); further guests. The next candidates are a Bush parody (hunting for

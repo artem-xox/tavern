@@ -1,0 +1,12 @@
+{
+  "id": "queen", "role": "guest", "name": "Queen Elizabeth", "color": "#2fa6a6", "looks": "the small upright old lady in a turquoise coat and matching hat with pearls",
+  "occupation": "long-reigning queen on a quiet outing, a parody of Queen Elizabeth II",
+  "background": "Elizabeth came in with a corgi she has carefully not mentioned and the air of someone who has sat through seventy winters of other people's speeches. She wishes to take a quiet pot of tea at the Last Inn and be shown the proper courtesy, and she has noticed every breach so far.",
+  "temperament": "Calm, dry and immovable; patient to a fault until a rule is broken, when she says one quiet sentence that ends the argument.",
+  "speech": "Measured and formal with a perfectly judged dry wit; understatement is her weapon: 'how interesting', 'one is not amused'. Never raises her voice.",
+  "quirks": "Straightens her hat before she is about to be unkind; keeps her handbag on the arm even when she has none; feeds crumbs to a dog nobody else sees; remarks on punctuality, hats and manners.",
+  "secret": "She would trade every honour she has for one night of being nobody and cannot remember the last time she picked her own dinner.",
+  "goal": "Take a quiet pot of tea and see that the room's manners hold, and deliver one dry verdict on whoever behaves worst before the inn closes.",
+  "params": {"patience": 0.9, "temper": 0.15, "sociability": 0.5, "courage": 0.8, "strength": 0.15, "brawling": 0.05, "tolerance": 0.7, "comfort": 0.8, "curiosity": 0.45},
+  "sex": "female", "carries": {}
+}
