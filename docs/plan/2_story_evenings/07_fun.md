@@ -125,3 +125,10 @@ evenings: the beer count is still thirst-limited. The mean story score is 35.8; 
 S2-05 baseline (`runs/g1`–`g4`) average 35.8 as well (10, 68, 33, 32), so **the story score has not risen**: the
 fun the guests have (games, drink) is not what the score counts. That target stays open and is the next thing to
 look at (a score weight for `got_drunk`, or the fights and quarrels S2-09 will add, which dominate it).
+
+**The weight for `got_drunk`.** The five evenings above, rescored with `got_drunk` at 1.0 (the Jev account is out
+of credit, HTTP 402, so no new live evenings could run; the events are the same ones): 12, 60, 30, 29, 62, mean
+**38.6** against the S2-05 live baseline 35.75 (`runs/g1`–`g4`: 10, 68, 33, 32). The 2.9 points are the 14 drunk
+moments at weight 1 (2.8 a evening): nothing else in the score moved, so the rise says only that guests now get
+drunk, not that evenings are better stories. S2-07 stays `doing` until the retelling or a live sample shows that
+the fun makes evenings people would retell (S2-10, S2-11).

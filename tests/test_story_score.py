@@ -32,6 +32,9 @@ def counts(**given: int) -> dict[str, int]:
     pytest.param([event("gave", "Ada gave Bram a beer")], counts(gift=1), id="gift"),
     pytest.param([event("dozed_off")], counts(fell_asleep=1), id="fell-asleep"),
     pytest.param([event("limped_home")], counts(limped_home=1), id="battered-and-gone"),
+    pytest.param([event("got_drunk")], counts(got_drunk=1), id="got-drunk"),
+    pytest.param([event("got_drunk", actor_id="ada"), event("got_drunk", actor_id="bram", time=5.0)],
+                 counts(got_drunk=2), id="two-guests-who-got-drunk"),
     pytest.param([event("quarrel", "Ada quarreled with Bram", actor_id="ada"),
                   event("quarrel", "Ada quarreled with Bram", actor_id="bram")], counts(quarrel=1),
                  id="one-event-per-participant-is-one-moment"),
@@ -63,3 +66,7 @@ def test_moments_keep_the_event_they_came_from() -> None:
 def test_a_weight_missing_for_a_kind_is_rejected() -> None:
     with pytest.raises(ValueError, match="gift"):
         story_score([], {kind: 1.0 for kind in WEIGHTS if kind != "gift"})
+
+
+def test_getting_drunk_is_a_small_moment_beside_a_quarrel() -> None:
+    assert 0 < WEIGHTS["got_drunk"] < WEIGHTS["quarrel"]
