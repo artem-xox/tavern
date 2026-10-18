@@ -1,6 +1,8 @@
 /** A guest's speech bubble: built once, told line by line in pieces, and drawn whole inside the map. */
 import Phaser from "phaser";
 import { chunkAt, placeBubble, splitLine, type Spoken } from "./bubble";
+import { slur } from "./slur";
+import type { Mind } from "./types";
 
 /** Speech bubbles wrap at this many pixels and draw above every guest. */
 const BUBBLE_WRAP = 150;
@@ -31,11 +33,12 @@ export class Speech {
    *
    * @param line The speaker's latest line, from their conversation or a call of their own, or null when they have none.
    * @param now Real time in milliseconds, for the piece's start.
+   * @param stage The speaker's stage of drink when the line starts: a drunk one's bubble slurs it.
    */
-  tell(line: Spoken | null, now: number): void {
+  tell(line: Spoken | null, now: number, stage: Mind["stage"]): void {
     if (line === null) { this.talk = null; return; }
     const key: string = `${line.time}:${line.line}`;
-    if (this.talk?.key !== key) this.talk = { key, chunks: splitLine(line.line), start: now };
+    if (this.talk?.key !== key) this.talk = { key, chunks: splitLine(slur(line.line, stage)), start: now };
   }
 
   /**
