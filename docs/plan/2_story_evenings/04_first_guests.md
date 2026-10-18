@@ -16,8 +16,14 @@ evenings with them work.
 ## Scope
 
 - In: three guests from the concept art, through the `add-npc` skill, with every pose in eight directions:
-  - a Putin parody: wants to keep his distance; carries a folding table.
-  - a Zelensky parody: wants a seat at the table; carries a deck of cards.
+  - a Putin parody, `characters/guests/putin/` (art and card done, 21 poses x 8 views): a compact, cold,
+    controlled man in a dark suit and burgundy tie who wants to keep his distance, sits facing the door with an
+    empty chair on each side, and learns what everyone wants before saying a word; carries nothing yet (the
+    folding table is a later item). Quietly lonely at the end of every long table.
+  - a Zelensky parody, `characters/guests/zelensky/` (art and card done, 21 poses x 8 views): a stubbled,
+    quick-witted man in an olive field shirt who pulls up a spare stool uninvited and wants a seat at the table
+    of the most powerful guests and one promise from them; carries nothing yet (the deck of cards is a later
+    item). Jokes until the joke turns into a plea.
   - a Trump parody: wants others to pay; carries a golden pen.
   - a Greta Thunberg parody, `characters/guests/greta/` (art and card done, 21 poses x 8 views): a stern young
     campaigner in a hot-pink blouse with one long braid; wants every guest to admit what they have done

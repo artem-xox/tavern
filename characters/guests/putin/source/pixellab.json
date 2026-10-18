@@ -1,0 +1,616 @@
+{
+  "group_id": "4643879e-6d03-485a-b6ee-5bd1c243e41e",
+  "states": [
+    {
+      "character": {
+        "id": "048912b2-baa1-43a9-9883-d53a4afe6817",
+        "name": "Idle",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-09T11:18:09.240759+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "28f95134-15a5-4972-bc0e-b8730a2f4372",
+        "name": "Darts",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T12:17:12.795166+00:00"
+      },
+      "folder": "Darts",
+      "frames": {
+        "rotations": {
+          "south": "Darts/rotations/south.png",
+          "south-east": "Darts/rotations/south-east.png",
+          "east": "Darts/rotations/east.png",
+          "north-east": "Darts/rotations/north-east.png",
+          "north": "Darts/rotations/north.png",
+          "north-west": "Darts/rotations/north-west.png",
+          "west": "Darts/rotations/west.png",
+          "south-west": "Darts/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "1a857396-086e-4ab1-98a9-3e0849d4bc18",
+        "name": "Drinking",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T12:17:14.138875+00:00"
+      },
+      "folder": "Drinking",
+      "frames": {
+        "rotations": {
+          "south": "Drinking/rotations/south.png",
+          "south-east": "Drinking/rotations/south-east.png",
+          "east": "Drinking/rotations/east.png",
+          "north-east": "Drinking/rotations/north-east.png",
+          "north": "Drinking/rotations/north.png",
+          "north-west": "Drinking/rotations/north-west.png",
+          "west": "Drinking/rotations/west.png",
+          "south-west": "Drinking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "2ed3820e-c108-4cec-894e-c7d6e777d9e0",
+        "name": "Seated",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T12:18:12.224012+00:00"
+      },
+      "folder": "Seated",
+      "frames": {
+        "rotations": {
+          "south": "Seated/rotations/south.png",
+          "south-east": "Seated/rotations/south-east.png",
+          "east": "Seated/rotations/east.png",
+          "north-east": "Seated/rotations/north-east.png",
+          "north": "Seated/rotations/north.png",
+          "north-west": "Seated/rotations/north-west.png",
+          "west": "Seated/rotations/west.png",
+          "south-west": "Seated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "67b91493-14c9-4f22-a3e5-85a8811a91d3",
+        "name": "Bathroom",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T12:18:14.089515+00:00"
+      },
+      "folder": "Bathroom",
+      "frames": {
+        "rotations": {
+          "south": "Bathroom/rotations/south.png",
+          "south-east": "Bathroom/rotations/south-east.png",
+          "east": "Bathroom/rotations/east.png",
+          "north-east": "Bathroom/rotations/north-east.png",
+          "north": "Bathroom/rotations/north.png",
+          "north-west": "Bathroom/rotations/north-west.png",
+          "west": "Bathroom/rotations/west.png",
+          "south-west": "Bathroom/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "310ab0b3-7909-4336-b462-a1575d0a2a93",
+        "name": "DrinkingSeated",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T12:18:18.289353+00:00"
+      },
+      "folder": "DrinkingSeated",
+      "frames": {
+        "rotations": {
+          "south": "DrinkingSeated/rotations/south.png",
+          "south-east": "DrinkingSeated/rotations/south-east.png",
+          "east": "DrinkingSeated/rotations/east.png",
+          "north-east": "DrinkingSeated/rotations/north-east.png",
+          "north": "DrinkingSeated/rotations/north.png",
+          "north-west": "DrinkingSeated/rotations/north-west.png",
+          "west": "DrinkingSeated/rotations/west.png",
+          "south-west": "DrinkingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "788dd4d9-174d-4401-80e9-640f44f33e01",
+        "name": "TalkingSeated",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T12:19:29.571216+00:00"
+      },
+      "folder": "TalkingSeated",
+      "frames": {
+        "rotations": {
+          "south": "TalkingSeated/rotations/south.png",
+          "south-east": "TalkingSeated/rotations/south-east.png",
+          "east": "TalkingSeated/rotations/east.png",
+          "north-east": "TalkingSeated/rotations/north-east.png",
+          "north": "TalkingSeated/rotations/north.png",
+          "north-west": "TalkingSeated/rotations/north-west.png",
+          "west": "TalkingSeated/rotations/west.png",
+          "south-west": "TalkingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "80395a53-8f1b-4404-b7f6-7c5da034409e",
+        "name": "TakeBeer",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T12:19:30.170020+00:00"
+      },
+      "folder": "TakeBeer",
+      "frames": {
+        "rotations": {
+          "south": "TakeBeer/rotations/south.png",
+          "south-east": "TakeBeer/rotations/south-east.png",
+          "east": "TakeBeer/rotations/east.png",
+          "north-east": "TakeBeer/rotations/north-east.png",
+          "north": "TakeBeer/rotations/north.png",
+          "north-west": "TakeBeer/rotations/north-west.png",
+          "west": "TakeBeer/rotations/west.png",
+          "south-west": "TakeBeer/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "5c8e29ba-d88e-4b9a-b53c-774d6c6c97ed",
+        "name": "Walking",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T12:19:53.687197+00:00"
+      },
+      "folder": "Walking",
+      "frames": {
+        "rotations": {
+          "south": "Walking/rotations/south.png",
+          "south-east": "Walking/rotations/south-east.png",
+          "east": "Walking/rotations/east.png",
+          "north-east": "Walking/rotations/north-east.png",
+          "north": "Walking/rotations/north.png",
+          "north-west": "Walking/rotations/north-west.png",
+          "west": "Walking/rotations/west.png",
+          "south-west": "Walking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "c4da21e5-28c5-43e7-8ccb-f6012ada4d91",
+        "name": "Talking",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T12:20:24.709050+00:00"
+      },
+      "folder": "Talking",
+      "frames": {
+        "rotations": {
+          "south": "Talking/rotations/south.png",
+          "south-east": "Talking/rotations/south-east.png",
+          "east": "Talking/rotations/east.png",
+          "north-east": "Talking/rotations/north-east.png",
+          "north": "Talking/rotations/north.png",
+          "north-west": "Talking/rotations/north-west.png",
+          "west": "Talking/rotations/west.png",
+          "south-west": "Talking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "f3d01f8e-ed5e-4df8-9251-692263445156",
+        "name": "Giving",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T12:20:44.341298+00:00"
+      },
+      "folder": "Giving",
+      "frames": {
+        "rotations": {
+          "south": "Giving/rotations/south.png",
+          "south-east": "Giving/rotations/south-east.png",
+          "east": "Giving/rotations/east.png",
+          "north-east": "Giving/rotations/north-east.png",
+          "north": "Giving/rotations/north.png",
+          "north-west": "Giving/rotations/north-west.png",
+          "west": "Giving/rotations/west.png",
+          "south-west": "Giving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "809e99e3-e5f7-488f-8fbe-eadd40641148",
+        "name": "Receiving",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T12:21:22.684444+00:00"
+      },
+      "folder": "Receiving",
+      "frames": {
+        "rotations": {
+          "south": "Receiving/rotations/south.png",
+          "south-east": "Receiving/rotations/south-east.png",
+          "east": "Receiving/rotations/east.png",
+          "north-east": "Receiving/rotations/north-east.png",
+          "north": "Receiving/rotations/north.png",
+          "north-west": "Receiving/rotations/north-west.png",
+          "west": "Receiving/rotations/west.png",
+          "south-west": "Receiving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "b6c947cf-4cf9-4fd1-b43a-0a39018bfae3",
+        "name": "GivingSeated",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T12:21:27.644889+00:00"
+      },
+      "folder": "GivingSeated",
+      "frames": {
+        "rotations": {
+          "south": "GivingSeated/rotations/south.png",
+          "south-east": "GivingSeated/rotations/south-east.png",
+          "east": "GivingSeated/rotations/east.png",
+          "north-east": "GivingSeated/rotations/north-east.png",
+          "north": "GivingSeated/rotations/north.png",
+          "north-west": "GivingSeated/rotations/north-west.png",
+          "west": "GivingSeated/rotations/west.png",
+          "south-west": "GivingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "d918d0bb-1ba3-47de-94e3-6c0f6fef063f",
+        "name": "ReceivingSeated",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T12:21:56.204405+00:00"
+      },
+      "folder": "ReceivingSeated",
+      "frames": {
+        "rotations": {
+          "south": "ReceivingSeated/rotations/south.png",
+          "south-east": "ReceivingSeated/rotations/south-east.png",
+          "east": "ReceivingSeated/rotations/east.png",
+          "north-east": "ReceivingSeated/rotations/north-east.png",
+          "north": "ReceivingSeated/rotations/north.png",
+          "north-west": "ReceivingSeated/rotations/north-west.png",
+          "west": "ReceivingSeated/rotations/west.png",
+          "south-west": "ReceivingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "be06cb98-22be-43f0-aaf1-f49d2ecc56d2",
+        "name": "SleepingSeated",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T12:22:35.300905+00:00"
+      },
+      "folder": "SleepingSeated",
+      "frames": {
+        "rotations": {
+          "south": "SleepingSeated/rotations/south.png",
+          "south-east": "SleepingSeated/rotations/south-east.png",
+          "east": "SleepingSeated/rotations/east.png",
+          "north-east": "SleepingSeated/rotations/north-east.png",
+          "north": "SleepingSeated/rotations/north.png",
+          "north-west": "SleepingSeated/rotations/north-west.png",
+          "west": "SleepingSeated/rotations/west.png",
+          "south-west": "SleepingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "bb4d8dd1-d60c-44b0-be61-ffe85c505a92",
+        "name": "KnockedOut",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T12:23:31.441649+00:00"
+      },
+      "folder": "KnockedOut",
+      "frames": {
+        "rotations": {
+          "south": "KnockedOut/rotations/south.png",
+          "south-east": "KnockedOut/rotations/south-east.png",
+          "east": "KnockedOut/rotations/east.png",
+          "north-east": "KnockedOut/rotations/north-east.png",
+          "north": "KnockedOut/rotations/north.png",
+          "north-west": "KnockedOut/rotations/north-west.png",
+          "west": "KnockedOut/rotations/west.png",
+          "south-west": "KnockedOut/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "4d0eeaf6-e28e-4d4c-aa6e-67c02b9ddcfe",
+        "name": "Fighting",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T12:23:57.939379+00:00"
+      },
+      "folder": "Fighting",
+      "frames": {
+        "rotations": {
+          "south": "Fighting/rotations/south.png",
+          "south-east": "Fighting/rotations/south-east.png",
+          "east": "Fighting/rotations/east.png",
+          "north-east": "Fighting/rotations/north-east.png",
+          "north": "Fighting/rotations/north.png",
+          "north-west": "Fighting/rotations/north-west.png",
+          "west": "Fighting/rotations/west.png",
+          "south-west": "Fighting/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "a52902b8-9c32-43e8-8d22-4c894ea3bc36",
+        "name": "Hurt",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T12:23:58.765279+00:00"
+      },
+      "folder": "Hurt",
+      "frames": {
+        "rotations": {
+          "south": "Hurt/rotations/south.png",
+          "south-east": "Hurt/rotations/south-east.png",
+          "east": "Hurt/rotations/east.png",
+          "north-east": "Hurt/rotations/north-east.png",
+          "north": "Hurt/rotations/north.png",
+          "north-west": "Hurt/rotations/north-west.png",
+          "west": "Hurt/rotations/west.png",
+          "south-west": "Hurt/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "c0ce915c-ac2c-4c17-990c-f4e5ef22012b",
+        "name": "HurtSeated",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T12:24:11.042759+00:00"
+      },
+      "folder": "HurtSeated",
+      "frames": {
+        "rotations": {
+          "south": "HurtSeated/rotations/south.png",
+          "south-east": "HurtSeated/rotations/south-east.png",
+          "east": "HurtSeated/rotations/east.png",
+          "north-east": "HurtSeated/rotations/north-east.png",
+          "north": "HurtSeated/rotations/north.png",
+          "north-west": "HurtSeated/rotations/north-west.png",
+          "west": "HurtSeated/rotations/west.png",
+          "south-west": "HurtSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "e9b97d6b-f284-412f-bfb7-08a337c5437d",
+        "name": "Shoving",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T12:25:11.017564+00:00"
+      },
+      "folder": "Shoving",
+      "frames": {
+        "rotations": {
+          "south": "Shoving/rotations/south.png",
+          "south-east": "Shoving/rotations/south-east.png",
+          "east": "Shoving/rotations/east.png",
+          "north-east": "Shoving/rotations/north-east.png",
+          "north": "Shoving/rotations/north.png",
+          "north-west": "Shoving/rotations/north-west.png",
+          "west": "Shoving/rotations/west.png",
+          "south-west": "Shoving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "556a5ff3-5588-4eab-9048-3775a7ce497a",
+        "name": "HelpingUp",
+        "prompt": "Vladimir Putin, recognizable older Russian male public figure: close-cropped light brown and gray hair, pale complexion, compact build, reserved neutral expression, wearing a dark tailored business suit, white dress shirt, and a subdued burgundy tie. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the formal suit silhouette clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T12:25:50.141418+00:00"
+      },
+      "folder": "HelpingUp",
+      "frames": {
+        "rotations": {
+          "south": "HelpingUp/rotations/south.png",
+          "south-east": "HelpingUp/rotations/south-east.png",
+          "east": "HelpingUp/rotations/east.png",
+          "north-east": "HelpingUp/rotations/north-east.png",
+          "north": "HelpingUp/rotations/north.png",
+          "north-west": "HelpingUp/rotations/north-west.png",
+          "west": "HelpingUp/rotations/west.png",
+          "south-west": "HelpingUp/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-18T12:29:24.798095"
+}
