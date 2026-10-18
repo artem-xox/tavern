@@ -69,6 +69,12 @@ def _check_question(question: Question) -> None:
         raise ValueError("A question's max_tokens must be a positive integer")
 
 
+def _thinking_off(model: str) -> dict[str, str]:
+    # Sonnet 5.5 answers `disabled` with a 400 and takes `between_tools` instead (alone, at effort `high` or below:
+    # we set no effort, and its default is `high`). Other models we ask accept `disabled`.
+    return {"type": "between_tools"} if model.startswith("claude-sonnet-5-5") else {"type": "disabled"}
+
+
 def _request(question: Question, model: str) -> dict[str, Any]:
     # A breakpoint closes every system block, so each prefix level is cached on its own; the
     # per-call content comes after them. Thinking is switched off: Haiku 5.5 thinks by default, and
@@ -76,7 +82,7 @@ def _request(question: Question, model: str) -> dict[str, Any]:
     system = [{"type": "text", "text": block, "cache_control": {"type": "ephemeral"}} for block in question["system"]]
     return {"model": model, "max_tokens": question["max_tokens"], "system": system,
             "messages": [{"role": "user", "content": question["content"]}],
-            "thinking": {"type": "disabled"},
+            "thinking": _thinking_off(model),
             "output_config": {"format": {"type": "json_schema", "schema": question["schema"]}}}
 
 
