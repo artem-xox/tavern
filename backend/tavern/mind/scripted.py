@@ -129,7 +129,13 @@ def _act(view: Mapping[str, Any], rng: Random) -> tuple[str, str]:
     # Returns the act and which lines voice it (an invitation's kind, for an invite).
     scene, me, acts = view["conversation"], view["speaker"], view["acts"]
     if not scene["turns"]:
-        return "greet", "greet"
+        # Someone who has already spoken tonight does not greet again: a fallback line for a later scene's
+        # opening (the model's was rejected) would read as a stranger's "Evening!" in the middle of a feud.
+        if not me.get("said"):
+            return "greet", "greet"
+        if "insult" in acts and _disliked(view):
+            return "insult", "insult"
+        return _opening_up(view, set(), rng) or _friendly(view, set(), rng)
     if view.get("answer"):
         # The invitee decided (`invitations.answer_options`): the line says it, a counter with an invitation of its own.
         decided = view["answer"]

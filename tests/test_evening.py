@@ -341,8 +341,9 @@ def test_quarrel_aggrieves_both_and_leaves_them_lonely() -> None:
     assert start_action(world, "ada", command("talk", "bea"))["accepted"]
     advance(world, 10)
     after = [actor["needs"]["social"] for actor in world["actors"]]
-    assert [[item["kind"] for item in actor["thoughts"] if item["kind"] == "quarrel"] for actor in world["actors"]] == [
-        ["quarrel"], ["quarrel"]]
+    # The quarrel goes on in the scene, so each holds one or more quarrel thoughts.
+    assert [{item["kind"] for item in actor["thoughts"] if item["kind"] == "quarrel"} for actor in world["actors"]] == [
+        {"quarrel"}, {"quarrel"}]
     assert [later >= earlier for earlier, later in zip(before, after)] == [True, True]
 
 

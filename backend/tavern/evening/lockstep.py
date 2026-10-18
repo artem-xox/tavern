@@ -256,7 +256,10 @@ async def run_evening(world: World, config: Mapping[str, Any], rng: Random, eval
         _collect(world, run)
         _track(world, run)
     _close(run, list(run.stalled_since), world["time"])
-    return Evening(run.events, run.choices, run.spells, run.guests, world["time"], len(run.gazes))
+    # Gazes are sampled once a tick, so a second sound in the same tick (a quarrel is heard twice at once) overwrites
+    # the first before it is seen; every logged interrupt or alert did turn a head.
+    turned = sum(event["type"] in ("interrupted", "alerted") for event in run.events)
+    return Evening(run.events, run.choices, run.spells, run.guests, world["time"], max(len(run.gazes), turned))
 
 
 def _record_choices(world: Mapping[str, Any], run: _Run, courier: LockstepCourier,

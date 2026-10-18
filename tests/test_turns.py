@@ -420,3 +420,16 @@ def test_lockstep_falls_back_to_scripted_lines_when_the_writer_fails(error: Exce
                                      Pace(step=0.1, model_latency=1.0, time_limit=12.0), failing_writer(error)))
     kinds = [event["type"] for event in result.events]
     assert ("turn_failed" in kinds, "turn" in kinds) == (True, True)
+
+
+@pytest.mark.parametrize("change, act", [
+    pytest.param({"said": []}, "greet", id="first-words-of-the-evening-greet"),
+    pytest.param({"said": ["Evening, Ada!"]}, "small_talk", id="a-guest-who-already-spoke-does-not-greet-again"),
+    pytest.param({"said": ["Evening, Ada!"], "opinions": {"ada": -50.0}}, "insult",
+                 id="a-guest-who-already-spoke-to-someone-they-loathe-goes-at-them"),
+])
+def test_a_later_scene_does_not_open_with_a_greeting(change: dict[str, Any], act: str) -> None:
+    scene = view(turns=[], **change)
+    scene["acts"] = [*scene["acts"], "insult"]
+    scene["speaker"].setdefault("opinions", {"ada": 0.0})
+    assert scripted_turn(scene)["act"] == act

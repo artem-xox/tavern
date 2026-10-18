@@ -22,6 +22,7 @@ ActEffect = Callable[[World, Conversation, Actor, Actor | None], None]
 # A speaker may insult only someone they think this little of; an insult is answered with a quarrel by
 # a target who thinks as little of the speaker.
 DISLIKED = -10.0
+LOATHED = -60.0  # An opinion this low rules out an invitation: enemies do not ask each other to play.
 
 
 @dataclass(frozen=True)
@@ -71,7 +72,7 @@ def _insult(world: World, scene: Conversation, speaker: Actor,
             addressee: Actor | None) -> None:
     # An insult to everyone lands on whoever the speaker thinks least of; the rest of the company
     # resents it if they like the target. A target who already thinks ill of the speaker answers in kind,
-    # which is a quarrel; one who does not is only stung (the insult itself is the next grudge).
+    # which is a quarrel the scene carries on with; one who does not is only stung (the insult itself is the next grudge).
     others = [item for item in _members(world, scene) if item["id"] != speaker["id"]]
     target = addressee or min(others, key=lambda item: opinion_of(speaker, item["id"], world["time"]))
     answers_back = opinion_of(target, speaker["id"], world["time"]) <= DISLIKED
@@ -82,8 +83,9 @@ def _insult(world: World, scene: Conversation, speaker: Actor,
     for member in others:
         social_acts.take_offence(world, member, speaker, target)
     if answers_back:
+        # The scene goes on: the target's next line is the answer. Ending it left the insulter to start a fresh
+        # scene against the same person every few seconds, and the target never spoke.
         _quarrel(world, speaker, target, scene["topic"])
-        end_conversation(world, scene, pleasant=False)
 
 
 ACTS: Mapping[str, Act] = MappingProxyType({
@@ -166,7 +168,8 @@ def offered_acts(world: Mapping[str, Any], scene: Conversation, speaker: Mapping
         "apologize": any(thought["about"] == speaker["id"] and thought["opinion"] < 0
                          for item in others for thought in active_thoughts(item["thoughts"], now)),
         "share_news": bool(speaker["knowledge"]["facts"]),
-        "invite": bool(invitations.offered_kinds(world, scene, speaker)),
+        "invite": bool(invitations.offered_kinds(world, scene, speaker))
+                  and all(opinion_of(speaker, item["id"], now) > LOATHED for item in others),
         "promise": any(commitments.promisable(world, speaker, item) for item in others),
         "accept": asked, "decline": asked}
     return {name: act.meaning for name, act in ACTS.items() if situational.get(name, True)}
@@ -176,8 +179,11 @@ def _quarrel(world: World, actor: Actor, partner: Actor, topic: str) -> None:
     message = f"{actor['name']} and {partner['name']} quarreled about {topic}"
     for visitor, other in ((actor, partner), (partner, actor)):
         record_event(world, visitor, "quarrel", message)
-        think(visitor, "quarrel", world["time"], f"Quarreled with {called(visitor, other)} about {topic}", message,
-              about=other)
+        thought = think(visitor, "quarrel", world["time"], f"Quarreled with {called(visitor, other)} about {topic}",
+                        message, about=other)
+        # The one who started it has nothing to answer: left unanswered, their own quarrel sends them straight back
+        # to start another, and the other never gets a turn.
+        thought["answered"] = visitor is actor
 
 
 def _share_places(speaker: Mapping[str, Any], listener: Actor) -> None:
