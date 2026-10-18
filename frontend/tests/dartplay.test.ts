@@ -1,7 +1,7 @@
 /** The dart game's small motions: the thrower's lunge, the dart's flight, the sparks of a hit and the winner's cheer. */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { CHEER_SECONDS, cheerSparks, dartAt, hitSparks, throwCycle, throwMotion, THROW_MS } from "../src/dartplay.ts";
+import { CHEER_SECONDS, cheerSparks, dartAt, handOf, hitSparks, throwCycle, throwMotion, THROW_MS } from "../src/dartplay.ts";
 
 test("a throw starts in the air and ends in the board, then the hit fades before the next throw", () => {
   assert.deepEqual(throwCycle(0, 0), { flight: 0, hit: 0 });
@@ -49,4 +49,12 @@ test("the winner's cheer sparkles for a few seconds and then stops", () => {
   assert.ok(cheerSparks(0.5, 1000).length > 0);
   assert.deepEqual(cheerSparks(CHEER_SECONDS, 1000), []);
   assert.deepEqual(cheerSparks(-1, 1000), []);
+});
+
+test("the dart leaves the hand at four fifths of a figure's height, well above the belly", () => {
+  const feet = 0.5 * 32 + 14;
+  const figure = 60;
+  const hand = handOf({ x: 2, y: 8 }, 32);
+  assert.equal(hand.x, 2.5 * 32 - 6);
+  assert.ok(Math.abs((feet + 8 * 32 - hand.y) / figure - 0.8) < 0.03);
 });

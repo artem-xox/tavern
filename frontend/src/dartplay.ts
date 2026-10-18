@@ -14,6 +14,11 @@ export function throwCycle(time: number, phase: number): { flight: number; hit: 
   return c < 0.4 ? { flight: c / 0.4, hit: 0 } : { flight: -1, hit: 1 - (c - 0.4) / 0.6 };
 }
 
+/** Where a thrower's hand is, from their cell: a little toward the board's side and 34 px above the cell's middle, at four fifths of a 60 px figure (feet 14 px below it). */
+export function handOf(cell: { x: number; y: number }, size: number): { x: number; y: number } {
+  return { x: (cell.x + 0.5) * size - 6, y: (cell.y + 0.5) * size - 34 };
+}
+
 /** The dart's place at `flight` (0–1) from the hand to the board, lifted in an arc that is highest midway. */
 export function dartAt(from: { x: number; y: number }, to: { x: number; y: number }, flight: number): { x: number; y: number } {
   return { x: from.x + (to.x - from.x) * flight, y: from.y + (to.y - from.y) * flight - Math.sin(Math.PI * flight) * 8 };
@@ -68,7 +73,7 @@ export function drawDartPlay(g: Phaser.GameObjects.Graphics, objects: readonly W
     if (board === undefined) continue;
     const phase: number = auraPhase(actor.id);
     const aim = { x: (board.x + 0.5) * size, y: (board.y + 0.5) * size };
-    const hand = { x: (actor.x + 0.5) * size - 6, y: (actor.y + 0.5) * size - 8 };
+    const hand = handOf(actor, size);
     const { flight, hit } = throwCycle(time, phase);
     const at = flight >= 0 ? dartAt(hand, aim, flight) : aim;
     // The dart's tail trails behind it in flight; once it has landed, only its flights show above the bullseye.
