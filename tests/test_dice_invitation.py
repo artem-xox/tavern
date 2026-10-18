@@ -209,6 +209,34 @@ def test_haiku_is_told_when_the_dice_table_stands_free_for_a_bored_guest(boredom
     assert ("dice table stands free" in content) is nudged
 
 
+def drunk_view(drunkenness: float, courage: float, boredom: float, kinds: list[str]) -> dict[str, Any]:
+    """Ada's view of her next line in the dice scene, as drunk and bold and bored as given."""
+    view = writer_view(boredom, courage, kinds)
+    view["speaker"]["drunkenness"] = drunkenness
+    return view
+
+
+@pytest.mark.parametrize("drunkenness, courage, expected", [
+    pytest.param(0.0, 0.2, {"darts_together"}, id="sober-and-timid-throws-darts"),
+    pytest.param(0.3, 0.2, {"dice_together"}, id="tipsy-and-timid-throws-dice"),
+    pytest.param(0.6, 0.2, {"dice_together"}, id="drunk-and-timid-throws-dice"),
+])
+def test_drink_loosens_the_scripted_writer_to_dice(drunkenness: float, courage: float, expected: set[str]) -> None:
+    assert invited_to(drunk_view(drunkenness, courage, 70, ["darts_together", "dice_together"])) == expected
+
+
+@pytest.mark.parametrize("drunkenness, boredom, kinds, nudged", [
+    pytest.param(0.3, 10, ["dice_together"], True, id="tipsy-and-content-with-a-table-free"),
+    pytest.param(0.3, 10, ["darts_together"], False, id="tipsy-without-a-table"),
+    pytest.param(0.0, 10, ["dice_together"], False, id="sober-and-content"),
+    pytest.param(0.3, 70, ["dice_together"], True, id="tipsy-and-bored"),
+])
+def test_haiku_is_told_a_drinking_guest_may_want_a_game(drunkenness: float, boredom: float, kinds: list[str],
+                                                        nudged: bool) -> None:
+    content = turn_content(drunk_view(drunkenness, 0.5, boredom, kinds))
+    assert ("dice table stands free" in content) is nudged
+
+
 async def never_asked(*arguments: Any) -> dict[str, float]:
     """A Jev that must not be asked: this evening runs on the local policy."""
     raise AssertionError("Jev must not be asked in an offline evening")
