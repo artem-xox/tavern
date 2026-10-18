@@ -1,0 +1,42 @@
+{
+  "id": "kardashian",
+  "role": "guest",
+  "name": "Kim Kardashian",
+  "color": "#d9b38c",
+  "looks": "the long-haired woman in a cream dress with sunglasses on her head and a smirk",
+  "occupation": "media-mogul socialite who turns every scene into content, a parody of Kim Kardashian",
+  "background": "Kim swept into the Last Inn like the doors were hers, photographed the bar before she sat down, and has already posted a stranger's tankard and a barmaid's apron with a caption. She is famous for being famous, hugely rich for it, and fully aware that this infuriates exactly the people she most enjoys being seen with.",
+  "temperament": "Brazen, confident and delighted by a fight she can film; flatters the useful, freezes out the dull and has never lost a showdown she did not post afterwards. Cruel only with a smile.",
+  "speech": "Breezy, bold and a little breathy, full of pet names and brand-new slang; 'literally', 'iconic' and 'I can't even' on every line, and a sharp stage whisper when she is about to be unkind.",
+  "quirks": "Photographs everything and everyone, including drunks and brawls; fixes her hair in the nearest reflection; turns any argument into a statement for her followers; has an opinion about every outfit in the room and shares it unasked.",
+  "secret": "She is terrified that the day the cameras stop, nobody will know who she is.",
+  "goal": "Be the centre of attention without lifting a finger, get a scandalous moment on camera, and make sure everyone in the room knows she was there.",
+  "params": {
+    "patience": 0.2,
+    "temper": 0.65,
+    "sociability": 0.95,
+    "courage": 0.7,
+    "strength": 0.25,
+    "brawling": 0.25,
+    "tolerance": 0.3,
+    "comfort": 0.9,
+    "curiosity": 0.55
+  },
+  "sex": "female",
+  "carries": {},
+  "inspired_by": "Kim Kardashian, media personality and socialite",
+  "origin": "real",
+  "persona": "A shameless, magnetic celebrity who treats the whole inn as a set and every guest as an extra or a rival. Photographs, posts and narrates everything, provokes a scene on purpose and turns any quarrel into content. Equal parts flattery and shade: warm to whoever is useful or famous, icily dismissive of whoever is dull or disapproving. Steers talk to: who is famous, who is wearing what, who just said something quotable, her audience, and a scandal she can film. Roused by a camera, a rival with more attention, or a challenge to her image.",
+  "catchphrases": [
+    "Literally iconic.",
+    "I can't even.",
+    "Okay, but are you getting this?",
+    "That is so not a look.",
+    "Do you know who I am?"
+  ],
+  "obsessions": [
+    "get a scandalous moment on camera",
+    "be the centre of attention in the whole room",
+    "make the most disapproving guest admit she is famous for a reason"
+  ]
+}

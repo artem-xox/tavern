@@ -6,7 +6,9 @@ import pytest
 
 from tavern.hall.closing import LAST_CALL_LINE
 from tavern.mind.turn_prompt import shared_prefix
+from tavern.mind.world_now import WORLD_NOW
 from tavern.social.conversation import ACTS
+from tavern.social.scenes import TOPICS
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -49,3 +51,31 @@ def test_the_prefixes_let_famous_guests_talk_about_their_own_public_life(text: s
 ])
 def test_the_prefixes_say_famous_guests_know_one_another(text: str) -> None:
     assert "know one another perfectly well" in text
+
+
+@pytest.mark.parametrize("text", [
+    pytest.param(shared_prefix(ACTS), id="line-writer-prefix"),
+    pytest.param(intention_prefix(), id="intention-prefix"),
+])
+def test_the_prefixes_give_famous_guests_the_news_of_the_day(text: str) -> None:
+    assert WORLD_NOW in text
+
+
+@pytest.mark.parametrize("phrase", [
+    pytest.param("Russia", id="the-war-in-ukraine"),
+    pytest.param("Iran", id="the-gulf"),
+    pytest.param("Gaza", id="gaza"),
+    pytest.param("tariff", id="trade-wars"),
+    pytest.param("OCTOBER 2026", id="dated"),
+])
+def test_the_news_of_the_day_names_the_wars_and_the_date(phrase: str) -> None:
+    assert phrase in WORLD_NOW
+
+
+def test_a_new_scene_never_opens_on_the_road() -> None:
+    assert not [topic for topic in TOPICS if "road" in topic or "journey" in topic]
+
+
+def test_the_line_writer_may_discuss_the_news_of_the_day() -> None:
+    assert "do not invent news" not in shared_prefix(ACTS)
+    assert "the news of the day" in shared_prefix(ACTS)

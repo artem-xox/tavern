@@ -64,3 +64,14 @@ export function opinionBar(opinion: number): { side: "left" | "right"; percent: 
   const held: number = Math.min(100, Math.max(-100, opinion));
   return { side: held < 0 ? "left" : "right", percent: Math.abs(held) / 2 };
 }
+
+/**
+ * The obsession an intention serves, in the card's words.
+ *
+ * @param obsessions The card's obsessions, or undefined for a card without any.
+ * @param index The intention's `obsession` index, or undefined when it serves none.
+ * @returns The obsession's text, or null when the intention names none or the index is not on the card.
+ */
+export function chasing(obsessions: readonly string[] | undefined, index: number | undefined): string | null {
+  return index === undefined ? null : obsessions?.[index] ?? null;
+}

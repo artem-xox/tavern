@@ -6,7 +6,7 @@ import re
 from typing import Any
 
 from tavern.body.ailment import urgent_needs
-from tavern.body.drunkenness import speech_instruction
+from tavern.body.drunkenness import drunk_stage, speech_instruction
 from tavern.mind.questions import Ask, Question
 from tavern.mind.scripted import BORED, CONTENT, MAX_LINE, PRESSING
 from tavern.mind.turn_prompt import shared_prefix, turn_schema
@@ -127,6 +127,10 @@ def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequen
         if me.get("news") and not told else "",
         "The speaker is bored, and the dice table stands free: a game of dice is a fine thing to propose."
         if me["needs"]["boredom"] >= BORED and "dice_together" in invitations else "",
+        "The speaker has had a few, and the dice table stands free: a game of dice, for pride and a loud cheer, is "
+        "a fine thing to propose."
+        if me["needs"]["boredom"] < BORED and drunk_stage(me["drunkenness"]).name != "sober"
+        and "dice_together" in invitations else "",
         "The speaker means to join someone here at their table: when saying so, use the promise act addressed to "
         "them, so the game can hold the speaker to it; promise it only if the speaker means to come."
         if "promise" in acts and me.get("aims_at") in {item["id"] for item in scene["participants"]} else "",
@@ -227,7 +231,7 @@ def _news(me: Mapping[str, Any]) -> str:
     # A hand-made view without the field carries no news, as with `earlier`.
     if not me.get("news"):
         return ("NEWS THE SPEAKER CARRIES\n\nNone, so the speaker cannot use share_news and talks about "
-                "themselves, the road or the room.")
+                "themselves, the room or what is on their mind.")
     items = [f'- id "{item["id"]}", {item["topic"]}: "{item["told_as"]}" ('
              f'{"you knew it before tonight" if item["heard_from"] is None else "heard from " + item["heard_from"]}; '
              f'{next(words for floor, words in _BELIEF if item["confidence"] >= floor)})' for item in me["news"]]

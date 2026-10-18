@@ -456,3 +456,16 @@ def test_the_writer_is_told_when_its_speaker_cuts_in(turns: list[dict[str, Any]]
     scene["turns"] = turns
     content = turn_question(turn_view(world, scene))["content"]
     assert ("cuts in" in content) is cut_in
+
+
+@pytest.mark.parametrize("change, act", [
+    pytest.param({"said": []}, "greet", id="first-words-of-the-evening-greet"),
+    pytest.param({"said": ["Evening, Ada!"]}, "small_talk", id="a-guest-who-already-spoke-does-not-greet-again"),
+    pytest.param({"said": ["Evening, Ada!"], "opinions": {"ada": -50.0}}, "insult",
+                 id="a-guest-who-already-spoke-to-someone-they-loathe-goes-at-them"),
+])
+def test_a_later_scene_does_not_open_with_a_greeting(change: dict[str, Any], act: str) -> None:
+    scene = view(turns=[], **change)
+    scene["acts"] = [*scene["acts"], "insult"]
+    scene["speaker"].setdefault("opinions", {"ada": 0.0})
+    assert scripted_turn(scene)["act"] == act

@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CHARACTERS = ("edda", "rurik", "toren", "brida", "calder", "saye", "hob", "trump", "greta", "musk", "tyson", "monroe", "thatcher", "queen")
+CHARACTERS = ("edda", "rurik", "toren", "brida", "calder", "saye", "hob", "trump", "greta", "musk", "tyson", "monroe", "thatcher", "queen", "putin", "zelensky", "zuckerberg", "kardashian")
 DIRECTIONS = ("north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west")
 FIGHT_POSES = ("Fighting", "KnockedOut", "Hurt", "HurtSeated", "Shoving", "HelpingUp")
 

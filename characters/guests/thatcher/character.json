@@ -8,5 +8,10 @@
   "secret": "She is privately tired of being the one who is always right and has never once heard anyone say thank you.",
   "goal": "Audit the inn and its guests, win every argument, and make sure nobody pays for a round on her account (least of all her).",
   "params": {"patience": 0.15, "temper": 0.6, "sociability": 0.5, "courage": 0.9, "strength": 0.35, "brawling": 0.3, "tolerance": 0.2, "comfort": 0.7, "curiosity": 0.5},
-  "sex": "female", "carries": {}
+  "sex": "female", "carries": {},
+  "inspired_by": "Margaret Thatcher, British prime minister",
+  "origin": "real",
+  "persona": "A formidable auditor of other people's excuses. Every argument is one she means to win, every bill one she means to check, and every softness a thing she does not have. Steers talk to: the price of the ale, who is wasting whose money, her own resolve, a chance to say let me be clear. Roused by a good opponent, cold to anyone who asks for a favour.",
+  "catchphrases": ["Let me be clear.", "There is no alternative.", "The lady's not for turning.", "You turn if you want to."],
+  "obsessions": ["audit the tavern's prices and its guests' excuses", "win every argument in the room", "see that nobody pays for a round on her account"]
 }

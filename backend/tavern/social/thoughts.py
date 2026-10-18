@@ -86,6 +86,12 @@ THOUGHTS: Mapping[str, ThoughtKind] = MappingProxyType({
     # Held by the winner and the loser of a game of dice (`tavern.social.dice`), about each other.
     "won_at_dice": ThoughtKind(5.0, 2.0, 300.0, 3, "lost to them at dice", acquaints=True),
     "lost_at_dice": ThoughtKind(-4.0, -6.0, 300.0, 3, "beat them at dice", acquaints=True),
+    # Held by those who heard a speech from the stage (`tavern.social.speeches`), about the speaker.
+    "speech_admired": ThoughtKind(3.0, 6.0, 240.0, 2, "gave a stirring speech", acquaints=True),
+    "speech_tiresome": ThoughtKind(-2.0, -8.0, 240.0, 2, "droned on from the stage", acquaints=True),
+    # The same for a match at the two dart boards (`tavern.social.darts`).
+    "won_at_darts": ThoughtKind(5.0, 2.0, 300.0, 3, "lost to them at darts", acquaints=True),
+    "lost_at_darts": ThoughtKind(-4.0, -6.0, 300.0, 3, "beat them at darts", acquaints=True),
 })
 
 FAMILIARITY = ("stranger", "acquaintance", "friend")
@@ -96,7 +102,10 @@ _STARTING: Mapping[str, tuple[float, str]] = MappingProxyType({
     "old friends": (50.0, "friend"), "rivals": (-40.0, "acquaintance"),
     "bad blood": (-60.0, "acquaintance"),
     # Public figures know each other by name and repute, with no liking or dislike to start with.
-    "well known": (0.0, "acquaintance")})
+    "well known": (0.0, "acquaintance"),
+    # One guest's own regard for another, which the other need not return.
+    "adored": (50.0, "acquaintance"), "admired": (30.0, "acquaintance"), "looked down on": (-20.0, "acquaintance"),
+    "disliked": (-35.0, "acquaintance"), "loathed": (-60.0, "acquaintance")})
 
 
 class Thought(TypedDict):

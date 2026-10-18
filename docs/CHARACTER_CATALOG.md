@@ -112,6 +112,17 @@ participants' views. For example, the Edda-Brida tie lives under Brida. Reading
 Edda's resolved profile still returns all her ties, including that one. Reject
 duplicate pairs and conflicting records rather than choosing one silently.
 
+A cast may also keep one regard matrix beside its characters, `characters/<cast>/relationships.json`
+(today only `guests`): a mapping of holder ID to a mapping of target ID to `{kind, note}`. Unlike a tie it is
+one-sided: each cell is what the holder thinks of the target, and the target may think otherwise. Kinds
+run `adored` (+50), `admired` (+30), `well known` (0), `looked down on` (-20), `disliked` (-35),
+`loathed` (-60) as the holder's starting opinion, all of them acquaintances; the evening then moves those
+opinions as anything else does. The loader rejects an unknown or repeated holder, a target outside the
+catalog, a cell for oneself, an unknown kind, an empty note, and a pair that already has a tie in a
+`relationships.json`. When a lineup is picked, the cells between the picked guests become each holder's
+starting ties. Adding a guest means adding their row and a cell in every other row; a test fails while any
+ordered pair of guests is in neither the matrix nor a tie.
+
 `visuals.json` owns the actual canvas size, display size, foot offset, and
 available pose paths relative to the character directory. Identity comes from
 the character ID, not a separately editable sprite alias. Common required pose

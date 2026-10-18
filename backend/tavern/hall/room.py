@@ -11,7 +11,7 @@ from tavern.hall.validation import coordinate, number, position, unique_ids
 
 # Every kind of object a hall may hold; saves, observations and the map check against this one list.
 OBJECT_KINDS = ("tap", "chair", "toilet", "table", "bar", "darts", "door", "window", "fireplace",
-                "dice_table", "dice_chair")
+                "dice_table", "dice_chair", "stage")
 
 # The seats, and the kind of table each stands at. Only a `chair` is somebody's own seat (`seat_id`);
 # a `dice_chair` belongs to a game (`tavern.social.dice`), so seating, resting and dozing never see it.
@@ -124,8 +124,8 @@ def _validate_footprint(item: Mapping[str, Any], world_map: Mapping[str, Any]) -
         coordinate(y, world_map["height"])
     if type(item.get("walkable", False)) is not bool:
         raise ValueError("Furniture walkability must be a boolean")
-    if item.get("walkable") and item.get("kind") not in SEAT_TABLES:
-        raise ValueError("Only seats may be walkable furniture")
+    if item.get("walkable") and item.get("kind") not in (*SEAT_TABLES, "stage"):
+        raise ValueError("Only seats and the stage may be walkable furniture")
 
 
 def _validate_objects(world_map: dict[str, Any]) -> None:

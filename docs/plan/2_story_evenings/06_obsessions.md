@@ -1,7 +1,7 @@
 ---
 id: S2-06
 title: Obsessions drive goals
-status: todo
+status: done
 needs: [S2-03, S2-05]
 touches: [mind/intentions.py, mind/goals.py, data/minds/intention_prefix.md, mind/briefing.py, mind/local_policy.py, evening/goal_metrics.py]
 ---
@@ -27,44 +27,43 @@ else pay, Greta lectures everyone about the planet. Today the mind sets typed go
 
 ## Shape
 
-- Intention answer gains `obsession: int | null` (index into the card's `obsessions`), checked at the
-  boundary (`check_intention`, `parse_stance`).
-- Saved intention keeps `obsession`; this is a schema bump: ask the user before it.
-- New goal kinds, all with a person (`target`) and built only from verbs and events that exist today:
+What shipped (the first plan changed where the code disagreed):
 
-| Kind | Wording | Serves | Reached when the log shows | Lasts |
-|------|---------|--------|---------------------------|-------|
-| `get_treated` | get {name} to buy them a drink | `invite:buy_drink` aim or approach to them | `gave` (a drink) from the target to the guest | 240 |
-| `play_with` | play dice or darts with {name} | `invite:dice_together`/`darts_together`, `play_dice` | `dice_won`/`dice_lost` between the two, or both finished `play_darts` together | 300 |
-| `drink_with` | share a drink with {name} | `buy_drink`/`stand_a_round` to them, `sit_with` their table | both drank at one table since | 240 |
-| `have_it_out` | have it out with {name} | `have_it_out`/`needle` aims to them | a `quarrel` event between them | 180 |
+- Intention answer gains `obsession: int | null` (index into the card's `obsessions`), checked by
+  `check_intention(answer, obsessions)` and `parse_stance`; an index past the card's list, a bool, a string
+  or a fraction is refused. It is **optional** in the model's schema and in `Intention` (`NotRequired`), so an
+  old save loads and **the schema version stays 19**: no save-format bump was needed.
+- `intention_view` gains `obsessions` (the card's list) and `possible` (for each other guest, the goal kinds
+  the hall can carry out now). `parse_stance` refuses a kind outside that guest's list.
+- Three new goal kinds, built only from what the game already records (thoughts hold the person):
 
-  The table is the spec; a kind whose `reached` cannot be read from events already logged is cut here.
+| Kind | Wording | Open when | Reached when the guest holds, formed after the goal | Lasts |
+|------|---------|-----------|------------------------------------------------------|-------|
+| `treat` | buy {name} an ale | a tap exists; they are not staff or asleep | `generous` about them | 240 |
+| `play_with` | play a game of dice with {name} | a dice table exists; not staff or asleep | `won_at_dice` or `lost_at_dice` about them | 300 |
+| `have_it_out` | have it out with {name} | not staff or asleep; opinion of them ≤ 0 | `quarrel` about them | 180 |
+
+  `get_treated` and `drink_with` of the first plan were cut: nothing a guest does makes someone else buy them
+  an ale, and no event says who drank with whom.
+- Aims serve goals too (`GoalKind.aims`, `serving_aim`): `invite:buy_drink` for `treat`,
+  `invite:dice_together` and `rematch` for `play_with`, `have_it_out` and `needle` for `have_it_out`.
+- `deliver_intention` keeps an active goal while the new answer names the same obsession; the goal's pull in
+  the local policy grows over its second half, from `GOAL_BONUS` 0.3 to `LATE_GOAL_BONUS` 0.5.
+- The log line of an intention that serves an obsession ends `(after: …; chasing: <obsession>)`; metrics
+  `goal_kinds` (goals set by kind) and `chased` (intentions per guest that served an obsession).
+- The inspector shows "Chasing · <obsession>"; `types.ts` has `Intention.obsession` and `CharacterCard.obsessions`.
+- Monroe, the Queen and Thatcher got persona cards with obsessions (they had none).
 
 ## Steps
 
-1. **Boundary.** Test first: `check_intention` accepts `obsession` as a valid index or `null`, rejects an
-   index out of range, a string, a bool. Check: `pytest tests/test_intentions.py -k obsession`.
-2. **Save.** Saved intention keeps `obsession`; `check_saved_intention` rejects a bad one; schema bump
-   (after approval), `test_database.py` names it. Check: `pytest tests/test_persistence.py -k intention`.
-3. **Goal kinds, one per commit.** For each kind in the table: a parametrized `serves` block and a
-   `reached` block (done, not yet, the person left → failed). Check: `pytest tests/test_goals.py -k <kind>`.
-4. **Plausible goals.** `check_goal` refuses a kind whose verbs are not open to the guest now (no dice table
-   in the room, a target already at a game, the guest on duty). One parametrized error block.
-   Check: `pytest tests/test_goals.py -k refused`.
-5. **Prompt.** `intention_view` lists obsessions numbered, first; the prefix explains goal kinds with one
-   example per obsession shape; prefix stays byte-identical and above 4,096 tokens. Check:
-   `pytest tests/test_intentions.py -k prefix`.
-6. **Stable pursuit.** Today `GOAL_BONUS = 0.3` only tips near ties, and a new intention every 180 s can
-   replace an unfinished goal. Two changes, each with a test:
-   - an active goal is kept across a new intention unless the answer names a different obsession
-     (`deliver_intention`); test: the second answer with the same obsession keeps the first goal;
-   - the bonus grows while the goal stays unserved (0.3 → 0.5 over its `lasts`), so a goal is not starved
-     by a steady need; test: the serving option wins a near tie late in the goal and loses it early.
-7. **Inspector.** Mind view shows "Chasing: <obsession>" and the goal; `types.ts` with it. Check:
-   `npm --prefix frontend test`, `make build`.
-8. **Metrics.** `goal_counts` gains `by_kind` and `by_obsession`. Check: `pytest tests/test_goal_metrics.py`.
-9. **Evenings.** Offline seeds 0–9 (scripted writer picks the first obsession) and live seed 5, Guests.
+1. Boundary: `check_intention` and `parse_stance` with an obsession index. Done.
+2. Saves: the index survives save and load, a bad one is refused. Done (no version bump).
+3. Goal kinds with `serves`, `reached`, `possible`; `open_kinds`; `serving_aim`. Done.
+4. Stable pursuit: goal kept for the same obsession; pull grows late. Done.
+5. Prompt: numbered obsessions in the moment, open kinds per guest, a section on obsessions with two examples,
+   the answer shape. Prefix still above 4,096 tokens. Done.
+6. Inspector and metrics. Done.
+7. Evenings: live Guests, seeds 5 and 7. Done (Results).
 
 ## Done when
 
@@ -74,3 +73,20 @@ else pay, Greta lectures everyone about the planet. Today the mind sets typed go
   (Results, with the `by_kind` table).
 
 ## Results
+
+Live Guests evenings (Jev + Haiku 5.5), seeds 5 and 7, each guest asked about their obsessions:
+
+| | seed 5 | seed 7 |
+|--|--------|--------|
+| goals set / done / expired / failed | 20 / 13 / 2 / 0 | 19 / 12 / 0 / 2 |
+| goals by kind | talk_to 10, have_it_out 7, treat 2, sit_with 1 | talk_to 10, have_it_out 6, play_with 2, treat 1 |
+| intentions that chased an obsession | Musk 5, Tyson 5, Trump 5, Greta 5 | Musk 5, Tyson 5, Trump 5, Greta 5 |
+
+Every guest chased an obsession in five intentions; 65% and 63% of goals ended `done`, 10% and 0% `expired`.
+Before the prompt asked Haiku for games and rounds (first pair of the same seeds) only `talk_to` and
+`have_it_out` were set. One moment: Greta's `have_it_out` with Trump came back after each quarrel it ended
+(done at the quarrel, set again at the next intention) because the obsession was the same.
+
+Not solved: `treat` goals often fail at the errand (`invitation_failed`, three times for Trump in seed 5):
+the fetcher cannot take a chair at a full table to hand the mug over (`errands._carry`). A candidate for
+`possible`: no `treat` for someone at a full table.

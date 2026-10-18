@@ -36,6 +36,15 @@ plus the topics they steer to, so talk does not loop), `catchphrases` (1–5 sho
 and `obsessions` (1–3 wishes for tonight). Write the persona so a stranger could name the
 guest from three lines. Then run a live evening (`make evening CAST=guests`) and read it.
 
+A famous guest also goes into the cast's regard matrix, `characters/guests/relationships.json`: one row
+for the newcomer (what they think of every other guest) and one cell in every other guest's row (what each
+of them thinks of the newcomer). Each cell is `{ "kind", "note" }`; the kind is how the holder sees the
+other, from warmest to coldest `adored`, `admired`, `well known`, `looked down on`, `disliked`, `loathed`
+(the matrix is not symmetric: a star can be adored by someone she barely notices). Think of the real
+world and of the public record, and write the note as the holder's own view in one sentence. A pair that
+already has a tie in a `relationships.json` (a feud, old friends) is described there and left out of the
+matrix. `make check` fails while any ordered pair of guests has neither.
+
 `relationships.json` is a list of `{ "with", "kind", "note" }`. Write each pair
 once, under either participant. The runtime makes the relation symmetric. Start with
 `[]` when there is none. `visuals.json` is `{ "size": 68, "lift": -16 }` unless the

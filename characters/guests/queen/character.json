@@ -8,5 +8,10 @@
   "secret": "She would trade every honour she has for one night of being nobody and cannot remember the last time she picked her own dinner.",
   "goal": "Take a quiet pot of tea and see that the room's manners hold, and deliver one dry verdict on whoever behaves worst before the inn closes.",
   "params": {"patience": 0.9, "temper": 0.15, "sociability": 0.5, "courage": 0.8, "strength": 0.15, "brawling": 0.05, "tolerance": 0.7, "comfort": 0.8, "curiosity": 0.45},
-  "sex": "female", "carries": {}
+  "sex": "female", "carries": {},
+  "inspired_by": "Queen Elizabeth II, British monarch",
+  "origin": "real",
+  "persona": "A monarch who has seen everything and is amused by very little. Impeccable manners, dry verdicts, and a way of making a rebuke sound like a compliment. Steers talk to: whether the room's manners hold, her dogs, a quiet pot of tea, the dreadful conduct of whoever is loudest. Never raises her voice.",
+  "catchphrases": ["How very interesting.", "One is not amused.", "We shall see.", "Quite."],
+  "obsessions": ["take a quiet pot of tea and see that the room's manners hold", "deliver one dry verdict on whoever behaves worst", "be introduced to every guest and remember their name"]
 }

@@ -1,10 +1,13 @@
 import Phaser from "phaser";
 import { callout, newer } from "./bubble";
 import { drawCandles, drawSconces } from "./candles";
+import { drawDartPlay, throwMotion } from "./dartplay.ts";
+import { drawDicePlay, rollLunge } from "./diceplay.ts";
 import { EMOTE_KINDS, EMOTE_WORDS, emoteFrame, emoteFrames, emoteMotion, emotePalette } from "./emotes";
 import { fightPose } from "./fightview";
 import { drawFloor } from "./floor";
-import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawTable, drawTap, drawToilet, drawWindow } from "./furniture";
+import { stageLift } from "./stage";
+import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawStage, drawTable, drawTap, drawToilet, drawWindow } from "./furniture";
 import { headingOf, headingToObject } from "./heading";
 import { drawFireplace, drawFlames, drawHearthGlow } from "./hearth";
 import { mapParts, type MapParts } from "./mapview";
@@ -47,6 +50,10 @@ interface ActorView {
   direction: Facing;
   /** How far drink sways the sprite, 0–1, as the server derives it. */
   sway: number;
+  /** Which way (-1 west, 1 east) a guest throwing darts faces the board; 0 when they are not throwing. */
+  throwToward: number;
+  /** Whether that throw is a die across the table rather than a dart. */
+  throwsDice: boolean;
   /** The stage of drink, and the haze it draws: a glow behind the figure, bubbles in front, with the guest's own offset. */
   stage: Mind["stage"];
   glow: Phaser.GameObjects.Graphics;
@@ -68,6 +75,10 @@ export class TavernScene extends Phaser.Scene {
   private flames!: Phaser.GameObjects.Graphics;
   /** The wall candles' flames and glow, redrawn every frame like the fire. */
   private candles!: Phaser.GameObjects.Graphics;
+  /** Darts in flight, the sparks where they land and a winner's stars, redrawn every frame. */
+  private dartPlay!: Phaser.GameObjects.Graphics;
+  /** Dice in the air over the dice table and a winner's stars, redrawn every frame. */
+  private dicePlay!: Phaser.GameObjects.Graphics;
   private route!: Phaser.GameObjects.Graphics;
   private readonly visitors: Map<string, ActorView> = new Map();
   /** The fingerprints of the map as drawn; empty before the first snapshot, so everything draws once. */
@@ -95,6 +106,8 @@ export class TavernScene extends Phaser.Scene {
     this.furniture = this.add.graphics();
     this.flames = this.add.graphics();
     this.candles = this.add.graphics();
+    this.dartPlay = this.add.graphics().setDepth(9);
+    this.dicePlay = this.add.graphics().setDepth(9);
     this.route = this.add.graphics();
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer): void => this.click(pointer));
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer): void => this.hover(pointer));
@@ -135,6 +148,11 @@ export class TavernScene extends Phaser.Scene {
       view.container.x += (view.targetX - view.container.x) * blend;
       view.container.y += (view.targetY - view.container.y) * blend;
       animateWounds(view.wounds, view.sprite, Math.max(view.sway, IDLE_SWAY) * 8 * Math.sin(time / 420 + view.cellX * 1.7 + view.cellY), time, view.direction);
+      if (view.throwToward !== 0) {
+        const lunge = view.throwsDice ? rollLunge(time, view.phase, view.throwToward) : throwMotion(time, view.phase, view.throwToward);
+        view.sprite.x += lunge.x;
+        view.sprite.y += lunge.y;
+      }
       this.animateEmote(view, time);
       drawAura(view.glow, view.bubbles, aura(view.stage, time, view.phase));
       view.speech.place(view.container.x, view.container.y, this.time.now, this.scale);
@@ -144,6 +162,8 @@ export class TavernScene extends Phaser.Scene {
       drawHearthGlow(this.hearthGlow, objects, width, size, time);
       drawFlames(this.flames, objects, width, size, time);
       drawCandles(this.candles, width, size, time);
+      drawDartPlay(this.dartPlay, objects, this.world.actors, this.world.events, this.world.time, size, time);
+      drawDicePlay(this.dicePlay, objects, this.world.actors, this.world.events, this.world.time, size, time);
     }
   }
 
@@ -175,6 +195,7 @@ export class TavernScene extends Phaser.Scene {
     if (object.kind === "table") { drawTable(this.furniture, object, size); }
     if (object.kind === "dice_table") drawDiceTable(this.furniture, object, size);
     if (object.kind === "darts") drawDarts(this.furniture, x, y);
+    if (object.kind === "stage") drawStage(this.furniture, x, y);
     if (object.reserved_by) this.furniture.lineStyle(2, 0xe6c88d, 0.75).strokeCircle(x, y, 15);
   }
 
@@ -202,7 +223,7 @@ export class TavernScene extends Phaser.Scene {
     const glow: Phaser.GameObjects.Graphics = this.add.graphics();
     const bubbles: Phaser.GameObjects.Graphics = this.add.graphics();
     const container: Phaser.GameObjects.Container = this.add.container(0, 0, [shadow, glow, selection, sprite, bubbles, wounds.cudgel, name, emote, ...wounds.stars]);
-    return { container, sprite, name, selection, speech, emote, emoteKind: null, emoteSince: 0, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south", sway: 0, stage: "sober", glow, bubbles, phase: auraPhase(actor.id), wounds };
+    return { container, sprite, name, selection, speech, emote, emoteKind: null, emoteSince: 0, targetX: 0, targetY: 0, cellX: actor.x, cellY: actor.y, direction: "south", sway: 0, throwToward: 0, throwsDice: false, stage: "sober", glow, bubbles, phase: auraPhase(actor.id), wounds };
   }
 
   private updateVisitor(view: ActorView, actor: Actor, size: number, reset: boolean): void {
@@ -229,13 +250,18 @@ export class TavernScene extends Phaser.Scene {
     // On the pot the visitor sits in the privy's own cell, not in the spot they walked to.
     const spot: { x: number; y: number } = this.onPot(actor) && target ? target : actor;
     const x: number = (spot.x + 0.5) * size;
-    const y: number = (spot.y + 0.5) * size;
+    const y: number = (spot.y + 0.5) * size - stageLift(actor, target);
     if (reset || view.targetX === 0 || Math.hypot(x - view.container.x, y - view.container.y) > size * 3) view.container.setPosition(x, y);
     view.targetX = x;
     view.targetY = y;
     view.name.setText(actor.name);
     view.sway = this.minds[actor.id]?.sway ?? 0;
     view.stage = this.minds[actor.id]?.stage ?? "sober";
+    const table: WorldObject | undefined = actor.action?.verb === "play_dice" ? this.world?.map.objects.find((object: WorldObject): boolean => object.id === target?.table_id) : undefined;
+    view.throwsDice = table !== undefined;
+    view.throwToward = actor.status !== "interacting" ? 0
+      : table?.game?.ends_at !== undefined && table.game.ends_at !== null ? Math.sign(table.x - actor.x)
+      : actor.action?.verb === "play_darts" && target ? Math.sign(target.x - actor.x) : 0;
     const talk: Conversation | undefined = this.world?.conversations.find((item: Conversation): boolean => item.participants.includes(actor.id));
     const turn: Turn | undefined = talk?.turns[talk.turns.length - 1];
     view.speech.tell(newer(turn?.speaker === actor.id ? turn : null, callout(this.world?.events ?? [], actor.id, this.world?.time ?? 0)), this.time.now, view.stage);

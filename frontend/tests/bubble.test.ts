@@ -95,3 +95,8 @@ test("callout: the barkeep's shout at a fight shows like his call at closing", (
   assert.deepEqual(callout(events as never, "hob", 12), { speaker: "hob", line: "Not in my hall!", time: 10 });
   assert.equal(callout(events as never, "hob", 30), null);
 });
+
+test("callout: a line spoken as a scene broke up still shows over its speaker", () => {
+  const events = [call("hob", 10, "You drunken sot.", "turn")];
+  assert.deepEqual(callout(events, "hob", 14), { speaker: "hob", line: "You drunken sot.", time: 10 });
+});

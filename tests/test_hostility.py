@@ -75,3 +75,11 @@ def test_targets_come_sorted_by_id() -> None:
 def test_only_hostile_verbs_have_targets(verb: str) -> None:
     with pytest.raises(ValueError, match="hostile verb"):
         hostile_targets(view(QUARREL, opinion=-40.0), verb)
+
+
+@pytest.mark.parametrize("temper, fight", [
+    pytest.param(0.45, ["bea"], id="a-sober-guest-of-middling-temper-fights-the-man-they-hate"),
+    pytest.param(0.4, [], id="a-cooler-head-still-does-not"),
+])
+def test_a_middling_temper_is_enough_to_fight_who_one_hates(temper: float, fight: list[str]) -> None:
+    assert hostile_targets(view(QUARREL, opinion=-50.0, temper=temper), "start_fight") == fight

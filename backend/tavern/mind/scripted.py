@@ -6,6 +6,7 @@ import re
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
+from tavern.body.drunkenness import drunk_stage
 from tavern.body.ailment import urgent_needs
 
 if TYPE_CHECKING:  # turns imports this module, so the types cross the cycle only for the checker.
@@ -128,7 +129,13 @@ def _act(view: Mapping[str, Any], rng: Random) -> tuple[str, str]:
     # Returns the act and which lines voice it (an invitation's kind, for an invite).
     scene, me, acts = view["conversation"], view["speaker"], view["acts"]
     if not scene["turns"]:
-        return "greet", "greet"
+        # Someone who has already spoken tonight does not greet again: a fallback line for a later scene's
+        # opening (the model's was rejected) would read as a stranger's "Evening!" in the middle of a feud.
+        if not me.get("said"):
+            return "greet", "greet"
+        if "insult" in acts and _disliked(view):
+            return "insult", "insult"
+        return _opening_up(view, set(), rng) or _friendly(view, set(), rng)
     if view.get("answer"):
         # The invitee decided (`invitations.answer_options`): the line says it, a counter with an invitation of its own.
         decided = view["answer"]
@@ -225,7 +232,8 @@ def _invitation(view: Mapping[str, Any]) -> str | None:
     # scenes before invitations existed offer none.
     offered, me = view.get("invitations", []), view["speaker"]
     wishes = [("leave_together", me["visit"]["seconds"] >= LONG_STAY),
-              ("dice_together", me["needs"]["boredom"] >= BORED and me["traits"].get("courage", 0.5) >= BOLD),
+              ("dice_together", me["needs"]["boredom"] >= BORED and (me["traits"].get("courage", 0.5) >= BOLD
+                                                                   or drunk_stage(me.get("drunkenness", 0.0)).name != "sober")),
               ("darts_together", me["needs"]["boredom"] >= BORED),
               ("join_table", me["needs"]["social"] >= 50), ("move_together", me["needs"]["social"] >= 50),
               ("buy_drink", True)]

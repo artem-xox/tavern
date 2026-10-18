@@ -7,5 +7,5 @@
 - Poses: `create_character_state` on the base, `use_color_palette_from_reference=true`, no size override, edit text
   "<pose>. Same face, outfit, colors and scale; change only pose."
 - Hurt needed two retries (heavy-load failures `f61afdcb-...`, `96792534-...`); the shipped one is `5488904b-621f-46f7-af69-3de6f1fd283d`.
-- Review notes: SleepingSeated draws a small table; check it against the room in the app.
 - 2026-10-18: TakeBeer regenerated without a tap or counter (new state `0576b146-6711-4aca-a81c-c935b0581168`), matching Edda, Toren and Trump.
+- 2026-10-18: SleepingSeated regenerated without the drawn table plank (new state `e6227751-46d6-4551-a733-2c2a809f8e76`), curled forward like the rest of the cast.

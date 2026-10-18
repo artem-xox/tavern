@@ -1,5 +1,6 @@
 """The lineup: the guests picked on the start screen, their evening's length, and the API that offers them."""
 
+from collections.abc import Callable
 import json
 from pathlib import Path
 from typing import Any
@@ -101,7 +102,7 @@ def test_the_cast_listing_shows_each_face_with_its_occupation() -> None:
     greta = next(item for item in casts["guests"]["characters"] if item["id"] == "greta")
     assert (casts["guests"]["title"], [item["id"] for item in casts["guests"]["characters"]], greta["name"],
             greta["description"], len(casts["locals"]["characters"])) == (
-        "Guests", ["greta", "monroe", "musk", "queen", "thatcher", "trump", "tyson"], "Greta", "young climate campaigner, a parody of Greta Thunberg", 6)
+        "Guests", ["greta", "kardashian", "monroe", "musk", "putin", "queen", "thatcher", "trump", "tyson", "zelensky", "zuckerberg"], "Greta", "young climate campaigner, a parody of Greta Thunberg", 6)
 
 
 def runtime(tmp_path: Path) -> TavernRuntime:
@@ -152,16 +153,25 @@ def client(tmp_path: Path) -> TestClient:
                                  catalog_dir=ROOT / "characters", scenarios_dir=ROOT / "data" / "scenarios"))
 
 
+def message_where(socket: Any, wanted: Callable[[dict[str, Any]], bool]) -> dict[str, Any]:
+    """Read socket messages until one is wanted: the server also pushes a snapshot every 0.1 s, which can arrive between a command and its answer."""
+    for _ in range(100):
+        message = socket.receive_json()
+        if wanted(message):
+            return message
+    raise AssertionError("The socket never sent the message that was wanted")
+
+
 def test_the_api_lists_both_casts_and_starts_either(tmp_path: Path) -> None:
     with client(tmp_path) as connection, connection.websocket_connect("/ws?session=device-lineup") as socket:
         casts = connection.get("/api/casts").json()
         socket.receive_json()
         socket.send_json({"type": "start", "cast": "guests", "guests": ["trump", "greta"], "minutes": 3})
-        started = socket.receive_json()["state"]
+        started = message_where(socket, lambda message: message.get("state", {}).get("closes_at") == 180)["state"]
         socket.send_json({"type": "start", "cast": "locals", "guests": ["edda"], "minutes": 5})
-        locals_evening = socket.receive_json()["state"]
+        locals_evening = message_where(socket, lambda message: message.get("state", {}).get("closes_at") == 300)["state"]
         socket.send_json({"type": "start", "cast": "robots", "guests": ["edda"], "minutes": 5})
-        refused = socket.receive_json()
+        refused = message_where(socket, lambda message: message.get("type") == "error")
     assert ([item["id"] for item in casts], started["closes_at"], locals_evening["closes_at"], refused["type"]) == (
         ["guests", "locals"], 180, 300, "error")
 
@@ -184,8 +194,8 @@ def test_famous_guests_start_out_knowing_each_other_by_name(cast: str, ids: list
 
 @pytest.mark.parametrize("ids, kinds", [
     pytest.param(["trump", "greta"], ["bad blood"], id="a-catalog-feud-replaces-knowing-by-name"),
-    pytest.param(["greta", "tyson"], ["well known"], id="an-untied-pair-know-each-other-by-name"),
-    pytest.param(["trump", "greta", "tyson"], ["bad blood", "well known", "well known"], id="mixed-trio"),
+    pytest.param(["greta", "tyson"], [], id="a-pair-in-the-regard-matrix-needs-no-shared-tie"),
+    pytest.param(["trump", "greta", "tyson"], ["bad blood"], id="mixed-trio"),
 ])
-def test_a_catalog_tie_is_not_doubled_by_knowing_by_name(ids: list[str], kinds: list[str]) -> None:
+def test_a_catalog_tie_is_not_doubled_by_the_regard_matrix(ids: list[str], kinds: list[str]) -> None:
     assert sorted(tie["kind"] for tie in lineup("guests", ids).ties) == sorted(kinds)

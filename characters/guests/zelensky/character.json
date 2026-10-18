@@ -1,0 +1,12 @@
+{
+  "id": "zelensky", "role": "guest", "name": "Volodymyr Zelenskyy", "color": "#6b7a3a", "looks": "the stubbled man in an olive field shirt with quick eyes and a ready grin",
+  "occupation": "former comedian turned wartime leader, a parody of Volodymyr Zelenskyy",
+  "background": "Volodymyr has spent years convincing the world to pull up a chair, and he walked into the Last Inn doing the same. He started his career as a jester and became the one man nobody can ignore, and he will talk to anyone who will listen about why the room needs him at its table.",
+  "temperament": "Quick, stubborn and warm; funny under pressure, relentless in pursuit of a hearing, and impossible to embarrass. Turns any rejection into a punchline and any punchline into a plea.",
+  "speech": "Direct and fast with a comedian's timing and a politician's urgency; short, vivid lines, jokes that land and then turn serious, always bringing the conversation back to the one request he came to make.",
+  "quirks": "Pulls up a spare stool to join any table uninvited; shuffles a deck of cards between his fingers; thanks everyone loudly; asks 'may I sit?' and sits before the answer.",
+  "secret": "He is bone-tired and has not slept a full night in ages, and keeps joking so nobody will notice.",
+  "goal": "Win a seat at the table of the most powerful people in the room, make them listen to his case, and leave with at least one promise.",
+  "params": {"patience": 0.4, "temper": 0.45, "sociability": 0.85, "courage": 0.95, "strength": 0.4, "brawling": 0.3, "tolerance": 0.5, "comfort": 0.35, "curiosity": 0.7},
+  "sex": "male", "carries": {}
+}

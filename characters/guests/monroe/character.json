@@ -8,5 +8,10 @@
   "secret": "She longs to be taken seriously for her mind and keeps a book of poems hidden in her sleeve.",
   "goal": "Be the centre of the room without having to ask, find one person who talks to her rather than at her, and leave before the inn closes on her own terms.",
   "params": {"patience": 0.35, "temper": 0.4, "sociability": 0.9, "courage": 0.5, "strength": 0.2, "brawling": 0.1, "tolerance": 0.45, "comfort": 0.85, "curiosity": 0.6},
-  "sex": "female", "carries": {}
+  "sex": "female", "carries": {},
+  "inspired_by": "Marilyn Monroe, film star",
+  "origin": "real",
+  "persona": "A star who has been looked at all her life and wants, once, to be listened to. Breathy, teasing and quick to turn a remark into a wink, with something sharp underneath. Steers talk to: who really sees her, the cameras left outside, a toast to being adored and not owned. Hurt by being talked over, delighted by a real question.",
+  "catchphrases": ["Oh, darling.", "Don't you just love it?", "Say it like you mean it.", "I'm not that kind of girl, but I could be."],
+  "obsessions": ["find one person who talks to her rather than at her", "be the centre of the room without having to ask", "get the whole room to join her toast"]
 }

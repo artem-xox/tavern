@@ -6,7 +6,7 @@ from typing import Any, Literal, TypedDict
 
 from tavern.body.items import parse_carries
 from tavern.mind.cards import Card, PERSONA_LISTS, PERSONA_TEXT, TEXT_FIELDS, parse_card
-from tavern.social.ties import Tie, parse_ties
+from tavern.social.ties import Regard, Tie, parse_regard, parse_ties
 
 
 ROLES = ("guest", "bartender")
@@ -45,6 +45,7 @@ class Catalog:
 
     characters: dict[str, Character]
     ties: tuple[Tie, ...]
+    regard: tuple[Regard, ...] = ()
 
     def character(self, character_id: str) -> Character:
         """Return one character by stable ID.
@@ -103,13 +104,14 @@ class Catalog:
         ]}
 
 
-def parse_catalog(records: Sequence[Any]) -> Catalog:
+def parse_catalog(records: Sequence[Any], regard: Any = None) -> Catalog:
     """Validate profile records and resolve their default relationship pairs.
 
     Args:
         records: Character records, each including its relationship records and display visuals.
+        regard: Optional matrix of what each character thinks of each other (`ties.parse_regard`); None for none.
     Returns:
-        Characters by ID and the catalog's undirected default ties.
+        Characters by ID, the catalog's undirected default ties and its regard records.
     Raises:
         ValueError: A profile is malformed, IDs repeat, or a relationship is invalid.
     """
@@ -121,7 +123,8 @@ def parse_catalog(records: Sequence[Any]) -> Catalog:
     if duplicate is not None:
         raise ValueError(f"Duplicate character {duplicate!r}")
     ties = _ties(characters, ids)
-    return Catalog(characters={item["id"]: item for item, _ in characters}, ties=ties)
+    return Catalog(characters={item["id"]: item for item, _ in characters}, ties=ties,
+                   regard=parse_regard({} if regard is None else regard, ids, ties))
 
 
 def _character(data: Any) -> tuple[Character, list[dict[str, Any]]]:

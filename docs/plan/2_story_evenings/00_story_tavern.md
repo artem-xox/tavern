@@ -48,4 +48,7 @@ prefixes (`tests/test_story_tavern.py`); `make check` (3,580 backend tests, 194 
 The client shell was also restyled (calmer surfaces, type from 12 px, grouped controls).
 Famous guests talk about their own public lives (a new section and examples in both prefixes) and start out
 knowing each other by name (`well known` ties, added by the lineup for the Guests cast).
+The line writer and the mind now also carry a dated briefing of the world's wars, scandals and quarrels
+(`mind/world_now.py`, copied into `intention_prefix.md`; refresh both before an evening), and scenes no longer
+open on "stories from the road".
 Step 3 (a live Locals evening, `make evening SEED=5`) is not run: it needs a Jev key.
