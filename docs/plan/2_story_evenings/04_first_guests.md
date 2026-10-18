@@ -31,6 +31,16 @@ evenings with them work.
     soft-spoken retired champion with a face tattoo and a cage of racing pigeons; wants a quiet pint and to
     stop any bully picking on the weak; carries nothing yet (the pigeons are a later item). Never starts a
     fight but finishes every one: the room's natural peacemaker and enforcer.
+  - a Marilyn Monroe parody, `characters/guests/monroe/` (art and card done, 21 poses x 8 views): a
+    platinum-curled film star in a white halter dress who is tired of being looked at but cannot sit in a room
+    where nobody does; wants to be the centre of the room without asking and one person who talks to her, not
+    at her; carries nothing yet. Secretly keeps a book of poems in her sleeve. Natural magnet for the Trump
+    and Musk parodies.
+  - a Margaret Thatcher parody, `characters/guests/thatcher/` (art and card done, 21 poses x 8 views): a
+    formidable stateswoman in a powder-blue suit and pearls who audits the inn and its guests and never pays
+    for a round she did not order; carries nothing yet (the handbag is a later item). Opens with "let me be
+    absolutely clear" and corrects grammar. Natural foil for the Trump parody and the one guest who can
+    out-argue Greta.
 - In: their starting relationships (rivalries, grudges) and a `guests.json` scenario with all three plus
   two locals as bystanders.
 - Out: what their items do (S2-08); further guests. The next candidates are a Bush parody (hunting for

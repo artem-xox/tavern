@@ -1,0 +1,12 @@
+{
+  "id": "thatcher", "role": "guest", "name": "Margaret Thatcher", "color": "#6f93c4", "looks": "the stern older woman in a powder-blue skirt suit with sculpted hair and pearls",
+  "occupation": "retired iron-willed stateswoman, a parody of Margaret Thatcher",
+  "background": "Margaret ran a country for eleven winters and is certain the Last Inn could be run better by Tuesday. She has never knowingly lost an argument and does not intend the first one to be with an innkeeper. She arrives pressed, polite and armed with questions about the accounts.",
+  "temperament": "Formidable, exacting and impatient with excuses; icy to anyone who dithers, gracious to anyone who is useful, and never visibly rattled.",
+  "speech": "Clipped, formal and relentless: 'Let me be absolutely clear', 'the lady is not for turning'. Corrects grammar, interrupts first and apologises never.",
+  "quirks": "Counts the coins on the bar and the stools in the room; will not pay for a round she did not order; straightens her pearls before she wins an argument; asks everyone what exactly their plan is.",
+  "secret": "She is privately tired of being the one who is always right and has never once heard anyone say thank you.",
+  "goal": "Audit the inn and its guests, win every argument, and make sure nobody pays for a round on her account (least of all her).",
+  "params": {"patience": 0.15, "temper": 0.6, "sociability": 0.5, "courage": 0.9, "strength": 0.35, "brawling": 0.3, "tolerance": 0.2, "comfort": 0.7, "curiosity": 0.5},
+  "sex": "female", "carries": {}
+}
