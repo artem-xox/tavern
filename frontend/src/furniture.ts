@@ -1,5 +1,6 @@
 /** Drawing of the hall's furniture and fittings, one function per object kind. */
 import Phaser from "phaser";
+import { diceInPlay } from "./mapview.ts";
 import type { WorldObject } from "./types";
 
 /**
@@ -122,22 +123,24 @@ export function drawDiceTable(g: Phaser.GameObjects.Graphics, object: WorldObjec
   drawTableTop(g, object, size);
   const cx: number = (object.x + (object.width ?? 1) / 2) * size;
   const cy: number = (object.y + (object.height ?? 1) / 2) * size - TABLE_LIFT;
+  // While a game is on, the players' own dice are thrown across the table (`diceplay.ts`); the resting pair would be a third and fourth.
+  if (diceInPlay(object)) return;
   drawDie(g, cx - 5, cy + 2, 3, -0.25);
   drawDie(g, cx + 6, cy - 3, 5, 0.35);
 }
 
 /** One die, turned by `tilt` radians, showing `pips` pips (1–6). */
 function drawDie(g: Phaser.GameObjects.Graphics, x: number, y: number, pips: number, tilt: number): void {
-  const side: number = 10;
+  const side: number = 8;
   const corner = (dx: number, dy: number): { x: number; y: number } => ({
     x: x + dx * Math.cos(tilt) - dy * Math.sin(tilt), y: y + dx * Math.sin(tilt) + dy * Math.cos(tilt) });
   g.fillStyle(0x33251d, 0.4).fillRoundedRect(x - side / 2 + 1, y - side / 2 + 3, side, side, 2);
   const half: number = side / 2;
   g.fillStyle(0xf3ead2).fillPoints([corner(-half, -half), corner(half, -half), corner(half, half), corner(-half, half)], true);
   g.lineStyle(1, 0x8a7656).strokePoints([corner(-half, -half), corner(half, -half), corner(half, half), corner(-half, half)], true);
-  const spots: [number, number][][] = [[[0, 0]], [[-2.5, -2.5], [2.5, 2.5]], [[-2.5, -2.5], [0, 0], [2.5, 2.5]],
-    [[-2.5, -2.5], [2.5, -2.5], [-2.5, 2.5], [2.5, 2.5]], [[-2.5, -2.5], [2.5, -2.5], [0, 0], [-2.5, 2.5], [2.5, 2.5]],
-    [[-2.5, -2.5], [2.5, -2.5], [-2.5, 0], [2.5, 0], [-2.5, 2.5], [2.5, 2.5]]];
+  const spots: [number, number][][] = [[[0, 0]], [[-2, -2], [2, 2]], [[-2, -2], [0, 0], [2, 2]],
+    [[-2, -2], [2, -2], [-2, 2], [2, 2]], [[-2, -2], [2, -2], [0, 0], [-2, 2], [2, 2]],
+    [[-2, -2], [2, -2], [-2, 0], [2, 0], [-2, 2], [2, 2]]];
   for (const [dx, dy] of spots[pips - 1]!) {
     const pip = corner(dx, dy);
     g.fillStyle(0x2b211b).fillCircle(pip.x, pip.y, 1.1);

@@ -34,17 +34,17 @@ export function rollLunge(time: number, phase: number, toward: number): { x: num
   return throwMotion(time * THROW_MS / ROLL_MS, phase + 0.25, toward);
 }
 
-const PIPS: readonly (readonly [number, number])[][] = [[[0, 0]], [[-2.5, -2.5], [2.5, 2.5]], [[-2.5, -2.5], [0, 0], [2.5, 2.5]],
-  [[-2.5, -2.5], [2.5, -2.5], [-2.5, 2.5], [2.5, 2.5]], [[-2.5, -2.5], [2.5, -2.5], [0, 0], [-2.5, 2.5], [2.5, 2.5]],
-  [[-2.5, -2.5], [2.5, -2.5], [-2.5, 0], [2.5, 0], [-2.5, 2.5], [2.5, 2.5]]];
+const PIPS: readonly (readonly [number, number])[][] = [[[0, 0]], [[-2, -2], [2, 2]], [[-2, -2], [0, 0], [2, 2]],
+  [[-2, -2], [2, -2], [-2, 2], [2, 2]], [[-2, -2], [2, -2], [0, 0], [-2, 2], [2, 2]],
+  [[-2, -2], [2, -2], [-2, 0], [2, 0], [-2, 2], [2, 2]]];
 
 function drawPlayDie(g: Phaser.GameObjects.Graphics, at: { x: number; y: number }, floor: number, pips: number, tilt: number): void {
-  const half: number = 5;
+  const half: number = 4;
   const corner = (dx: number, dy: number): { x: number; y: number } => ({
     x: at.x + dx * Math.cos(tilt) - dy * Math.sin(tilt), y: at.y + dx * Math.sin(tilt) + dy * Math.cos(tilt) });
   const outline = [corner(-half, -half), corner(half, -half), corner(half, half), corner(-half, half)];
   // The shadow stays on the table while the die is up, shrinking as it comes down.
-  g.fillStyle(0x33251d, 0.3).fillEllipse(at.x, floor + 4, 9, 4);
+  g.fillStyle(0x33251d, 0.3).fillEllipse(at.x, floor + 3, 7, 3);
   g.fillStyle(0xf3ead2).fillPoints(outline, true);
   g.lineStyle(1, 0x8a7656).strokePoints(outline, true);
   for (const [dx, dy] of PIPS[pips - 1]!) {
