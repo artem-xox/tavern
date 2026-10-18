@@ -8,7 +8,7 @@ import pytest
 
 from tavern.adapters.claude import ClaudeError
 from tavern.social.conversation import ACTS
-from tavern.mind.haiku_turns import RejectedTurn, claude_writer, parse_turn, turn_question, writer_mode
+from tavern.mind.haiku_turns import RejectedTurn, claude_writer, parse_turn, turn_question, worn_words, writer_mode
 from tavern.mind.questions import Question
 from tavern.evening.recording import Record, record_questions, replay_questions
 from tavern.social.scenes import conversation_of, start_conversation
@@ -436,3 +436,42 @@ def test_the_voiced_card_carries_the_persona() -> None:
     block = turn_question(view_of(world))["system"][1]
     assert all(phrase in block for phrase in (
         "Loud and proud.", "Tremendous!", "Believe me.", "get someone else to pay", "A tycoon"))
+
+
+@pytest.mark.parametrize("rule", [
+    pytest.param("never its words", id="answer-the-meaning-not-the-words"),
+    pytest.param("three rounds on one point", id="a-quarrel-moves-to-a-new-point"),
+])
+def test_the_style_rules_keep_a_talk_moving(rule: str) -> None:
+    assert rule in turn_question(view_of(scene_world()))["system"][0]
+
+
+def test_places_the_listener_already_knows_are_not_nudged() -> None:
+    world = scene_world(knows_tap=True)
+    people(world)["bea"]["knowledge"]["objects"]["tap"] = {**world["map"]["objects"][3], "last_seen": 0.0}
+    assert "not yet told" not in turn_question(view_of(world))["content"]
+
+
+DRONES = ["Your drones hit Kyiv again.", "Drones? Your refineries burn.", "Refineries are hit because your drones came first.",
+          "Refineries? Ask your generals."]
+
+
+@pytest.mark.parametrize("lines, worn", [
+    pytest.param([], [], id="no-lines"),
+    pytest.param(DRONES[:1], [], id="a-single-line"),
+    pytest.param(DRONES, ["drones", "refineries"], id="words-said-again-and-again"),
+    pytest.param(["Well, Vladimir.", "Well, Volodymyr.", "Well, Vladimir."], [], id="names-and-small-words-never-wear"),
+    pytest.param([*DRONES, "Fine. Tell me about the children taken.", "Children? I know of no children.",
+                  "Then name the camps.", "Camps are a Western invention."], ["camps", "children"],
+                 id="only-the-last-four-lines-count"),
+])
+def test_words_the_talk_keeps_coming_back_to_are_worn(lines: list[str], worn: list[str]) -> None:
+    assert worn_words(lines, ["Vladimir Putin", "Volodymyr Zelenskyy"]) == worn
+
+
+def test_the_moment_tells_the_speaker_to_leave_worn_words_alone() -> None:
+    world = scene_world()
+    conversation_of(world, "ada")["turns"] += [
+        {"speaker": ("bea", "ada")[index % 2], "addressee": None, "line": line, "act": "complain", "time": float(index)}
+        for index, line in enumerate(DRONES)]
+    assert "Worn out in this talk: drones, refineries." in turn_question(view_of(world))["content"]

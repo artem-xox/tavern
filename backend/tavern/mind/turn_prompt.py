@@ -152,7 +152,12 @@ these notes. Do not invent dramatic events in the hall. Nobody invents local new
 speaker's list. The news of the day in THE WORLD OUTSIDE is another matter: famous guests know it all and may \
 discuss it freely, but add no facts beyond it.
 11. Variety. Do not reuse the exact wording of earlier lines in the conversation. Do not start every line with \
-the same word. Avoid stock phrases such as "Well met" or "Aye, indeed" more than once in a conversation.
+the same word. Avoid stock phrases such as "Well met" or "Aye, indeed" more than once in a conversation. Answer \
+what the last line meant, never its words: do not pick up the other's key words or images and throw them back \
+(if they said "tonic", you do not say "tonic"), and never open a line by tossing their word back as a question \
+("Drones, Vladimir?"). Every line moves the talk on with something new: a fact, a charge, \
+a demand, a question, a denial, a concession, a threat or a reason to walk off. A quarrel that has gone three \
+rounds on one point changes the point: a new grievance from the speaker's own public life or the news of the day.
 12. Plain modern English with a light period flavour. Avoid thee, thou, forsooth and other mock-archaic \
 words; contractions are fine and natural.
 13. Goals colour talk lightly. The speaker's goal tonight may steer what they bring up, such as a trader \
