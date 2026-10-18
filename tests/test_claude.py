@@ -77,6 +77,20 @@ def test_request_caches_each_system_block_and_asks_for_the_schema() -> None:
     assert body["output_config"] == {"format": {"type": "json_schema", "schema": SCHEMA}}
 
 
+@pytest.mark.parametrize("model, thinking", [
+    pytest.param("claude-haiku-5-5", {"type": "disabled"}, id="haiku-turns-thinking-off-by-disabling-it"),
+    pytest.param("claude-sonnet-5-5", {"type": "between_tools"}, id="sonnet-5-5-refuses-disabled-so-thinks-only-between-tools"),
+])
+def test_thinking_is_switched_off_the_way_the_model_accepts(model: str, thinking: dict[str, str]) -> None:
+    sent: list[httpx2.Request] = []
+
+    def respond(request: httpx2.Request) -> httpx2.Response:
+        sent.append(request)
+        return httpx2.Response(200, json=message())
+    ask(respond, settings=config(model=model))
+    assert json.loads(sent[0].content)["thinking"] == thinking
+
+
 @pytest.mark.parametrize("respond, error", [
     pytest.param(reply({"type": "error", "error": {"type": "api_error", "message": "boom"}}, 500), "HTTP 500",
                  id="server-error"),
