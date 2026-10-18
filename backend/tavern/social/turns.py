@@ -17,7 +17,7 @@ from tavern.hall.memory import log_event
 from tavern.hall.staff import on_staff, post_of
 from tavern.hall.state import World
 from tavern.mind.briefing import recollections
-from tavern.mind.cards import TEXT_FIELDS
+from tavern.mind.cards import TEXT_FIELDS, persona_words
 from tavern.mind.feelings import feelings
 from tavern.mind.portrait import portrait
 from tavern.mind.scripted import scripted_turn
@@ -166,7 +166,7 @@ def _mind(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str, A
     others = [item for item in world["actors"] if item["id"] in scene["participants"] and item["id"] != speaker["id"]]
     others.sort(key=lambda item: scene["participants"].index(item["id"]))
     thoughts = active_thoughts(speaker["thoughts"], now)
-    return {"card": None if card is None else {key: card[key] for key in TEXT_FIELDS},
+    return {"card": None if card is None else {**{key: card[key] for key in TEXT_FIELDS}, **persona_words(card)},
             "portrait": portrait(speaker),
             "feelings": feelings({"actor": {**speaker, "drunkenness": 0.0}, "time": now}),
             "drunkenness": speaker["drunkenness"], "ailing": speaker["ailing"], "hurt": hurt(speaker),

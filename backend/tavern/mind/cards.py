@@ -9,6 +9,10 @@ PARAMS = ("patience", "temper", "sociability", "courage", "strength", "brawling"
           "curiosity")
 TEXT_FIELDS = ("name", "occupation", "background", "temperament", "speech", "quirks", "secret", "goal")
 SEXES = ("female", "male")
+ORIGINS = ("real", "fictional")
+# A famous guest's optional persona: the public image to play up, as short texts and short lists of texts.
+PERSONA_TEXT = ("inspired_by", "persona")
+PERSONA_LISTS = {"catchphrases": (1, 5), "obsessions": (1, 3)}
 # A player's card is sent to a model as-is, so each field is bounded to keep a call's cost bounded.
 _MAX_TEXT = 2000
 # Looks name a stranger in every briefing and line about them, so they stay a short phrase.
@@ -41,6 +45,11 @@ class Card(CardText):
     params: dict[str, float]
     looks: NotRequired[str]
     sex: NotRequired[str]
+    inspired_by: NotRequired[str]
+    origin: NotRequired[str]
+    persona: NotRequired[str]
+    catchphrases: NotRequired[list[str]]
+    obsessions: NotRequired[list[str]]
 
 
 def _exact_fields(data: Any, fields: set[str], label: str) -> Mapping[str, Any]:
@@ -99,7 +108,8 @@ def parse_card(data: Any) -> Card:
     Raises:
         ValueError: A field is missing, unknown or malformed.
     """
-    optional = {"looks", "sex"} & set(data) if isinstance(data, Mapping) else set()
+    known = {"looks", "sex", "origin", *PERSONA_TEXT, *PERSONA_LISTS}
+    optional = known & set(data) if isinstance(data, Mapping) else set()
     fields = _exact_fields(data, {"id", "sprite", "params", *TEXT_FIELDS, *optional}, "Card")
     words = parse_card_text({key: fields[key] for key in TEXT_FIELDS})
     for key in ("id", "sprite"):
@@ -114,7 +124,39 @@ def parse_card(data: Any) -> Card:
         if fields["sex"] not in SEXES:
             raise ValueError(f"Card sex must be one of {', '.join(SEXES)}, not {fields['sex']!r}")
         card["sex"] = fields["sex"]
+    _add_persona(card, fields, optional)
     return card
+
+
+def persona_words(card: Mapping[str, Any]) -> dict[str, str]:
+    """Phrase a card's persona fields for a model, in the order a writer should weigh them.
+
+    Args:
+        card: A card, with or without persona fields.
+    Returns:
+        Label to text for each persona field the card has; empty for an ordinary guest.
+    """
+    labels = (("inspired_by", "Inspired by"), ("persona", "Public persona"),
+              ("catchphrases", "Catchphrases to echo or twist, never repeat word for word"),
+              ("obsessions", "Obsessions tonight"))
+    return {label: " | ".join(card[key]) if isinstance(card[key], list) else card[key]
+            for key, label in labels if key in card}
+
+
+def _add_persona(card: Card, fields: Mapping[str, Any], present: set[str]) -> None:
+    for key in PERSONA_TEXT:
+        if key in present:
+            card[key] = _text(fields[key], key)  # type: ignore[literal-required]
+    if "origin" in present:
+        if fields["origin"] not in ORIGINS:
+            raise ValueError(f"Card origin must be one of {', '.join(ORIGINS)}, not {fields['origin']!r}")
+        card["origin"] = fields["origin"]
+    for key, (low, high) in PERSONA_LISTS.items():
+        if key in present:
+            items = fields[key]
+            if not isinstance(items, list) or not low <= len(items) <= high:
+                raise ValueError(f"Card {key} must be a list of {low} to {high} texts")
+            card[key] = [_text(item, key) for item in items]  # type: ignore[literal-required]
 
 
 def parse_cards(records: Sequence[Any]) -> dict[str, Card]:

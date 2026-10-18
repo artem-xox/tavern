@@ -95,7 +95,7 @@ def test_repository_scenario_resolves_catalog_defaults() -> None:
 
 @pytest.mark.parametrize("scenario, cast, guests", [
     pytest.param("locals", "locals", ["edda", "rurik", "toren", "brida", "calder", "saye"], id="locals-evening"),
-    pytest.param("guests", "guests", ["trump"], id="guests-evening"),
+    pytest.param("guests", "guests", ["musk", "tyson", "trump", "greta"], id="guests-evening"),
 ])
 def test_each_cast_has_a_scenario_of_its_own_people(scenario: str, cast: str, guests: list[str]) -> None:
     root = Path(__file__).resolve().parents[1]

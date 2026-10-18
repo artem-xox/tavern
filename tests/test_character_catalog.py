@@ -52,6 +52,14 @@ def test_catalog_resolves_defaults_and_hides_a_secret_from_public_data() -> None
     assert "secret" not in str(catalog.public())
 
 
+def test_persona_reaches_the_card_and_stays_out_of_public_data() -> None:
+    catalog = parse_catalog([profile("ada", inspired_by="Captain Ahab", origin="fictional",
+                                     persona="Hunts one whale.", catchphrases=["There she blows."],
+                                     obsessions=["find the white whale"])])
+    assert catalog.character("ada")["card"]["obsessions"] == ["find the white whale"]
+    assert not {"Ahab", "whale"} & set(str(catalog.public()).split())
+
+
 @pytest.mark.parametrize("records, message", [
     pytest.param([profile("ada"), profile("ada")], "Duplicate character", id="duplicate-id"),
     pytest.param([profile("ada", role="bouncer")], "role", id="unknown-role"),
