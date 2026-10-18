@@ -55,8 +55,10 @@ def quarrelsome() -> dict[str, Any]:
 
 
 async def complaining(view: Mapping[str, Any], config: Mapping[str, Any]) -> dict[str, Any]:
-    """A fake turn writer: the speaker insults the other, who thinks ill of them, which ends in a quarrel."""
+    """A fake turn writer: the first speaker insults the other, who thinks ill of them, which is a quarrel; the other says goodbye."""
     other = next(item["id"] for item in view["conversation"]["participants"] if item["id"] != view["speaker"]["id"])
+    if view["conversation"]["turn"] > 0:
+        return {"line": "Enough of this.", "act": "leave_conversation", "addressee": other, "topic": "the ale"}
     return {"line": "This ale is piss, and so are you.", "act": "insult", "addressee": other, "topic": "the ale"}
 
 

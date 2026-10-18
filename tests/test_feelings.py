@@ -79,9 +79,10 @@ def talked(beers: int) -> Callable[[], dict[str, Any]]:
 
 @pytest.mark.parametrize("scene, kinds, familiarity, opinion", [
     pytest.param(took_seat, ["seat_taken"], "stranger", THOUGHTS["seat_taken"].opinion, id="a-taken-seat"),
-    # Ada thought -40 of Bea already; Bea insulted her, and the quarrel followed at once.
-    pytest.param(talked(3), ["insulted", "quarrel"], "acquaintance",
-                 -40.0 + THOUGHTS["insulted"].opinion + THOUGHTS["quarrel"].opinion, id="an-insult-and-a-quarrel"),
+    # Ada thought -40 of Bea already; Bea insulted her and the quarrel followed at once. The scene goes on, so Ada
+    # answers in kind and Bea's reply is a second quarrel.
+    pytest.param(talked(3), ["insulted", "quarrel", "quarrel"], "acquaintance",
+                 -40.0 + THOUGHTS["insulted"].opinion + 2 * THOUGHTS["quarrel"].opinion, id="an-insult-and-a-quarrel"),
     pytest.param(talked(0), ["chat"], "acquaintance", THOUGHTS["chat"].opinion, id="a-pleasant-chat"),
 ])
 def test_events_leave_thoughts_about_who_caused_them(scene: Callable[[], dict[str, Any]], kinds: list[str],

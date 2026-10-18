@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 
 from tavern.social.conversation import ACTS
+from tavern.social.responses import calling
 from tavern.mind.scripted import scripted_turn
 from tavern.social.thoughts import THOUGHTS, familiarity_of, opinion_of, think, thought_mood
 from tavern.social.turns import check_turn, turn_view
@@ -111,7 +112,7 @@ def test_a_repeated_apology_softens_only_once_per_grudge() -> None:
     pytest.param(0, 0.5, -10.0, True, id="a-sober-insult-on-a-grudge-quarrels"),
     pytest.param(3, 1.0, -40.0, True, id="a-patient-pair-with-a-deep-grudge-quarrels"),
 ])
-def test_an_insult_ends_in_a_quarrel_only_on_someone_who_already_thinks_ill_of_the_speaker(
+def test_an_insult_starts_a_quarrel_only_on_someone_who_already_thinks_ill_of_the_speaker(
         beers: int, patience: float, opinion: float, quarrel: bool) -> None:
     world = seated_talk()
     hated(world)
@@ -119,8 +120,9 @@ def test_an_insult_ends_in_a_quarrel_only_on_someone_who_already_thinks_ill_of_t
     for item in world["actors"]:
         item["visit"]["beers"], item["traits"]["patience"] = beers, patience
     say(world, "insult", "You drunken sot.")
-    assert (scene_of(world) is None, sorted(item["kind"] for item in actor(world, "bea")["thoughts"])) == (
-        quarrel, ["insulted", "quarrel"] if quarrel else ["insulted"])
+    # The scene goes on either way: the target's next line is their answer.
+    assert (scene_of(world) is not None, sorted(item["kind"] for item in actor(world, "bea")["thoughts"])) == (
+        True, ["insulted", "quarrel"] if quarrel else ["insulted"])
 
 
 def test_introduction_makes_strangers_acquaintances_known_by_name() -> None:
@@ -213,3 +215,26 @@ def test_scripted_stranger_introduces_themselves_after_greeting() -> None:
     world = seated_talk(cards=True)
     say(world, "greet")
     assert scripted_turn(turn_view(world, scene_of(world)))["act"] == "introduce"
+
+
+@pytest.mark.parametrize("who, calls", [
+    pytest.param("ada", [], id="the-one-who-insulted-has-nothing-to-answer"),
+    pytest.param("bea", ["insulted", "quarrel"], id="the-one-insulted-has-an-answer-to-make"),
+])
+def test_only_the_insulted_are_called_to_answer_a_quarrel(who: str, calls: list[str]) -> None:
+    world = seated_talk()
+    hated(world)
+    actor(world, "bea")["relations"]["ada"] = {"name": "Ada", "opinion": -40.0, "familiarity": "acquaintance"}
+    say(world, "insult", "You drunken sot.")
+    assert sorted(item["kind"] for item in calling(actor(world, who), world["time"])) == calls
+
+
+@pytest.mark.parametrize("opinion, offered_invite", [
+    pytest.param(-40.0, True, id="someone-merely-disliked-may-still-be-invited"),
+    pytest.param(-60.0, False, id="nobody-asks-an-enemy-to-play-darts"),
+])
+def test_nobody_invites_someone_they_loathe(opinion: float, offered_invite: bool) -> None:
+    world = seated_talk()
+    know(world, "ada", "tap")
+    actor(world, "ada")["relations"]["bea"] = {"name": "Bea", "opinion": opinion, "familiarity": "acquaintance"}
+    assert ("invite" in offered(world)) == offered_invite
