@@ -72,13 +72,13 @@ def test_a_goal_in_words_the_table_lacks_fails_loudly() -> None:
 def intention(who: str, tail: str = "") -> dict[str, Any]:
     """A logged intention, with what it chases when told."""
     return {"time": 1.0, "actor_id": who, "type": "intention",
-            "message": f"{who} thinks: Hm. Intends: Stay. (after: arrival){tail}"}
+            "message": f"{who} thinks: Hm. Intends: Stay. (after: arrival{tail})"}
 
 
 @pytest.mark.parametrize("events, expected", [
     pytest.param([], {}, id="empty"),
-    pytest.param([intention("ada", " Chasing: get someone else to pay.")], {"ada": 1}, id="single"),
-    pytest.param([intention("ada", " Chasing: a."), intention("ada", " Chasing: b."), intention("bea", " Chasing: a.")],
+    pytest.param([intention("ada", "; chasing: get someone else to pay")], {"ada": 1}, id="single"),
+    pytest.param([intention("ada", "; chasing: a"), intention("ada", "; chasing: b"), intention("bea", "; chasing: a")],
                  {"ada": 2, "bea": 1}, id="duplicates-and-two-guests"),
     pytest.param([intention("ada"), event("goal_set")], {}, id="an-intention-that-chases-nothing"),
 ])

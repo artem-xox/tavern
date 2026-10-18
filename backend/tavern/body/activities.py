@@ -312,8 +312,10 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              family="refreshment",
              what="walk to the tap {target} and get a mug of ale to carry: the barkeep pours it, or they pour "
                   "their own when nobody tends the bar",
-             guidance="Thirsty guests and newcomers naturally fetch a drink. It is pointless while they already "
-                      "hold a mug, or when the tap has run dry."),
+             guidance="Thirsty guests and newcomers naturally fetch a drink, and so does a guest in lively company, "
+                      "before they are thirsty: a table that is drinking together drinks another. It is pointless "
+                      "while they already hold a mug, or when the tap has run dry, and not for a guest who is "
+                      "already wasted."),
     # Never a candidate: the barkeep's own routine (`tavern.body.bartending`) pours for the guest waiting at the
     # tap, and a guest is refused it. The routine, not the timer, ends it.
     Activity(verb="pour_beer", duration=3.0, served=True, staff_only=True, label="Pour a beer", status="pouring",
@@ -327,7 +329,8 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              family="refreshment",
              what="drink the mug of ale they are holding",
              guidance="Sipping ale at the table is the heart of a tavern evening; it quenches thirst but fills "
-                      "the bladder."),
+                      "the bladder. A mug in hand at a table of company is drunk with the others, thirsty or not; "
+                      "a few of them make a guest louder and bolder."),
     Activity(verb="rest", target_kinds=("chair",), duration=3.0,
              label="Rest", pose="Seated", interruptible=True, doing="resting", done="rested",
              family="resting",

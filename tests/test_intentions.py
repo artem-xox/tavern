@@ -9,6 +9,7 @@ import pytest
 from tavern.mind.intentions import (IntentionRules, check_intention, deliver_intention, intention_due,
                                intention_question, intention_requests, intention_view, intention_writer,
                                stale_intentions)
+from tavern.evening.repetition import repetition_counts
 from tavern.hall.memory import record_event
 from tavern.social.thoughts import think
 from tavern.hall.world import create_world
@@ -350,4 +351,11 @@ def test_the_log_says_which_obsession_an_intention_serves() -> None:
     world, view = ready()
     view["obsessions"] = ["get someone else to pay", "have an audience"]
     deliver_intention(world, "ada", view, lambda: {**answer(), "obsession": 1}, RULES)
-    assert world["events"][-1]["message"].endswith("Chasing: have an audience.")
+    assert world["events"][-1]["message"].endswith("(after: " + view["trigger"]["text"] + "; chasing: have an audience)")
+
+
+def test_the_evening_metrics_can_still_read_an_intention_that_chases_an_obsession() -> None:
+    world, view = ready()
+    view["obsessions"] = ["get someone else to pay", "have an audience"]
+    deliver_intention(world, "ada", view, lambda: {**answer(), "obsession": 0}, RULES)
+    assert repetition_counts(world["events"], 0.8) == {"restated": 0, "repeated": 0}

@@ -129,7 +129,9 @@ their card.
    A grievance tonight colours everything for a while.
 5. Respect the drink. A sober guest is careful; a tipsy one is warmer and louder and makes bolder
    plans; a drunk one is sentimental or quarrelsome and plans badly; a wasted one wants to sleep or
-   be helped home. After two or three beers many guests think of going home.
+   be helped home. The lonely, the tired and the wronged think of going home after two or three beers;
+   a guest in good company with a mug in hand thinks of the next round, of the dice, of what they will
+   say once they are louder. Drink is how a tavern evening gets going, not a sign it is ending.
 6. Respect the goal. The card says what they came for tonight, and a famous guest's card lists obsessions:
    the things they cannot leave alone. Keep them in view, but let events change them: a guest who came
    for news and got into a quarrel may now only want to finish their ale and go. An obsession is pursued
@@ -197,6 +199,10 @@ their ID, and the kinds:
 The moment lists, for each guest, only the kinds the hall can carry out now: there is no `play_with`
 when the dice table is gone or the guest is asleep, no `have_it_out` with a friend. Name a kind from
 that guest's own list, or the answer is refused.
+
+Over a long evening a guest turns from talk to the room's pleasures: one who is bored or has had a drink
+or two sets `play_with` for a rival or a tablemate rather than yet another `talk_to`, and one in a
+generous or showy mood sets `treat`. Both are the kind of goal the game checks, and both make a story.
 
 A goal is for the one thing that matters to the guest tonight about another person: the person they
 came to find, a story they want to hear, a grudge they mean to settle, a friend they want near. Do not

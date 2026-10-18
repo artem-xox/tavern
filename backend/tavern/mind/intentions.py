@@ -104,8 +104,9 @@ SALIENT_EVENTS: Mapping[str, str] = MappingProxyType({
 SALIENT_THOUGHTS = ("quarrel", "seat_taken", "table_intruded", "insulted", "shoved", "attacked", "lost_fight",
                     "knocked_out_by")
 _LONGEST = 400
-# What the log of an intention that serves an obsession carries after its trigger, then the obsession (`evening.goal_metrics`).
-CHASING = " Chasing: "
+# What the log of an intention that serves an obsession carries inside its "(after: …)", then the obsession: the
+# intention's words must still end in the parenthesis (`evening.repetition` reads them).
+CHASING = "; chasing: "
 _ANSWER_FIELDS = {"thought", "intention", "goal", "obsession"}
 
 # Writes a guest's thought and intention from their view (see `intention_view`); raises on failure.
@@ -457,9 +458,9 @@ def deliver_intention(world: World, actor_id: str, view: Mapping[str, Any],
     if "obsession" in written:
         intention["obsession"] = written["obsession"]
     actor["intention"] = intention
-    chasing = f"{CHASING}{view['obsessions'][written['obsession']]}." if "obsession" in written else ""
+    chasing = f"{CHASING}{view['obsessions'][written['obsession']]}" if "obsession" in written else ""
     log_event(world, actor_id, "intention", f"{actor['name']} thinks: {written['thought']} Intends: "
-                                       f"{written['intention']} (after: {view['trigger']['text']}){chasing}")
+                                       f"{written['intention']} (after: {view['trigger']['text']}{chasing})")
     if goal is not None and not kept:
         log_event(world, actor_id, "goal_set", f"{actor['name']} set out to {goal_words(goal, view['others'][goal['target']])}")
     return world["time"] + rules.min_gap
