@@ -749,10 +749,12 @@
       "y": 9,
       "interaction_spots": [
         [
-          16,
+          17,
           9
         ]
-      ]
+      ],
+      "walkable": true,
+      "facing": "west"
     },
     {
       "id": "dice-table",
