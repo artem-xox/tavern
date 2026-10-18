@@ -12,7 +12,7 @@ from tavern.evening.lineup import lineup_scenario
 from tavern.mind.characters import parse_catalog
 from tavern.social.thoughts import seed_relations
 
-from tests.test_character_catalog import profile
+from test_character_catalog import profile
 
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG = load_catalog(ROOT / "characters")
