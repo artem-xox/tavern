@@ -25,7 +25,7 @@ from tavern.hall.state import World, find_actor
 from tavern.hall.world import observe_actor, observe_people
 from tavern.mind.briefing import brief
 from tavern.mind.cards import PARAMS, TEXT_FIELDS, persona_words
-from tavern.mind.goals import GOALS, STATUSES, Goal, check_goal, goal_words, open_kinds
+from tavern.mind.goals import GOALS, STATUSES, Goal, check_goal, goal_words, open_alone, open_kinds
 from tavern.mind.questions import Ask, Question
 from tavern.social.heard import earlier_lines
 from tavern.social.names import called
@@ -215,7 +215,7 @@ def intention_view(world: Mapping[str, Any], actor: Mapping[str, Any], trigger: 
     Returns:
         `actor_id`, `name`, `time`, `trigger`, `previous` intention (or None), `card` in words,
         `situation` (the briefing paragraph, without the previous intention), active `thoughts`,
-        `obsessions` (the card's obsessions, in order; empty without a card or persona), `duty` (the bar they work at, or None for a guest), `others` (the guests in the hall as this guest calls them: ID to name, for a goal), `possible` (the goal kinds the hall can carry out for each of them now), `earlier`
+        `obsessions` (the card's obsessions, in order; empty without a card or persona), `duty` (the bar they work at, or None for a guest), `others` (the guests in the hall as this guest calls them: ID to name, for a goal), `possible` (the goal kinds the hall can carry out for each of them now), `alone` (those about no one it can carry out), `earlier`
         (the latest 8 lines they said or heard tonight, see `heard.earlier_lines`) and `drink`
         (drunkenness stage).
     """
@@ -225,6 +225,7 @@ def intention_view(world: Mapping[str, Any], actor: Mapping[str, Any], trigger: 
     return {"actor_id": actor["id"], "name": actor["name"], "time": world["time"], "trigger": dict(trigger),
             "previous": deepcopy(actor["intention"]), "card": _card(actor), "obsessions": _obsessions(actor),
             "possible": {item["id"]: open_kinds(world, actor, item) for item in world["actors"] if item["id"] != actor["id"]},
+            "alone": open_alone(world, actor),
             "situation": brief(observation, [])["situation"],
             "duty": post_of(world["map"], actor)["name"] if on_staff(actor) else None,
             "others": {item["id"]: called(actor, item) for item in world["actors"] if item["id"] != actor["id"]},
@@ -284,7 +285,7 @@ def _others(view: Mapping[str, Any]) -> str:
                        for key, name in view["others"].items()) or "no one"
     return (f"Guests they could set a goal about: {people}. Goal kinds: "
             + "; ".join(f"{kind} = {goal_words({'kind': kind, 'target': None, 'status': 'active'}, 'that guest')}"
-                        for kind in GOALS) + ".")
+                        for kind in GOALS) + f". Goals about no one (target null) open now: {', '.join(view['alone']) or 'none'}.")
 
 
 def _earlier(view: Mapping[str, Any]) -> list[str]:
@@ -371,11 +372,12 @@ def check_intention(answer: Any, obsessions: int = 0) -> Written:
 
 def _is_goal(goal: Any) -> bool:
     return (isinstance(goal, dict) and set(goal) == {"kind", "target", "status"} and goal["kind"] in GOALS
-            and isinstance(goal["target"], str) and goal["status"] in STATUSES)
+            and (isinstance(goal["target"], str) or (goal["target"] is None and not GOALS[goal["kind"]].person))
+            and goal["status"] in STATUSES)
 
 
 def parse_stance(answer: Any, others: Mapping[str, str], on_duty: bool = False, obsessions: int = 0,
-                 possible: Mapping[str, Collection[str]] | None = None) -> Written:
+                 possible: Mapping[str, Collection[str]] | None = None, alone: Collection[str] | None = None) -> Written:
     """Check what the mind answered at the boundary.
 
     Args:
@@ -399,7 +401,7 @@ def parse_stance(answer: Any, others: Mapping[str, str], on_duty: bool = False, 
     kind = answer["goal"]
     if not isinstance(kind, str) or not (answer["target"] is None or isinstance(answer["target"], str)):
         raise ValueError(f"A goal is a kind and the ID of a guest, not {kind!r} and {answer['target']!r}")
-    goal = check_goal(None if kind == "none" else kind, answer["target"], others, on_duty, possible)
+    goal = check_goal(None if kind == "none" else kind, answer["target"], others, on_duty, possible, alone)
     return check_intention({"thought": answer["thought"], "intention": answer["intention"], "goal": goal,
                             "obsession": answer.get("obsession")}, obsessions)
 
@@ -417,7 +419,7 @@ def intention_writer(prefix: str, ask: Ask) -> Intender:
     """
     async def write(view: Mapping[str, Any]) -> Written:
         return parse_stance(await ask(intention_question(prefix, view)), view["others"], view["duty"] is not None,
-                            len(view["obsessions"]), view["possible"])
+                            len(view["obsessions"]), view["possible"], view["alone"])
     return write
 
 
@@ -462,7 +464,7 @@ def deliver_intention(world: World, actor_id: str, view: Mapping[str, Any],
     log_event(world, actor_id, "intention", f"{actor['name']} thinks: {written['thought']} Intends: "
                                        f"{written['intention']} (after: {view['trigger']['text']}{chasing})")
     if goal is not None and not kept:
-        log_event(world, actor_id, "goal_set", f"{actor['name']} set out to {goal_words(goal, view['others'][goal['target']])}")
+        log_event(world, actor_id, "goal_set", f"{actor['name']} set out to {goal_words(goal, view['others'].get(goal['target']))}")
     return world["time"] + rules.min_gap
 
 

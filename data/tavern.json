@@ -715,6 +715,19 @@
       ]
     },
     {
+      "id": "stage",
+      "kind": "stage",
+      "name": "Stage",
+      "x": 17,
+      "y": 9,
+      "interaction_spots": [
+        [
+          16,
+          9
+        ]
+      ]
+    },
+    {
       "id": "dice-table",
       "kind": "dice_table",
       "name": "Dice table",

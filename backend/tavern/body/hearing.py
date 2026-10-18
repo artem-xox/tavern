@@ -76,6 +76,8 @@ EVENT_SOUNDS: Mapping[str, Sound] = MappingProxyType({
     "blow": Sound("brawl", 0.3, 40.0, "blows landing"),
     # Below the interrupt level: it turns heads without breaking off what anyone is doing.
     "dice_won": Sound("cheer", 0.3, 12.0, "a whoop at the dice table"),
+    # A speech from the stage is meant for the whole room: it turns heads across the hall, but breaks nothing off.
+    "gave_speech": Sound("speech", 0.6, 30.0, "a speech from the stage"),
 })
 
 

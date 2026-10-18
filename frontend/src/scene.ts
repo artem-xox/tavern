@@ -4,7 +4,7 @@ import { drawCandles, drawSconces } from "./candles";
 import { EMOTE_KINDS, EMOTE_WORDS, emoteFrame, emoteFrames, emoteMotion, emotePalette } from "./emotes";
 import { fightPose } from "./fightview";
 import { drawFloor } from "./floor";
-import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawTable, drawTap, drawToilet, drawWindow } from "./furniture";
+import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawStage, drawTable, drawTap, drawToilet, drawWindow } from "./furniture";
 import { headingOf, headingToObject } from "./heading";
 import { drawFireplace, drawFlames, drawHearthGlow } from "./hearth";
 import { mapParts, type MapParts } from "./mapview";
@@ -175,6 +175,7 @@ export class TavernScene extends Phaser.Scene {
     if (object.kind === "table") { drawTable(this.furniture, object, size); }
     if (object.kind === "dice_table") drawDiceTable(this.furniture, object, size);
     if (object.kind === "darts") drawDarts(this.furniture, x, y);
+    if (object.kind === "stage") drawStage(this.furniture, x, y);
     if (object.reserved_by) this.furniture.lineStyle(2, 0xe6c88d, 0.75).strokeCircle(x, y, 15);
   }
 

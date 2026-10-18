@@ -5,6 +5,7 @@ import math
 from types import MappingProxyType
 from typing import Any
 
+from tavern.body.activities import ACTIVITIES
 from tavern.body.ailment import carries_cure
 from tavern.body.drunkenness import drunk_stage
 from tavern.body.items import ITEMS
@@ -107,6 +108,9 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
         "watch_dice": max(0.0, 0.1 + 0.5 * actor["needs"].get("boredom", 0) / 100 + 0.25 * traits.get("curiosity", 0.5)
                           - 0.3 * max(thirst, fatigue, bladder)),
         "use_toilet": bladder,
+        # The sociable, the drunk and the bored want the room's ear: the fun of a speech, as it eases boredom.
+        "give_speech": min(1.0, 0.05 + 0.3 * traits.get("sociability", 0.5) + 0.3 * actor.get("drunkenness", 0.0)
+                           + 0.3 * ACTIVITIES["give_speech"].fun * actor["needs"].get("boredom", 0) / 100),
         # Sleep suits a guest who is tired, and more so one who has drunk: they sleep it off where they sit.
         "doze": min(1.0, max(0.0, 2.2 * (fatigue - 0.6)) + 0.9 * actor.get("drunkenness", 0.0)),
         "inspect": 0.08 + 0.12 * traits.get("curiosity", 0.5) + 0.4 * missing_relief,
