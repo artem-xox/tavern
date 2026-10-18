@@ -9,11 +9,12 @@ from typing import Any
 import pytest
 
 from tavern.mind.agents import Evaluators
+from tavern.mind.haiku_turns import turn_question
 from tavern.server.runtime import TavernRuntime
 from tavern.evening.lockstep import Pace, run_evening
 from tavern.social.scenes import conversation_of
 from tavern.mind.scripted import scripted_turn
-from tavern.social.turns import check_turn, claim_turns, deliver_turn, reading_time, turn_view
+from tavern.social.turns import check_turn, claim_turns, deliver_turn, next_speaker, reading_time, turn_view
 from tavern.hall.world import create_world, start_action, step_world
 
 RULES = {"min_gap": 2.5, "chars_per_second": 15.0}
@@ -420,3 +421,38 @@ def test_lockstep_falls_back_to_scripted_lines_when_the_writer_fails(error: Exce
                                      Pace(step=0.1, model_latency=1.0, time_limit=12.0), failing_writer(error)))
     kinds = [event["type"] for event in result.events]
     assert ("turn_failed" in kinds, "turn" in kinds) == (True, True)
+
+
+def line(speaker: str, addressee: str | None) -> dict[str, Any]:
+    """Build a spoken turn; only who spoke and to whom matter to the order."""
+    return {"speaker": speaker, "addressee": addressee, "line": "...", "act": "small_talk", "time": 0.0}
+
+
+@pytest.mark.parametrize("people, turns, expected", [
+    pytest.param(("ada", "bea"), [line("ada", "bea")], "bea", id="pair-answers-the-addressee"),
+    pytest.param(("ada", "bea", "cid"), [line("ada", "bea")], "bea", id="one-line-is-too-soon-to-cut-in"),
+    pytest.param(("ada", "bea", "cid"), [line("ada", "bea"), line("bea", "ada")], "cid",
+                 id="third-cuts-in-after-two-lines-without-them"),
+    pytest.param(("ada", "bea", "cid"), [line("ada", "bea"), line("bea", "ada"), line("cid", "ada")], "ada",
+                 id="a-line-of-their-own-resets-the-wait"),
+    pytest.param(("ada", "bea", "cid"), [line("ada", "cid"), line("cid", "ada")], "bea",
+                 id="the-one-left-out-cuts-in-on-whichever-pair-talks"),
+    pytest.param(("ada", "bea", "cid", "dan"), [line("ada", "bea"), line("bea", "ada")], "cid",
+                 id="first-silent-in-joining-order-cuts-in"),
+])
+def test_a_silent_member_cuts_in_on_a_pair_talking_past_them(people: tuple[str, ...], turns: list[dict[str, Any]],
+                                                              expected: str) -> None:
+    scene = {"participants": list(people), "turns": turns}
+    assert next_speaker(scene) == expected
+
+
+@pytest.mark.parametrize("turns, cut_in", [
+    pytest.param([line("ada", "bea")], False, id="first-reply-is-no-cut-in"),
+    pytest.param([line("ada", "bea"), line("bea", "ada")], True, id="third-left-out-two-lines-cuts-in"),
+])
+def test_the_writer_is_told_when_its_speaker_cuts_in(turns: list[dict[str, Any]], cut_in: bool) -> None:
+    world = talking("cid", social=100.0)
+    scene = conversation_of(world, "ada")
+    scene["turns"] = turns
+    content = turn_question(turn_view(world, scene))["content"]
+    assert ("cuts in" in content) is cut_in
