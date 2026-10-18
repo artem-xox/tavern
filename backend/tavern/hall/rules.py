@@ -19,7 +19,7 @@ def default_rules() -> Rules:
         per game second, distances in cells.
     """
     return {"move_seconds": 0.35, "blocked_timeout": 3.0, "vision_radius": 5,
-            "need_rates": {"thirst": 0.18, "fatigue": 0.05, "bladder": 0.10,
+            "need_rates": {"thirst": 0.22, "fatigue": 0.05, "bladder": 0.10,
                            "social": 0.18, "boredom": 0.25},
             "durations": {verb: activity.duration for verb, activity in ACTIVITIES.items()
                           if activity.duration is not None},
@@ -36,8 +36,9 @@ def default_rules() -> Rules:
                               "waiting": 0.5},
             "long_wait": 2.0,
             # A middling drinker's rise per beer, how much wears off each second, and how often a
-            # wasted guest at their table nods off, per second.
-            "drunkenness": {"per_beer": 0.2, "per_second": 0.0005, "doze_per_second": 0.01},
+            # wasted guest at their table nods off, per second. Three beers make a guest drunk and stay
+            # so for most of a ten-minute evening (0.0002 a second wears off 0.12 in ten minutes).
+            "drunkenness": {"per_beer": 0.2, "per_second": 0.0002, "doze_per_second": 0.01},
             # Scenes (`tavern.social.scenes`, `tavern.social.turns`): seconds before the first line and per line
             # at least, how long a scene holds its guests once a closing line is spoken (so it can be heard),
             # reading speed, how long a claimed line may keep the others waiting, social

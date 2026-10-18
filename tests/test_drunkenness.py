@@ -11,6 +11,7 @@ from tavern.mind.briefing import brief
 from tavern.body.drunkenness import (STAGES, drink_beer, drunk_stage, fight_accuracy, inhibition_modifier, sober_up,
                                 speech_instruction)
 from tavern.adapters.persistence import load_world, save_world
+from tavern.hall.rules import default_rules
 from tavern.hall.world import create_world, observe_actor, start_action, step_world
 
 RULES = {"per_beer": 0.2, "per_second": 0.0005, "doze_per_second": 0.01}
@@ -129,7 +130,7 @@ def test_drunkenness_wears_off_in_the_inn() -> None:
     world = create_world(table_room())
     world["actors"][0]["drunkenness"] = 0.5
     advance(world, 100)
-    assert world["actors"][0]["drunkenness"] == pytest.approx(0.45)
+    assert world["actors"][0]["drunkenness"] == pytest.approx(0.48)
 
 
 def sleepy(drunkenness: float, sit: bool) -> dict[str, Any]:
@@ -198,3 +199,21 @@ def test_corrupt_drunkenness_is_rejected(tmp_path: Path, corrupt: Callable[[dict
     save_world(world, tmp_path / "corrupt.json")
     with pytest.raises(ValueError):
         load_world(tmp_path / "corrupt.json")
+
+
+@pytest.mark.parametrize("beers, minutes, stage", [
+    pytest.param(3, 0, "drunk", id="three-beers-and-drunk-at-once"),
+    pytest.param(3, 10, "drunk", id="three-beers-still-drunk-ten-minutes-on"),
+    pytest.param(2, 10, "tipsy", id="two-beers-are-tipsy-ten-minutes-on"),
+    pytest.param(4, 0, "wasted", id="four-beers-and-wasted-at-once"),
+])
+def test_a_middling_drinker_stays_as_drunk_as_the_beers_made_them_through_the_evening(beers: int, minutes: int,
+                                                                                       stage: str) -> None:
+    rules, level = default_rules()["drunkenness"], 0.0
+    for _ in range(beers):
+        level = drink_beer(level, 0.5, rules)
+    assert drunk_stage(sober_up(level, minutes * 60, rules)).name == stage
+
+
+def test_a_guest_who_has_not_drunk_for_five_minutes_is_thirsty_enough_to_fetch_an_ale() -> None:
+    assert default_rules()["need_rates"]["thirst"] * 300 >= 60
