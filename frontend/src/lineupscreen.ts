@@ -43,7 +43,7 @@ export class LineupScreen {
   }
 
   private faces(cast: Cast): TemplateResult {
-    return html`<div class="faces">${cast.characters.map((person) => html`<button class="face ${this.picked.includes(person.id) ? "picked" : ""}" aria-pressed=${this.picked.includes(person.id)} @click=${(): void => { this.picked = togglePick(this.picked, person.id); this.draw(); }}>
+    return html`<div class="lineup-faces">${cast.characters.map((person) => html`<button class="lineup-face ${this.picked.includes(person.id) ? "picked" : ""}" aria-pressed=${this.picked.includes(person.id)} @click=${(): void => { this.picked = togglePick(this.picked, person.id); this.draw(); }}>
         <img src="/characters/${person.id}/Idle/rotations/south.png" alt="" width="68" height="68"><strong>${person.name}</strong><span>${person.description}</span></button>`)}</div>
       <div class="lineup-actions">
         <button @click=${(): void => { this.cast = null; this.picked = []; this.draw(); }}>← Casts</button>

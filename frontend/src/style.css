@@ -194,13 +194,14 @@ summary > span:last-child { color: var(--muted); font-size: var(--t-label); text
 .cast-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .cast-choice { display: flex; flex-direction: column; gap: 6px; padding: 28px 16px; font-size: 20px; }
 .cast-choice span { font-size: var(--t-small); color: var(--muted); }
-.faces { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.lineup-faces { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
 .face { position: relative; width: 44px; height: 44px; flex-shrink: 0; overflow: hidden; border-radius: 22px 22px 6px 6px; background: var(--raised); box-shadow: 0 0 0 2px #5a4a30; }
 .face img { position: absolute; left: -19px; top: -1px; width: 83px; height: 83px; image-rendering: pixelated; }
-.face img { image-rendering: pixelated; }
-.face span { font-size: var(--t-small); line-height: 1.4; color: var(--muted); }
-.face.picked { border-color: var(--gold-2); }
-.face.picked span { color: var(--on-gold); }
+.lineup-face { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 8px; text-align: center; white-space: normal; border: 2px solid transparent; }
+.lineup-face img { image-rendering: pixelated; }
+.lineup-face span { font-size: var(--t-small); line-height: 1.4; color: var(--muted); }
+.lineup-face.picked { border-color: var(--gold-2); }
+.lineup-face.picked span { color: var(--on-gold); }
 .lineup-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 18px; }
 .lineup-actions .muted { margin-right: auto; }
 .lineup-card .link { display: block; margin: 16px auto 0; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; }
