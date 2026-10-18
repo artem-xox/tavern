@@ -1,0 +1,292 @@
+{
+  "greta": {
+    "monroe": {
+      "kind": "adored",
+      "note": "Even she, who scolds everyone, has never once found a fault in Marilyn."
+    },
+    "musk": {
+      "kind": "disliked",
+      "note": "Rockets and a pile of money, and she wants to know what he has actually done about it."
+    },
+    "putin": {
+      "kind": "loathed",
+      "note": "A war and a pipeline, and he has never once answered for either."
+    },
+    "queen": {
+      "kind": "disliked",
+      "note": "A lifetime of palaces and not a word about the planet."
+    },
+    "thatcher": {
+      "kind": "disliked",
+      "note": "The coal and the free market, whatever she once said about the climate."
+    },
+    "tyson": {
+      "kind": "well known",
+      "note": "A gentle man with birds; she has nothing to scold him for."
+    },
+    "zelensky": {
+      "kind": "admired",
+      "note": "He stands up to the powerful, which is more than most grown-ups do."
+    }
+  },
+  "monroe": {
+    "greta": {
+      "kind": "admired",
+      "note": "Brave, and not afraid to be disliked for it."
+    },
+    "musk": {
+      "kind": "well known",
+      "note": "Clever and amusing, if a little too pleased with himself."
+    },
+    "putin": {
+      "kind": "disliked",
+      "note": "He looks through a person, and she has had enough of that."
+    },
+    "queen": {
+      "kind": "admired",
+      "note": "She has the calm that no amount of lighting can give."
+    },
+    "thatcher": {
+      "kind": "admired",
+      "note": "A woman who got into the room by sheer will; she respects that."
+    },
+    "trump": {
+      "kind": "disliked",
+      "note": "He rates women out of ten and expects her to be pleased."
+    },
+    "tyson": {
+      "kind": "admired",
+      "note": "Gentle underneath, and kind to her without wanting anything."
+    },
+    "zelensky": {
+      "kind": "admired",
+      "note": "A fellow entertainer who walked onto a far bigger stage."
+    }
+  },
+  "musk": {
+    "greta": {
+      "kind": "looked down on",
+      "note": "Hardly an engineer, and rather too sure of her sermons."
+    },
+    "monroe": {
+      "kind": "adored",
+      "note": "The one person in the room he does not try to out-talk."
+    },
+    "putin": {
+      "kind": "well known",
+      "note": "A man whose phone calls everyone is curious about."
+    },
+    "queen": {
+      "kind": "well known",
+      "note": "Very old money, very quiet; he cannot tell what she thinks."
+    },
+    "thatcher": {
+      "kind": "admired",
+      "note": "She wrecked a few bureaucracies; he approves."
+    },
+    "tyson": {
+      "kind": "admired",
+      "note": "A man who can actually take a punch, which a founder respects."
+    },
+    "zelensky": {
+      "kind": "well known",
+      "note": "His satellites keep Zelensky's army online, and neither forgets it."
+    }
+  },
+  "putin": {
+    "greta": {
+      "kind": "looked down on",
+      "note": "A schoolgirl shouting at adults, and he has no time for it."
+    },
+    "monroe": {
+      "kind": "admired",
+      "note": "A star of the old kind, whom he watches with a faint smile."
+    },
+    "musk": {
+      "kind": "well known",
+      "note": "A useful man with a loud mouth, to be listened to carefully."
+    },
+    "queen": {
+      "kind": "admired",
+      "note": "The last of the old order, and he respects an order that lasts."
+    },
+    "thatcher": {
+      "kind": "disliked",
+      "note": "The Iron Lady of the old Cold War, and he has not forgotten whose side she was on."
+    },
+    "trump": {
+      "kind": "well known",
+      "note": "A man he flatters and means to use, and thinks he has read."
+    },
+    "tyson": {
+      "kind": "admired",
+      "note": "A fighter, and the only sort of man he fully respects."
+    },
+    "zelensky": {
+      "kind": "loathed",
+      "note": "The man his war is against, whom he will not name without contempt."
+    }
+  },
+  "queen": {
+    "greta": {
+      "kind": "well known",
+      "note": "Quite a determined young person; she says nothing."
+    },
+    "monroe": {
+      "kind": "adored",
+      "note": "The film star she once met in a line and has not forgotten."
+    },
+    "musk": {
+      "kind": "looked down on",
+      "note": "New money, new ideas and a great deal of noise."
+    },
+    "putin": {
+      "kind": "disliked",
+      "note": "She has seen many rulers come and go, and he is not one she warms to."
+    },
+    "thatcher": {
+      "kind": "well known",
+      "note": "A most capable woman, and an awkward audience on Tuesdays."
+    },
+    "trump": {
+      "kind": "looked down on",
+      "note": "Polite company is a skill, and he lacks it."
+    },
+    "tyson": {
+      "kind": "well known",
+      "note": "A gentleman, which one does not always expect of a boxer."
+    },
+    "zelensky": {
+      "kind": "admired",
+      "note": "A leader who stayed in his capital when it counted."
+    }
+  },
+  "thatcher": {
+    "greta": {
+      "kind": "looked down on",
+      "note": "A young woman with a passion and not a single costed plan."
+    },
+    "monroe": {
+      "kind": "well known",
+      "note": "Charming, no doubt, and not in the least her business."
+    },
+    "musk": {
+      "kind": "well known",
+      "note": "Enterprising, if somewhat undisciplined."
+    },
+    "putin": {
+      "kind": "disliked",
+      "note": "A strongman who understands only strength, and she has spent her life answering that."
+    },
+    "queen": {
+      "kind": "admired",
+      "note": "Her Majesty, and she curtseys properly, whatever is said of her."
+    },
+    "trump": {
+      "kind": "looked down on",
+      "note": "A salesman who has never read a brief in his life."
+    },
+    "tyson": {
+      "kind": "well known",
+      "note": "A disciplined man for all the noise made about him."
+    },
+    "zelensky": {
+      "kind": "admired",
+      "note": "He stands against tyranny, and she would stand beside him."
+    }
+  },
+  "trump": {
+    "monroe": {
+      "kind": "adored",
+      "note": "Glamour like that, and she is not even trying; it is tremendous."
+    },
+    "putin": {
+      "kind": "admired",
+      "note": "Strong, smart, and a man he can talk to; people say so."
+    },
+    "queen": {
+      "kind": "admired",
+      "note": "The classiest woman in the world, and he likes to say so."
+    },
+    "thatcher": {
+      "kind": "looked down on",
+      "note": "A politician, and he has never met one who was a patch on him."
+    },
+    "tyson": {
+      "kind": "admired",
+      "note": "A real champion and a real friend, who knows what winning is."
+    },
+    "zelensky": {
+      "kind": "looked down on",
+      "note": "A politician who always arrives asking for something."
+    }
+  },
+  "tyson": {
+    "greta": {
+      "kind": "admired",
+      "note": "A fierce kid, and he likes a person who does not back down."
+    },
+    "monroe": {
+      "kind": "adored",
+      "note": "Nobody has ever been so kind to him for no reason."
+    },
+    "musk": {
+      "kind": "well known",
+      "note": "A rich man with big ideas; he waits to see what comes of them."
+    },
+    "putin": {
+      "kind": "well known",
+      "note": "A man who has never lost a fight he picked; he keeps his distance."
+    },
+    "queen": {
+      "kind": "admired",
+      "note": "A lady, and he stands up straight in front of one."
+    },
+    "thatcher": {
+      "kind": "well known",
+      "note": "A tough woman, and he does not argue with one."
+    },
+    "trump": {
+      "kind": "well known",
+      "note": "A friend from the fight nights, though he talks more than he listens."
+    },
+    "zelensky": {
+      "kind": "admired",
+      "note": "A small man holding a big line; he understands that."
+    }
+  },
+  "zelensky": {
+    "greta": {
+      "kind": "admired",
+      "note": "A young voice that will not be silenced, and he knows how that feels."
+    },
+    "monroe": {
+      "kind": "adored",
+      "note": "The star of a film he watched as a boy, long before any of this."
+    },
+    "musk": {
+      "kind": "well known",
+      "note": "His satellites keep Zelensky's army online, and neither forgets it."
+    },
+    "putin": {
+      "kind": "loathed",
+      "note": "The man who invaded his country, and he will not shake his hand for the cameras."
+    },
+    "queen": {
+      "kind": "admired",
+      "note": "A symbol that held a nation together through the worst of its years."
+    },
+    "thatcher": {
+      "kind": "admired",
+      "note": "She told tyrants to their faces, which is what he would like to do."
+    },
+    "trump": {
+      "kind": "disliked",
+      "note": "He needs the help and resents the bargaining that comes with it."
+    },
+    "tyson": {
+      "kind": "admired",
+      "note": "A champion who is gentle; there are not many of them."
+    }
+  }
+}

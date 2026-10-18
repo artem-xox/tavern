@@ -102,7 +102,10 @@ _STARTING: Mapping[str, tuple[float, str]] = MappingProxyType({
     "old friends": (50.0, "friend"), "rivals": (-40.0, "acquaintance"),
     "bad blood": (-60.0, "acquaintance"),
     # Public figures know each other by name and repute, with no liking or dislike to start with.
-    "well known": (0.0, "acquaintance")})
+    "well known": (0.0, "acquaintance"),
+    # One guest's own regard for another, which the other need not return.
+    "adored": (50.0, "acquaintance"), "admired": (30.0, "acquaintance"), "looked down on": (-20.0, "acquaintance"),
+    "disliked": (-35.0, "acquaintance"), "loathed": (-60.0, "acquaintance")})
 
 
 class Thought(TypedDict):

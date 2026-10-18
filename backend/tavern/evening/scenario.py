@@ -17,7 +17,7 @@ from tavern.hall.world import create_world
 from tavern.mind.cards import Card, parse_card
 from tavern.mind.characters import Catalog
 from tavern.social.facts import News, draw_news, parse_news
-from tavern.social.ties import OwnTie, Tie, own_ties, parse_own_ties, parse_ties
+from tavern.social.ties import OwnTie, Regard, Tie, own_regard, own_ties, parse_own_ties, parse_ties
 
 
 class Guest(TypedDict):
@@ -211,12 +211,13 @@ def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None,
     guest_ids = [item["id"] for item in guests]
     defaults = [] if catalog is None else [item for item in catalog.ties if item["a"] in guest_ids and item["b"] in guest_ids]
     ties = parse_ties([*defaults, *fields.get("relationships", [])], guest_ids)
+    regard = [] if catalog is None else [item for item in catalog.regard if item["holder"] in guest_ids and item["toward"] in guest_ids]
     news = parse_news(fields.get("news", []), [item["id"] for item in guests])
     told = _news_tonight(fields.get("news_tonight"), len(news))
     ailing = _ailing_fatigue(fields.get("ailment"), guests)
     # `arrival` is a required field above, so its ranges are never None here.
     arrival = cast(dict[str, tuple[float, float]], arrival_ranges(fields))
-    return Scenario(guests=_with_ties(guests, ties), arrival=arrival, closes_at=closes_at, seed=seed, ties=ties,
+    return Scenario(guests=_with_ties(guests, ties, regard), arrival=arrival, closes_at=closes_at, seed=seed, ties=ties,
                     news=news, staff=staff, opening_window=window, news_tonight=told, last_call_at=last_call,
                     ailing_fatigue=ailing)
 
@@ -304,10 +305,10 @@ def _cast(entry: Any, cards: Mapping[str, Card] | None, catalog: Catalog | None,
     return {**rest, "traits": dict(card["params"]), "card": card}
 
 
-def _with_ties(guests: Sequence[Guest], ties: Sequence[Tie]) -> tuple[Guest, ...]:
+def _with_ties(guests: Sequence[Guest], ties: Sequence[Tie], regard: Sequence[Regard]) -> tuple[Guest, ...]:
     # Only guests with ties carry the field, so guests without any keep their plain shape.
     names = {item["id"]: item["name"] for item in guests}
-    held = {item["id"]: own_ties(item["id"], ties, names) for item in guests}
+    held = {item["id"]: [*own_ties(item["id"], ties, names), *own_regard(item["id"], regard, names)] for item in guests}
     return tuple(Guest(**item, ties=held[item["id"]]) if held[item["id"]] else item for item in guests)
 
 
