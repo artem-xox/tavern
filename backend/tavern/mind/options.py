@@ -7,6 +7,7 @@ from typing import Any
 from tavern.body.activities import FAMILIES
 from tavern.body.items import ITEMS
 from tavern.mind.fight_words import TEXTS as FIGHT_TEXTS
+from tavern.mind.goals import serving_aim
 from tavern.social.aims import aim_words
 from tavern.social.giving import empty_handed_tablemates
 from tavern.social.invitations import KINDS, known_place
@@ -56,7 +57,8 @@ def aim_text(observation: Observation, candidate: Action) -> str:
         raise ValueError(f"Cannot describe an aim towards {candidate['target_id']!r}, who is not in sight")
     topics = {fact_id: fact["topic"] for fact_id, fact in observation["actor"].get("knowledge", {}).get("facts", {}).items()}
     words = aim_words(candidate["aim"], label_of(person), topics)
-    return f"{option_text(observation, candidate)}, meaning to {words}"
+    goal = " (this meaning serves the goal they set themselves)" if serving_aim(observation, candidate) else ""
+    return f"{option_text(observation, candidate)}, meaning to {words}{goal}"
 
 
 def answer_text(observation: Observation, invitation: Mapping[str, Any], answer: str) -> str:
@@ -314,6 +316,12 @@ def _watch_dice(observation: Observation, action: Action) -> str:
     return f"walk {walk_words(steps_to(observation, table))} to the dice table and watch {game}"
 
 
+def _speech(observation: Observation, action: Action) -> str:
+    stage = _target(observation, action)
+    return (f"walk {walk_words(steps_to(observation, stage))} to the stage and make a speech to the whole room "
+            "(everyone in the hall hears it; some will cheer and some will groan)")
+
+
 def _toilet(observation: Observation, action: Action) -> str:
     return f"walk {walk_words(steps_to(observation, _target(observation, action)))} to the WC"
 
@@ -352,7 +360,7 @@ def family_text(observation: Observation, option: Action) -> str:
 _OPTIONS: Mapping[str, Callable[[Observation, Action], str]] = {
     "take_beer": _pour, "settle_in": _settle, "stand_a_round": _round, "rematch": _rematch, "drink": _drink, "rest": _rest, "seating": _seating, "sit": _sit, "doze": _doze, "talk": _talk,
     "approach": _approach, "join_conversation": _join, "play_darts": _darts, "stand_at_bar": _bar, "watch": _watch,
-    "watch_dice": _watch_dice,
+    "watch_dice": _watch_dice, "give_speech": _speech,
     "use_toilet": _toilet, "give": _give, "bring_drink": _bring,
     "inspect": _inspect, "wait": _wait, "leave": _leave, "cut_in_line": _cut, "shove": _shove, "start_fight": _fight,
     **FIGHT_TEXTS}

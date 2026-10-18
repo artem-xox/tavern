@@ -5,6 +5,7 @@ from typing import Any
 
 from tavern.body.wounds import hurt
 from tavern.social.bystanders import reactions
+from tavern.social.speeches import applause
 
 
 def is_hurt(observation: Mapping[str, Any]) -> bool:
@@ -26,12 +27,13 @@ def room_reactions(observation: Mapping[str, Any]) -> list[tuple[str, str | None
         observation: The guest's observation.
 
     Returns:
-        `(verb, target_id)` pairs from `bystanders.reactions`; nothing for a guest who is hurt (their business is
+        `(verb, target_id)` pairs from `bystanders.reactions` and `speeches.applause`; nothing for a guest who is hurt (their business is
         to mend) or one on an errand.
     """
     if is_hurt(observation) or observation["actor"]["id"] in observation.get("on_errands", []):
         return []
-    return reactions(observation)
+    # A fight and a speech can both be cheered; the option is offered once.
+    return list(dict.fromkeys([*reactions(observation), *applause(observation)]))
 
 
 def treatments(observation: Mapping[str, Any]) -> list[tuple[str, str | None]]:

@@ -13,7 +13,7 @@ from tavern.mind.briefing import brief
 from tavern.mind.families import family_scores, group_families
 from tavern.mind.fight_candidates import is_hurt, room_reactions, treatments
 from tavern.mind.hall_view import in_use, line_place
-from tavern.mind.local_policy import ASK_FLOOR, local_aim_scores, local_answer_scores, local_scores, local_seat_scores
+from tavern.mind.local_policy import ASK_FLOOR, conviviality, local_aim_scores, local_answer_scores, local_scores, local_seat_scores
 from tavern.mind.observation import known_objects, own_actor
 from tavern.mind.options import aim_text, answer_text
 from tavern.mind.selection import bounded, drawable, read_aims, read_answers, read_lean, read_projects, read_temperature, select, spread, worth_asking
@@ -21,6 +21,7 @@ from tavern.social.aims import AIM_VERBS, aim_candidates, offered_aims
 from tavern.social.invitations import answer_act
 from tavern.social.giving import empty_handed_company, empty_handed_tablemates, gift_targets
 from tavern.social.responses import calling
+from tavern.social.speeches import performs, spoke_lately
 from tavern.social.hostility import HOSTILITY, hostile_targets
 from tavern.social.tables import liked
 
@@ -143,13 +144,18 @@ def _concrete_candidates(observation: Mapping[str, Any]) -> list[Action]:
     # A mug is carried to a seat and drunk there, unless there is no seat to be had.
     seatless = not actor.get("seat_id") and not _free_seats(observation, objects)
     actions = [_action("drink")] if actor["inventory"]["beer"] and (actor.get("seat_id") or seatless) else []
-    verbs = {"tap": "take_beer", "chair": "rest", "toilet": "use_toilet", "darts": "play_darts", "door": "leave"}
+    verbs = {"tap": "take_beer", "chair": "rest", "toilet": "use_toilet", "darts": "play_darts", "door": "leave",
+             "stage": "give_speech"}
     for item in sorted(objects, key=lambda item: item["id"]):
         if item["kind"] not in verbs or item.get("table_id"):
             continue
+        if item["kind"] == "stage" and (spoke_lately(observation) or not performs(observation)):
+            continue
         if item["kind"] == "tap" and (not item.get("stock") or actor["inventory"]["beer"] or _called(observation)):
             continue
-        if item["kind"] == "tap" and "social" in actor["needs"] and actor["needs"]["thirst"] < 35:
+        # Not thirsty enough to fetch an ale, unless the table is good company (`local_policy.conviviality`).
+        if item["kind"] == "tap" and "social" in actor["needs"] and actor["needs"]["thirst"] < 35 \
+                and not conviviality(observation):
             continue
         actions.extend(_line_options(observation, item, _action(verbs[item["kind"]], item["id"])))
     return [*actions, *_seat_wish(observation, objects), *_views(observation, objects), *_games(objects),

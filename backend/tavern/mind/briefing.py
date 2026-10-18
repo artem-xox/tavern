@@ -5,6 +5,7 @@ import math
 from typing import Any
 
 from tavern.body.activities import ACTIVITIES, FAMILIES
+from tavern.body.drunkenness import drunk_stage
 from tavern.body.items import carried_words, held_words
 from tavern.body.wounds import health_of, hurt
 from tavern.hall.room import SEAT_TABLES
@@ -41,7 +42,7 @@ def brief(observation: Observation, candidates: Sequence[Mapping[str, Any]]) -> 
     """
     parts = (_closing(observation), _stay(observation), _whereabouts(observation), _carrying(observation), _trigger(observation),
              _own_seat(observation),
-             _needs(observation), _unwell(observation), _temperament(observation), portrait(observation["actor"]),
+             _needs(observation), _fun(observation), _unwell(observation), _temperament(observation), portrait(observation["actor"]),
              feelings(observation), invitation_note(observation), _intention(observation), _promises(observation),
              _unanswered(observation),
              _people(observation),
@@ -133,6 +134,34 @@ def _needs(observation: Observation) -> str:
               "social": "wish for company", "boredom": "boredom"}
     parts = [f"{label} {round(needs[need])} ({_level(needs[need])})" for need, label in labels.items() if need in needs]
     return f"Needs, from 0 satisfied to 100 urgent: {', '.join(parts)}."
+
+
+# How bored a guest must be for a game to be named to them as fun; a fight in sight needs less.
+FUN_BORED = 40
+FUN_AT_A_FIGHT = 25
+
+
+def _fun(observation: Observation) -> str:
+    # What would be fun for them right now, in the room as they see it: a game, a fight to watch, a table that is
+    # drinking together. A model weighs these with everything else; nothing here is said to a guest who is closing up,
+    # hurt or wasted.
+    actor = observation["actor"]
+    if (observation.get("closed") or observation.get("called_closing") is not None or hurt(actor)
+            or drunk_stage(actor.get("drunkenness", 0.0)).name == "wasted"):
+        return ""
+    boredom = actor["needs"].get("boredom", 0)
+    notes = []
+    if boredom >= FUN_BORED:
+        for table in (item for item in observation["objects"] if item["kind"] == "dice_table"):
+            players = len((table.get("game") or {}).get("players", []))
+            notes.append(f"a game of dice is on at {label_of(table)}, and watching it is a show" if players
+                         else f"{label_of(table)} stands free for a game of dice")
+    people = observation.get("people", observation.get("visitors", []))
+    if boredom >= FUN_AT_A_FIGHT and any(person.get("fighting") for person in people):
+        notes.append("a fight is on, and a fight is something to watch")
+    if any(person.get("seat_id") and _shares_table(observation, person) and not person.get("asleep") for person in people):
+        notes.append("their table is drinking together, and another round, or standing one, is part of the fun")
+    return f"Fun, if they want it: {'; '.join(notes)}." if notes else ""
 
 
 def _temperament(observation: Observation) -> str:

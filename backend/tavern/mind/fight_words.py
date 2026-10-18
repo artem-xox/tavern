@@ -34,6 +34,8 @@ def _watch(observation: Observation, action: Action) -> str:
 
 
 def _cheer(observation: Observation, action: Action) -> str:
+    if not any(person.get("fighting") for person in observation.get("people", [])):
+        return "shout and cheer the speech they just heard from the stage"
     return f"shout and cheer {_fighters(observation)} on (rowdy company's way; the fighters hear it)"
 
 
