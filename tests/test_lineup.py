@@ -102,7 +102,7 @@ def test_the_cast_listing_shows_each_face_with_its_occupation() -> None:
     greta = next(item for item in casts["guests"]["characters"] if item["id"] == "greta")
     assert (casts["guests"]["title"], [item["id"] for item in casts["guests"]["characters"]], greta["name"],
             greta["description"], len(casts["locals"]["characters"])) == (
-        "Guests", ["greta", "monroe", "musk", "putin", "queen", "thatcher", "trump", "tyson", "zelensky"], "Greta", "young climate campaigner, a parody of Greta Thunberg", 6)
+        "Guests", ["greta", "kardashian", "monroe", "musk", "putin", "queen", "thatcher", "trump", "tyson", "zelensky", "zuckerberg"], "Greta", "young climate campaigner, a parody of Greta Thunberg", 6)
 
 
 def runtime(tmp_path: Path) -> TavernRuntime:
@@ -194,8 +194,8 @@ def test_famous_guests_start_out_knowing_each_other_by_name(cast: str, ids: list
 
 @pytest.mark.parametrize("ids, kinds", [
     pytest.param(["trump", "greta"], ["bad blood"], id="a-catalog-feud-replaces-knowing-by-name"),
-    pytest.param(["greta", "tyson"], ["well known"], id="an-untied-pair-know-each-other-by-name"),
-    pytest.param(["trump", "greta", "tyson"], ["bad blood", "well known", "well known"], id="mixed-trio"),
+    pytest.param(["greta", "tyson"], [], id="a-pair-in-the-regard-matrix-needs-no-shared-tie"),
+    pytest.param(["trump", "greta", "tyson"], ["bad blood"], id="mixed-trio"),
 ])
-def test_a_catalog_tie_is_not_doubled_by_knowing_by_name(ids: list[str], kinds: list[str]) -> None:
+def test_a_catalog_tie_is_not_doubled_by_the_regard_matrix(ids: list[str], kinds: list[str]) -> None:
     assert sorted(tie["kind"] for tie in lineup("guests", ids).ties) == sorted(kinds)

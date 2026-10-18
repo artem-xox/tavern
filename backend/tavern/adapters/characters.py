@@ -32,11 +32,27 @@ def load_catalog(root: Path) -> Catalog:
     if not folders:
         raise ValueError("Character catalog has no character directories")
     records = [_record(folder) for folder in folders]
-    catalog = parse_catalog(records)
+    catalog = parse_catalog(records, _regard(root))
     for folder in folders:
         character = catalog.character(folder.name)
         _check_art(folder, character["role"], character["visuals"]["size"])
     return catalog
+
+
+def _regard(root: Path) -> dict[str, Any]:
+    # A cast may keep one `relationships.json` beside its characters: what each of them thinks of the others.
+    # Casts hold different people, so their rows never share a holder.
+    matrix: dict[str, Any] = {}
+    for cast in _cast_folders(root):
+        path = cast / "relationships.json"
+        rows = _json(path) if path.is_file() else {}
+        if not isinstance(rows, dict):
+            raise ValueError(f"Regard matrix must be an object: {path}")
+        repeated = next((holder for holder in rows if holder in matrix), None)
+        if repeated is not None:
+            raise ValueError(f"Regard row of {repeated!r} is given twice")
+        matrix.update(rows)
+    return matrix
 
 
 def _cast_folders(root: Path) -> list[Path]:

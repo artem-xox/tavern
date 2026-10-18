@@ -52,6 +52,16 @@ evenings with them work.
     manners; wants the room's manners to hold and to deliver one dry verdict on whoever behaves worst; carries
     nothing yet (the corgi is a later item). "One is not amused." Calm judge for the loud guests, foil for the
     Trump parody's manners and for Thatcher.
+  - a Mark Zuckerberg parody, `characters/guests/zuckerberg/` (art and card done, 21 poses x 8 views): a flat,
+    earnest, curly-haired founder in a plain grey t-shirt and jeans, obsessed with putting a thinking machine (AI)
+    into everything and connecting everyone through it; wants a guest to try it and to learn what each wants;
+    carries nothing yet. Deadpan, relentlessly curious and secretly afraid he has only ever had users, not
+    friends. Natural rival for the Musk parody (who pitches his own thinking machine) and a target for Greta.
+  - a Kim Kardashian parody, `characters/guests/kardashian/` (art and card done, 21 poses x 8 views): a brazen,
+    long-haired celebrity in a cream dress with sunglasses on her head who photographs and posts everything and
+    turns any quarrel into content; wants a scandalous moment on camera and to be the centre of the room;
+    carries nothing yet. Warm to the famous and useful, icy to the dull and disapproving. The room's chaos engine
+    and a foil for Greta, Thatcher and the Queen.
 - In: their starting relationships (rivalries, grudges) and a `guests.json` scenario with all three plus
   two locals as bystanders.
 - Out: what their items do (S2-08); further guests. The next candidates are a Bush parody (hunting for
@@ -93,3 +103,7 @@ Greta "what have you actually done"; Tyson "sir, a quiet pint"). Open problems: 
 guest recite "darts and the WC"; quarrels loop on one charge; Tyson never steps in; Trump's "others pay" has no
 act; the retelling call fails (`thinking: disabled` is refused by `claude-sonnet-5-5`, S2-10).
 
+
+Starting regard: `characters/guests/relationships.json` is a one-sided matrix of what each guest thinks of each
+other guest (adored down to loathed), read into every lineup; a test fails when a new guest is missing from it
+(see [CHARACTER_CATALOG.md](../../CHARACTER_CATALOG.md) and `add-npc`).

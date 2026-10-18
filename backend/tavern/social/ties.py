@@ -3,7 +3,9 @@
 from collections.abc import Mapping, Sequence
 from typing import Any, TypedDict, cast
 
-KINDS = ("old friends", "rivals", "bad blood", "well known")
+# The first three are shared by a pair; the rest are one guest's own regard for another, in words from the holder's side.
+KINDS = ("old friends", "rivals", "bad blood", "well known",
+         "adored", "admired", "looked down on", "disliked", "loathed")
 
 
 class Tie(TypedDict):
@@ -11,6 +13,15 @@ class Tie(TypedDict):
 
     a: str
     b: str
+    kind: str
+    note: str
+
+
+class Regard(TypedDict):
+    """One guest's regard for another, which the other need not return: `holder`, `toward`, a kind and a note."""
+
+    holder: str
+    toward: str
     kind: str
     note: str
 
@@ -86,3 +97,56 @@ def parse_own_ties(value: Any) -> list[OwnTie]:
     if any(item["kind"] not in KINDS for item in value):
         raise ValueError("A guest's tie has an unknown kind")
     return [cast(OwnTie, dict(item)) for item in value]
+
+
+def parse_regard(value: Any, ids: Sequence[str], tied: Sequence[Tie] = ()) -> tuple[Regard, ...]:
+    """Validate a cast's regard matrix: what each guest thinks of each other, by holder and then by target.
+
+    Args:
+        value: Mapping of holder ID to a mapping of target ID to `{kind, note}`.
+        ids: IDs of every character in the catalog.
+        tied: Catalog ties; a pair that has one is described there, so the matrix must not repeat it.
+    Returns:
+        The records in listed order.
+    Raises:
+        ValueError: The matrix or a row is malformed, names an unknown character, gives a guest regard for
+            themselves, has an unknown kind or an empty note, or repeats a pair that already has a tie.
+    """
+    if not isinstance(value, Mapping):
+        raise ValueError("The regard matrix must map each holder to a row")
+    held = {frozenset((item["a"], item["b"])) for item in tied}
+    records: list[Regard] = []
+    for holder, row in value.items():
+        if not isinstance(row, Mapping):
+            raise ValueError(f"The regard row of {holder!r} must map targets to {{kind, note}}")
+        for toward, cell in row.items():
+            records.append(_regard(holder, toward, cell, ids, held))
+    return tuple(records)
+
+
+def _regard(holder: Any, toward: Any, cell: Any, ids: Sequence[str], held: set[frozenset[str]]) -> Regard:
+    if holder not in ids or toward not in ids or holder == toward:
+        raise ValueError(f"Regard is between two different characters of the catalog, not {holder!r} and {toward!r}")
+    if not isinstance(cell, Mapping) or set(cell) != {"kind", "note"}:
+        raise ValueError(f"Regard of {holder!r} for {toward!r} has exactly kind and note")
+    if cell["kind"] not in KINDS:
+        raise ValueError(f"Regard kind must be one of {', '.join(KINDS)}, not {cell['kind']!r}")
+    if not isinstance(cell["note"], str) or not cell["note"].strip():
+        raise ValueError(f"Regard of {holder!r} for {toward!r} needs a note in words")
+    if frozenset((holder, toward)) in held:
+        raise ValueError(f"Regard of {holder!r} for {toward!r} repeats a tie the catalog already gives the pair")
+    return Regard(holder=holder, toward=toward, kind=cell["kind"], note=cell["note"])
+
+
+def own_regard(guest_id: str, regard: Sequence[Regard], names: Mapping[str, str]) -> list[OwnTie]:
+    """List what one guest thinks of the others, from their side.
+
+    Args:
+        guest_id: The guest.
+        regard: Validated regard records; each is held by its holder alone.
+        names: Each guest's name by ID.
+    Returns:
+        The guest's regard as ties, in listed order.
+    """
+    return [{"with": item["toward"], "name": names[item["toward"]], "kind": item["kind"], "note": item["note"]}
+            for item in regard if item["holder"] == guest_id]

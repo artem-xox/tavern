@@ -17,8 +17,6 @@ ENTRY_SHARE = 0.5
 # The barkeep calls closing time when this share of the evening has passed.
 LAST_CALL_SHARE = 0.9
 CAST_TITLES = {"locals": "Locals", "guests": "Guests"}
-# Casts whose guests are public figures who know one another by name before they meet.
-FAMOUS_CASTS = ("guests",)
 
 
 def lineup_scenario(templates: Mapping[str, Mapping[str, Any]], catalog: Catalog, cast: str,
@@ -50,21 +48,10 @@ def lineup_scenario(templates: Mapping[str, Mapping[str, Any]], catalog: Catalog
     data = {**templates[cast], "closes_at": length, "opening_window": [1, 1 + gap * (len(ids) - 1)],
             "last_call_at": length * LAST_CALL_SHARE,
             "guests": [{"character": item, "arrives_at": 0} for item in ids], **_news_for(templates[cast], ids)}
-    if cast in FAMOUS_CASTS:
-        # A tie the catalog already gives a pair (a feud, say) stands in for knowing each other by name.
-        held = [*data.get("relationships", []), *({"a": tie["a"], "b": tie["b"]} for tie in catalog.ties)]
-        data["relationships"] = [*data.get("relationships", []), *_well_known(ids, held)]
     # An unwell guest must carry no cure; a lone healer, say, has nobody to fall ill, so they come in well.
     if not eligible([{"carries": catalog.character(item)["carries"]} for item in ids]):
         data.pop("ailment", None)
     return parse_scenario(data, catalog=catalog)
-
-
-def _well_known(ids: Sequence[str], tied: Sequence[Mapping[str, Any]]) -> list[dict[str, str]]:
-    # Every pair the template does not already tie, in picked order.
-    held = {frozenset((item["a"], item["b"])) for item in tied}
-    return [{"a": a, "b": b, "kind": "well known", "note": "Each knows the other by name and reputation."}
-            for i, a in enumerate(ids) for b in ids[i + 1:] if frozenset((a, b)) not in held]
 
 
 def _picked(character_ids: Any, catalog: Catalog, cast: str) -> list[str]:
