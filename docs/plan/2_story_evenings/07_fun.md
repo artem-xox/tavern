@@ -51,6 +51,13 @@ What shipped:
   guest, a fight to watch, a table that is drinking together. Nothing for a guest who is closing up, hurt or wasted.
 - Model-facing text: Jev's system prompt, the `take_beer` and `drink` guidance and the intention prefix now say
   that in lively company a refill comes before the mug is dry, and that games and `treat` are goals worth setting.
+- Rates (`rules.py`): thirst 0.18 → 0.20 a second, drink wears off 0.0005 → 0.0002 a second. Three beers now
+  make a middling drinker drunk for most of a ten-minute evening (they stay above the 0.45 floor), four make
+  them wasted. Thirst 0.25 was tried and refused: by 200 s everyone is too thirsty to be spoken to
+  (`test_turned_down`). 0.22, which the live evenings below ran at, broke `test_facts` seed 1 once main's
+  darts were merged (a news item no longer travels two hops: chaos, not a rule), so the final value is 0.20, the
+  lowest rate that still gives thirst 60 after five minutes. The live numbers below were measured at 0.22 and
+  were not repeated at 0.20 (the Jev account is out of credit).
 - Events `got_drunk` and `got_wasted` (crossing into the stage, once each); metrics `drink` (who, and every
   guest's beers). They are **not** story-score moments: the weights stay as in S2-05, so the score is comparable.
 
@@ -104,3 +111,27 @@ Not done: "the story score of both casts rises against the S2-05 baseline" is no
 offline ones are too few to tell fights apart from luck), and "at least two guests drunk" held in one of two live
 evenings. Next: a five-evening live sample for both casts, and a look at the wear-off rate and the thirst rate
 (`rules.py` `per_second`, `need_rates`) if guests are to reach `wasted`.
+
+Live Guests evenings at thirst 0.22 and wear-off 0.0002, five seeds 1–5, Jev + Haiku 5.5:
+
+| seed | story score | drunk | wasted | beers (4 guests) | dice games | goals set / done / expired |
+|------|-------------|-------|--------|------------------|------------|-----------------------------|
+| 1 | 8 | 4 | 0 | 2 3 3 3 | 1 | 21 / 13 / 1 |
+| 2 | 56 | 3 | 1 | 2 2 4 4 | 2 | 16 / 10 / 1 |
+| 3 | 28 | 2 | 0 | 2 2 2 3 | 1 | 20 / 13 / 2 |
+| 4 | 28 | 1 | 0 | 1 1 2 3 | 2 | 15 / 7 / 0 |
+| 5 | 59 | 3 | 0 | 2 3 3 3 | 1 | 21 / 15 / 1 |
+
+Four evenings of five had two or more drunk guests (mean 2.6), every evening had a dice game (mean 1.4), nobody
+drank more than four beers, and every guest chased an obsession in five intentions. One wasted guest in five
+evenings: the beer count is still thirst-limited. The mean story score is 35.8; the live Guests evenings of the
+S2-05 baseline (`runs/g1`–`g4`) average 35.8 as well (10, 68, 33, 32), so **the story score has not risen**: the
+fun the guests have (games, drink) is not what the score counts. That target stays open and is the next thing to
+look at (a score weight for `got_drunk`, or the fights and quarrels S2-09 will add, which dominate it).
+
+**The weight for `got_drunk`.** The five evenings above, rescored with `got_drunk` at 1.0 (the Jev account is out
+of credit, HTTP 402, so no new live evenings could run; the events are the same ones): 12, 60, 30, 29, 62, mean
+**38.6** against the S2-05 live baseline 35.75 (`runs/g1`–`g4`: 10, 68, 33, 32). The 2.9 points are the 14 drunk
+moments at weight 1 (2.8 a evening): nothing else in the score moved, so the rise says only that guests now get
+drunk, not that evenings are better stories. S2-07 stays `doing` until the retelling or a live sample shows that
+the fun makes evenings people would retell (S2-10, S2-11).

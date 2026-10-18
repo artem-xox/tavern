@@ -3,7 +3,7 @@
 import type { Retelling, Story } from "./types.ts";
 
 const MARKS: Record<string, string> = {
-  quarrel: "😡", fight: "👊", knockout: "💫", played_together: "🎲", gift: "🎁", fell_asleep: "💤", limped_home: "🩹",
+  quarrel: "😡", fight: "👊", knockout: "💫", played_together: "🎲", gift: "🎁", fell_asleep: "💤", limped_home: "🩹", got_drunk: "🥴",
 };
 
 /** The chips of the moments that happened, the most frequent first (equal counts keep the server's order). */
