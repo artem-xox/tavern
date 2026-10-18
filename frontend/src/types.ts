@@ -323,7 +323,7 @@ export interface WorldEvent {
   actor_id: string | null;
   type: string;
   message: string;
-  /** The words a character says aloud, for the `last_call` event, which the scene shows in a bubble. */
+  /** The words a character says aloud, for the `last_call` event, or a `turn` that ended its scene, which the scene shows in a bubble. */
   line?: string;
 }
 
