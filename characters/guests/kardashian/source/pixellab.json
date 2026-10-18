@@ -1,0 +1,616 @@
+{
+  "group_id": "ca6079e8-d5ff-40be-ac17-a966d65791f1",
+  "states": [
+    {
+      "character": {
+        "id": "6f6a012c-a308-4d43-8a43-f23fef3b860f",
+        "name": "Idle",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:33:13.022757+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "5a030d8a-bca4-479f-9f7c-c56203a9f483",
+        "name": "Darts",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:43:32.736990+00:00"
+      },
+      "folder": "Darts",
+      "frames": {
+        "rotations": {
+          "south": "Darts/rotations/south.png",
+          "south-east": "Darts/rotations/south-east.png",
+          "east": "Darts/rotations/east.png",
+          "north-east": "Darts/rotations/north-east.png",
+          "north": "Darts/rotations/north.png",
+          "north-west": "Darts/rotations/north-west.png",
+          "west": "Darts/rotations/west.png",
+          "south-west": "Darts/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "957a41af-5a12-4fe0-97db-12bf05de1314",
+        "name": "Bathroom",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:43:35.751129+00:00"
+      },
+      "folder": "Bathroom",
+      "frames": {
+        "rotations": {
+          "south": "Bathroom/rotations/south.png",
+          "south-east": "Bathroom/rotations/south-east.png",
+          "east": "Bathroom/rotations/east.png",
+          "north-east": "Bathroom/rotations/north-east.png",
+          "north": "Bathroom/rotations/north.png",
+          "north-west": "Bathroom/rotations/north-west.png",
+          "west": "Bathroom/rotations/west.png",
+          "south-west": "Bathroom/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "a271baf9-3f4b-44b9-acb2-a0c1c7fbc071",
+        "name": "Drinking",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:43:36.366439+00:00"
+      },
+      "folder": "Drinking",
+      "frames": {
+        "rotations": {
+          "south": "Drinking/rotations/south.png",
+          "south-east": "Drinking/rotations/south-east.png",
+          "east": "Drinking/rotations/east.png",
+          "north-east": "Drinking/rotations/north-east.png",
+          "north": "Drinking/rotations/north.png",
+          "north-west": "Drinking/rotations/north-west.png",
+          "west": "Drinking/rotations/west.png",
+          "south-west": "Drinking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "74750f06-89f0-43b0-aa1f-207d4cd0b2b7",
+        "name": "DrinkingSeated",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:43:37.730674+00:00"
+      },
+      "folder": "DrinkingSeated",
+      "frames": {
+        "rotations": {
+          "south": "DrinkingSeated/rotations/south.png",
+          "south-east": "DrinkingSeated/rotations/south-east.png",
+          "east": "DrinkingSeated/rotations/east.png",
+          "north-east": "DrinkingSeated/rotations/north-east.png",
+          "north": "DrinkingSeated/rotations/north.png",
+          "north-west": "DrinkingSeated/rotations/north-west.png",
+          "west": "DrinkingSeated/rotations/west.png",
+          "south-west": "DrinkingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "c66673e2-460e-48ac-a565-44d914f67495",
+        "name": "TalkingSeated",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:45:40.231403+00:00"
+      },
+      "folder": "TalkingSeated",
+      "frames": {
+        "rotations": {
+          "south": "TalkingSeated/rotations/south.png",
+          "south-east": "TalkingSeated/rotations/south-east.png",
+          "east": "TalkingSeated/rotations/east.png",
+          "north-east": "TalkingSeated/rotations/north-east.png",
+          "north": "TalkingSeated/rotations/north.png",
+          "north-west": "TalkingSeated/rotations/north-west.png",
+          "west": "TalkingSeated/rotations/west.png",
+          "south-west": "TalkingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "5ac4b49d-3fb2-46de-ae0e-b8a195879a46",
+        "name": "TakeBeer",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:45:55.848540+00:00"
+      },
+      "folder": "TakeBeer",
+      "frames": {
+        "rotations": {
+          "south": "TakeBeer/rotations/south.png",
+          "south-east": "TakeBeer/rotations/south-east.png",
+          "east": "TakeBeer/rotations/east.png",
+          "north-east": "TakeBeer/rotations/north-east.png",
+          "north": "TakeBeer/rotations/north.png",
+          "north-west": "TakeBeer/rotations/north-west.png",
+          "west": "TakeBeer/rotations/west.png",
+          "south-west": "TakeBeer/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "be303c16-faf4-40c1-8519-3a99b49a21eb",
+        "name": "Walking",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:45:56.595372+00:00"
+      },
+      "folder": "Walking",
+      "frames": {
+        "rotations": {
+          "south": "Walking/rotations/south.png",
+          "south-east": "Walking/rotations/south-east.png",
+          "east": "Walking/rotations/east.png",
+          "north-east": "Walking/rotations/north-east.png",
+          "north": "Walking/rotations/north.png",
+          "north-west": "Walking/rotations/north-west.png",
+          "west": "Walking/rotations/west.png",
+          "south-west": "Walking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "9612b46a-20ee-44fe-8bf0-a1783d06672a",
+        "name": "Talking",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:45:58.876995+00:00"
+      },
+      "folder": "Talking",
+      "frames": {
+        "rotations": {
+          "south": "Talking/rotations/south.png",
+          "south-east": "Talking/rotations/south-east.png",
+          "east": "Talking/rotations/east.png",
+          "north-east": "Talking/rotations/north-east.png",
+          "north": "Talking/rotations/north.png",
+          "north-west": "Talking/rotations/north-west.png",
+          "west": "Talking/rotations/west.png",
+          "south-west": "Talking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "565bdc30-e51e-4a04-b3f8-64d67ef374ec",
+        "name": "Giving",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:47:50.226978+00:00"
+      },
+      "folder": "Giving",
+      "frames": {
+        "rotations": {
+          "south": "Giving/rotations/south.png",
+          "south-east": "Giving/rotations/south-east.png",
+          "east": "Giving/rotations/east.png",
+          "north-east": "Giving/rotations/north-east.png",
+          "north": "Giving/rotations/north.png",
+          "north-west": "Giving/rotations/north-west.png",
+          "west": "Giving/rotations/west.png",
+          "south-west": "Giving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "62f7d75a-e318-48c7-96ea-862191ad03ba",
+        "name": "Receiving",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:48:33.727532+00:00"
+      },
+      "folder": "Receiving",
+      "frames": {
+        "rotations": {
+          "south": "Receiving/rotations/south.png",
+          "south-east": "Receiving/rotations/south-east.png",
+          "east": "Receiving/rotations/east.png",
+          "north-east": "Receiving/rotations/north-east.png",
+          "north": "Receiving/rotations/north.png",
+          "north-west": "Receiving/rotations/north-west.png",
+          "west": "Receiving/rotations/west.png",
+          "south-west": "Receiving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "fb3cb12e-9343-4af8-8197-abe05054ae46",
+        "name": "GivingSeated",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:48:34.015962+00:00"
+      },
+      "folder": "GivingSeated",
+      "frames": {
+        "rotations": {
+          "south": "GivingSeated/rotations/south.png",
+          "south-east": "GivingSeated/rotations/south-east.png",
+          "east": "GivingSeated/rotations/east.png",
+          "north-east": "GivingSeated/rotations/north-east.png",
+          "north": "GivingSeated/rotations/north.png",
+          "north-west": "GivingSeated/rotations/north-west.png",
+          "west": "GivingSeated/rotations/west.png",
+          "south-west": "GivingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "a4b6f364-9db0-47a1-8036-d758393b3d31",
+        "name": "ReceivingSeated",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:49:09.615311+00:00"
+      },
+      "folder": "ReceivingSeated",
+      "frames": {
+        "rotations": {
+          "south": "ReceivingSeated/rotations/south.png",
+          "south-east": "ReceivingSeated/rotations/south-east.png",
+          "east": "ReceivingSeated/rotations/east.png",
+          "north-east": "ReceivingSeated/rotations/north-east.png",
+          "north": "ReceivingSeated/rotations/north.png",
+          "north-west": "ReceivingSeated/rotations/north-west.png",
+          "west": "ReceivingSeated/rotations/west.png",
+          "south-west": "ReceivingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "4869098f-f37c-4ac3-a83b-f2896d50bf13",
+        "name": "SleepingSeated",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:49:18.953090+00:00"
+      },
+      "folder": "SleepingSeated",
+      "frames": {
+        "rotations": {
+          "south": "SleepingSeated/rotations/south.png",
+          "south-east": "SleepingSeated/rotations/south-east.png",
+          "east": "SleepingSeated/rotations/east.png",
+          "north-east": "SleepingSeated/rotations/north-east.png",
+          "north": "SleepingSeated/rotations/north.png",
+          "north-west": "SleepingSeated/rotations/north-west.png",
+          "west": "SleepingSeated/rotations/west.png",
+          "south-west": "SleepingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "13ae3e41-1226-4cdd-bbf1-e574f6c742bc",
+        "name": "KnockedOut",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:50:28.043075+00:00"
+      },
+      "folder": "KnockedOut",
+      "frames": {
+        "rotations": {
+          "south": "KnockedOut/rotations/south.png",
+          "south-east": "KnockedOut/rotations/south-east.png",
+          "east": "KnockedOut/rotations/east.png",
+          "north-east": "KnockedOut/rotations/north-east.png",
+          "north": "KnockedOut/rotations/north.png",
+          "north-west": "KnockedOut/rotations/north-west.png",
+          "west": "KnockedOut/rotations/west.png",
+          "south-west": "KnockedOut/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "2bcf08b1-c9c5-4f0b-b9cd-bf9d19a5bba8",
+        "name": "Fighting",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:50:41.974367+00:00"
+      },
+      "folder": "Fighting",
+      "frames": {
+        "rotations": {
+          "south": "Fighting/rotations/south.png",
+          "south-east": "Fighting/rotations/south-east.png",
+          "east": "Fighting/rotations/east.png",
+          "north-east": "Fighting/rotations/north-east.png",
+          "north": "Fighting/rotations/north.png",
+          "north-west": "Fighting/rotations/north-west.png",
+          "west": "Fighting/rotations/west.png",
+          "south-west": "Fighting/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "acf4921a-3865-4b80-baf4-9bff33008038",
+        "name": "HurtSeated",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:51:26.598689+00:00"
+      },
+      "folder": "HurtSeated",
+      "frames": {
+        "rotations": {
+          "south": "HurtSeated/rotations/south.png",
+          "south-east": "HurtSeated/rotations/south-east.png",
+          "east": "HurtSeated/rotations/east.png",
+          "north-east": "HurtSeated/rotations/north-east.png",
+          "north": "HurtSeated/rotations/north.png",
+          "north-west": "HurtSeated/rotations/north-west.png",
+          "west": "HurtSeated/rotations/west.png",
+          "south-west": "HurtSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "88a4c8f6-ab14-4afb-b534-5f68645ce196",
+        "name": "Shoving",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:52:25.824727+00:00"
+      },
+      "folder": "Shoving",
+      "frames": {
+        "rotations": {
+          "south": "Shoving/rotations/south.png",
+          "south-east": "Shoving/rotations/south-east.png",
+          "east": "Shoving/rotations/east.png",
+          "north-east": "Shoving/rotations/north-east.png",
+          "north": "Shoving/rotations/north.png",
+          "north-west": "Shoving/rotations/north-west.png",
+          "west": "Shoving/rotations/west.png",
+          "south-west": "Shoving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "aa80e5a2-6a15-42ca-be09-308ce6bddcd4",
+        "name": "HelpingUp",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:52:26.518443+00:00"
+      },
+      "folder": "HelpingUp",
+      "frames": {
+        "rotations": {
+          "south": "HelpingUp/rotations/south.png",
+          "south-east": "HelpingUp/rotations/south-east.png",
+          "east": "HelpingUp/rotations/east.png",
+          "north-east": "HelpingUp/rotations/north-east.png",
+          "north": "HelpingUp/rotations/north.png",
+          "north-west": "HelpingUp/rotations/north-west.png",
+          "west": "HelpingUp/rotations/west.png",
+          "south-west": "HelpingUp/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "8d40c103-697b-414b-bb22-eafe5b796d43",
+        "name": "Seated",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:55:00.377369+00:00"
+      },
+      "folder": "Seated",
+      "frames": {
+        "rotations": {
+          "south": "Seated/rotations/south.png",
+          "south-east": "Seated/rotations/south-east.png",
+          "east": "Seated/rotations/east.png",
+          "north-east": "Seated/rotations/north-east.png",
+          "north": "Seated/rotations/north.png",
+          "north-west": "Seated/rotations/north-west.png",
+          "west": "Seated/rotations/west.png",
+          "south-west": "Seated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "3ab4d667-fbda-46cf-a4d2-d7b1c8d9aaab",
+        "name": "Hurt",
+        "prompt": "Kim Kardashian, recognizable American female media personality and socialite, drawn with a distinctive face: very long, sleek, jet-black hair parted in the middle, strong thick dark eyebrows, high cheekbones, large dark almond eyes with sharp winged eyeliner, full glossy lips in a confident smirk with a raised chin. Wear a fitted cream-colored knee-length dress with long sleeves, large gold hoop earrings and cream high-heeled sandals; black oversized sunglasses pushed up on top of her head. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the sleek black hair, the strong eyebrows and the smirk especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T15:58:29.978456+00:00"
+      },
+      "folder": "Hurt",
+      "frames": {
+        "rotations": {
+          "south": "Hurt/rotations/south.png",
+          "south-east": "Hurt/rotations/south-east.png",
+          "east": "Hurt/rotations/east.png",
+          "north-east": "Hurt/rotations/north-east.png",
+          "north": "Hurt/rotations/north.png",
+          "north-west": "Hurt/rotations/north-west.png",
+          "west": "Hurt/rotations/west.png",
+          "south-west": "Hurt/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-18T16:01:31.436108"
+}
