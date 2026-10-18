@@ -436,3 +436,10 @@ def test_the_voiced_card_carries_the_persona() -> None:
     block = turn_question(view_of(world))["system"][1]
     assert all(phrase in block for phrase in (
         "Loud and proud.", "Tremendous!", "Believe me.", "get someone else to pay", "A tycoon"))
+
+
+def test_places_everyone_already_knows_are_not_put_in_the_speakers_mind() -> None:
+    world = scene_world(knows_tap=True)
+    people(world)["bea"]["knowledge"]["objects"]["tap"] = {**world["map"]["objects"][3], "last_seen": 0.0}
+    content = turn_question(view_of(world))["content"]
+    assert ("Tap (tap)" in content, "Places you know: none to tell" in content) == (False, True)
