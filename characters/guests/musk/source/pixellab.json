@@ -351,35 +351,6 @@
     },
     {
       "character": {
-        "id": "544746c1-babf-4993-9c6e-2cdb78d306a9",
-        "name": "SleepingSeated",
-        "prompt": "Elon Musk, recognizable middle-aged South African-born American male public figure: short dark brown hair with a receding hairline, light complexion, light dark stubble, broad soft build, faint smug half-smile. Wear a plain fitted black t-shirt, dark blue jeans and black boots; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the black t-shirt and receding dark hair especially clear at game scale.",
-        "size": {
-          "width": 68,
-          "height": 68
-        },
-        "template_id": "mannequin",
-        "directions": 8,
-        "view": "low top-down",
-        "created_at": "2026-10-17T21:49:02.723457+00:00"
-      },
-      "folder": "SleepingSeated",
-      "frames": {
-        "rotations": {
-          "south": "SleepingSeated/rotations/south.png",
-          "south-east": "SleepingSeated/rotations/south-east.png",
-          "east": "SleepingSeated/rotations/east.png",
-          "north-east": "SleepingSeated/rotations/north-east.png",
-          "north": "SleepingSeated/rotations/north.png",
-          "north-west": "SleepingSeated/rotations/north-west.png",
-          "west": "SleepingSeated/rotations/west.png",
-          "south-west": "SleepingSeated/rotations/south-west.png"
-        },
-        "animations": {}
-      }
-    },
-    {
-      "character": {
         "id": "96b0ed72-408c-4e96-920c-fc302500ed15",
         "name": "KnockedOut",
         "prompt": "Elon Musk, recognizable middle-aged South African-born American male public figure: short dark brown hair with a receding hairline, light complexion, light dark stubble, broad soft build, faint smug half-smile. Wear a plain fitted black t-shirt, dark blue jeans and black boots; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the black t-shirt and receding dark hair especially clear at game scale.",
@@ -609,8 +580,37 @@
         },
         "animations": {}
       }
+    },
+    {
+      "character": {
+        "id": "79e12182-ea0b-46fb-b113-ecda42af13bb",
+        "name": "SleepingSeated",
+        "prompt": "Elon Musk, recognizable middle-aged South African-born American male public figure: short dark brown hair with a receding hairline, light complexion, light dark stubble, broad soft build, faint smug half-smile. Wear a plain fitted black t-shirt, dark blue jeans and black boots; no logos or text. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark. Keep the black t-shirt and receding dark hair especially clear at game scale.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-18T13:00:21.615895+00:00"
+      },
+      "folder": "SleepingSeated",
+      "frames": {
+        "rotations": {
+          "south": "SleepingSeated/rotations/south.png",
+          "south-east": "SleepingSeated/rotations/south-east.png",
+          "east": "SleepingSeated/rotations/east.png",
+          "north-east": "SleepingSeated/rotations/north-east.png",
+          "north": "SleepingSeated/rotations/north.png",
+          "north-west": "SleepingSeated/rotations/north-west.png",
+          "west": "SleepingSeated/rotations/west.png",
+          "south-west": "SleepingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-10-17T22:06:38.836815"
+  "export_date": "2026-10-18T13:05:43.855934"
 }

@@ -10,7 +10,7 @@ WEIGHTS: Mapping[str, float] = {"quarrel": 2.0, "fight": 4.0, "knockout": 3.0, "
 
 # Logged event types that are a moment by themselves.
 # An insult is not one: every quarrel logs its own `quarrel` event beside it, so counting both would count twice.
-_BY_TYPE = {"quarrel": "quarrel", "fight_started": "fight", "dice_won": "played_together",
+_BY_TYPE = {"quarrel": "quarrel", "fight_started": "fight", "dice_won": "played_together", "darts_won": "played_together",
             "gave": "gift", "dozed_off": "fell_asleep", "limped_home": "limped_home", "got_drunk": "got_drunk"}
 # `fight_ended` carries no outcome field, only words (`aftermath._words`): these end the fights that knocked someone out.
 _KNOCKOUT_WORDS = ("out cold", "knocked each other out")
