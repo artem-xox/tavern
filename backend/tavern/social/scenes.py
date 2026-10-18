@@ -72,7 +72,7 @@ class Conversation(TypedDict):
 
 
 # What a new scene is about, by how many conversations the starter remembers.
-TOPICS = ("stories from the road", "the inn's beer", "their next journey", "a game of darts")
+TOPICS = ("the evening so far", "the inn's beer", "the state of the world", "a game of darts")
 
 
 def conversation_of(world: Mapping[str, Any], actor_id: Any) -> Conversation | None:

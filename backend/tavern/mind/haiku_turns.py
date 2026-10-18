@@ -224,7 +224,7 @@ def _news(me: Mapping[str, Any]) -> str:
     # A hand-made view without the field carries no news, as with `earlier`.
     if not me.get("news"):
         return ("NEWS THE SPEAKER CARRIES\n\nNone, so the speaker cannot use share_news and talks about "
-                "themselves, the road or the room.")
+                "themselves, the room or what is on their mind.")
     items = [f'- id "{item["id"]}", {item["topic"]}: "{item["told_as"]}" ('
              f'{"you knew it before tonight" if item["heard_from"] is None else "heard from " + item["heard_from"]}; '
              f'{next(words for floor, words in _BELIEF if item["confidence"] >= floor)})' for item in me["news"]]
