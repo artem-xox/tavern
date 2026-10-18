@@ -118,6 +118,9 @@ def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequen
         if closing_called and not duty else "",
         "The speaker has had enough company for now and may say goodbye after answering."
         if me["needs"]["social"] < CONTENT and not duty else "",
+        "The others have been talking past the speaker, who cuts in uninvited: a quick remark on what was just said, "
+        "or a claim on the talk, addressed to whom the speaker means."
+        if scene.get("cutting_in") else "",
         "The speaker has not yet told anyone here where the places they know are; someone may want to know."
         if me["places"] and not shared else "",
         "The speaker carries news the others have not heard from them; telling one piece is welcome."

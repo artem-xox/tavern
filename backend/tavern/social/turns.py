@@ -68,6 +68,29 @@ def reading_time(line: str, rules: Mapping[str, Any]) -> float:
     return max(rules["min_gap"], len(line) / rules["chars_per_second"])
 
 
+# Lines in a row a member may stay out of before they cut in on those talking past them.
+CUT_IN_AFTER = 2
+
+
+def cutting_in(scene: Conversation) -> str | None:
+    """Tell who cuts in on the talk now, if anyone.
+
+    Args:
+        scene: Scene with at least one participant.
+
+    Returns:
+        The first member, in order of joining, who spoke in none of the last `CUT_IN_AFTER` lines and is
+        neither their last speaker nor whom the last line addressed; None while no one is left out that long.
+    """
+    turns = scene["turns"]
+    if len(turns) < CUT_IN_AFTER:
+        return None
+    recent = {turn["speaker"] for turn in turns[-CUT_IN_AFTER:]}
+    last = turns[-1]
+    return next((member for member in scene["participants"]
+                 if member not in recent and member != last["addressee"]), None)
+
+
 def next_speaker(scene: Conversation) -> str:
     """Tell who speaks next in a scene.
 
@@ -75,13 +98,16 @@ def next_speaker(scene: Conversation) -> str:
         scene: Scene with at least one participant.
 
     Returns:
-        Whoever the last line addressed, if still there and not its speaker; otherwise the
-        participant after the last speaker, in order of joining; and the starter for the first
-        line, or after the last speaker left.
+        Whoever cuts in (see `cutting_in`); otherwise whoever the last line addressed, if still there and not
+        its speaker; otherwise the participant after the last speaker, in order of joining; and the starter
+        for the first line, or after the last speaker left.
     """
     people = scene["participants"]
     if not scene["turns"]:
         return people[0]
+    interrupter = cutting_in(scene)
+    if interrupter is not None:
+        return interrupter
     last = scene["turns"][-1]
     if last["addressee"] in people and last["addressee"] != last["speaker"]:
         return last["addressee"]
@@ -99,7 +125,8 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
 
     Returns:
         `conversation`: ID, topic, index of the turn being written, participants (see
-        `_participants`), every turn spoken in it so far and the pending `invitation`, if any;
+        `_participants`), every turn spoken in it so far, whether the speaker `cutting_in` on others talking past
+        them, and the pending `invitation`, if any;
         `speaker`: their ID, name, needs, traits, visit, the places they could tell about (tap,
         WC, darts), their `opinions` of the others, `earlier`, everything they still remember saying and hearing
         in other scenes tonight (`heard.earlier_lines`), `said`, every line of their own they remember, this scene's
@@ -118,7 +145,7 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
               sorted(speaker["knowledge"]["objects"].items()) if item["kind"] in ("tap", "toilet", "darts")]
     view = {"conversation": {"id": scene["id"], "topic": scene["topic"], "turn": len(scene["turns"]),
                              "participants": _participants(world, scene, speaker),
-                             "turns": deepcopy(scene["turns"])},
+                             "turns": deepcopy(scene["turns"]), "cutting_in": cutting_in(scene) == speaker["id"]},
             "speaker": {"id": speaker["id"], "name": speaker["name"], **deepcopy(
                 {key: speaker[key] for key in ("needs", "traits", "visit")}), "places": places,
                          **_mind(world, scene, speaker)},
