@@ -9,7 +9,6 @@ import type { ActivityView, Actor, Chapter, Command, Conversation, ItemView, Min
 interface Handlers {
   command: (command: Command) => void;
   select: (id: string) => void;
-  edit: (enabled: boolean) => void;
   lineup: () => void;
 }
 
@@ -30,7 +29,6 @@ export class Dashboard {
   private selectedId: string | null = null;
   private retellingDismissed = false;
   private connected: boolean = false;
-  private editing: boolean = false;
   private targetSignature: string = "";
   private noticeTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -133,8 +131,7 @@ export class Dashboard {
           </section>
           <section class="control-card" aria-label="Shape the evening">
             <div class="controls-row"><button id="evening" data-evening data-control class="primary">▶ Start the evening</button><button id="pause" data-control>Pause</button><label class="speed-label">Speed<select id="speed" data-control aria-label="Simulation speed"><option value="0.5">½×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
-              <span class="controls-spacer"></span><button id="new-lineup">Change guests</button><button id="refill" data-control>Refill beer</button><button id="edit" data-control aria-pressed="false">Edit obstacles</button><button id="save" data-control>Save</button><button id="load" data-control>Load</button></div>
-            <p id="edit-hint" class="helper">Refill adds 10 servings. Obstacle mode toggles a clicked cell. The server keeps your saved world.</p>
+            </div>
           </section>
           <section class="events-card"><div class="section-heading"><h3>Story of the evening</h3><span id="story-score" class="muted"></span></div><div id="story"></div></section>
           <section class="events-card"><div class="section-heading"><h3>From the room</h3><span class="muted">Recent events</span></div><ol id="events" class="event-list"></ol></section>
@@ -151,13 +148,9 @@ export class Dashboard {
       const target: HTMLElement | null = (event.target as HTMLElement).closest("button");
       if (!target) return;
       if (target.dataset.actor) { this.handlers.select(target.dataset.actor); return; }
-      if (target.id === "new-lineup") { this.handlers.lineup(); return; }
       if (!this.world) return;
       if (target.dataset.evening !== undefined) this.startOrRestart();
       if (target.id === "pause") this.handlers.command({ type: "pause", paused: !this.world.paused });
-      if (["save", "load"].includes(target.id)) this.handlers.command({ type: target.id as "save" | "load" });
-      if (target.id === "refill") this.refill();
-      if (target.id === "edit") this.toggleEditing();
       if (target.id === "force") this.forceAction();
     });
     element<HTMLSelectElement>(this.root, "#speed").addEventListener("change", (event: Event): void => this.handlers.command({ type: "speed", value: Number((event.target as HTMLSelectElement).value) }));
@@ -177,7 +170,7 @@ export class Dashboard {
 
   private renderRoster(world: World): void {
     // Keyed by guest, so a chip keeps its element (and a tap that is under way) when the roster reorders.
-    render(html`${repeat([...world.actors, ...world.departed], (actor: Actor): string => actor.id, (actor: Actor) => html`<button class="visitor-chip ${actor.id === this.selectedId ? "selected" : ""} ${this.departed(actor) ? "departed" : ""}" data-actor=${actor.id} aria-pressed=${actor.id === this.selectedId}><span class="visitor-dot" style="background:${this.actorColor(actor)}"></span>${actor.name}<span class="visitor-status">${this.activity(actor)}</span></button>`)}`, element(this.root, "#roster"));
+    render(html`${repeat([...world.actors, ...world.departed], (actor: Actor): string => actor.id, (actor: Actor) => html`<button class="visitor-chip ${actor.id === this.selectedId ? "selected" : ""} ${this.departed(actor) ? "departed" : ""}" data-actor=${actor.id} aria-pressed=${actor.id === this.selectedId}><span class="visitor-dot" style="background:${this.actorColor(actor)}"></span><span class="visitor-name">${actor.name}</span><span class="visitor-status">${this.activity(actor)}</span></button>`)}`, element(this.root, "#roster"));
     element(this.root, "#loading").hidden = true;
   }
 
@@ -300,20 +293,6 @@ export class Dashboard {
     if (actor.action?.verb === "doze") return "asleep";
     if (actor.seat_id) return actor.action?.verb === "drink" ? "sipping ale" : "seated";
     return actor.status;
-  }
-
-  private refill(): void {
-    const tap: WorldObject | undefined = this.world?.map.objects.find((object: WorldObject): boolean => object.kind === "tap");
-    if (tap) this.handlers.command({ type: "refill", object_id: tap.id, amount: 10 });
-  }
-
-  private toggleEditing(): void {
-    this.editing = !this.editing;
-    const button: HTMLButtonElement = element(this.root, "#edit");
-    button.setAttribute("aria-pressed", String(this.editing));
-    button.textContent = this.editing ? "✓ Editing obstacles" : "Edit obstacles";
-    element(this.root, "#edit-hint").textContent = this.editing ? "Click a floor cell to block it, or an obstacle to unblock it. Server rules still apply." : "Refill adds 10 servings. Obstacle mode toggles a clicked cell. The server keeps your saved world.";
-    this.handlers.edit(this.editing);
   }
 
   private forceAction(): void {

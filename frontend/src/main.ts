@@ -4,7 +4,7 @@ import { Dashboard } from "./dashboard";
 import { LineupScreen } from "./lineupscreen";
 import { TavernScene } from "./scene";
 import { spriteSheets } from "./sprites";
-import type { Cast, Cell, CharacterCatalog, Snapshot, World } from "./types";
+import type { Cast, CharacterCatalog, Snapshot, World } from "./types";
 import "./style.css";
 
 const root: HTMLElement | null = document.querySelector("#app");
@@ -35,7 +35,6 @@ async function start(): Promise<void> {
   const offered: Cast[] = await casts.json() as Cast[];
   let world: World | null = null;
   let selectedId: string | null = null;
-  let editing: boolean = false;
   let connection: WorldConnection;
 
 function selectVisitor(id: string): void {
@@ -44,20 +43,13 @@ function selectVisitor(id: string): void {
   dashboard.select(id);
 }
 
-function editCell(x: number, y: number): void {
-  if (!world || !editing) return;
-  const blocked: boolean = world.map.blocked.some(([cellX, cellY]: Cell): boolean => cellX === x && cellY === y);
-  connection.send({ type: "block", x, y, blocked: !blocked });
-}
-
 const scene: TavernScene = new TavernScene(
-  { select: selectVisitor, cell: editCell, hover: (message: string): void => dashboard.hover(message) },
+  { select: selectVisitor, cell: (): void => {}, hover: (message: string): void => dashboard.hover(message) },
   sprites,
 );
 const dashboard: Dashboard = new Dashboard(application, {
   command: (command): void => connection.send(command),
   select: selectVisitor,
-  edit: (enabled: boolean): void => { editing = enabled; scene.setEditing(enabled); },
   lineup: (): void => lineup.open(true),
 }, sprites);
 const lineupHost: HTMLElement = document.createElement("div");

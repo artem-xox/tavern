@@ -212,6 +212,7 @@ export class TavernScene extends Phaser.Scene {
     if (actor.status !== "walking") {
       // The server turns heads toward sounds and partners; otherwise the seat or the task decides.
       view.direction = actor.facing ?? seat?.facing ?? (target && actor.status === "interacting" ? target.facing ?? headingToObject(actor, target) ?? view.direction : view.direction);
+      if (this.onPot(actor)) view.direction = "south";
     }
     const { name: character, sheet } = spriteOf(actor, this.sprites);
     let wanted: string = this.actorPose(actor);
@@ -225,8 +226,10 @@ export class TavernScene extends Phaser.Scene {
     readWounds(view.wounds, view.container, actor, this.world?.fights ?? [], this.world?.time ?? 0, wanted, pose, view.direction);
     view.cellX = actor.x;
     view.cellY = actor.y;
-    const x: number = (actor.x + 0.5) * size;
-    const y: number = (actor.y + 0.5) * size;
+    // On the pot the visitor sits in the privy's own cell, not in the spot they walked to.
+    const spot: { x: number; y: number } = this.onPot(actor) && target ? target : actor;
+    const x: number = (spot.x + 0.5) * size;
+    const y: number = (spot.y + 0.5) * size;
     if (reset || view.targetX === 0 || Math.hypot(x - view.container.x, y - view.container.y) > size * 3) view.container.setPosition(x, y);
     view.targetX = x;
     view.targetY = y;
@@ -265,10 +268,16 @@ export class TavernScene extends Phaser.Scene {
     }
   }
 
+  /** A visitor using the WC sits on the pot, facing south, in the ordinary seated pose. */
+  private onPot(actor: Actor): boolean {
+    return actor.status === "interacting" && actor.action?.verb === "use_toilet";
+  }
+
   private actorPose(actor: Actor): string {
     const wound: string | null = fightPose(actor);
     if (wound) return wound;
     if (actor.status === "walking") return "Walking";
+    if (this.onPot(actor)) return "Seated";
     // Someone handing this visitor something holds it out to them; they reach for it, whatever they were doing.
     const offered: boolean = this.world?.actors.some((giver: Actor): boolean => giver.status === "interacting" && giver.action?.verb === "give" && giver.action.target_id === actor.id) ?? false;
     const pose: string | null | undefined = offered ? "Receiving" : actor.status === "interacting" && actor.action ? this.activities[actor.action.verb]?.pose : null;
