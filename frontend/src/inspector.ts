@@ -4,7 +4,7 @@ import { aimLabel } from "./aims";
 import { clock } from "./clock";
 import { iconPixels } from "./icons";
 import { projectLabel } from "./projects";
-import { mergeThoughts, NEED_PIPS, needPips, needTone, needWord, opinionBar, type MergedThought } from "./mindview";
+import { chasing, mergeThoughts, NEED_PIPS, needPips, needTone, needWord, opinionBar, type MergedThought } from "./mindview";
 import { spriteOf, type SpriteRegistry } from "./sprites";
 import type { ActivityView, Actor, ItemView, Mind, NewsCopy, Verb, World, WorldObject } from "./types";
 
@@ -84,9 +84,10 @@ function now(actor: Actor, ctx: InspectorContext): TemplateResult {
   const place: string = actor.visit.left_at !== undefined ? `Left at ${clock(actor.visit.left_at)}` : target ? target.name : partner ? `With ${partner.name}` : "";
   const written = actor.intention;
   const goal: string = written?.goal ? `${written.goal.kind.replace("_", " ")} ${ctx.world.actors.find((item: Actor): boolean => item.id === written.goal?.target)?.name ?? written.goal.target}` : "";
+  const obsession: string | null = chasing(actor.card?.obsessions, written?.obsession);
   const plan = ctx.world.projects.find((item) => item.by === actor.id);
   return html`<div class="now"><p class="action">${action}</p><p class="where">${place}</p>${plan ? html`<p class="where">${projectLabel(plan.kind, plan.step, plan.of)}</p>` : ""}
-    ${written ? html`<p class="thought">“${written.thought}”</p><p class="intends"><b>Intends</b> ${written.intention}</p>${goal ? html`<span class="goal" title="${written.goal?.status ?? ""}">Goal · ${goal}</span>` : ""}`
+    ${written ? html`<p class="thought">“${written.thought}”</p><p class="intends"><b>Intends</b> ${written.intention}</p>${goal ? html`<span class="goal" title="${written.goal?.status ?? ""}">Goal · ${goal}</span>` : ""}${obsession ? html`<p class="where">Chasing · ${obsession}</p>` : ""}`
       : html`<p class="quiet">${ctx.intentions ? "No intention written yet." : "Offline: no Claude key, so guests write no intentions."}</p>`}</div>`;
 }
 

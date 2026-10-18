@@ -9,7 +9,7 @@ from tavern.body.ailment import carries_cure
 from tavern.body.items import ITEMS
 from tavern.body.wounds import health_of, hurt
 from tavern.mind.fight_policy import hatred_scores, utilities as fight_utilities
-from tavern.mind.goals import serving
+from tavern.mind.goals import GOALS, serving, serving_aim
 from tavern.mind.hall_view import in_use, line_place, steps_to
 from tavern.social.giving import empty_handed_tablemates
 from tavern.social.hostility import urge
@@ -162,13 +162,27 @@ ASK_FLOOR: Mapping[str, float] = MappingProxyType({"inspect": 0.3, "wait": 0.1, 
 
 # What serving the guest's goal adds to an option's score: enough to tip a near tie, not to outweigh a pressing need.
 GOAL_BONUS = 0.3
+# What it grows to by the end of the goal's time: a goal not yet reached pulls harder as it runs out, so a steady
+# need cannot starve it, but it still does not outweigh a need that presses.
+LATE_GOAL_BONUS = 0.5
+
+
+def _goal_bonus(observation: Mapping[str, Any]) -> float:
+    # Grows linearly over the second half of the goal's time, from the base to the late bonus.
+    intention = observation["actor"].get("intention")
+    goal = intention.get("goal") if intention else None
+    if goal is None or goal["status"] != "active" or "time" not in observation:
+        return GOAL_BONUS
+    age = (observation["time"] - intention["written_at"]) / GOALS[goal["kind"]].lasts
+    return GOAL_BONUS + (LATE_GOAL_BONUS - GOAL_BONUS) * min(1.0, max(0.0, 2 * age - 1))
 
 
 def _score_goal(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
                 scores: dict[str, float]) -> None:
+    bonus = _goal_bonus(observation)
     for action in candidates:
         if serving(observation, action):
-            scores[action["id"]] = min(1.0, scores[action["id"]] + GOAL_BONUS)
+            scores[action["id"]] = min(1.0, scores[action["id"]] + bonus)
 
 
 def _score_answers(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
@@ -210,6 +224,7 @@ def local_aim_scores(observation: Mapping[str, Any], candidates: Sequence[Mappin
                  "win_over": 0.2 + 0.4 * sociability, "needle": 0.1 + 0.5 * temper * max(0.0, -opinion),
                  "have_it_out": 0.2 + 0.5 * temper, "thank": 0.5,
                  "rematch": 0.2 + 0.4 * needs.get("boredom", 0) / 100 + 0.3 * temper}[kind]
+        score += _goal_bonus(observation) if serving_aim(observation, candidate) else 0.0
         scores[candidate["id"]] = min(1.0, max(0.0, score))
     return scores
 
@@ -248,6 +263,7 @@ def local_answer_scores(observation: Mapping[str, Any], invitation: Mapping[str,
         score = (worth + liking if answer == "accept"
                  else 0.3 + 0.2 * (1 - actor.get("traits", {}).get("sociability", 0.5)) if answer == "decline"
                  else _invitation_worth(observation, answer.partition(":")[2]) - 0.1)
+        score += _goal_bonus(observation) if serving_aim(observation, candidate) else 0.0
         scores[candidate["id"]] = min(1.0, max(0.0, score))
     return scores
 

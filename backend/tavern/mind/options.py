@@ -7,6 +7,7 @@ from typing import Any
 from tavern.body.activities import FAMILIES
 from tavern.body.items import ITEMS
 from tavern.mind.fight_words import TEXTS as FIGHT_TEXTS
+from tavern.mind.goals import serving_aim
 from tavern.social.aims import aim_words
 from tavern.social.giving import empty_handed_tablemates
 from tavern.social.invitations import KINDS, known_place
@@ -56,7 +57,8 @@ def aim_text(observation: Observation, candidate: Action) -> str:
         raise ValueError(f"Cannot describe an aim towards {candidate['target_id']!r}, who is not in sight")
     topics = {fact_id: fact["topic"] for fact_id, fact in observation["actor"].get("knowledge", {}).get("facts", {}).items()}
     words = aim_words(candidate["aim"], label_of(person), topics)
-    return f"{option_text(observation, candidate)}, meaning to {words}"
+    goal = " (this meaning serves the goal they set themselves)" if serving_aim(observation, candidate) else ""
+    return f"{option_text(observation, candidate)}, meaning to {words}{goal}"
 
 
 def answer_text(observation: Observation, invitation: Mapping[str, Any], answer: str) -> str:

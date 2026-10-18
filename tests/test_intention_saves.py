@@ -59,3 +59,36 @@ def test_corrupt_intentions_are_rejected(tmp_path: Path, corrupt: Callable[[dict
     save_world(world, tmp_path / "corrupt.json")
     with pytest.raises(ValueError):
         load_world(tmp_path / "corrupt.json")
+
+
+def obsessed() -> dict[str, Any]:
+    """Ada's intention serves the second of her two obsessions."""
+    world = minded()
+    world["actors"][0]["card"] = {"id": "ada", "name": "Ada", "sprite": "visitor", "occupation": "drover",
+                                  "background": "Drives cattle.", "temperament": "Easygoing.", "speech": "Slow.",
+                                  "quirks": "Whistles.", "secret": "None to tell.", "goal": "A quiet drink.",
+                                  "params": dict.fromkeys(("patience", "temper", "sociability", "courage", "strength",
+                                                           "brawling", "tolerance", "comfort", "curiosity"), 0.5),
+                                  "obsessions": ["find the white whale", "get someone else to pay"]}
+    world["actors"][0]["intention"]["obsession"] = 1
+    return world
+
+
+def test_the_obsession_an_intention_serves_survives_save_and_load(tmp_path: Path) -> None:
+    world = obsessed()
+    save_world(world, tmp_path / "evening.json")
+    assert load_world(tmp_path / "evening.json") == world
+
+
+@pytest.mark.parametrize("corrupt", [
+    pytest.param(lambda world: world["actors"][0]["intention"].update(obsession=2), id="index-past-the-card"),
+    pytest.param(lambda world: world["actors"][0]["intention"].update(obsession=-1), id="negative-index"),
+    pytest.param(lambda world: world["actors"][0]["intention"].update(obsession="1"), id="text-index"),
+    pytest.param(lambda world: world["actors"][0].update(card=None), id="index-for-a-guest-without-a-card"),
+])
+def test_a_corrupt_obsession_is_rejected(tmp_path: Path, corrupt: Callable[[dict[str, Any]], Any]) -> None:
+    world = obsessed()
+    corrupt(world)
+    save_world(world, tmp_path / "corrupt.json")
+    with pytest.raises(ValueError):
+        load_world(tmp_path / "corrupt.json")

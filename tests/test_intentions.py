@@ -250,3 +250,104 @@ def test_the_card_block_carries_the_persona() -> None:
     view = intention_view(world, actor(world, "ada"), intention_due(world, actor(world, "ada"), RULES))
     block = intention_question("SHARED PREFIX", view)["system"][1]
     assert all(phrase in block for phrase in ("Loud and proud.", "Tremendous!", "get someone else to pay", "A tycoon"))
+
+
+@pytest.mark.parametrize("obsession, count, kept", [
+    pytest.param(0, 3, 0, id="the-first-obsession"),
+    pytest.param(2, 3, 2, id="the-last-obsession"),
+    pytest.param(None, 3, None, id="none-of-them"),
+    pytest.param(None, 0, None, id="none-for-a-guest-without-any"),
+])
+def test_an_intention_may_name_the_obsession_it_serves(obsession: int | None, count: int, kept: int | None) -> None:
+    assert check_intention({**answer(), "obsession": obsession}, count).get("obsession") == kept
+
+
+@pytest.mark.parametrize("obsession, count", [
+    pytest.param(3, 3, id="index-past-the-end"),
+    pytest.param(-1, 3, id="negative-index"),
+    pytest.param(0, 0, id="index-for-a-guest-without-obsessions"),
+    pytest.param(True, 3, id="a-bool"),
+    pytest.param("0", 3, id="a-string"),
+    pytest.param(1.5, 3, id="a-fraction"),
+])
+def test_an_obsession_outside_the_card_is_rejected(obsession: Any, count: int) -> None:
+    with pytest.raises(ValueError):
+        check_intention({**answer(), "obsession": obsession}, count)
+
+
+def obsessed() -> dict[str, Any]:
+    """Ada's view, from a card with two obsessions."""
+    world = card_world()
+    actor(world, "ada")["card"] = {**CARD, "obsessions": ["get someone else to pay", "have an audience"]}
+    return intention_view(world, actor(world, "ada"), intention_due(world, actor(world, "ada"), RULES))
+
+
+def test_the_question_lists_the_obsessions_by_number_and_the_schema_allows_naming_one() -> None:
+    question = intention_question("SHARED PREFIX", obsessed())
+    assert "0: get someone else to pay" in question["content"] and "1: have an audience" in question["content"]
+    assert question["schema"]["properties"]["obsession"]["anyOf"] == [{"type": "integer"}, {"type": "null"}]
+
+
+def test_a_guest_without_obsessions_is_not_asked_for_one() -> None:
+    world = card_world()
+    view = intention_view(world, actor(world, "ada"), intention_due(world, actor(world, "ada"), RULES))
+    assert "obsession" not in intention_question("SHARED PREFIX", view)["content"].lower()
+
+
+def test_a_delivered_intention_keeps_the_obsession_it_serves() -> None:
+    world, view = ready()
+    view["obsessions"] = ["get someone else to pay", "have an audience"]
+    deliver_intention(world, "ada", view, lambda: {**answer(), "obsession": 1}, RULES)
+    assert actor(world, "ada")["intention"]["obsession"] == 1
+
+
+def test_the_writer_passes_the_obsession_through_the_boundary() -> None:
+    async def ask(question: Any) -> dict[str, Any]:
+        return {**answer(), "goal": "none", "target": None, "obsession": 0}
+    assert asyncio.run(intention_writer("SHARED PREFIX", ask)(obsessed())) == {**answer(), "obsession": 0}
+
+
+def test_the_writer_rejects_an_obsession_the_card_does_not_have() -> None:
+    async def ask(question: Any) -> dict[str, Any]:
+        return {**answer(), "goal": "none", "target": None, "obsession": 2}
+    with pytest.raises(ValueError):
+        asyncio.run(intention_writer("SHARED PREFIX", ask)(obsessed()))
+
+
+def pursuing(status: str = "active", obsession: int | None = 0) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Ada, who set out to talk to Bea for her first obsession at 10 s, takes stock again at 20 s."""
+    world, view = ready()
+    view["obsessions"] = ["get someone else to pay", "have an audience"]
+    previous = actor(world, "ada")["intention"]
+    previous["goal"] = {"kind": "talk_to", "target": "bea", "status": status}
+    if obsession is not None:
+        previous["obsession"] = obsession
+    return world, view
+
+
+def restated(obsession: int | None) -> Callable[[], dict[str, Any]]:
+    """A new answer that sets a different goal for an obsession."""
+    goal = {"kind": "sit_with", "target": "bea", "status": "active"}
+    return lambda: {**answer(), "goal": goal, **({} if obsession is None else {"obsession": obsession})}
+
+
+@pytest.mark.parametrize("status, before, after, kept", [
+    pytest.param("active", 0, 0, "talk_to", id="the-same-obsession-keeps-the-goal"),
+    pytest.param("active", 0, 1, "sit_with", id="another-obsession-sets-a-new-goal"),
+    pytest.param("active", 0, None, "sit_with", id="no-obsession-sets-a-new-goal"),
+    pytest.param("active", None, None, "sit_with", id="a-goal-without-an-obsession-is-replaced"),
+    pytest.param("done", 0, 0, "sit_with", id="a-reached-goal-is-replaced"),
+    pytest.param("expired", 0, 0, "sit_with", id="a-lapsed-goal-is-replaced"),
+])
+def test_a_guest_keeps_an_unreached_goal_while_the_mind_names_the_same_obsession(
+        status: str, before: int | None, after: int | None, kept: str) -> None:
+    world, view = pursuing(status, before)
+    deliver_intention(world, "ada", view, restated(after), RULES)
+    assert actor(world, "ada")["intention"]["goal"]["kind"] == kept
+
+
+def test_the_log_says_which_obsession_an_intention_serves() -> None:
+    world, view = ready()
+    view["obsessions"] = ["get someone else to pay", "have an audience"]
+    deliver_intention(world, "ada", view, lambda: {**answer(), "obsession": 1}, RULES)
+    assert world["events"][-1]["message"].endswith("Chasing: have an audience.")

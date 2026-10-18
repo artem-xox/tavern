@@ -182,8 +182,10 @@ export interface Heard {
 export interface Intention {
   thought: string;
   intention: string;
-  /** What they set out to do (`talk_to` or `sit_with` a guest), and whether it is `active`, `done`, `failed` or `expired`; null for none. */
+  /** What they set out to do (a kind: `talk_to`, `sit_with`, `treat`, `play_with` or `have_it_out`, about a guest), and whether it is `active`, `done`, `failed` or `expired`; null for none. */
   goal: { kind: string; target: string; status: string } | null;
+  /** Index into the card's `obsessions` that this intention serves; absent when it serves none. */
+  obsession?: number;
   written_at: number;
   trigger: { kind: string; text: string; time: number };
 }
@@ -202,6 +204,8 @@ export interface CharacterCard {
   params: Record<string, number>;
   /** How strangers see the guest until they learn the name. */
   looks?: string;
+  /** What a famous guest cannot leave alone tonight, up to three; an intention's `obsession` indexes it. */
+  obsessions?: string[];
   /** Counts only in how much punishment a fighter takes. */
   sex?: "female" | "male";
 }
