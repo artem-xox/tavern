@@ -1,7 +1,7 @@
 ---
 id: S2-03
 title: Persona cards
-status: todo
+status: doing
 needs: [S2-01]
 touches: [adapters/characters.py, mind/cards.py, mind/turn_prompt.py, mind/intentions.py, social/turns.py, .agents/skills/add-npc]
 ---
@@ -33,7 +33,8 @@ also never speak (Claude from GTA III).
 - `catchphrases`: up to five short lines the writer may echo or twist, never repeat word for word twice.
 - `obsessions`: one to three wishes for tonight ("find out who has oil", "keep everyone at a distance",
   "get someone else to pay").
-- `mute`: `true` for a character who never speaks. Default `false`.
+- `mute`: `true` for a character who never speaks. Default `false`. **Deferred**: no guest needs it yet (the
+  GTA III hero is the first); it lands with that guest.
 
 ## Steps
 
@@ -49,3 +50,7 @@ also never speak (Claude from GTA III).
 - `make check` passes; the Locals evening replays unchanged.
 
 ## Results
+
+Built: `inspired_by`, `origin`, `persona`, `catchphrases` (1–5), `obsessions` (1–3), all optional, so saves and
+Locals cards are unchanged. They reach the line writer (cached card block) and the intention prompt through
+`cards.persona_words`; the shared prefix rule 4 says how to play them. Not sent to the browser. `mute` deferred.

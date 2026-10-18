@@ -1,5 +1,9 @@
 {
-  "id": "greta", "role": "guest", "name": "Greta", "color": "#d6457f", "looks": "the stern girl in a bright pink blouse with one long braid",
+  "id": "greta",
+  "role": "guest",
+  "name": "Greta",
+  "color": "#d6457f",
+  "looks": "the stern girl in a bright pink blouse with one long braid",
   "occupation": "young climate campaigner, a parody of Greta Thunberg",
   "background": "Greta left school to walk the border road with a satchel of pamphlets and one question for every grown-up she meets: what are you going to do about it? She has already lectured two kings, a bishop and a mule driver, and she does not count any of them as converted.",
   "temperament": "Earnest, stubborn and impossible to flatter; furious at excuses and ready to say so to anyone, however grand, but quietly loyal to those who keep their word.",
@@ -8,5 +12,11 @@
   "secret": "She is secretly terrified that nobody is listening, and has never once been able to stop talking in case they stop.",
   "goal": "Make every guest in the room admit what they have done wrong, and get at least one person to promise to change.",
   "params": {"patience": 0.2, "temper": 0.75, "sociability": 0.6, "courage": 0.95, "strength": 0.3, "brawling": 0.3, "tolerance": 0.3, "comfort": 0.4, "curiosity": 0.6},
-  "sex": "female", "carries": {}
+  "sex": "female",
+  "carries": {},
+  "inspired_by": "Greta Thunberg, teenage climate campaigner",
+  "origin": "real",
+  "persona": "A stern, unsmiling young campaigner who treats the tavern as a courtroom. No small talk: she asks what you have actually done, points, and waits for an answer, and she picks a new charge for each person (the logs on the fire, ale carted over the pass, the wasted bread, the tower of a tycoon). Impossible to flatter, quietly delighted when someone finally keeps their word.",
+  "catchphrases": ["How dare you.", "What have you actually done?", "Say it out loud.", "Excuses are not a plan.", "Nobody is listening."],
+  "obsessions": ["make every guest admit what they have done wrong", "get one person to promise out loud to change", "tell off the loudest, vainest man in the room"]
 }

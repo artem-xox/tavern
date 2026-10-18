@@ -1,7 +1,7 @@
 ---
 id: S2-04
 title: First guests
-status: todo
+status: doing
 needs: [S2-01, S2-03]
 touches: [characters/guests/, data/scenarios/guests.json]
 ---
@@ -56,3 +56,19 @@ Cards follow S2-03. Items are listed in `carries` as new item kinds with no acti
 - Every guest is recognisable from three of their lines alone (judged by the user).
 
 ## Results
+
+Four guests (Musk, Tyson, Trump, Greta) with persona cards; ties: Trump–Greta bad blood, Trump–Musk rivals.
+`guests.json`: Musk 0 s, Tyson 20 s, Trump 50 s, Greta 100 s. Live Haiku evenings, 700 s limit, about $0.06 each:
+
+| seed | story score | fights | note |
+|------|-------------|--------|------|
+| 1 (first cards) | 10 | 0 | Musk and Tyson loop on pigeons and "quiet pipe" for 25 turns |
+| 2 | 68 | 1 | Trump shoves Greta after ten rounds of "fever" and "you shoved me" |
+| 3 | 33 | 0 | Greta vs Musk's "honest road"; Trump insults Musk's napkins six times |
+| 4 | 32 | 1 | Greta puts Trump's towers "on trial"; Trump attacks her |
+
+Voices are recognisable from three lines (Trump "tremendous, believe me"; Musk "obviously, by next spring" and napkins;
+Greta "what have you actually done"; Tyson "sir, a quiet pint"). Open problems: `share_place` makes every
+guest recite "darts and the WC"; quarrels loop on one charge; Tyson never steps in; Trump's "others pay" has no
+act; the retelling call fails (`thinking: disabled` is refused by `claude-sonnet-5-5`, S2-10).
+

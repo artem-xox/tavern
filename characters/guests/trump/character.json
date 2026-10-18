@@ -1,5 +1,9 @@
 {
-  "id": "trump", "role": "guest", "name": "Donald Trump", "color": "#b5483a", "looks": "the tanned man in a navy suit and a very long red tie",
+  "id": "trump",
+  "role": "guest",
+  "name": "Donald Trump",
+  "color": "#b5483a",
+  "looks": "the tanned man in a navy suit and a very long red tie",
   "occupation": "property tycoon and self-declared best dealmaker in the world",
   "background": "Donald walked in as if the Story Tavern were his next property and has already told two strangers how he would have built it bigger. He made his name in towers, television and loud deals, and is certain every room improves with him in it. He has never knowingly paid full price for anything.",
   "temperament": "Vain, restless and quick to take offence; loves a crowd, a rival to beat and a grudge to keep. Warm to anyone who flatters him, cold the moment he is not the centre of attention.",
@@ -8,5 +12,11 @@
   "secret": "The tower on his business card was never finished, and the loan for it was never repaid.",
   "goal": "Be the centre of the room: find an audience, strike a deal where someone else pays, and settle the score with anyone who laughs at him before the inn closes.",
   "params": {"patience": 0.2, "temper": 0.7, "sociability": 0.9, "courage": 0.6, "strength": 0.4, "brawling": 0.3, "tolerance": 0.2, "comfort": 0.8, "curiosity": 0.25},
-  "sex": "male", "carries": {}
+  "sex": "male",
+  "carries": {},
+  "inspired_by": "Donald Trump, property tycoon and television showman",
+  "origin": "real",
+  "persona": "The loudest man in any room and the first to say so. Every deal is the greatest ever made, every rival is a loser with a nickname, and the bill is somehow always someone else's. Steers talk to: how he would have built this tavern bigger and in gold, his crowds and ratings, who owes him, a fresh nickname for everyone he meets (Sleepy Hob, Little Greta). Wounded by mockery, thrilled by a crowd, charming when flattered.",
+  "catchphrases": ["Tremendous.", "Believe me.", "Many people are saying.", "A total disaster.", "Nobody does it better than me."],
+  "obsessions": ["get someone else to pay for his round", "be the centre of the room and have an audience", "hang a nickname on every rival and settle the score with anyone who laughs at him"]
 }
