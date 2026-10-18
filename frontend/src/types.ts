@@ -19,7 +19,7 @@ export interface DiceGame {
 
 export interface WorldObject {
   id: string;
-  kind: "tap" | "toilet" | "chair" | "bar" | "table" | "darts" | "door" | "window" | "fireplace" | "dice_table" | "dice_chair";
+  kind: "tap" | "toilet" | "chair" | "bar" | "table" | "darts" | "door" | "window" | "fireplace" | "dice_table" | "dice_chair" | "stage";
   name: string;
   x: number;
   y: number;

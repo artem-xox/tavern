@@ -182,3 +182,10 @@ export function drawDarts(g: Phaser.GameObjects.Graphics, x: number, y: number):
   g.fillStyle(0xce7358).fillCircle(x, y, 3);
   g.lineStyle(2, 0xe5c178).lineBetween(x + 1, y - 3, x + 8, y - 10);
 }
+
+/** A plain plank platform, one tile: a speaker's stage. */
+export function drawStage(g: Phaser.GameObjects.Graphics, x: number, y: number): void {
+  g.fillStyle(0x4a3524).fillRoundedRect(x - 15, y - 12, 30, 28, 3);
+  g.fillStyle(0x8a6a44).fillRoundedRect(x - 15, y - 16, 30, 26, 3);
+  for (let i: number = -1; i <= 1; i += 1) g.lineStyle(1, 0x5b4129, 0.8).lineBetween(x + i * 10 - 5, y - 15, x + i * 10 - 5, y + 9);
+}

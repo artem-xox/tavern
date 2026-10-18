@@ -27,6 +27,7 @@ from tavern.evening.fight_metrics import fight_counts
 from tavern.evening.giving_metrics import giving_counts
 from tavern.evening.manner_metrics import manner_counts
 from tavern.evening.drink_metrics import drink_counts
+from tavern.evening.speech_metrics import speech_counts
 from tavern.evening.goal_metrics import chased_counts, goal_counts, goal_kind_counts, promise_counts
 from tavern.evening.repetition import ALIKE, repetition_counts
 from tavern.evening.retelling import retell
@@ -377,6 +378,7 @@ def main(root: Path) -> None:
               "news": news_metrics(world), "dice": dice_metrics(evening.events),
               "sleep": sleep_metrics(evening.events, world["departed"], world["closes_at"]),
               "drink": drink_counts(evening.events, [*world["actors"], *world["departed"]]),
+              "speeches": speech_counts(evening.events),
               "giving": giving_counts(evening.events), "manners": manner_counts(evening.events),
               "closing": closing_counts(world["departed"], world["last_call_at"], world["closes_at"]),
               "ailment": ailment_counts(evening.events, {item["id"]: item["name"]

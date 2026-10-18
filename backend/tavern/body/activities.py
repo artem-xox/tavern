@@ -19,6 +19,7 @@ from tavern.social.darts import settle_match
 from tavern.social.giving import hand_over
 from tavern.social.invitations import begin_errand
 from tavern.social.names import called
+from tavern.social.speeches import give_speech
 from tavern.social.scenes import conversation_of, join_conversation, start_conversation
 from tavern.social.tables import intrude
 from tavern.social.thoughts import opinion_of, think
@@ -161,6 +162,10 @@ def _drink(world: World, actor: Actor, target: dict[str, Any] | None) -> None:
     # Crossing into drunk or wasted is a moment of its own: the client shows it, and the evening's metrics count it.
     if after.floor > before.floor and after.name in ("drunk", "wasted"):
         record_event(world, actor, f"got_{after.name}", f"{actor['name']} is {after.name} now")
+
+
+def _speak_from_stage(world: World, actor: Actor, stage: dict[str, Any] | None) -> None:
+    give_speech(world, actor, stage)
 
 
 def _open_scene(world: World, actor: Actor, partner: Actor | None) -> None:
@@ -375,6 +380,14 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "wronged them tonight."),
     # Leaning on the bar is how a guest comes within reach of the barkeep: standing there they are side by side
     # with him (`scenes.side_by_side`), and chat with him as with a neighbour.
+    # A guest with something to say climbs up and addresses the whole room (`tavern.social.speeches`).
+    Activity(verb="give_speech", fatigue_per_second=0.2, target_kinds=("stage",), duration=6.0, leaves_seat=True,
+             fun=0.8, effect=_speak_from_stage, label="Give a speech", status="making a speech", pose="Talking",
+             doing="making a speech from the stage", done="made a speech", family="company",
+             stopped_at_last_call="The inn is closing: no more speeches",
+             what="climb onto the stage {target} and address the whole room",
+             guidance="For the loud, the proud and the drunk, who want everyone to listen: the whole hall hears it, "
+                      "some cheer and some groan. Pointless for the shy."),
     Activity(verb="stand_at_bar", fatigue_per_second=0.075, target_kinds=("bar",), shared_target=True, duration=12.0, leaves_seat=True,
              fun=0.3, needs=MappingProxyType({"social": -10}), label="Stand at the bar", status="at the bar",
              interruptible=True, doing="leaning on the bar", done="stood at the bar", family="company",

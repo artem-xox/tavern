@@ -30,6 +30,7 @@ Known problems that no task owns are in [TECH_DEBT.md](TECH_DEBT.md).
 | S2-09 | [Chaos](2_story_evenings/09_chaos.md): rivals, shouting, quarrels that escalate into fights | 04, 05 | todo |
 | S2-10 | [Retelling](2_story_evenings/10_retelling.md): a strong model retells the log; a closing screen shows it | 05 | doing |
 | S2-11 | [Acceptance](2_story_evenings/11_acceptance.md): live Guest evenings meet the story targets | all | todo |
+| S2-12 | [The stage](2_story_evenings/12_stage.md): a small stage from which a guest addresses the whole room | 06, 07 | doing |
 
 Order: 00, 01 and 05 can run in parallel. 05 lands before 06–09 so that each of them is measured
 against a baseline. 08 and 09 both touch `activities.py`, `actions.py` and `local_policy.py`: do not run
