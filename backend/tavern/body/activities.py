@@ -381,8 +381,8 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
     # Leaning on the bar is how a guest comes within reach of the barkeep: standing there they are side by side
     # with him (`scenes.side_by_side`), and chat with him as with a neighbour.
     # A guest with something to say climbs up and addresses the whole room (`tavern.social.speeches`).
-    Activity(verb="give_speech", fatigue_per_second=0.2, target_kinds=("stage",), duration=6.0, leaves_seat=True,
-             fun=0.8, effect=_speak_from_stage, label="Give a speech", status="making a speech", pose="Talking",
+    Activity(verb="give_speech", fatigue_per_second=0.2, target_kinds=("stage",), duration=9.0, leaves_seat=True,
+             fun=0.8, on_arrival=_speak_from_stage, label="Give a speech", status="making a speech", pose="Talking",
              doing="making a speech from the stage", done="made a speech", family="company",
              stopped_at_last_call="The inn is closing: no more speeches",
              what="climb onto the stage {target} and address the whole room",

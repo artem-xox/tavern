@@ -1,5 +1,6 @@
 """The lineup: the guests picked on the start screen, their evening's length, and the API that offers them."""
 
+from collections.abc import Callable
 import json
 from pathlib import Path
 from typing import Any
@@ -152,16 +153,25 @@ def client(tmp_path: Path) -> TestClient:
                                  catalog_dir=ROOT / "characters", scenarios_dir=ROOT / "data" / "scenarios"))
 
 
+def message_where(socket: Any, wanted: Callable[[dict[str, Any]], bool]) -> dict[str, Any]:
+    """Read socket messages until one is wanted: the server also pushes a snapshot every 0.1 s, which can arrive between a command and its answer."""
+    for _ in range(100):
+        message = socket.receive_json()
+        if wanted(message):
+            return message
+    raise AssertionError("The socket never sent the message that was wanted")
+
+
 def test_the_api_lists_both_casts_and_starts_either(tmp_path: Path) -> None:
     with client(tmp_path) as connection, connection.websocket_connect("/ws?session=device-lineup") as socket:
         casts = connection.get("/api/casts").json()
         socket.receive_json()
         socket.send_json({"type": "start", "cast": "guests", "guests": ["trump", "greta"], "minutes": 3})
-        started = socket.receive_json()["state"]
+        started = message_where(socket, lambda message: message.get("state", {}).get("closes_at") == 180)["state"]
         socket.send_json({"type": "start", "cast": "locals", "guests": ["edda"], "minutes": 5})
-        locals_evening = socket.receive_json()["state"]
+        locals_evening = message_where(socket, lambda message: message.get("state", {}).get("closes_at") == 300)["state"]
         socket.send_json({"type": "start", "cast": "robots", "guests": ["edda"], "minutes": 5})
-        refused = socket.receive_json()
+        refused = message_where(socket, lambda message: message.get("type") == "error")
     assert ([item["id"] for item in casts], started["closes_at"], locals_evening["closes_at"], refused["type"]) == (
         ["guests", "locals"], 180, 300, "error")
 

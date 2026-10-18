@@ -34,7 +34,7 @@ def test_speeches_are_counted(events: list[dict[str, Any]], expected: dict[str, 
 
 
 def test_a_speech_in_the_hall_logs_how_it_was_taken() -> None:
-    world = table_hall(guest("ada", (16, 9)), guest("bea", (15, 7), traits={"sociability": 0.9}))
+    world = table_hall(guest("ada", (17, 9), card={"persona": "x"}, intention={"thought": "I must speak.", "intention": "Speak.", "goal": None, "written_at": 0.0, "trigger": {"kind": "arrival", "text": "x", "time": 0.0}, "obsession": 0}), guest("bea", (15, 7), traits={"sociability": 0.9}))
     assert start(world, "ada", "give_speech", "stage")["accepted"]
     advance(world, 8)
     assert speech_counts(world["events"]) == {"speeches": 1, "speakers": ["ada"], "admired": 1, "groaned": 0}

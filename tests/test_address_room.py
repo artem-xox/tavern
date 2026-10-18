@@ -14,7 +14,7 @@ ANSWER = {"thought": "I must speak.", "intention": "Tell them all.", "goal": "ad
 
 def minded(at: float = 0.0, **fields: Any) -> dict[str, Any]:
     """The hall where Ada, at the stage, holds the goal to address the room, written at a game time."""
-    world = table_hall(guest("ada", (16, 9), card={"persona": "A loud showman"}, **fields), guest("bea", (15, 7)))
+    world = table_hall(guest("ada", (17, 9), card={"persona": "A loud showman"}, **fields), guest("bea", (15, 7)))
     who(world, "ada")["intention"] = {
         "thought": "Hm.", "intention": "Speak.", "goal": {"kind": "address_room", "target": None, "status": "active"},
         "written_at": at, "trigger": {"kind": "arrival", "text": "Ada came in", "time": at}}
@@ -73,5 +73,5 @@ def test_the_goal_is_done_when_the_log_shows_the_speech(speak: bool, seconds: fl
 
 
 def test_an_ordinary_guest_has_no_wish_to_address_the_room() -> None:
-    world = table_hall(guest("ada", (16, 9)))
+    world = table_hall(guest("ada", (17, 9)))
     assert open_alone(world, who(world, "ada")) == []
