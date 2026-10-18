@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help install run test check build benchmark evening
+.PHONY: help install run test check build benchmark evening eval
 
 SEED ?= 0
 CAST ?= locals
@@ -8,6 +8,8 @@ OUT ?= runs/evening-$(SEED)
 CALLS ?=
 LIMIT ?= 1200
 TRACE ?=
+SEEDS ?= 1
+ENV ?= .env
 
 help:
 	@printf 'make run      Start the backend and browser client; Ctrl+C stops both\n'
@@ -22,6 +24,8 @@ help:
 	@printf '              MODE=live (default when .env has TYPESAFE_API_KEY), local, or replay CALLS=path/calls.jsonl\n'
 	@printf '              (a replay needs the SEED, LIMIT and .env AI settings of the recorded run)\n'
 	@printf '              TRACE=true traces live calls to LangSmith, one thread per character\n'
+	@printf 'make eval     Local only: play the dialogue eval scenarios live (Jev + Haiku), measure and judge a minute\n'
+	@printf '              of talk; writes runs/evals/<time>/report.md. SEEDS="1 2" ENV=path/.env\n'
 
 install:
 	@test -x .venv/bin/python || uv venv .venv
@@ -49,3 +53,6 @@ benchmark:
 evening:
 	.venv/bin/python scripts/evening.py --cast $(CAST) --seed $(SEED) --out $(OUT) --time-limit $(LIMIT) \
 		$(if $(MODE),--mode $(MODE)) $(if $(CALLS),--calls $(CALLS)) $(if $(filter true,$(TRACE)),--trace)
+
+eval:
+	PYTHONPATH=backend .venv/bin/python scripts/dialogue_eval.py --seeds $(SEEDS) --env-file $(ENV)

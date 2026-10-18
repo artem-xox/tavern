@@ -9,6 +9,7 @@ one that has no answer `rules.conversation.turn_timeout` seconds after it was du
 
 from collections.abc import Callable, Coroutine, Mapping
 from copy import deepcopy
+import re
 from typing import Any, NotRequired, TypedDict
 
 from tavern.body.wounds import hurt
@@ -52,6 +53,7 @@ class TurnResult(TypedDict):
 TurnWriter = Callable[[Mapping[str, Any], Mapping[str, Any]], Coroutine[Any, Any, TurnResult]]
 
 _FIELDS = {"line", "act", "addressee", "topic"}
+_QUOTED = re.compile(r": “.*”$", re.DOTALL)  # The words a thought quotes (`conversation._insult`), at its end.
 _OPTIONAL = {"invitation", "fact_id"}
 
 
@@ -188,7 +190,7 @@ def _mind(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str, A
     # Who the speaker is and how they feel, for a model writer: `card` (the card's words, or None),
     # `portrait`, `feelings` in words, their current `intention` (the mind's words, or None), `aims_at` (whom their active goal is about, or None), `drunkenness` (0–1; kept out of `feelings`, so a writer
     # words it once), whether they came in unwell (`ailing`), and `company`: whether each other participant looks
-    # unwell, and the speaker's opinion of, familiarity with, and active thoughts about them, in order of joining.
+    # unwell, and the speaker's opinion of, familiarity with, and grudges about them (counted, never quoted), in order of joining.
     now, card = world["time"], speaker["card"]
     others = [item for item in world["actors"] if item["id"] in scene["participants"] and item["id"] != speaker["id"]]
     others.sort(key=lambda item: scene["participants"].index(item["id"]))
@@ -207,8 +209,18 @@ def _mind(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str, A
             "company": [{"id": other["id"], "name": other["name"], "ailing": other["ailing"], "hurt": hurt(other),
                          "opinion": opinion_of(speaker, other["id"], now),
                          "familiarity": familiarity_of(speaker, other["id"]),
-                         "thoughts": [item["text"] for item in thoughts if item["about"] == other["id"]]}
+                         "thoughts": _grudges([item for item in thoughts if item["about"] == other["id"]])}
                         for other in others]}
+
+
+def _grudges(thoughts: list[Mapping[str, Any]]) -> list[str]:
+    # One entry per kind, in the order the speaker first had them: the latest wording without the words it quotes, and
+    # how often. Quoted insults handed to a line writer come straight back as its next line, so the talk circles.
+    kinds: dict[str, list[Mapping[str, Any]]] = {}
+    for item in thoughts:
+        kinds.setdefault(item["kind"], []).append(item)
+    return [_QUOTED.sub("", items[-1]["text"]) + (f" ({len(items)} times)" if len(items) > 1 else "")
+            for items in kinds.values()]
 
 
 def _just_fought(world: Mapping[str, Any], speaker: Mapping[str, Any], others: list[Mapping[str, Any]]) -> list[str]:

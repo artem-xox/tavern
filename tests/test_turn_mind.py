@@ -58,13 +58,15 @@ def test_speaker_card_words_are_in_the_view(card: dict[str, Any] | None, expecte
     assert ("salt trader" in me["portrait"]) == (card is not None)
 
 
-@pytest.mark.parametrize("quarrels, chats, opinions", [
-    pytest.param(0, 0, {"bea": 0.0, "cid": 0.0}, id="empty-no-thoughts"),
-    pytest.param(1, 0, {"bea": -20.0, "cid": 0.0}, id="single-quarrel"),
-    pytest.param(2, 1, {"bea": -40.0, "cid": 6.0}, id="duplicate-quarrels-stack"),
+# Repeats of a thought are counted, not listed again: a line writer fed the same grudge twice repeats it.
+@pytest.mark.parametrize("quarrels, chats, opinions, about_bea", [
+    pytest.param(0, 0, {"bea": 0.0, "cid": 0.0}, [], id="empty-no-thoughts"),
+    pytest.param(1, 0, {"bea": -20.0, "cid": 0.0}, ["Quarreled with Bea about ale"], id="single-quarrel"),
+    pytest.param(2, 1, {"bea": -40.0, "cid": 6.0}, ["Quarreled with Bea about ale (2 times)"],
+                 id="duplicate-quarrels-stack"),
 ])
 def test_company_lists_opinions_and_thoughts_about_those_present(quarrels: int, chats: int,
-                                                                 opinions: dict[str, float]) -> None:
+                                                                 opinions: dict[str, float], about_bea: list[str]) -> None:
     world = scene_world(None)
     ada, bea, cid = (people(world)[key] for key in ("ada", "bea", "cid"))
     for _ in range(quarrels):
@@ -73,8 +75,7 @@ def test_company_lists_opinions_and_thoughts_about_those_present(quarrels: int, 
         think(ada, "chat", world["time"], "Chatted with Cid about the road", "chat", about=cid)
     company = speaker_view(world)["company"]
     assert {item["id"]: item["opinion"] for item in company} == opinions
-    assert [item["thoughts"] for item in company] == [["Quarreled with Bea about ale"] * quarrels,
-                                                      ["Chatted with Cid about the road"] * chats]
+    assert [item["thoughts"] for item in company] == [about_bea, ["Chatted with Cid about the road"] * chats]
     assert [item["familiarity"] for item in company] == [
         "acquaintance" if quarrels else "stranger", "acquaintance" if chats else "stranger"]
 

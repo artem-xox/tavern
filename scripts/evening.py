@@ -83,6 +83,8 @@ def arguments(root: Path) -> argparse.ArgumentParser:
     parser.add_argument("--trace", action="store_true",
                         help="trace the live Jev and Haiku calls to LangSmith, one thread per character; "
                              "needs LANGSMITH_API_KEY in the env file and spends LangSmith quota")
+    parser.add_argument("--no-retelling", action="store_true",
+                        help="skip the closing retelling, which asks a stronger model (e.g. for dialogue evals)")
     parser.add_argument("--step", type=float, default=0.1, help="game seconds per tick")
     parser.add_argument("--latency", type=float, default=1.0, help="virtual model latency, game seconds")
     parser.add_argument("--time-limit", type=float, default=1200.0, help="game seconds before the evening is cut off")
@@ -392,7 +394,8 @@ def main(root: Path) -> None:
     (args.out / "events.jsonl").write_text("".join(json.dumps(event, sort_keys=True) + "\n" for event in evening.events))
     (args.out / "metrics.json").write_text(json.dumps(rounded(report), indent=2) + "\n")
     print(json.dumps(rounded(report), indent=2))
-    write_retelling(args.out, evening.events, report["story"], mode, values)
+    if not args.no_retelling:
+        write_retelling(args.out, evening.events, report["story"], mode, values)
     print(f"{mode} evening, seed {args.seed}, {writer} lines: {round(evening.end_time)} game s in {wall:.1f} "
           f"wall s{''.join(f' ({text})' for text in (note, writer_note) if text)}; wrote {args.out}")
     if tracer is not None:

@@ -284,3 +284,19 @@ def test_places_are_shared_only_while_someone_lacks_one(ada_knows: tuple[str, ..
     know(world, "ada", *ada_knows)
     know(world, "bea", *bea_knows)
     assert ("share_place" in offered(world)) == offered_place
+
+
+@pytest.mark.parametrize("insults, expected", [
+    pytest.param([], [], id="nothing-on-her-mind"),
+    pytest.param(["You drunken sot."], ["Bea insulted me"], id="one-insult-without-its-words"),
+    pytest.param(["You drunken sot.", "You smell of the stable.", "Nobody asked you."], ["Bea insulted me (3 times)"],
+                 id="three-insults-are-one-thought-with-a-count"),
+])
+def test_the_line_writer_hears_grudges_counted_not_quoted(insults: list[str], expected: list[str]) -> None:
+    world = seated_talk()
+    ada, bea = actor(world, "ada"), actor(world, "bea")
+    for index, words in enumerate(insults):
+        think(ada, "insulted", world["time"] + index, f"Bea insulted me: “{words}”", "Bea insulted Ada", about=bea)
+    world["time"] += len(insults)
+    company = turn_view(world, scene_of(world))["speaker"]["company"]
+    assert next(item["thoughts"] for item in company if item["id"] == "bea") == expected

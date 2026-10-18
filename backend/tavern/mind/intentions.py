@@ -29,6 +29,7 @@ from tavern.mind.goals import GOALS, STATUSES, Goal, check_goal, goal_words, ope
 from tavern.mind.questions import Ask, Question
 from tavern.social.heard import earlier_lines
 from tavern.social.names import called
+from tavern.social.scenes import conversation_of
 from tavern.social.thoughts import THOUGHTS, active_thoughts
 
 
@@ -73,12 +74,14 @@ class IntentionRules:
     `interval`: without salient events, a guest takes stock again this long after the last time;
     a failed request also waits this long before it is asked again. `min_gap`: least time between
     two requests of one guest, so a burst of events costs one call. `budget`: most requests per guest
-    after arrival, apart from closing time, or None for no limit.
+    after arrival, apart from closing time, or None for no limit. `talk_lines`: lines of the guest's current
+    scene since they last took stock after which they take stock again, so a long talk changes their mind.
     """
 
     interval: float
     min_gap: float
     budget: int | None = None
+    talk_lines: int = 5
 
     def __post_init__(self) -> None:
         if not 0 < self.interval < math.inf:
@@ -87,11 +90,14 @@ class IntentionRules:
             raise ValueError(f"Intention gap must be a nonnegative number of seconds, not {self.min_gap!r}")
         if self.budget is not None and (isinstance(self.budget, bool) or self.budget < 0):
             raise ValueError(f"Intention budget must be a nonnegative number of requests or None, not {self.budget!r}")
+        if isinstance(self.talk_lines, bool) or not isinstance(self.talk_lines, int) or self.talk_lines < 1:
+            raise ValueError(f"Lines of talk before taking stock must be a positive whole number, not {self.talk_lines!r}")
 
 
 # Every three minutes of game time: twice or three times in a ten-minute evening.
-# Each guest's mind is asked at most four more times after arrival: the evening's turning points, not every scene.
-INTENTION_RULES = IntentionRules(interval=180.0, min_gap=3.0, budget=4)
+# Each guest's mind is asked at most eight more times after arrival: the evening's turning points and a rethink every
+# five lines of a long talk, not every line.
+INTENTION_RULES = IntentionRules(interval=180.0, min_gap=3.0, budget=8, talk_lines=5)
 # Triggers the budget never withholds: a guest always plans on arriving, at the barkeep's call and when the inn closes.
 UNMETERED = ("arrival", "last_call", "closing")
 
@@ -103,6 +109,10 @@ SALIENT_EVENTS: Mapping[str, str] = MappingProxyType({
 # Thought kinds that make a guest take stock: a wrong done to them.
 SALIENT_THOUGHTS = ("quarrel", "seat_taken", "table_intruded", "insulted", "shoved", "attacked", "lost_fight",
                     "knocked_out_by")
+# Of those, the ones words alone cause: about someone in the guest's current scene they are part of the talk, weighed
+# once a stretch of it has passed (`IntentionRules.talk_lines`), not line by line, which would spend the guest's
+# budget in the first minute of a quarrel.
+SPOKEN_THOUGHTS = ("quarrel", "insulted")
 _LONGEST = 400
 # What the log of an intention that serves an obsession carries inside its "(after: …)", then the obsession: the
 # intention's words must still end in the parenthesis (`evening.repetition` reads them).
@@ -122,11 +132,15 @@ def latest_trigger(world: Mapping[str, Any], actor: Mapping[str, Any], since: fl
         since: Game time; only later events count.
 
     Returns:
-        The newest salient thought, the barkeep's call, closing time or remembered event, or None. On a tie a
+        The newest salient thought (but not one words caused about someone in their current scene, see
+        `SPOKEN_THOUGHTS`), the barkeep's call, closing time or remembered event, or None. On a tie a
         thought wins over the call and the close, and those over a remembered event: it says most about why.
     """
+    scene = conversation_of(world, actor["id"])
+    talking_with = set(scene["participants"]) if scene else set()
     found = [Trigger(kind=item["kind"], text=item["text"], time=item["expires_at"] - THOUGHTS[item["kind"]].seconds)
-             for item in actor["thoughts"] if item["kind"] in SALIENT_THOUGHTS and item["kind"] in THOUGHTS]
+             for item in actor["thoughts"] if item["kind"] in SALIENT_THOUGHTS and item["kind"] in THOUGHTS
+             and not (item["kind"] in SPOKEN_THOUGHTS and item["about"] in talking_with)]
     if closing_called(world):
         found.append(Trigger(kind="last_call", text="The barkeep called closing time", time=world["last_call_at"]))
     if world["closes_at"] is not None and world["closes_at"] <= world["time"]:
@@ -147,19 +161,35 @@ def intention_due(world: Mapping[str, Any], actor: Mapping[str, Any], rules: Int
 
     Returns:
         None for a guest asleep; else `arrival` for a guest without an intention; else the newest salient event since their
-        intention was asked; else `interval` once `rules.interval` has passed; else None.
+        intention was asked; else `talk` once `rules.talk_lines` lines of their current scene have been said since;
+        else `interval` once `rules.interval` has passed; else None.
     """
     now, current = world["time"], actor["intention"]
     if asleep(actor):
         return None
     if current is None:
         return Trigger(kind="arrival", text=f"{actor['name']} has just come in", time=now)
-    salient = latest_trigger(world, actor, current["written_at"])
+    salient = latest_trigger(world, actor, current["written_at"]) or _talked(world, actor, current["written_at"],
+                                                                               rules.talk_lines)
     if salient is not None:
         return salient
     if now - current["written_at"] >= rules.interval:
         return Trigger(kind="interval", text="A few minutes have passed since they last took stock", time=now)
     return None
+
+
+def _talked(world: Mapping[str, Any], actor: Mapping[str, Any], since: float, lines: int) -> Trigger | None:
+    # A stretch of talk in their current scene since they last took stock: what was said may have changed their mind.
+    scene = conversation_of(world, actor["id"])
+    if scene is None:
+        return None
+    spoken = [turn for turn in scene["turns"] if turn["time"] > since]
+    if len(spoken) < lines:
+        return None
+    people = {item["id"]: item for item in world["actors"]}
+    others = ", ".join(called(actor, people[key]) for key in scene["participants"] if key != actor["id"] and key in people)
+    return Trigger(kind="talk", text=f"{actor['name']} has talked a while with {others} "
+                                     f"({len(spoken)} lines since they last took stock)", time=world["time"])
 
 
 def intention_requests(world: Mapping[str, Any], pending: Container[str], next_allowed: Mapping[str, float],

@@ -6,7 +6,11 @@
   "speech": "Direct and fast with a comedian's timing and a politician's urgency; short, vivid lines, jokes that land and then turn serious, always bringing the conversation back to the one request he came to make.",
   "quirks": "Pulls up a spare stool to join any table uninvited; shuffles a deck of cards between his fingers; thanks everyone loudly; asks 'may I sit?' and sits before the answer.",
   "secret": "He is bone-tired and has not slept a full night in ages, and keeps joking so nobody will notice.",
-  "goal": "Win a seat at the table of the most powerful people in the room, make them listen to his case, and leave with at least one promise.",
+  "goal": "Make Putin answer for the war in front of witnesses, and leave with at least one concrete promise of help from the most powerful guest in the room.",
+  "inspired_by": "Volodymyr Zelenskyy, Ukrainian president and former comedian",
+  "persona": "A wartime president in an olive shirt who never stops campaigning. Names facts, not feelings: drones over Kyiv, Patriot interceptors running short, refineries burning, children taken, a truce broken. Asks every powerful guest for something concrete and calls out every evasion with a joke that turns serious. Will not shake Putin's hand, will not let one of his lies pass, and thanks loudly anyone who helps. Steers talk to: air defence and weapons, sanctions with teeth, security guarantees, prisoners and children to bring home, and who in the room has actually helped.",
+  "catchphrases": ["I need ammunition, not a ride.", "Slava Ukraini.", "Thank you, but what will you do?", "We are not giving up.", "Look at what he does, not what he says."],
+  "obsessions": ["make Putin answer for the war before the whole room and never let a lie of his pass", "get a concrete promise of help from the most powerful guest: air defence, sanctions or guarantees", "win the room over to Ukraine's side, one guest at a time"],
   "params": {"patience": 0.4, "temper": 0.45, "sociability": 0.85, "courage": 0.95, "strength": 0.4, "brawling": 0.3, "tolerance": 0.5, "comfort": 0.35, "curiosity": 0.7},
   "sex": "male", "carries": {}
 }

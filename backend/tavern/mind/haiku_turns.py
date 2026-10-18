@@ -26,6 +26,18 @@ _BELIEF = ((0.85, "you are sure of it"), (0.55, "you believe it"), (0.0, "a rumo
 # Tuned on recorded evenings: copies and near copies scored 0.76-1.00, lines that only share a phrase 0.73 or less.
 REPEAT_SIMILARITY = 0.75
 _FAMILIARITY = {"stranger": "a stranger to you", "acquaintance": "an acquaintance", "friend": "an old friend"}
+# A word is worn once it comes up in this many of a scene's last `WORN_LINES` lines: the talk is circling it. Recorded
+# quarrels of 2026-10-18 threw one word ("drones", "refineries", "tonic") back in nearly every line.
+WORN_LINES = 4
+WORN = 2
+MOST_WORN = 5
+# Words of four letters or more that every line may need, so they never wear; names are left out as well.
+_COMMON = frozenset((
+    "that this with your have what then they them their there these those when will just like from been were into "
+    "only more still about would could should here want know make said tell come came well over than some even "
+    "very much again ever never always going yours mine shall does done back first last every because where which "
+    "while whom whose let's don't won't can't i'll i've you're you've that's what's there's").split())
+_WORD = re.compile(r"[a-z][a-z']{3,}")
 
 
 class RejectedTurn(ValueError):
@@ -95,6 +107,26 @@ def _labels(view: Mapping[str, Any]) -> dict[str, str]:
             if item["id"] != view["speaker"]["id"]}
 
 
+def worn_words(lines: Sequence[str], names: Sequence[str]) -> list[str]:
+    """Find the words a talk keeps coming back to.
+
+    Args:
+        lines: The scene's lines, oldest first.
+        names: Names of the people present; their parts never wear.
+
+    Returns:
+        Words of four letters or more, other than common ones and names, found in at least `WORN` of the last
+        `WORN_LINES` lines; most frequent first, then alphabetically, at most `MOST_WORN`.
+    """
+    named = {part for name in names for part in _WORD.findall(name.lower())}
+    counts: dict[str, int] = {}
+    for line in lines[-WORN_LINES:]:
+        for word in set(_WORD.findall(line.lower())) - _COMMON - named:
+            counts[word] = counts.get(word, 0) + 1
+    return sorted((word for word, count in counts.items() if count >= WORN), key=lambda word: (-counts[word], word))[
+        :MOST_WORN]
+
+
 def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequence[str], acts: Sequence[str],
             closing_called: bool = False, answer: str | None = None) -> str:
     # The scripted writer's thresholds (`scripted.PRESSING`, `scripted.CONTENT`) say when a need
@@ -122,7 +154,8 @@ def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequen
         "or a claim on the talk, addressed to whom the speaker means."
         if scene.get("cutting_in") else "",
         "The speaker has not yet told anyone here where the places they know are; someone may want to know."
-        if me["places"] and not shared else "",
+        if me["places"] and not shared and "share_place" in acts else "",
+        _worn(scene, me),
         "The speaker carries news the others have not heard from them; telling one piece is welcome."
         if me.get("news") and not told else "",
         "The speaker is bored, and the dice table stands free: a game of dice is a fine thing to propose."
@@ -164,6 +197,14 @@ def _came_for(aim: Mapping[str, Any] | None, acts: Sequence[str]) -> str:
     named = f" ({names[fitting[0]]} {aim['detail']})" if fitting[0] in names and aim["detail"] else ""
     return (f"The speaker came over to {aim['words']}: say so in their own words, early. "
             f"Acts that fit: {', '.join(fitting)}{named}.")
+
+
+def _worn(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:
+    # Left to itself, the model throws the other's last word back at them ("Drones, Vladimir?") line after line.
+    worn = worn_words([turn["line"] for turn in scene["turns"]],
+                      [me["name"], *(item["name"] for item in scene["participants"])])
+    return (f"Worn out in this talk: {', '.join(worn)}. The speaker's line uses none of these words: it brings a new "
+            "fact, charge, demand, denial or turn from their own public life or the news of the day." if worn else "")
 
 
 def _scene(scene: Mapping[str, Any], me: Mapping[str, Any]) -> str:
