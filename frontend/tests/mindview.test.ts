@@ -1,7 +1,7 @@
 /** What the inspector makes of a visitor's inner state: pips for needs, merged thoughts, opinion bars. */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mergeThoughts, needPips, needTone, needWord, opinionBar } from "../src/mindview.ts";
+import { chasing, mergeThoughts, needPips, needTone, needWord, opinionBar } from "../src/mindview.ts";
 import type { Thought } from "../src/types.ts";
 
 function thought(text: string, mood: number, expiresAt: number = 100): Thought {
@@ -49,3 +49,14 @@ const bars: { id: string; opinion: number; side: string; percent: number }[] = [
   { id: "beyond the scale is held", opinion: 150, side: "right", percent: 50 },
 ];
 for (const { id, opinion, side, percent } of bars) test(`opinionBar: ${id}`, () => assert.deepEqual(opinionBar(opinion), { side, percent }));
+
+const OBSESSIONS: string[] = ["get someone else to pay", "have an audience"];
+const chased: { id: string; obsessions: readonly string[] | undefined; index: number | undefined; text: string | null }[] = [
+  { id: "the first obsession by its index", obsessions: OBSESSIONS, index: 0, text: "get someone else to pay" },
+  { id: "the last obsession by its index", obsessions: OBSESSIONS, index: 1, text: "have an audience" },
+  { id: "none when the intention names none", obsessions: OBSESSIONS, index: undefined, text: null },
+  { id: "none for a guest whose card lists none", obsessions: undefined, index: 0, text: null },
+  { id: "none for an index past the list", obsessions: OBSESSIONS, index: 2, text: null },
+  { id: "none for an empty list", obsessions: [], index: 0, text: null },
+];
+for (const { id, obsessions, index, text } of chased) test(`chasing: ${id}`, () => assert.equal(chasing(obsessions, index), text));

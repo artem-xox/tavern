@@ -9,7 +9,7 @@ Runners ask asynchronously, like decisions: one request per guest at a time, at 
 seconds apart; a salient event after the request makes its answer stale (`stale_intentions`).
 """
 
-from collections.abc import Callable, Container, Coroutine, Mapping
+from collections.abc import Callable, Collection, Container, Coroutine, Mapping
 from copy import deepcopy
 from dataclasses import dataclass
 import math
@@ -25,7 +25,7 @@ from tavern.hall.state import World, find_actor
 from tavern.hall.world import observe_actor, observe_people
 from tavern.mind.briefing import brief
 from tavern.mind.cards import PARAMS, TEXT_FIELDS, persona_words
-from tavern.mind.goals import GOALS, STATUSES, Goal, check_goal, goal_words
+from tavern.mind.goals import GOALS, STATUSES, Goal, check_goal, goal_words, open_kinds
 from tavern.mind.questions import Ask, Question
 from tavern.social.heard import earlier_lines
 from tavern.social.names import called
@@ -46,21 +46,24 @@ class Trigger(TypedDict):
 class Intention(TypedDict):
     """A guest's current mind: a first-person thought, what they intend next in words, the goal they
     set out to do (see `goals`, or None), when it was asked (the game time whose situation it answers),
-    and what prompted it."""
+    and what prompted it. `obsession` is the index into the card's obsessions that the intention serves;
+    absent when it serves none (and in saves written before it existed)."""
 
     thought: str
     intention: str
     goal: Goal | None
     written_at: float
     trigger: Trigger
+    obsession: NotRequired[int]
 
 
 class Written(TypedDict):
-    """The mind's validated answer; a `goal` it leaves out is none."""
+    """The mind's validated answer; a `goal` it leaves out is none, and an `obsession` it leaves out serves none."""
 
     thought: str
     intention: str
     goal: NotRequired[Goal | None]
+    obsession: NotRequired[int]
 
 
 @dataclass(frozen=True)
@@ -101,6 +104,10 @@ SALIENT_EVENTS: Mapping[str, str] = MappingProxyType({
 SALIENT_THOUGHTS = ("quarrel", "seat_taken", "table_intruded", "insulted", "shoved", "attacked", "lost_fight",
                     "knocked_out_by")
 _LONGEST = 400
+# What the log of an intention that serves an obsession carries inside its "(after: …)", then the obsession: the
+# intention's words must still end in the parenthesis (`evening.repetition` reads them).
+CHASING = "; chasing: "
+_ANSWER_FIELDS = {"thought", "intention", "goal", "obsession"}
 
 # Writes a guest's thought and intention from their view (see `intention_view`); raises on failure.
 Intender = Callable[[Mapping[str, Any]], Coroutine[Any, Any, Written]]
@@ -208,7 +215,7 @@ def intention_view(world: Mapping[str, Any], actor: Mapping[str, Any], trigger: 
     Returns:
         `actor_id`, `name`, `time`, `trigger`, `previous` intention (or None), `card` in words,
         `situation` (the briefing paragraph, without the previous intention), active `thoughts`,
-        `duty` (the bar they work at, or None for a guest), `others` (the guests in the hall as this guest calls them: ID to name, for a goal), `earlier`
+        `obsessions` (the card's obsessions, in order; empty without a card or persona), `duty` (the bar they work at, or None for a guest), `others` (the guests in the hall as this guest calls them: ID to name, for a goal), `possible` (the goal kinds the hall can carry out for each of them now), `earlier`
         (the latest 8 lines they said or heard tonight, see `heard.earlier_lines`) and `drink`
         (drunkenness stage).
     """
@@ -216,7 +223,8 @@ def intention_view(world: Mapping[str, Any], actor: Mapping[str, Any], trigger: 
     # The previous intention is shown on its own, so the situation leaves it out.
     observation["actor"]["intention"] = None
     return {"actor_id": actor["id"], "name": actor["name"], "time": world["time"], "trigger": dict(trigger),
-            "previous": deepcopy(actor["intention"]), "card": _card(actor),
+            "previous": deepcopy(actor["intention"]), "card": _card(actor), "obsessions": _obsessions(actor),
+            "possible": {item["id"]: open_kinds(world, actor, item) for item in world["actors"] if item["id"] != actor["id"]},
             "situation": brief(observation, [])["situation"],
             "duty": post_of(world["map"], actor)["name"] if on_staff(actor) else None,
             "others": {item["id"]: called(actor, item) for item in world["actors"] if item["id"] != actor["id"]},
@@ -233,6 +241,20 @@ def _card(actor: Mapping[str, Any]) -> str:
                        *(f"{label}: {text}" for label, text in persona_words(card).items())])
     params = ", ".join(f"{name} {card['params'][name]}" for name in PARAMS)
     return f"The guest's character card.\n{words}\nTraits from 0 to 1 (0.5 is ordinary): {params}."
+
+
+def _obsessions(actor: Mapping[str, Any]) -> list[str]:
+    card = actor["card"]
+    return list(card.get("obsessions", [])) if card else []
+
+
+def _wishes(view: Mapping[str, Any]) -> list[str]:
+    # Their obsessions by number, so the answer can name the one this intention serves.
+    if not view["obsessions"]:
+        return []
+    numbered = "; ".join(f"{index}: {text}" for index, text in enumerate(view["obsessions"]))
+    return [f"Their obsessions tonight, by number: {numbered}. Name the number of the one this intention serves, "
+            "or null when it serves none."]
 
 
 def _previous(view: Mapping[str, Any]) -> str:
@@ -257,7 +279,9 @@ def _duty(view: Mapping[str, Any]) -> list[str]:
 
 
 def _others(view: Mapping[str, Any]) -> str:
-    people = "; ".join(f"{name} (id \"{key}\")" for key, name in view["others"].items()) or "no one"
+    # Each guest with the goal kinds the hall can carry out for them now: the same list `parse_stance` checks against.
+    people = "; ".join(f"{name} (id \"{key}\"; goals open: {', '.join(view['possible'][key]) or 'none'})"
+                       for key, name in view["others"].items()) or "no one"
     return (f"Guests they could set a goal about: {people}. Goal kinds: "
             + "; ".join(f"{kind} = {goal_words({'kind': kind, 'target': None, 'status': 'active'}, 'that guest')}"
                         for kind in GOALS) + ".")
@@ -291,7 +315,7 @@ def intention_question(prefix: str, view: Mapping[str, Any]) -> Question:
         f"What prompted it: {view['trigger']['text']}.", _previous(view),
         f"The situation as they see it: {view['situation']}",
         f"Thoughts on their mind: {thoughts}.", *_earlier(view), f"Drink: they are {view['drink']}.", *_duty(view),
-        _others(view),
+        *_wishes(view), _others(view),
         f"Write {view['name']}'s thought, intention and goal."])
     return Question(system=[prefix, view["card"]], content=content, schema=_schema(), max_tokens=250)
 
@@ -305,26 +329,29 @@ def _schema() -> dict[str, Any]:
         "intention": {**text, "description": "One sentence: what they want to do next."},
         "goal": {**text, "description": "A goal kind, or none when they set out to do nothing in particular."},
         "target": {"anyOf": [text, {"type": "null"}],
-                   "description": "The ID of the guest the goal is about, or null when the goal is none."}},
+                   "description": "The ID of the guest the goal is about, or null when the goal is none."},
+        # Not required: a guest without obsessions has none to name (checked against the card at the boundary).
+        "obsession": {"anyOf": [{"type": "integer"}, {"type": "null"}],
+                      "description": "The number of the obsession this intention serves, or null."}},
         "required": ["thought", "intention", "goal", "target"], "additionalProperties": False}
 
 
-def check_intention(answer: Any) -> Written:
+def check_intention(answer: Any, obsessions: int = 0) -> Written:
     """Validate the mind's answer.
 
     Args:
         answer: Decoded answer.
+        obsessions: How many obsessions the guest's card lists; an `obsession` index must be below it.
 
     Returns:
-        The thought and intention.
+        The thought and intention, with the goal and the obsession index when the answer names them.
 
     Raises:
-        ValueError: It is not exactly a thought and an intention, each nonempty text of at most
-            400 characters.
+        ValueError: It is not a thought and an intention, each nonempty text of at most 400 characters, with at
+            most a valid goal and an obsession that is null or an index into the card's list.
     """
-    if not isinstance(answer, Mapping) or set(answer) not in ({"thought", "intention"},
-                                                               {"thought", "intention", "goal"}):
-        raise ValueError(f"An intention has exactly a thought, an intention and perhaps a goal, not {answer!r}")
+    if not isinstance(answer, Mapping) or not {"thought", "intention"} <= set(answer) <= _ANSWER_FIELDS:
+        raise ValueError(f"An intention has a thought, an intention and perhaps a goal and an obsession, not {answer!r}")
     for key in ("thought", "intention"):
         if not isinstance(answer[key], str) or not answer[key].strip() or len(answer[key]) > _LONGEST:
             raise ValueError(f"An intention's {key} must be nonempty text of at most {_LONGEST} characters")
@@ -334,6 +361,11 @@ def check_intention(answer: Any) -> Written:
     written = Written(thought=answer["thought"], intention=answer["intention"])
     if goal is not None:
         written["goal"] = goal
+    obsession = answer.get("obsession")
+    if obsession is not None:
+        if isinstance(obsession, bool) or not isinstance(obsession, int) or not 0 <= obsession < obsessions:
+            raise ValueError(f"Obsession {obsession!r} is not one of the card's {obsessions} obsessions")
+        written["obsession"] = obsession
     return written
 
 
@@ -342,29 +374,34 @@ def _is_goal(goal: Any) -> bool:
             and isinstance(goal["target"], str) and goal["status"] in STATUSES)
 
 
-def parse_stance(answer: Any, others: Mapping[str, str], on_duty: bool = False) -> Written:
+def parse_stance(answer: Any, others: Mapping[str, str], on_duty: bool = False, obsessions: int = 0,
+                 possible: Mapping[str, Collection[str]] | None = None) -> Written:
     """Check what the mind answered at the boundary.
 
     Args:
         answer: Decoded answer: a thought, an intention, a goal kind (or "none") and its person's ID.
         others: Guests in the hall besides the one asking: ID to name (`intention_view`).
         on_duty: Whether the one asking works behind a bar (`intention_view`'s `duty`).
+        obsessions: How many obsessions the guest's card lists (`len(intention_view["obsessions"])`).
+        possible: For each guest, the goal kinds the hall can carry out now (`intention_view`'s `possible`); None
+            asks nothing of the hall.
 
     Returns:
-        The thought, the intention and the goal they name, active, or none.
+        The thought, the intention, the goal they name, active, or none, and the obsession they serve.
 
     Raises:
-        ValueError: The answer is not exactly those four fields, a text is blank or over 400 characters, the
-            goal kind is not in `GOALS` or not open to someone on duty, or its person is not in the hall (so it
-            cannot be carried out).
+        ValueError: The answer is not those four fields, with at most an `obsession`; a text is blank or over 400
+            characters, the obsession is not an index into the card's list, the goal kind is not in `GOALS` or not open to someone on duty, its person is not in the hall, or the
+            hall cannot carry it out for that person now.
     """
-    if not isinstance(answer, Mapping) or set(answer) != {"thought", "intention", "goal", "target"}:
-        raise ValueError(f"An answer has exactly a thought, an intention, a goal and a target, not {answer!r}")
+    if not isinstance(answer, Mapping) or set(answer) - {"obsession"} != {"thought", "intention", "goal", "target"}:
+        raise ValueError(f"An answer has a thought, an intention, a goal and a target, not {answer!r}")
     kind = answer["goal"]
     if not isinstance(kind, str) or not (answer["target"] is None or isinstance(answer["target"], str)):
         raise ValueError(f"A goal is a kind and the ID of a guest, not {kind!r} and {answer['target']!r}")
-    goal = check_goal(None if kind == "none" else kind, answer["target"], others, on_duty)
-    return check_intention({"thought": answer["thought"], "intention": answer["intention"], "goal": goal})
+    goal = check_goal(None if kind == "none" else kind, answer["target"], others, on_duty, possible)
+    return check_intention({"thought": answer["thought"], "intention": answer["intention"], "goal": goal,
+                            "obsession": answer.get("obsession")}, obsessions)
 
 
 def intention_writer(prefix: str, ask: Ask) -> Intender:
@@ -379,7 +416,8 @@ def intention_writer(prefix: str, ask: Ask) -> Intender:
         or ValueError for an invalid answer.
     """
     async def write(view: Mapping[str, Any]) -> Written:
-        return parse_stance(await ask(intention_question(prefix, view)), view["others"], view["duty"] is not None)
+        return parse_stance(await ask(intention_question(prefix, view)), view["others"], view["duty"] is not None,
+                            len(view["obsessions"]), view["possible"])
     return write
 
 
@@ -408,19 +446,35 @@ def deliver_intention(world: World, actor_id: str, view: Mapping[str, Any],
     try:
         if failure is not None:
             raise failure
-        written = check_intention(answer)
+        written = check_intention(answer, len(view["obsessions"]))
     except Exception as error:
         log_event(world, actor_id, "intention_failed", f"{actor['name']}'s intention could not be written ({error})")
         return world["time"] + rules.interval
-    actor["intention"] = Intention(thought=written["thought"], intention=written["intention"],
-                                   goal=written.get("goal"), written_at=view["time"],
-                                   trigger=deepcopy(view["trigger"]))
+    previous = actor["intention"]
+    goal = _pursued(previous, written)
+    kept = previous is not None and goal is not None and goal is previous.get("goal")
+    intention = Intention(thought=written["thought"], intention=written["intention"], goal=goal,
+                          written_at=view["time"], trigger=deepcopy(view["trigger"]))
+    if "obsession" in written:
+        intention["obsession"] = written["obsession"]
+    actor["intention"] = intention
+    chasing = f"{CHASING}{view['obsessions'][written['obsession']]}" if "obsession" in written else ""
     log_event(world, actor_id, "intention", f"{actor['name']} thinks: {written['thought']} Intends: "
-                                       f"{written['intention']} (after: {view['trigger']['text']})")
-    goal = written.get("goal")
-    if goal is not None:
+                                       f"{written['intention']} (after: {view['trigger']['text']}{chasing})")
+    if goal is not None and not kept:
         log_event(world, actor_id, "goal_set", f"{actor['name']} set out to {goal_words(goal, view['others'][goal['target']])}")
     return world["time"] + rules.min_gap
+
+
+def _pursued(previous: Intention | None, written: Written) -> Goal | None:
+    # A goal not yet reached is kept while the mind goes on naming the obsession it was set for: a guest chases an
+    # obsession until the world ends the goal, not until the next time the mind takes stock.
+    if previous is not None:
+        old = previous.get("goal")
+        if (old is not None and old["status"] == "active" and previous.get("obsession") is not None
+                and written.get("obsession") == previous["obsession"]):
+            return old
+    return written.get("goal")
 
 
 def check_saved_intention(actor: Mapping[str, Any]) -> None:
@@ -435,9 +489,11 @@ def check_saved_intention(actor: Mapping[str, Any]) -> None:
     intention = actor["intention"]
     if intention is None:
         return
-    if not isinstance(intention, dict) or set(intention) != set(Intention.__annotations__):
+    if not isinstance(intention, dict) or set(intention) - {"obsession"} != Intention.__required_keys__:
         raise ValueError(f"Invalid saved intention {intention!r}")
-    check_intention({"thought": intention["thought"], "intention": intention["intention"], "goal": intention["goal"]})
+    card = actor["card"]
+    check_intention({"thought": intention["thought"], "intention": intention["intention"], "goal": intention["goal"],
+                     "obsession": intention.get("obsession")}, len(card.get("obsessions", [])) if card else 0)
     trigger = intention["trigger"]
     if not isinstance(trigger, dict) or set(trigger) != set(Trigger.__annotations__) or not all(
             isinstance(trigger[key], str) for key in ("kind", "text")):

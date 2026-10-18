@@ -24,8 +24,8 @@ Known problems that no task owns are in [TECH_DEBT.md](TECH_DEBT.md).
 | S2-03 | [Persona cards](2_story_evenings/03_persona_cards.md): public persona, catchphrases, obsessions, mute characters, parody names | 01 | doing |
 | S2-04 | [First guests](2_story_evenings/04_first_guests.md): three famous guests with full art and a scenario | 01, 03 | doing |
 | S2-05 | [Story score](2_story_evenings/05_story_score.md): count what is worth retelling in every evening | — | done |
-| S2-06 | [Obsessions drive goals](2_story_evenings/06_obsessions.md): a guest's obsession becomes their goals and intentions | 03, 05 | todo |
-| S2-07 | [Fun](2_story_evenings/07_fun.md): a need that chaos, games and signature acts fill | 05 | todo |
+| S2-06 | [Obsessions drive goals](2_story_evenings/06_obsessions.md): a guest's obsession becomes their goals and intentions | 03, 05 | done |
+| S2-07 | [Fun](2_story_evenings/07_fun.md): a need that chaos, games and signature acts fill | 05 | doing |
 | S2-08 | [Signature items](2_story_evenings/08_signature_items.md): what is in the backpack, and the act it unlocks | 03, 05 | todo |
 | S2-09 | [Chaos](2_story_evenings/09_chaos.md): rivals, shouting, quarrels that escalate into fights | 04, 05 | todo |
 | S2-10 | [Retelling](2_story_evenings/10_retelling.md): a strong model retells the log; a closing screen shows it | 05 | doing |

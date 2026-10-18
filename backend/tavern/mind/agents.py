@@ -13,7 +13,7 @@ from tavern.mind.briefing import brief
 from tavern.mind.families import family_scores, group_families
 from tavern.mind.fight_candidates import is_hurt, room_reactions, treatments
 from tavern.mind.hall_view import in_use, line_place
-from tavern.mind.local_policy import ASK_FLOOR, local_aim_scores, local_answer_scores, local_scores, local_seat_scores
+from tavern.mind.local_policy import ASK_FLOOR, conviviality, local_aim_scores, local_answer_scores, local_scores, local_seat_scores
 from tavern.mind.observation import known_objects, own_actor
 from tavern.mind.options import aim_text, answer_text
 from tavern.mind.selection import bounded, drawable, read_aims, read_answers, read_lean, read_projects, read_temperature, select, spread, worth_asking
@@ -149,7 +149,9 @@ def _concrete_candidates(observation: Mapping[str, Any]) -> list[Action]:
             continue
         if item["kind"] == "tap" and (not item.get("stock") or actor["inventory"]["beer"] or _called(observation)):
             continue
-        if item["kind"] == "tap" and "social" in actor["needs"] and actor["needs"]["thirst"] < 35:
+        # Not thirsty enough to fetch an ale, unless the table is good company (`local_policy.conviviality`).
+        if item["kind"] == "tap" and "social" in actor["needs"] and actor["needs"]["thirst"] < 35 \
+                and not conviviality(observation):
             continue
         actions.extend(_line_options(observation, item, _action(verbs[item["kind"]], item["id"])))
     return [*actions, *_seat_wish(observation, objects), *_views(observation, objects), *_games(objects),

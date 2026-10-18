@@ -6,10 +6,11 @@ from types import MappingProxyType
 from typing import Any
 
 from tavern.body.ailment import carries_cure
+from tavern.body.drunkenness import drunk_stage
 from tavern.body.items import ITEMS
 from tavern.body.wounds import health_of, hurt
 from tavern.mind.fight_policy import hatred_scores, utilities as fight_utilities
-from tavern.mind.goals import serving
+from tavern.mind.goals import GOALS, serving, serving_aim
 from tavern.mind.hall_view import in_use, line_place, steps_to
 from tavern.social.giving import empty_handed_tablemates
 from tavern.social.hostility import urge
@@ -23,6 +24,39 @@ SOCIABLE_PULL = 0.4
 # What a walk over to someone who looks unwell adds for a guest who carries a cure, and how a remedy for them scores.
 SEEKING_THE_SICK = 0.5
 CURE_SCORE = 0.95
+
+
+# The most a table of drinking company adds to a guest's taste for another ale: with two mates, for a sociable guest.
+CONVIVIALITY = 0.35
+# How much of the wish to go home, after a few beers, the best company at the table takes away.
+HOLD = 0.7
+
+
+def conviviality(observation: Mapping[str, Any]) -> float:
+    """Tell how much the company at a guest's table tempts them to another ale, past their thirst.
+
+    Args:
+        observation: The guest's observation.
+
+    Returns:
+        0 for a guest alone at their table, or wasted; up to `CONVIVIALITY` for a sociable guest with two mates awake,
+        less for fewer mates, the unsociable, and a full bladder.
+    """
+    actor = observation["actor"]
+    if drunk_stage(actor.get("drunkenness", 0.0)).name == "wasted":
+        return 0.0
+    seat = next((item for item in observation["objects"] if item["id"] == actor.get("seat_id")), None)
+    table = seat.get("table_id") if seat else None
+    mates = sum(1 for person in observation.get("people", [])
+                if table and person.get("seat_id") and person.get("table_id") == table and not person.get("asleep"))
+    sociability = actor.get("traits", {}).get("sociability", 0.5)
+    return CONVIVIALITY * min(mates, 2) / 2 * (0.5 + sociability) * (1 - actor["needs"]["bladder"] / 100)
+
+
+def _gamble(actor: Mapping[str, Any]) -> float:
+    # The bold and the drunk will bet on anything: courage above the ordinary and drink both make a game of dice
+    # more tempting (0 for an ordinary sober guest).
+    return 0.3 * (actor.get("traits", {}).get("courage", 0.5) - 0.5) + 0.3 * actor.get("drunkenness", 0.0)
 
 
 def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]]) -> dict[str, float]:
@@ -48,9 +82,10 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
     moving = any(action["verb"] == "sit" for action in candidates)
     # The sociable lean toward company and loners away; 0.5 is ordinary, and scores stay within 0–1.
     company = SOCIABLE_PULL * (traits.get("sociability", 0.5) - 0.5)
+    tempted = conviviality(observation)
     utility = {
-        "drink": 0.9 * thirst + 0.1,
-        "take_beer": max(0.0, 0.8 * thirst - 0.3 * bladder),
+        "drink": min(1.0, 0.9 * thirst + 0.1 + tempted),
+        "take_beer": min(1.0, max(0.0, 0.8 * thirst - 0.3 * bladder) + tempted),
         # The whole of coming in thirsty, a little above fetching the ale alone (tap, then chair, then the drink).
         "settle_in": min(1.0, 0.1 + 0.8 * thirst - 0.3 * bladder),
         "rest": fatigue * (0.85 + 0.15 * traits.get("comfort", 0.5)),
@@ -82,7 +117,8 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
         "bring_drink": 0.0,  # weighed with the gifts, as a trip for someone
         "stand_a_round": 0.0,  # weighed with the gifts, as trips for several
         # Another go at someone who just won: the bored and the hot-tempered want it most.
-        "rematch": min(1.0, 0.2 + 0.4 * actor["needs"].get("boredom", 0) / 100 + 0.3 * traits.get("temper", 0.5)),
+        "rematch": min(1.0, 0.2 + 0.4 * actor["needs"].get("boredom", 0) / 100 + 0.3 * traits.get("temper", 0.5)
+                       + _gamble(actor)),
         # Hostile acts are rare: even the hottest head scores them below a seat to rest in, and only the
         # urge (temper loosened by drink) lifts them; a fight is likelier than a shove only through Jev.
         "shove": 0.1 + 0.3 * min(1.0, urge(observation)),
@@ -162,13 +198,27 @@ ASK_FLOOR: Mapping[str, float] = MappingProxyType({"inspect": 0.3, "wait": 0.1, 
 
 # What serving the guest's goal adds to an option's score: enough to tip a near tie, not to outweigh a pressing need.
 GOAL_BONUS = 0.3
+# What it grows to by the end of the goal's time: a goal not yet reached pulls harder as it runs out, so a steady
+# need cannot starve it, but it still does not outweigh a need that presses.
+LATE_GOAL_BONUS = 0.5
+
+
+def _goal_bonus(observation: Mapping[str, Any]) -> float:
+    # Grows linearly over the second half of the goal's time, from the base to the late bonus.
+    intention = observation["actor"].get("intention")
+    goal = intention.get("goal") if intention else None
+    if goal is None or goal["status"] != "active" or "time" not in observation:
+        return GOAL_BONUS
+    age = (observation["time"] - intention["written_at"]) / GOALS[goal["kind"]].lasts
+    return GOAL_BONUS + (LATE_GOAL_BONUS - GOAL_BONUS) * min(1.0, max(0.0, 2 * age - 1))
 
 
 def _score_goal(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
                 scores: dict[str, float]) -> None:
+    bonus = _goal_bonus(observation)
     for action in candidates:
         if serving(observation, action):
-            scores[action["id"]] = min(1.0, scores[action["id"]] + GOAL_BONUS)
+            scores[action["id"]] = min(1.0, scores[action["id"]] + bonus)
 
 
 def _score_answers(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
@@ -203,13 +253,14 @@ def local_aim_scores(observation: Mapping[str, Any], candidates: Sequence[Mappin
         kind, _, detail = candidate["aim"].partition(":")
         opinion = opinion_of(actor, candidate["target_id"], now) / 100
         invitation = {"darts_together": 0.2 + 0.5 * needs.get("boredom", 0) / 100,
-                      "dice_together": 0.2 + 0.5 * needs.get("boredom", 0) / 100,
+                      "dice_together": 0.25 + 0.5 * needs.get("boredom", 0) / 100 + _gamble(actor),
                       "buy_drink": 0.2 + 0.4 * max(0.0, opinion),
                       "join_table": 0.2 + 0.4 * needs.get("social", 0) / 100}
         score = {"pass_time": 0.4, "tell_news": 0.25 + 0.3 * curiosity, "invite": invitation.get(detail, 0.0),
                  "win_over": 0.2 + 0.4 * sociability, "needle": 0.1 + 0.5 * temper * max(0.0, -opinion),
                  "have_it_out": 0.2 + 0.5 * temper, "thank": 0.5,
-                 "rematch": 0.2 + 0.4 * needs.get("boredom", 0) / 100 + 0.3 * temper}[kind]
+                 "rematch": 0.2 + 0.4 * needs.get("boredom", 0) / 100 + 0.3 * temper + _gamble(actor)}[kind]
+        score += _goal_bonus(observation) if serving_aim(observation, candidate) else 0.0
         scores[candidate["id"]] = min(1.0, max(0.0, score))
     return scores
 
@@ -218,7 +269,7 @@ def _invitation_worth(observation: Mapping[str, Any], kind: str) -> float:
     # What each thing an invitation leads to is worth to this guest now, in the terms of the options it stands for.
     needs = observation["actor"]["needs"]
     return {"darts_together": 0.15 + 0.65 * needs.get("boredom", 0) / 100,
-            "dice_together": 0.15 + 0.65 * needs.get("boredom", 0) / 100,
+            "dice_together": 0.15 + 0.65 * needs.get("boredom", 0) / 100 + _gamble(observation["actor"]),
             "buy_drink": 0.4 + 0.5 * needs["thirst"] / 100,  # an ale is always welcome
             "join_table": 0.2 + 0.6 * needs.get("social", 0) / 100,
             "move_together": 0.2 + 0.6 * needs.get("social", 0) / 100,
@@ -248,6 +299,7 @@ def local_answer_scores(observation: Mapping[str, Any], invitation: Mapping[str,
         score = (worth + liking if answer == "accept"
                  else 0.3 + 0.2 * (1 - actor.get("traits", {}).get("sociability", 0.5)) if answer == "decline"
                  else _invitation_worth(observation, answer.partition(":")[2]) - 0.1)
+        score += _goal_bonus(observation) if serving_aim(observation, candidate) else 0.0
         scores[candidate["id"]] = min(1.0, max(0.0, score))
     return scores
 
@@ -282,7 +334,11 @@ def _leave_utility(observation: Mapping[str, Any]) -> float:
     needs, visit = actor["needs"], actor.get("visit", {})
     seconds, patience = visit.get("seconds", 0), actor.get("traits", {}).get("patience", 0.5)
     calm = 1 - sum(needs.get(name, 0) for name in ("thirst", "fatigue", "bladder", "social", "boredom")) / 500
-    content = min(1.0, seconds / 240) * min(1.0, visit.get("beers", 0) / 3) * calm
+    # Good company at the table holds a guest, and so does drink: a guest who has drunk past their thirst is not going
+    # home content after four minutes, they are going on. The more drunk, the longer the evening they mean to have.
+    held = min(1.0, conviviality(observation) / (CONVIVIALITY * 1.5))
+    stay = 240 * (1 + 2 * actor.get("drunkenness", 0.0))
+    content = min(1.0, seconds / stay) * min(1.0, visit.get("beers", 0) / 3) * calm * (1 - HOLD * held)
     taps = [item for item in observation["objects"] if item["kind"] == "tap"]
     run_dry = bool(taps) and not any(item.get("stock") for item in taps) and not actor["inventory"]["beer"]
     upset = min(1.0, 0.35 * _wrongs(observation) * (1.5 - patience)
@@ -297,6 +353,10 @@ def _leave_utility(observation: Mapping[str, Any]) -> float:
         wish = max(wish, 0.55 + 0.4 * (1 - health_of(actor) / 100))
     if any(person.get("fighting") for person in observation.get("people", [])):
         wish = max(wish, 0.15 + 0.5 * (1 - actor.get("traits", {}).get("courage", 0.5)))
+    # A healer does not go home past someone in sight she could mend: little outweighs a remedy for the unwell
+    # (`CURE_SCORE`), and the more a guest drinks the likelier she is to be gone before it is given.
+    if carries_cure(actor["inventory"]) and any(_unwell(person) for person in observation.get("people", [])):
+        wish = min(wish, 0.2)
     # Once the barkeep has called closing time everyone means to go: at first a guest finishes their mug or their
     # chat, 40 s on nothing but a pressing need outweighs the door (a full bladder scores 1.0). 0.95 is as strong as
     # walking home with someone.

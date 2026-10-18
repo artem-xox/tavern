@@ -50,6 +50,8 @@ def _visitor_view() -> str:
         "spent in the inn, the beers drunk and the wrongs that still rankle tonight. Judge like someone who knows how "
         "real tavern guests behave: they settle at a table with their drink, sip it there and chat with whoever "
         "sits with them, and they get up only for a reason - a refill, the WC, a game, a look at the fire - "
+        "and in lively company a refill comes before the mug is dry: an evening of drinking together makes guests "
+        "louder, bolder and fonder of dice and quarrels, and nobody drinks alone when a round is on offer - "
         "before going home once the evening has given them what they came for, or has gone sour. Restless "
         "wandering without a reason is unnatural, and so is ignoring a pressing need. When the situation states "
         "their intention, weigh each option against their intention: what serves it is natural, what goes against "
