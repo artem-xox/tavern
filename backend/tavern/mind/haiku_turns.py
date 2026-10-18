@@ -84,7 +84,7 @@ def turn_content(view: Mapping[str, Any]) -> str:
     seen = _seen(view["speaker"].get("seen") or [])
     return "\n\n".join([_scene(view["conversation"], view["speaker"]), *([earlier] if earlier else []),
                         *([seen] if seen else []),
-                        _self(view["speaker"]), _news(view["speaker"]), *([f"THE MOMENT\n\n{nudges}"] if nudges else []), _offer(view),
+                        _self(view["speaker"], view["acts"]), _news(view["speaker"]), *([f"THE MOMENT\n\n{nudges}"] if nudges else []), _offer(view),
                         "Write the speaker's next line now: one or two short sentences, under 120 characters."])
 
 
@@ -252,10 +252,12 @@ def _seen(memories: Sequence[str]) -> str:
     return "WHAT THE SPEAKER DID AND SAW TONIGHT\n\nOldest first.\n" + "\n".join(f"- {item}" for item in memories)
 
 
-def _self(me: Mapping[str, Any]) -> str:
+def _self(me: Mapping[str, Any], acts: Mapping[str, str]) -> str:
     needs = ", ".join(f"{label} {me['needs'][key]:.0f}" for key, label in _NEEDS)
-    places = ", ".join(f"{item['name']} ({item['kind']})" for item in me["places"]) or \
-        "none, so the speaker cannot use share_place"
+    # Places are listed only to be told: with share_place not offered (the others know them all), naming them
+    # only gets them recited in a remark, turn after turn.
+    places = (", ".join(f"{item['name']} ({item['kind']})" for item in me["places"])
+              if "share_place" in acts and me["places"] else "none to tell, so the speaker cannot use share_place")
     goal = me["card"]["goal"] if me["card"] else "to rest and pass a pleasant evening"
     mean = f"\nWhat you mean to do: {me['intention']}" if me.get("intention") else ""
     unwell = ("\nYou feel feverish and weak tonight." if me.get("ailing")

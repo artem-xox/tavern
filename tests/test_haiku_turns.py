@@ -475,3 +475,10 @@ def test_the_moment_tells_the_speaker_to_leave_worn_words_alone() -> None:
         {"speaker": ("bea", "ada")[index % 2], "addressee": None, "line": line, "act": "complain", "time": float(index)}
         for index, line in enumerate(DRONES)]
     assert "Worn out in this talk: drones, refineries." in turn_question(view_of(world))["content"]
+
+
+def test_places_everyone_already_knows_are_not_put_in_the_speakers_mind() -> None:
+    world = scene_world(knows_tap=True)
+    people(world)["bea"]["knowledge"]["objects"]["tap"] = {**world["map"]["objects"][3], "last_seen": 0.0}
+    content = turn_question(view_of(world))["content"]
+    assert ("Tap (tap)" in content, "Places you know: none to tell" in content) == (False, True)
