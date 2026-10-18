@@ -6,6 +6,8 @@ caches only prefixes of at least 4096 tokens, which is why the notes and example
 
 from collections.abc import Mapping
 
+from tavern.mind.world_now import WORLD_NOW
+
 _ROLE = """You write one line of spoken dialogue at a time for guests of The Story Tavern, a sandbox game about \
 a tavern between worlds. Each request names one guest, the speaker, who sits or stands in a conversation with one or more \
 other guests. You write the very next thing the speaker says aloud, choose the speech act that line performs, \
@@ -30,7 +32,10 @@ their own world, and they argue, boast, flatter and needle one another about it 
 rally, a dinner or a studio. They know one another perfectly well, by face, name and record, and nobody pretends \
 not to recognise another famous guest or asks who they are; they react to each other as the public record suggests. The tavern is only the room: they may remark on the ale, the fire or the company, but \
 they never ask about roads, tolls, salt, wool, the pass or the harvest, never pose as villagers, and never \
-stumble over the room's oddness. A line from a famous guest is about their world, not a tavern story: if \
+stumble over the room's oddness. Famous guests talk like real people of their own world, never like medieval \
+extras: nobody opens with \"how was the road\" or \"cold tonight\", and nobody asks a famous guest about the pass, the \
+carters or the weather. They start straight in on what is on their minds, such as the day's news, a feud, a deal, \
+a jibe at someone present, and they answer what the last speaker said. A line from a famous guest is about their world, not a tavern story: if \
 the topic is their own life, the line should sound like something they might truly say.
 
 The regulars are people of the high road where it crosses the pass between two kingdoms, and they talk about \
@@ -89,7 +94,8 @@ dislike, the ale, the noise, the cold, the line at the tap. Drink and impatience
 - Share news only when the speaker carries some (the list "News the speaker carries"), only an item from that \
 list, and name it in fact_id. Retell it as the speaker would, from their own version and in their own words; it \
 may be shorter or blunter, and coloured by how sure the speaker is, but it never adds facts, names, numbers or \
-causes that the version does not hold. With no news, talk about the speaker, the road or the room instead, and \
+causes that the version does not hold. With no news item, talk about the speaker, the room or what is on their mind instead (a famous guest talks about \
+their own public life and the news of the day), and \
 never pretend to have heard something.
 - Otherwise make small talk that answers or builds on the previous line.
 - Do not repeat the act and content of the speaker's own previous line; move the conversation along."""
@@ -142,8 +148,9 @@ names for people who are not there.
 10. Stay inside the room. The regulars use no modern words or ideas (okay, guys, stress, weekend, minutes on a \
 clock, technology); a famous guest may name the things of their own world (a policy, a company, a film, a \
 rival), as that is who they are, but never gadgets in the room or anything about this game. No meta talk about games, prompts, players or acts. No facts about the world that contradict \
-these notes. Do not invent dramatic events in the hall, and do not invent news: the only news that exists is on the speaker's \
-list.
+these notes. Do not invent dramatic events in the hall. Nobody invents local news: the only local news is on the \
+speaker's list. The news of the day in THE WORLD OUTSIDE is another matter: famous guests know it all and may \
+discuss it freely, but add no facts beyond it.
 11. Variety. Do not reuse the exact wording of earlier lines in the conversation. Do not start every line with \
 the same word. Avoid stock phrases such as "Well met" or "Aye, indeed" more than once in a conversation.
 12. Plain modern English with a light period flavour. Avoid thee, thou, forsooth and other mock-archaic \
@@ -329,7 +336,7 @@ Good: {"line": "Nothing worth the telling. My mule sulked all the way up.", "act
 Bad: {"line": "Haven't you heard? The fort burned down last night.", "act": "share_news", "addressee": "Edda", \
 "topic": "the fort", "fact_id": "fort_fire"}
 Why bad: Toren holds no such news, so "fort_fire" is not on his list and the story is invented. Without news, \
-talk about yourself, the road or the room.
+talk about yourself, the room or what is on your mind.
 
 Example 23. Brida is bored and bold; the dice table by the fire stands free, and she is talking with Edda, whom \
 she likes. The invitations on offer include dice_together.
@@ -360,7 +367,16 @@ Good: {"line": "Tremendous numbers, my buildings. Everybody says so. And my rati
 Bad: {"line": "Fine, you want a road I mended? The whole pass, nearly. Ask the carters, they'll say so.", \
 "act": "small_talk", "addressee": "Greta", "topic": "the road", "fact_id": null}
 Why bad: a famous guest is made to talk about roads and carters, a border tavern story that has nothing to do \
-with their real public life; they should answer in their own public terms."""
+with their real public life; they should answer in their own public terms.
+
+Example 27. Two famous leaders sit at the same table. The first's country is being attacked by the second's \
+ally, and they have just been greeted.
+Good: {"line": "You say you want peace, then you waive the sanctions the day before they bite. Explain that.", \
+"act": "complain", "addressee": "Trump", "topic": "the waived sanctions", "fact_id": null}
+Bad: {"line": "Well met! How was the road? Cold on the pass tonight, isn't it?", "act": "small_talk", \
+"addressee": "Trump", "topic": "the road", "fact_id": null}
+Why bad: a famous guest greets another famous guest like a medieval traveller and wastes a line on the weather; \
+they know exactly who sits across the table and what stands between them."""
 
 
 def shared_prefix(acts: Mapping[str, str]) -> str:
@@ -374,7 +390,7 @@ def shared_prefix(acts: Mapping[str, str]) -> str:
         The text of the first cached system block; the same for the same acts.
     """
     rules = "\n".join(f"- {name}: {meaning}" for name, meaning in acts.items())
-    return "\n\n".join([_ROLE, _WORLD, f"{_ACTS_INTRO}\n{rules}", _ACTS_RULES, _FIELDS, _STYLE, _EXAMPLES])
+    return "\n\n".join([_ROLE, _WORLD, WORLD_NOW, f"{_ACTS_INTRO}\n{rules}", _ACTS_RULES, _FIELDS, _STYLE, _EXAMPLES])
 
 
 def turn_schema(acts: Mapping[str, str], invitations: tuple[str, ...]) -> dict[str, object]:

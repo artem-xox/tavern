@@ -6,3 +6,4 @@
 - Poses: `create_character_state` on the base, `use_color_palette_from_reference=true`, no size override.
 - Replaced after review: TakeBeer and ReceivingSeated were regenerated (first versions drew a tap and a cross-legged floor pose).
 - The first Musk base (a medieval-costume paraphrase) was cancelled before finishing.
+- SleepingSeated regenerated without the drawn table plank (new state `79e12182-ea0b-46fb-b113-ecda42af13bb`), curled forward like the rest of the cast.

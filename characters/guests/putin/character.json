@@ -1,0 +1,12 @@
+{
+  "id": "putin", "role": "guest", "name": "Vladimir Putin", "color": "#7a2e3c", "looks": "the compact pale man in a dark suit and burgundy tie with a cold, unreadable face",
+  "occupation": "long-ruling strongman on a private errand, a parody of Vladimir Putin",
+  "background": "Vladimir arrived at the Last Inn with no escort, a dark coat folded over his arm and a clear wish that the room not come closer than a long table's length. He has run his country for more winters than most guests have been alive and trusts nobody he cannot see from across the room.",
+  "temperament": "Cold, controlled and patient; speaks softly, keeps his hands still and his distance, and prefers that a problem solve itself in his favour. Never raises his voice, because he never needs to.",
+  "speech": "Slow, quiet, clipped and faintly ironic, with long pauses and a half-joke that is not quite a joke; answers a question with a question and never says anything he cannot walk back.",
+  "quirks": "Chooses the seat that faces the door and the wall at his back; measures the room with his eyes before he sits; leaves exactly one empty chair on each side of him; never finishes his drink in front of anyone.",
+  "secret": "He is quietly lonely at the far end of every long table and has not been addressed by his first name in years.",
+  "goal": "Keep his distance, take the seat nobody can approach from behind, and learn quietly what everyone in the room wants before saying a word of his own.",
+  "params": {"patience": 0.9, "temper": 0.3, "sociability": 0.2, "courage": 0.7, "strength": 0.5, "brawling": 0.4, "tolerance": 0.4, "comfort": 0.5, "curiosity": 0.65},
+  "sex": "male", "carries": {}
+}

@@ -89,6 +89,9 @@ THOUGHTS: Mapping[str, ThoughtKind] = MappingProxyType({
     # Held by those who heard a speech from the stage (`tavern.social.speeches`), about the speaker.
     "speech_admired": ThoughtKind(3.0, 6.0, 240.0, 2, "gave a stirring speech", acquaints=True),
     "speech_tiresome": ThoughtKind(-2.0, -8.0, 240.0, 2, "droned on from the stage", acquaints=True),
+    # The same for a match at the two dart boards (`tavern.social.darts`).
+    "won_at_darts": ThoughtKind(5.0, 2.0, 300.0, 3, "lost to them at darts", acquaints=True),
+    "lost_at_darts": ThoughtKind(-4.0, -6.0, 300.0, 3, "beat them at darts", acquaints=True),
 })
 
 FAMILIARITY = ("stranger", "acquaintance", "friend")
