@@ -5,6 +5,7 @@ from typing import Any
 import pytest
 
 from social_hall import actor, advance, know, say, seated_talk, scene_of
+from tavern.hall.memory import record_event
 from tavern.hall.world import observe_actor, start_action
 from tavern.mind.briefing import brief
 from tavern.social.aims import offered_aims
@@ -81,3 +82,33 @@ def test_an_invitation_left_unanswered_is_not_made_again_at_once(walks_off: str,
 def test_the_inviter_has_the_unanswered_invitation_on_their_mind() -> None:
     view = observe_actor(left_hanging("bea", 1.0), "ada")
     assert "Bea never answered my invitation" in brief(view, [TALK_TO_BEA])["situation"]
+
+
+def loud_quarrel(world: dict[str, Any]) -> None:
+    """Cid and Dan quarrel loudly at the far table, a few steps from Ada and Bea's talk."""
+    actor(world, "dan").update(x=3, y=6)
+    for actor_id in ("cid", "dan"):
+        record_event(world, actor(world, actor_id), "quarrel", "Cid and Dan quarreled about the inn's beer")
+
+
+@pytest.mark.parametrize("asked, answered, held", [
+    pytest.param(False, False, False, id="a-quarrel-breaks-up-a-plain-talk"),
+    # Live Guests evenings (seeds 1 and 5, 2026-10-25): of 48 invitations, 19 died when a quarrel nearby broke one of
+    # the two off before the answer.
+    pytest.param(True, False, True, id="not-while-an-invitation-awaits-its-answer"),
+    pytest.param(True, True, False, id="once-it-is-answered-it-does-again"),
+])
+def test_a_loud_quarrel_does_not_break_off_a_talk_waiting_for_an_answer(asked: bool, answered: bool,
+                                                                        held: bool) -> None:
+    world = seated_talk()
+    know(world, "ada", "darts", "tap")
+    if asked:
+        say(world, "invite", "Darts?", invitation="darts_together")
+    if answered:
+        say(world, "decline", "Not tonight.")
+    loud_quarrel(world)
+    advance(world, 0.1)
+    scene = scene_of(world)
+    talking = scene is not None and set(scene["participants"]) == {"ada", "bea"}
+    assert (talking, actor(world, "ada")["emote"]["kind"], actor(world, "bea")["emote"]["kind"]) == (
+        held, "alert", "alert")

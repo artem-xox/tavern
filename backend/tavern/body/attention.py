@@ -10,7 +10,7 @@ from tavern.body.hearing import Stimulus, salience
 from tavern.hall.memory import record_event
 from tavern.hall.room import SEAT_TABLES, object_cells
 from tavern.hall.state import Actor, World
-from tavern.social.scenes import leave_conversation
+from tavern.social.scenes import awaits_answer, leave_conversation
 from tavern.social.thoughts import friends_of
 
 
@@ -24,7 +24,8 @@ def attend(world: World) -> list[Actor]:
     `interrupted_at`) or, busy with something they finish first, just remember hearing it.
     A sleeper (`dozing.asleep`) ignores every sound below the interrupt level and wakes to every one above it.
     Such a sound also takes them out of any conversation scene, so the scene loses a member or
-    ends; their part in it (`talk`, `join_conversation`) breaks off although no timer could.
+    ends; their part in it (`talk`, `join_conversation`) breaks off although no timer could. Only a guest who made or
+    was made an invitation still waiting for its answer (`scenes.awaits_answer`) stays in the talk, alerted as if busy.
 
     Args:
         world: World whose pending `stimuli` are consumed; visitors are updated in place and
@@ -62,9 +63,13 @@ def _alert(world: World, actor: Actor, stimulus: Stimulus) -> bool:
     look_at(actor, stimulus["cell"], now + world["rules"]["attention"]["turn_seconds"], stimulus["id"])
     show_emote(actor, "alert", now + world["rules"]["emote_seconds"]["alert"])
     heard = f"{stimulus['noun']} {_landmark(world['map'], stimulus['cell'])}"
-    leave_conversation(world, actor)
+    # Two guests between an invitation and its answer stay in their talk: broken off by every quarrel nearby, they
+    # left 19 of 48 invitations unanswered in live evenings (seeds 1 and 5, 2026-10-25).
+    held = awaits_answer(world, actor["id"])
+    if not held:
+        leave_conversation(world, actor)
     action = actor["action"]
-    if action and not (ACTIVITIES[action["verb"]].interruptible or ACTIVITIES[action["verb"]].partner):
+    if held or (action and not (ACTIVITIES[action["verb"]].interruptible or ACTIVITIES[action["verb"]].partner)):
         record_event(world, actor, "alerted", f"{actor['name']} heard {heard} while busy: {stimulus['cause']}")
         return False
     actor["interrupted_at"] = now

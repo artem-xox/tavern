@@ -152,16 +152,17 @@ def offered_acts(world: Mapping[str, Any], scene: Conversation, speaker: Mapping
         while someone present knows the speaker only by their looks; `insult` while the
         speaker thinks `DISLIKED` or less of someone present; `apologize` while someone holds
         a grudge against them; `invite` while an invitation kind is possible and none is
-        pending; `promise` while someone present has a table the speaker is not at and nothing is promised them; `accept` and `decline` while an invitation waits for their answer; `share_news`
-        while they hold any news.
+        pending; `promise` while someone present has a table the speaker is not at and nothing is promised them;
+        `share_news` while they hold any news. An invitee whose answer is due may only answer: `accept` or `decline`,
+        or the one act of the answer they decided.
     """
     others = [item for item in _members(world, scene) if item["id"] != speaker["id"]]
     now, waiting = world["time"], invitations.pending_for(scene, speaker["id"])
-    if waiting is not None and "answer" in waiting:
-        # The invitee has decided (`invitations.answer_options`): the line says it, and nothing else.
-        act = invitations.answer_act(waiting["answer"])
-        return {act: ACTS[act].meaning}
-    asked = waiting is not None
+    if waiting is not None:
+        # The invitee's line answers, and nothing else: as decided (`invitations.answer_options`), or yes or no. Left
+        # free, they said yes in words under another act or said goodbye, and the invitation hung unanswered.
+        answers = [invitations.answer_act(waiting["answer"])] if "answer" in waiting else ["accept", "decline"]
+        return {act: ACTS[act].meaning for act in answers}
     situational = {
         "introduce": any(called(item, speaker) != speaker["name"] for item in others),
         "insult": any(opinion_of(speaker, item["id"], now) <= DISLIKED for item in others),
@@ -173,7 +174,7 @@ def offered_acts(world: Mapping[str, Any], scene: Conversation, speaker: Mapping
         "invite": bool(invitations.offered_kinds(world, scene, speaker))
                   and all(opinion_of(speaker, item["id"], now) > LOATHED for item in others),
         "promise": any(commitments.promisable(world, speaker, item) for item in others),
-        "accept": asked, "decline": asked}
+        "accept": False, "decline": False}
     return {name: act.meaning for name, act in ACTS.items() if situational.get(name, True)}
 
 

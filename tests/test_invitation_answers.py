@@ -8,6 +8,7 @@ import pytest
 
 from tavern.adapters.persistence import load_world, save_world
 from tavern.hall.world import create_world, start_action
+from tavern.mind.haiku_turns import turn_content
 from tavern.social.conversation import offered_acts
 from tavern.social.invitations import accept, answer_act, answer_options
 from tavern.social.turns import claim_turns, turn_view
@@ -150,3 +151,28 @@ def test_a_decided_answer_survives_a_save(tmp_path: Any) -> None:
 def test_a_saved_answer_that_is_not_one_is_rejected(tmp_path: Any, answer: Any) -> None:
     with pytest.raises(ValueError):
         load_world(saved(tmp_path, lambda data: data["conversations"][0]["invitation"].update(answer=answer)))
+
+
+def test_an_invitee_who_has_not_decided_may_only_answer() -> None:
+    # Live Guests evenings (seeds 1 and 5, 2026-10-25): of 33 invitees' first lines only 3 answered; 8 said goodbye and
+    # the rest said yes or no in words under another act ("Dice, sure" as agree), so the invitation hung unanswered.
+    world = inviting("dice_together", ("darts",))
+    scene = scene_of(world)
+    assert scene is not None
+    assert set(offered_acts(world, scene, actor(world, "bea"))) == {"accept", "decline"}
+
+
+@pytest.mark.parametrize("needs", [
+    pytest.param({}, id="at-ease"),
+    pytest.param({"bladder": 95.0}, id="bursting"),
+    pytest.param({"social": 0.0}, id="had-enough-company"),
+])
+def test_an_invitee_is_told_to_answer_and_never_to_leave_first(needs: dict[str, float]) -> None:
+    world = inviting("dice_together", ("darts",))
+    scene = scene_of(world)
+    assert scene is not None
+    view = turn_view(world, scene)
+    view["speaker"]["needs"].update(needs)
+    content = turn_content(view)
+    assert ("waits for the speaker's answer" in content, "leave the conversation" in content,
+            "may say goodbye" in content) == (True, False, False)

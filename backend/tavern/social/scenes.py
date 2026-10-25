@@ -91,6 +91,21 @@ def conversation_of(world: Mapping[str, Any], actor_id: Any) -> Conversation | N
     return next((scene for scene in world["conversations"] if actor_id in scene["participants"]), None)
 
 
+def awaits_answer(world: Mapping[str, Any], actor_id: Any) -> bool:
+    """Tell whether a visitor asked, or was asked, something in their scene that has not been answered yet.
+
+    Args:
+        world: Current world.
+        actor_id: Visitor who may have made or been made the invitation.
+
+    Returns:
+        True while their scene holds a pending invitation from or to them.
+    """
+    scene = conversation_of(world, actor_id)
+    invitation = scene["invitation"] if scene is not None else None
+    return invitation is not None and actor_id in (invitation["from"], invitation["to"])
+
+
 def table_of(world: Mapping[str, Any], actor: Mapping[str, Any]) -> str | None:
     """Tell at which table a visitor sits.
 
