@@ -6,7 +6,7 @@ import re
 from typing import Any
 
 from tavern.body.ailment import urgent_needs
-from tavern.body.drunkenness import speech_instruction
+from tavern.body.drunkenness import drunk_stage, speech_instruction
 from tavern.mind.questions import Ask, Question
 from tavern.mind.scripted import BORED, CONTENT, MAX_LINE, PRESSING
 from tavern.mind.turn_prompt import shared_prefix, turn_schema
@@ -137,6 +137,10 @@ def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequen
     pressing = [f"{label} {me['needs'][key]:.0f}" for key, label in _NEEDS if key in urgent and me["needs"][key] >= PRESSING]
     shared = any(turn["speaker"] == me["id"] and turn["act"] == "share_place" for turn in scene["turns"])
     told = any(turn["speaker"] == me["id"] and turn["act"] == "share_news" for turn in scene["turns"])
+    # The dice table is mentioned only while an invite may be said and the speaker has asked nobody yet in this talk:
+    # told on every line, even mid-quarrel, the writer put "dice" into half of an evening's lines and no game came of it.
+    asked = any(turn["speaker"] == me["id"] and turn["act"] == "invite" for turn in scene["turns"])
+    dice = "dice_together" in invitations and "invite" in acts and not asked
     return " ".join(text for text in (
         f"You are the barkeep, on duty behind the {duty}: you stay while the guest does, and leave only to pour."
         if duty else "",
@@ -158,10 +162,11 @@ def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequen
         _worn(scene, me),
         "The speaker carries news the others have not heard from them; telling one piece is welcome."
         if me.get("news") and not told else "",
-        # Only to the bored and only when an invite may be said: told to every tipsy guest, even mid-quarrel, the
-        # writer put "dice" into half of an evening's lines and no game came of it.
         "The speaker is bored, and the dice table stands free: a game of dice is a fine thing to propose."
-        if me["needs"]["boredom"] >= BORED and "dice_together" in invitations and "invite" in acts else "",
+        if dice and me["needs"]["boredom"] >= BORED else "",
+        "The speaker has had a few, and the dice table stands free: a game of dice, for pride and a loud cheer, is "
+        "a fine thing to propose."
+        if dice and me["needs"]["boredom"] < BORED and drunk_stage(me["drunkenness"]).name != "sober" else "",
         "The speaker means to join someone here at their table: when saying so, use the promise act addressed to "
         "them, so the game can hold the speaker to it; promise it only if the speaker means to come."
         if "promise" in acts and me.get("aims_at") in {item["id"] for item in scene["participants"]} else "",
