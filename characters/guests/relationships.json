@@ -35,6 +35,14 @@
     "kardashian": {
       "kind": "disliked",
       "note": "A brand built on private jets and fast fashion, and she would like to see the footprint."
+    },
+    "vucic": {
+      "kind": "disliked",
+      "note": "Vucic calls the people asking for accountability a threat to his precious stability."
+    },
+    "sobchak": {
+      "kind": "disliked",
+      "note": "Sobchak keeps discovering nuance exactly where a powerful man should answer a direct question."
     }
   },
   "monroe": {
@@ -77,6 +85,14 @@
     "kardashian": {
       "kind": "admired",
       "note": "She understands the camera better than most, and the age of the feed."
+    },
+    "vucic": {
+      "kind": "well known",
+      "note": "Vucic seems so occupied saving both his seats that I wonder whether he ever gets to rest."
+    },
+    "sobchak": {
+      "kind": "well known",
+      "note": "Sobchak asks what everyone wants to know, but I would rather she asked what I want to say."
     }
   },
   "musk": {
@@ -115,6 +131,14 @@
     "kardashian": {
       "kind": "well known",
       "note": "She turns attention into money better than any rocket."
+    },
+    "vucic": {
+      "kind": "well known",
+      "note": "Vucic wants an investment before he can decide which table likes my idea."
+    },
+    "sobchak": {
+      "kind": "admired",
+      "note": "Sobchak wants to interview me, which is an excellent starting position for understanding the future."
     }
   },
   "putin": {
@@ -157,6 +181,14 @@
     "kardashian": {
       "kind": "looked down on",
       "note": "A frivolous woman and her phone, and not worth his time."
+    },
+    "vucic": {
+      "kind": "looked down on",
+      "note": "Vucic promises friendship while checking whether the other table has a better offer."
+    },
+    "sobchak": {
+      "kind": "looked down on",
+      "note": "Sobchak is useful so long as she knows which follow-up to leave unasked."
     }
   },
   "queen": {
@@ -199,6 +231,14 @@
     "kardashian": {
       "kind": "looked down on",
       "note": "Far too many photographs, and not a word of hers worth keeping."
+    },
+    "vucic": {
+      "kind": "looked down on",
+      "note": "Vucic has mistaken two invitations for permission to occupy two places at dinner."
+    },
+    "sobchak": {
+      "kind": "looked down on",
+      "note": "Sobchak knows every rank at the table and still insists her deference is independence."
     }
   },
   "thatcher": {
@@ -241,6 +281,14 @@
     "kardashian": {
       "kind": "looked down on",
       "note": "Wealth without work, as she sees it, and an appalling lack of discipline."
+    },
+    "vucic": {
+      "kind": "disliked",
+      "note": "Vucic calls sitting on the fence a policy and then expects somebody else to pay for the fence."
+    },
+    "sobchak": {
+      "kind": "disliked",
+      "note": "Sobchak is remarkably fearless until a powerful guest actually requires an answer."
     }
   },
   "trump": {
@@ -275,6 +323,14 @@
     "kardashian": {
       "kind": "admired",
       "note": "Famous for being famous, and he respects the way she gets paid for it."
+    },
+    "vucic": {
+      "kind": "looked down on",
+      "note": "Vucic needs both chairs because he cannot negotiate one tremendous deal with me."
+    },
+    "sobchak": {
+      "kind": "looked down on",
+      "note": "Sobchak wants my audience and calls it an interview, then complains when I give the answers."
     }
   },
   "tyson": {
@@ -317,6 +373,14 @@
     "kardashian": {
       "kind": "well known",
       "note": "A friendly person who is always on camera; he is polite and keeps his distance."
+    },
+    "vucic": {
+      "kind": "well known",
+      "note": "Vucic looks tired, but nobody asked him to carry two tables on his back."
+    },
+    "sobchak": {
+      "kind": "well known",
+      "note": "Sobchak can ask me something quiet if she lets me finish answering it."
     }
   },
   "zelensky": {
@@ -359,6 +423,14 @@
     "kardashian": {
       "kind": "well known",
       "note": "A famous person with an enormous audience, who could be persuaded to listen."
+    },
+    "vucic": {
+      "kind": "disliked",
+      "note": "Vucic wants my gratitude at one table and Putin's approval at the other."
+    },
+    "sobchak": {
+      "kind": "disliked",
+      "note": "Sobchak will challenge a comedian all evening but explain a strongman's answer for him."
     }
   },
   "zuckerberg": {
@@ -401,6 +473,14 @@
     "zelensky": {
       "kind": "admired",
       "note": "A former comedian who grew an audience of the whole world."
+    },
+    "vucic": {
+      "kind": "well known",
+      "note": "Vucic wants every audience at once without allowing their comments to meet."
+    },
+    "sobchak": {
+      "kind": "well known",
+      "note": "Sobchak understands attention, though she prefers a guest list to an open network."
     }
   },
   "kardashian": {
@@ -443,6 +523,114 @@
     "zuckerberg": {
       "kind": "well known",
       "note": "The platform she lives on, and the man who is rarely seen smiling."
+    },
+    "vucic": {
+      "kind": "looked down on",
+      "note": "Vucic can turn one photograph into a speech, and none of his ties are a look."
+    },
+    "sobchak": {
+      "kind": "well known",
+      "note": "Sobchak knows the guest list, but I know when another woman wants to turn my scandal into her interview."
+    }
+  },
+  "vucic": {
+    "greta": {
+      "kind": "disliked",
+      "note": "She sounds like the student hecklers who interrupt my account of all the pressure I bear."
+    },
+    "kardashian": {
+      "kind": "well known",
+      "note": "Her audience could make an excellent photograph of my next historic agreement."
+    },
+    "monroe": {
+      "kind": "adored",
+      "note": "Even an evening of national sacrifice deserves a place near Marilyn."
+    },
+    "musk": {
+      "kind": "admired",
+      "note": "A factory investment would make my second table look wonderfully independent."
+    },
+    "putin": {
+      "kind": "admired",
+      "note": "Vladimir understands loyalty, and I would like him to praise mine before I visit the other table."
+    },
+    "queen": {
+      "kind": "admired",
+      "note": "She makes holding a position for decades look effortless and properly ceremonial."
+    },
+    "thatcher": {
+      "kind": "looked down on",
+      "note": "She insists a negotiator choose a side before she has even heard his figures."
+    },
+    "trump": {
+      "kind": "disliked",
+      "note": "Donald calls every threat a deal and expects me to thank him for the pressure."
+    },
+    "tyson": {
+      "kind": "well known",
+      "note": "A quiet champion nearby would discourage anyone from overturning my careful seating plan."
+    },
+    "zelensky": {
+      "kind": "well known",
+      "note": "I can offer sympathy and a drink, provided neither becomes a demand to leave my other table."
+    },
+    "zuckerberg": {
+      "kind": "admired",
+      "note": "A useful platform could carry my explanation to everyone who missed the first broadcast."
+    },
+    "sobchak": {
+      "kind": "well known",
+      "note": "She has interviewed me and knows when a friendly question can become a useful public answer."
+    }
+  },
+  "sobchak": {
+    "greta": {
+      "kind": "disliked",
+      "note": "She mistakes refusing every compromise for having an actual plan for tomorrow."
+    },
+    "kardashian": {
+      "kind": "admired",
+      "note": "She monetises attention without pretending to be above it, which makes her a useful rival."
+    },
+    "monroe": {
+      "kind": "adored",
+      "note": "Marilyn is the one guest whose silence would still be a better interview than most answers here."
+    },
+    "musk": {
+      "kind": "admired",
+      "note": "An unpredictable billionaire with an audience is an interview worth fighting for."
+    },
+    "putin": {
+      "kind": "adored",
+      "note": "Vladimir Vladimirovich lets me remain useful, and I can surely explain his side more sympathetically."
+    },
+    "queen": {
+      "kind": "admired",
+      "note": "Nobody understood access, composure and the guest list better than she did."
+    },
+    "thatcher": {
+      "kind": "looked down on",
+      "note": "Her absolute answers leave no room for a clever qualification or a follow-up."
+    },
+    "trump": {
+      "kind": "disliked",
+      "note": "Donald mistakes bad taste and a loud sales pitch for an answer, but I still want the interview."
+    },
+    "tyson": {
+      "kind": "well known",
+      "note": "His quietness might conceal the only honest answer in the room."
+    },
+    "zelensky": {
+      "kind": "well known",
+      "note": "He will ask why my sharpest follow-up becomes a clarification at the powerful table."
+    },
+    "zuckerberg": {
+      "kind": "admired",
+      "note": "He owns the room in which everyone else competes to be seen."
+    },
+    "vucic": {
+      "kind": "well known",
+      "note": "My interviewee can turn two reserved chairs into a very long answer about having only one."
     }
   }
 }

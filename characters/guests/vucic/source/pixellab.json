@@ -1,0 +1,650 @@
+{
+  "group_id": "9fdb1e7b-f313-4b8f-8ba7-31ea03ad2fce",
+  "states": [
+    {
+      "character": {
+        "id": "966cbda1-9040-4c04-963c-a68ba925d0b8",
+        "name": "Idle",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:05:38.173534+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "5fee32a0-38c9-4c29-ac63-a047e9e625a1",
+        "name": "Seated",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:11:53.501682+00:00"
+      },
+      "folder": "Seated",
+      "frames": {
+        "rotations": {
+          "south": "Seated/rotations/south.png",
+          "south-east": "Seated/rotations/south-east.png",
+          "east": "Seated/rotations/east.png",
+          "north-east": "Seated/rotations/north-east.png",
+          "north": "Seated/rotations/north.png",
+          "north-west": "Seated/rotations/north-west.png",
+          "west": "Seated/rotations/west.png",
+          "south-west": "Seated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "dc44af5d-ff5a-44a7-b26c-1138bc4f6c48",
+        "name": "Darts",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:11:53.858656+00:00"
+      },
+      "folder": "Darts",
+      "frames": {
+        "rotations": {
+          "south": "Darts/rotations/south.png",
+          "south-east": "Darts/rotations/south-east.png",
+          "east": "Darts/rotations/east.png",
+          "north-east": "Darts/rotations/north-east.png",
+          "north": "Darts/rotations/north.png",
+          "north-west": "Darts/rotations/north-west.png",
+          "west": "Darts/rotations/west.png",
+          "south-west": "Darts/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "b2e98662-3910-4e8f-80a8-419e4adeca55",
+        "name": "Bathroom",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:11:54.471122+00:00"
+      },
+      "folder": "Bathroom",
+      "frames": {
+        "rotations": {
+          "south": "Bathroom/rotations/south.png",
+          "south-east": "Bathroom/rotations/south-east.png",
+          "east": "Bathroom/rotations/east.png",
+          "north-east": "Bathroom/rotations/north-east.png",
+          "north": "Bathroom/rotations/north.png",
+          "north-west": "Bathroom/rotations/north-west.png",
+          "west": "Bathroom/rotations/west.png",
+          "south-west": "Bathroom/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "c8a1b81b-3f73-4de6-9ad3-8362e0fd24bd",
+        "name": "Drinking",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:11:54.785541+00:00"
+      },
+      "folder": "Drinking",
+      "frames": {
+        "rotations": {
+          "south": "Drinking/rotations/south.png",
+          "south-east": "Drinking/rotations/south-east.png",
+          "east": "Drinking/rotations/east.png",
+          "north-east": "Drinking/rotations/north-east.png",
+          "north": "Drinking/rotations/north.png",
+          "north-west": "Drinking/rotations/north-west.png",
+          "west": "Drinking/rotations/west.png",
+          "south-west": "Drinking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "c396cb09-199b-4f3e-9833-4fbe141dabd0",
+        "name": "DrinkingSeated",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:12:04.457856+00:00"
+      },
+      "folder": "DrinkingSeated",
+      "frames": {
+        "rotations": {
+          "south": "DrinkingSeated/rotations/south.png",
+          "south-east": "DrinkingSeated/rotations/south-east.png",
+          "east": "DrinkingSeated/rotations/east.png",
+          "north-east": "DrinkingSeated/rotations/north-east.png",
+          "north": "DrinkingSeated/rotations/north.png",
+          "north-west": "DrinkingSeated/rotations/north-west.png",
+          "west": "DrinkingSeated/rotations/west.png",
+          "south-west": "DrinkingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "300eefec-0068-4786-8792-77d5ebe17ddd",
+        "name": "TalkingSeated",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:12:04.985080+00:00"
+      },
+      "folder": "TalkingSeated",
+      "frames": {
+        "rotations": {
+          "south": "TalkingSeated/rotations/south.png",
+          "south-east": "TalkingSeated/rotations/south-east.png",
+          "east": "TalkingSeated/rotations/east.png",
+          "north-east": "TalkingSeated/rotations/north-east.png",
+          "north": "TalkingSeated/rotations/north.png",
+          "north-west": "TalkingSeated/rotations/north-west.png",
+          "west": "TalkingSeated/rotations/west.png",
+          "south-west": "TalkingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "21c5e9bd-65f1-4c15-aca3-bbaf90f86cc3",
+        "name": "TakeBeer",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:12:05.338398+00:00"
+      },
+      "folder": "TakeBeer",
+      "frames": {
+        "rotations": {
+          "south": "TakeBeer/rotations/south.png",
+          "south-east": "TakeBeer/rotations/south-east.png",
+          "east": "TakeBeer/rotations/east.png",
+          "north-east": "TakeBeer/rotations/north-east.png",
+          "north": "TakeBeer/rotations/north.png",
+          "north-west": "TakeBeer/rotations/north-west.png",
+          "west": "TakeBeer/rotations/west.png",
+          "south-west": "TakeBeer/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "2773c9c5-6d07-4e50-b5cd-58fbfafb285a",
+        "name": "Walking",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:12:05.900217+00:00"
+      },
+      "folder": "Walking",
+      "frames": {
+        "rotations": {
+          "south": "Walking/rotations/south.png",
+          "south-east": "Walking/rotations/south-east.png",
+          "east": "Walking/rotations/east.png",
+          "north-east": "Walking/rotations/north-east.png",
+          "north": "Walking/rotations/north.png",
+          "north-west": "Walking/rotations/north-west.png",
+          "west": "Walking/rotations/west.png",
+          "south-west": "Walking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "76cfc054-8ac4-404c-a827-eb936840a1c5",
+        "name": "Talking",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:12:06.588700+00:00"
+      },
+      "folder": "Talking",
+      "frames": {
+        "rotations": {
+          "south": "Talking/rotations/south.png",
+          "south-east": "Talking/rotations/south-east.png",
+          "east": "Talking/rotations/east.png",
+          "north-east": "Talking/rotations/north-east.png",
+          "north": "Talking/rotations/north.png",
+          "north-west": "Talking/rotations/north-west.png",
+          "west": "Talking/rotations/west.png",
+          "south-west": "Talking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "cdff374d-76f3-448e-b7c4-727abd188fac",
+        "name": "Giving",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:12:07.187033+00:00"
+      },
+      "folder": "Giving",
+      "frames": {
+        "rotations": {
+          "south": "Giving/rotations/south.png",
+          "south-east": "Giving/rotations/south-east.png",
+          "east": "Giving/rotations/east.png",
+          "north-east": "Giving/rotations/north-east.png",
+          "north": "Giving/rotations/north.png",
+          "north-west": "Giving/rotations/north-west.png",
+          "west": "Giving/rotations/west.png",
+          "south-west": "Giving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "15382284-7249-445f-9222-6ffcb4125a91",
+        "name": "GivingSeated",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:12:07.536413+00:00"
+      },
+      "folder": "GivingSeated",
+      "frames": {
+        "rotations": {
+          "south": "GivingSeated/rotations/south.png",
+          "south-east": "GivingSeated/rotations/south-east.png",
+          "east": "GivingSeated/rotations/east.png",
+          "north-east": "GivingSeated/rotations/north-east.png",
+          "north": "GivingSeated/rotations/north.png",
+          "north-west": "GivingSeated/rotations/north-west.png",
+          "west": "GivingSeated/rotations/west.png",
+          "south-west": "GivingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "62ef459a-ec67-41f9-925b-5c8a87eb9c40",
+        "name": "Receiving",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:12:08.064671+00:00"
+      },
+      "folder": "Receiving",
+      "frames": {
+        "rotations": {
+          "south": "Receiving/rotations/south.png",
+          "south-east": "Receiving/rotations/south-east.png",
+          "east": "Receiving/rotations/east.png",
+          "north-east": "Receiving/rotations/north-east.png",
+          "north": "Receiving/rotations/north.png",
+          "north-west": "Receiving/rotations/north-west.png",
+          "west": "Receiving/rotations/west.png",
+          "south-west": "Receiving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "89155cfb-582e-4d0f-81a0-a198cee2e28f",
+        "name": "ReceivingSeated",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:12:08.398742+00:00"
+      },
+      "folder": "ReceivingSeated",
+      "frames": {
+        "rotations": {
+          "south": "ReceivingSeated/rotations/south.png",
+          "south-east": "ReceivingSeated/rotations/south-east.png",
+          "east": "ReceivingSeated/rotations/east.png",
+          "north-east": "ReceivingSeated/rotations/north-east.png",
+          "north": "ReceivingSeated/rotations/north.png",
+          "north-west": "ReceivingSeated/rotations/north-west.png",
+          "west": "ReceivingSeated/rotations/west.png",
+          "south-west": "ReceivingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "2d613905-2f40-43f8-a563-20bfbf448007",
+        "name": "SleepingSeated",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:12:08.735193+00:00"
+      },
+      "folder": "SleepingSeated",
+      "frames": {
+        "rotations": {
+          "south": "SleepingSeated/rotations/south.png",
+          "south-east": "SleepingSeated/rotations/south-east.png",
+          "east": "SleepingSeated/rotations/east.png",
+          "north-east": "SleepingSeated/rotations/north-east.png",
+          "north": "SleepingSeated/rotations/north.png",
+          "north-west": "SleepingSeated/rotations/north-west.png",
+          "west": "SleepingSeated/rotations/west.png",
+          "south-west": "SleepingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "a3d52007-d63b-408b-b878-df46602d3e1d",
+        "name": "Fighting",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:12:09.259853+00:00"
+      },
+      "folder": "Fighting",
+      "frames": {
+        "rotations": {
+          "south": "Fighting/rotations/south.png",
+          "south-east": "Fighting/rotations/south-east.png",
+          "east": "Fighting/rotations/east.png",
+          "north-east": "Fighting/rotations/north-east.png",
+          "north": "Fighting/rotations/north.png",
+          "north-west": "Fighting/rotations/north-west.png",
+          "west": "Fighting/rotations/west.png",
+          "south-west": "Fighting/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "ed76a608-11e9-4773-aa1c-907f05490e63",
+        "name": "KnockedOut",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:12:09.607581+00:00"
+      },
+      "folder": "KnockedOut",
+      "frames": {
+        "rotations": {
+          "south": "KnockedOut/rotations/south.png",
+          "south-east": "KnockedOut/rotations/south-east.png",
+          "east": "KnockedOut/rotations/east.png",
+          "north-east": "KnockedOut/rotations/north-east.png",
+          "north": "KnockedOut/rotations/north.png",
+          "north-west": "KnockedOut/rotations/north-west.png",
+          "west": "KnockedOut/rotations/west.png",
+          "south-west": "KnockedOut/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "3bddce2f-009b-4360-80e1-332284c034c2",
+        "name": "Hurt",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:12:09.929057+00:00"
+      },
+      "folder": "Hurt",
+      "frames": {
+        "rotations": {
+          "south": "Hurt/rotations/south.png",
+          "south-east": "Hurt/rotations/south-east.png",
+          "east": "Hurt/rotations/east.png",
+          "north-east": "Hurt/rotations/north-east.png",
+          "north": "Hurt/rotations/north.png",
+          "north-west": "Hurt/rotations/north-west.png",
+          "west": "Hurt/rotations/west.png",
+          "south-west": "Hurt/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "3e335638-6b1a-449f-99ea-0629c098ef02",
+        "name": "HurtSeated",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:12:10.249798+00:00"
+      },
+      "folder": "HurtSeated",
+      "frames": {
+        "rotations": {
+          "south": "HurtSeated/rotations/south.png",
+          "south-east": "HurtSeated/rotations/south-east.png",
+          "east": "HurtSeated/rotations/east.png",
+          "north-east": "HurtSeated/rotations/north-east.png",
+          "north": "HurtSeated/rotations/north.png",
+          "north-west": "HurtSeated/rotations/north-west.png",
+          "west": "HurtSeated/rotations/west.png",
+          "south-west": "HurtSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "7871e066-bc28-451c-b12b-bb82b595e34f",
+        "name": "Shoving",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:12:10.583558+00:00"
+      },
+      "folder": "Shoving",
+      "frames": {
+        "rotations": {
+          "south": "Shoving/rotations/south.png",
+          "south-east": "Shoving/rotations/south-east.png",
+          "east": "Shoving/rotations/east.png",
+          "north-east": "Shoving/rotations/north-east.png",
+          "north": "Shoving/rotations/north.png",
+          "north-west": "Shoving/rotations/north-west.png",
+          "west": "Shoving/rotations/west.png",
+          "south-west": "Shoving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "cedf17e1-d039-4c5e-afd1-f8e53f81d566",
+        "name": "HelpingUp",
+        "prompt": "Aleksandar Vucic, recognizable Serbian male political figure, only very lightly caricatured: tall build, elongated face, short side-parted greying brown hair, distinctive full pursed lips, straight prominent nose, worried heavy brows, thin dark rectangular eyeglasses. Navy tailored business suit, white dress shirt, subdued burgundy necktie, dark formal shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Make his body slightly taller and leaner than the anchor without cropping or reducing the head to unreadable size; preserve visible margins around hair and feet. Recognizable glasses, mouth and hair are the main likeness cues. Human public-figure parody with a restrained weary expression, not a grotesque caricature. One centered character on a native 68x68 transparent canvas. No props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face or identity.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:12:10.905123+00:00"
+      },
+      "folder": "HelpingUp",
+      "frames": {
+        "rotations": {
+          "south": "HelpingUp/rotations/south.png",
+          "south-east": "HelpingUp/rotations/south-east.png",
+          "east": "HelpingUp/rotations/east.png",
+          "north-east": "HelpingUp/rotations/north-east.png",
+          "north": "HelpingUp/rotations/north.png",
+          "north-west": "HelpingUp/rotations/north-west.png",
+          "west": "HelpingUp/rotations/west.png",
+          "south-west": "HelpingUp/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-25T11:15:28.551214",
+  "authoring": {
+    "base_character_id": "966cbda1-9040-4c04-963c-a68ba925d0b8",
+    "source_image_id": "1ad5f77e-e96e-5b7e-b62b-7627e5a9777a",
+    "source_image_job_id": "72b7a336-7813-46a9-b4a7-68937d1e4954",
+    "style_reference_character_id": "048912b2-baa1-43a9-9883-d53a4afe6817",
+    "style_reference_direction": "south",
+    "state_tool": "create_character_state",
+    "use_color_palette_from_reference": true,
+    "pose_edits": {
+      "Seated": "Sit upright with bent knees, feet together, hands resting on lap. No chair, stool, table or furniture. Preserve the accepted Aleksandar Vucic face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "Darts": "Stand aiming a tiny dart, one elbow bent and throwing hand raised beside the head, opposite arm balancing. No dartboard or scenery. Preserve the accepted Aleksandar Vucic face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "Bathroom": "Compact seated squat for using the privy, knees bent, hands on knees, fully clothed. No toilet, chair or furniture. Preserve the accepted Aleksandar Vucic face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "Drinking": "Stand lifting a small wooden beer tankard to the mouth, elbow bent and head tilted slightly toward it. Include only the tankard. Preserve the accepted Aleksandar Vucic face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "DrinkingSeated": "Sit with knees bent and lift a small wooden beer tankard to the mouth. Include tankard but no chair, table or furniture. Preserve the accepted Aleksandar Vucic face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "TalkingSeated": "Sit with knees bent, mouth speaking, one open hand making a clear conversational gesture. No chair, table, mug or furniture. Preserve the accepted Aleksandar Vucic face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "TakeBeer": "Stand reaching one empty hand forward to collect a drink. Draw no mug, tap, counter, keg or furniture; these are game overlays. Preserve the accepted Aleksandar Vucic face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "Walking": "Clear walking mid-stride still, one foot forward and opposite arm swinging. No motion blur or ground. Preserve the accepted Aleksandar Vucic face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "Talking": "Stand speaking, one open palm gesturing outward at chest height, mouth open. No props. Preserve the accepted Aleksandar Vucic face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "Giving": "Stand extending one empty open hand forward to offer a small item. Leave hand clearly visible for the game's item overlay. No prop. Preserve the accepted Aleksandar Vucic face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "GivingSeated": "Sit with bent knees, extending one empty open hand forward to offer a small item. No chair, table, item or furniture. Preserve the accepted Aleksandar Vucic face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "Receiving": "Stand reaching forward with an empty open palm to accept a small item. No item or other person. Preserve the accepted Aleksandar Vucic face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "ReceivingSeated": "Sit with knees bent, reaching forward with an empty open palm to accept a small item. No chair, table, item or furniture. Preserve the accepted Aleksandar Vucic face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "SleepingSeated": "Sit asleep, head drooped forward onto folded arms, compact curled seated silhouette. No table plank, chair, bed or furniture. Preserve the accepted Aleksandar Vucic face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "Fighting": "Standing defensive brawling stance, knees bent, fists raised, right fist clearly separated from torso for a future club overlay. No weapon or opponent. Preserve the accepted Aleksandar Vucic face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "KnockedOut": "Lying unconscious on the back on the ground, full body within the canvas, limbs relaxed, eyes closed. No blood, weapon, scenery or floor. Preserve the accepted Aleksandar Vucic face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "Hurt": "Stand recoiling from a blow, shoulders hunched, one hand protecting the ribs and the other raised defensively, pained expression. No blood. Preserve the accepted Aleksandar Vucic face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "HurtSeated": "Sit recoiling in pain with bent knees, one hand protecting ribs, shoulders hunched. No blood, chair, table or furniture. Preserve the accepted Aleksandar Vucic face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "Shoving": "Stand leaning forward with both open palms pushing outward at chest height, elbows partly extended. No opponent. Preserve the accepted Aleksandar Vucic face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "HelpingUp": "Bend at knees and waist, one empty hand extended downward to help somebody rise, free hand balancing. No other person or furniture. Preserve the accepted Aleksandar Vucic face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props."
+    },
+    "native_size": 68,
+    "south_accepted_by_user": true,
+    "pose_generation_cost": 200
+  }
+}

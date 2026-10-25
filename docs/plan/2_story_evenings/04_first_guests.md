@@ -107,3 +107,22 @@ act; the retelling call fails (`thinking: disabled` is refused by `claude-sonnet
 Starting regard: `characters/guests/relationships.json` is a one-sided matrix of what each guest thinks of each
 other guest (adored down to loathed), read into every lineup; a test fails when a new guest is missing from it
 (see [CHARACTER_CATALOG.md](../../CHARACTER_CATALOG.md) and `add-npc`).
+
+### Vucic and Sobchak (2026-10-25)
+
+Added `vucic` and `sobchak` to the Guests catalog and scenario, each with 21 poses in eight native
+68px transparent views. Both accepted Idle appearances and all later poses live in PixelLab Characters;
+their source records retain the group/state IDs, prompts and targeted corrections. The cards lightly
+caricature Vucic's two-table bargaining and Sobchak's selective independence around Putin. Catchphrases
+are authored satire; source notes distinguish public statements from fictional motives and rivalries.
+Added 46 directed regards, covering both newcomers, every existing famous guest and each other; the
+patrons' cooler regard for the newcomers deliberately differs from the newcomers' flattering regard.
+
+Validation: `make check` — 4041 Python tests, mypy (123 source files), TypeScript, 247 frontend tests;
+`make build` passed. All 336 new PNGs were decoded and checked for native dimensions and transparency,
+and all views were visually reviewed. A seed-5 offline Guests evening reached closing at 553s. A live
+seed-5 evening with Putin, Vucic, Sobchak and Trump produced 23 lines and two quarrels, and closed at
+188s; replay reproduced `events.jsonl` byte for byte. Vucic sought Putin's public praise while Sobchak
+called Trump's offer a noisy advertisement and repeatedly sought a place beside Putin.
+Sobchak's Seated was then refined from TalkingSeated at the user's request to lower her legs;
+all eight views were saved into her existing Characters Seated state.
