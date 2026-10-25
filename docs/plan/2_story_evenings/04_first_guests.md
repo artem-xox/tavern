@@ -126,3 +126,7 @@ seed-5 evening with Putin, Vucic, Sobchak and Trump produced 23 lines and two qu
 called Trump's offer a noisy advertisement and repeatedly sought a place beside Putin.
 Sobchak's Seated was then refined from TalkingSeated at the user's request to lower her legs;
 all eight views were saved into her existing Characters Seated state.
+The other seated actions were then corrected for both newcomers: GivingSeated, ReceivingSeated,
+HurtSeated and SleepingSeated now lower the shins and feet. All 64 corrections replaced the original
+Characters rotations; a fresh export matches all 112 seated game frames pixel for pixel. The temporary
+SeatedRefined was removed after verifying its pixels were already in the working Seated state.

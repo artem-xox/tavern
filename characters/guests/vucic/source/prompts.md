@@ -11,7 +11,13 @@
   state IDs and frame paths are retained in `pixellab.json`.
 - Verified all 21 poses in eight directions: 168 native transparent 68x68 PNGs.
   Reviewed all views; `poses-south.png` is a 2x nearest-neighbour review sheet.
-- Pose generation used 200 subscription generations. The accepted image and
+- GivingSeated, ReceivingSeated, HurtSeated and SleepingSeated had raised lower
+  legs. PixelLab `edit_image` corrected all eight views of each; `save_to_asset`
+  replaced the rotations in their original Characters states, without new states.
+  Exact edit prompts, image job IDs, targets and charges are in `pixellab.json`.
+  All 56 seated frames were compared pixel for pixel with a fresh Characters export.
+  `poses-seated.png` records the visual review of all seven poses and eight directions.
+- Pose generation and corrections used 240 subscription generations. The accepted image and
   its initial rotations used 6 more. No pose retries were needed.
 
 ## Persona sources and interpretation

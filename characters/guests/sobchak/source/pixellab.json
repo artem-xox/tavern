@@ -645,7 +645,7 @@
     },
     "native_size": 68,
     "south_accepted_by_user": true,
-    "pose_generation_cost": 210,
+    "pose_generation_cost": 250,
     "corrections": [
       {
         "state": "Hurt",
@@ -677,8 +677,109 @@
         "generation_tool": "create_character_state",
         "save_tool": "save_to_asset",
         "generations_charged": 10,
-        "edit_description": "Use this TalkingSeated state as the exact anatomical and positional reference. Preserve its seated torso, hip height, thigh angles, knee positions, lower legs and feet in every direction: the knees and feet must stay lower and less tucked up than the original Seated pose. Change ONLY the speaking gesture: close her mouth and lower both forearms so her hands rest naturally on her thighs or lap. She is sitting quietly with relaxed dropped shoulders and lower legs hanging down naturally. Keep the exact same Ksenia Sobchak identity, blonde bob, dark glasses, beige trouser suit, blouse, shoes, colors, scale and low top-down camera. No chair, stool, table, floor, shadow, props or extra person. Native transparent 68x68 canvas, full body with clear margins."
+        "edit_description": "Use this TalkingSeated state as the exact anatomical and positional reference. Preserve its seated torso, hip height, thigh angles, knee positions, lower legs and feet in every direction: the knees and feet must stay lower and less tucked up than the original Seated pose. Change ONLY the speaking gesture: close her mouth and lower both forearms so her hands rest naturally on her thighs or lap. She is sitting quietly with relaxed dropped shoulders and lower legs hanging down naturally. Keep the exact same Ksenia Sobchak identity, blonde bob, dark glasses, beige trouser suit, blouse, shoes, colors, scale and low top-down camera. No chair, stool, table, floor, shadow, props or extra person. Native transparent 68x68 canvas, full body with clear margins.",
+        "temporary_refinement_removed_after_verified_replacement": true
+      },
+      {
+        "state": "GivingSeated",
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ],
+        "reason": "Lower hanging shins and feet to match the quiet sitting posture instead of raised floor-sitting legs.",
+        "edit_tool": "edit_image",
+        "job_id": "ef19c629-6e1a-4667-b803-912c5d90eed6",
+        "asset_id": "47cd5da3-c98a-5ace-b0d0-30b51a6b4ba1",
+        "target_state_id": "12f58e70-48aa-42b1-b622-f99bfbeefafd",
+        "save_tool": "save_to_asset",
+        "generations_charged": 10,
+        "edit_description": "Correct ONLY the seated lower body of this same character in every provided direction. The current feet are raised and projected forward like sitting on the floor. Make the person sit on an invisible normal-height tavern chair: preserve the current hip/pelvis position and scale, thighs roughly horizontal, knees clearly bent at right angles, shins dropping vertically DOWN under the knees, shoes resting lower directly under the knees rather than sticking forward or tucked up against the torso. Lower the knee and shoe silhouette to match a natural seated adult, with a clear short thigh and hanging lower leg. Preserve every original upper-body gesture, arms, hands, head, face, expression, hair, glasses, clothes, palette, outline, facing direction and camera. In the sleeping pose the torso may lean forward but the legs must still drop down naturally from the chair, not curl up onto it. Remove old raised-leg pixels cleanly, keep complete feet inside the same native 68x68 transparent canvas. No drawn chair, table, furniture, shadow, ground, extra props or people. All frames are the same individual in compass order; retain each frame's own direction."
+      },
+      {
+        "state": "ReceivingSeated",
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ],
+        "reason": "Lower hanging shins and feet to match the quiet sitting posture instead of raised floor-sitting legs.",
+        "edit_tool": "edit_image",
+        "job_id": "44d4ec93-3bae-4390-8549-8764cd1e852e",
+        "asset_id": "5ad3f9a9-c613-5307-b4d7-dcba13979d65",
+        "target_state_id": "f483dd4f-280d-46eb-91a4-7a8ff2cdb5f2",
+        "save_tool": "save_to_asset",
+        "generations_charged": 10,
+        "edit_description": "Correct ONLY the seated lower body of this same character in every provided direction. The current feet are raised and projected forward like sitting on the floor. Make the person sit on an invisible normal-height tavern chair: preserve the current hip/pelvis position and scale, thighs roughly horizontal, knees clearly bent at right angles, shins dropping vertically DOWN under the knees, shoes resting lower directly under the knees rather than sticking forward or tucked up against the torso. Lower the knee and shoe silhouette to match a natural seated adult, with a clear short thigh and hanging lower leg. Preserve every original upper-body gesture, arms, hands, head, face, expression, hair, glasses, clothes, palette, outline, facing direction and camera. In the sleeping pose the torso may lean forward but the legs must still drop down naturally from the chair, not curl up onto it. Remove old raised-leg pixels cleanly, keep complete feet inside the same native 68x68 transparent canvas. No drawn chair, table, furniture, shadow, ground, extra props or people. All frames are the same individual in compass order; retain each frame's own direction."
+      },
+      {
+        "state": "HurtSeated",
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ],
+        "reason": "Lower hanging shins and feet to match the quiet sitting posture instead of raised floor-sitting legs.",
+        "edit_tool": "edit_image",
+        "job_id": "22da41c5-9d9f-41d4-b6bc-e51fd7b30369",
+        "asset_id": "083e8e74-12d8-5fa5-a88a-c547fefc2561",
+        "target_state_id": "2faf4368-5ce2-4bfa-92bb-3ccfddd750dd",
+        "save_tool": "save_to_asset",
+        "generations_charged": 10,
+        "edit_description": "Correct ONLY the seated lower body of this same character in every provided direction. The current feet are raised and projected forward like sitting on the floor. Make the person sit on an invisible normal-height tavern chair: preserve the current hip/pelvis position and scale, thighs roughly horizontal, knees clearly bent at right angles, shins dropping vertically DOWN under the knees, shoes resting lower directly under the knees rather than sticking forward or tucked up against the torso. Lower the knee and shoe silhouette to match a natural seated adult, with a clear short thigh and hanging lower leg. Preserve every original upper-body gesture, arms, hands, head, face, expression, hair, glasses, clothes, palette, outline, facing direction and camera. In the sleeping pose the torso may lean forward but the legs must still drop down naturally from the chair, not curl up onto it. Remove old raised-leg pixels cleanly, keep complete feet inside the same native 68x68 transparent canvas. No drawn chair, table, furniture, shadow, ground, extra props or people. All frames are the same individual in compass order; retain each frame's own direction."
+      },
+      {
+        "state": "SleepingSeated",
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ],
+        "reason": "Lower hanging shins and feet to match the quiet sitting posture instead of raised floor-sitting legs.",
+        "edit_tool": "edit_image",
+        "job_id": "f776b805-a37c-48fe-b04e-8bb5af7e8b3c",
+        "asset_id": "59ef038f-4251-5f09-9a6b-202440ef087a",
+        "target_state_id": "c56f66b8-44b4-4008-add6-fa036a9250ad",
+        "save_tool": "save_to_asset",
+        "generations_charged": 10,
+        "edit_description": "Correct ONLY the seated lower body of this same character in every provided direction. The current feet are raised and projected forward like sitting on the floor. Make the person sit on an invisible normal-height tavern chair: preserve the current hip/pelvis position and scale, thighs roughly horizontal, knees clearly bent at right angles, shins dropping vertically DOWN under the knees, shoes resting lower directly under the knees rather than sticking forward or tucked up against the torso. Lower the knee and shoe silhouette to match a natural seated adult, with a clear short thigh and hanging lower leg. Preserve every original upper-body gesture, arms, hands, head, face, expression, hair, glasses, clothes, palette, outline, facing direction and camera. In the sleeping pose the torso may lean forward but the legs must still drop down naturally from the chair, not curl up onto it. Remove old raised-leg pixels cleanly, keep complete feet inside the same native 68x68 transparent canvas. No drawn chair, table, furniture, shadow, ground, extra props or people. All frames are the same individual in compass order; retain each frame's own direction."
       }
-    ]
+    ],
+    "seated_roundtrip_verification": {
+      "poses": [
+        "Seated",
+        "TalkingSeated",
+        "DrinkingSeated",
+        "GivingSeated",
+        "ReceivingSeated",
+        "HurtSeated",
+        "SleepingSeated"
+      ],
+      "directions": 8,
+      "frames_checked": 56,
+      "native_size": 68,
+      "transparent": true,
+      "decoded_pixels_match_actual_characters_export": true
+    }
   }
 }

@@ -16,10 +16,17 @@
   south-east rotation. The correction was free and is recorded in `pixellab.json`.
 - At the user's request, Seated was refined from TalkingSeated to keep the lower
   knee and foot positions, with a closed mouth and hands resting on the lap.
-  `SeatedRefined` (`6902e2d3-7f73-4aa0-9fce-f4907eae4af1`) remains in the Characters
-  library as provenance; its eight rotations were saved into the original Seated
-  state `0c7472e6-4395-4ba9-9866-35dea848c2b2`. The game still ships 21 poses.
-- Pose generation and the Seated refinement used 210 subscription generations. The accepted image and
+  The temporary `SeatedRefined` (`6902e2d3-7f73-4aa0-9fce-f4907eae4af1`) was removed
+  after its eight rotations were saved into the original Seated state
+  `0c7472e6-4395-4ba9-9866-35dea848c2b2` and a fresh export proved them identical.
+  Both the Characters library and the game contain the same 21 working poses.
+- GivingSeated, ReceivingSeated, HurtSeated and SleepingSeated also had raised
+  lower legs. PixelLab `edit_image` corrected all eight views of each; `save_to_asset`
+  replaced the rotations in their original Characters states, without new states.
+  Exact edit prompts, image job IDs, targets and charges are in `pixellab.json`.
+  All 56 seated frames were compared pixel for pixel with a fresh Characters export.
+  `poses-seated.png` records the visual review of all seven poses and eight directions.
+- Pose generation and corrections used 250 subscription generations. The accepted image and
   its initial rotations used 6 more.
 
 ## Persona sources and interpretation
