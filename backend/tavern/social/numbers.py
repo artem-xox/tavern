@@ -42,8 +42,8 @@ NUMBERS: Mapping[str, Number] = MappingProxyType({
                     "blunders and what they did tonight, sharp and funny, as a comedian would at a roast dinner", True),
     "pitch": Number("a pitch to the whole room: the speaker's big idea, claim, campaign or cause, announced as at a "
                     "rally, a launch or a press conference, with one bold promise", False),
-    "confession": Number("a drunken confession: the speaker starts to tell the room the secret on their card, comes "
-                         "close enough that everyone can guess it, then catches themselves and covers it with bluster",
+    "confession": Number("a drunken confession: the speaker starts to tell the room their secret, comes close enough "
+                         "that everyone can guess it, then catches themselves and covers it with bluster",
                          False),
 })
 

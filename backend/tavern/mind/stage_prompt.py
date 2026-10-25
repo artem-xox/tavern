@@ -29,8 +29,9 @@ still gets one laugh at the toasted one's expense, the way a best man's speech d
 famous blunders and what they did tonight. Sharp, specific and funny, as at a roast dinner; never a slur.
 - A pitch: the speaker's big idea, claim, campaign or cause, announced to the room as at a rally, a launch or a press \
 conference, with one bold promise. It is about their real public life, not about the tavern's taps and chairs.
-- A confession: the speaker is drunk, and starts to tell the room the secret on their card. They come close enough that \
-everyone can guess it, then catch themselves and cover it with bluster. They never say it outright.
+- A confession: the speaker is drunk, and starts to tell the room their secret. They come close enough that everyone \
+can guess it, then catch themselves and cover it with bluster. They never say it outright, and never call it a secret \
+on a card or anything from this game.
 
 A heckle is one line shouted from the floor at the performer, by someone the number stung or who cannot stand the \
 performer. It answers what was just said, in the heckler's own voice and from their own public life: a counter-charge, a \
@@ -47,7 +48,7 @@ _RULES = """STYLE RULES
 
 1. Spoken words only. No narration, no stage directions, no actions or tone in asterisks, brackets or parentheses, no \
 speaker labels, no quotation marks around a line. A laugh is written as speech: "Ha!".
-2. Short lines. Each line under 120 characters, usually under 90. A number has two or three lines; a heckle and a \
+2. Short lines. Each line under 160 characters, usually under 100. A number has two or three lines; a heckle and a \
 comeback have exactly one.
 3. In character. The speaker's card says how they talk: their manner, pet words and catchphrases. Play the public image \
 up for satire so a stranger could tell who it is without the name. Echo or twist a catchphrase at most once.
@@ -86,7 +87,7 @@ Buster Douglas. Cheers, ma'am."]}
 Bad: {"lines": ["To Ksenia.", "She is nice.", "Cheers."]}
 Why bad: it could be anyone toasting anyone; the good one uses what happened tonight and Tyson's own record.
 
-Example 4. Vladimir Putin, drunk, owes a confession; his card says he is lonely at the end of every long table.
+Example 4. Vladimir Putin, drunk, owes a confession; his secret is that he is lonely at the end of every long table.
 Good: {"lines": ["You know, comrades, at the end of a very long table one hears nothing but one's own voice.", \
 "Not that I mind. Silence is a strategic asset. Pour."]}
 Bad: {"lines": ["I confess that I am lonely and nobody talks to me, and it makes me sad."]}

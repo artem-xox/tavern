@@ -55,7 +55,8 @@ person it stung shouts back from the floor and gets a comeback.
   moments, and for a heckle or comeback the words being answered.
 - Question: system `[stage_prompt.shared_prefix(), haiku_turns.card_block(speaker)]` (the prefix shares the turn
   writer's world, news and comic moves, and stays above 16,500 characters to be cached); answer `{"lines": [...]}`:
-  2–3 lines for a number, 1 for a heckle or comeback, each at most 120 characters, no stage directions. Recorded as
+  2–3 lines for a number, 1 for a heckle or comeback, each at most 160 characters (120 at first: every line Haiku
+  wrote over it in the first live evenings was a good one of 122–155), no stage directions. Recorded as
   call kind `stage` in `calls.jsonl`; a replay answers from it.
 - `speech_metrics.stage_counts(events)`: numbers by kind, heckles, comebacks; in `metrics.json` beside `speeches`.
 - Story: `heckled` is a `heckle` moment (weight 1.0).
