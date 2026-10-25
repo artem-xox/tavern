@@ -55,6 +55,8 @@ def test_the_card_is_the_second_cached_block() -> None:
     pytest.param(performed, "heckle", {"lines": ["Sit down!"]}, id="a-heckle-of-one"),
     # Live seeds 1 and 5 (2026-10-25): every line over the first limit of 120 was a good one of 122-155 characters.
     pytest.param(performed, "heckle", {"lines": ["x" * 155]}, id="a-long-shout-a-bubble-cuts-in-pieces"),
+    # The final live evenings (seeds 1 and 5, 2026-10-25) threw away 5 of 25 answers for a line of 162-172.
+    pytest.param(performed, "heckle", {"lines": ["x" * 190]}, id="as-long-as-a-conversation-line-may-be"),
 ])
 def test_an_answer_in_the_documented_shape_passes(make: Any, kind: str, answer: dict[str, Any]) -> None:
     assert parse_stage(view_of(make, kind), answer) == answer["lines"]
@@ -65,7 +67,7 @@ def test_an_answer_in_the_documented_shape_passes(make: Any, kind: str, answer: 
     pytest.param(on_stage, "number", {"lines": ["1.", "2.", "3.", "4."]}, id="a-number-too-long"),
     pytest.param(performed, "heckle", {"lines": ["Sit down!", "And stay down!"]}, id="a-heckle-of-two"),
     pytest.param(on_stage, "number", {"lines": ["*bows* Friends!", "Hello."]}, id="a-stage-direction"),
-    pytest.param(on_stage, "number", {"lines": ["x" * 161, "Hello."]}, id="a-line-over-160-characters"),
+    pytest.param(on_stage, "number", {"lines": ["x" * 201, "Hello."]}, id="a-line-over-200-characters"),
     pytest.param(on_stage, "number", {"lines": ["", "Hello."]}, id="a-blank-line"),
     pytest.param(on_stage, "number", {"lines": NUMBER, "act": "boast"}, id="a-field-too-many"),
     pytest.param(on_stage, "number", ["Friends!", "Hello."], id="not-an-object"),

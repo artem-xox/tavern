@@ -55,7 +55,7 @@ DECIDES = {"local": "the local policy (no model)", "live": "Jev, recorded", "rep
 RETELLING_MODEL = "claude-sonnet-5-5"  # Tells the evening at the end: one call, so a stronger model costs cents.
 CLAUDE_MODEL = "claude-haiku-5-5"  # The model `app.py` asks too: a measured evening costs what the server's would.
 CASTS_WITH_SCENARIOS = ("locals", "guests")
-TARIFFS = {"turn": HAIKU_5_5, "card": HAIKU_5_5, "intention": HAIKU_5_5}
+TARIFFS = {"turn": HAIKU_5_5, "card": HAIKU_5_5, "intention": HAIKU_5_5, "stage": HAIKU_5_5}
 
 
 def arguments(root: Path) -> argparse.ArgumentParser:

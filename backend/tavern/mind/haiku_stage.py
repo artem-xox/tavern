@@ -6,12 +6,12 @@ from typing import Any
 
 from tavern.mind.haiku_turns import card_block
 from tavern.mind.questions import Ask, Question
+# A stage line may run as long as a conversation line: the bubble cuts it into pieces it shows in turn. Live evenings
+# (seeds 1 and 5, 2026-10-25) threw good lines of 122-172 characters away at tighter limits.
+from tavern.mind.scripted import MAX_LINE
 from tavern.mind.stage_prompt import shared_prefix, stage_schema
 from tavern.social.stage_lines import StageWriter
 
-# Characters. Live seeds 1 and 5 (2026-10-25): every line Haiku wrote over 120 was a good one of 122-155, and a bubble
-# cuts a long line into pieces it shows in turn (`bubble.splitLine`).
-MAX_LINE = 160
 MAX_TOKENS = 300  # Bounds the answer: at most three short lines in a JSON object.
 # How many lines each claim wants: a number is a short bit, a heckle and a comeback one shout.
 LINES = {"number": (2, 3), "heckle": (1, 1), "comeback": (1, 1)}
