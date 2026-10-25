@@ -1,7 +1,7 @@
 ---
 id: S2-15
 title: A stage worth climbing
-status: doing
+status: done
 needs: [S2-14]
 touches: [data/tavern.json, frontend/src/furniture.ts, frontend/src/stage.ts, frontend/src/scene.ts]
 ---
@@ -48,3 +48,12 @@ visible across the hall before anyone reads a word.
 - A screenshot of a number on the new stage.
 
 ## Results
+
+Built: the 2-by-3 stage in `data/tavern.json` (cells 17-18 by 7-9, the spot at (17, 8)), `stage.ts` (`stageLift`
+over the whole stage, `footlights`, `performing`), `furniture.drawStage` (boards, a front trim and a step, a lectern,
+bunting, brass dishes) and `drawFootlights` (a flame on each dish that flares, with a warm glow, during a number).
+`make check` and `make build` pass. In the browser (live Guests evening, 177 s): Trump up on the new stage roasting
+Greta, her heckle over her head across the hall, his comeback over his; the footlights glow around him
+(`runs/stage-heckle.jpg`, `runs/stage-comeback.jpg`, not committed). A wall candle already hung at (19, 9), beside the
+stage's back edge.
+

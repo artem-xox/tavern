@@ -1,7 +1,7 @@
 ---
 id: S2-14
 title: Stage numbers
-status: doing
+status: done
 needs: [S2-12, S2-13]
 touches: [social/speeches.py, social/numbers.py, social/heckles.py, social/stage_lines.py, social/thoughts.py, mind/agents.py, mind/stage_prompt.py, mind/haiku_stage.py, evening/mind_loop.py, evening/lockstep.py, evening/speech_metrics.py, evening/story_score.py, server/runtime.py, server/sessions.py, server/api.py, app.py, scripts/evening.py, frontend/src/bubble.ts]
 ---
@@ -89,3 +89,30 @@ person it stung shouts back from the floor and gets a comeback.
   answered, and an observer can retell one from the log.
 
 ## Results
+
+Built: `numbers.py` (the four numbers, the choice, scripted words), `heckles.py` (who heckles, the heckle, the
+comeback), `stage_lines.py` (what is owed, delivery, the `stage_fallback` log), `speeches.perform` with the scripted
+number after `PERFORM_WAIT`, the mind loop's stage requests, the Haiku stage writer (`stage_prompt.py`, 19,374
+characters, cached; `haiku_stage.py`), the wiring in both runners, `stage_counts`, the `heckle` story moment, and
+bubbles for heckles and comebacks. Nothing new is saved. `make check`: 4414 passed, mypy clean, 260 node tests; `make build` passes.
+
+Live Guests evenings, before (2026-10-25 morning, seed 5) and after (final code, seeds 1 and 5):
+
+| | before, seed 5 | after, seed 1 | after, seed 5 |
+|---|---|---|---|
+| numbers | 8, all "inner thought" speeches | 4 roasts | toast, 2 roasts, confession, pitch |
+| heckled and answered | — | 4 and 4 | 4 and 4 |
+| scripted words standing in | — | 4 | 1 |
+| stage calls, cost | — | 12, $0.003 | 13, $0.003 |
+
+Every scripted stand-in was a line over the length limit; with the conversation line's limit (200), all 25 recorded
+answers of those evenings pass. Six of eight numbers before opened "Friends, patrons, whoever is still sober!"; after,
+each names its target. One exchange (seed 5, 134 s): Greta roasts Trump, "He has cancelled it twice. He pulled
+America out of Paris on his first day back"; Trump heckles, "the draught can't vote and neither can you, so sit down
+and let the adults talk"; Greta answers, "the draught can't vote, but it can still outlast you". Another (seed 5,
+34 s): Musk toasts Tyson, "He takes a hit like it's a software update"; Tyson shouts back, "You called his fight a
+software update and forgot to pay him!".
+
+Left open: roasts dominate (6 of 7 aimed numbers), since most famous guests start with someone they dislike; toasts
+need a guest tipsy and fond of someone present. `--trace` does not trace stage calls to LangSmith.
+
