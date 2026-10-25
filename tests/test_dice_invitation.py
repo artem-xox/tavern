@@ -226,15 +226,28 @@ def test_drink_loosens_the_scripted_writer_to_dice(drunkenness: float, courage: 
 
 
 @pytest.mark.parametrize("drunkenness, boredom, kinds, nudged", [
-    pytest.param(0.3, 10, ["dice_together"], True, id="tipsy-and-content-with-a-table-free"),
+    # A live Guests evening (seed 5, 2026-10-25) told every tipsy guest about the table: 80 of 125 lines were asked
+    # with a dice nudge (64 for drink alone), 67 said "dice", and not one game was played.
+    pytest.param(0.3, 10, ["dice_together"], False, id="tipsy-and-content-with-a-table-free"),
     pytest.param(0.3, 10, ["darts_together"], False, id="tipsy-without-a-table"),
     pytest.param(0.0, 10, ["dice_together"], False, id="sober-and-content"),
     pytest.param(0.3, 70, ["dice_together"], True, id="tipsy-and-bored"),
 ])
-def test_haiku_is_told_a_drinking_guest_may_want_a_game(drunkenness: float, boredom: float, kinds: list[str],
-                                                        nudged: bool) -> None:
+def test_drink_alone_does_not_tell_haiku_to_propose_dice(drunkenness: float, boredom: float, kinds: list[str],
+                                                         nudged: bool) -> None:
     content = turn_content(drunk_view(drunkenness, 0.5, boredom, kinds))
     assert ("dice table stands free" in content) is nudged
+
+
+@pytest.mark.parametrize("acts, nudged", [
+    pytest.param(["small_talk", "invite"], True, id="may-invite"),
+    pytest.param(["small_talk", "insult"], False, id="may-not-invite"),
+])
+def test_haiku_hears_of_the_dice_table_only_when_the_speaker_may_invite(acts: list[str], nudged: bool) -> None:
+    # Told mid-quarrel, where no invite is offered, the writer threw "Dice!" into insults instead.
+    view = writer_view(70, 0.5, ["dice_together"])
+    view["acts"] = acts
+    assert ("dice table stands free" in turn_content(view)) is nudged
 
 
 async def never_asked(*arguments: Any) -> dict[str, float]:
