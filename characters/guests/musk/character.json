@@ -11,7 +11,7 @@
   "quirks": "Sketches machines on napkins and beer mats; checks his pocket for a phone that does not exist; rates every drink by how soon it could be automated; laughs a beat before his own punchline.",
   "secret": "He has never finished a single pint: he carries one around for the look of it.",
   "goal": "Pitch his latest big idea to everyone in the room, get at least one person to back it, and win over or outshine whoever talks louder than he does before the inn closes.",
-  "params": {"patience": 0.25, "temper": 0.55, "sociability": 0.65, "courage": 0.7, "strength": 0.3, "brawling": 0.2, "tolerance": 0.35, "comfort": 0.55, "curiosity": 0.95},
+  "params": {"patience": 0.1, "temper": 0.8, "sociability": 0.65, "courage": 0.85, "strength": 0.3, "brawling": 0.5, "tolerance": 0.05, "comfort": 0.55, "curiosity": 0.95},
   "sex": "male",
   "carries": {},
   "inspired_by": "Elon Musk, rocket and car founder",

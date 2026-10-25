@@ -13,13 +13,13 @@
   "goal": "Get Putin to praise his loyalty, secure a welcome at a second table, and deny that either welcome commits him to anything.",
   "sex": "male",
   "params": {
-    "patience": 0.7,
-    "temper": 0.55,
+    "patience": 0.3,
+    "temper": 0.85,
     "sociability": 0.7,
-    "courage": 0.4,
+    "courage": 0.7,
     "strength": 0.6,
-    "brawling": 0.2,
-    "tolerance": 0.5,
+    "brawling": 0.5,
+    "tolerance": 0.1,
     "comfort": 0.7,
     "curiosity": 0.55
   },

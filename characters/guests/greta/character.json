@@ -11,7 +11,7 @@
   "quirks": "Points a finger at whoever she is scolding; counts the logs on the fire and tuts; refuses a second helping of anything that was carried a long way; tugs her braid when she is thinking.",
   "secret": "She is secretly terrified that nobody is listening, and has never once been able to stop talking in case they stop.",
   "goal": "Make every guest in the room admit what they have done wrong, and get at least one person to promise to change.",
-  "params": {"patience": 0.2, "temper": 0.75, "sociability": 0.6, "courage": 0.95, "strength": 0.3, "brawling": 0.3, "tolerance": 0.3, "comfort": 0.4, "curiosity": 0.6},
+  "params": {"patience": 0.1, "temper": 0.9, "sociability": 0.6, "courage": 0.95, "strength": 0.3, "brawling": 0.5, "tolerance": 0.05, "comfort": 0.4, "curiosity": 0.6},
   "sex": "female",
   "carries": {},
   "inspired_by": "Greta Thunberg, teenage climate campaigner",

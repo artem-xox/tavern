@@ -8,8 +8,8 @@
   "arrival": {
     "needs": {
       "thirst": [
-        55,
-        90
+        80,
+        100
       ],
       "fatigue": [
         0,
