@@ -23,7 +23,7 @@ it was the model's fault:
 
 ## Scope
 
-- In: the dice nudge only for a bored guest who may invite; an unanswered invitation counts as a no; a prompt that
+- In: the dice nudges only while the speaker may invite and has asked nobody yet in the talk; an unanswered invitation counts as a no; a prompt that
   plays famous guests for satire, with comic moves and famous-guest examples; a `funny` criterion for the judge.
 - Out: scene stakes and an end to insult loops (with [S2-09](09_chaos.md)); a "what just happened in the room" block;
   the barkeep as a gossip; model-written speeches on the stage (a stage task of its own).
@@ -39,7 +39,8 @@ it was the model's fault:
 
 1. Judge scores `funny` — check: `pytest tests/test_dialogue_judge.py`.
 2. Baseline: `scripts/dialogue_eval.py --seeds 1 2 3` on a snapshot of step 1.
-3. Dice nudge for the bored who may invite — check: `pytest tests/test_dice_invitation.py -k "haiku or drink_alone"`.
+3. Dice nudges only while an invite is on offer and the speaker has asked nobody yet in the talk — check:
+   `pytest tests/test_dice_invitation.py -k haiku`.
 4. An unanswered invitation is not made again at once — check: `pytest tests/test_turned_down.py`.
 5. Prompt: tone, comic moves, examples — check: `pytest tests/test_story_tavern.py`.
 6. Eval again, and a live Guests evening (seed 5) against the morning's.
@@ -52,9 +53,10 @@ it was the model's fault:
 
 ## Results
 
-Built: the dice nudge only for a bored guest who may invite; a `left_hanging` thought that makes an unanswered
-invitation count as a no; a line-writer prompt with a satire tone, a COMIC MOVES block and 23 of 34 examples voicing
-famous guests; a `funny` criterion for the judge. `make check`: 4311 passed, frontend typecheck and node tests pass.
+Built: the dice nudges (bored, or tipsy) only while an invite is on offer and the speaker has asked nobody yet in the
+talk; a `left_hanging` thought that makes an unanswered invitation count as a no; a line-writer prompt with a satire
+tone, a COMIC MOVES block and 23 of 34 examples voicing famous guests; a `funny` criterion for the judge.
+`make check`: 4317 passed, frontend typecheck and 247 node tests pass.
 
 Dialogue eval, Putin and Zelensky, 3 scenarios × seeds 1–3, means before → after (`runs/evals/baseline`,
 `runs/evals/after`):
@@ -68,20 +70,24 @@ No change the judge can see. That pair's talk is one quarrel about the war, and 
 thing every time: both circle one charge and nothing changes (D28). A prompt does not fix that. Once, Putin copied
 Zelensky's previous line word for word: the repeat check only compares a speaker with their own lines.
 
-Live Guests evenings, before → after:
+Live Guests evenings: before; with no drink nudge at all; with it back, once per talk (the final code):
 
 | | seed 5 | seed 1 |
 |---|---|---|
-| lines saying "dice" | 44 of 84 → 12 of 105 | 20 of 77 → 0 of 90 |
-| longest run of insults between one pair | 27 → 5 | 4 → 7 |
-| fights | 0 → 2 | 4 → 6 |
-| dice games played | 0 → 0 | 2 → 0 |
-| invites said | 13 → 5 | 11 → 3 |
+| line requests with a dice nudge | 80 of 125 → 7 of 159 → 19 of 103 | 24 of 97 → 0 of 109 → 14 of 127 |
+| lines saying "dice" | 44 of 84 → 12 of 105 → 32 of 87 | 20 of 77 → 0 of 90 → 22 of 90 |
+| invitations accepted | 0 → 0 → 3 | 2 → 0 → 0 |
+| dice games played | 0 → 0 → 1 | 2 → 0 → 0 |
+| longest run of insults between one pair | 27 → 5 → 2 | 4 → 7 → 5 |
+| fights | 0 → 2 → 2 | 4 → 6 → 2 |
+
+With the nudge once per talk, most of seed 5's dice lines come from talks where dice are already the subject: an
+invitation being answered, or a game played earlier. Seed 1 played no game because its invitations died unanswered:
+of 8, five ended with the inviter or the one asked walking out of the talk 6 to 10 s later (D29).
 
 The talk moved to the guests' public lives: Vucic, asked about his two chairs, "One for the people, one for the people
 who pay"; Musk to Tyson, "your chair's the only thing you've ever held longer than a grudge". Left as they were: the
 barkeep greets the same newcomer four times in 15 s, Musk and Hob circle the beer pipe for the last ten lines, and the
 speeches from the stage are still a guest's inner thought read aloud.
 
-Open: both games on seed 1 came from invitations made under the drink nudge (Vucic lost twice to Sobchak and wanted
-his revenge). Without it no evening played a game, which the stage's done-when asks for.
+Open: games now hang on D29. Where a talk lasts until the answer (seed 5), invitations are accepted and played.
