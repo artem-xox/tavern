@@ -66,6 +66,9 @@ THOUGHTS: Mapping[str, ThoughtKind] = MappingProxyType({
     # Held by an inviter whose invitation was declined (`tavern.social.invitations`), about the one who declined it:
     # while it lasts they ask that person nothing again.
     "turned_down": ThoughtKind(-1.0, 0.0, 180.0, 1, "turned down their invitation", acquaints=True),
+    # Held by an inviter whose invitation lapsed unanswered because one of them left the talk (`tavern.social.scenes`),
+    # about the one asked: it counts as a no, so they do not ask again at once.
+    "left_hanging": ThoughtKind(-1.0, 0.0, 180.0, 1, "never answered their invitation", acquaints=True),
     # Held by the victim of a hostile act (`tavern.body.activities`), about whoever did it.
     "shoved": ThoughtKind(-8.0, -25.0, 300.0, 3, "shoved them", acquaints=True),
     "attacked": ThoughtKind(-10.0, -35.0, 300.0, 3, "attacked them", acquaints=True),

@@ -354,9 +354,9 @@ def turned_down_by(inviter: Mapping[str, Any], other_id: str, now: float) -> boo
         now: Current game time.
 
     Returns:
-        True while the guest's `turned_down` thought about them lasts.
+        True while the guest's `turned_down` or `left_hanging` thought about them lasts.
     """
-    return any(item["kind"] == "turned_down" and item["about"] == other_id
+    return any(item["kind"] in ("turned_down", "left_hanging") and item["about"] == other_id
                for item in active_thoughts(inviter.get("thoughts", []), now))
 
 
