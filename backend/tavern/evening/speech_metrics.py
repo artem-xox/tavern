@@ -41,3 +41,34 @@ def speech_counts(events: Sequence[Mapping[str, Any]]) -> SpeechCounts:
         admired, groaned = admired + int(match[1]), groaned + int(match[2])
     return {"speeches": len(given), "speakers": list(dict.fromkeys(event["actor_id"] for event in given)),
             "admired": admired, "groaned": groaned}
+
+
+
+class StageCounts(TypedDict):
+    """Numbers given from the stage by kind (only kinds given), and the heckles and comebacks that answered them."""
+
+    numbers: dict[str, int]
+    heckles: int
+    comebacks: int
+
+
+def stage_counts(events: Sequence[Mapping[str, Any]]) -> StageCounts:
+    """Count the evening's stage numbers by kind, and the heckles and comebacks.
+
+    Args:
+        events: The complete event log: `gave_speech` events with their `number`, `heckled` and `heckle_answered`.
+
+    Returns:
+        Numbers by kind, in the order each kind was first given; heckles; comebacks. A `gave_speech` logged before
+        numbers had kinds counts as a pitch: every speech then addressed the room with the speaker's own cause.
+
+    Raises:
+        KeyError: An event has no type.
+    """
+    numbers: dict[str, int] = {}
+    for event in events:
+        if event["type"] == "gave_speech":
+            kind = event.get("number", "pitch")
+            numbers[kind] = numbers.get(kind, 0) + 1
+    return {"numbers": numbers, "heckles": sum(1 for event in events if event["type"] == "heckled"),
+            "comebacks": sum(1 for event in events if event["type"] == "heckle_answered")}
