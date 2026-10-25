@@ -13,13 +13,13 @@
   "goal": "Get a revealing admission from someone famous, publicly defend Putin without losing the label independent, and make Trump answer an awkward question.",
   "sex": "female",
   "params": {
-    "patience": 0.3,
-    "temper": 0.6,
+    "patience": 0.1,
+    "temper": 0.9,
     "sociability": 0.9,
-    "courage": 0.5,
+    "courage": 0.8,
     "strength": 0.3,
-    "brawling": 0.15,
-    "tolerance": 0.45,
+    "brawling": 0.4,
+    "tolerance": 0.05,
     "comfort": 0.9,
     "curiosity": 0.9
   },

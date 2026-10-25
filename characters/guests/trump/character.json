@@ -11,7 +11,7 @@
   "quirks": "Rates everything out of ten and always gives his own the ten; names a price for things that are not for sale; expects someone else to pick up the tab; will not touch a handshake that lets go first.",
   "secret": "The tower on his business card was never finished, and the loan for it was never repaid.",
   "goal": "Be the centre of the room: find an audience, strike a deal where someone else pays, and settle the score with anyone who laughs at him before the inn closes.",
-  "params": {"patience": 0.2, "temper": 0.7, "sociability": 0.9, "courage": 0.6, "strength": 0.4, "brawling": 0.3, "tolerance": 0.2, "comfort": 0.8, "curiosity": 0.25},
+  "params": {"patience": 0.1, "temper": 0.9, "sociability": 0.9, "courage": 0.8, "strength": 0.4, "brawling": 0.5, "tolerance": 0.05, "comfort": 0.8, "curiosity": 0.25},
   "sex": "male",
   "carries": {},
   "inspired_by": "Donald Trump, property tycoon and television showman",
