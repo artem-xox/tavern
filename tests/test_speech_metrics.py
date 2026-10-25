@@ -46,14 +46,16 @@ def number(kind: str | None, time: float = 1.0) -> dict[str, Any]:
 
 
 @pytest.mark.parametrize("events, expected", [
-    pytest.param([], {"numbers": {}, "heckles": 0, "comebacks": 0}, id="no-stage-tonight"),
+    pytest.param([], {"numbers": {}, "heckles": 0, "comebacks": 0, "fallbacks": 0}, id="no-stage-tonight"),
+    pytest.param([number("roast"), event("stage_fallback", "Ada spoke scripted words: too long", 2.0)],
+                 {"numbers": {"roast": 1}, "heckles": 0, "comebacks": 0, "fallbacks": 1}, id="scripted-words-counted"),
     pytest.param([number("roast"), event("heckled", "Bea heckled Ada", 3.0, "bea"),
                   event("heckle_answered", "Ada answered Bea", 5.0)],
-                 {"numbers": {"roast": 1}, "heckles": 1, "comebacks": 1}, id="a-roast-heckled-and-answered"),
+                 {"numbers": {"roast": 1}, "heckles": 1, "comebacks": 1, "fallbacks": 0}, id="a-roast-heckled-and-answered"),
     pytest.param([number("toast"), number("toast", 90.0), number("confession", 200.0)],
-                 {"numbers": {"toast": 2, "confession": 1}, "heckles": 0, "comebacks": 0}, id="kinds-counted-apart"),
+                 {"numbers": {"toast": 2, "confession": 1}, "heckles": 0, "comebacks": 0, "fallbacks": 0}, id="kinds-counted-apart"),
     # Before S2-14 every speech addressed the room with the speaker's own cause.
-    pytest.param([number(None)], {"numbers": {"pitch": 1}, "heckles": 0, "comebacks": 0}, id="an-old-log-was-pitches"),
+    pytest.param([number(None)], {"numbers": {"pitch": 1}, "heckles": 0, "comebacks": 0, "fallbacks": 0}, id="an-old-log-was-pitches"),
 ])
 def test_numbers_heckles_and_comebacks_are_counted(events: list[dict[str, Any]], expected: dict[str, Any]) -> None:
     assert stage_counts(events) == expected

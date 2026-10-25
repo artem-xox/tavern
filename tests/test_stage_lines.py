@@ -143,3 +143,8 @@ def test_a_failed_heckle_is_shouted_in_scripted_words() -> None:
 def test_the_scripted_writer_answers_with_the_scripted_words() -> None:
     [claim] = claims(on_stage(), "number")
     assert asyncio.run(write_scripted_stage(claim["view"], {})) == claim["view"]["scripted"]
+
+
+def test_a_failed_writer_is_logged_with_its_reason() -> None:
+    [event] = events(performed(failed()), "stage_fallback")
+    assert (event["actor_id"], "the writer did not answer" in event["message"]) == ("ada", True)

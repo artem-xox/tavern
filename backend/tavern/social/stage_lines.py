@@ -12,6 +12,7 @@ from typing import Any, TypedDict
 from tavern.body.dozing import asleep
 from tavern.body.drunkenness import speech_instruction
 from tavern.hall.chance import roll
+from tavern.hall.memory import log_event
 from tavern.hall.state import Actor, World
 from tavern.mind.briefing import recollections
 from tavern.mind.cards import TEXT_FIELDS, persona_words
@@ -126,15 +127,19 @@ def deliver_stage(world: World, claim: StageClaim, outcome: Callable[[], Sequenc
     """Speak the words a writer wrote for a claim, if they are still owed; scripted ones if the writer failed.
 
     Args:
-        world: World updated in place.
+        world: World updated in place; a writer's failure is logged as `stage_fallback`, with its reason.
         claim: The claim the words answer (`stage_claims`).
         outcome: Returns the writer's lines, or raises the request's error.
     """
     due = next((item for item in stage_claims(world) if item["key"] == claim["key"]), None)
     try:
         lines = list(outcome())
-    except Exception:  # Any failure of the writer leaves the scripted words, as a turn falls back to a scripted line.
-        lines = due["view"]["scripted"] if due else []
+    except Exception as error:  # Any failure of the writer leaves the scripted words, as a turn falls back to a scripted line.
+        if due is None:
+            return
+        lines = due["view"]["scripted"]
+        log_event(world, claim["key"][1], "stage_fallback",
+                  f"{due['view']['speaker']['name']} spoke scripted words for a {claim['kind']}: {error}")
     if due is None:
         return
     people = {item["id"]: item for item in world["actors"]}

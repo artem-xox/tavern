@@ -45,11 +45,13 @@ def speech_counts(events: Sequence[Mapping[str, Any]]) -> SpeechCounts:
 
 
 class StageCounts(TypedDict):
-    """Numbers given from the stage by kind (only kinds given), and the heckles and comebacks that answered them."""
+    """Numbers given from the stage by kind (only kinds given), the heckles and comebacks that answered them, and how
+    often scripted words stood in for a writer that failed."""
 
     numbers: dict[str, int]
     heckles: int
     comebacks: int
+    fallbacks: int
 
 
 def stage_counts(events: Sequence[Mapping[str, Any]]) -> StageCounts:
@@ -59,7 +61,7 @@ def stage_counts(events: Sequence[Mapping[str, Any]]) -> StageCounts:
         events: The complete event log: `gave_speech` events with their `number`, `heckled` and `heckle_answered`.
 
     Returns:
-        Numbers by kind, in the order each kind was first given; heckles; comebacks. A `gave_speech` logged before
+        Numbers by kind, in the order each kind was first given; heckles; comebacks; `stage_fallback`s. A `gave_speech` logged before
         numbers had kinds counts as a pitch: every speech then addressed the room with the speaker's own cause.
 
     Raises:
@@ -71,4 +73,5 @@ def stage_counts(events: Sequence[Mapping[str, Any]]) -> StageCounts:
             kind = event.get("number", "pitch")
             numbers[kind] = numbers.get(kind, 0) + 1
     return {"numbers": numbers, "heckles": sum(1 for event in events if event["type"] == "heckled"),
-            "comebacks": sum(1 for event in events if event["type"] == "heckle_answered")}
+            "comebacks": sum(1 for event in events if event["type"] == "heckle_answered"),
+            "fallbacks": sum(1 for event in events if event["type"] == "stage_fallback")}
