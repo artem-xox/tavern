@@ -46,6 +46,13 @@ def test_a_malformed_verdict_is_rejected(answer: Any) -> None:
         parse_verdict(answer)
 
 
+def test_a_verdict_must_say_whether_the_talk_was_funny() -> None:
+    # The stage's test is whether an observer laughs (Stage 2 README); a verdict that skips it says nothing of that.
+    sober = {name: 4 for name in ("in_character", "development", "liveliness", "coherence")}
+    with pytest.raises(ValueError, match="funny"):
+        parse_verdict({**GOOD, "scores": sober})
+
+
 def test_the_judge_asks_the_port_once_and_checks_the_answer() -> None:
     asked: list[Any] = []
 

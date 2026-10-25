@@ -14,7 +14,7 @@ class Verdict(TypedDict):
 
 
 # What the judge scores, each from 1 to 5. The order is the order of the report's columns.
-CRITERIA: tuple[str, ...] = ("in_character", "development", "liveliness", "coherence")
+CRITERIA: tuple[str, ...] = ("in_character", "development", "liveliness", "coherence", "funny")
 _MEANING = {
     "in_character": "each speaks as their real public self would, as the character notes say; 1 = generic tavern "
                     "talk or the wrong person, 5 = you would know who speaks without the name",
@@ -22,7 +22,9 @@ _MEANING = {
                    "point over and over, 5 = every few lines something changes",
     "liveliness": "it sounds like two people, not an echo: answers react to meaning, wit, interruptions; 1 = "
                   "each line rephrases the last one, 5 = sharp, varied, surprising",
-    "coherence": "lines follow from one another and from what they are; 1 = non sequiturs, 5 = a real exchange"}
+    "coherence": "lines follow from one another and from what they are; 1 = non sequiturs, 5 = a real exchange",
+    "funny": "an observer would laugh or screenshot a line: a twist, a jab, a nickname, an absurd turn; 1 = not a "
+             "smile in it, 5 = several lines worth quoting"}
 _RUBRIC = ("You judge a short recorded conversation between two famous people in a tavern game, written line by "
            "line by a small model. Be strict: a 3 is ordinary, a 5 is rare.\n\nScore each criterion from 1 to 5:\n"
            + "\n".join(f"- {name}: {meaning}" for name, meaning in _MEANING.items())
