@@ -10,6 +10,7 @@ from tavern.hall.chance import roll
 from tavern.hall.memory import log_event, record_event
 from tavern.hall.state import Actor, World
 from tavern.social.names import called
+from tavern.social.numbers import choose_number
 from tavern.social.thoughts import THOUGHTS, active_thoughts, opinion_of, think
 
 # The loudness, 0–1, from which a listener makes out a speech; a quieter one is only a murmur from the stage.
@@ -26,6 +27,9 @@ PLAIN_CLOSER = "That is all, and it is the truth!"
 APPLAUSE_WITHIN = 20.0
 # Game seconds a guest who has just spoken lets pass before climbing up again; the room has heard them.
 SPEAKS_AGAIN_AFTER = 180.0
+# Game seconds after any number during which nobody climbs up for another: eight numbers in ten minutes (live seed 5,
+# 2026-10-25) made the stage a routine rather than an event.
+ROOM_QUIET = 90.0
 
 
 def speech_lines(world: Mapping[str, Any], speaker: Mapping[str, Any]) -> str:
@@ -129,19 +133,33 @@ def spoke_lately(observation: Mapping[str, Any]) -> bool:
 
 
 def performs(observation: Mapping[str, Any]) -> bool:
-    """Tell whether a guest gets up to speak: a famous guest with a public persona who has something to say.
+    """Tell whether a guest gets up to speak: a famous guest with a public persona and a number worth giving.
 
     Args:
-        observation: The guest's observation, with their `card` and the mind's latest `intention`.
+        observation: The guest's observation, with their `card`, relations, drink and `memory`, the mind's latest
+            `intention`, the `people` in sight and the game `time`.
 
     Returns:
-        True when the card has a `persona` and the intention serves one of their obsessions or holds the goal to
-        address the room; an ordinary local, or one with nothing on their mind, never climbs the stage.
+        True when the card has a `persona`, the room has heard no number for `ROOM_QUIET` seconds, and the guest has
+        a number to give (`numbers.choose_number`): a roast, a toast or a confession, or a pitch when their intention
+        serves one of their obsessions or holds the goal to address the room. An ordinary local, or one with nothing
+        to say, never climbs the stage.
     """
     actor = observation["actor"]
-    card, intention = actor.get("card"), actor.get("intention")
-    if not (card and card.get("persona") and intention):
+    card, intention, now = actor.get("card"), actor.get("intention"), observation.get("time") or 0.0
+    if not (card and card.get("persona")) or _heard_lately(actor, now):
+        return False
+    kind, _ = choose_number(actor, [item["id"] for item in observation.get("people", [])], now)
+    if kind != "pitch":
+        return True
+    if not intention:
         return False
     goal = intention.get("goal")
     return intention.get("obsession") is not None or bool(
         goal and goal["kind"] == "address_room" and goal["status"] == "active")
+
+
+def _heard_lately(actor: Mapping[str, Any], now: float) -> bool:
+    # Any number the guest gave or heard lately keeps them off the stage: the room is still taking the last one in.
+    return any(item["type"] in ("gave_speech", "heard_speech") and now - item["time"] < ROOM_QUIET
+               for item in actor.get("memory", []))

@@ -237,3 +237,44 @@ def test_the_listeners_remember_the_speech_the_moment_it_is_given() -> None:
 def test_the_listeners_turn_to_look_at_the_speaker() -> None:
     world = speech(guest("bea", (15, 7)), seconds=0.5)
     assert who(world, "bea")["gaze"]["cell"] == list(STAGE_SPOT)
+
+
+# --- reasons to climb, and a quiet room between numbers --------------------------------------------------------
+
+
+def with_reasons(opinion: float | None = None, drunk: float = 0.0, secret: bool = False,
+                 intention: dict[str, Any] | None = None, heard_ago: float | None = None) -> dict[str, Any]:
+    """Ada, a showman at the stage with Bea in sight: what Ada thinks of Bea, her drink, a secret, her intention, and
+    how long ago she heard a number from the stage."""
+    card = {**PERFORMER, **({"secret": "The tower was never finished."} if secret else {})}
+    world = table_hall(guest("ada", STAGE_SPOT, card=card, intention=intention), guest("bea", (15, 7)))
+    ada = who(world, "ada")
+    ada["drunkenness"] = drunk
+    if opinion is not None:
+        ada["relations"]["bea"] = {"name": "Bea", "opinion": opinion, "familiarity": "acquaintance", "knows_name": True}
+    world["time"] = 300.0
+    if heard_ago is not None:
+        ada["memory"].append({"time": 300.0 - heard_ago, "actor_id": "ada", "type": "heard_speech",
+                              "message": 'Ada heard Bea say: "Friends!"'})
+    return world
+
+
+@pytest.mark.parametrize("world, offered", [
+    pytest.param(with_reasons(), False, id="nothing-to-say"),
+    pytest.param(with_reasons(opinion=-30.0), True, id="a-rival-in-sight-to-roast"),
+    pytest.param(with_reasons(opinion=40.0, drunk=0.3), True, id="a-friend-to-toast-after-a-few"),
+    pytest.param(with_reasons(opinion=40.0), False, id="no-toasts-while-sober"),
+    pytest.param(with_reasons(drunk=0.5, secret=True), True, id="a-secret-on-a-drunk-tongue"),
+    pytest.param(with_reasons(intention=with_a_thought()), True, id="a-pitch-for-an-obsession"),
+])
+def test_a_performer_climbs_up_for_a_number_worth_giving(world: dict[str, Any], offered: bool) -> None:
+    assert (SPEECH["id"] in options_of(world)) is offered
+
+
+@pytest.mark.parametrize("heard_ago, offered", [
+    # Eight numbers in ten minutes (live seed 5, 2026-10-25) made the stage a routine rather than an event.
+    pytest.param(30.0, False, id="the-room-just-heard-one"),
+    pytest.param(120.0, True, id="the-room-has-had-a-rest"),
+])
+def test_the_room_rests_between_numbers(heard_ago: float, offered: bool) -> None:
+    assert (SPEECH["id"] in options_of(with_reasons(opinion=-30.0, heard_ago=heard_ago))) is offered
