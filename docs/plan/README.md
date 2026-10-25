@@ -32,6 +32,8 @@ Known problems that no task owns are in [TECH_DEBT.md](TECH_DEBT.md).
 | S2-11 | [Acceptance](2_story_evenings/11_acceptance.md): live Guest evenings meet the story targets | all | todo |
 | S2-12 | [The stage](2_story_evenings/12_stage.md): a small stage from which a guest addresses the whole room | 06, 07 | doing |
 | S2-13 | [Livelier talk](2_story_evenings/13_livelier_talk.md): no dice nudge on every line, no repeated invitations, a prompt that plays famous guests for satire, a `funny` judge | 03 | doing |
+| S2-14 | [Stage numbers](2_story_evenings/14_stage_numbers.md): toast, roast, pitch or confession, written by Haiku; a heckle from the floor and a comeback | 12, 13 | doing |
+| S2-15 | [A stage worth climbing](2_story_evenings/15_stage_look.md): a 3-by-2 platform with a lectern and footlights that flare during a number | 14 | doing |
 
 Order: 00, 01 and 05 can run in parallel. 05 lands before 06–09 so that each of them is measured
 against a baseline. 08 and 09 both touch `activities.py`, `actions.py` and `local_policy.py`: do not run
