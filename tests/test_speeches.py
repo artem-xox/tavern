@@ -11,7 +11,7 @@ from tavern.social.thoughts import active_thoughts
 from dice_hall import advance, guest, happened, start, who
 from dice_hall import table_hall as bare_hall
 
-STAGE_SPOT = (17, 9)
+STAGE_SPOT = (17, 8)
 
 
 def table_hall(*actors: dict[str, Any]) -> dict[str, Any]:
@@ -56,10 +56,13 @@ def kinds(world: dict[str, Any], actor_id: str) -> list[str]:
     return [item["kind"] for item in active_thoughts(who(world, actor_id)["thoughts"], world["time"])]
 
 
-def test_the_hall_has_a_stage_with_one_speaker_spot_on_the_stage_itself() -> None:
+def test_the_hall_has_a_stage_three_long_and_two_deep_with_one_speaker_spot_on_it() -> None:
+    # S2-15: a 3-by-2 platform along the right wall, the room in front of it, the speaker at its front edge's middle.
     world = table_hall(speaker())
     stage = next(item for item in world["map"]["objects"] if item["kind"] == "stage")
-    assert stage["interaction_spots"] == [[stage["x"], stage["y"]]] and stage["walkable"] and stage["facing"] == "west"
+    cells = {(stage["x"] + dx, stage["y"] + dy) for dx in range(stage["width"]) for dy in range(stage["height"])}
+    assert ((stage["width"], stage["height"]), stage["interaction_spots"], tuple(stage["interaction_spots"][0]) in cells,
+            stage["walkable"], stage["facing"]) == ((2, 3), [list(STAGE_SPOT)], True, True, "west")
 
 
 def test_giving_a_speech_logs_it_with_the_words() -> None:

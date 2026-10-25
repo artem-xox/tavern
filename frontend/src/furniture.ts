@@ -1,7 +1,9 @@
 /** Drawing of the hall's furniture and fittings, one function per object kind. */
 import Phaser from "phaser";
+import { flicker } from "./hearth.ts";
 import { diceInPlay } from "./mapview.ts";
-import type { WorldObject } from "./types";
+import { footlights, performing } from "./stage.ts";
+import type { Actor, WorldObject } from "./types";
 
 /**
  * The entrance: a plank door in a timber frame, as tall as the wall stones beside it (`floor.ts`'s `drawWall`
@@ -186,9 +188,77 @@ export function drawDarts(g: Phaser.GameObjects.Graphics, x: number, y: number):
   g.lineStyle(2, 0xe5c178).lineBetween(x + 1, y - 3, x + 8, y - 10);
 }
 
-/** A plain plank platform, one tile: a speaker's stage. */
-export function drawStage(g: Phaser.GameObjects.Graphics, x: number, y: number): void {
-  g.fillStyle(0x4a3524).fillRoundedRect(x - 15, y - 12, 30, 28, 3);
-  g.fillStyle(0x8a6a44).fillRoundedRect(x - 15, y - 16, 30, 26, 3);
-  for (let i: number = -1; i <= 1; i += 1) g.lineStyle(1, 0x5b4129, 0.8).lineBetween(x + i * 10 - 5, y - 15, x + i * 10 - 5, y + 9);
+/** The way a stage's front faces the room, as a step of one cell. */
+const FRONT: Record<NonNullable<WorldObject["facing"]>, [number, number]> = { west: [-1, 0], east: [1, 0], north: [0, -1], south: [0, 1] };
+/** Pixels between two pennants of the bunting along the stage's back edge. */
+const PENNANT_GAP = 7;
+
+/**
+ * A speaker's stage, as big as its object: a raised plank platform with boards along its front edge, a dark trim and a
+ * step on the room's side at the speaker's spot, a lectern before the spot, bunting along the back, and brass dishes
+ * for the two footlights (`drawFootlights` lights them).
+ */
+export function drawStage(g: Phaser.GameObjects.Graphics, stage: WorldObject, size: number): void {
+  const left: number = stage.x * size;
+  const top: number = stage.y * size;
+  const width: number = (stage.width ?? 1) * size;
+  const height: number = (stage.height ?? 1) * size;
+  const [dx, dy]: [number, number] = FRONT[stage.facing ?? "west"];
+  // The platform's side shows below its top, so it reads as raised.
+  g.fillStyle(0x3a2a1c).fillRoundedRect(left + 1, top + 4, width - 2, height - 3, 3);
+  g.fillStyle(0x8a6a44).fillRoundedRect(left + 1, top + 1, width - 2, height - 4, 3);
+  const across: boolean = dx !== 0;
+  for (let at: number = 8; at < (across ? width : height) - 2; at += 8) {
+    if (across) g.lineStyle(1, 0x5b4129, 0.7).lineBetween(left + at, top + 3, left + at, top + height - 5);
+    else g.lineStyle(1, 0x5b4129, 0.7).lineBetween(left + 3, top + at, left + width - 3, top + at);
+  }
+  const [spotX, spotY]: [number, number] = (stage.interaction_spots[0] ?? [stage.x, stage.y]) as [number, number];
+  const cx: number = (spotX + 0.5) * size;
+  const cy: number = (spotY + 0.5) * size;
+  // The front trim, then the step just outside the front edge and the lectern just inside it, both at the spot.
+  const frontX: number = dx < 0 ? left + 1 : dx > 0 ? left + width - 5 : left + 1;
+  const frontY: number = dy < 0 ? top + 1 : dy > 0 ? top + height - 7 : top + 1;
+  g.fillStyle(0x5a3f27).fillRect(frontX, frontY, across ? 4 : width - 2, across ? height - 4 : 4);
+  const edge = { x: cx + dx * size / 2, y: cy + dy * size / 2 };
+  g.fillStyle(0x6b4f33).fillRect(edge.x + dx * 3 - (across ? 3 : 7), edge.y + dy * 3 - (across ? 7 : 3), across ? 6 : 14, across ? 14 : 6);
+  const lectern = { x: cx + dx * 9, y: cy + dy * 9 };
+  g.fillStyle(0x4a3220).fillRect(lectern.x - (across ? 3 : 6), lectern.y - (across ? 6 : 3), across ? 7 : 12, across ? 12 : 7);
+  g.fillStyle(0x7a5636).fillRect(lectern.x - (across ? 3 : 6), lectern.y - (across ? 6 : 3), across ? 7 : 12, 3);
+  // Bunting along the back edge, the pennants pointing into the room, red and gold in turn.
+  const backX: number = dx < 0 ? left + width - 3 : dx > 0 ? left + 3 : left + 3;
+  const backY: number = dy < 0 ? top + height - 6 : dy > 0 ? top + 3 : top + 3;
+  const length: number = across ? height - 6 : width - 6;
+  for (let at: number = 3, index: number = 0; at + 5 <= length; at += PENNANT_GAP, index += 1) {
+    const base = across ? { x: backX, y: top + at } : { x: left + at, y: backY };
+    const tip = { x: base.x + dx * 5 + (across ? 0 : 2.5), y: base.y + dy * 5 + (across ? 2.5 : 0) };
+    const end = across ? { x: base.x, y: base.y + 5 } : { x: base.x + 5, y: base.y };
+    g.fillStyle(index % 2 === 0 ? 0xb5483a : 0xe5c178).fillTriangle(base.x, base.y, end.x, end.y, tip.x, tip.y);
+  }
+  for (const light of footlights(stage, size)) g.fillStyle(0xb08a3e).fillCircle(light.x, light.y + 2, 3);
+}
+
+/**
+ * The stages' footlights, redrawn every frame like the candles: a small flame on each brass dish that flares, with a
+ * wide warm glow on the boards, while a number is on (`stage.performing`).
+ *
+ * @param g Layer for the footlights.
+ * @param objects The hall's objects; only stages have footlights.
+ * @param actors The hall's visitors, who tell whether anyone is performing.
+ * @param size Tile size in pixels.
+ * @param time Milliseconds since the scene began, for the flicker.
+ */
+export function drawFootlights(g: Phaser.GameObjects.Graphics, objects: readonly WorldObject[], actors: readonly Actor[],
+                               size: number, time: number): void {
+  g.clear();
+  for (const stage of objects) {
+    if (stage.kind !== "stage") continue;
+    const lit: boolean = performing(actors, stage);
+    footlights(stage, size).forEach((light, index: number): void => {
+      const strength: number = flicker(time, index * 1.9) * (lit ? 1.6 : 1);
+      if (lit) for (let ring: number = 3; ring > 0; ring -= 1) g.fillStyle(0xf5a347, 0.07 * strength).fillCircle(light.x, light.y, ring * size * 0.4 * strength);
+      const flame: number = (lit ? 5 : 3) * strength;
+      g.fillStyle(0xf08a30).fillTriangle(light.x - 2, light.y, light.x + 2, light.y, light.x, light.y - flame - 1);
+      g.fillStyle(0xfbd86a).fillTriangle(light.x - 1, light.y, light.x + 1, light.y, light.x, light.y - flame * 0.6);
+    });
+  }
 }

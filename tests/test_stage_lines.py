@@ -11,7 +11,7 @@ from tavern.social.stage_lines import HECKLE_WITHIN, deliver_stage, stage_claims
 from tavern.social.thoughts import active_thoughts
 from dice_hall import advance, guest, start, table_hall, who
 
-STAGE_SPOT = (17, 9)
+STAGE_SPOT = (17, 8)
 CARD = {"name": "Ada", "occupation": "showman", "background": "Ada has filled halls all her life.",
         "temperament": "Loud and vain.", "speech": "Superlatives.", "quirks": "Rates everything out of ten.",
         "secret": "She once lost a crowd to a juggler.", "goal": "Be the centre of the room."}
