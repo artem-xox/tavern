@@ -1,7 +1,6 @@
-"""Speeches from the stage: the words a speaker says, who in the hall hears them, and what the room makes of it."""
+"""Speeches from the stage: when a performer speaks, who in the hall hears the number, and what the room makes of it."""
 
 from collections.abc import Mapping
-import re
 from typing import Any
 
 from tavern.body.expression import look_at
@@ -9,20 +8,16 @@ from tavern.body.hearing import EVENT_SOUNDS, emit, heard_loudness
 from tavern.hall.chance import roll
 from tavern.hall.memory import log_event, record_event
 from tavern.hall.state import Actor, World
+from tavern.social.heckles import heckler_of
 from tavern.social.names import called
-from tavern.social.numbers import choose_number
+from tavern.social.numbers import NUMBERS, choose_number, scripted_number
+from tavern.social.social_acts import take_offence
 from tavern.social.thoughts import THOUGHTS, active_thoughts, opinion_of, think
 
 # The loudness, 0–1, from which a listener makes out a speech; a quieter one is only a murmur from the stage.
 HEARD_FROM = 0.1
 # Game seconds a listener keeps their eyes on the speaker, about as long as the speech lasts.
 LISTENS_FOR = 8.0
-# The longest part of a speaker's thought they voice, in characters: about two lines of a bubble.
-MAX_THOUGHT = 160
-# What the speaker opens with; the card's first catchphrase, when there is one, closes the speech.
-OPENERS = ("Quiet, everyone! Hear me out!", "Friends, patrons, whoever is still sober! A word!",
-           "Everybody listen! I have something to say!")
-PLAIN_CLOSER = "That is all, and it is the truth!"
 # Game seconds after a speech during which a listener it pleased may still cheer it.
 APPLAUSE_WITHIN = 20.0
 # Game seconds a guest who has just spoken lets pass before climbing up again; the room has heard them.
@@ -30,28 +25,59 @@ SPEAKS_AGAIN_AFTER = 180.0
 # Game seconds after any number during which nobody climbs up for another: eight numbers in ten minutes (live seed 5,
 # 2026-10-25) made the stage a routine rather than an event.
 ROOM_QUIET = 90.0
+# Game seconds a performer stands on the stage waiting for their number's words before saying scripted ones.
+PERFORM_WAIT = 4.0
+# How the log tells each number, after the performer's name.
+_TOLD = {"toast": "raised a toast to {target}", "roast": "roasted {target} from the stage",
+         "pitch": "gave a speech", "confession": "made a drunken confession from the stage"}
 
 
-def speech_lines(world: Mapping[str, Any], speaker: Mapping[str, Any]) -> str:
-    """Write the words a guest says from the stage.
+def on_stage_for(world: Mapping[str, Any], actor: Mapping[str, Any]) -> float | None:
+    """Tell how long a guest has stood on the stage with no number given yet.
 
     Args:
-        world: World whose seed and tick pick the opener.
-        speaker: Guest speaking; their card's first catchphrase closes the speech.
+        world: Current world, with its rules' `give_speech` duration.
+        actor: Guest who may be performing.
 
     Returns:
-        An opener, the first sentence of the speaker's current thought (their intention's, up to `MAX_THOUGHT`
-        characters; what they have to say), and a catchphrase (or a plain closer for a guest without one).
+        Game seconds since they climbed up (from `_remaining`, saved with the action), or None when they are not up
+        there doing `give_speech`, or have already given their number since climbing up.
     """
-    opener = OPENERS[int(roll(world, "speech", speaker["id"]) * len(OPENERS))]
-    catchphrases = ((speaker.get("card") or {}).get("catchphrases")) or []
-    closer = catchphrases[0] if catchphrases else PLAIN_CLOSER
-    intention = speaker.get("intention")
-    if not intention:
-        return f"{opener} {closer}"
-    thought = intention["thought"].strip()
-    sentence = (re.match(r".*?[.!?](?=\s|$)", thought) or [thought])[0]
-    return f"{opener} {sentence[:MAX_THOUGHT].rstrip()} {closer}"
+    action = actor.get("action")
+    if not action or action["verb"] != "give_speech" or actor["status"] != "interacting":
+        return None
+    since = world["rules"]["durations"]["give_speech"] - actor["_remaining"]
+    given = any(item["type"] == "gave_speech" and item["time"] >= world["time"] - since for item in actor["memory"])
+    return None if given else since
+
+
+def number_for(world: Mapping[str, Any], speaker: Mapping[str, Any]) -> tuple[str, str | None]:
+    """Choose the number a guest on the stage gives now, from who is in the hall (`numbers.choose_number`).
+
+    Args:
+        world: Current world.
+        speaker: Guest on the stage.
+
+    Returns:
+        (kind, target ID or None).
+    """
+    return choose_number(speaker, [item["id"] for item in world["actors"]], world["time"])
+
+
+def perform_overdue(world: World) -> None:
+    """Let every performer still waiting for words `PERFORM_WAIT` seconds after climbing up say scripted ones.
+
+    Args:
+        world: World whose performers may give their number now.
+    """
+    for actor in list(world["actors"]):
+        since = on_stage_for(world, actor)
+        if since is not None and since >= PERFORM_WAIT:
+            kind, target_id = number_for(world, actor)
+            target = next((item for item in world["actors"] if item["id"] == target_id), None)
+            lines = scripted_number(actor, kind, called(actor, target) if target else None,
+                                    roll(world, "speech", actor["id"]))
+            perform(world, actor, kind, target_id, lines)
 
 
 def _admires(listener: Mapping[str, Any], speaker: Mapping[str, Any], now: float) -> bool:
@@ -60,24 +86,43 @@ def _admires(listener: Mapping[str, Any], speaker: Mapping[str, Any], now: float
     return opinion_of(listener, speaker["id"], now) + 40 * (sociability - 0.5) + 30 * listener.get("drunkenness", 0.0) >= 0
 
 
-def give_speech(world: World, speaker: Actor, stage: Any) -> None:
-    """Let a guest address the room: the words are logged, heard and remembered by everyone in earshot.
+def perform(world: World, speaker: Actor, kind: str, target_id: str | None, lines: list[str]) -> None:
+    """Let a guest on the stage give their number: it is logged, heard, remembered and taken to heart.
 
     Args:
         world: World whose log, sounds, `heard` lines and thoughts are updated in place.
         speaker: The guest on the stage; they remember their own words too.
-        stage: The stage object they stand at (unused beyond being the target).
+        kind: The number (`numbers.NUMBERS`), kept on the event and in the speaker's memory.
+        target_id: Whom an aimed number is aimed at, or None.
+        lines: The words, said one after another.
+
+    Raises:
+        ValueError: The kind is unknown, an aimed number has no target in the hall, or there are no words.
     """
-    line = speech_lines(world, speaker)
-    message = f'{speaker["name"]} gave a speech: "{line}"'
+    target = next((item for item in world["actors"] if item["id"] == target_id), None)
+    if kind not in NUMBERS or NUMBERS[kind].aimed != (target is not None) or not lines:
+        raise ValueError(f"A {kind!r} number at {target_id!r} with {len(lines)} lines cannot be given")
+    line = " ".join(lines)
+    told = _TOLD[kind].format(target=target["name"] if target else "")
+    message = f'{speaker["name"]} {told}: "{line}"'
     record_event(world, speaker, "gave_speech", message)
-    world["events"][-1]["line"] = line
+    event = world["events"][-1]
+    event.update(line=line, number=kind, target_id=target_id)
+    speaker["memory"][-1]["number"] = kind
+    listeners = _hear(world, speaker, message, line)
+    if target is not None:
+        _land(world, speaker, kind, target, listeners, message)
+    event["heckler_id"] = heckler_of(speaker, target_id, listeners, world["time"])
+
+
+def _hear(world: World, speaker: Actor, message: str, line: str) -> list[Actor]:
+    # Everyone in earshot keeps the words and makes up their mind about the speaker; returns who heard it.
     # The sound the event just made, found again by the same kind, time and cause (`hearing.emit` merges them).
     stimulus = emit(world, EVENT_SOUNDS["gave_speech"], [speaker["id"]], [speaker["x"], speaker["y"]], [], message,
                     "gave_speech")
     scene, keep = f"speech-{world['time']:.0f}", world["rules"]["conversation"]["recall_lines"]
     damping = world["rules"]["attention"]["wall_damping"]
-    taken = {"speech_admired": 0, "speech_tiresome": 0}
+    taken, listeners = {"speech_admired": 0, "speech_tiresome": 0}, []
     for listener in world["actors"]:
         own = listener["id"] == speaker["id"]
         # A sleeper is woken by a loud enough sound (`dozing.waking_sound`) and hears it like anyone; no more is asked here,
@@ -98,8 +143,21 @@ def give_speech(world: World, speaker: Actor, stage: Any) -> None:
             del listener["memory"][:-100]
             look_at(listener, [speaker["x"], speaker["y"]], world["time"] + LISTENS_FOR, stimulus["id"])
             taken[kind] += 1
+            listeners.append(listener)
     log_event(world, speaker["id"], "speech_reaction",
               f"{speaker['name']}'s speech: {taken['speech_admired']} admired it, {taken['speech_tiresome']} groaned")
+    return listeners
+
+
+def _land(world: World, speaker: Actor, kind: str, target: Actor, listeners: list[Actor], message: str) -> None:
+    # A toast warms its target; a roast stings them, and their friends who heard it take offence as at an insult.
+    if kind == "toast":
+        think(target, "toasted", world["time"], f"{called(target, speaker)} raised a toast to me", message, about=speaker)
+    elif kind == "roast":
+        think(target, "roasted", world["time"], f"{called(target, speaker)} roasted me from the stage", message,
+              about=speaker)
+        for listener in listeners:
+            take_offence(world, listener, speaker, target)
 
 
 def applause(observation: Mapping[str, Any]) -> list[tuple[str, str | None]]:

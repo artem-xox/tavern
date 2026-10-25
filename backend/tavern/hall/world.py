@@ -38,6 +38,7 @@ from tavern.social.invitations import errand_parties, invitations_of
 from tavern.social.tables import mark_ownership
 from tavern.social.scenes import check_conversations
 from tavern.social.thoughts import forget_expired
+from tavern.social.speeches import perform_overdue
 from tavern.social.turns import speak_turns
 
 
@@ -164,6 +165,7 @@ def step_world(world: World, dt: float) -> None:
     admit_arrivals(world)
     check_conversations(world)
     speak_turns(world)
+    perform_overdue(world)
     honor_invitations(world, start_action)
     honor_projects(world, start_action)
     settle_commitments(world)
