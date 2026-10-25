@@ -90,4 +90,18 @@ who pay"; Musk to Tyson, "your chair's the only thing you've ever held longer th
 barkeep greets the same newcomer four times in 15 s, Musk and Hob circle the beer pipe for the last ten lines, and the
 speeches from the stage are still a guest's inner thought read aloud.
 
-Open: games now hang on D29. Where a talk lasts until the answer (seed 5), invitations are accepted and played.
+Follow-up, D29: why invitations died unanswered. Of 48 in six live evenings, 19 died when a quarrel nearby broke one
+of the two off (`attention._alert` took every alerted guest out of their talk), and the invitee rarely answered: 3 of
+33 first lines were accept or decline, 8 said goodbye, the rest said yes in words under another act ("Dice, sure" as
+agree). The answer stage of C7 is off unless `AI_ANSWERS` is set, so the line writer had every act. Now two guests
+between an invitation and its answer stay in their talk when a sound turns their heads (`scenes.awaits_answer`), and
+an undecided invitee may only accept or decline, with no goodbye nudged at them.
+
+| | seed 1 | seed 5 |
+|---|---|---|
+| invitations answered | 0 → 10 | 3 → 10 |
+| games played (dice + darts) | 0 → 7 | 1 → 5 |
+| invitee's answer, seconds after the invitation | – | 6 to 9 |
+
+(Once-per-talk nudge → with the hold; one live evening each.) Answers lean heavily to yes: 19 accepts to 2 declines.
+Insults and quarrels rose on seed 5 (3 → 21 insults), as they swing from run to run (36, 25, 3, 21 on that seed).
