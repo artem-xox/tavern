@@ -122,7 +122,7 @@ it with the faces of who was involved.
 
 ## Scope now
 
-One hall, one evening, three to six guests from one cast, one barkeep, an observer player. See
+One hall, one evening, one to eight guests from one cast, one barkeep, an observer player. See
 [Stage 2](plan/2_story_evenings/README.md).
 
 **Central test:** do famous guests produce evenings with many more retellable moments than the locals,

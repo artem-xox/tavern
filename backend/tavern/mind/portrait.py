@@ -26,5 +26,6 @@ def portrait(actor: Mapping[str, Any]) -> str:
         f"Occupation: {card['occupation']}.", f"Temperament in words: {card['temperament']}",
         f"Their goal tonight: {card['goal']}"]
     parts += [f"{item['name']} is {_TIE_PHRASES[item['kind']]} of theirs ({item['note']})."
+              + (f" Their history: {item['history']}" if "history" in item else "")
               for item in actor.get("ties", [])]
     return " ".join(parts)

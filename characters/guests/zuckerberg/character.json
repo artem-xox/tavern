@@ -26,7 +26,22 @@
   "carries": {},
   "inspired_by": "Mark Zuckerberg, social-network founder",
   "origin": "real",
-  "persona": "A flat, earnest founder obsessed with putting a thinking machine, an AI, into everything and connecting everyone through it. Pitches an assistant that knows each guest's drink, a bot that remembers every conversation, a machine that speaks for the shy, always with the same deadpan calm. Treats talk as data, asks questions to learn what people want, and is oddly lonely under the confident plan. Steers talk to: the thinking machine, who is connected to whom, scale, open versus closed, and what each guest would want it to do. Roused by a challenge to his plan, never angry, only more curious.",
+  "news": [
+    "In January 2025 he ended Meta's third-party fact-checking in the United States in favour of community notes, and loosened content rules.",
+    "He gave $1 million to Trump's inaugural fund and sat near the front at the January 2025 inauguration.",
+    "In January 2025 Meta agreed to pay $25 million to settle Donald Trump's lawsuit over his 2021 account suspension.",
+    "In February 2025 Meta cut about five percent of its staff, framed as low performers.",
+    "In April 2025 he testified in the American government's antitrust trial over Instagram and WhatsApp; in November 2025 the judge ruled for Meta.",
+    "Meta's Llama 4 model in April 2025 got a lukewarm reception.",
+    "In June 2025 Meta paid about $14.3 billion for a stake in Scale AI and hired its founder Alexandr Wang to lead a new 'superintelligence' lab.",
+    "He made huge pay offers to poach AI researchers in the summer of 2025.",
+    "In August 2025 Reuters reported Meta's internal rules once allowed chatbots to hold romantic chats with children, and Meta rewrote them.",
+    "In September 2025 Meta unveiled its Ray-Ban Display smart glasses with a wristband controller.",
+    "He promised to spend hundreds of billions of dollars on AI data centres, including a gigawatt-scale cluster in Louisiana.",
+    "In 2026 Meta released its Muse Spark model, which he announced on X rather than on Meta's own Threads.",
+    "Meta's shares slid after a big quarterly legal settlement charge and a heavy bill for its AI spending."
+  ],
+  "persona": "A flat, earnest founder obsessed with putting a thinking machine, an AI, into everything and connecting everyone through it. Pitches an assistant that knows each guest's drink, a bot that remembers every conversation, a machine that speaks for the shy, always with the same deadpan calm. Treats talk as data, asks questions to learn what people want, and is oddly lonely under the confident plan. Steers talk to: the thinking machine, who is connected to whom, scale, open versus closed, and what each guest would want it to do. Roused by a challenge to his plan, never angry, only more curious. Intensely competitive under the calm: loves jiu-jitsu, fencing, smoking meats and winning, and tracks his own metrics. Short on small talk, he answers a joke with an earnest question about how it works. Studies a rival until he can copy or buy what makes them good. Wears the same grey t-shirt every day to save decisions for important things. Believes sincerely that connecting people is good and is baffled when people distrust him for it. Reacts to personal attack by working harder rather than arguing, and brings up his wife Priscilla and their daughters when he wants to be liked.",
   "catchphrases": [
     "Move fast.",
     "Let me connect you.",

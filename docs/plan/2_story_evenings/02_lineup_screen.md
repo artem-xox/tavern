@@ -15,7 +15,7 @@ The player decides who is drinking tonight. Today the browser opens straight int
 ## Scope
 
 - In: a start screen. Step one: **Guests** (the famous cast) or **Locals** (the Stage 1 cast). Step two: the
-  cast's faces (the `south` view of `Idle`, the name and the card's `occupation`) to click, from 1 to 6
+  cast's faces (the `south` view of `Idle`, the name and the card's `occupation`) to click, from 1 to 8
   picked; the evening's length (3, 5, 10, 15 or 30 minutes at the standard speed, 5 by default).
 - In: a way back to the screen after closing (the recap window) and from the controls ("Change guests").
 - Out: custom cards, choosing the news (former E26).
@@ -28,7 +28,7 @@ The player decides who is drinking tonight. Today the browser opens straight int
   cast's scenario is the template: `evening/lineup.py` swaps in the picked guests (all due at opening, the
   opening window staggers them), `closes_at = minutes × 60`, last call at 90 %, and cuts the news to what
   the picked guests know (no ailment when nobody picked can fall ill). A later `reset` replays the lineup.
-  Refused with a `ValueError`: an unknown cast, fewer than 1 or more than 6 guests, a repeat, a character of
+  Refused with a `ValueError`: an unknown cast, fewer than 1 or more than 8 guests, a repeat, a character of
   another cast, minutes outside 1–60.
 - `types.ts`: `Cast`, `CastMember` and the `start` command.
 

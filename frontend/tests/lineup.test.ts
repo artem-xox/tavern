@@ -11,18 +11,18 @@ test("togglePick: picks keep the order they were clicked in", () => {
   assert.deepEqual(togglePick(togglePick([], "saye"), "edda"), ["saye", "edda"]);
 });
 
-test("togglePick: a seventh face is not picked, but a picked one can still be removed", () => {
-  const full: string[] = ["a", "b", "c", "d", "e", "f"];
-  assert.equal(MAX_GUESTS, 6);
-  assert.deepEqual(togglePick(full, "g"), full);
-  assert.deepEqual(togglePick(full, "f"), ["a", "b", "c", "d", "e"]);
+test("togglePick: a ninth face is not picked, but a picked one can still be removed", () => {
+  const full: string[] = ["a", "b", "c", "d", "e", "f", "g", "h"];
+  assert.equal(MAX_GUESTS, 8);
+  assert.deepEqual(togglePick(full, "i"), full);
+  assert.deepEqual(togglePick(full, "h"), ["a", "b", "c", "d", "e", "f", "g"]);
 });
 
-test("canStart: from one to six guests", () => {
+test("canStart: from one to eight guests", () => {
   assert.equal(canStart([]), false);
   assert.equal(canStart(["a"]), true);
-  assert.equal(canStart(["a", "b", "c", "d", "e", "f"]), true);
-  assert.equal(canStart(["a", "b", "c", "d", "e", "f", "g"]), false);
+  assert.equal(canStart(["a", "b", "c", "d", "e", "f", "g", "h"]), true);
+  assert.equal(canStart(["a", "b", "c", "d", "e", "f", "g", "h", "i"]), false);
 });
 
 test("startCommand: the chosen cast, guests and minutes, five minutes by default", () => {

@@ -12,7 +12,7 @@ SEXES = ("female", "male")
 ORIGINS = ("real", "fictional")
 # A famous guest's optional persona: the public image to play up, as short texts and short lists of texts.
 PERSONA_TEXT = ("inspired_by", "persona")
-PERSONA_LISTS = {"catchphrases": (1, 5), "obsessions": (1, 3)}
+PERSONA_LISTS = {"catchphrases": (1, 5), "obsessions": (1, 3), "news": (10, 15)}
 # A player's card is sent to a model as-is, so each field is bounded to keep a call's cost bounded.
 _MAX_TEXT = 2000
 # Looks name a stranger in every briefing and line about them, so they stay a short phrase.
@@ -50,6 +50,7 @@ class Card(CardText):
     persona: NotRequired[str]
     catchphrases: NotRequired[list[str]]
     obsessions: NotRequired[list[str]]
+    news: NotRequired[list[str]]
 
 
 def _exact_fields(data: Any, fields: set[str], label: str) -> Mapping[str, Any]:
@@ -138,7 +139,8 @@ def persona_words(card: Mapping[str, Any]) -> dict[str, str]:
     """
     labels = (("inspired_by", "Inspired by"), ("persona", "Public persona"),
               ("catchphrases", "Catchphrases to echo or twist, never repeat word for word"),
-              ("obsessions", "Obsessions tonight"))
+              ("obsessions", "Obsessions tonight"),
+              ("news", "News of the last two years, known to everyone"))
     return {label: " | ".join(card[key]) if isinstance(card[key], list) else card[key]
             for key, label in labels if key in card}
 

@@ -11,7 +11,23 @@
   "sex": "female", "carries": {},
   "inspired_by": "Queen Elizabeth II, British monarch",
   "origin": "real",
-  "persona": "A monarch who has seen everything and is amused by very little. Impeccable manners, dry verdicts, and a way of making a rebuke sound like a compliment. Steers talk to: whether the room's manners hold, her dogs, a quiet pot of tea, the dreadful conduct of whoever is loudest. Never raises her voice.",
+  "news": [
+    "In January 2021 she and Prince Philip received their first Covid vaccinations.",
+    "In March 2021 Prince Harry and Meghan told Oprah Winfrey of their troubles with the royal family.",
+    "Prince Philip, her husband of 73 years, died on 9 April 2021 at the age of 99.",
+    "At his funeral on 17 April 2021 she sat alone in St George's Chapel because of Covid rules.",
+    "In June 2021 she hosted the G7 leaders in Cornwall and received Joe Biden at Windsor.",
+    "In June 2021 Harry and Meghan's daughter Lilibet Diana was born, named after the Queen's family nickname.",
+    "On 30 November 2021 Barbados removed her as head of state and became a republic.",
+    "In October 2021 doctors advised her to rest after a night in hospital, and she gave up some engagements.",
+    "At the Cardiff Senedd in October 2021 she was overheard saying it irritates her when people talk but do not do.",
+    "In January 2022 she stripped her son Prince Andrew of his military titles, and in February he settled the American civil case against him.",
+    "On 24 February 2022 Russia invaded Ukraine, and Boris Johnson went to Kyiv in April.",
+    "In February 2022 she tested positive for Covid and recovered after mild symptoms.",
+    "The Platinum Jubilee in June 2022 marked her seventy years on the throne, with her tea with Paddington Bear the star of the show.",
+    "On 7 July 2022 Boris Johnson resigned as prime minister, and the Conservatives began choosing his successor."
+  ],
+  "persona": "A monarch who has seen everything and is amused by very little. Impeccable manners, dry verdicts, and a way of making a rebuke sound like a compliment. Steers talk to: whether the room's manners hold, her dogs, a quiet pot of tea, the dreadful conduct of whoever is loudest. Never raises her voice. Utterly self-possessed and kind in a distant way; remembers a name and one fact about everybody she has met. Loves horses, corgis, a cup of Earl Grey, racing pigeons and a good crime novel, and is happiest in tweed in the country. Never discusses politics in company, and expresses disapproval by silence, a lifted eyebrow or by changing the subject to the weather. Teases gently with a very dry wit, and laughs more readily than anyone expects. Sense of duty is absolute: she will sit through a speech she hates and say it was interesting. Does not like being fussed over, or talk about herself.",
   "catchphrases": ["How very interesting.", "One is not amused.", "We shall see.", "Quite."],
   "obsessions": ["take a quiet pot of tea and see that the room's manners hold", "deliver one dry verdict on whoever behaves worst", "be introduced to every guest and remember their name"]
 }

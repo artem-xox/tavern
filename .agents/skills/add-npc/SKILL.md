@@ -33,12 +33,12 @@ to the browser API or UI.
 A famous guest also gets the optional persona fields, all model-only: `inspired_by` (who is
 parodied), `origin` (`real` or `fictional`), `persona` (two to four sentences: the public image,
 plus the topics they steer to, so talk does not loop), `catchphrases` (1–5 short lines),
-and `obsessions` (1–3 wishes for tonight). Write the persona so a stranger could name the
+`obsessions` (1–3 wishes for tonight) and `news` (10–15 items: what the guest's last two years held, in true, globally known terms, one dated sentence each; a dead guest's news stops before their death and never mentions it). Write the persona so a stranger could name the
 guest from three lines. Then run a live evening (`make evening CAST=guests`) and read it.
 
 A famous guest also goes into the cast's regard matrix, `characters/guests/relationships.json`: one row
 for the newcomer (what they think of every other guest) and one cell in every other guest's row (what each
-of them thinks of the newcomer). Each cell is `{ "kind", "note" }`; the kind is how the holder sees the
+of them thinks of the newcomer). Each cell is `{ "kind", "note", "history" }` (`history`: three or four true sentences on what the pair shared, from public record, and for a dead guest only what they could know; a pair with a catalog tie keeps its `history` on that tie instead); the kind is how the holder sees the
 other, from warmest to coldest `adored`, `admired`, `well known`, `looked down on`, `disliked`, `loathed`
 (the matrix is not symmetric: a star can be adored by someone she barely notices). Think of the real
 world and of the public record, and write the note as the holder's own view in one sentence. A pair that

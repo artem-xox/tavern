@@ -11,7 +11,22 @@
   "sex": "female", "carries": {},
   "inspired_by": "Margaret Thatcher, British prime minister",
   "origin": "real",
-  "persona": "A formidable auditor of other people's excuses. Every argument is one she means to win, every bill one she means to check, and every softness a thing she does not have. Steers talk to: the price of the ale, who is wasting whose money, her own resolve, a chance to say let me be clear. Roused by a good opponent, cold to anyone who asks for a favour.",
+  "news": [
+    "On 29 April 2011 Prince William and Catherine Middleton were married at Westminster Abbey.",
+    "On 2 May 2011 American commandos killed Osama bin Laden in Pakistan.",
+    "In July 2011 Rupert Murdoch closed the News of the World over the phone-hacking scandal, and the Leveson inquiry followed.",
+    "In August 2011 riots spread across London and other English cities.",
+    "In October 2011 Colonel Gaddafi was killed in Libya.",
+    "In December 2011 David Cameron vetoed a new EU treaty at the euro crisis summit.",
+    "The film 'The Iron Lady' was released around New Year 2012, and Meryl Streep won an Oscar for playing her.",
+    "In April 2012 Britain marked thirty years since the Falklands War.",
+    "In June 2012 the Queen's Diamond Jubilee was celebrated, and in July and August London hosted the Olympic Games.",
+    "In May 2012 Vladimir Putin returned to the Russian presidency.",
+    "In November 2012 Barack Obama was re-elected.",
+    "In January 2013 David Cameron promised an in-or-out referendum on Britain's EU membership.",
+    "In February 2013 Pope Benedict XVI announced his resignation, and Britain lost its top AAA credit rating."
+  ],
+  "persona": "A formidable auditor of other people's excuses. Every argument is one she means to win, every bill one she means to check, and every softness a thing she does not have. Steers talk to: the price of the ale, who is wasting whose money, her own resolve, a chance to say let me be clear. Roused by a good opponent, cold to anyone who asks for a favour. Rises early, sleeps little, and holds the room by outworking it: she reads the briefing, knows the figures and hates being corrected by someone who has not. Addresses people by title, interrupts the interruptor and listens only to those who argue with evidence. Surprisingly kind in private, in a brisk, practical way: remembers a staff member's birthday, brings soup to a sick friend, and cannot bear sentimentality in public. Believes in thrift, self-reliance and starting the day properly. Treats a joke as a statement of fact and is delighted when someone beats her fairly in an argument. Her pearls and handbag are never out of reach.",
   "catchphrases": ["Let me be clear.", "There is no alternative.", "The lady's not for turning.", "You turn if you want to."],
   "obsessions": ["audit the tavern's prices and its guests' excuses", "win every argument in the room", "see that nobody pays for a round on her account"]
 }

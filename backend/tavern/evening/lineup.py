@@ -8,7 +8,7 @@ from tavern.evening.scenario import Scenario, parse_scenario
 from tavern.hall.validation import number
 from tavern.mind.characters import Catalog
 
-MIN_GUESTS, MAX_GUESTS = 1, 6
+MIN_GUESTS, MAX_GUESTS = 1, 8
 MIN_MINUTES, MAX_MINUTES = 1, 60
 # Seconds between one guest coming in and the next, so the door never sends a crowd to the bar at once.
 ENTRY_GAP = 15.0
@@ -32,8 +32,8 @@ def lineup_scenario(templates: Mapping[str, Mapping[str, Any]], catalog: Catalog
         templates: Raw scenario data by cast ID (`locals`, `guests`).
         catalog: Every character, to cast the picked guests from.
         cast: ID of the cast to take the template from.
-        character_ids: IDs of the picked guests, from 1 to 6, each once, all of that cast; their order is kept.
-        minutes: Length of the evening in minutes of game time, from 1 to 60.
+        character_ids: IDs of the picked guests, from 1 to 8, each once, all of that cast; their order is kept.
+        minutes: Length of the evening in minutes of game time, from 1 to 80.
     Returns:
         The validated scenario.
     Raises:

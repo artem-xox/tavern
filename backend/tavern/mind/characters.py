@@ -174,12 +174,12 @@ def _ties(characters: Sequence[tuple[Character, list[dict[str, Any]]]], ids: Seq
     records: list[dict[str, Any]] = []
     for character, relationships in characters:
         for relationship in relationships:
-            if not isinstance(relationship, Mapping) or set(relationship) != {"with", "kind", "note"}:
-                raise ValueError("Character relationship has exactly with, kind and note")
+            if not isinstance(relationship, Mapping) or not {"with", "kind", "note"} <= set(relationship) <= {"with", "kind", "note", "history"}:
+                raise ValueError("Character relationship has with, kind and note, and may have a history")
             if relationship["with"] not in ids:
                 raise ValueError(f"Character relationship names unknown character {relationship['with']!r}")
-            records.append({"a": character["id"], "b": relationship["with"],
-                            "kind": relationship["kind"], "note": relationship["note"]})
+            records.append({"a": character["id"], "b": relationship["with"], "kind": relationship["kind"],
+                            "note": relationship["note"], **({"history": relationship["history"]} if "history" in relationship else {})})
     try:
         return parse_ties(records, ids)
     except ValueError as error:
