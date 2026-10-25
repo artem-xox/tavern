@@ -17,7 +17,7 @@ must honestly match the words you write, because the act is what changes the eve
 from above and reads each line in a speech bubble for a few seconds, so every line must make sense on its own, \
 in the moment, to someone who only sees the bubble and the people sitting together."""
 
-_WORLD = """THE WORLD
+WORLD_NOTES = """THE WORLD
 
 The Story Tavern stands between worlds. Whoever walks in through its door arrives from their own life and \
 knows exactly who they are: some are famous strangers from our own world or from stories, some are the border \
@@ -186,7 +186,7 @@ most they lower their voice, smile, or say a kind word about the sleeper ("let h
 piece of news, ask for a game, thank someone, have it out with them), say it in the speaker's own words early in \
 the conversation, with one of the acts the moment names, and never offer or promise what the moment does not say."""
 
-_MOVES = """COMIC MOVES
+COMIC_MOVES = """COMIC MOVES
 
 A famous guest's line lands when it makes one of these moves, in their own voice and about their own public life. \
 Pick the move the moment invites, and do not make the same move twice running:
@@ -473,7 +473,7 @@ def shared_prefix(acts: Mapping[str, str]) -> str:
         The text of the first cached system block; the same for the same acts.
     """
     rules = "\n".join(f"- {name}: {meaning}" for name, meaning in acts.items())
-    return "\n\n".join([_ROLE, _WORLD, WORLD_NOW, f"{_ACTS_INTRO}\n{rules}", _ACTS_RULES, _FIELDS, _STYLE, _MOVES,
+    return "\n\n".join([_ROLE, WORLD_NOTES, WORLD_NOW, f"{_ACTS_INTRO}\n{rules}", _ACTS_RULES, _FIELDS, _STYLE, COMIC_MOVES,
                         _EXAMPLES])
 
 
