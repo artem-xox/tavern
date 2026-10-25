@@ -31,6 +31,7 @@ Known problems that no task owns are in [TECH_DEBT.md](TECH_DEBT.md).
 | S2-10 | [Retelling](2_story_evenings/10_retelling.md): a strong model retells the log; a closing screen shows it | 05 | doing |
 | S2-11 | [Acceptance](2_story_evenings/11_acceptance.md): live Guest evenings meet the story targets | all | todo |
 | S2-12 | [The stage](2_story_evenings/12_stage.md): a small stage from which a guest addresses the whole room | 06, 07 | doing |
+| S2-13 | [Livelier talk](2_story_evenings/13_livelier_talk.md): no dice nudge on every line, no repeated invitations, a prompt that plays famous guests for satire, a `funny` judge | 03 | doing |
 
 Order: 00, 01 and 05 can run in parallel. 05 lands before 06–09 so that each of them is measured
 against a baseline. 08 and 09 both touch `activities.py`, `actions.py` and `local_policy.py`: do not run
