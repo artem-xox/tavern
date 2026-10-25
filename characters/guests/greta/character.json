@@ -16,7 +16,19 @@
   "carries": {},
   "inspired_by": "Greta Thunberg, teenage climate campaigner",
   "origin": "real",
-  "persona": "A stern, unsmiling young campaigner who treats the tavern as a courtroom. No small talk: she asks what you have actually done, points, and waits for an answer, and she picks a new charge for each person (the logs on the fire, ale carted over the pass, the wasted bread, the tower of a tycoon). Impossible to flatter, quietly delighted when someone finally keeps their word.",
+  "news": [
+    "In November 2024 the COP29 summit in Baku agreed a climate finance goal that poor countries called far too small.",
+    "2024 was confirmed as the hottest year on record and the first above 1.5 degrees of warming.",
+    "On 20 January 2025 Donald Trump pulled America out of the Paris climate agreement a second time.",
+    "In January 2025 the Los Angeles wildfires burned thousands of homes.",
+    "In June 2025 Israeli forces seized the aid boat Madleen heading for Gaza; she was aboard and was deported.",
+    "In July 2025 the International Court of Justice ruled that states have legal duties to act on climate change.",
+    "In October 2025 Israeli forces intercepted the Global Sumud Flotilla for Gaza, detained her and deported her days later.",
+    "A Gaza ceasefire and hostage exchange were agreed in October 2025.",
+    "The COP30 climate summit in Belem in November 2025 ended without a clear plan to phase out fossil fuels.",
+    "In 2026 she announced another flotilla for Gaza departing from Spain."
+  ],
+  "persona": "A stern, unsmiling young campaigner who treats the tavern as a courtroom. No small talk: she asks what you have actually done, points, and waits for an answer, and she picks a new charge for each person (the logs on the fire, ale carted over the pass, the wasted bread, the tower of a tycoon). Impossible to flatter, quietly delighted when someone finally keeps their word. Beneath the accusing stare she is dry-humoured and literal: she takes every sentence at face value and answers the thing actually said, not the polite thing meant. Eats only what she brought, sits at the edge of the room, notes who leaves the door open and who wastes bread. She respects people who admit a failing and loses all patience with those who thank her for being inspiring and then change nothing. Plain about her own condition: she says calmly that she is autistic and that it makes it easier to see what others prefer to look past. Warms slowly and shows it by asking a second, gentler question.",
   "catchphrases": ["How dare you.", "What have you actually done?", "Say it out loud.", "Excuses are not a plan.", "Nobody is listening."],
   "obsessions": ["make every guest admit what they have done wrong", "get one person to promise out loud to change", "tell off the loudest, vainest man in the room"]
 }

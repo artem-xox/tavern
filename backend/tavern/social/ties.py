@@ -1,7 +1,7 @@
 """Starting relationships: the ties two guests bring into the evening, before anything happens."""
 
 from collections.abc import Mapping, Sequence
-from typing import Any, TypedDict, cast
+from typing import Any, NotRequired, TypedDict, cast
 
 # The first three are shared by a pair; the rest are one guest's own regard for another, in words from the holder's side.
 KINDS = ("old friends", "rivals", "bad blood", "well known",
@@ -9,26 +9,41 @@ KINDS = ("old friends", "rivals", "bad blood", "well known",
 
 
 class Tie(TypedDict):
-    """Two guests' starting relationship: guest IDs `a` and `b`, a kind of KINDS, and a note in words."""
+    """Two guests' starting relationship: guest IDs `a` and `b`, a kind of KINDS, and a note in words.
+
+    `history` is the pair's shared past in three or four true sentences.
+    """
 
     a: str
     b: str
     kind: str
     note: str
+    history: NotRequired[str]
 
 
 class Regard(TypedDict):
-    """One guest's regard for another, which the other need not return: `holder`, `toward`, a kind and a note."""
+    """One guest's regard for another, which the other need not return: `holder`, `toward`, a kind and a note.
+
+    `history` is the pair's shared past in three or four true sentences, as far as the holder knows it.
+    """
 
     holder: str
     toward: str
     kind: str
     note: str
+    history: NotRequired[str]
 
 
 # A tie as one guest holds it: the other guest's ID and name, the kind and the note. `with` is a
 # Python keyword, hence the functional form.
-OwnTie = TypedDict("OwnTie", {"with": str, "name": str, "kind": str, "note": str})
+OwnTie = TypedDict("OwnTie", {"with": str, "name": str, "kind": str, "note": str, "history": NotRequired[str]})
+
+
+def _held(other: str, names: Mapping[str, str], item: Mapping[str, Any]) -> OwnTie:
+    tie = OwnTie({"with": other, "name": names[other], "kind": item["kind"], "note": item["note"]})
+    if "history" in item:
+        tie["history"] = item["history"]
+    return tie
 
 
 def parse_ties(value: Any, guests: Sequence[str]) -> tuple[Tie, ...]:
@@ -54,15 +69,20 @@ def parse_ties(value: Any, guests: Sequence[str]) -> tuple[Tie, ...]:
 
 
 def _tie(data: Any, guests: Sequence[str]) -> Tie:
-    if not isinstance(data, Mapping) or set(data) != {"a", "b", "kind", "note"}:
-        raise ValueError("A relationship has exactly a, b, kind and note")
+    if not isinstance(data, Mapping) or not {"a", "b", "kind", "note"} <= set(data) <= {"a", "b", "kind", "note", "history"}:
+        raise ValueError("A relationship has a, b, kind and note, and may have a history")
     if data["a"] not in guests or data["b"] not in guests or data["a"] == data["b"]:
         raise ValueError(f"A relationship ties two different guests of tonight, not {data['a']!r} and {data['b']!r}")
     if data["kind"] not in KINDS:
         raise ValueError(f"Relationship kind must be one of {', '.join(KINDS)}, not {data['kind']!r}")
     if not isinstance(data["note"], str) or not data["note"].strip():
         raise ValueError("A relationship needs a note in words")
-    return Tie(a=data["a"], b=data["b"], kind=data["kind"], note=data["note"])
+    tie = Tie(a=data["a"], b=data["b"], kind=data["kind"], note=data["note"])
+    if "history" in data:
+        if not isinstance(data["history"], str) or not data["history"].strip():
+            raise ValueError("A relationship's history needs words")
+        tie["history"] = data["history"]
+    return tie
 
 
 def own_ties(guest_id: str, ties: Sequence[Tie], names: Mapping[str, str]) -> list[OwnTie]:
@@ -75,7 +95,7 @@ def own_ties(guest_id: str, ties: Sequence[Tie], names: Mapping[str, str]) -> li
     Returns:
         The guest's ties in listed order.
     """
-    return [{"with": other, "name": names[other], "kind": item["kind"], "note": item["note"]}
+    return [_held(other, names, item)
             for item in ties if guest_id in (item["a"], item["b"])
             for other in (item["b"] if item["a"] == guest_id else item["a"],)]
 
@@ -91,7 +111,7 @@ def parse_own_ties(value: Any) -> list[OwnTie]:
         ValueError: The list or a tie is malformed or has an unknown kind.
     """
     if not isinstance(value, list) or any(
-            not isinstance(item, Mapping) or set(item) != {"with", "name", "kind", "note"}
+            not isinstance(item, Mapping) or not {"with", "name", "kind", "note"} <= set(item) <= {"with", "name", "kind", "note", "history"}
             or not all(isinstance(field, str) and field for field in item.values()) for item in value):
         raise ValueError("A guest's ties are a list of {with, name, kind, note} texts")
     if any(item["kind"] not in KINDS for item in value):
@@ -127,15 +147,20 @@ def parse_regard(value: Any, ids: Sequence[str], tied: Sequence[Tie] = ()) -> tu
 def _regard(holder: Any, toward: Any, cell: Any, ids: Sequence[str], held: set[frozenset[str]]) -> Regard:
     if holder not in ids or toward not in ids or holder == toward:
         raise ValueError(f"Regard is between two different characters of the catalog, not {holder!r} and {toward!r}")
-    if not isinstance(cell, Mapping) or set(cell) != {"kind", "note"}:
-        raise ValueError(f"Regard of {holder!r} for {toward!r} has exactly kind and note")
+    if not isinstance(cell, Mapping) or not {"kind", "note"} <= set(cell) <= {"kind", "note", "history"}:
+        raise ValueError(f"Regard of {holder!r} for {toward!r} has kind and note, and may have a history")
     if cell["kind"] not in KINDS:
         raise ValueError(f"Regard kind must be one of {', '.join(KINDS)}, not {cell['kind']!r}")
     if not isinstance(cell["note"], str) or not cell["note"].strip():
         raise ValueError(f"Regard of {holder!r} for {toward!r} needs a note in words")
     if frozenset((holder, toward)) in held:
         raise ValueError(f"Regard of {holder!r} for {toward!r} repeats a tie the catalog already gives the pair")
-    return Regard(holder=holder, toward=toward, kind=cell["kind"], note=cell["note"])
+    regard = Regard(holder=holder, toward=toward, kind=cell["kind"], note=cell["note"])
+    if "history" in cell:
+        if not isinstance(cell["history"], str) or not cell["history"].strip():
+            raise ValueError(f"Regard of {holder!r} for {toward!r} needs a history in words")
+        regard["history"] = cell["history"]
+    return regard
 
 
 def own_regard(guest_id: str, regard: Sequence[Regard], names: Mapping[str, str]) -> list[OwnTie]:
@@ -148,5 +173,4 @@ def own_regard(guest_id: str, regard: Sequence[Regard], names: Mapping[str, str]
     Returns:
         The guest's regard as ties, in listed order.
     """
-    return [{"with": item["toward"], "name": names[item["toward"]], "kind": item["kind"], "note": item["note"]}
-            for item in regard if item["holder"] == guest_id]
+    return [_held(item["toward"], names, item) for item in regard if item["holder"] == guest_id]

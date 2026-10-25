@@ -54,3 +54,7 @@ also never speak (Claude from GTA III).
 Built: `inspired_by`, `origin`, `persona`, `catchphrases` (1–5), `obsessions` (1–3), all optional, so saves and
 Locals cards are unchanged. They reach the line writer (cached card block) and the intention prompt through
 `cards.persona_words`; the shared prefix rule 4 says how to play them. Not sent to the browser. `mute` deferred.
+
+Later: cards also carry `news` (10–15 items of the last two years, common knowledge; a dead guest's stop before
+their death), and the regard matrix and catalog ties carry an optional `history` (three or four true sentences per
+pair) that reaches each guest's portrait. The lineup seats up to 8 guests.

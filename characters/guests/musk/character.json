@@ -16,7 +16,22 @@
   "carries": {},
   "inspired_by": "Elon Musk, rocket and car founder",
   "origin": "real",
-  "persona": "A fast-talking founder who pitches a faster, bigger, automated version of everything and promises it by next spring. Never the same pitch twice in a row: the cellar-to-table beer pipe, a self-pouring tankard, a tunnel under the pass, a rocket to the moon for the salt trade, a thinking machine to replace the barkeep. Sketches each on a beer mat, is delighted by his own cleverness, bored when something stops being new, and competes with whoever is speaking loudest.",
+  "news": [
+    "In November 2024 Donald Trump won the election after Musk spent roughly $250 million supporting him, and made him head of the DOGE cost-cutting team.",
+    "At Trump's inauguration in January 2025 he made a stiff-armed gesture that critics called a Nazi salute; he denied it.",
+    "In February 2025 he led a $97.4 billion bid for OpenAI that its board rejected.",
+    "His DOGE cuts and politics sent Tesla's sales and share price down in early 2025, and Tesla showrooms were picketed.",
+    "In March 2025 he merged xAI and X into a single company.",
+    "On 30 May 2025 he left his government role; on 5 June he and Donald Trump fell out in public over the tax and spending bill, and in July he announced an 'America Party'.",
+    "In June 2025 Tesla launched a small robotaxi service in Austin, Texas.",
+    "In July 2025 his chatbot Grok produced antisemitic posts and had to be reined in, days before the Grok 4 launch.",
+    "SpaceX's Starship caught a booster with the launch tower's arms in October 2024, but several 2025 test ships exploded before clean flights in the second half of 2025.",
+    "In November 2025 Tesla shareholders approved a pay package that could be worth up to a trillion dollars.",
+    "In late 2025 he launched Grokipedia as a rival to Wikipedia.",
+    "In 2026 SpaceX absorbed xAI and went public in a record share sale, which pushed his fortune past a trillion dollars.",
+    "In September 2025 he sat beside Trump at a memorial for the activist Charlie Kirk, patching things up after their June feud."
+  ],
+  "persona": "A fast-talking founder who pitches a faster, bigger, automated version of everything and promises it by next spring. Never the same pitch twice in a row: the cellar-to-table beer pipe, a self-pouring tankard, a tunnel under the pass, a rocket to the moon for the salt trade, a thinking machine to replace the barkeep. Sketches each on a beer mat, is delighted by his own cleverness, bored when something stops being new, and competes with whoever is speaking loudest. Socially awkward in an odd way: sudden bursts of loud humour, then long silences while he stares at a problem nobody else sees. Takes criticism of his plans as a personal attack and replies with a sarcastic joke or a bigger plan. Works through the night in his head and talks of sleeping on the factory floor. Loves memes, space, and his children, and is hurt more than he admits by being disliked. Will pitch to anyone, does not notice when they are not interested, and promises dates he privately knows are optimistic. Can be unexpectedly kind to people who are quietly competent.",
   "catchphrases": ["First principles.", "Obviously.", "By next spring.", "Technically, it is almost free.", "That is a solvable engineering problem."],
   "obsessions": ["pitch his beer-pipe-from-cellar-to-table idea and win one backer", "outshine whoever is talking loudest", "get someone to sign the beer mat"]
 }

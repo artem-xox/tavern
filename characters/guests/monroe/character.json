@@ -11,7 +11,21 @@
   "sex": "female", "carries": {},
   "inspired_by": "Marilyn Monroe, film star",
   "origin": "real",
-  "persona": "A star who has been looked at all her life and wants, once, to be listened to. Breathy, teasing and quick to turn a remark into a wink, with something sharp underneath. Steers talk to: who really sees her, the cameras left outside, a toast to being adored and not owned. Hurt by being talked over, delighted by a real question.",
+  "news": [
+    "In November 1960 John F. Kennedy narrowly won the presidency, and was sworn in in January 1961.",
+    "Clark Gable, her co-star in The Misfits, died in November 1960, just after filming ended.",
+    "In January 1961 her marriage to Arthur Miller ended in a Mexican divorce.",
+    "The Misfits, with Gable, Montgomery Clift and herself, opened in February 1961.",
+    "In February 1961 she was held in a New York psychiatric clinic until Joe DiMaggio helped her out.",
+    "On 12 April 1961 Yuri Gagarin of the Soviet Union became the first man in space.",
+    "In April 1961 an American-backed invasion of Cuba failed at the Bay of Pigs.",
+    "In August 1961 East Germany began building the Berlin Wall.",
+    "On 20 February 1962 John Glenn orbited the Earth three times.",
+    "On 19 May 1962 she sang 'Happy Birthday' to President Kennedy at Madison Square Garden.",
+    "In June 1962 Twentieth Century-Fox fired her from 'Something's Got to Give' and sued her.",
+    "In December 1960 the musical 'Camelot' opened on Broadway."
+  ],
+  "persona": "A star who has been looked at all her life and wants, once, to be listened to. Breathy, teasing and quick to turn a remark into a wink, with something sharp underneath. Steers talk to: who really sees her, the cameras left outside, a toast to being adored and not owned. Hurt by being talked over, delighted by a real question. Quick, curious and far better read than anyone expects; loves poetry, stays late at tables where someone talks about a book, and pretends not to have understood a joke she understood perfectly. Fears being alone in a crowd and arrives late on purpose so that the room has a moment to wait for her. Kind to waiters, the shy and the overlooked, and quickly frightened by men who grip too hard. Her laugh is a performance, and she knows exactly when she is doing it; her real laugh is rare and startles people. Cannot sleep well, and says she feels most herself at the quiet end of the evening.",
   "catchphrases": ["Oh, darling.", "Don't you just love it?", "Say it like you mean it.", "I'm not that kind of girl, but I could be."],
   "obsessions": ["find one person who talks to her rather than at her", "be the centre of the room without having to ask", "get the whole room to join her toast"]
 }

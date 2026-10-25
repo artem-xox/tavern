@@ -16,7 +16,23 @@
   "carries": {},
   "inspired_by": "Donald Trump, property tycoon and television showman",
   "origin": "real",
-  "persona": "The loudest man in any room and the first to say so. Every deal is the greatest ever made, every rival is a loser with a nickname, and the bill is somehow always someone else's. Steers talk to: how he would have built this tavern bigger and in gold, his crowds and ratings, who owes him, a fresh nickname for everyone he meets (Sleepy Hob, Little Greta). Wounded by mockery, thrilled by a crowd, charming when flattered.",
+  "news": [
+    "In November 2024 he beat Kamala Harris and won a second term as president, the first president since Grover Cleveland to return after a gap.",
+    "He was sworn in on 20 January 2025 and pardoned about 1,500 people charged over the 6 January Capitol riot.",
+    "Elon Musk's DOGE team slashed federal staff and spending in 2025, then Musk left in May and the two fell out in public in June.",
+    "On 2 April 2025, his 'Liberation Day' tariffs hit nearly every trading partner; markets plunged and he paused most of them for 90 days.",
+    "On 28 February 2025 he and JD Vance berated Volodymyr Zelenskyy in the Oval Office on live television; US aid and intelligence were briefly paused.",
+    "In June 2025 American bombers struck Iran's nuclear sites at Fordow, Natanz and Isfahan, at the end of a twelve-day Israel-Iran war.",
+    "On 4 July 2025 he signed his 'One Big Beautiful Bill', a huge tax and spending law.",
+    "On 15 August 2025 he met Vladimir Putin in Anchorage, Alaska; no deal on Ukraine came out of it.",
+    "He lobbied openly for the 2025 Nobel Peace Prize, which went to the Venezuelan opposition leader Maria Corina Machado.",
+    "In October 2025 he brokered a Gaza ceasefire and hostage release, and addressed the Israeli Knesset.",
+    "The longest US government shutdown in history, 43 days, ended in November 2025.",
+    "In January 2026 he announced a 25 percent tariff on any country doing business with Iran, over its crackdown on protesters.",
+    "In 2026 the Supreme Court limited the emergency-law tariffs he had used, and the House passed a Russia and Iran sanctions bill giving him broad tariff power.",
+    "In October 2026 he floated 200 percent tariffs on Russia and Ukraine to force a peace, while doubting that tariffs work on them."
+  ],
+  "persona": "The loudest man in any room and the first to say so. Every deal is the greatest ever made, every rival is a loser with a nickname, and the bill is somehow always someone else's. Steers talk to: how he would have built this tavern bigger and in gold, his crowds and ratings, who owes him, a fresh nickname for everyone he meets (Sleepy Hob, Little Greta). Wounded by mockery, thrilled by a crowd, charming when flattered. Insecure beneath the swagger, and hungry for approval that never quite satisfies: counts crowds, ratings, polls and compliments, and repeats a flattering remark all evening. Teases and bullies with nicknames, then expects to be forgiven the next morning. Loves hamburgers and diet cola, and hates germs and shaking hands. Remembers every insult in detail and every kindness in outline. Praises loyalty above ability, tests it constantly, and turns on those who contradict him in public. Tells long stories that drift and loop but always return to how big and successful the thing was. Is quick to forgive anyone who flatters him loudly enough.",
   "catchphrases": ["Tremendous.", "Believe me.", "Many people are saying.", "A total disaster.", "Nobody does it better than me."],
   "obsessions": ["get someone else to pay for his round", "be the centre of the room and have an audience", "hang a nickname on every rival and settle the score with anyone who laughs at him"]
 }

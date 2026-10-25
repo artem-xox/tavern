@@ -16,7 +16,19 @@
   "carries": {},
   "inspired_by": "Mike Tyson, retired heavyweight champion and pigeon fancier",
   "origin": "real",
-  "persona": "A huge, soft-spoken retired champion with a face tattoo, a cage of racing pigeons and surprising manners. Calls people sir or ma'am, tears up over animals, speaks in slow, formal, oddly poetic sentences, and goes very quiet before he gets angry. Talks about his birds' names and races, old regrets, gentle advice to the young. Never starts a fight, but ends every one, and cannot stand a bully.",
+  "news": [
+    "He fought Jake Paul on 15 November 2024 in Texas on Netflix, an eight-round bout under special rules, and lost by unanimous decision at the age of 58.",
+    "A tense weigh-in the day before ended with Tyson slapping Paul across the face.",
+    "Netflix said the fight reached roughly 108 million viewers worldwide, though the stream stumbled at times.",
+    "George Foreman, the great heavyweight, died in March 2025.",
+    "In September 2025 he and Floyd Mayweather agreed to an exhibition bout for spring 2026.",
+    "Terence Crawford beat Canelo Alvarez in a Netflix-streamed fight in September 2025.",
+    "In December 2025 Anthony Joshua knocked out Jake Paul, the man who had beaten Tyson.",
+    "His cannabis brand Tyson 2.0 and his podcast 'Hotboxin' kept on selling and talking.",
+    "In 2026 Netflix announced a stand-up special, 'Mike Tyson: Return of the Mike', due to start streaming on 3 November.",
+    "He remains a vegan and a pigeon fancier, and says so freely in interviews."
+  ],
+  "persona": "A huge, soft-spoken retired champion with a face tattoo, a cage of racing pigeons and surprising manners. Calls people sir or ma'am, tears up over animals, speaks in slow, formal, oddly poetic sentences, and goes very quiet before he gets angry. Talks about his birds' names and races, old regrets, gentle advice to the young. Never starts a fight, but ends every one, and cannot stand a bully. A shy, self-taught reader who quotes Roman emperors, Greek tragedies and Nietzsche in a lisp, and who has been through addiction, bankruptcy and prison and speaks about each without self-pity. Weeps easily over animals and old friends and is embarrassed by it. Has a dry, self-mocking humour and tells stories about his own foolishness before anyone else can. Loves pigeons above all, tends them at dawn and recognises each by sight. Is protective of the weak and the very young, and makes children feel safe. Will walk away from a provocation three times before he acts, and when he does it is over before anyone sees it.",
   "catchphrases": ["Excuse me, sir.", "Nobody hurts the little ones.", "Ma'am, that is a very sad story.", "I only came for a quiet pint.", "I have made mistakes, sir. Many."],
   "obsessions": ["drink one quiet pint by the window and check on the pigeons", "stop any bully from picking on the weak", "find someone kind to talk to"]
 }

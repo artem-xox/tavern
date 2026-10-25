@@ -77,9 +77,9 @@ def test_a_lone_healer_comes_in_well_because_nobody_else_could_fall_ill() -> Non
 
 
 @pytest.mark.parametrize("ids, minutes, message", [
-    pytest.param([], 5, "1 to 6", id="nobody"),
+    pytest.param([], 5, "1 to 8", id="nobody"),
     pytest.param(["edda"] * 2, 5, "twice", id="duplicate"),
-    pytest.param(["edda", "rurik", "toren", "brida", "calder", "saye", "edda"], 5, "1 to 6", id="seven"),
+    pytest.param(["edda", "rurik", "toren", "brida", "calder", "saye", "a", "b", "c"], 5, "1 to 8", id="nine"),
     pytest.param(["trump"], 5, "not in the locals", id="from-another-cast"),
     pytest.param(["hob"], 5, "not in the locals", id="the-barkeep"),
     pytest.param(["nobody"], 5, "Unknown character", id="unknown-character"),
@@ -128,7 +128,7 @@ def test_restart_replays_the_picked_lineup(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize("command, message", [
-    pytest.param({"type": "start", "cast": "guests", "guests": [], "minutes": 5}, "1 to 6", id="nobody"),
+    pytest.param({"type": "start", "cast": "guests", "guests": [], "minutes": 5}, "1 to 8", id="nobody"),
     pytest.param({"type": "start", "cast": "guests", "minutes": 5}, "guests", id="no-guests-field"),
     pytest.param({"type": "start", "guests": ["greta"], "minutes": 5}, "cast", id="no-cast-field"),
     pytest.param({"type": "start", "cast": "guests", "guests": ["greta"]}, "Evening length", id="no-minutes"),
