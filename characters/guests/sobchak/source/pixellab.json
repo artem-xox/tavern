@@ -1,0 +1,785 @@
+{
+  "group_id": "1663b56e-633d-451c-adeb-9d96bf0ff27a",
+  "states": [
+    {
+      "character": {
+        "id": "58534577-892c-4c22-9fe5-445aacb712ef",
+        "name": "Idle",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:05:42.943714+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "0c7472e6-4395-4ba9-9866-35dea848c2b2",
+        "name": "Seated",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:15:12.226602+00:00"
+      },
+      "folder": "Seated",
+      "frames": {
+        "rotations": {
+          "south": "Seated/rotations/south.png",
+          "south-east": "Seated/rotations/south-east.png",
+          "east": "Seated/rotations/east.png",
+          "north-east": "Seated/rotations/north-east.png",
+          "north": "Seated/rotations/north.png",
+          "north-west": "Seated/rotations/north-west.png",
+          "west": "Seated/rotations/west.png",
+          "south-west": "Seated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "cc3d32da-5b12-4d96-abbc-aab2bfcc6f87",
+        "name": "Darts",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:15:12.566034+00:00"
+      },
+      "folder": "Darts",
+      "frames": {
+        "rotations": {
+          "south": "Darts/rotations/south.png",
+          "south-east": "Darts/rotations/south-east.png",
+          "east": "Darts/rotations/east.png",
+          "north-east": "Darts/rotations/north-east.png",
+          "north": "Darts/rotations/north.png",
+          "north-west": "Darts/rotations/north-west.png",
+          "west": "Darts/rotations/west.png",
+          "south-west": "Darts/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "2e1b4f5c-1e36-4282-bd53-a8a24c95f2c4",
+        "name": "Bathroom",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:15:12.911322+00:00"
+      },
+      "folder": "Bathroom",
+      "frames": {
+        "rotations": {
+          "south": "Bathroom/rotations/south.png",
+          "south-east": "Bathroom/rotations/south-east.png",
+          "east": "Bathroom/rotations/east.png",
+          "north-east": "Bathroom/rotations/north-east.png",
+          "north": "Bathroom/rotations/north.png",
+          "north-west": "Bathroom/rotations/north-west.png",
+          "west": "Bathroom/rotations/west.png",
+          "south-west": "Bathroom/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "60f475cb-32c0-4218-b5e3-73f794511cec",
+        "name": "Drinking",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:15:13.443672+00:00"
+      },
+      "folder": "Drinking",
+      "frames": {
+        "rotations": {
+          "south": "Drinking/rotations/south.png",
+          "south-east": "Drinking/rotations/south-east.png",
+          "east": "Drinking/rotations/east.png",
+          "north-east": "Drinking/rotations/north-east.png",
+          "north": "Drinking/rotations/north.png",
+          "north-west": "Drinking/rotations/north-west.png",
+          "west": "Drinking/rotations/west.png",
+          "south-west": "Drinking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "568360c5-4d11-4978-a56b-599a20e25c54",
+        "name": "DrinkingSeated",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:15:13.789598+00:00"
+      },
+      "folder": "DrinkingSeated",
+      "frames": {
+        "rotations": {
+          "south": "DrinkingSeated/rotations/south.png",
+          "south-east": "DrinkingSeated/rotations/south-east.png",
+          "east": "DrinkingSeated/rotations/east.png",
+          "north-east": "DrinkingSeated/rotations/north-east.png",
+          "north": "DrinkingSeated/rotations/north.png",
+          "north-west": "DrinkingSeated/rotations/north-west.png",
+          "west": "DrinkingSeated/rotations/west.png",
+          "south-west": "DrinkingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "dca76638-5c6f-4f82-8d43-484ff42a2bfe",
+        "name": "TalkingSeated",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:15:14.673716+00:00"
+      },
+      "folder": "TalkingSeated",
+      "frames": {
+        "rotations": {
+          "south": "TalkingSeated/rotations/south.png",
+          "south-east": "TalkingSeated/rotations/south-east.png",
+          "east": "TalkingSeated/rotations/east.png",
+          "north-east": "TalkingSeated/rotations/north-east.png",
+          "north": "TalkingSeated/rotations/north.png",
+          "north-west": "TalkingSeated/rotations/north-west.png",
+          "west": "TalkingSeated/rotations/west.png",
+          "south-west": "TalkingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "da844e88-03a2-40cc-8366-4aaaa5f12734",
+        "name": "TakeBeer",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:15:15.006658+00:00"
+      },
+      "folder": "TakeBeer",
+      "frames": {
+        "rotations": {
+          "south": "TakeBeer/rotations/south.png",
+          "south-east": "TakeBeer/rotations/south-east.png",
+          "east": "TakeBeer/rotations/east.png",
+          "north-east": "TakeBeer/rotations/north-east.png",
+          "north": "TakeBeer/rotations/north.png",
+          "north-west": "TakeBeer/rotations/north-west.png",
+          "west": "TakeBeer/rotations/west.png",
+          "south-west": "TakeBeer/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "b8967fc7-cc9a-45d8-ac56-afc940d3963e",
+        "name": "Walking",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:15:15.325480+00:00"
+      },
+      "folder": "Walking",
+      "frames": {
+        "rotations": {
+          "south": "Walking/rotations/south.png",
+          "south-east": "Walking/rotations/south-east.png",
+          "east": "Walking/rotations/east.png",
+          "north-east": "Walking/rotations/north-east.png",
+          "north": "Walking/rotations/north.png",
+          "north-west": "Walking/rotations/north-west.png",
+          "west": "Walking/rotations/west.png",
+          "south-west": "Walking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "5abbf030-4f97-476f-bc20-26cd3e26e54e",
+        "name": "Talking",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:15:15.744018+00:00"
+      },
+      "folder": "Talking",
+      "frames": {
+        "rotations": {
+          "south": "Talking/rotations/south.png",
+          "south-east": "Talking/rotations/south-east.png",
+          "east": "Talking/rotations/east.png",
+          "north-east": "Talking/rotations/north-east.png",
+          "north": "Talking/rotations/north.png",
+          "north-west": "Talking/rotations/north-west.png",
+          "west": "Talking/rotations/west.png",
+          "south-west": "Talking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "22a6e77f-704f-4c9b-a4b8-85a06f6d4468",
+        "name": "Giving",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:15:16.077811+00:00"
+      },
+      "folder": "Giving",
+      "frames": {
+        "rotations": {
+          "south": "Giving/rotations/south.png",
+          "south-east": "Giving/rotations/south-east.png",
+          "east": "Giving/rotations/east.png",
+          "north-east": "Giving/rotations/north-east.png",
+          "north": "Giving/rotations/north.png",
+          "north-west": "Giving/rotations/north-west.png",
+          "west": "Giving/rotations/west.png",
+          "south-west": "Giving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "12f58e70-48aa-42b1-b622-f99bfbeefafd",
+        "name": "GivingSeated",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:15:16.402003+00:00"
+      },
+      "folder": "GivingSeated",
+      "frames": {
+        "rotations": {
+          "south": "GivingSeated/rotations/south.png",
+          "south-east": "GivingSeated/rotations/south-east.png",
+          "east": "GivingSeated/rotations/east.png",
+          "north-east": "GivingSeated/rotations/north-east.png",
+          "north": "GivingSeated/rotations/north.png",
+          "north-west": "GivingSeated/rotations/north-west.png",
+          "west": "GivingSeated/rotations/west.png",
+          "south-west": "GivingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "1dae1e12-1688-47e3-817d-ae7e6b01052d",
+        "name": "Receiving",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:15:16.729880+00:00"
+      },
+      "folder": "Receiving",
+      "frames": {
+        "rotations": {
+          "south": "Receiving/rotations/south.png",
+          "south-east": "Receiving/rotations/south-east.png",
+          "east": "Receiving/rotations/east.png",
+          "north-east": "Receiving/rotations/north-east.png",
+          "north": "Receiving/rotations/north.png",
+          "north-west": "Receiving/rotations/north-west.png",
+          "west": "Receiving/rotations/west.png",
+          "south-west": "Receiving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "f483dd4f-280d-46eb-91a4-7a8ff2cdb5f2",
+        "name": "ReceivingSeated",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:15:17.067034+00:00"
+      },
+      "folder": "ReceivingSeated",
+      "frames": {
+        "rotations": {
+          "south": "ReceivingSeated/rotations/south.png",
+          "south-east": "ReceivingSeated/rotations/south-east.png",
+          "east": "ReceivingSeated/rotations/east.png",
+          "north-east": "ReceivingSeated/rotations/north-east.png",
+          "north": "ReceivingSeated/rotations/north.png",
+          "north-west": "ReceivingSeated/rotations/north-west.png",
+          "west": "ReceivingSeated/rotations/west.png",
+          "south-west": "ReceivingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "c56f66b8-44b4-4008-add6-fa036a9250ad",
+        "name": "SleepingSeated",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:15:17.403497+00:00"
+      },
+      "folder": "SleepingSeated",
+      "frames": {
+        "rotations": {
+          "south": "SleepingSeated/rotations/south.png",
+          "south-east": "SleepingSeated/rotations/south-east.png",
+          "east": "SleepingSeated/rotations/east.png",
+          "north-east": "SleepingSeated/rotations/north-east.png",
+          "north": "SleepingSeated/rotations/north.png",
+          "north-west": "SleepingSeated/rotations/north-west.png",
+          "west": "SleepingSeated/rotations/west.png",
+          "south-west": "SleepingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "aa710fe1-fa15-481d-a740-30d3fd88cade",
+        "name": "Fighting",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:15:17.728670+00:00"
+      },
+      "folder": "Fighting",
+      "frames": {
+        "rotations": {
+          "south": "Fighting/rotations/south.png",
+          "south-east": "Fighting/rotations/south-east.png",
+          "east": "Fighting/rotations/east.png",
+          "north-east": "Fighting/rotations/north-east.png",
+          "north": "Fighting/rotations/north.png",
+          "north-west": "Fighting/rotations/north-west.png",
+          "west": "Fighting/rotations/west.png",
+          "south-west": "Fighting/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "2f90f90f-2f6d-4373-98cb-288ff1c9de70",
+        "name": "KnockedOut",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:15:18.083405+00:00"
+      },
+      "folder": "KnockedOut",
+      "frames": {
+        "rotations": {
+          "south": "KnockedOut/rotations/south.png",
+          "south-east": "KnockedOut/rotations/south-east.png",
+          "east": "KnockedOut/rotations/east.png",
+          "north-east": "KnockedOut/rotations/north-east.png",
+          "north": "KnockedOut/rotations/north.png",
+          "north-west": "KnockedOut/rotations/north-west.png",
+          "west": "KnockedOut/rotations/west.png",
+          "south-west": "KnockedOut/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "a06e05f2-51ad-4f05-96ec-ba8a92a07c4d",
+        "name": "Hurt",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:15:18.422879+00:00"
+      },
+      "folder": "Hurt",
+      "frames": {
+        "rotations": {
+          "south": "Hurt/rotations/south.png",
+          "south-east": "Hurt/rotations/south-east.png",
+          "east": "Hurt/rotations/east.png",
+          "north-east": "Hurt/rotations/north-east.png",
+          "north": "Hurt/rotations/north.png",
+          "north-west": "Hurt/rotations/north-west.png",
+          "west": "Hurt/rotations/west.png",
+          "south-west": "Hurt/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "2faf4368-5ce2-4bfa-92bb-3ccfddd750dd",
+        "name": "HurtSeated",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:15:18.757374+00:00"
+      },
+      "folder": "HurtSeated",
+      "frames": {
+        "rotations": {
+          "south": "HurtSeated/rotations/south.png",
+          "south-east": "HurtSeated/rotations/south-east.png",
+          "east": "HurtSeated/rotations/east.png",
+          "north-east": "HurtSeated/rotations/north-east.png",
+          "north": "HurtSeated/rotations/north.png",
+          "north-west": "HurtSeated/rotations/north-west.png",
+          "west": "HurtSeated/rotations/west.png",
+          "south-west": "HurtSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "f5ff78b1-0a4f-49af-9d86-994d77658b62",
+        "name": "Shoving",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:15:19.074923+00:00"
+      },
+      "folder": "Shoving",
+      "frames": {
+        "rotations": {
+          "south": "Shoving/rotations/south.png",
+          "south-east": "Shoving/rotations/south-east.png",
+          "east": "Shoving/rotations/east.png",
+          "north-east": "Shoving/rotations/north-east.png",
+          "north": "Shoving/rotations/north.png",
+          "north-west": "Shoving/rotations/north-west.png",
+          "west": "Shoving/rotations/west.png",
+          "south-west": "Shoving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "d32292c5-da6e-48a7-a0eb-830e1c352897",
+        "name": "HelpingUp",
+        "prompt": "Ksenia Sobchak, recognizable Russian female interviewer and society personality, only very lightly caricatured: slim upright build, long angular face, pronounced straight nose, defined cheekbones and lips, knowing restrained half-smile, large dark thick-rimmed angular eyeglasses. Straight honey-blonde centre-parted bob falling just to the shoulders, no bangs, clear bright blonde silhouette. Tailored muted beige trouser suit with a long-lapelled jacket, cream blouse, straight trousers, dark flat shoes. Full body, standing upright in a neutral relaxed Idle pose, both empty hands visible beside the body, feet slightly apart, facing SOUTH directly toward the viewer, with the same low top-down camera as the style anchor. Match the existing Story Tavern cast: a large readable head, small but anatomically clear hands, compact game-sprite proportions, crisp single-pixel dark umber outline, simple warm muted shading and clean silhouette. Keep her recognizably adult and sophisticated, with distinct blonde hair, statement glasses and an elongated face visible at native resolution. Human public-figure parody, subtle facial emphasis, not grotesque or animal-like. One centered character on a native 68x68 transparent canvas with visible margins around hair and shoes. No microphone, phone, handbag, props, text, logo, flag, scenery, floor, furniture, ground shadow or watermark. Copy the reference's rendering technique and camera, not its face, sex, hairstyle or clothing.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-25T11:15:19.397098+00:00"
+      },
+      "folder": "HelpingUp",
+      "frames": {
+        "rotations": {
+          "south": "HelpingUp/rotations/south.png",
+          "south-east": "HelpingUp/rotations/south-east.png",
+          "east": "HelpingUp/rotations/east.png",
+          "north-east": "HelpingUp/rotations/north-east.png",
+          "north": "HelpingUp/rotations/north.png",
+          "north-west": "HelpingUp/rotations/north-west.png",
+          "west": "HelpingUp/rotations/west.png",
+          "south-west": "HelpingUp/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-25T11:17:55.724215",
+  "authoring": {
+    "base_character_id": "58534577-892c-4c22-9fe5-445aacb712ef",
+    "source_image_id": "959702d1-b854-55e6-809e-b713add64155",
+    "source_image_job_id": "21c5efb7-ed60-4115-b266-39904881db61",
+    "style_reference_character_id": "048912b2-baa1-43a9-9883-d53a4afe6817",
+    "style_reference_direction": "south",
+    "state_tool": "create_character_state",
+    "use_color_palette_from_reference": true,
+    "pose_edits": {
+      "Seated": "Sit upright with bent knees, feet together, hands resting on lap. No chair, stool, table or furniture. Preserve the accepted Ksenia Sobchak face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "Darts": "Stand aiming a tiny dart, one elbow bent and throwing hand raised beside the head, opposite arm balancing. No dartboard or scenery. Preserve the accepted Ksenia Sobchak face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "Bathroom": "Compact seated squat for using the privy, knees bent, hands on knees, fully clothed. No toilet, chair or furniture. Preserve the accepted Ksenia Sobchak face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "Drinking": "Stand lifting a small wooden beer tankard to the mouth, elbow bent and head tilted slightly toward it. Include only the tankard. Preserve the accepted Ksenia Sobchak face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "DrinkingSeated": "Sit with knees bent and lift a small wooden beer tankard to the mouth. Include tankard but no chair, table or furniture. Preserve the accepted Ksenia Sobchak face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "TalkingSeated": "Sit with knees bent, mouth speaking, one open hand making a clear conversational gesture. No chair, table, mug or furniture. Preserve the accepted Ksenia Sobchak face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "TakeBeer": "Stand reaching one empty hand forward to collect a drink. Draw no mug, tap, counter, keg or furniture; these are game overlays. Preserve the accepted Ksenia Sobchak face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "Walking": "Clear walking mid-stride still, one foot forward and opposite arm swinging. No motion blur or ground. Preserve the accepted Ksenia Sobchak face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "Talking": "Stand speaking, one open palm gesturing outward at chest height, mouth open. No props. Preserve the accepted Ksenia Sobchak face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "Giving": "Stand extending one empty open hand forward to offer a small item. Leave hand clearly visible for the game's item overlay. No prop. Preserve the accepted Ksenia Sobchak face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "GivingSeated": "Sit with bent knees, extending one empty open hand forward to offer a small item. No chair, table, item or furniture. Preserve the accepted Ksenia Sobchak face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "Receiving": "Stand reaching forward with an empty open palm to accept a small item. No item or other person. Preserve the accepted Ksenia Sobchak face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "ReceivingSeated": "Sit with knees bent, reaching forward with an empty open palm to accept a small item. No chair, table, item or furniture. Preserve the accepted Ksenia Sobchak face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "SleepingSeated": "Sit asleep, head drooped forward onto folded arms, compact curled seated silhouette. No table plank, chair, bed or furniture. Preserve the accepted Ksenia Sobchak face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "Fighting": "Standing defensive brawling stance, knees bent, fists raised, right fist clearly separated from torso for a future club overlay. No weapon or opponent. Preserve the accepted Ksenia Sobchak face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "KnockedOut": "Lying unconscious on the back on the ground, full body within the canvas, limbs relaxed, eyes closed. No blood, weapon, scenery or floor. Preserve the accepted Ksenia Sobchak face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "Hurt": "Stand recoiling from a blow, shoulders hunched, one hand protecting the ribs and the other raised defensively, pained expression. No blood. Preserve the accepted Ksenia Sobchak face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "HurtSeated": "Sit recoiling in pain with bent knees, one hand protecting ribs, shoulders hunched. No blood, chair, table or furniture. Preserve the accepted Ksenia Sobchak face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "Shoving": "Stand leaning forward with both open palms pushing outward at chest height, elbows partly extended. No opponent. Preserve the accepted Ksenia Sobchak face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props.",
+      "HelpingUp": "Bend at knees and waist, one empty hand extended downward to help somebody rise, free hand balancing. No other person or furniture. Preserve the accepted Ksenia Sobchak face, glasses, hairstyle, exact outfit, colors, proportions, pixel technique and low top-down camera. Change only the pose. One centered full-body sprite, native 68x68 transparent canvas with clear margins; no text, shadow, extra people or unrequested props."
+    },
+    "native_size": 68,
+    "south_accepted_by_user": true,
+    "pose_generation_cost": 250,
+    "corrections": [
+      {
+        "state": "Hurt",
+        "direction": "south-east",
+        "reason": "Generated view faced north-east; mirrored the correct south-west view in PixelLab workbench and saved into the same Characters state.",
+        "workbench_source_id": "79fe68b1-9151-44b0-9570-d4a85b0525fa",
+        "workbench_result_id": "dbf7f39e-f9c6-4372-8a3b-963a9273186e",
+        "tool": "save_to_asset",
+        "target": "character:a06e05f2-51ad-4f05-96ec-ba8a92a07c4d:south-east",
+        "generations_charged": 0
+      },
+      {
+        "state": "Seated",
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ],
+        "reason": "User requested the lower knee and foot placement of TalkingSeated; generated a quiet sitting variant from TalkingSeated and saved all eight views back into the original Seated state.",
+        "source_state_id": "dca76638-5c6f-4f82-8d43-484ff42a2bfe",
+        "refinement_state_id": "6902e2d3-7f73-4aa0-9fce-f4907eae4af1",
+        "refinement_state_name": "SeatedRefined",
+        "target_state_id": "0c7472e6-4395-4ba9-9866-35dea848c2b2",
+        "generation_tool": "create_character_state",
+        "save_tool": "save_to_asset",
+        "generations_charged": 10,
+        "edit_description": "Use this TalkingSeated state as the exact anatomical and positional reference. Preserve its seated torso, hip height, thigh angles, knee positions, lower legs and feet in every direction: the knees and feet must stay lower and less tucked up than the original Seated pose. Change ONLY the speaking gesture: close her mouth and lower both forearms so her hands rest naturally on her thighs or lap. She is sitting quietly with relaxed dropped shoulders and lower legs hanging down naturally. Keep the exact same Ksenia Sobchak identity, blonde bob, dark glasses, beige trouser suit, blouse, shoes, colors, scale and low top-down camera. No chair, stool, table, floor, shadow, props or extra person. Native transparent 68x68 canvas, full body with clear margins.",
+        "temporary_refinement_removed_after_verified_replacement": true
+      },
+      {
+        "state": "GivingSeated",
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ],
+        "reason": "Lower hanging shins and feet to match the quiet sitting posture instead of raised floor-sitting legs.",
+        "edit_tool": "edit_image",
+        "job_id": "ef19c629-6e1a-4667-b803-912c5d90eed6",
+        "asset_id": "47cd5da3-c98a-5ace-b0d0-30b51a6b4ba1",
+        "target_state_id": "12f58e70-48aa-42b1-b622-f99bfbeefafd",
+        "save_tool": "save_to_asset",
+        "generations_charged": 10,
+        "edit_description": "Correct ONLY the seated lower body of this same character in every provided direction. The current feet are raised and projected forward like sitting on the floor. Make the person sit on an invisible normal-height tavern chair: preserve the current hip/pelvis position and scale, thighs roughly horizontal, knees clearly bent at right angles, shins dropping vertically DOWN under the knees, shoes resting lower directly under the knees rather than sticking forward or tucked up against the torso. Lower the knee and shoe silhouette to match a natural seated adult, with a clear short thigh and hanging lower leg. Preserve every original upper-body gesture, arms, hands, head, face, expression, hair, glasses, clothes, palette, outline, facing direction and camera. In the sleeping pose the torso may lean forward but the legs must still drop down naturally from the chair, not curl up onto it. Remove old raised-leg pixels cleanly, keep complete feet inside the same native 68x68 transparent canvas. No drawn chair, table, furniture, shadow, ground, extra props or people. All frames are the same individual in compass order; retain each frame's own direction."
+      },
+      {
+        "state": "ReceivingSeated",
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ],
+        "reason": "Lower hanging shins and feet to match the quiet sitting posture instead of raised floor-sitting legs.",
+        "edit_tool": "edit_image",
+        "job_id": "44d4ec93-3bae-4390-8549-8764cd1e852e",
+        "asset_id": "5ad3f9a9-c613-5307-b4d7-dcba13979d65",
+        "target_state_id": "f483dd4f-280d-46eb-91a4-7a8ff2cdb5f2",
+        "save_tool": "save_to_asset",
+        "generations_charged": 10,
+        "edit_description": "Correct ONLY the seated lower body of this same character in every provided direction. The current feet are raised and projected forward like sitting on the floor. Make the person sit on an invisible normal-height tavern chair: preserve the current hip/pelvis position and scale, thighs roughly horizontal, knees clearly bent at right angles, shins dropping vertically DOWN under the knees, shoes resting lower directly under the knees rather than sticking forward or tucked up against the torso. Lower the knee and shoe silhouette to match a natural seated adult, with a clear short thigh and hanging lower leg. Preserve every original upper-body gesture, arms, hands, head, face, expression, hair, glasses, clothes, palette, outline, facing direction and camera. In the sleeping pose the torso may lean forward but the legs must still drop down naturally from the chair, not curl up onto it. Remove old raised-leg pixels cleanly, keep complete feet inside the same native 68x68 transparent canvas. No drawn chair, table, furniture, shadow, ground, extra props or people. All frames are the same individual in compass order; retain each frame's own direction."
+      },
+      {
+        "state": "HurtSeated",
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ],
+        "reason": "Lower hanging shins and feet to match the quiet sitting posture instead of raised floor-sitting legs.",
+        "edit_tool": "edit_image",
+        "job_id": "22da41c5-9d9f-41d4-b6bc-e51fd7b30369",
+        "asset_id": "083e8e74-12d8-5fa5-a88a-c547fefc2561",
+        "target_state_id": "2faf4368-5ce2-4bfa-92bb-3ccfddd750dd",
+        "save_tool": "save_to_asset",
+        "generations_charged": 10,
+        "edit_description": "Correct ONLY the seated lower body of this same character in every provided direction. The current feet are raised and projected forward like sitting on the floor. Make the person sit on an invisible normal-height tavern chair: preserve the current hip/pelvis position and scale, thighs roughly horizontal, knees clearly bent at right angles, shins dropping vertically DOWN under the knees, shoes resting lower directly under the knees rather than sticking forward or tucked up against the torso. Lower the knee and shoe silhouette to match a natural seated adult, with a clear short thigh and hanging lower leg. Preserve every original upper-body gesture, arms, hands, head, face, expression, hair, glasses, clothes, palette, outline, facing direction and camera. In the sleeping pose the torso may lean forward but the legs must still drop down naturally from the chair, not curl up onto it. Remove old raised-leg pixels cleanly, keep complete feet inside the same native 68x68 transparent canvas. No drawn chair, table, furniture, shadow, ground, extra props or people. All frames are the same individual in compass order; retain each frame's own direction."
+      },
+      {
+        "state": "SleepingSeated",
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ],
+        "reason": "Lower hanging shins and feet to match the quiet sitting posture instead of raised floor-sitting legs.",
+        "edit_tool": "edit_image",
+        "job_id": "f776b805-a37c-48fe-b04e-8bb5af7e8b3c",
+        "asset_id": "59ef038f-4251-5f09-9a6b-202440ef087a",
+        "target_state_id": "c56f66b8-44b4-4008-add6-fa036a9250ad",
+        "save_tool": "save_to_asset",
+        "generations_charged": 10,
+        "edit_description": "Correct ONLY the seated lower body of this same character in every provided direction. The current feet are raised and projected forward like sitting on the floor. Make the person sit on an invisible normal-height tavern chair: preserve the current hip/pelvis position and scale, thighs roughly horizontal, knees clearly bent at right angles, shins dropping vertically DOWN under the knees, shoes resting lower directly under the knees rather than sticking forward or tucked up against the torso. Lower the knee and shoe silhouette to match a natural seated adult, with a clear short thigh and hanging lower leg. Preserve every original upper-body gesture, arms, hands, head, face, expression, hair, glasses, clothes, palette, outline, facing direction and camera. In the sleeping pose the torso may lean forward but the legs must still drop down naturally from the chair, not curl up onto it. Remove old raised-leg pixels cleanly, keep complete feet inside the same native 68x68 transparent canvas. No drawn chair, table, furniture, shadow, ground, extra props or people. All frames are the same individual in compass order; retain each frame's own direction."
+      }
+    ],
+    "seated_roundtrip_verification": {
+      "poses": [
+        "Seated",
+        "TalkingSeated",
+        "DrinkingSeated",
+        "GivingSeated",
+        "ReceivingSeated",
+        "HurtSeated",
+        "SleepingSeated"
+      ],
+      "directions": 8,
+      "frames_checked": 56,
+      "native_size": 68,
+      "transparent": true,
+      "decoded_pixels_match_actual_characters_export": true
+    }
+  }
+}

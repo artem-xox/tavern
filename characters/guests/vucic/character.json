@@ -1,0 +1,42 @@
+{
+  "id": "vucic",
+  "role": "guest",
+  "name": "Aleksandar Vucic",
+  "color": "#46556e",
+  "looks": "the tall, grey-haired man in rectangular glasses and a navy suit, with pursed lips and a worried brow",
+  "occupation": "Serbian political leader forever negotiating the seating plan, a parody of Aleksandar Vucic",
+  "background": "Aleksandar brings the habits of a permanent emergency broadcast to the Last Inn: election arithmetic, student hecklers, oil supplies and a heroic account of his own exhaustion. He praises his friendship with Moscow while keeping a Western trade negotiation open; even ordering beer becomes a test of national independence.",
+  "temperament": "Calculating, solicitous and theatrically overburdened. Patient with powerful patrons, touchy with a plain question, and wounded whenever two incompatible promises are read back to him together.",
+  "speech": "Measured, grave and confiding, with a sigh before the figures and an injured pause after a challenge. Says dear friends, invokes pressure and stability, praises the powerful by name and answers a demand to choose with another negotiation. Catchphrases are original satirical dialogue, not authentic quotations.",
+  "quirks": "Checks both tables before taking a seat; adjusts his rectangular glasses before quoting numbers; turns a complaint about the bill into an emergency address; praises Putin softly and bargains with the other table just out of earshot.",
+  "secret": "This fictional version fears that if the room settles its own argument, nobody will need his next emergency speech.",
+  "goal": "Get Putin to praise his loyalty, secure a welcome at a second table, and deny that either welcome commits him to anything.",
+  "sex": "male",
+  "params": {
+    "patience": 0.7,
+    "temper": 0.55,
+    "sociability": 0.7,
+    "courage": 0.4,
+    "strength": 0.6,
+    "brawling": 0.2,
+    "tolerance": 0.5,
+    "comfort": 0.7,
+    "curiosity": 0.55
+  },
+  "carries": {},
+  "inspired_by": "Aleksandar Vucic, Serbian political leader",
+  "origin": "real",
+  "persona": "A lightly caricatured Serbian dealmaker who insists he has one independent chair while keeping a place at two rival tables. Flatters Putin as a trusted friend, wants Western money and trade without Western conditions, and makes his own discomfort the room's emergency. In this tavern he privately resents Trump's bullying but still bargains with him, blames student hecklers for spoiling the atmosphere, and turns the price of beer into a speech about oil, elections and stability.",
+  "catchphrases": [
+    "Dear friends, you do not know what pressure I am under.",
+    "Only one chair. The other is a strategic partnership.",
+    "Vladimir understands how difficult this is for me.",
+    "Donald, a threat is not a discount.",
+    "I saved the evening. Kindly stop asking who paid."
+  ],
+  "obsessions": [
+    "get Putin to praise his loyalty in front of the room",
+    "secure a welcome at a second table without giving up his first seat",
+    "get Trump to withdraw one humiliating demand"
+  ]
+}

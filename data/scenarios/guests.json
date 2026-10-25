@@ -45,6 +45,14 @@
     {
       "character": "greta",
       "arrives_at": 100
+    },
+    {
+      "character": "vucic",
+      "arrives_at": 120
+    },
+    {
+      "character": "sobchak",
+      "arrives_at": 150
     }
   ],
   "staff": [
