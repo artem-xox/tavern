@@ -27,7 +27,7 @@ from tavern.evening.fight_metrics import fight_counts
 from tavern.evening.giving_metrics import giving_counts
 from tavern.evening.manner_metrics import manner_counts
 from tavern.evening.drink_metrics import drink_counts
-from tavern.evening.speech_metrics import speech_counts
+from tavern.evening.speech_metrics import speech_counts, stage_counts
 from tavern.evening.goal_metrics import chased_counts, goal_counts, goal_kind_counts, promise_counts
 from tavern.evening.repetition import ALIKE, repetition_counts
 from tavern.evening.retelling import retell
@@ -41,12 +41,14 @@ from tavern.evening.scenario import open_evening, parse_scenario
 from tavern.hall.staff import on_staff
 from tavern.mind.agents import Evaluators
 from tavern.adapters.characters import load_catalog
+from tavern.mind.haiku_stage import claude_stage_writer
 from tavern.mind.haiku_turns import claude_writer, writer_mode
 from tavern.mind.intentions import Intender, intention_writer
 from tavern.mind.model_health import HealthBoard, banner, blocking
 from tavern.mind.questions import Question
 from tavern.mind.scripted import write_scripted_turn
 from tavern.mind.selection import read_switch
+from tavern.social.stage_lines import StageWriter, write_scripted_stage
 from tavern.social.turns import TurnWriter
 
 DECIDES = {"local": "the local policy (no model)", "live": "Jev, recorded", "replay": "Jev answers replayed"}
@@ -189,6 +191,31 @@ def turn_writer(writer: str, mode: str, calls: list[Record], keep: Callable[[Rec
         return claude_writer(record_questions("turn", ask, keep, time.monotonic, ClaudeError))
     asked = record_questions("turn", traced_question(ask, CLAUDE_MODEL, tracer), keep, time.monotonic, ClaudeError)
     return traced_writer(claude_writer(asked), tracer)
+
+
+def stage_writer(writer: str, mode: str, calls: list[Record], keep: Callable[[Record], None],
+                 values: Mapping[str, Any]) -> StageWriter:
+    """Wire the writer of the words on and at the stage, as the line writer is wired.
+
+    Args:
+        writer: `haiku` or `scripted`, the same as the line writer.
+        mode: Evening mode; a replay answers from `calls`, and one recorded before the stage had a writer falls back
+            to the scripted words, call by call.
+        calls: The evening's calls, loaded for a replay.
+        keep: Receives each live call as soon as it ends, recorded as `stage`.
+        values: Parsed env file with ANTHROPIC_API_KEY.
+    Returns:
+        The stage writer port.
+    """
+    if writer == "scripted":
+        return write_scripted_stage
+    if mode == "replay":
+        return claude_stage_writer(replay_questions("stage", calls, ClaudeError))
+    config = {"anthropic_api_key": values["ANTHROPIC_API_KEY"], "model": CLAUDE_MODEL, "timeout": 30.0, "retries": 1}
+
+    async def ask(question: Question) -> Any:
+        return await ask_claude(question, config)
+    return claude_stage_writer(record_questions("stage", ask, keep, time.monotonic, ClaudeError))
 
 
 def mind(mode: str, values: Mapping[str, Any], prefix: str, calls: list[Record],
@@ -342,6 +369,7 @@ def main(root: Path) -> None:
     except ValueError as error:
         parser.error(str(error))
     lines = turn_writer(writer, mode, calls, keep, values, tracer)
+    stage = stage_writer(writer, mode, calls, keep, values)
     room = json.loads((root / "data" / "tavern.json").read_text())
     try:
         scenario_path = args.scenario or root / "data" / "scenarios" / f"{args.cast}.json"
@@ -355,7 +383,8 @@ def main(root: Path) -> None:
                             args.out / "calls.jsonl", tracer)
     announce_health(parser, mode, writer, settings, values)
     started = time.monotonic()
-    evening = asyncio.run(run_evening(world, settings, Random(args.seed), ports, pace, lines, intender=intender))
+    evening = asyncio.run(run_evening(world, settings, Random(args.seed), ports, pace, lines, intender=intender,
+                                      stage_writer=stage))
     wall = time.monotonic() - started
     if tracer is not None:
         # The client uploads in the background; what is still queued must leave before the process ends.
@@ -380,7 +409,7 @@ def main(root: Path) -> None:
               "news": news_metrics(world), "dice": dice_metrics(evening.events),
               "sleep": sleep_metrics(evening.events, world["departed"], world["closes_at"]),
               "drink": drink_counts(evening.events, [*world["actors"], *world["departed"]]),
-              "speeches": speech_counts(evening.events),
+              "speeches": speech_counts(evening.events), "stage": stage_counts(evening.events),
               "giving": giving_counts(evening.events), "manners": manner_counts(evening.events),
               "closing": closing_counts(world["departed"], world["last_call_at"], world["closes_at"]),
               "ailment": ailment_counts(evening.events, {item["id"]: item["name"]

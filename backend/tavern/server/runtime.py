@@ -29,6 +29,7 @@ from tavern.mind.intentions import INTENTION_RULES, Intender, IntentionRules
 from tavern.mind.model_health import HealthBoard
 from tavern.mind.scripted import write_scripted_turn
 from tavern.server.controls import forced_action, refill_tap, set_paused, set_speed, toggle_block
+from tavern.social.stage_lines import StageWriter, write_scripted_stage
 from tavern.social.turns import TurnWriter
 
 
@@ -119,7 +120,7 @@ class TavernRuntime:
                  intender: Intender | None = None, intention_rules: IntentionRules = INTENTION_RULES,
                  choose: Chooser = choose_action, health: HealthBoard | None = None,
                  answer: Answerer = choose_invitation_answer, storyteller: Ask | None = None,
-                 lineup: Lineup | None = None) -> None:
+                 lineup: Lineup | None = None, stage_writer: StageWriter = write_scripted_stage) -> None:
         self.map_data = deepcopy(dict(map_data))
         self.scenario = scenario
         # Makes the evening of a `start` command; None where the start screen is not offered.
@@ -144,7 +145,8 @@ class TavernRuntime:
         answers = ((lambda observation, invitation, options: answer(observation, invitation, options, self.ai_config,
                                                                     self.rng)) if read_answers(self.ai_config) else None)
         self.mind = MindLoop(TaskCourier(), lambda observation: choose(observation, self.ai_config, self.rng),
-                             lambda view: self.writer(view, self.ai_config), intender, intention_rules, answers)
+                             lambda view: self.writer(view, self.ai_config), intender, intention_rules, answers,
+                             lambda view: stage_writer(view, self.ai_config))
 
     @property
     def pending(self) -> dict[str, tuple[Any, int]]:

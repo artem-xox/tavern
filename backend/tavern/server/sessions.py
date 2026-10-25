@@ -14,6 +14,7 @@ from tavern.mind.model_health import HealthBoard
 from tavern.mind.questions import Ask
 from tavern.mind.scripted import write_scripted_turn
 from tavern.server.runtime import Answerer, Chooser, Lineup, Store, TavernRuntime, choose_action, choose_invitation_answer
+from tavern.social.stage_lines import StageWriter, write_scripted_stage
 from tavern.social.turns import TurnWriter
 
 
@@ -30,9 +31,9 @@ class TavernSessions:
                  intender: Intender | None = None, store_for: Callable[[str], Store] | None = None,
                  choose: Chooser | None = None, health: HealthBoard | None = None,
                  answer: Answerer | None = None, storyteller: Ask | None = None,
-                 lineup: Lineup | None = None) -> None:
+                 lineup: Lineup | None = None, stage_writer: StageWriter = write_scripted_stage) -> None:
         self.map_data = deepcopy(dict(map_data))
-        self.writer, self.writer_label = writer, writer_label
+        self.writer, self.writer_label, self.stage_writer = writer, writer_label, stage_writer
         self.save_dir = save_dir
         self.intender = intender
         self.ai_config = dict(ai_config)
@@ -77,7 +78,7 @@ class TavernSessions:
                                 self.writer, self.writer_label, intender=self.intender,
                                 choose=self.choose or choose_action, health=self.health,
                                 answer=self.answer or choose_invitation_answer, storyteller=self.storyteller,
-                                lineup=self.lineup)
+                                lineup=self.lineup, stage_writer=self.stage_writer)
         if not runtime.restore():
             # A new evening waits at the door until someone presses Start.
             runtime.world["paused"] = True

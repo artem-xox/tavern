@@ -104,7 +104,7 @@ def _answer_claim(world: Mapping[str, Any], kind: str, speaker: Actor, other: Ac
                      "heard": event["line"], "scripted": [scripted]}}
 
 
-def _speaker(world: Mapping[str, Any], speaker: Actor) -> dict[str, Any]:
+def _speaker(world: Mapping[str, Any], speaker: Mapping[str, Any]) -> dict[str, Any]:
     # Who speaks and how they feel, in the shape a line writer's card block reads (`haiku_turns.card_block`).
     now, card = world["time"], speaker["card"]
     return {"id": speaker["id"], "name": speaker["name"],
