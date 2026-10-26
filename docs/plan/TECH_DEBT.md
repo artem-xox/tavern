@@ -39,4 +39,3 @@ by a Stage 2 task or waits here until an evening shows it matters.
 | U4 | iPhone Safari: taps that land and a screen that holds still | Open: bug |
 | U11 | Lighter snapshots | Open, only if U4 shows they matter |
 | MIND step 6 | Memory between evenings | Dropped with Stage 4; not planned |
-| S2-05 | `fight_ended` has no outcome field, so the story score reads knockouts from its words (`story_score._KNOCKOUT_WORDS`) | Open: log the outcome as a field when S2-09 touches fights |

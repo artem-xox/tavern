@@ -9,7 +9,7 @@ from tavern.body.hearing import sound_event
 from tavern.hall.state import Actor, World
 
 
-def record_event(world: World, actor: Actor, kind: str, message: str) -> None:
+def record_event(world: World, actor: Actor, kind: str, message: str, outcome: str | None = None) -> None:
     """Log an event for the room and remember it; it may be heard and show on the visitor's face.
 
     Args:
@@ -17,8 +17,12 @@ def record_event(world: World, actor: Actor, kind: str, message: str) -> None:
         actor: Visitor who keeps the latest 100 memories: about one evening of what they did and what befell them.
         kind: Event type.
         message: Human-readable description.
+        outcome: How it came out, for the events that have one (a fight's `ENDINGS`), kept as a field so that
+            nothing has to read it from the words.
     """
     event = {"time": world["time"], "actor_id": actor["id"], "type": kind, "message": message}
+    if outcome is not None:
+        event["outcome"] = outcome
     world["events"].append(event)
     actor["memory"].append(deepcopy(event))
     sound_event(world, actor, event)

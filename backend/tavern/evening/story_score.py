@@ -17,8 +17,8 @@ WEIGHTS: Mapping[str, float] = {"quarrel": 2.0, "fight": 4.0, "knockout": 3.0, "
 _BY_TYPE = {"quarrel": "quarrel", "fight_started": "fight", "dice_won": "played_together", "darts_won": "played_together",
             "gave": "gift", "dozed_off": "fell_asleep", "limped_home": "limped_home", "got_drunk": "got_drunk",
             "gave_speech": "speech", "heckled": "heckle"}
-# `fight_ended` carries no outcome field, only words (`aftermath._words`): these end the fights that knocked someone out.
-_KNOCKOUT_WORDS = ("out cold", "knocked each other out")
+# The outcomes of `fight_ended` that knocked someone out.
+_KNOCKOUTS = ("knockout", "double_knockout")
 
 
 class Moment(TypedDict):
@@ -37,7 +37,8 @@ class StoryScore(TypedDict):
 
 def _kind_of(event: Mapping[str, Any]) -> str | None:
     if event["type"] == "fight_ended":
-        return "knockout" if any(words in event["message"] for words in _KNOCKOUT_WORDS) else None
+        # An end logged before the outcome was a field (an old save's log) has none and counts no knockout.
+        return "knockout" if event.get("outcome") in _KNOCKOUTS else None
     return _BY_TYPE.get(event["type"])
 
 
