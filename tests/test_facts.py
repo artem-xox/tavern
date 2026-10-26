@@ -775,9 +775,11 @@ def first_evening_played(seed: int) -> dict[str, Any]:
 
 # Seeds 0 and 4 became 1 and 2 (2026-10-10, with the user's approval) when the fights' data (Rurik's temper, the bad-blood
 # and rivalry ties) changed the seeded first evening and the news went no further there; ten of twelve seeds carry it.
+# Seed 2 became 3 (2026-10-26, with the user's approval) when guests began to talk where they stand and walk up to
+# standers (S2-16, S2-17); eleven of twelve seeds carry it.
 @pytest.mark.parametrize("seed", [
     pytest.param(1, id="seed-1"),
-    pytest.param(2, id="seed-2"),
+    pytest.param(3, id="seed-3"),
 ])
 def test_a_news_item_reaches_a_third_guest_in_other_words(seed: int) -> None:
     world = first_evening_played(seed)

@@ -339,7 +339,7 @@ def _social_candidates(observation: Mapping[str, Any], actor: Mapping[str, Any],
                        objects: Sequence[Mapping[str, Any]]) -> list[Action]:
     # Seated tablemates, or anyone standing beside them (`people`, when observed): talk to whoever
     # is free, or join a conversation already going, once per scene through its first member seen.
-    # Anyone seated at another table can be walked over to.
+    # Anyone seated at another table, and anyone standing in the open in company or busy, can be walked over to.
     visitors, people = observation.get("visitors", []), observation.get("people", [])
     if not isinstance(visitors, list) or not isinstance(people, list):
         raise ValueError("Visible visitors must be a list")
@@ -367,12 +367,22 @@ def _social_candidates(observation: Mapping[str, Any], actor: Mapping[str, Any],
                     and standing_room.get(visitor["table_id"], True) \
                     and not (liked(actor, visitor["id"], now) and visitor["table_id"] in open_tables):
                 walks.setdefault(visitor["table_id"], _action("approach", visitor["id"]))
+            elif _worth_walking_up_to(visitor):
+                walks.setdefault(visitor.get("conversation") or visitor["id"], _action("approach", visitor["id"]))
             continue
         if visitor.get("available"):
             options.setdefault(visitor["id"], _action("talk", visitor["id"]))
         elif visitor.get("conversation"):
             options.setdefault(visitor["conversation"], _action("join_conversation", visitor["id"]))
     return [*options.values(), *walks.values()]
+
+
+def _worth_walking_up_to(visitor: Mapping[str, Any]) -> bool:
+    # Someone on their feet in the open, who is in company or visibly busy where they stand: an idle stander is about to
+    # decide and move off, and a guest at a table's spot is reached through the table.
+    return (not visitor.get("seat_id") and visitor.get("at_table") is None and not visitor.get("walking")
+            and not visitor.get("post") and not visitor.get("asleep") and not visitor.get("fighting")
+            and bool(visitor.get("conversation") or (visitor.get("available") and visitor.get("doing"))))
 
 
 async def choose_action(

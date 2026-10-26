@@ -8,7 +8,7 @@ from tavern.hall.navigation import find_path, select_interaction_spot
 from tavern.hall.room import find_object, impassable_cells
 from tavern.hall.staff import off_limits
 from tavern.hall.state import Actor, find_actor
-from tavern.social.scenes import within_reach
+from tavern.social.scenes import at_table, side_by_side, within_reach
 
 
 def reserved_spots(world: Mapping[str, Any], actor_id: str) -> list[tuple[int, int]]:
@@ -50,7 +50,9 @@ def plan_route(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mappi
     if action["verb"] == "inspect":
         return _inspection_plan(world, actor, obstacles)
     if ACTIVITIES[action["verb"]].approaches:
-        return _approach_plan(world, actor, action, obstacles)
+        partner = find_actor(world, action.get("target_id"))
+        in_the_open = partner is not None and at_table(world, partner) is None
+        return (_walk_up_plan if in_the_open else _approach_plan)(world, actor, action, obstacles)
     if ACTIVITIES[action["verb"]].closes_in:
         return _closing_plan(world, actor, action, obstacles)
     target = find_object(world_map, action.get("target_id"))
@@ -65,8 +67,7 @@ def _approach_plan(world: Mapping[str, Any], actor: Mapping[str, Any], action: M
     # A spot at the table the partner sits at that nobody stands on; the nearest by walking distance.
     world_map = world["map"]
     partner = find_actor(world, action.get("target_id"))
-    seat = find_object(world_map, partner.get("seat_id")) if partner else None
-    table = find_object(world_map, seat.get("table_id")) if seat else None
+    table = find_object(world_map, at_table(world, partner)) if partner else None
     if table is None:
         return None, []
     standing = set(occupied_cells(world, actor))
@@ -74,6 +75,28 @@ def _approach_plan(world: Mapping[str, Any], actor: Mapping[str, Any], action: M
     selected = select_interaction_spot((actor["x"], actor["y"]), spots, world_map["width"], world_map["height"],
                                        obstacles)
     return ([*selected[0]], [list(cell) for cell in selected[1][1:]]) if selected else None
+
+
+def _walk_up_plan(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any],
+                  obstacles: list[tuple[int, int]]) -> tuple[list[int] | None, list[list[int]]] | None:
+    # A free cell beside someone standing in the open: next to them if one is free, else within the reach of a chat;
+    # either way a cell from which they would be side by side (no wall between), nearest by walking.
+    world_map, partner = world["map"], find_actor(world, action.get("target_id"))
+    if partner is None:
+        return None, []
+    taken = set(occupied_cells(world, actor)) | set(obstacles)
+    reach = world["rules"]["conversation"]["reach"]
+    for radius in range(1, reach + 1):
+        cells = [(x, y) for x in range(partner["x"] - radius, partner["x"] + radius + 1)
+                 for y in range(partner["y"] - radius, partner["y"] + radius + 1)
+                 if 0 <= x < world_map["width"] and 0 <= y < world_map["height"] and (x, y) not in taken
+                 and max(abs(x - partner["x"]), abs(y - partner["y"])) == radius
+                 and side_by_side(world, {**actor, "x": x, "y": y, "path": [], "status": "idle", "seat_id": None}, partner)]
+        selected = select_interaction_spot((actor["x"], actor["y"]), cells, world_map["width"], world_map["height"],
+                                           obstacles)
+        if selected:
+            return [*selected[0]], [list(cell) for cell in selected[1][1:]]
+    return None
 
 
 def _closing_plan(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any],

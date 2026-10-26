@@ -169,7 +169,7 @@ def heard_loudness(world_map: Mapping[str, Any], stimulus: Stimulus, cell: Seque
 
 
 def _between(origin: tuple[int, int], target: tuple[int, int]) -> Iterator[tuple[int, int]]:
-    # The same integer Bresenham line as sight.line_visible, without either end cell.
+    # The same integer Bresenham line as sightlines.line_visible, without either end cell.
     x, y = origin
     end_x, end_y = target
     dx, dy = abs(end_x - x), -abs(end_y - y)

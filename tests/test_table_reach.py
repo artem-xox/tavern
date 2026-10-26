@@ -33,7 +33,7 @@ def walking_past(world: dict[str, Any]) -> None:
     pytest.param({"bea": "e"}, {"ada": (3, 3)}, None, True, id="stander-on-the-tables-spot"),
     pytest.param({"ada": "w"}, {"bea": (4, 3)}, None, True, id="seated-one-and-stander-the-other-way-round"),
     pytest.param({}, {"ada": (3, 3), "bea": (4, 3)}, None, True, id="two-standers-on-one-tables-spots"),
-    pytest.param({"cid": "fw"}, {"ada": (3, 3)}, None, False, id="stander-at-another-table"),
+    pytest.param({"cid": "fw"}, {"ada": (3, 3), "bea": (8, 1)}, None, False, id="stander-at-another-table"),
     pytest.param({"bea": "e"}, {"ada": (3, 4)}, None, False, id="stander-one-cell-off-the-spot"),
     pytest.param({"bea": "e"}, {"ada": (3, 3)}, walking_past, False, id="stander-walking-past-the-spot"),
     pytest.param({}, {"ada": (3, 3), "bea": (3, 6)}, None, False, id="standers-at-different-tables"),
@@ -86,7 +86,7 @@ def options_of(world: dict[str, Any], who: str) -> dict[str, str]:
 
 
 @pytest.mark.parametrize("seated, standing, viewer, option, phrase", [
-    pytest.param({"bea": "e"}, {"ada": (4, 3)}, "ada", "talk:bea", "sits at the table they stand by",
+    pytest.param({"bea": "e"}, {"ada": (4, 3), "cid": (8, 1)}, "ada", "talk:bea", "sits at the table they stand by",
                  id="standing-guest-talks-to-a-seated-one"),
     pytest.param({"ada": "w"}, {"bea": (4, 3)}, "ada", "talk:bea", "stands beside them",
                  id="seated-guest-talks-to-a-stander"),
@@ -96,3 +96,27 @@ def options_of(world: dict[str, Any], who: str) -> dict[str, str]:
 def test_a_chat_across_the_table_edge_is_told_as_it_is(seated: dict[str, str], standing: dict[str, tuple[int, int]],
                                                        viewer: str, option: str, phrase: str) -> None:
     assert phrase in options_of(room(seated, standing), viewer)[option]
+
+
+def offered_talks(world: dict[str, Any], who: str = "ada") -> list[str]:
+    """The IDs of the chats a guest is offered, whichever family holds them."""
+    observation = {**observe_actor(world, who), "people": observe_people(world, who)}
+    return [item["id"] for option in build_candidates(observation) for item in option.get("members", [option])
+            if item["verb"] == "talk"]
+
+
+@pytest.mark.parametrize("standing, expected", [
+    pytest.param({"ada": (7, 0), "bea": (8, 0)}, ["talk:bea"], id="a-stander-beside-them-in-the-open"),
+    pytest.param({"ada": (7, 0), "bea": (7, 3)}, [], id="a-stander-three-cells-off"),
+])
+def test_a_guest_is_offered_a_chat_with_someone_standing_beside_them_in_the_open(
+        standing: dict[str, tuple[int, int]], expected: list[str]) -> None:
+    assert offered_talks(room({}, standing)) == expected
+
+
+def test_a_stander_on_a_tables_spot_talks_with_one_in_the_open_beside_them() -> None:
+    world = room({}, {"ada": (3, 3), "bea": (5, 3)})
+    assert start_action(world, "ada", command("talk", "bea"))["accepted"]
+    advance(world, 1)
+    scene = conversation_of(world, "ada")
+    assert (scene["table_id"], scene["participants"]) == (None, ["ada", "bea"])

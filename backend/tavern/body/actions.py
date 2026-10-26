@@ -149,10 +149,18 @@ def _approach_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: 
         return None  # Carrying on with their part for as long as the scene lasts.
     if conversation_of(world, actor["id"]) is not None:
         return "Visitor is already in a conversation"
-    if not underway and (table_of(world, partner) is None or at_table(world, actor) == table_of(world, partner)):
-        return "Walk over to a visitor who sits at another table"
-    if underway and not within_reach(world, actor, partner):
-        return f"{partner['name']} is no longer at that table"
+    table = at_table(world, partner)
+    if not underway and table is not None and at_table(world, actor) == table:
+        return "Walk over to a visitor who is at another table, or stands in the open"
+    if not underway and table is None:
+        if partner["status"] == "walking" or partner["path"]:
+            return f"{partner['name']} is on the move"
+        if within_reach(world, actor, partner):
+            return f"{partner['name']} is right beside them: talk instead"
+    # The walker reaching their cell still counts as walking when this is asked (see `lifecycle._begin_interaction`).
+    arrived = {**actor, "status": "interacting", "path": []}
+    if underway and not within_reach(world, arrived, partner):
+        return f"{partner['name']} is no longer at that table" if table is not None else f"{partner['name']} walked off"
     scene = conversation_of(world, partner["id"])
     if scene is not None:
         full = len(scene["participants"]) >= world["rules"]["conversation"]["max_participants"]

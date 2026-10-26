@@ -6,7 +6,7 @@ from typing import Any
 
 from tavern.body.fights import fight_of, opponent_of
 from tavern.hall.memory import record_event
-from tavern.hall.sight import line_visible
+from tavern.hall.sightlines import line_visible
 from tavern.hall.staff import on_staff
 from tavern.hall.state import World, find_actor
 from tavern.social.names import called

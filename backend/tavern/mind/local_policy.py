@@ -186,7 +186,9 @@ def _score_approaches(observation: Mapping[str, Any], candidates: Sequence[Mappi
         if action["verb"] != "approach":
             continue
         table = objects.get(people.get(action["target_id"], {}).get("table_id"))
-        walk = steps_to(observation, table) if table else 0
+        person = people.get(action["target_id"], {})
+        # Someone standing in the open is walked to where they stand.
+        walk = steps_to(observation, table) if table else steps_to(observation, person) if "x" in person else 0
         score = scores[action["id"]] - min(0.15, 0.01 * walk) + 0.25 * opinion_of(actor, action["target_id"], now) / 100
         # Someone who carries a cure goes to the one who looks unwell (`tavern.body.ailment`) before anyone else.
         if healer and _unwell(people.get(action["target_id"], {})):

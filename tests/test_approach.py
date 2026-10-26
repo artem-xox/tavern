@@ -9,7 +9,7 @@ from tavern.hall.world import create_world, observe_actor, observe_people, start
 from tavern.mind.agents import build_candidates
 from tavern.mind.briefing import brief
 from tavern.mind.local_policy import local_scores
-from tavern.social.scenes import conversation_of
+from tavern.social.scenes import conversation_of, side_by_side
 from social_hall import actor, advance, command, say, spotted_hall
 
 FAR_SPOTS = [[3, 6], [4, 6]]
@@ -99,7 +99,6 @@ def ada_talking_to_bea(world: dict[str, Any]) -> None:
     pytest.param({"ada": "w", "cid": "fw"}, None, None, "ada", None, id="no-target"),
     pytest.param({"ada": "w", "cid": "fw"}, None, None, "ada", [], id="malformed-target"),
     pytest.param({"ada": "w", "cid": "fw"}, None, staff_cid, "ada", "cid", id="staff"),
-    pytest.param({"ada": "w"}, None, None, "ada", "cid", id="a-partner-who-stands"),
     pytest.param({"ada": "w", "bea": "e"}, None, None, "ada", "bea", id="a-partner-at-the-same-table"),
     pytest.param({"cid": "fw"}, {"ada": (3, 6)}, None, "ada", "cid", id="already-standing-at-that-table"),
     pytest.param({"ada": "w", "cid": "fw"}, None, pressed_cid, "ada", "cid", id="a-partner-pressed-by-a-need"),
@@ -192,3 +191,150 @@ def test_only_a_real_need_keeps_a_guest_from_being_walked_over_to(
     world = evening({"ada": "w", "cid": "fw"})
     prepare(world)
     assert (approaches(sees(world)), approach(world)["accepted"]) == (offered, bool(offered))
+
+
+def dan_walks(world: dict[str, Any]) -> None:
+    """Dan is on his way somewhere."""
+    actor(world, "dan").update(status="walking", path=[[9, 5]])
+
+
+def dan_is_blocked_mid_route(world: dict[str, Any]) -> None:
+    """Dan waits on a blocked route, with steps left to take."""
+    actor(world, "dan").update(status="waiting", path=[[9, 5]])
+
+
+@pytest.mark.parametrize("seated, standing, prepare, expected", [
+    pytest.param({"cid": "fw"}, None, None, (False, "far"), id="a-seated-guest-is-at-their-table"),
+    pytest.param({}, None, None, (False, None), id="an-idle-stander-in-the-open"),
+    pytest.param({}, {"dan": (3, 6)}, None, (False, "far"), id="a-stander-on-a-tables-spot"),
+    pytest.param({}, None, dan_walks, (True, None), id="a-walker"),
+    pytest.param({}, None, dan_is_blocked_mid_route, (True, None), id="a-guest-blocked-mid-route"),
+])
+def test_people_show_who_is_on_the_move_and_which_table_they_are_at(
+        seated: dict[str, str], standing: dict[str, tuple[int, int]] | None,
+        prepare: Callable[[dict[str, Any]], None] | None, expected: tuple[bool, str | None]) -> None:
+    world = evening(seated, standing)
+    if prepare:
+        prepare(world)
+    who = "cid" if "cid" in seated else "dan"
+    seen = next(item for item in observe_people(world, "ada") if item["id"] == who)
+    assert (seen["walking"], seen["at_table"]) == expected
+
+
+def surrounded(world: dict[str, Any]) -> None:
+    """Walls close in every cell round Dan within reach of him."""
+    world["map"]["blocked"].extend([x, y] for x in range(7, 12) for y in range(4, 8) if (x, y) != (9, 6))
+
+
+@pytest.mark.parametrize("standing, prepare, reason", [
+    pytest.param(None, dan_walks, "Dan is on the move", id="someone-on-the-move"),
+    pytest.param({"ada": (8, 6)}, None, "Dan is right beside them", id="someone-already-within-reach"),
+])
+def test_walking_up_to_someone_standing_is_refused_with_a_reason(
+        standing: dict[str, tuple[int, int]] | None, prepare: Callable[[dict[str, Any]], None] | None,
+        reason: str) -> None:
+    world = evening({}, standing)
+    if prepare:
+        prepare(world)
+    assert reason in str(approach(world, "ada", "dan")["reason"])
+
+
+def test_walking_up_to_someone_no_free_cell_reaches_is_refused() -> None:
+    world = evening({})
+    surrounded(world)
+    assert not approach(world, "ada", "dan")["accepted"]
+
+
+def test_an_approach_to_someone_standing_ends_in_a_standing_scene_beside_them() -> None:
+    world = evening({})
+    assert approach(world, "ada", "dan")["accepted"]
+    advance(world, 12)
+    scene, ada, dan = conversation_of(world, "ada"), actor(world, "ada"), actor(world, "dan")
+    assert (scene["participants"], scene["table_id"], ada["action"]["verb"], side_by_side(world, ada, dan)) == (
+        ["ada", "dan"], None, "approach", True)
+
+
+def test_an_approach_to_someone_in_a_standing_conversation_joins_it() -> None:
+    world = evening({}, {"bea": (9, 5)})
+    assert start_action(world, "dan", command("talk", "bea"))["accepted"]
+    assert approach(world, "ada", "dan")["accepted"]
+    advance(world, 12)
+    assert conversation_of(world, "ada")["participants"] == ["dan", "bea", "ada"]
+
+
+def test_an_approach_to_someone_standing_fails_when_they_walk_off() -> None:
+    world = evening({})
+    assert approach(world, "ada", "dan")["accepted"]
+    assert start_action(world, "dan", command("take_beer", "tap"))["accepted"]
+    advance(world, 12)
+    assert (conversation_of(world, "ada"), actor(world, "ada")["action"]) == (None, None)
+    assert any(event["type"] == "action_failed" for event in actor(world, "ada")["memory"])
+
+
+def dan_plays_darts(world: dict[str, Any]) -> None:
+    """Dan throws darts at the board."""
+    assert start_action(world, "dan", command("play_darts", "darts"))["accepted"]
+    advance(world, 6)
+
+
+def dan_waits_a_moment(world: dict[str, Any]) -> None:
+    """Dan stands where he is for a moment."""
+    assert start_action(world, "dan", command("wait"))["accepted"]
+
+
+def dan_chats_with_bea(world: dict[str, Any]) -> None:
+    """Dan and Bea, side by side in the open, are in a conversation."""
+    assert start_action(world, "dan", command("talk", "bea"))["accepted"]
+
+
+def dan_fetches_a_beer(world: dict[str, Any]) -> None:
+    """Dan walks to the tap."""
+    assert start_action(world, "dan", command("take_beer", "tap"))["accepted"]
+    advance(world, 0.5)
+
+
+@pytest.mark.parametrize("standing, prepare, expected", [
+    pytest.param(None, dan_plays_darts, ["approach:dan"], id="someone-busy-at-the-darts"),
+    pytest.param(None, None, [], id="someone-standing-idle"),
+    pytest.param(None, dan_fetches_a_beer, [], id="someone-on-the-move"),
+    pytest.param({"dan": (3, 6)}, dan_waits_a_moment, [], id="someone-at-a-tables-spot"),
+    pytest.param({"bea": (9, 5)}, dan_chats_with_bea, ["approach:bea"], id="two-in-one-standing-conversation-by-the-first"),
+])
+def test_a_guest_may_walk_up_to_someone_standing_who_is_busy_or_in_company(
+        standing: dict[str, tuple[int, int]] | None, prepare: Callable[[dict[str, Any]], None] | None,
+        expected: list[str]) -> None:
+    world = evening({}, standing)
+    if prepare:
+        prepare(world)
+    assert approaches(sees(world)) == expected
+
+
+@pytest.mark.parametrize("seen_of_dan", [
+    pytest.param({"asleep": True, "available": False}, id="a-sleeper"),
+    pytest.param({"post": "Bar"}, id="staff"),
+    pytest.param({"fighting": "bea", "available": False}, id="a-fighter"),
+])
+def test_nobody_walks_up_to_a_sleeper_staff_or_a_fighter_standing_busy(seen_of_dan: dict[str, Any]) -> None:
+    world = evening({})
+    dan_plays_darts(world)
+    observation = sees(world)
+    next(item for item in observation["people"] if item["id"] == "dan").update(seen_of_dan)
+    assert approaches(observation) == []
+
+
+def test_the_option_says_how_far_and_what_they_are_doing() -> None:
+    world = evening({})
+    dan_plays_darts(world)
+    observation = sees(world)
+    text = brief(observation, build_candidates(observation))["options"]["approach:dan"]
+    assert ("Dan" in text, "on their feet" in text, "playing darts" in text) == (True, True, True)
+
+
+def stander_score(cell: tuple[int, int]) -> float:
+    """Ada's local score for walking up to Dan, who stands on a cell."""
+    world = evening({}, {"dan": cell}, social=90.0)
+    return local_scores(sees(world), [{"id": "approach:dan", "verb": "approach", "target_id": "dan"}])["approach:dan"]
+
+
+def test_the_farther_a_stander_the_less_readily_a_guest_walks_up() -> None:
+    assert stander_score((7, 0)) > stander_score((11, 7))

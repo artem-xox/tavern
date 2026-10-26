@@ -8,7 +8,7 @@ import pytest
 
 from tavern.body.hearing import EVENT_SOUNDS, Sound, emit
 from tavern.adapters.persistence import load_world, save_world
-from tavern.social.scenes import conversation_of
+from tavern.social.scenes import conversation_of, side_by_side
 from tavern.hall.world import create_world, start_action, step_world
 
 
@@ -267,3 +267,69 @@ def test_corrupt_saved_scenes_are_rejected(tmp_path: Path, corrupt: Callable[[di
     save_world(world, tmp_path / "corrupt.json")
     with pytest.raises(ValueError):
         load_world(tmp_path / "corrupt.json")
+
+
+def in_the_open(*cells: tuple[int, int]) -> dict[str, Any]:
+    """Ada, Bea and Cid stand on the given cells of the open floor (Cid's is optional); Dan is far off."""
+    names = ("ada", "bea", "cid")
+    guests = [guest(name, *cell) for name, cell in zip(names, cells)]
+    return create_world(hall(*guests, guest("dan", 9, 9)))
+
+
+def wall_between(world: dict[str, Any]) -> None:
+    """A wall cell stands between Ada and Bea."""
+    world["map"]["blocked"].append([9, 2])
+
+
+def bea_walks(world: dict[str, Any]) -> None:
+    """Bea is on her way somewhere."""
+    actor(world, "bea")["status"] = "walking"
+
+
+def bea_is_blocked_mid_route(world: dict[str, Any]) -> None:
+    """Bea waits on a blocked route, with steps left to take."""
+    actor(world, "bea").update(status="waiting", path=[[10, 3]])
+
+
+def bea_sits(world: dict[str, Any]) -> None:
+    """Bea sits on a chair."""
+    actor(world, "bea")["seat_id"] = "east"
+
+
+@pytest.mark.parametrize("cells, change, expected", [
+    pytest.param([(8, 2), (9, 2)], None, True, id="one-cell-apart"),
+    pytest.param([(8, 2), (10, 2)], None, True, id="reach-apart"),
+    pytest.param([(8, 2), (11, 2)], None, False, id="one-past-reach"),
+    pytest.param([(8, 2), (10, 2)], wall_between, False, id="a-wall-between"),
+    pytest.param([(8, 2), (9, 2)], bea_walks, False, id="one-walking"),
+    pytest.param([(8, 2), (9, 2)], bea_is_blocked_mid_route, False, id="one-blocked-mid-route"),
+    pytest.param([(8, 2), (9, 2)], bea_sits, False, id="one-seated"),
+])
+def test_guests_standing_still_near_each_other_in_the_open_are_side_by_side(
+        cells: list[tuple[int, int]], change: Callable[[dict[str, Any]], None] | None, expected: bool) -> None:
+    world = in_the_open(*cells)
+    if change:
+        change(world)
+    assert side_by_side(world, actor(world, "ada"), actor(world, "bea")) is expected
+
+
+def test_a_guest_is_not_side_by_side_with_themselves() -> None:
+    world = in_the_open((8, 2), (9, 2))
+    assert side_by_side(world, actor(world, "ada"), actor(world, "ada")) is False
+
+
+def test_guests_who_meet_in_the_open_talk_and_a_third_joins() -> None:
+    world = in_the_open((8, 2), (9, 2), (10, 2))
+    assert start_action(world, "ada", command("talk", "bea"))["accepted"]
+    advance(world, 3)
+    scene = conversation_of(world, "ada")
+    assert (scene["table_id"], scene["participants"], conversation_of(world, "bea") is scene) == (
+        None, ["ada", "bea"], True)
+    assert start_action(world, "cid", command("join_conversation", "ada"))["accepted"]
+    assert conversation_of(world, "ada")["participants"] == ["ada", "bea", "cid"]
+
+
+def test_a_guest_beyond_reach_of_a_standing_scene_cannot_join_it() -> None:
+    world = in_the_open((7, 2), (8, 2), (11, 2))
+    assert start_action(world, "ada", command("talk", "bea"))["accepted"]
+    assert not start_action(world, "cid", command("join_conversation", "ada"))["accepted"]
