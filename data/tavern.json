@@ -746,9 +746,9 @@
       "kind": "stage",
       "name": "Stage",
       "x": 17,
-      "y": 7,
+      "y": 8,
       "width": 2,
-      "height": 3,
+      "height": 2,
       "interaction_spots": [
         [
           17,
