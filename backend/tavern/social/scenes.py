@@ -18,7 +18,9 @@ from tavern.hall.room import find_object
 from tavern.hall.staff import on_staff
 from tavern.hall.state import Actor, World
 from tavern.hall.validation import number
+from tavern.social.names import called
 from tavern.social.responses import calling
+from tavern.social.thoughts import think
 
 if TYPE_CHECKING:  # turns imports this module, so the type crosses the cycle only for the checker.
     from tavern.social.turns import TurnResult
@@ -87,6 +89,21 @@ def conversation_of(world: Mapping[str, Any], actor_id: Any) -> Conversation | N
         Their scene, or None when they are in no conversation.
     """
     return next((scene for scene in world["conversations"] if actor_id in scene["participants"]), None)
+
+
+def awaits_answer(world: Mapping[str, Any], actor_id: Any) -> bool:
+    """Tell whether a visitor asked, or was asked, something in their scene that has not been answered yet.
+
+    Args:
+        world: Current world.
+        actor_id: Visitor who may have made or been made the invitation.
+
+    Returns:
+        True while their scene holds a pending invitation from or to them.
+    """
+    scene = conversation_of(world, actor_id)
+    invitation = scene["invitation"] if scene is not None else None
+    return invitation is not None and actor_id in (invitation["from"], invitation["to"])
 
 
 def table_of(world: Mapping[str, Any], actor: Mapping[str, Any]) -> str | None:
@@ -279,7 +296,7 @@ def leave_conversation(world: World, actor: Actor) -> bool:
         return False
     _recast(scene)
     scene["participants"].remove(actor["id"])
-    _lapse(scene)
+    _lapse(world, scene)
     _tidy_aims(world, scene)
     record_event(world, actor, "left_conversation", f"{actor['name']} left the conversation")
     if len(scene["participants"]) < 2:
@@ -296,6 +313,8 @@ def end_conversation(world: World, scene: Conversation, pleasant: bool) -> None:
         pleasant: False when it broke up in a quarrel, which is remembered instead.
     """
     world["conversations"].remove(scene)
+    if scene["invitation"] is not None:
+        _left_hanging(world, scene["invitation"])
     # A greeting nobody answered is no conversation.
     if not pleasant or len(scene["turns"]) < 2:
         return
@@ -398,7 +417,7 @@ def _drop_departed(world: World, scene: Conversation) -> None:
         return
     _recast(scene)
     scene["participants"] = [actor_id for actor_id in scene["participants"] if actor_id in present]
-    _lapse(scene)
+    _lapse(world, scene)
     if len(scene["participants"]) < 2:
         end_conversation(world, scene, pleasant=True)
 
@@ -411,11 +430,22 @@ def _still_there(world: Mapping[str, Any], scene: Conversation, actor: Mapping[s
                if other != actor["id"] and other in people)
 
 
-def _lapse(scene: Conversation) -> None:
+def _lapse(world: World, scene: Conversation) -> None:
     # An invitation nobody is left to make or answer is void.
     invitation = scene["invitation"]
     if invitation is not None and not {invitation["from"], invitation["to"]} <= set(scene["participants"]):
+        _left_hanging(world, invitation)
         scene["invitation"] = None
+
+
+def _left_hanging(world: World, invitation: Mapping[str, str]) -> None:
+    # An invitation that lapsed unanswered counts as a no to the inviter (`invitations.turned_down_by`): left hanging,
+    # they asked the same person again in every next talk (live seed 5: 11 of 13 invitations never answered).
+    people = {item["id"]: item for item in world["actors"]}
+    inviter, invitee = people.get(invitation["from"]), people.get(invitation["to"])
+    if inviter is not None and invitee is not None:
+        think(inviter, "left_hanging", world["time"], f"{called(inviter, invitee)} never answered my invitation",
+              f"{invitee['name']} never answered {inviter['name']}'s invitation", about=invitee)
 
 
 def _tidy_aims(world: Mapping[str, Any], scene: Conversation) -> None:

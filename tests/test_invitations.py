@@ -11,6 +11,7 @@ from tavern.mind.agents import choose_action
 from tavern.mind.briefing import brief
 from tavern.adapters.persistence import load_world, save_world
 from tavern.hall.world import observe_actor, observe_people
+from tavern.social.scenes import leave_conversation
 from tavern.social.thoughts import THOUGHTS, opinion_of
 from social_hall import actor, advance, by_the_fire, know, say, scene_of, seated_talk
 
@@ -72,9 +73,9 @@ def test_pending_invitation_lapses_when_the_inviter_leaves_the_scene() -> None:
     world = seated_talk(cid_joins=True)
     know(world, "ada", "darts")
     say(world, "invite", "Darts, Bea?", addressee="bea", invitation="darts_together")
-    say(world, "leave_conversation", "I'll be off.")  # Bea, addressed, says goodbye: the invitation lapses
-    advance(world, 2.1)  # ...once the goodbye is heard
-    assert scene_of(world)["invitation"] is None
+    # Ada walks off; Bea, asked, could not say goodbye first: an invitee's line answers (`conversation.offered_acts`).
+    leave_conversation(world, actor(world, "ada"))
+    assert scene_of(world, "bea")["invitation"] is None
 
 
 def situation(world: dict[str, Any], actor_id: str) -> str:

@@ -8,26 +8,35 @@ export interface Spoken {
   time: number;
 }
 
-/** How long, in game seconds, a barkeep's call stays over his head: about what its two pieces take to read. */
+/** How long, in game seconds, a call stays over its speaker at least: about what a barkeep's two pieces take to read. */
 const CALLOUT_SECONDS = 8;
-/** The events that carry a call-out: closing time, the barkeep's shout at a fight, a speech from the stage, and a line that ended its scene. */
-const CALLOUT_TYPES: readonly string[] = ["last_call", "barkeep_shout", "gave_speech", "turn"];
+/** Game seconds a call stays up after its last piece has had its reading time. */
+const CALLOUT_LINGER = 1;
+/** The events that carry a call-out: closing time, the barkeep's shout at a fight, a number from the stage, a heckle and its comeback, and a line that ended its scene. */
+const CALLOUT_TYPES: readonly string[] = ["last_call", "barkeep_shout", "gave_speech", "heckled", "heckle_answered", "turn"];
 
 /**
  * The call a character made while it is still new, to show over their head.
  *
- * @param events The world's event log, oldest first; only a `last_call`, `barkeep_shout`, `gave_speech` or `turn` event with words counts.
+ * @param events The world's event log, oldest first; only a `CALLOUT_TYPES` event with words counts.
  * @param actorId The character.
  * @param worldTime Game time now.
- * @returns The newest call by them, as a line, while it is under `CALLOUT_SECONDS` old; otherwise null.
+ * @returns The newest call by them, as a line, while it is younger than `CALLOUT_SECONDS` or, for a long one, than
+ *   its pieces take to read (`chunkMs`) and `CALLOUT_LINGER`; otherwise null.
  */
 export function callout(events: readonly WorldEvent[], actorId: string, worldTime: number): Spoken | null {
   for (let index: number = events.length - 1; index >= 0; index -= 1) {
     const event: WorldEvent = events[index]!;
     if (!CALLOUT_TYPES.includes(event.type) || event.actor_id !== actorId || event.line === undefined) continue;
-    return worldTime - event.time < CALLOUT_SECONDS ? { speaker: actorId, line: event.line, time: event.time } : null;
+    return worldTime - event.time < calloutSeconds(event.line) ? { speaker: actorId, line: event.line, time: event.time } : null;
   }
   return null;
+}
+
+/** How long a call stays up: its pieces' reading time and a little more, and never less than `CALLOUT_SECONDS`. */
+function calloutSeconds(line: string): number {
+  const reading: number = splitLine(line).reduce((total: number, chunk: string): number => total + chunkMs(chunk), 0) / 1000;
+  return Math.max(CALLOUT_SECONDS, reading + CALLOUT_LINGER);
 }
 
 /** The later of two lines, the first on a tie (null when neither was said). */

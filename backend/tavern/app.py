@@ -17,6 +17,7 @@ from tavern.adapters.probes import probes
 from tavern.adapters.tracing import (Scorer, Tracer, open_tracer, traced_intender, traced_question, traced_scores,
                                      traced_writer)
 from tavern.mind.agents import Evaluator, EvaluatorError, Evaluators, choose_action, choose_answer
+from tavern.mind.haiku_stage import claude_stage_writer
 from tavern.mind.haiku_turns import claude_writer
 from tavern.mind.intentions import intention_writer
 from tavern.mind.selection import read_switch
@@ -64,7 +65,7 @@ def create_default_app() -> FastAPI:
             (root / "data" / "minds" / "intention_prefix.md").read_text(), ask)
         if tracer is not None:
             writer, intender = traced_writer(writer, tracer), traced_intender(intender, tracer)
-        lines = {"writer": writer, "writer_label": "haiku"}
+        lines = {"writer": writer, "writer_label": "haiku", "stage_writer": claude_stage_writer(ask)}
     choosers = _jev_choosers(board, tracer)
     # A stronger model retells the evening once, at closing: a few cents an evening.
     storyteller = _claude_port(os.environ.get("ANTHROPIC_API_KEY"), board, tracer, "claude-sonnet-5-5")

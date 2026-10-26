@@ -100,3 +100,19 @@ test("callout: a line spoken as a scene broke up still shows over its speaker", 
   const events = [call("hob", 10, "You drunken sot.", "turn")];
   assert.deepEqual(callout(events, "hob", 14), { speaker: "hob", line: "You drunken sot.", time: 10 });
 });
+
+for (const type of ["heckled", "heckle_answered"]) {
+  test(`callout: a ${type} line shows over whoever shouted it`, () => {
+    assert.deepEqual(callout([call("hob", 10, "Sit down!", type)], "hob", 12), { speaker: "hob", line: "Sit down!", time: 10 });
+  });
+}
+
+const number = "Friends, I have built the greatest tavern in history, and this is it. Tremendous rooms, tremendous ale, " +
+  "the best barkeep anyone has ever seen. And Elon is paying for all of it, believe me, he loves paying for my things.";
+const numbers: { id: string; at: number; shown: boolean }[] = [
+  { id: "a long number is still up while it is read", at: 22, shown: true },
+  { id: "and gone once every piece had its time", at: 40, shown: false },
+];
+for (const { id, at, shown } of numbers) {
+  test(`callout: ${id}`, () => assert.equal(callout([call("hob", 10, number, "gave_speech")], "hob", at) !== null, shown));
+}

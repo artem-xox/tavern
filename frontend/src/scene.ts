@@ -7,7 +7,7 @@ import { EMOTE_KINDS, EMOTE_WORDS, emoteFrame, emoteFrames, emoteMotion, emotePa
 import { fightPose } from "./fightview";
 import { drawFloor } from "./floor";
 import { stageLift } from "./stage";
-import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawStage, drawTable, drawTap, drawToilet, drawWindow } from "./furniture";
+import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawFootlights, drawStage, drawTable, drawTap, drawToilet, drawWindow } from "./furniture";
 import { headingOf, headingToObject } from "./heading";
 import { drawFireplace, drawFlames, drawHearthGlow } from "./hearth";
 import { mapParts, type MapParts } from "./mapview";
@@ -75,6 +75,8 @@ export class TavernScene extends Phaser.Scene {
   private flames!: Phaser.GameObjects.Graphics;
   /** The wall candles' flames and glow, redrawn every frame like the fire. */
   private candles!: Phaser.GameObjects.Graphics;
+  /** The stage's footlights, which flare while a number is on. */
+  private footlights!: Phaser.GameObjects.Graphics;
   /** Darts in flight, the sparks where they land and a winner's stars, redrawn every frame. */
   private dartPlay!: Phaser.GameObjects.Graphics;
   /** Dice in the air over the dice table and a winner's stars, redrawn every frame. */
@@ -106,6 +108,7 @@ export class TavernScene extends Phaser.Scene {
     this.furniture = this.add.graphics();
     this.flames = this.add.graphics();
     this.candles = this.add.graphics();
+    this.footlights = this.add.graphics();
     this.dartPlay = this.add.graphics().setDepth(9);
     this.dicePlay = this.add.graphics().setDepth(9);
     this.route = this.add.graphics();
@@ -162,6 +165,7 @@ export class TavernScene extends Phaser.Scene {
       drawHearthGlow(this.hearthGlow, objects, width, size, time);
       drawFlames(this.flames, objects, width, size, time);
       drawCandles(this.candles, width, size, time);
+      drawFootlights(this.footlights, objects, this.world.actors, size, time);
       drawDartPlay(this.dartPlay, objects, this.world.actors, this.world.events, this.world.time, size, time);
       drawDicePlay(this.dicePlay, objects, this.world.actors, this.world.events, this.world.time, size, time);
     }
@@ -195,7 +199,7 @@ export class TavernScene extends Phaser.Scene {
     if (object.kind === "table") { drawTable(this.furniture, object, size); }
     if (object.kind === "dice_table") drawDiceTable(this.furniture, object, size);
     if (object.kind === "darts") drawDarts(this.furniture, x, y);
-    if (object.kind === "stage") drawStage(this.furniture, x, y);
+    if (object.kind === "stage") drawStage(this.furniture, object, size);
     if (object.reserved_by) this.furniture.lineStyle(2, 0xe6c88d, 0.75).strokeCircle(x, y, 15);
   }
 

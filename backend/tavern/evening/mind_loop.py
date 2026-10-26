@@ -18,6 +18,7 @@ from tavern.mind.goals import settle_goals
 from tavern.mind.intentions import (UNMETERED, IntentionRules, Intender, deliver_intention, intention_requests,
                                     stale_intentions)
 from tavern.social.invitations import answer_options
+from tavern.social.stage_lines import StageClaim, deliver_stage, stage_claims, write_scripted_stage
 from tavern.social.turns import TurnResult, claim_turns, deliver_turn, next_speaker
 
 # One answer in flight. What it is belongs to the courier: a task live, a stored coroutine in lockstep.
@@ -28,6 +29,8 @@ Decide = Callable[[Mapping[str, Any]], Coroutine[Any, Any, dict[str, Any]]]
 Write = Callable[[Mapping[str, Any]], Coroutine[Any, Any, TurnResult]]
 # Asks how an invitee answers: their observation, the pending invitation and the answers open to them.
 Answer = Callable[[Mapping[str, Any], Mapping[str, Any], Sequence[str]], Coroutine[Any, Any, dict[str, Any]]]
+# Asks for the words of a claim on or at the stage from its view (`stage_lines.stage_claims`).
+Stage = Callable[[Mapping[str, Any]], Coroutine[Any, Any, list[str]]]
 
 
 class Courier(Protocol):
@@ -83,11 +86,12 @@ class MindLoop:
     The dictionaries are public because the runtimes and their tests read them: `pending` holds
     per visitor a decision's (ticket, revision); `asked_at` the game time it was asked;
     `writing` per claimed turn (scene ID, turn index) its ticket; `intending` per guest an
-    intention's (ticket, asked at, view).
+    intention's (ticket, asked at, view); `staging` per stage claim key its (ticket, claim), and `staged` every key
+    asked, whatever came of it.
     """
 
     def __init__(self, courier: Courier, decide: Decide, write: Write, intender: Intender | None,
-                 rules: IntentionRules, answer: Answer | None = None) -> None:
+                 rules: IntentionRules, answer: Answer | None = None, stage: Stage | None = None) -> None:
         """Create a loop with nothing in flight.
 
         Args:
@@ -97,8 +101,12 @@ class MindLoop:
             intender: Writes intentions; None offline, which asks for none.
             rules: When guests take stock.
             answer: Asks how an invitee answers; None leaves the answer to the line writer, as before.
+            stage: Asks for the words on and at the stage; None answers with the scripted ones.
         """
         self.courier, self.decide, self.write, self.answer = courier, decide, write, answer
+        self.stage: Stage = stage or (lambda view: write_scripted_stage(view, {}))
+        self.staging: dict[tuple[str, str, float], tuple[Ticket, StageClaim]] = {}
+        self.staged: set[tuple[str, str, float]] = set()
         self.intender, self.rules = intender, rules
         self.pending: dict[str, tuple[Ticket, int]] = {}
         self.revisions: dict[str, int] = {}
@@ -128,6 +136,8 @@ class MindLoop:
         self._ask_answers(world)
         self._deliver_lines(world)
         self._ask_lines(world)
+        self._deliver_stage(world)
+        self._ask_stage(world)
         if self.intender is not None:
             self._take_stock(world, self.intender)
         return asked
@@ -145,7 +155,7 @@ class MindLoop:
         for ticket in self._tickets():
             self.courier.cancel(ticket)
         for requests in (self.pending, self.writing, self.answering, self.answered, self.intending, self.next_intention, self.asked_at,
-                         self.revisions, self.next_decision, self.made):
+                         self.revisions, self.next_decision, self.made, self.staging, self.staged):
             requests.clear()
 
     async def close(self) -> None:
@@ -157,6 +167,7 @@ class MindLoop:
     def _tickets(self) -> list[Ticket]:
         return [*(ticket for ticket, _revision in self.pending.values()), *self.writing.values(),
                 *(ticket for ticket, _ in self.answering.values()),
+                *(ticket for ticket, _ in self.staging.values()),
                 *(ticket for ticket, _, _ in self.intending.values())]
 
     def _drop_stale_decisions(self, world: World) -> None:
@@ -232,6 +243,19 @@ class MindLoop:
             if self.courier.ready(ticket, world["time"]):
                 del self.writing[key]
                 deliver_turn(world, *key, self.courier.outcome(ticket))
+
+    def _deliver_stage(self, world: World) -> None:
+        for key, (ticket, claim) in list(self.staging.items()):
+            if self.courier.ready(ticket, world["time"]):
+                del self.staging[key]
+                deliver_stage(world, claim, self.courier.outcome(ticket))
+
+    def _ask_stage(self, world: World) -> None:
+        # Each claim is asked once: one not spoken in time is left to the world's scripted words.
+        for claim in stage_claims(world):
+            if claim["key"] not in self.staged:
+                self.staged.add(claim["key"])
+                self.staging[claim["key"]] = (self.courier.send(self.stage(claim["view"]), world["time"]), claim)
 
     def _ask_lines(self, world: World) -> None:
         for scene_id, turn, view in claim_turns(world):

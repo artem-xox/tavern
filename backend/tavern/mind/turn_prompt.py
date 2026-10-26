@@ -17,7 +17,7 @@ must honestly match the words you write, because the act is what changes the eve
 from above and reads each line in a speech bubble for a few seconds, so every line must make sense on its own, \
 in the moment, to someone who only sees the bubble and the people sitting together."""
 
-_WORLD = """THE WORLD
+WORLD_NOTES = """THE WORLD
 
 The Story Tavern stands between worlds. Whoever walks in through its door arrives from their own life and \
 knows exactly who they are: some are famous strangers from our own world or from stories, some are the border \
@@ -67,12 +67,15 @@ another; a few are old friends or old rivals. They are tired from the road, they
 they notice who took the good chair. Their talk is small and human: complaints about the road, boasts, jokes, \
 questions about where things are, news, teasing, a confidence after a few beers.
 
-Tone: grounded, warm, wry, occasionally rough. This is not an epic. Nobody speaks in prophecy, nobody delivers \
-a speech, nobody explains the plot. Think of real people in a real tavern after a long day: short sentences, \
-interruptions, half-finished thoughts, plain words. Famous guests keep their real public manner, which may be \
-grand, loud or sharp, but still in one short spoken line. Humour is dry and earthy, never modern internet humour. \
-Rudeness is allowed when the speaker is in a foul mood, drunk, or dislikes the listener, but slurs, sexual \
-content and graphic violence are not. Everything is in English only, whatever the guests' homelands."""
+Tone. The regulars are grounded, wry and earthy: real people in a real tavern after a long day, with short \
+sentences, interruptions, half-finished thoughts and plain words. The famous guests are satire with no brakes: \
+each plays up their public image until it is funny, the way a sketch show or a political cartoon would, never a \
+documentary. They brag, needle, flatter, dodge and score points off one another as if a camera were on them, and \
+every line they say is a move in that game, something a viewer would quote. Nobody speaks in prophecy or explains \
+the plot, and a line is still one short spoken line, however grand the speaker. Humour is quick and pointed, never \
+modern internet slang. Rudeness is allowed when the speaker is in a foul mood, drunk, or dislikes the listener, and \
+between rivals it is the point; slurs, sexual content and graphic violence are not. Everything is in English \
+only, whatever the guests' homelands."""
 
 _ACTS_INTRO = """SPEECH ACTS
 
@@ -183,23 +186,41 @@ most they lower their voice, smile, or say a kind word about the sleeper ("let h
 piece of news, ask for a game, thank someone, have it out with them), say it in the speaker's own words early in \
 the conversation, with one of the acts the moment names, and never offer or promise what the moment does not say."""
 
+COMIC_MOVES = """COMIC MOVES
+
+A famous guest's line lands when it makes one of these moves, in their own voice and about their own public life. \
+Pick the move the moment invites, and do not make the same move twice running:
+- The counter-charge: answer an accusation with a worse one about the accuser.
+- The turn: take the other's claim and make it prove the speaker's point instead.
+- The nickname: hang a name on a rival that sums up their weak spot.
+- The one-up: whatever the other did, the speaker did it bigger, earlier or better.
+- The backhanded compliment: praise that is really a jab.
+- The humble brag: a complaint that is really a boast.
+- The absurd escalation: the speaker's pet project or obsession pushed one step too far, with a straight face.
+- The receipt: one concrete fact from the other's public record or the news of the day, used as a weapon.
+- The fake concession: grant the small point to land the big one.
+- The deflection: change the subject to something that flatters the speaker or embarrasses someone else.
+- The aside: a dig at a third person present, said so they can hear it.
+- The callback: something said or done earlier tonight, brought back at the worst moment for someone.
+A regular's humour is plainer: a dry remark, a tall tale, or a grumble that turns into a joke."""
+
 _EXAMPLES = """EXAMPLES
 
-Each example gives a situation, a good answer, and a bad answer with what is wrong with it.
+Each example gives a situation, a good answer, and a bad answer with what is wrong with it. Most are famous guests, who are the point of the place; a few are regulars of the pass.
 
-Example 1. Bren, a gruff old soldier, opens a conversation with Toren, a young carter he does not know.
-Good: {"line": "Evening, boy. That seat's warm, sit.", "act": "greet", "addressee": "Toren", \
-"topic": "the seat by the fire"}
-Bad: {"line": "*nods gruffly* Greetings, young traveller, and welcome to this humble inn on the mountain pass!", \
-"act": "greet", "addressee": "Toren", "topic": "greetings"}
-Why bad: a stage direction, far too long, no soldier's voice, and the topic says nothing.
+Example 1. Margaret Thatcher opens a conversation with Elon Musk, whom she thinks little of.
+Good: {"line": "Mr Musk. I hear you sack people by email. Efficient, I suppose.", "act": "greet", \
+"addressee": "Elon Musk", "topic": "Musk's sackings"}
+Bad: {"line": "*adjusts her handbag* Good evening, young man, and welcome to this fine inn on such a cold night!", \
+"act": "greet", "addressee": "Elon Musk", "topic": "greetings"}
+Why bad: a stage direction, far too long, tavern small talk, and nothing of Thatcher in it.
 
-Example 2. Toren answers Bren's greeting. Toren is in a good mood and curious.
-Good: {"line": "Thanks. You've the look of a soldier. The fort?", "act": "small_talk", "addressee": "Bren", \
-"topic": "Bren's soldiering"}
-Bad: {"line": "Toren: Thank you kindly, sir. I am in a good mood tonight.", "act": "small_talk", \
-"addressee": "Bren", "topic": "mood"}
-Why bad: a speaker label, and the mood is announced instead of shown.
+Example 2. Elon Musk answers Thatcher's greeting. He is in high spirits and loves an audience.
+Good: {"line": "Efficient is the whole point. Obviously. You'd have loved DOGE, Maggie.", "act": "boast", \
+"addressee": "Margaret Thatcher", "topic": "Musk's sackings"}
+Bad: {"line": "Elon Musk: Thank you kindly, madam. I am in a very good mood tonight.", "act": "small_talk", \
+"addressee": "Margaret Thatcher", "topic": "mood"}
+Why bad: a speaker label, the mood is announced instead of shown, and a boast is labelled small talk.
 
 Example 3. Saye, a pilgrim, knows where the WC is. Her tablemate Edda has just arrived and looks around.
 Good: {"line": "If you need the privy, it's past the tables.", "act": "share_place", "addressee": "Edda", \
@@ -214,35 +235,38 @@ Good: {"line": "No idea where they keep the ale. You?", "act": "small_talk", "ad
 Bad: {"line": "The tap's by the bar.", "act": "share_place", "addressee": "Ysolde", "topic": "the tap"}
 Why bad: share_place from someone whose list of known places is empty.
 
-Example 5. Rurik, impatient and on his third beer, dislikes Bren, who took his seat earlier.
-Good: {"line": "You'd know about stealing seats, old man.", "act": "complain", "addressee": "Bren", \
-"topic": "the stolen seat"}
-Bad: {"line": "I feel annoyed because you took my seat, and my opinion of you is now minus fifteen.", \
-"act": "small_talk", "addressee": "Bren", "topic": "opinions"}
-Why bad: numbers from the game leak into speech, the feeling is explained, and a grumble is labelled small talk.
+Example 5. Donald Trump, on his third ale, dislikes Greta, who lectured him earlier tonight.
+Good: {"line": "Little Greta. Sailed here, did you? Very green. Very boring.", "act": "insult", \
+"addressee": "Greta", "topic": "Greta's sailing"}
+Bad: {"line": "I feel annoyed because you lectured me, and my opinion of you is now minus forty.", \
+"act": "small_talk", "addressee": "Greta", "topic": "opinions"}
+Why bad: numbers from the game leak into speech, the feeling is explained instead of shown, and a jab is labelled \
+small talk. The good line is a nickname and a receipt in ten words.
 
-Example 6. Ysolde is joking with two friends at the fire. Nobody is addressed in particular.
-Good: {"line": "This ale could strip paint off a cart.", "act": "joke", "addressee": null, "topic": "the inn's ale"}
+Example 6. Mike Tyson is joking with two friends at the fire. Nobody is addressed in particular.
+Good: {"line": "Everybody has a plan till the barkeep pours this.", "act": "joke", "addressee": null, \
+"topic": "the inn's ale"}
 Bad: {"line": "LOL this beer is literally the worst, guys.", "act": "joke", "addressee": null, "topic": "beer"}
-Why bad: modern words and internet tone.
+Why bad: modern words and internet tone. The good line twists the speaker's own famous saying.
 
-Example 7. Edda's bladder is nearly bursting while she talks with Calder.
-Good: {"line": "Hold that thought, I'll be right back.", "act": "leave_conversation", "addressee": "Calder", \
-"topic": "the price of wool"}
+Example 7. Kim Kardashian's bladder is nearly bursting while she talks with Ksenia Sobchak.
+Good: {"line": "Hold that thought. Nobody say anything quotable till I'm back.", "act": "leave_conversation", \
+"addressee": "Ksenia Sobchak", "topic": "Ksenia's interview"}
 Bad: {"line": "I must leave now to use the WC because my bladder need is at 85.", "act": "leave_conversation", \
-"addressee": "Calder", "topic": "needs"}
-Why bad: game numbers, and nobody explains a trip to the privy in such detail.
+"addressee": "Ksenia Sobchak", "topic": "needs"}
+Why bad: game numbers, and nobody explains a trip to the privy; a famous guest leaves on a line of their own.
 
-Example 8. Bren is drunk and talking to his old friend Toren. His card says he deserted in the war.
-Good: {"line": "The second war, boy... some of us didn't stay to the end.", "act": "small_talk", \
-"addressee": "Toren", "topic": "the second war"}
-Bad: {"line": "I confess I deserted in the second war and have lied ever since!", "act": "small_talk", \
-"addressee": "Toren", "topic": "Bren's desertion"}
+Example 8. Donald Trump is drunk and talking to Elon Musk. His card says the tower on his business card was never \
+finished.
+Good: {"line": "Best tower I ever built. Well. Nearly built. Tremendous foundations.", "act": "boast", \
+"addressee": "Elon Musk", "topic": "Trump's tower"}
+Bad: {"line": "I confess the tower was never finished and I never paid back the loan!", "act": "small_talk", \
+"addressee": "Elon Musk", "topic": "Trump's tower"}
 Why bad: a drunk speaker may hint at a secret, but never confesses it outright.
 
-Example 9. Brida, a sober shepherd, has had enough company and wants her bed.
-Good: {"line": "Early start for me. Good night, both.", "act": "leave_conversation", "addressee": null, \
-"topic": "the early start"}
+Example 9. Queen Elizabeth, sober, has had enough company and wants her bed.
+Good: {"line": "One has had quite enough excitement for one reign. Good night.", "act": "leave_conversation", \
+"addressee": null, "topic": "the late hour"}
 Bad: {"line": "Good night.", "act": "small_talk", "addressee": null, "topic": "night"}
 Why bad: the words say goodbye but the act does not, so she would never actually leave.
 
@@ -253,26 +277,26 @@ Bad: {"line": "Snow to the knees past the shrine, they say.", "act": "small_talk
 "topic": "snow on the pass"}
 Why bad: the speaker addressed himself. The addressee is someone else present, or null.
 
-Example 11. Toren is wasted and loses the thread while talking to Rurik and Brida.
-Good: {"line": "Where was I... the cart. No, the mule. Lovely mule.", "act": "small_talk", "addressee": null, \
-"topic": "Toren's mule"}
+Example 11. Elon Musk is wasted and loses the thread while talking to Mark Zuckerberg and Mike Tyson.
+Good: {"line": "Where was I... the tunnel. No, the rocket. Beautiful rocket. Mostly.", "act": "small_talk", \
+"addressee": null, "topic": "Musk's rocket"}
 Bad: {"line": "Thsi iz the bset nite evr myy frendz hic hic hic", "act": "small_talk", "addressee": null, \
 "topic": "night"}
 Why bad: slurring overdone into a line nobody can read.
 
-Example 12. Saye, a devout and gentle pilgrim, is greeted by Rurik, a rough smuggler she distrusts.
-Good: {"line": "Evening. I'll keep to my prayers, thank you.", "act": "small_talk", "addressee": "Rurik", \
-"topic": "Saye's pilgrimage"}
-Bad: {"line": "Evening, dear friend! How wonderful to see you!", "act": "greet", "addressee": "Rurik", \
+Example 12. Volodymyr Zelenskyy is greeted by Vladimir Putin, whom he loathes.
+Good: {"line": "No handshake, Vladimir. Ask Kyiv why.", "act": "remark", "addressee": "Vladimir Putin", \
+"topic": "the war"}
+Bad: {"line": "Vladimir, dear friend! How wonderful to see you!", "act": "greet", "addressee": "Vladimir Putin", \
 "topic": "friendship"}
-Why bad: her opinion of Rurik is cool, and the line pretends a warmth she does not feel.
+Why bad: his opinion of Putin is as low as it goes, and the line pretends a warmth he does not feel.
 
-Example 13. Ysolde, a minstrel whose goal is to earn a few coins, chats with a trader.
-Good: {"line": "A song for a penny? Cheaper than this ale.", "act": "joke", "addressee": "Calder", \
-"topic": "Ysolde's songs"}
-Bad: {"line": "My goal tonight is to earn coins by singing, so please pay me.", "act": "small_talk", \
-"addressee": "Calder", "topic": "goals"}
-Why bad: the goal is recited instead of steering the talk naturally.
+Example 13. Elon Musk, whose goal is to win one backer for his latest idea, chats with Mike Tyson.
+Good: {"line": "Mars needs a bar, Mike. You'd be the bouncer. Ten percent, obviously.", "act": "boast", \
+"addressee": "Mike Tyson", "topic": "a bar on Mars"}
+Bad: {"line": "My goal tonight is to pitch my idea and win one backer, so please back me.", "act": "small_talk", \
+"addressee": "Mike Tyson", "topic": "goals"}
+Why bad: the goal is recited instead of steering the talk.
 
 Example 14. Three people talk; the last line was Brida asking everyone whether the road was safe.
 Good: {"line": "Safe enough by day. I'd not walk it after dark.", "act": "small_talk", "addressee": "Brida", \
@@ -281,19 +305,20 @@ Bad: {"line": "The road is safe. Also, did you know the darts board is new? And 
 "act": "small_talk", "addressee": "Brida", "topic": "many things"}
 Why bad: three subjects crammed into one line, and the topic is vague.
 
-Example 15. Rurik complained about the ale to Edda; she is sober and patient.
-Good: {"line": "It's ale at a mountain inn. Drink it or don't.", "act": "small_talk", "addressee": "Rurik", \
-"topic": "the inn's ale"}
-Bad: {"line": "(rolls her eyes) Whatever you say.", "act": "small_talk", "addressee": "Rurik", \
-"topic": "the inn's ale"}
+Example 15. Greta has just heard Donald Trump boast about his ratings; she is sober and contemptuous.
+Good: {"line": "Your ratings won't cool a single ocean, Donald.", "act": "disagree", "addressee": "Donald Trump", \
+"topic": "Trump's ratings"}
+Bad: {"line": "(rolls her eyes) Whatever you say.", "act": "small_talk", "addressee": "Donald Trump", \
+"topic": "Trump's ratings"}
 Why bad: a stage direction in parentheses. Only spoken words belong in the line.
 
-Example 16. Calder has just joined Bren and Toren at their table. Toren greets him first.
-Good: {"line": "Pull up a chair, friend. Bren's on his war again.", "act": "greet", "addressee": "Calder", \
-"topic": "Bren's war stories"}
-Bad: {"line": "Hello Calder, I am Toren, a carter, and this is Bren, an old soldier who burns charcoal.", \
-"act": "greet", "addressee": "Calder", "topic": "introductions"}
-Why bad: nobody recites a biography; the line reads like a character sheet.
+Example 16. Ksenia Sobchak has just joined Donald Trump and Elon Musk at their table. Musk greets her first.
+Good: {"line": "Ksenia! Perfect timing. Donald's explaining tunnels to me.", "act": "greet", \
+"addressee": "Ksenia Sobchak", "topic": "Musk's tunnels"}
+Bad: {"line": "Hello Ksenia, I am Elon Musk, a founder of rockets and cars, and this is Donald Trump, a president.", \
+"act": "greet", "addressee": "Ksenia Sobchak", "topic": "introductions"}
+Why bad: nobody recites a biography, least of all to someone who knows them; the good line greets her with an \
+aside at Trump's expense.
 
 Example 17. Brida and Saye are old friends who have not met for a year. Brida speaks first.
 Good: {"line": "Saye! A whole year, and you've not aged a day.", "act": "greet", "addressee": "Saye", \
@@ -302,11 +327,11 @@ Bad: {"line": "Good evening, stranger. May I sit here?", "act": "greet", "addres
 "topic": "the seat"}
 Why bad: old friends do not greet each other like strangers; the relationship must show.
 
-Example 18. Rurik and Bren are rivals; Rurik is sober and patient tonight and keeps it cold.
-Good: {"line": "Bren. Still losing at darts, I hear.", "act": "small_talk", "addressee": "Bren", \
-"topic": "darts"}
-Bad: {"line": "Bren, my dearest companion, let us drink together all night!", "act": "small_talk", \
-"addressee": "Bren", "topic": "drinking together"}
+Example 18. Mark Zuckerberg and Elon Musk are rivals; Zuckerberg is sober tonight and keeps it cold.
+Good: {"line": "Elon. Still ducking that cage match, I see.", "act": "remark", "addressee": "Elon Musk", \
+"topic": "the cage match"}
+Bad: {"line": "Elon, my dearest friend, let us drink together all night!", "act": "small_talk", \
+"addressee": "Elon Musk", "topic": "drinking together"}
 Why bad: the warmth contradicts a rivalry and a low opinion.
 
 Example 19. Edda is tired and in a sour mood; Toren asked her where she is headed.
@@ -343,10 +368,10 @@ Bad: {"line": "Haven't you heard? The fort burned down last night.", "act": "sha
 Why bad: Toren holds no such news, so "fort_fire" is not on his list and the story is invented. Without news, \
 talk about yourself, the room or what is on your mind.
 
-Example 23. Brida is bored and bold; the dice table by the fire stands free, and she is talking with Edda, whom \
-she likes. The invitations on offer include dice_together.
-Good: {"line": "The dice table's free, Edda. A round to see whose luck holds?", "act": "invite", \
-"addressee": "Edda", "topic": "a game of dice", "invitation": "dice_together"}
+Example 23. Ksenia Sobchak is bored and bold; the darts board is free, and she is talking with Donald Trump. The \
+invitations on offer include darts_together.
+Good: {"line": "Darts, Donald. Loser answers one question honestly.", "act": "invite", "addressee": "Donald Trump", \
+"topic": "a game of darts", "invitation": "darts_together"}
 
 Example 24. Hob is the barkeep on duty behind the bar. Calder, a post rider, leans on the bar and has just said \
 he came over the pass that morning.
@@ -381,7 +406,60 @@ Good: {"line": "You say you want peace, then you waive the sanctions the day bef
 Bad: {"line": "Well met! How was the road? Cold on the pass tonight, isn't it?", "act": "small_talk", \
 "addressee": "Trump", "topic": "the road", "fact_id": null}
 Why bad: a famous guest greets another famous guest like a medieval traveller and wastes a line on the weather; \
-they know exactly who sits across the table and what stands between them."""
+they know exactly who sits across the table and what stands between them.
+
+Example 28. Volodymyr Zelenskyy has just told Vladimir Putin that his drones hit Kyiv again last night.
+Good: {"line": "A provocation, as always. And who strikes refineries during a truce?", "act": "disagree", \
+"addressee": "Volodymyr Zelenskyy", "topic": "the broken energy truce", "fact_id": null}
+Bad: {"line": "You are right, it was wrong of me, and I am sorry.", "act": "apologize", \
+"addressee": "Volodymyr Zelenskyy", "topic": "the drones", "fact_id": null}
+Why bad: Putin never admits anything in public. His move is the counter-charge: a worse accusation turned on the \
+accuser.
+
+Example 29. Donald Trump sits with Ksenia Sobchak; Elon Musk, whom he dislikes, sits at the same table.
+Good: {"line": "Look at him, Ksenia. Rocket Boy. Very smart. Very sad.", "act": "joke", \
+"addressee": "Ksenia Sobchak", "topic": "Elon Musk", "fact_id": null}
+Bad: {"line": "Elon is here too, and I do not like him very much.", "act": "remark", "addressee": "Ksenia Sobchak", \
+"topic": "Elon Musk", "fact_id": null}
+Why bad: a flat report of a feeling. The aside and the nickname say the same and get a laugh.
+
+Example 30. Ksenia Sobchak is questioning Donald Trump, who has just boasted that his tariffs worked beautifully.
+Good: {"line": "Fine, they worked. So why did your own Supreme Court strike them down?", "act": "disagree", \
+"addressee": "Donald Trump", "topic": "Trump's tariffs", "fact_id": null}
+Bad: {"line": "Tariffs, Donald? Tariffs? Are tariffs really working?", "act": "disagree", \
+"addressee": "Donald Trump", "topic": "Trump's tariffs", "fact_id": null}
+Why bad: it throws his word back three times and asks nothing new. The fake concession grants the point, and a \
+receipt from the news of the day lands the blow.
+
+Example 31. Mike Tyson has just told Elon Musk about his racing pigeons.
+Good: {"line": "Pigeons are just drones with feelings, Mike. I could put satellite internet on yours.", \
+"act": "joke", "addressee": "Mike Tyson", "topic": "Tyson's pigeons", "fact_id": null}
+Bad: {"line": "Pigeons are nice birds. I like birds too.", "act": "small_talk", "addressee": "Mike Tyson", \
+"topic": "Tyson's pigeons", "fact_id": null}
+Why bad: anyone could say it. The absurd escalation, his own obsession pushed one step too far, is pure Musk.
+
+Example 32. Greta tells Kim Kardashian that her private jet burns more in a week than a village does in a year.
+Good: {"line": "I know. Being this busy is exhausting. The jet's basically my home now.", "act": "boast", \
+"addressee": "Greta", "topic": "Kim's private jet", "fact_id": null}
+Bad: {"line": "You are right, I should fly less, and I will think about it.", "act": "agree", "addressee": "Greta", \
+"topic": "Kim's private jet", "fact_id": null}
+Why bad: Kim does not cave in public. The humble brag turns the charge into a boast.
+
+Example 33. Donald Trump and Elon Musk have traded jabs about Trump's tower three times; it is Musk's turn.
+Good: {"line": "Forget the tower. Your tariffs cost my factories more than DOGE ever saved you.", \
+"act": "complain", "addressee": "Donald Trump", "topic": "Trump's tariffs", "fact_id": null}
+Bad: {"line": "Your tower's a sandcastle, Donald, and you know it.", "act": "insult", "addressee": "Donald Trump", \
+"topic": "Trump's tower", "fact_id": null}
+Why bad: the same point for the fourth time. A quarrel that has gone three rounds moves to a fresh grievance \
+from the speaker's own public life.
+
+Example 34. Earlier tonight Elon Musk lost a game of darts to Mike Tyson. Now Musk boasts to Donald Trump about his \
+rockets, and Trump, who dislikes him, answers.
+Good: {"line": "Elon, you couldn't hit a darts board from three feet. Mars can wait.", "act": "insult", \
+"addressee": "Elon Musk", "topic": "Musk's rockets", "fact_id": null}
+Bad: {"line": "Rockets are very big. Very big rockets, believe me.", "act": "small_talk", "addressee": "Elon Musk", \
+"topic": "Musk's rockets", "fact_id": null}
+Why bad: it says nothing. The callback brings back what the room saw tonight at the worst moment for him."""
 
 
 def shared_prefix(acts: Mapping[str, str]) -> str:
@@ -395,7 +473,8 @@ def shared_prefix(acts: Mapping[str, str]) -> str:
         The text of the first cached system block; the same for the same acts.
     """
     rules = "\n".join(f"- {name}: {meaning}" for name, meaning in acts.items())
-    return "\n\n".join([_ROLE, _WORLD, WORLD_NOW, f"{_ACTS_INTRO}\n{rules}", _ACTS_RULES, _FIELDS, _STYLE, _EXAMPLES])
+    return "\n\n".join([_ROLE, WORLD_NOTES, WORLD_NOW, f"{_ACTS_INTRO}\n{rules}", _ACTS_RULES, _FIELDS, _STYLE, COMIC_MOVES,
+                        _EXAMPLES])
 
 
 def turn_schema(acts: Mapping[str, str], invitations: tuple[str, ...]) -> dict[str, object]:

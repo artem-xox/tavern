@@ -22,6 +22,7 @@ from tavern.mind.scripted import write_scripted_turn
 from tavern.server.cards_api import card_routes
 from tavern.server.runtime import Answerer, Chooser, Lineup, Store, TavernRuntime
 from tavern.server.sessions import TavernSessions
+from tavern.social.stage_lines import StageWriter, write_scripted_stage
 from tavern.social.turns import TurnWriter
 
 
@@ -77,7 +78,8 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
                health: HealthBoard | None = None,
                probes: Mapping[str, Callable[[], Awaitable[object]]] | None = None,
                answer: Answerer | None = None, catalog_dir: Path | None = None,
-               storyteller: Ask | None = None, scenarios_dir: Path | None = None) -> FastAPI:
+               storyteller: Ask | None = None, scenarios_dir: Path | None = None,
+               stage_writer: StageWriter = write_scripted_stage) -> FastAPI:
     """Construct the local server with explicit paths and AI configuration.
 
     Args:
@@ -102,6 +104,7 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
             it the compiler runs its labeled offline mode.
         writer: Turn writer of every session's conversation lines; scripted by default.
         writer_label: Name of that writer shown to the client (`haiku` or `scripted`).
+        stage_writer: Writer of the words on and at the stage; scripted by default.
         intender: Optional mind port writing guests' intentions; without it guests have none
             and the snapshot says so.
         store_for: Optional maker of a session's store from its ID, in place of the database or
@@ -138,7 +141,7 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
         initialize_database(database_url)
         store_for = lambda session_id: DatabaseStore(database_url, session_id)
     sessions = TavernSessions(map_data, save_dir, ai_config, seed, database_url, scenario, writer, writer_label,
-                              intender, store_for, choose, health, answer, storyteller, lineup)
+                              intender, store_for, choose, health, answer, storyteller, lineup, stage_writer)
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         ticker = asyncio.create_task(_run_world(sessions, 0.1)) if run_loop else None

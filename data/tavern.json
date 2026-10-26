@@ -746,11 +746,13 @@
       "kind": "stage",
       "name": "Stage",
       "x": 17,
-      "y": 9,
+      "y": 7,
+      "width": 2,
+      "height": 3,
       "interaction_spots": [
         [
           17,
-          9
+          8
         ]
       ],
       "walkable": true,

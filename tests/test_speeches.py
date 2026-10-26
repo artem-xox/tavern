@@ -6,11 +6,12 @@ import pytest
 
 from tavern.body.activities import ACTIVITIES
 from tavern.body.hearing import EVENT_SOUNDS
+from tavern.social.speeches import PERFORM_WAIT
 from tavern.social.thoughts import active_thoughts
 from dice_hall import advance, guest, happened, start, who
 from dice_hall import table_hall as bare_hall
 
-STAGE_SPOT = (17, 9)
+STAGE_SPOT = (17, 8)
 
 
 def table_hall(*actors: dict[str, Any]) -> dict[str, Any]:
@@ -55,10 +56,13 @@ def kinds(world: dict[str, Any], actor_id: str) -> list[str]:
     return [item["kind"] for item in active_thoughts(who(world, actor_id)["thoughts"], world["time"])]
 
 
-def test_the_hall_has_a_stage_with_one_speaker_spot_on_the_stage_itself() -> None:
+def test_the_hall_has_a_stage_three_long_and_two_deep_with_one_speaker_spot_on_it() -> None:
+    # S2-15: a 3-by-2 platform along the right wall, the room in front of it, the speaker at its front edge's middle.
     world = table_hall(speaker())
     stage = next(item for item in world["map"]["objects"] if item["kind"] == "stage")
-    assert stage["interaction_spots"] == [[stage["x"], stage["y"]]] and stage["walkable"] and stage["facing"] == "west"
+    cells = {(stage["x"] + dx, stage["y"] + dy) for dx in range(stage["width"]) for dy in range(stage["height"])}
+    assert ((stage["width"], stage["height"]), stage["interaction_spots"], tuple(stage["interaction_spots"][0]) in cells,
+            stage["walkable"], stage["facing"]) == ((2, 3), [list(STAGE_SPOT)], True, True, "west")
 
 
 def test_giving_a_speech_logs_it_with_the_words() -> None:
@@ -218,9 +222,10 @@ def test_a_goal_to_address_the_room_is_something_to_say() -> None:
     assert SPEECH["id"] in options_of(world)
 
 
-def test_the_speech_voices_the_speakers_thought() -> None:
+def test_the_scripted_number_never_reads_the_speakers_thought_aloud() -> None:
+    # The inner thought read to the room was the nonsense (S2-14): "Thirst first, then an audience..."
     event = next(item for item in speech().get("events") if item["type"] == "gave_speech")
-    assert "Nobody in this room knows who is the greatest man here." in event["line"]
+    assert "Nobody in this room" not in event["line"]
 
 
 def test_the_speaker_stays_on_the_stage_a_few_seconds_after_speaking() -> None:
@@ -230,10 +235,116 @@ def test_the_speaker_stays_on_the_stage_a_few_seconds_after_speaking() -> None:
 
 
 def test_the_listeners_remember_the_speech_the_moment_it_is_given() -> None:
-    world = speech(guest("bea", (15, 7)), seconds=0.5)
-    assert any(item["type"] == "heard_speech" and "Nobody in this room" in item["message"] for item in who(world, "bea")["memory"])
+    world = speech(guest("bea", (15, 7)), seconds=PERFORM_WAIT + 0.5)
+    given = next(item["time"] for item in world["events"] if item["type"] == "gave_speech")
+    assert [item["time"] for item in who(world, "bea")["memory"] if item["type"] == "heard_speech"] == [given]
 
 
 def test_the_listeners_turn_to_look_at_the_speaker() -> None:
-    world = speech(guest("bea", (15, 7)), seconds=0.5)
+    world = speech(guest("bea", (15, 7)), seconds=PERFORM_WAIT + 0.5)
     assert who(world, "bea")["gaze"]["cell"] == list(STAGE_SPOT)
+
+
+# --- reasons to climb, and a quiet room between numbers --------------------------------------------------------
+
+
+def with_reasons(opinion: float | None = None, drunk: float = 0.0, secret: bool = False,
+                 intention: dict[str, Any] | None = None, heard_ago: float | None = None) -> dict[str, Any]:
+    """Ada, a showman at the stage with Bea in sight: what Ada thinks of Bea, her drink, a secret, her intention, and
+    how long ago she heard a number from the stage."""
+    card = {**PERFORMER, **({"secret": "The tower was never finished."} if secret else {})}
+    world = table_hall(guest("ada", STAGE_SPOT, card=card, intention=intention), guest("bea", (15, 7)))
+    ada = who(world, "ada")
+    ada["drunkenness"] = drunk
+    if opinion is not None:
+        ada["relations"]["bea"] = {"name": "Bea", "opinion": opinion, "familiarity": "acquaintance", "knows_name": True}
+    world["time"] = 300.0
+    if heard_ago is not None:
+        ada["memory"].append({"time": 300.0 - heard_ago, "actor_id": "ada", "type": "heard_speech",
+                              "message": 'Ada heard Bea say: "Friends!"'})
+    return world
+
+
+@pytest.mark.parametrize("world, offered", [
+    pytest.param(with_reasons(), False, id="nothing-to-say"),
+    pytest.param(with_reasons(opinion=-30.0), True, id="a-rival-in-sight-to-roast"),
+    pytest.param(with_reasons(opinion=40.0, drunk=0.3), True, id="a-friend-to-toast-after-a-few"),
+    pytest.param(with_reasons(opinion=40.0), False, id="no-toasts-while-sober"),
+    pytest.param(with_reasons(drunk=0.5, secret=True), True, id="a-secret-on-a-drunk-tongue"),
+    pytest.param(with_reasons(intention=with_a_thought()), True, id="a-pitch-for-an-obsession"),
+])
+def test_a_performer_climbs_up_for_a_number_worth_giving(world: dict[str, Any], offered: bool) -> None:
+    assert (SPEECH["id"] in options_of(world)) is offered
+
+
+@pytest.mark.parametrize("heard_ago, offered", [
+    # Eight numbers in ten minutes (live seed 5, 2026-10-25) made the stage a routine rather than an event.
+    pytest.param(30.0, False, id="the-room-just-heard-one"),
+    pytest.param(120.0, True, id="the-room-has-had-a-rest"),
+])
+def test_the_room_rests_between_numbers(heard_ago: float, offered: bool) -> None:
+    assert (SPEECH["id"] in options_of(with_reasons(opinion=-30.0, heard_ago=heard_ago))) is offered
+
+
+# --- performing a number ---------------------------------------------------------------------------------------
+
+
+def numbers_given(world: dict[str, Any]) -> list[dict[str, Any]]:
+    """The `gave_speech` events logged so far."""
+    return [item for item in world["events"] if item["type"] == "gave_speech"]
+
+
+@pytest.mark.parametrize("seconds, given", [
+    pytest.param(PERFORM_WAIT - 1.0, 0, id="up-on-the-stage-waiting-for-the-words"),
+    pytest.param(PERFORM_WAIT + 1.0, 1, id="no-words-came-so-the-scripted-ones"),
+    pytest.param(12.0, 1, id="one-number-a-climb"),
+])
+def test_a_number_waits_for_its_words_then_falls_back_to_scripted_ones(seconds: float, given: int) -> None:
+    assert len(numbers_given(speech(guest("bea", (15, 7)), seconds=seconds))) == given
+
+
+def aimed_at_bea(opinion: float, drunk: float = 0.0, *others: dict[str, Any]) -> dict[str, Any]:
+    """Ada performs with Bea in the room, whom she thinks `opinion` of; the others listen too."""
+    world = table_hall(guest("ada", STAGE_SPOT, card=PERFORMER), guest("bea", (15, 8)), *others)
+    ada = who(world, "ada")
+    ada["drunkenness"] = drunk
+    ada["relations"]["bea"] = {"name": "Bea", "opinion": opinion, "familiarity": "acquaintance", "knows_name": True}
+    for other in others:
+        if "opinion" in other:
+            who(world, other["id"])["relations"]["ada"] = {"name": "Ada", "opinion": other["opinion"],
+                                                         "familiarity": "acquaintance", "knows_name": True}
+        if "likes_bea" in other:
+            who(world, other["id"])["relations"]["bea"] = {"name": "Bea", "opinion": other["likes_bea"],
+                                                         "familiarity": "acquaintance", "knows_name": True}
+    assert start(world, "ada", "give_speech", "stage")["accepted"]
+    advance(world, PERFORM_WAIT + 1.0)
+    return world
+
+
+@pytest.mark.parametrize("world, number, target", [
+    pytest.param(aimed_at_bea(-40.0), "roast", "bea", id="a-roast-of-a-rival"),
+    pytest.param(aimed_at_bea(50.0, 0.3), "toast", "bea", id="a-toast-to-a-friend"),
+    pytest.param(aimed_at_bea(0.0), "pitch", None, id="a-pitch-at-nobody"),
+])
+def test_the_number_is_logged_with_its_kind_and_target(world: dict[str, Any], number: str, target: str | None) -> None:
+    [event] = numbers_given(world)
+    assert (event["number"], event["target_id"], target is None or "Bea" in event["line"]) == (number, target, True)
+
+
+@pytest.mark.parametrize("world, actor_id, thought", [
+    pytest.param(aimed_at_bea(50.0, 0.3), "bea", "toasted", id="the-toasted-are-pleased"),
+    pytest.param(aimed_at_bea(-40.0), "bea", "roasted", id="the-roasted-are-stung"),
+    pytest.param(aimed_at_bea(-40.0, 0.0, guest("cid", (14, 7), likes_bea=60.0)), "cid", "friend_insulted",
+                 id="their-friends-take-offence"),
+])
+def test_an_aimed_number_lands_on_its_target(world: dict[str, Any], actor_id: str, thought: str) -> None:
+    assert thought in kinds(world, actor_id)
+
+
+@pytest.mark.parametrize("world, heckler", [
+    pytest.param(aimed_at_bea(-40.0, 0.0, rival()), "bea", id="the-roasted-answer-first"),
+    pytest.param(aimed_at_bea(0.0, 0.0, rival()), "cid", id="else-whoever-thinks-least-of-the-speaker"),
+    pytest.param(aimed_at_bea(0.0), None, id="nobody-minds"),
+])
+def test_a_number_names_who_will_heckle_it(world: dict[str, Any], heckler: str | None) -> None:
+    assert numbers_given(world)[0]["heckler_id"] == heckler

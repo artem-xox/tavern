@@ -8,13 +8,15 @@ from typing import Any, TypedDict
 WEIGHTS: Mapping[str, float] = {"quarrel": 2.0, "fight": 4.0, "knockout": 3.0, "played_together": 1.0, "gift": 1.0,
                                 "fell_asleep": 2.0, "limped_home": 2.0, "got_drunk": 1.0,
                                 # A speech is a set piece, but it is the room's reaction that makes the tale: below a fight.
-                                "speech": 1.5}
+                                "speech": 1.5,
+                                # A heckle is the room answering back: worth a gift, less than the number it answers.
+                                "heckle": 1.0}
 
 # Logged event types that are a moment by themselves.
 # An insult is not one: every quarrel logs its own `quarrel` event beside it, so counting both would count twice.
 _BY_TYPE = {"quarrel": "quarrel", "fight_started": "fight", "dice_won": "played_together", "darts_won": "played_together",
             "gave": "gift", "dozed_off": "fell_asleep", "limped_home": "limped_home", "got_drunk": "got_drunk",
-            "gave_speech": "speech"}
+            "gave_speech": "speech", "heckled": "heckle"}
 # `fight_ended` carries no outcome field, only words (`aftermath._words`): these end the fights that knocked someone out.
 _KNOCKOUT_WORDS = ("out cold", "knocked each other out")
 

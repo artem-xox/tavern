@@ -15,6 +15,7 @@ from tavern.mind.agents import Evaluators, choose_action, choose_answer
 from tavern.mind.intentions import INTENTION_RULES, Intender, IntentionRules
 from tavern.mind.scripted import write_scripted_turn
 from tavern.mind.selection import read_answers
+from tavern.social.stage_lines import StageWriter, write_scripted_stage
 from tavern.social.turns import TurnWriter
 
 
@@ -206,7 +207,8 @@ def evening_mode(requested: str | None, keyed: bool) -> tuple[str, str | None]:
 
 async def run_evening(world: World, config: Mapping[str, Any], rng: Random, evaluators: Evaluators,
                       pace: Pace, writer: TurnWriter = write_scripted_turn, intender: Intender | None = None,
-                      intention_rules: IntentionRules = INTENTION_RULES) -> Evening:
+                      intention_rules: IntentionRules = INTENTION_RULES,
+                      stage_writer: StageWriter = write_scripted_stage) -> Evening:
     """Play an evening to its end in lockstep.
 
     Each tick advances the world by one step, applies the answers that are due, then asks
@@ -228,6 +230,7 @@ async def run_evening(world: World, config: Mapping[str, Any], rng: Random, eval
         writer: Turn writer port; the scripted writer by default.
         intender: Mind port writing guests' intentions; None (offline) writes none.
         intention_rules: When guests take stock.
+        stage_writer: Writer of the words on and at the stage (`tavern.social.stage_lines`); scripted by default.
 
     Returns:
         The evening's complete log, choices, stalled spells, guests and end time. A guest is
@@ -246,7 +249,8 @@ async def run_evening(world: World, config: Mapping[str, Any], rng: Random, eval
     answer = ((lambda observation, invitation, options: choose_answer(observation, invitation, options, config, rng,
                                                                       evaluators)) if read_answers(config) else None)
     mind = MindLoop(courier, lambda observation: choose_action(observation, config, rng, evaluators),
-                    lambda view: writer(view, config), intender, intention_rules, answer)
+                    lambda view: writer(view, config), intender, intention_rules, answer,
+                    lambda view: stage_writer(view, config))
     _track(world, run)
     while not evening_over(world, pace.time_limit):
         step_world(world, pace.step)
