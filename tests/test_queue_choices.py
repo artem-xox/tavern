@@ -115,7 +115,7 @@ def test_an_impatient_guest_gives_up_waiting_for_darts(patience: float, gives_up
     data = {key: value for key, value in HALL.items() if key != "arrival"}
     data["actors"] = [{"id": "ann", "name": "Ann", "x": 3, "y": 9, "needs": {"boredom": 90}},
                       {"id": "bob", "name": "Bob", "x": 6, "y": 10, "needs": {"boredom": 0, "fatigue": 50},
-                       "traits": {"patience": patience}}]
+                       "traits": {"patience": patience, "sociability": 0.0}}]
     world = create_world(data)
     for guest in ("ann", "bob"):
         assert start_action(world, guest, {"id": "play_darts:darts", "verb": "play_darts", "target_id": "darts"})

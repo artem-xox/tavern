@@ -1,7 +1,7 @@
 """Conversation scenes: who talks together, who may join, and when someone leaves or the scene ends.
 
 A scene lives in `world["conversations"]`. It is held at a table (`table_id`) by guests seated at it or
-standing by it, or standing (`table_id` None) by guests side by side in a line or by a view. Members keep their own
+standing by it, or standing (`table_id` None) by guests side by side in a line or in the open. Members keep their own
 actions: whoever started or joined it holds `talk` or `join_conversation`, which the scene, not a
 timer, ends. When the next turn is spoken is `tavern.social.turns`' business; what an act does is
 `tavern.social.conversation`'s.
@@ -15,6 +15,7 @@ from tavern.body.ailment import urgent_needs
 from tavern.hall.closing import inn_closed
 from tavern.hall.memory import record_event
 from tavern.hall.room import find_object
+from tavern.hall.sightlines import line_visible
 from tavern.hall.staff import on_staff
 from tavern.hall.state import Actor, World
 from tavern.hall.validation import number
@@ -166,12 +167,6 @@ def _lines(world: Mapping[str, Any]) -> dict[str, tuple[str, int]]:
             for place, entry in enumerate(item.get("queue", []))}
 
 
-def _by_a_view(world: Mapping[str, Any], actor: Mapping[str, Any]) -> bool:
-    # Standing at, or right beside, the spot from which the fire or a window is watched.
-    return any(max(abs(actor["x"] - x), abs(actor["y"] - y)) <= 1 for item in world["map"]["objects"]
-               if item["kind"] in ("fireplace", "window") for x, y in item["interaction_spots"])
-
-
 def bar_of(world: Mapping[str, Any], person: Mapping[str, Any]) -> str | None:
     """Tell at which bar someone stands.
 
@@ -205,9 +200,9 @@ def side_by_side(world: Mapping[str, Any], actor: Mapping[str, Any], other: Mapp
         other: The other visitor.
 
     Returns:
-        True when neither sits, and they stand next to each other in the same line, or neither
-        walks and both stand by the fire or a window within reach of each other, or both stand at
-        the same bar (a guest on one of its spots, its staff member on a staff cell), however far apart.
+        True when neither sits, and they stand next to each other in the same line, or both stand at
+        the same bar (a guest on one of its spots, its staff member on a staff cell), however far apart, or
+        neither is staff, walks or has steps left and they stand within reach of each other with no wall between.
     """
     if actor["id"] == other["id"] or actor.get("seat_id") or other.get("seat_id"):
         return False
@@ -221,8 +216,11 @@ def side_by_side(world: Mapping[str, Any], actor: Mapping[str, Any], other: Mapp
     at_bar = bar_of(world, actor)
     if at_bar is not None and at_bar == bar_of(world, other):
         return True
-    near =max(abs(actor["x"] - other["x"]), abs(actor["y"] - other["y"])) <= world["rules"]["conversation"]["reach"]
-    return near and _by_a_view(world, actor) and _by_a_view(world, other)
+    if on_staff(actor) or on_staff(other) or actor["path"] or other["path"]:
+        return False  # Staff meet guests only across their bar; a guest with steps left is still on their way.
+    near = max(abs(actor["x"] - other["x"]), abs(actor["y"] - other["y"])) <= world["rules"]["conversation"]["reach"]
+    return near and line_visible((actor["x"], actor["y"]), (other["x"], other["y"]),
+                                 set(map(tuple, world["map"]["blocked"])))
 
 
 def within_reach(world: Mapping[str, Any], actor: Mapping[str, Any], other: Mapping[str, Any]) -> bool:
@@ -253,9 +251,11 @@ def start_conversation(world: World, actor: Actor, partner: Mapping[str, Any]) -
         The new scene; its first line is due `rules.conversation.opening` seconds from now.
     """
     count = sum(item["type"] == "conversation" for item in actor["memory"])
+    # A scene is held at a table only when both are at it; with one in the open it is a standing scene.
+    table = at_table(world, actor)
     scene: Conversation = {
         "id": f"conversation-{world['next_conversation_id']}", "participants": [actor["id"], partner["id"]],
-        "table_id": at_table(world, actor), "topic": TOPICS[count % len(TOPICS)], "turns": [],
+        "table_id": table if table == at_table(world, partner) else None, "topic": TOPICS[count % len(TOPICS)], "turns": [],
         "started_at": world["time"], "next_turn_at": world["time"] + world["rules"]["conversation"]["opening"],
         "writing": None, "written": None, "invitation": None}
     world["next_conversation_id"] += 1
