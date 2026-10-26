@@ -116,6 +116,10 @@ _STARTING: Mapping[str, tuple[float, str]] = MappingProxyType({
     "disliked": (-35.0, "acquaintance"), "loathed": (-60.0, "acquaintance")})
 
 
+# The optional flags a thought gains as the evening goes on (`responses.mark_answered`, `responses.note_calls`).
+_MARKS = {"answered", "called"}
+
+
 class Thought(TypedDict):
     """One timed thought: what it is, whom it is about, its effects, and what caused it."""
 
@@ -128,6 +132,8 @@ class Thought(TypedDict):
     source_event: str
     # Whether the guest has set out to answer it (`tavern.social.responses`); absent until they do.
     answered: NotRequired[bool]
+    # Whether a `called` event was logged for it (`responses.note_calls`); absent until then.
+    called: NotRequired[bool]
 
 
 class Relation(TypedDict):
@@ -380,8 +386,8 @@ def check_mind(actor: Mapping[str, Any]) -> None:
     if not isinstance(thoughts, list) or not isinstance(relations, dict):
         raise ValueError("Saved thoughts must be a list and relations a mapping")
     for item in thoughts:
-        if not isinstance(item, dict) or set(item) - {"answered"} != set(Thought.__annotations__) - {"answered"} \
-                or item["kind"] not in THOUGHTS or not isinstance(item.get("answered", False), bool):
+        if not isinstance(item, dict) or set(item) - _MARKS != set(Thought.__annotations__) - _MARKS \
+                or item["kind"] not in THOUGHTS or not all(isinstance(item.get(mark, False), bool) for mark in _MARKS):
             raise ValueError(f"Invalid saved thought {item!r}")
         if not isinstance(item["text"], str) or not isinstance(item["source_event"], str) \
                 or not isinstance(item["about"], (str, type(None))):

@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any
 
-from tavern.hall.memory import record_event
+from tavern.hall.memory import log_event, record_event
 from tavern.hall.state import Actor, World, find_actor
 from tavern.social.names import called
 from tavern.social.thoughts import THOUGHTS, Thought, active_thoughts
@@ -117,3 +117,20 @@ def mark_answered(world: World, actor: Actor, action: Mapping[str, Any]) -> None
     thought["answered"] = True
     record_event(world, actor, "answered", f"{actor['name']} went to answer {called(actor, other)}, who "
                                            f"{THOUGHTS[thought['kind']].reason} ({age_of(thought, world['time']):.0f} s later)")
+
+
+def note_calls(world: World) -> None:
+    """Log, once each, the thoughts that call for an answer about someone in the hall.
+
+    Args:
+        world: World whose visitors' thoughts get a `called` mark and whose event log is appended to. A thought is
+            noticed on the first tick after it forms, so the event may trail it by up to a tick.
+    """
+    for actor in world["actors"]:
+        for thought in calling(actor, world["time"]):
+            other = find_actor(world, thought["about"])
+            if thought.get("called") or other is None:
+                continue
+            thought["called"] = True
+            log_event(world, actor["id"], "called", f"{actor['name']} is called to answer {called(actor, other)}, who "
+                                                    f"{THOUGHTS[thought['kind']].reason}")
