@@ -89,6 +89,13 @@ def test_a_knockout_lies_on_the_floor_then_gets_up_groggy_with_their_thoughts() 
     assert [item["kind"] for item in bea["thoughts"] if item["kind"] in thoughts] == thoughts
 
 
+def test_the_end_of_a_fight_is_logged_with_its_outcome() -> None:
+    world = pair()
+    brawl(world)
+    fight = finish(world)
+    assert [item["outcome"] for item in world["events"] if item["type"] == "fight_ended"] == [fight["outcome"]] * 2
+
+
 def test_nobody_may_turn_on_someone_already_fighting() -> None:
     world = pair()
     brawl(world)

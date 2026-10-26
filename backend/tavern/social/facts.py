@@ -4,7 +4,7 @@ from collections.abc import Mapping, Sequence
 from random import Random
 from typing import Any, TypedDict
 
-from tavern.hall.memory import log_event
+from tavern.hall.memory import log_event, record_event
 from tavern.hall.state import Actor, World
 from tavern.hall.validation import number, unique_ids
 from tavern.social.names import called
@@ -207,6 +207,7 @@ def tell(world: World, scene: Conversation, speaker: Actor, addressee: Actor | N
                                        heard_at=world["time"], confidence=told["confidence"] * trust,
                                        hops=told["hops"] + 1, overheard=False)
         heard.append(listener["name"])
+        record_event(world, listener, "news_heard", f"{listener['name']} heard {told['topic']} from {speaker['name']}")
     if heard:
         names = heard[0] if len(heard) == 1 else f"{', '.join(heard[:-1])} and {heard[-1]}"
         log_event(world, speaker["id"], "news_told", f"{speaker['name']} told {told['topic']} to {names}")

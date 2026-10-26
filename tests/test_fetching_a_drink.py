@@ -56,6 +56,21 @@ def test_the_host_walks_back_with_the_mug_and_hands_it_over_at_the_table() -> No
         ["Ada went to fetch Bea an ale"], ["Ada brought Bea an ale"], []]
 
 
+def stands_by_the_table(world: dict[str, Any]) -> None:
+    """Bea gets up from her chair and stands at the table's edge, with no seat to call her own."""
+    table = next(item for item in world["map"]["objects"] if item["id"] == "near")
+    table["interaction_spots"] = [[3, 3], [4, 3]]
+    actor(world, "bea").update(seat_id=None, favorite_seat_id=None, action=None, status="idle", x=4, y=3, path=[])
+
+
+def test_the_host_walks_over_to_an_invitee_who_stands_by_the_table() -> None:
+    world = bought_for_bea()
+    stands_by_the_table(world)
+    advance_until(world, the_errand_ends, limit=60.0)
+    assert ([events(world, kind) for kind in ("fetch_done", "fetch_failed")], actor(world, "bea")["inventory"]["beer"]) == (
+        [["Ada brought Bea an ale"], []], 1)
+
+
 def test_a_drink_that_is_carried_is_still_a_treat() -> None:
     world = bought_for_bea()
     advance_until(world, lambda world: holds_a_mug(world, "bea"))

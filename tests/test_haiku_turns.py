@@ -190,6 +190,17 @@ def test_invalid_answers_are_rejected(answer: Any) -> None:
         parse_turn(view_of(scene_world()), answer)
 
 
+@pytest.mark.parametrize("act", [
+    pytest.param("accept", id="accept"),
+    pytest.param("decline", id="decline"),
+])
+def test_an_answer_to_an_invitation_drops_the_invitation_the_model_attached(act: str) -> None:
+    view = view_of(scene_world())
+    answer = {**GOOD, "act": act, "invitation": "dice_together"}
+    parsed = parse_turn({**view, "acts": [*view["acts"], act]}, answer)
+    assert parsed == {key: value for key, value in answer.items() if key != "invitation"}
+
+
 def asking(*answers: Any) -> Any:
     """A fake Claude port answering in turn, noting the questions it was asked."""
     replies, asked = iter(answers), []
@@ -276,6 +287,16 @@ def test_unrecorded_turn_fails_loudly_in_a_replay() -> None:
 def test_writer_mode_uses_haiku_when_a_key_is_configured(requested: str | None, keyed: bool, expected: str) -> None:
     mode, note = writer_mode(requested, keyed)
     assert (mode, note is None) == (expected, requested is not None or keyed)
+
+
+@pytest.mark.parametrize("requested, expected", [
+    pytest.param(None, "scripted", id="default-stays-offline-despite-a-key"),
+    pytest.param("scripted", "scripted", id="scripted-asked"),
+    pytest.param("haiku", "haiku", id="haiku-asked-for-in-an-offline-evening"),
+])
+def test_an_offline_evening_asks_haiku_only_when_told_to(requested: str | None, expected: str) -> None:
+    mode, _ = writer_mode(requested, True, offline=True)
+    assert mode == expected
 
 
 @pytest.mark.parametrize("requested", [

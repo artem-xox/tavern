@@ -12,6 +12,11 @@ def event(kind: str, message: str = "Ada did a thing", time: float = 1.0, actor_
     return {"time": time, "actor_id": actor_id, "type": kind, "message": message}
 
 
+def ended(outcome: str, message: str) -> dict[str, Any]:
+    """Build the logged end of a fight, with the outcome it carries."""
+    return {**event("fight_ended", message), "outcome": outcome}
+
+
 def counts(**given: int) -> dict[str, int]:
     """Moment counts with every kind of the table present, zero unless given."""
     return {kind: given.get(kind, 0) for kind in WEIGHTS}
@@ -23,10 +28,13 @@ def counts(**given: int) -> dict[str, int]:
     pytest.param([event("insulted"), event("quarrel", "Ada and Bram quarreled")], counts(quarrel=1),
                  id="insult-and-the-quarrel-it-starts-count-once"),
     pytest.param([event("fight_started")], counts(fight=1), id="fight"),
-    pytest.param([event("fight_ended", "Bram knocked Ada out cold")], counts(knockout=1), id="knockout-counts-extra"),
-    pytest.param([event("fight_ended", "Ada and Bram knocked each other out")], counts(knockout=1),
+    pytest.param([ended("knockout", "Bram knocked Ada out cold")], counts(knockout=1), id="knockout-counts-extra"),
+    pytest.param([ended("double_knockout", "Ada and Bram knocked each other out")], counts(knockout=1),
                  id="double-knockout-is-one-moment"),
-    pytest.param([event("fight_ended", "Ada gave up and backed away from Bram")], counts(),
+    pytest.param([ended("knockout", "Bram won the fight")], counts(knockout=1), id="knockout-is-read-from-the-outcome"),
+    pytest.param([ended("yielded", "Bram talked of knocking Ada out cold")], counts(),
+                 id="words-alone-are-no-knockout"),
+    pytest.param([ended("yielded", "Ada gave up and backed away from Bram")], counts(),
                  id="fight-ended-without-knockout-adds-nothing"),
     pytest.param([event("dice_won")], counts(played_together=1), id="dice-game"),
     pytest.param([event("gave", "Ada gave Bram a beer")], counts(gift=1), id="gift"),

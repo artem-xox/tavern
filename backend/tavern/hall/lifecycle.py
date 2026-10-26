@@ -296,12 +296,12 @@ def _interact(world: World, actor: Actor, elapsed: float) -> None:
     action = actor["action"]
     if action is not None and not _ends_on_timer(world, ACTIVITIES[action["verb"]]):
         actor["_remaining"] = max(0.0, actor["_remaining"])
-    elif action is not None and actor["_remaining"] <= 0 and not ACTIVITIES[action["verb"]].partner:
+    elif action is not None and actor["_remaining"] <= 0:
         complete_action(world, actor)
 
 
 def _ends_on_timer(world: Mapping[str, Any], activity: Activity) -> bool:
-    return not (activity.game or activity.held or (activity.served and tended(world)))
+    return not (activity.partner or activity.game or activity.held or (activity.served and tended(world)))
 
 
 def complete_action(world: World, actor: Actor) -> None:

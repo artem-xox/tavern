@@ -326,6 +326,9 @@ def parse_turn(view: Mapping[str, Any], answer: Any) -> TurnResult:
         # invite and share_news.
         given = ({key: value for key, value in answer.items() if key not in ("invitation", "fact_id") or value is not None}
                  if isinstance(answer, Mapping) else answer)
+        if isinstance(given, Mapping) and given.get("act") in ("accept", "decline"):
+            # An answer names no invitation (the one waiting is the game's); Haiku sometimes attaches one anyway.
+            given = {key: value for key, value in given.items() if key != "invitation"}
         if isinstance(given, Mapping) and isinstance(given.get("addressee"), str):
             # Named as listed; anything else is checked as it stands, so a stray id still means its guest.
             given = {**given, "addressee": _labels(view).get(given["addressee"], given["addressee"])}
@@ -379,12 +382,13 @@ def claude_writer(ask: Ask) -> TurnWriter:
     return write
 
 
-def writer_mode(requested: str | None, keyed: bool) -> tuple[str, str | None]:
+def writer_mode(requested: str | None, keyed: bool, offline: bool = False) -> tuple[str, str | None]:
     """Choose who writes conversation lines.
 
     Args:
         requested: `haiku`, `scripted`, or None for Haiku when it can be asked.
         keyed: Whether Claude can be asked: a key is configured, or a replay has recorded turns.
+        offline: Whether the evening is meant to make no model calls: then only an explicit `haiku` asks Haiku.
 
     Returns:
         The writer's label, and a note for the output when the default fell back to scripted lines.
@@ -392,6 +396,8 @@ def writer_mode(requested: str | None, keyed: bool) -> tuple[str, str | None]:
     Raises:
         ValueError: The writer is unknown, or Haiku was asked for without a key.
     """
+    if requested is None and offline:
+        return "scripted", "Offline evening, so the labeled scripted writer speaks (--writer haiku asks Haiku)"
     if requested is None:
         return ("haiku", None) if keyed else (
             "scripted", "No ANTHROPIC_API_KEY (or no recorded turns), so the labeled scripted writer speaks")

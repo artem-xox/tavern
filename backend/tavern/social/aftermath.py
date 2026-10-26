@@ -25,7 +25,7 @@ def bout_ended(world: World, fight: Mapping[str, Any], result: Ending) -> None:
     winner, loser = ((second, first) if fight["loser"] == first["id"] else (first, second)) if fight["loser"] else (None, None)
     message = _words(result.kind, first, second, winner, loser)
     for member in (first, second):
-        record_event(world, member, "fight_ended", message)
+        record_event(world, member, "fight_ended", message, outcome=result.kind)
     now = world["time"]
     if winner is not None and loser is not None:
         kind = "knocked_out_by" if result.kind == "knockout" else "lost_fight"
