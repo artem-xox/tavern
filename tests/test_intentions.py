@@ -82,6 +82,7 @@ def fresh() -> dict[str, Any]:
                  id="interrupt-before-writing-is-old-news"),
     pytest.param(lambda: thought(fresh(), "quarrel", 15.0), "quarrel", id="quarrel-thought"),
     pytest.param(lambda: thought(fresh(), "seat_taken", 15.0), "seat_taken", id="taken-seat-thought"),
+    pytest.param(lambda: heard(fresh(), "news_heard", 15.0), "news", id="news-heard-after-writing"),
     pytest.param(lambda: thought(fresh(), "chat", 15.0), None, id="pleasant-chat-is-not-salient"),
     pytest.param(lambda: heard(fresh(), "conversation", 15.0), None, id="scene-ended-alone-is-not-salient"),
     pytest.param(lambda: heard(fresh(), "left_conversation", 15.0), None, id="left-a-scene-alone-is-not-salient"),

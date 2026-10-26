@@ -421,6 +421,15 @@ def test_news_told_is_logged_with_the_teller_and_listeners() -> None:
             "Bea and Cid" in event["message"]) == ("ada", True, True, True)
 
 
+def test_each_listener_remembers_hearing_the_news() -> None:
+    world = seated_talk(social=100.0, cid_joins=True)
+    hold(world, "ada")
+    tell(world)
+    heard = {guest: [item["message"] for item in actor(world, guest)["memory"] if item["type"] == "news_heard"]
+             for guest in ("ada", "bea", "cid")}
+    assert heard == {"ada": [], "bea": ["Bea heard the toll from Ada"], "cid": ["Cid heard the toll from Ada"]}
+
+
 def test_nothing_is_logged_when_everyone_already_knew() -> None:
     world = talk_with_news("ada", "bea")
     tell(world)
