@@ -66,9 +66,20 @@ so the exit comes first.
 - The longest insult run of an evening is not a metric: the log carries the acts only inside a `turn` event's
   words. A live run is checked by reading `events.jsonl`.
 
-### Grudges, shout, writer (frozen when their step starts)
+### Grudges (step 4, saves are version 20)
 
-- Relationship entry in `relationships.json` gains `grudge: string | null`.
+- An optional `grudge: string` (a reason in words, never empty) on a starting relationship: a shared tie
+  (`Tie`, from a character's `relationships` or a scenario's), an entry of the regard matrix in
+  `characters/guests/relationships.json` (`Regard`), and so on the tie a guest holds (`OwnTie`, saved in
+  `actor["ties"]`). Absent when there is none, not `null`. The held tie is the only saved place, so the saved
+  world is `schema_version` 20 (approved by the user), checked by `ties.parse_own_ties`.
+- A grudge against someone is a cause that never goes stale: `hostility._caused` is true for them, so a shove
+  or a fight needs no fresh insult or quarrel. The other gates are unchanged (an ill opinion, the urge,
+  the same table or side by side), so a grudge alone makes nobody fight.
+- Insults need no grudge: they are open to anyone who thinks `DISLIKED` of the other (`conversation`).
+
+### Shout, writer (frozen when their step starts)
+
 - New act `shout` in the speech-act table with its loudness and thoughts.
 
 ## Steps
@@ -80,7 +91,8 @@ so the exit comes first.
 3. `heat` in the turn view and the writer's warning, the insult meaning, `stormed_off` in the score. Done.
    Check: `make check`; offline evenings seeds 1, 5, 7 unchanged (no scripted quarrel reaches the boil); a live
    seed 5 and its replay still wait for a key.
-4. Grudges: a pair with a grudge has hostile options without a fresh cause; without one, nothing changes.
+4. Grudges: a pair with a grudge has hostile options without a fresh cause; without one, nothing changes. Done
+   (the field and the gate); which pairs hold one is data, still to fill.
 5. `shout` act and its stimulus; bystanders react.
 6. Writer prompt change; provocation.
 7. Five live Guests evenings: count quarrels, shouts, walk-offs and fights.

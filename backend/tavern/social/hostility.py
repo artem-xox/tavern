@@ -67,8 +67,8 @@ def hostile_targets(observation: Mapping[str, Any], verb: str) -> list[str]:
 
     Returns:
         IDs of those who sit at the guest's table or stand beside them, are not staff, are awake, are thought
-        ill of (see `HOSTILITY.opinion`), gave a recent cause (`HOSTILE_CAUSES`), and the guest's
-        urge reaches the verb's threshold; sorted.
+        ill of (see `HOSTILITY.opinion`), gave a recent cause (`HOSTILE_CAUSES`) or are held a grudge against (a tie
+        with a `grudge`), and the guest's urge reaches the verb's threshold; sorted.
 
     Raises:
         ValueError: The verb is not a hostile verb, or drunkenness is malformed.
@@ -123,7 +123,8 @@ def _near(observation: Mapping[str, Any], person: Mapping[str, Any]) -> bool:
 
 
 def _caused(actor: Mapping[str, Any], other_id: str, now: float) -> bool:
-    # A thought lasts its kind's seconds from forming, so `expires_at` gives back when it formed.
-    return any(item["about"] == other_id and item["kind"] in HOSTILE_CAUSES
+    # A grudge is a cause that never goes stale. A thought lasts its kind's seconds from forming, so `expires_at`
+    # gives back when it formed.
+    return any(tie["with"] == other_id and "grudge" in tie for tie in actor.get("ties", [])) or any(item["about"] == other_id and item["kind"] in HOSTILE_CAUSES
                and now - (item["expires_at"] - THOUGHTS[item["kind"]].seconds) <= HOSTILITY.recent
                for item in active_thoughts(actor.get("thoughts", []), now))
