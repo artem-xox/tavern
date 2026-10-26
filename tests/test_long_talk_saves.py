@@ -6,7 +6,7 @@ import pytest
 
 from tavern.adapters.persistence import parse_world
 from tavern.hall.world import start_action, step_world
-from tests.test_social import advance, command, seated_world
+from test_social import advance, command, seated_world
 
 
 @pytest.mark.parametrize("seconds", [
