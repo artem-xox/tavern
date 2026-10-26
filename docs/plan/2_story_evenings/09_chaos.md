@@ -55,14 +55,16 @@ so the exit comes first.
 
 ### Model view
 
-- `conversation.heat: int` in the turn view: how many insults the run holds, so the writer can raise the
-  stakes on the way to the boil. The insult meaning stops saying "a quarrel that ends the conversation" (it no
-  longer did) and says what happens at `BOIL`.
+- `conversation.heat: int` in the turn view: how many insults the run holds. At `BOIL - 1` the line writer's
+  per-moment text says one more insult boils the quarrel over, so it can land a last jab or back down. The
+  insult meaning stops saying "a quarrel that ends the conversation" (it did not) and says what happens at `BOIL`.
 
 ### Score and metrics
 
-- `stormed_off` joins `story_score.WEIGHTS` at 1.5, below a fight. `metrics.json` counts `stormed_off` and
-  the longest insult run of the evening (`longest_insult_run`).
+- `stormed_off` joins `story_score.WEIGHTS` at 1.5, below a fight and a quarrel, so `metrics.json` counts it
+  under `story.moments` with no change to `Metrics`. The client shows an unknown kind with its fallback chip.
+- The longest insult run of an evening is not a metric: the log carries the acts only inside a `turn` event's
+  words. A live run is checked by reading `events.jsonl`.
 
 ### Grudges, shout, writer (frozen when their step starts)
 
@@ -75,8 +77,9 @@ so the exit comes first.
    Check: `pytest tests/test_quarrels.py -k heat`.
 2. Boil-over: at `BOIL` the scene ends in a fight when the gate allows, else in a walk-off; below `BOIL`
    nothing changes. Check: `pytest tests/test_quarrels.py`, `tests/test_conversation.py`.
-3. `heat` in the turn view and the insult meaning; `stormed_off` in the score and metrics.
-   Check: `make check`; offline evening seed 5; live seed 5 and its replay.
+3. `heat` in the turn view and the writer's warning, the insult meaning, `stormed_off` in the score. Done.
+   Check: `make check`; offline evenings seeds 1, 5, 7 unchanged (no scripted quarrel reaches the boil); a live
+   seed 5 and its replay still wait for a key.
 4. Grudges: a pair with a grudge has hostile options without a fresh cause; without one, nothing changes.
 5. `shout` act and its stimulus; bystanders react.
 6. Writer prompt change; provocation.
@@ -84,7 +87,7 @@ so the exit comes first.
 
 ## Done when
 
-- `make check` passes; no live Guests evening has an insult run longer than `BOIL`.
+- `make check` passes; no live Guests evening has an insult run longer than `BOIL` (read from `events.jsonl`).
 - In five live Guests evenings at least four have a quarrel and two have a fight (Results).
 
 ## Results

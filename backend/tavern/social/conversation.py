@@ -13,6 +13,7 @@ from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World
 from tavern.social import commitments, facts, invitations, social_acts
 from tavern.social.names import called
+from tavern.social.quarrels import BOIL
 from tavern.social.scenes import Conversation, end_conversation
 from tavern.social.thoughts import active_thoughts, opinion_of, think
 
@@ -113,7 +114,8 @@ ACTS: Mapping[str, Act] = MappingProxyType({
     "insult": Act(_insult, "insult the addressee, someone the speaker dislikes; it sours their mood and their "
                            "opinion of the speaker, offends anyone nearby who likes them, rings out across "
                            "the hall; if the addressee already thinks ill of the speaker it is answered in kind, "
-                           "a quarrel that ends the conversation"),
+                           f"a quarrel, and once {BOIL} insults have been traded it boils over into a fight or one "
+                           "of them storming off"),
     "apologize": Act(social_acts.apologize, "apologize to the addressee (everyone, if nobody in particular) "
                                             "for a wrong; it halves the latest grudge each holds against the "
                                             "speaker and warms them a little to the speaker"),

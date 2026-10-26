@@ -5,7 +5,11 @@ from typing import Any
 
 import pytest
 
+from tavern.evening.story_score import WEIGHTS, story_moments, story_score
+from tavern.mind.haiku_turns import turn_question
+from tavern.social.conversation import ACTS
 from tavern.social.quarrels import BOIL, heat
+from tavern.social.turns import claim_turns, turn_view
 from social_hall import actor, advance, say, scene_of as scene_in, seated_talk
 
 
@@ -98,3 +102,44 @@ def test_a_boiled_quarrel_is_not_taken_up_again_at_once() -> None:
     advance(world, 3)
     assert all(item.get("answered") for guest in ("ada", "bea") for item in actor(world, guest)["thoughts"]
                if item["kind"] == "quarrel")
+
+
+def test_a_walk_off_is_one_story_moment_worth_less_than_a_fight() -> None:
+    message = "Bea stormed off from Ada"
+    events = [{"time": 9.0, "actor_id": guest, "type": "stormed_off", "message": message} for guest in ("ada", "bea")]
+    scored = story_score(story_moments(events), WEIGHTS)
+    assert (scored["moments"]["stormed_off"], scored["score"], WEIGHTS["stormed_off"] < WEIGHTS["fight"]) == (
+        1, WEIGHTS["stormed_off"], True)
+
+
+@pytest.mark.parametrize("insults", [
+    pytest.param(0, id="no-insults"),
+    pytest.param(1, id="one-insult"),
+    pytest.param(BOIL - 1, id="one-short-of-the-boil"),
+])
+def test_the_writer_is_told_how_hot_the_quarrel_runs(insults: int) -> None:
+    world = seated_talk()
+    foes(world)
+    for _ in range(insults):
+        say(world, "insult")
+    [(_, _, view)] = claim_turns(world)
+    assert view["conversation"]["heat"] == insults
+
+
+@pytest.mark.parametrize("insults, warned", [
+    pytest.param(0, False, id="fresh-talk-no-warning"),
+    pytest.param(BOIL - 2, False, id="two-short-no-warning"),
+    pytest.param(BOIL - 1, True, id="one-short-of-the-boil-warns"),
+])
+def test_the_writer_is_warned_when_one_more_insult_boils_the_quarrel_over(insults: int, warned: bool) -> None:
+    world = seated_talk()
+    foes(world)
+    for _ in range(insults):
+        say(world, "insult")
+    [(_, _, view)] = claim_turns(world)
+    assert ("boils over" in turn_question(view)["content"]) == warned
+
+
+def test_the_insult_act_says_what_a_run_of_them_leads_to() -> None:
+    meaning = ACTS["insult"].meaning
+    assert ("boils over" in meaning, str(BOIL) in meaning, "ends the conversation" in meaning) == (True, True, False)
