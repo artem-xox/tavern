@@ -195,8 +195,8 @@ const PENNANT_GAP = 7;
 
 /**
  * A speaker's stage, as big as its object: a raised plank platform with boards along its front edge, a dark trim and a
- * step on the room's side at the speaker's spot, a lectern before the spot, bunting along the back, and brass dishes
- * for the two footlights (`drawFootlights` lights them).
+ * step in the middle of its front edge, a lectern just inside it, bunting along the back, and brass dishes for the two
+ * footlights (`drawFootlights` lights them).
  */
 export function drawStage(g: Phaser.GameObjects.Graphics, stage: WorldObject, size: number): void {
   const left: number = stage.x * size;
@@ -212,16 +212,14 @@ export function drawStage(g: Phaser.GameObjects.Graphics, stage: WorldObject, si
     if (across) g.lineStyle(1, 0x5b4129, 0.7).lineBetween(left + at, top + 3, left + at, top + height - 5);
     else g.lineStyle(1, 0x5b4129, 0.7).lineBetween(left + 3, top + at, left + width - 3, top + at);
   }
-  const [spotX, spotY]: [number, number] = (stage.interaction_spots[0] ?? [stage.x, stage.y]) as [number, number];
-  const cx: number = (spotX + 0.5) * size;
-  const cy: number = (spotY + 0.5) * size;
-  // The front trim, then the step just outside the front edge and the lectern just inside it, both at the spot.
+  // The front trim, then the step just outside the front edge and the lectern just inside it, both at the edge's
+  // middle: on a stage two cells long the speaker's spot is a cell off it, and the platform would look lopsided.
   const frontX: number = dx < 0 ? left + 1 : dx > 0 ? left + width - 5 : left + 1;
   const frontY: number = dy < 0 ? top + 1 : dy > 0 ? top + height - 7 : top + 1;
   g.fillStyle(0x5a3f27).fillRect(frontX, frontY, across ? 4 : width - 2, across ? height - 4 : 4);
-  const edge = { x: cx + dx * size / 2, y: cy + dy * size / 2 };
+  const edge = { x: left + width / 2 + dx * width / 2, y: top + height / 2 + dy * height / 2 };
   g.fillStyle(0x6b4f33).fillRect(edge.x + dx * 3 - (across ? 3 : 7), edge.y + dy * 3 - (across ? 7 : 3), across ? 6 : 14, across ? 14 : 6);
-  const lectern = { x: cx + dx * 9, y: cy + dy * 9 };
+  const lectern = { x: edge.x - dx * 7, y: edge.y - dy * 7 };
   g.fillStyle(0x4a3220).fillRect(lectern.x - (across ? 3 : 6), lectern.y - (across ? 6 : 3), across ? 7 : 12, across ? 12 : 7);
   g.fillStyle(0x7a5636).fillRect(lectern.x - (across ? 3 : 6), lectern.y - (across ? 6 : 3), across ? 7 : 12, 3);
   // Bunting along the back edge, the pennants pointing into the room, red and gold in turn.

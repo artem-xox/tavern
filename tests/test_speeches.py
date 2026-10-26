@@ -56,13 +56,28 @@ def kinds(world: dict[str, Any], actor_id: str) -> list[str]:
     return [item["kind"] for item in active_thoughts(who(world, actor_id)["thoughts"], world["time"])]
 
 
-def test_the_hall_has_a_stage_three_long_and_two_deep_with_one_speaker_spot_on_it() -> None:
-    # S2-15: a 3-by-2 platform along the right wall, the room in front of it, the speaker at its front edge's middle.
-    world = table_hall(speaker())
-    stage = next(item for item in world["map"]["objects"] if item["kind"] == "stage")
+def the_stage(world: dict[str, Any]) -> dict[str, Any]:
+    """The hall's stage."""
+    return next(item for item in world["map"]["objects"] if item["kind"] == "stage")
+
+
+def test_the_hall_has_a_square_stage_with_one_speaker_spot_on_it() -> None:
+    # A 2-by-3 platform looked out of proportion in the hall (the user, 2026-10-26): two by two, on the front edge.
+    stage = the_stage(table_hall(speaker()))
     cells = {(stage["x"] + dx, stage["y"] + dy) for dx in range(stage["width"]) for dy in range(stage["height"])}
     assert ((stage["width"], stage["height"]), stage["interaction_spots"], tuple(stage["interaction_spots"][0]) in cells,
-            stage["walkable"], stage["facing"]) == ((2, 3), [list(STAGE_SPOT)], True, True, "west")
+            stage["walkable"], stage["facing"]) == ((2, 2), [list(STAGE_SPOT)], True, True, "west")
+
+
+def test_the_stage_stands_against_the_wall_midway_between_the_tables_beside_it() -> None:
+    world = table_hall(speaker())
+    stage = the_stage(world)
+    # The tables on the stage's side of the hall, above and below it: the nearest of each.
+    side = [item for item in world["map"]["objects"] if item["kind"] == "table" and item["x"] > world["map"]["width"] / 2]
+    above = max(item["y"] for item in side if item["y"] < stage["y"])
+    below = min(item["y"] for item in side if item["y"] >= stage["y"] + stage["height"])
+    against_wall = stage["x"] + stage["width"] == world["map"]["width"] - 1
+    assert (against_wall, stage["y"] - above - 1, below - stage["y"] - stage["height"]) == (True, 1, 1)
 
 
 def test_giving_a_speech_logs_it_with_the_words() -> None:
