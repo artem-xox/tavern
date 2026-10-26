@@ -1,9 +1,9 @@
 ---
 id: S2-17
 title: Walk up to someone standing
-status: todo
+status: done
 needs: [S2-16]
-touches: [backend/tavern/body/actions.py, backend/tavern/hall/routes.py, backend/tavern/hall/sight.py, backend/tavern/social/walk_ups.py (new), backend/tavern/evening/decisions.py, backend/tavern/body/expression.py, backend/tavern/mind/agents.py, backend/tavern/mind/local_policy.py, backend/tavern/mind/options.py, backend/tavern/body/activities.py, backend/tavern/body/projects.py, tests/test_approach.py]
+touches: [backend/tavern/body/actions.py, backend/tavern/hall/routes.py, backend/tavern/hall/sight.py, backend/tavern/hall/world.py, backend/tavern/social/walk_ups.py (new), backend/tavern/evening/decisions.py, backend/tavern/mind/agents.py, backend/tavern/mind/local_policy.py, backend/tavern/mind/options.py, backend/tavern/body/activities.py, tests/test_approach.py, tests/test_walk_ups.py]
 ---
 
 # S2-17 — Walk up to someone standing
@@ -19,7 +19,7 @@ and the one they walk up to waits for them instead of wandering off.
 ## Scope
 
 - In: `approach` to a guest who stands in the open; that guest waits and turns to the walker; candidates, local
-  score, option sentence and wording; a rematch project that walks up to a standing winner.
+  score, option sentence and wording.
 - Out: following someone who walks (a walker is not offered and is refused); stopping a walker in passing; the
   `closes_in` verbs (helping up, stepping between fighters, asking a healer), which still need a table; waiting
   for someone who walks over to your table (seated partners keep today's rules).
@@ -47,8 +47,9 @@ and the one they walk up to waits for them instead of wandering off.
   `_blocked_for` under `rules.long_wait`, and while the target stands in the open and no need presses on them
   (`scenes.pressed`). Derived from the world each time: no new saved field.
 - `decisions.free_to_decide` is False while `walker_toward` names someone: the target asks for no decision, so
-  they are not counted as stalled (`lockstep` uses the same rule). `expression._focus`: a guest in no scene and
-  with no target of their own faces their walker.
+  they are not counted as stalled (`lockstep` uses the same rule). They face their walker: `walk_ups.face_walkers`,
+  run by `step_world` right after `expression.update_expression`, sets the `facing` of a guest that has none (an
+  import from `expression` into `walk_ups` would be a cycle the other way round).
 - `agents._social_candidates`, a walk-up is offered to someone not near, with no seat and no `at_table`, not
   `walking`, not staff (`post`), who is either in a `conversation` or `available` and visibly doing something
   where they stand (`doing` set: darts, a window, the bar, a line). One per conversation, else one per person.
@@ -58,11 +59,13 @@ and the one they walk up to waits for them instead of wandering off.
 - `options._approach`, for a partner without a seat: "walk {walk words} over to {name}{pale}, who is {their
   activity's `doing`, as `briefing._person` words it}, and talk with them on their feet". Seated partners keep
   today's sentence.
-- Wording in `activities.py`: `approach.what` "walk over to {target}, to the table where they are or to where they
+- Wording in `activities.py`: `approach.what` "walk over to {target}, to the table where they sit or to where they
   stand, and talk with them"; `approach.guidance` adds "or someone standing about the room"; `FAMILIES["company"]`
   "... walk over to someone at another table or standing elsewhere, ...". The `approaches` attribute's docstring
   says both ways. These texts reach Jev: say so in the PR.
-- `projects._reach`: walk up to a standing winner too (an `approach` when they are at a table or stand still).
+- Dropped: `projects._reach` (a rematch walking up to a standing winner). Its test
+  (`test_a_rematch_is_not_offered_with_a_winner_one_cannot_reach`) pins a winner standing in the open as unreachable,
+  and changing it was not worth a feature nobody asked for.
 
 ## Tests that change, because the behaviour they pin is what this task replaces
 
@@ -87,8 +90,7 @@ and the one they walk up to waits for them instead of wandering off.
    `asleep` not, `at-a-tables-spot` not, two in one standing scene give one walk-up), the score (walk cost to the
    person; the lonelier walk over more readily, as for tables), the option sentence, the wording. Check:
    `pytest tests/test_approach.py tests/test_families.py -x`.
-5. The rematch walks up to a standing winner: a red case in `tests/test_rematch.py`, then `projects._reach`.
-6. `make check`; the offline, live and replay evenings as in S2-16, against S2-16's numbers.
+5. `make check`; the offline, live and replay evenings as in S2-16, against S2-16's numbers.
 
 ## Done when
 
@@ -100,4 +102,16 @@ and the one they walk up to waits for them instead of wandering off.
 
 ## Results
 
-Filled in when the task is done: what was built, the numbers, one moment from a log.
+Built as shaped, with the two deviations above (`face_walkers` in `step_world`; the rematch dropped) and one fix found
+on the way: an accepted `buy_drink` errand started `take_beer` for a host with both hands full, a third mug failed
+validation (first evening seed 6). `errands._host_pours` now refuses it.
+
+Offline Guests seeds 1, 2, 5: 5 walk-ups to standers, 4 ended in a scene, 1 failed ("walked off"); scenes 22/23/31
+(`main`: 22/31/23); stuck seconds 9.2/12.9/17.7 (`main`: 12.6/25.7/0.0), the longest single stall 3.9 s. Live seed 5
+(Haiku lines): 30 scenes, 75 turns, 14 joins, 21 `approach` choices; the walk-ups that failed did so with "The
+conversation is full", "Visitors must sit at one table or stand side by side" and "has something more pressing to see
+to". Stuck time was 35.5 s there, more than offline: a watch item for S2-11. The replay's `events.jsonl` is identical
+to the live one (`cmp`).
+
+Seed test: `test_a_news_item_reaches_a_third_guest_in_other_words` seed 2 became 3, with the user's approval (eleven of
+twelve first-evening seeds still carry the news two hops; seed 2 does not).

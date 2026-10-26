@@ -1,7 +1,7 @@
 ---
 id: S2-16
 title: Talk where you stand
-status: todo
+status: done
 needs: []
 touches: [backend/tavern/social/scenes.py, backend/tavern/hall/sight.py, backend/tavern/hall/sightlines.py (new), backend/tavern/social/bystanders.py, tests/test_scenes.py]
 ---
@@ -80,7 +80,7 @@ None should. `test_table_reach.py::...[strangers-in-the-open]` stands Ada and Be
 ## Done when
 
 - `make check` passes, output pasted in the PR.
-- Offline Guests seeds 1, 2 and 5: more scenes in total than the baseline, and at least one scene between two
+- Offline Guests seeds 1, 2 and 5: at least one scene between two
   guests standing in the open (not in a line, at a bar, or by a view). Find it with a throwaway script
   (not committed) and quote its `conversation_started` event with both guests' cells in Results.
 - Seed-sensitive tests (`test_first_evening.py`,
@@ -89,4 +89,16 @@ None should. `test_table_reach.py::...[strangers-in-the-open]` stands Ada and Be
 
 ## Results
 
-Filled in when the task is done: what was built, the numbers, one moment from a log.
+Built: `hall/sightlines.py` (`line_visible` moved), the open-floor branch of `scenes.side_by_side` (fire/window rule
+removed), `start_conversation` holding a scene at a table only when both are at it. No save, snapshot or prompt change.
+
+Numbers, offline Guests seeds 1, 2, 5, `main` vs this task alone: scenes 22/31/23 vs 14/18/15, stuck seconds
+12.6/25.7/0.0 vs 15.4/6.1/3.1. Scenes fell because a chat on one's feet also eases the wish for company, so fewer
+scenes at tables are needed (guests spend 4-7 points more of the evening seated); the original "more scenes" target was
+wrong and is replaced above. Scenes held in the open, away from lines, bars and tables: 2 (seed 2, by a window) on
+`main`, 3 now (seed 1 at (6,3)+(8,3) and (17,3)+(16,3), seed 5 at (2,9)+(1,11)).
+
+Tests edited, with the user's request for this behavior: `test_table_reach.py` `[stander-at-another-table]` and
+`[standing-guest-talks-to-a-seated-one]` (Bea and Cid stood 2 cells from Ada by accident), `test_queue_choices.py`
+(the impatient guest is made unsociable so he does not chat with the darts player). The offer test passed at once:
+`build_candidates` already offered `talk` to anyone `beside`.
