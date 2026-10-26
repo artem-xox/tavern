@@ -190,6 +190,17 @@ def test_invalid_answers_are_rejected(answer: Any) -> None:
         parse_turn(view_of(scene_world()), answer)
 
 
+@pytest.mark.parametrize("act", [
+    pytest.param("accept", id="accept"),
+    pytest.param("decline", id="decline"),
+])
+def test_an_answer_to_an_invitation_drops_the_invitation_the_model_attached(act: str) -> None:
+    view = view_of(scene_world())
+    answer = {**GOOD, "act": act, "invitation": "dice_together"}
+    parsed = parse_turn({**view, "acts": [*view["acts"], act]}, answer)
+    assert parsed == {key: value for key, value in answer.items() if key != "invitation"}
+
+
 def asking(*answers: Any) -> Any:
     """A fake Claude port answering in turn, noting the questions it was asked."""
     replies, asked = iter(answers), []

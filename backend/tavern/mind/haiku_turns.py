@@ -326,6 +326,9 @@ def parse_turn(view: Mapping[str, Any], answer: Any) -> TurnResult:
         # invite and share_news.
         given = ({key: value for key, value in answer.items() if key not in ("invitation", "fact_id") or value is not None}
                  if isinstance(answer, Mapping) else answer)
+        if isinstance(given, Mapping) and given.get("act") in ("accept", "decline"):
+            # An answer names no invitation (the one waiting is the game's); Haiku sometimes attaches one anyway.
+            given = {key: value for key, value in given.items() if key != "invitation"}
         if isinstance(given, Mapping) and isinstance(given.get("addressee"), str):
             # Named as listed; anything else is checked as it stands, so a stray id still means its guest.
             given = {**given, "addressee": _labels(view).get(given["addressee"], given["addressee"])}
