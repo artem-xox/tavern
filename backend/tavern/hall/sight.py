@@ -11,40 +11,12 @@ from tavern.body.fights import fight_of, opponent_of
 from tavern.body.items import ITEMS
 from tavern.body.wounds import hurt, laid_out
 from tavern.hall.room import OBJECT_KINDS, find_object
+from tavern.hall.sightlines import line_visible
 from tavern.hall.staff import on_staff, post_of
 from tavern.hall.state import Actor, find_actor
 from tavern.hall.validation import saved_cell
 from tavern.social.names import called
 from tavern.social.scenes import conversation_of, pressed, within_reach
-
-
-def line_visible(origin: tuple[int, int], target: tuple[int, int], blocked: set[tuple[int, int]]) -> bool:
-    """Tell whether a straight line between two cells passes no blocked cell.
-
-    Args:
-        origin: Viewer's cell.
-        target: Cell looked at.
-        blocked: Cells that hide what lies behind them.
-    Returns:
-        True when nothing blocks the view between the cells.
-    """
-    # Integer Bresenham visibility treats the endpoint itself as visible furniture.
-    x, y = origin
-    end_x, end_y = target
-    dx, dy = abs(end_x - x), -abs(end_y - y)
-    step_x, step_y = (1 if x < end_x else -1), (1 if y < end_y else -1)
-    error = dx + dy
-    while (x, y) != target:
-        if (x, y) != origin and (x, y) in blocked:
-            return False
-        doubled = 2 * error
-        if doubled >= dy:
-            error += dy
-            x += step_x
-        if doubled <= dx:
-            error += dx
-            y += step_y
-    return True
 
 
 def visible_cells(world: Mapping[str, Any], actor: Mapping[str, Any], radius: int) -> list[list[int]]:
