@@ -128,7 +128,10 @@ def _both_play_dice(world: Mapping[str, Any], host: Mapping[str, Any],
 def _host_pours(world: Mapping[str, Any], host: Mapping[str, Any],
                 guest: Mapping[str, Any]) -> list[tuple[str, dict[str, Any]]] | None:
     tap = known_place(host, "tap")
-    return None if tap is None else [(host["id"], _command("take_beer", tap))]
+    # A mug needs a free hand: the invitation may have been made, or accepted, with both full.
+    if tap is None or host["inventory"]["beer"] >= ITEMS["beer"].hands:
+        return None
+    return [(host["id"], _command("take_beer", tap))]
 
 
 def _host_heads_home(world: Mapping[str, Any], host: Mapping[str, Any],

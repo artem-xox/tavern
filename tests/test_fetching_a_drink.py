@@ -215,3 +215,13 @@ def test_a_host_with_no_chair_to_sit_in_and_nobody_near_gives_up_at_once() -> No
     advance_until(world, the_errand_ends, limit=3.0)
     assert (len(events(world, "invitation_failed")), len(events(world, "fetch_failed")),
             actor(world, "ada")["inventory"]["beer"], free_to_decide(world, actor(world, "ada"))) == (1, 1, 1, True)
+
+
+def test_a_host_whose_hands_are_full_cannot_set_out_to_fetch_the_drink() -> None:
+    world = seated_talk()
+    know(world, "ada", "tap")
+    actor(world, "ada")["inventory"]["beer"] = 2
+    say(world, "invite", "Shall we?", invitation="buy_drink")
+    say(world, "accept", "Gladly.")
+    advance(world, 3)
+    assert (actor(world, "ada")["inventory"]["beer"], events(world, "fetch_begun"), world["invitations"]) == (2, [], [])
