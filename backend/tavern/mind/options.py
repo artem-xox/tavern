@@ -4,7 +4,7 @@ from collections.abc import Callable, Mapping
 import math
 from typing import Any
 
-from tavern.body.activities import FAMILIES
+from tavern.body.activities import ACTIVITIES, FAMILIES
 from tavern.body.items import ITEMS
 from tavern.mind.fight_words import TEXTS as FIGHT_TEXTS
 from tavern.mind.goals import serving_aim
@@ -239,6 +239,11 @@ def _approach(observation: Observation, action: Action) -> str:
     table = known_object(observation, partner.get("table_id")) if partner else None
     pale = (f" ({name} looks pale and feverish)" if partner and partner.get("ailing")
             else f" ({name} is battered and hurt)" if partner and partner.get("hurt") else "")
+    if partner and not partner.get("seat_id") and "x" in partner:
+        activity = ACTIVITIES.get(partner.get("doing") or "")
+        doing = activity.doing if activity and activity.doing else "standing about"
+        return (f"walk {walk_words(steps_to(observation, partner))} over to {name}{pale}, who is {doing}, "
+                "and talk with them on their feet")
     if table is None:
         return f"walk over to {name}'s table and talk with them{pale}, standing beside it"
     return (f"walk {walk_words(steps_to(observation, table))} over to the {label_of(table)} and talk with {name}{pale}, "

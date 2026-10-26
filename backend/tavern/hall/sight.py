@@ -16,7 +16,7 @@ from tavern.hall.staff import on_staff, post_of
 from tavern.hall.state import Actor, find_actor
 from tavern.hall.validation import saved_cell
 from tavern.social.names import called
-from tavern.social.scenes import conversation_of, pressed, within_reach
+from tavern.social.scenes import at_table, conversation_of, pressed, within_reach
 
 
 def visible_cells(world: Mapping[str, Any], actor: Mapping[str, Any], radius: int) -> list[list[int]]:
@@ -81,7 +81,8 @@ def people_in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[
         viewer calls them, cell, seat and table, whether they are free to talk (not a sleeper, not fighting nor on the
         floor), whether they are asleep, whether they look unwell (`ailing`) or hurt, their condition (`wounds`),
         whom they are fighting (`fighting`), whether they are known to carry a remedy (`healer`), their conversation, whether they are within reach of the viewer (at one table or side by
-        side), their current verb and target name, and
+        side), the table they are at (`at_table`, seated or standing by it), whether they are on the move (walking, or
+        waiting on a blocked route), their current verb and target name, and
         what is in their hands (`holding`, counts of the kinds others can see); for staff also `post`, the name of the bar they work at.
     """
     walls = set(map(tuple, world["map"]["blocked"]))
@@ -105,7 +106,8 @@ def people_in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[
                           fighting=opponent_of(fight, visitor["id"]) if fight else None,
                           healer=carries_cure(visitor["inventory"]),
                           conversation=scene["id"] if scene else None,
-                          beside=within_reach(world, actor, visitor),
+                          beside=within_reach(world, actor, visitor), at_table=at_table(world, visitor),
+                          walking=visitor["status"] in ("walking", "waiting") or bool(visitor["path"]),
                           doing=action.get("verb"), target=target["name"] if target else None,
                           holding={kind: visitor["inventory"][kind] for kind, item in ITEMS.items()
                                    if item.visible and visitor["inventory"][kind]})

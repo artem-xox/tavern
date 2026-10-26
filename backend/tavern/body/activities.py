@@ -41,8 +41,9 @@ class Activity:
         partner: Whether it targets another visitor instead of an object. Such a verb is a part in a
             conversation scene (`tavern.social.scenes`): the scene, not a timer, ends it.
         joins: Whether it joins the partner's scene instead of starting one with them.
-        approaches: Whether the part walks first, to a spot at the table the partner sits at, and then joins the
-            partner's scene or starts one with them (`tavern.social.scenes`).
+        approaches: Whether the part walks first, to a spot at the table the partner is at or, when they stand in the
+            open, to a free cell beside them, and then joins the partner's scene or starts one with them
+            (`tavern.social.scenes`); a partner standing in the open waits for the walker (`tavern.social.walk_ups`).
         near_person: Whether it targets another visitor at the actor's table or beside them, as a chat does:
             no scene, no walking, and the timer ends it. Shoving (`tavern.social.hostility`) is such a verb, and
             fighting is one that the world ends (`held`).
@@ -361,8 +362,8 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              sound=Sound("chat", 0.25, 6.0, "a conversation"), doing="walking over for a word",
              done="went over for a word",
              family="company",
-             what="walk over to the table where {target} sits and talk with them, standing beside it",
-             guidance="The polite way to seek out someone sitting at another table: nobody's chair is taken. It "
+             what="walk over to {target}, to the table where they sit or to where they stand, and talk with them",
+             guidance="The polite way to seek out someone sitting at another table, or standing about the room: nobody's chair is taken. It "
                       "eases the wish for company like any chat, and standing there they may suggest moving to a "
                       "free table together, a game or an ale. Pointless with someone they dislike."),
     Activity(verb="join_conversation", fatigue_per_second=0.05, partner=True, joins=True, duration=8.0, on_arrival=_join_scene,
@@ -602,7 +603,8 @@ FAMILIES: Mapping[str, str] = MappingProxyType({
     "refreshment": "get something to drink",
     "resting": "sit down for a rest, or sleep a while where they sit",
     "seat_choice": "find a seat at a table, or move to another one",
-    "company": "chat with someone at their table or beside them, walk over to someone at another table, join a "
+    "company": "chat with someone at their table or beside them, walk over to someone at another table or standing "
+               "elsewhere, join a "
                "conversation, lean on the bar, or hand someone something they carry",
     "pastime": "pass the time",
     "wc": "use the WC",

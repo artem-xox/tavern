@@ -36,6 +36,7 @@ from tavern.social.errands import honor_invitations
 from tavern.social.responses import mark_answered
 from tavern.social.invitations import errand_parties, invitations_of
 from tavern.social.tables import mark_ownership
+from tavern.social.walk_ups import face_walkers
 from tavern.social.scenes import check_conversations
 from tavern.social.thoughts import forget_expired
 from tavern.social.speeches import perform_overdue
@@ -186,6 +187,7 @@ def step_world(world: World, dt: float) -> None:
         activate(world, actor, {"id": "doze", "verb": "doze", "target_id": None}, (None, []))
     finish_parts(world)
     update_expression(world)
+    face_walkers(world)
     show_sleep(world)
 
 
