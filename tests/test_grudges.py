@@ -1,12 +1,15 @@
 """A grudge is a reason in words that one guest holds against another: it travels with the tie and gives a cause to lash out."""
 
 from collections.abc import Callable
+import json
 from pathlib import Path
 from typing import Any
 
 import pytest
 
+from tavern.adapters.characters import load_catalog
 from tavern.adapters.persistence import load_world, save_world
+from tavern.evening.lineup import lineup_scenario
 from tavern.hall.world import create_world
 from tavern.social.hostility import hostile_targets
 from tavern.social.ties import own_regard, own_ties, parse_own_ties, parse_regard, parse_ties
@@ -99,3 +102,25 @@ def test_a_grudge_survives_a_save(tmp_path: Path) -> None:
     world = create_world(data)
     save_world(world, tmp_path / "evening.json")
     assert load_world(tmp_path / "evening.json")["actors"][0]["ties"] == held(GRUDGE)
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+# The grudges the famous guests bring, as (holder, toward): each has a reason in the guest's own relationship.
+FAMOUS = [
+    pytest.param("putin", "zelensky", id="putin-zelensky"),
+    pytest.param("zelensky", "putin", id="zelensky-putin"),
+    pytest.param("zelensky", "trump", id="zelensky-trump"),
+    pytest.param("trump", "zuckerberg", id="trump-zuckerberg"),
+    pytest.param("musk", "zuckerberg", id="musk-zuckerberg"),
+    pytest.param("zuckerberg", "musk", id="zuckerberg-musk"),
+]
+
+
+@pytest.mark.parametrize("holder, toward", FAMOUS)
+def test_famous_guests_bring_their_grudges_into_the_evening(holder: str, toward: str) -> None:
+    catalog = load_catalog(ROOT / "characters")
+    templates = {"guests": json.loads((ROOT / "data" / "scenarios" / "guests.json").read_text())}
+    guests = lineup_scenario(templates, catalog, "guests", [holder, toward], 5).guests
+    tie = next(item for guest in guests if guest["id"] == holder for item in guest["ties"] if item["with"] == toward)
+    assert tie.get("grudge")

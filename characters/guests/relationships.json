@@ -157,7 +157,8 @@
     "zuckerberg": {
       "kind": "disliked",
       "note": "A rival who copies his ideas and talks like a quarterly report.",
-      "history": "In June 2023 Musk offered to fight Zuckerberg in a cage match; Zuckerberg replied send me location, and they never fought. Meta launched Threads as a rival to Twitter in July 2023, and Musk mocked it. Zuckerberg trains in jiu-jitsu and won medals in a 2023 tournament. In 2025 both found themselves on Donald Trump's side of the room."
+      "history": "In June 2023 Musk offered to fight Zuckerberg in a cage match; Zuckerberg replied send me location, and they never fought. Meta launched Threads as a rival to Twitter in July 2023, and Musk mocked it. Zuckerberg trains in jiu-jitsu and won medals in a 2023 tournament. In 2025 both found themselves on Donald Trump's side of the room.",
+      "grudge": "The cage match Zuckerberg never turned up for in 2023."
     },
     "kardashian": {
       "kind": "well known",
@@ -214,7 +215,8 @@
     "zelensky": {
       "kind": "loathed",
       "note": "The man his war is against, whom he will not name without contempt.",
-      "history": "They met in person once, at the Normandy format summit in Paris on 9 December 2019, and agreed to a prisoner exchange. Russia invaded on 24 February 2022, and Zelenskyy has said he will not shake Putin's hand. When Zelenskyy challenged Putin to meet him in Istanbul in May 2025, Putin sent a lower-level delegation. Both have said in October 2026 that they back three-way talks."
+      "history": "They met in person once, at the Normandy format summit in Paris on 9 December 2019, and agreed to a prisoner exchange. Russia invaded on 24 February 2022, and Zelenskyy has said he will not shake Putin's hand. When Zelenskyy challenged Putin to meet him in Istanbul in May 2025, Putin sent a lower-level delegation. Both have said in October 2026 that they back three-way talks.",
+      "grudge": "Every speech Zelensky gives makes the Kremlin look small, and he cannot forgive it."
     },
     "zuckerberg": {
       "kind": "well known",
@@ -395,7 +397,8 @@
     "zuckerberg": {
       "kind": "disliked",
       "note": "A man who once shut off his megaphone, and he has not forgotten.",
-      "history": "Facebook suspended Trump's account after the Capitol riot of 6 January 2021, and restored it in 2023. Trump once said Zuckerberg would spend the rest of his life in prison if he tried to rig the 2024 election, then shared a dinner with him at Mar-a-Lago in November 2024. Zuckerberg gave $1 million to the inauguration, and Meta paid $25 million to settle Trump's lawsuit in January 2025."
+      "history": "Facebook suspended Trump's account after the Capitol riot of 6 January 2021, and restored it in 2023. Trump once said Zuckerberg would spend the rest of his life in prison if he tried to rig the 2024 election, then shared a dinner with him at Mar-a-Lago in November 2024. Zuckerberg gave $1 million to the inauguration, and Meta paid $25 million to settle Trump's lawsuit in January 2025.",
+      "grudge": "Facebook shut off his megaphone after the Capitol riot of January 2021."
     },
     "kardashian": {
       "kind": "admired",
@@ -494,7 +497,8 @@
     "putin": {
       "kind": "loathed",
       "note": "The man who invaded his country, and he will not shake his hand for the cameras.",
-      "history": "They met in person once, at the Normandy format summit in Paris on 9 December 2019, and agreed to a prisoner exchange. Russia invaded on 24 February 2022, and Zelenskyy has said he will not shake Putin's hand. When Zelenskyy challenged Putin to meet him in Istanbul in May 2025, Putin sent a lower-level delegation. Both have said in October 2026 that they back three-way talks."
+      "history": "They met in person once, at the Normandy format summit in Paris on 9 December 2019, and agreed to a prisoner exchange. Russia invaded on 24 February 2022, and Zelenskyy has said he will not shake Putin's hand. When Zelenskyy challenged Putin to meet him in Istanbul in May 2025, Putin sent a lower-level delegation. Both have said in October 2026 that they back three-way talks.",
+      "grudge": "The war he started costs Zelensky's country another night of sirens, every night."
     },
     "queen": {
       "kind": "admired",
@@ -509,7 +513,8 @@
     "trump": {
       "kind": "disliked",
       "note": "He needs the help and resents the bargaining that comes with it.",
-      "history": "Their phone call of 25 July 2019, in which Trump asked Zelenskyy for a favour concerning the Bidens, led to Trump's first impeachment. In February 2025 Trump called him a dictator without elections, and on 28 February they clashed on camera in the Oval Office. They met again on 18 August 2025 at the White House with European leaders, and Trump has swung between blaming Kyiv and blaming Moscow since."
+      "history": "Their phone call of 25 July 2019, in which Trump asked Zelenskyy for a favour concerning the Bidens, led to Trump's first impeachment. In February 2025 Trump called him a dictator without elections, and on 28 February they clashed on camera in the Oval Office. They met again on 18 August 2025 at the White House with European leaders, and Trump has swung between blaming Kyiv and blaming Moscow since.",
+      "grudge": "The shouting match in the Oval Office in February 2025, in front of the cameras."
     },
     "tyson": {
       "kind": "admired",
@@ -556,7 +561,8 @@
     "musk": {
       "kind": "disliked",
       "note": "A rival with a bigger rocket and a louder account, and a cage match he does not quite want.",
-      "history": "In June 2023 Musk offered to fight Zuckerberg in a cage match; Zuckerberg replied send me location, and they never fought. Meta launched Threads as a rival to Twitter in July 2023, and Musk mocked it. Zuckerberg trains in jiu-jitsu and won medals in a 2023 tournament. In 2025 both found themselves on Donald Trump's side of the room."
+      "history": "In June 2023 Musk offered to fight Zuckerberg in a cage match; Zuckerberg replied send me location, and they never fought. Meta launched Threads as a rival to Twitter in July 2023, and Musk mocked it. Zuckerberg trains in jiu-jitsu and won medals in a 2023 tournament. In 2025 both found themselves on Donald Trump's side of the room.",
+      "grudge": "Musk keeps taunting him about the cage match, in front of everyone."
     },
     "putin": {
       "kind": "well known",
