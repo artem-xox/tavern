@@ -86,6 +86,25 @@ def hostile_targets(observation: Mapping[str, Any], verb: str) -> list[str]:
                    and _caused(actor, person["id"], now)})
 
 
+def may_fight(actor: Mapping[str, Any], other_id: str, now: float) -> bool:
+    """Tell whether a guest's temper, drink and hatred bring them to a fight with one person.
+
+    Args:
+        actor: The guest, with `traits`, `drunkenness`, `relations` and `thoughts`.
+        other_id: The one they would turn on.
+        now: Current game time.
+
+    Returns:
+        Whether the guest's urge reaches a fight and `_willing` holds for `start_fight`; unlike `hostile_targets` it
+        looks at no cause or place, since the caller (a quarrel) has them in hand.
+
+    Raises:
+        ValueError: Drunkenness is not a number from 0 to 1.
+    """
+    observation = {"actor": actor}
+    return urge(observation) >= HOSTILITY.hatred_urge and _willing(observation, other_id, "start_fight", now)
+
+
 def _willing(observation: Mapping[str, Any], other_id: str, verb: str, now: float) -> bool:
     # A shove needs a grudge and a temper. A fight comes by drink (a hot head, really drunk, who thinks ill of them) or
     # by hatred (a head hot enough, drunk or sober).
