@@ -379,12 +379,13 @@ def claude_writer(ask: Ask) -> TurnWriter:
     return write
 
 
-def writer_mode(requested: str | None, keyed: bool) -> tuple[str, str | None]:
+def writer_mode(requested: str | None, keyed: bool, offline: bool = False) -> tuple[str, str | None]:
     """Choose who writes conversation lines.
 
     Args:
         requested: `haiku`, `scripted`, or None for Haiku when it can be asked.
         keyed: Whether Claude can be asked: a key is configured, or a replay has recorded turns.
+        offline: Whether the evening is meant to make no model calls: then only an explicit `haiku` asks Haiku.
 
     Returns:
         The writer's label, and a note for the output when the default fell back to scripted lines.
@@ -392,6 +393,8 @@ def writer_mode(requested: str | None, keyed: bool) -> tuple[str, str | None]:
     Raises:
         ValueError: The writer is unknown, or Haiku was asked for without a key.
     """
+    if requested is None and offline:
+        return "scripted", "Offline evening, so the labeled scripted writer speaks (--writer haiku asks Haiku)"
     if requested is None:
         return ("haiku", None) if keyed else (
             "scripted", "No ANTHROPIC_API_KEY (or no recorded turns), so the labeled scripted writer speaks")

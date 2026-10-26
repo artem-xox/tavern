@@ -80,7 +80,8 @@ def arguments(root: Path) -> argparse.ArgumentParser:
     parser.add_argument("--calls", type=Path, help="recorded calls.jsonl to replay (replay mode)")
     parser.add_argument("--writer", choices=("haiku", "scripted"),
                         help="who writes conversation lines; default: Haiku when ANTHROPIC_API_KEY is in the env "
-                             "file (a replay: when the recording has turns), else scripted")
+                             "file (a replay: when the recording has turns), else scripted; "
+                             "never by default in --mode local")
     parser.add_argument("--env-file", type=Path, default=root / ".env")
     parser.add_argument("--trace", action="store_true",
                         help="trace the live Jev and Haiku calls to LangSmith, one thread per character; "
@@ -365,7 +366,7 @@ def main(root: Path) -> None:
     keyed = (any(record["kind"] == "turn" for record in calls) if mode == "replay"
              else bool(values.get("ANTHROPIC_API_KEY")))
     try:
-        writer, writer_note = writer_mode(args.writer, keyed)
+        writer, writer_note = writer_mode(args.writer, keyed, offline=mode == "local")
     except ValueError as error:
         parser.error(str(error))
     lines = turn_writer(writer, mode, calls, keep, values, tracer)

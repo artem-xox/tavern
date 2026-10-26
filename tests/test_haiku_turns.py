@@ -278,6 +278,16 @@ def test_writer_mode_uses_haiku_when_a_key_is_configured(requested: str | None, 
     assert (mode, note is None) == (expected, requested is not None or keyed)
 
 
+@pytest.mark.parametrize("requested, expected", [
+    pytest.param(None, "scripted", id="default-stays-offline-despite-a-key"),
+    pytest.param("scripted", "scripted", id="scripted-asked"),
+    pytest.param("haiku", "haiku", id="haiku-asked-for-in-an-offline-evening"),
+])
+def test_an_offline_evening_asks_haiku_only_when_told_to(requested: str | None, expected: str) -> None:
+    mode, _ = writer_mode(requested, True, offline=True)
+    assert mode == expected
+
+
 @pytest.mark.parametrize("requested", [
     pytest.param("haiku", id="haiku-without-a-key"),
     pytest.param("", id="empty-name"),
