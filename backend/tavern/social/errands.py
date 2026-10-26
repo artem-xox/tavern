@@ -17,6 +17,7 @@ from tavern.social.dice import PLAY, open_chairs
 from tavern.social.giving import formed_since
 from tavern.social.invitations import KINDS, Errand, free_chair, free_table, home_table, known_place, open_chairs_at
 from tavern.social.names import called
+from tavern.social.scenes import at_table
 from tavern.social.thoughts import think
 
 # Starts an action the way `world.start_action` does: world, visitor ID, action; returns acceptance.
@@ -202,9 +203,10 @@ def _carry(world: World, errand: Errand, host: Actor | None, guest: Actor | None
     if action_error(world, host, hand_over) is None:
         start(world, host["id"], hand_over)
     elif verb != "sit":
-        # Not near yet and not on the way: take a chair at the invitee's table, as an invitee is seated. With
-        # none to be had there is no way to get near, so the errand ends and the host keeps the mug.
-        chair = free_chair(world, home_table(world, guest), host)
+        # Not near yet and not on the way: take a chair at the invitee's table, as an invitee is seated, or at the
+        # table they stand beside when they have no seat of their own. With none to be had there is no way to get
+        # near, so the errand ends and the host keeps the mug.
+        chair = free_chair(world, home_table(world, guest) or at_table(world, guest), host)
         if not (chair and start(world, host["id"], _command("sit", chair))["accepted"]):
             return _failed(world, errand)
     return True
