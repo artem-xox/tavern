@@ -11,6 +11,7 @@ from tavern.adapters.characters import load_catalog
 from tavern.adapters.persistence import load_world, save_world
 from tavern.evening.lineup import lineup_scenario
 from tavern.hall.world import create_world
+from tavern.mind.portrait import portrait
 from tavern.social.hostility import hostile_targets
 from tavern.social.ties import own_regard, own_ties, parse_own_ties, parse_regard, parse_ties
 from hostile_view import person, thought, view
@@ -124,3 +125,8 @@ def test_famous_guests_bring_their_grudges_into_the_evening(holder: str, toward:
     guests = lineup_scenario(templates, catalog, "guests", [holder, toward], 5).guests
     tie = next(item for guest in guests if guest["id"] == holder for item in guest["ties"] if item["with"] == toward)
     assert tie.get("grudge")
+
+
+def test_a_portrait_tells_the_grudge_a_guest_holds() -> None:
+    actor = {"card": None, "ties": [{"name": "Bea", "kind": "rivals", "note": "Old rivals.", "grudge": GRUDGE}]}
+    assert portrait(actor) == f"Bea is a rival of theirs (Old rivals.). They hold a grudge against them: {GRUDGE}"

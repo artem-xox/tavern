@@ -11,24 +11,27 @@ from tavern.social.scenes import end_conversation
 # The run of insults (two each) at which a quarrel boils over.
 BOIL = 4
 
+# The acts that make up a row: a shout is an insult flung across the hall.
+ROW_ACTS = ("insult", "shout")
+
 # How the world starts an action for a visitor (`lifecycle.activate`).
 Activate = Callable[..., None]
 
 
 def heat(scene: Mapping[str, Any]) -> int:
-    """Count the insults two guests have traded, one after the other, at the end of a scene.
+    """Count the insults and shouts two guests have traded, one after the other, at the end of a scene.
 
     Args:
         scene: A conversation scene with its `turns`.
 
     Returns:
-        The length of the run of `insult` turns ending the scene, each addressed to the guest who spoke the one
+        The length of the run of `ROW_ACTS` turns ending the scene, each addressed to the guest who spoke the one
         before it. Any other act, a third speaker, one speaker twice in a row, or an insult to nobody in
         particular ends the run; 0 for a scene with no turns or whose last turn is not an insult.
     """
     run, later = 0, None
     for turn in reversed(scene["turns"]):
-        if turn["act"] != "insult" or turn["addressee"] is None:
+        if turn["act"] not in ROW_ACTS or turn["addressee"] is None:
             break
         # Each insult answers the one after it: the later speaker is the one this turn insulted, and the reverse.
         if later is not None and (later["speaker"] != turn["addressee"] or later["addressee"] != turn["speaker"]):

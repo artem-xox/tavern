@@ -78,9 +78,22 @@ so the exit comes first.
   the same table or side by side), so a grudge alone makes nobody fight.
 - Insults need no grudge: they are open to anyone who thinks `DISLIKED` of the other (`conversation`).
 
-### Shout, writer (frozen when their step starts)
+### Shout and the writer
 
-- New act `shout` in the speech-act table with its loudness and thoughts.
+- `shout`, an act of `ACTS` and an insult flung across the hall: it does what an insult does
+  (`conversation._insult`, so the same thoughts, offence and answer in kind) and counts in the heat of a row
+  (`quarrels.ROW_ACTS`). It is offered while the speaker thinks `DISLIKED` of someone present and a row is on
+  (`quarrels.heat > 0`) or they hold a grudge against that person (`hostility.grudge_against`).
+- It sounds as a shout: loudness 0.7 and reach 30 cells (`overhearing.TURN_SOUNDS`), past the interrupt level, so
+  every head in the hall turns and what can be broken off is. An insult stays 0.4 and 14. An insult answered in
+  kind also logs a `quarrel`, which is loud already; the shout matters for the one that is not answered.
+- Far listeners take offence at a shout as at an insult (`overhearing._catch`).
+- The shared prompt says a rivalry is played to the end and an insult may be harsh and personal, about the
+  other's public record; the portrait of a guest tells the grudge they hold (`portrait`).
+- Provocation needed no new rule: the `needle` aim (`aims.py`) already sends a guest who dislikes someone to
+  needle them, and a grudge keeps that dislike alive.
+- The famous guests bring six grudges (`characters/guests/relationships.json`): Putin and Zelensky of each other,
+  Zelensky of Trump, Trump of Zuckerberg, and Musk and Zuckerberg of each other.
 
 ## Steps
 
@@ -93,9 +106,9 @@ so the exit comes first.
    seed 5 and its replay still wait for a key.
 4. Grudges: a pair with a grudge has hostile options without a fresh cause; without one, nothing changes. Done
    (the field and the gate); which pairs hold one is data, still to fill.
-5. `shout` act and its stimulus; bystanders react.
-6. Writer prompt change; provocation.
-7. Five live Guests evenings: count quarrels, shouts, walk-offs and fights.
+5. `shout` act and its sound; far listeners react. Done.
+6. Writer prompt and the portrait; provocation was already the `needle` aim. Done.
+7. Five live Guests evenings: count quarrels, shouts, walk-offs and fights. **Not done**: it needs a live key.
 
 ## Done when
 
@@ -103,3 +116,12 @@ so the exit comes first.
 - In five live Guests evenings at least four have a quarrel and two have a fight (Results).
 
 ## Results
+
+Built (steps 1–6): the boil-over (`social/quarrels.py`), `heat` and a warning for the writer, `stormed_off` in the
+story score, the `grudge` field with saves at version 20, six grudges in the data, the `shout` act, and the prompt
+and portrait changes. `make check`: 4556 passed, mypy clean, 260 node tests.
+
+Offline Guests evenings (scripted lines, seeds 1, 2, 3, 5, 7): unchanged by the grudges and the boil-over (the
+scripted writer never reaches a run of four insults, and its drunk hotheads rarely stand by a rival), so they
+cannot show the effect. The five live evenings of step 7 are still to run, and with them the "done when" and the
+closing of D27 and D28.

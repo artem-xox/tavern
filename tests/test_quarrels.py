@@ -143,3 +143,15 @@ def test_the_writer_is_warned_when_one_more_insult_boils_the_quarrel_over(insult
 def test_the_insult_act_says_what_a_run_of_them_leads_to() -> None:
     meaning = ACTS["insult"].meaning
     assert ("boils over" in meaning, str(BOIL) in meaning, "ends the conversation" in meaning) == (True, True, False)
+
+
+def test_the_writer_is_told_that_a_rivalry_is_played_to_the_end_and_may_be_harsh() -> None:
+    prefix = turn_question(view_of_next_line())["system"][0]
+    assert "a rivalry is played to the end" in prefix
+
+
+def view_of_next_line() -> dict[str, Any]:
+    """The view of the first line of a plain talk."""
+    world = seated_talk()
+    [(_, _, view)] = claim_turns(world)
+    return view

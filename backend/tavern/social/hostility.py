@@ -122,9 +122,22 @@ def _near(observation: Mapping[str, Any], person: Mapping[str, Any]) -> bool:
     return bool(person.get("beside")) or bool(table and person.get("seat_id") and person.get("table_id") == table)
 
 
+def grudge_against(actor: Mapping[str, Any], other_id: str) -> bool:
+    """Tell whether a guest holds a grudge against someone.
+
+    Args:
+        actor: The guest, with their `ties` (missing on a bare record).
+        other_id: The other guest.
+
+    Returns:
+        Whether one of the guest's ties with the other carries a grudge.
+    """
+    return any(tie["with"] == other_id and "grudge" in tie for tie in actor.get("ties", []))
+
+
 def _caused(actor: Mapping[str, Any], other_id: str, now: float) -> bool:
     # A grudge is a cause that never goes stale. A thought lasts its kind's seconds from forming, so `expires_at`
     # gives back when it formed.
-    return any(tie["with"] == other_id and "grudge" in tie for tie in actor.get("ties", [])) or any(item["about"] == other_id and item["kind"] in HOSTILE_CAUSES
+    return grudge_against(actor, other_id) or any(item["about"] == other_id and item["kind"] in HOSTILE_CAUSES
                and now - (item["expires_at"] - THOUGHTS[item["kind"]].seconds) <= HOSTILITY.recent
                for item in active_thoughts(actor.get("thoughts", []), now))
