@@ -88,6 +88,8 @@ class Activity:
         what: Wording for the evaluator; `{target}` stands for the quoted target ID.
         guidance: When the evaluator should consider it natural.
         interruptible: Whether a loud enough stimulus stops it; otherwise the visitor finishes first.
+        absorbed: Whether the visitor's eyes stay on the task: no sound turns their head (it still breaks off or
+            alerts them as `interruptible` says).
         asleep: Whether the visitor sleeps while doing it: others see a sleeper, and only a loud sound wakes them.
         seated: Whether it can only be done from a seat at a table.
         stopped_at_last_call: Refusal given to anyone who starts it after the barkeep has called closing time, or None
@@ -130,6 +132,7 @@ class Activity:
     doing: str | None = None
     done: str | None = None
     interruptible: bool = False
+    absorbed: bool = False
     asleep: bool = False
     seated: bool = False
     stopped_at_last_call: str | None = None
@@ -309,7 +312,7 @@ def _settle(world: World, actor: Actor, seat: dict[str, Any] | None) -> None:
 
 ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity for activity in (
     Activity(verb="take_beer", fatigue_per_second=0.25, target_kinds=("tap",), duration=0.8, empty_target="Beer tap is empty",
-             stopped_at_last_call="The bar has stopped serving", leaves_seat=True, served=True, effect=_pour, label="Get a beer", status="getting ale", pose="TakeBeer",
+             stopped_at_last_call="The bar has stopped serving", leaves_seat=True, served=True, absorbed=True, effect=_pour, label="Get a beer", status="getting ale", pose="TakeBeer",
              doing="fetching ale", done="poured a mug of ale",
              family="refreshment",
              what="walk to the tap {target} and get a mug of ale to carry: the barkeep pours it, or they pour "
@@ -320,7 +323,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "already wasted."),
     # Never a candidate: the barkeep's own routine (`tavern.body.bartending`) pours for the guest waiting at the
     # tap, and a guest is refused it. The routine, not the timer, ends it.
-    Activity(verb="pour_beer", duration=3.0, served=True, staff_only=True, label="Pour a beer", status="pouring",
+    Activity(verb="pour_beer", duration=3.0, absorbed=True, served=True, staff_only=True, label="Pour a beer", status="pouring",
              pose="PouringBeer", doing="pouring ale behind the bar", done="poured a mug of ale",
              family="refreshment",
              what="pour a mug of ale for the guest waiting at the tap",
@@ -394,7 +397,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "passes on what he hears and answers a word or two; it eases boredom and the wish for "
                       "company a little. It means leaving their seat for a while."),
     Activity(verb="play_darts", fatigue_per_second=0.4, target_kinds=("darts",), duration=10.0, leaves_seat=True,
-             fun=0.7, label="Play darts", status="darts", pose="Darts", interruptible=True,
+             fun=0.7, label="Play darts", absorbed=True, status="darts", pose="Darts", interruptible=True,
              sound=Sound("thud", 0.25, 10.0, "darts thudding into the board"),
              doing="playing darts", done="played darts", effect=settle_match,
              family="pastime",
@@ -403,7 +406,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
     # Never a candidate: only an accepted `dice_together` invitation (or the debug panel) sends a guest to a
     # dice chair. The game, not the timer, ends it.
     Activity(verb="play_dice", fatigue_per_second=0.075, target_kinds=("dice_chair",), duration=30.0, game=True, leaves_seat=True,
-             fun=0.9, needs=MappingProxyType({"social": -20}), label="Play dice", status="dice",
+             fun=0.9, needs=MappingProxyType({"social": -20}), label="Play dice", absorbed=True, status="dice",
              pose="TalkingSeated", sound=Sound("dice", 0.25, 8.0, "dice rattling on a table"),
              doing="playing dice", done="played dice", family="pastime",
              what="sit at the dice table {target} for a game of dice they agreed to",
@@ -450,7 +453,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "suits someone with nothing pressing of their own, and the one they bring it for may still "
                       "refuse it."),
     Activity(verb="use_toilet", fatigue_per_second=0.25, target_kinds=("toilet",), duration=2.0, leaves_seat=True,
-             needs=MappingProxyType({"bladder": -65}), label="Use the toilet", status="WC", pose="Bathroom",
+             needs=MappingProxyType({"bladder": -65}), label="Use the toilet", absorbed=True, status="WC", pose="Bathroom",
              doing="heading to the WC", done="used the WC",
              family="wc",
              what="use the WC {target}",

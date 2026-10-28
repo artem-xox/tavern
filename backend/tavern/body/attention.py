@@ -1,4 +1,4 @@
-"""Attention: each tick's sounds draw a glance, or interrupt what a visitor can break off."""
+"""Attention: each tick's sounds are heard; loud ones nearby or from the stage turn heads, louder ones interrupt."""
 
 from collections.abc import Mapping, Sequence
 from typing import Any
@@ -6,7 +6,7 @@ from typing import Any
 from tavern.body.activities import ACTIVITIES
 from tavern.body.dozing import asleep, waking_sound
 from tavern.body.expression import look_at, show_emote
-from tavern.body.hearing import Stimulus, salience
+from tavern.body.hearing import Stimulus, draws_eyes, salience
 from tavern.hall.memory import record_event
 from tavern.hall.room import SEAT_TABLES, object_cells
 from tavern.hall.state import Actor, World
@@ -17,6 +17,8 @@ from tavern.social.thoughts import friends_of
 def attend(world: World) -> list[Actor]:
     """Let every visitor attend to the sounds made since the last tick, once each.
 
+    A head turns (glance or alert) only to a sound `hearing.draws_eyes` and never of a visitor absorbed in their task
+    (`Activity.absorbed`); every other sound is heard and logged all the same, and interrupts as below.
     Each visitor reacts only to the most salient sound (the earliest on a tie). Below the
     `attention.glance` rule they ignore it; below `attention.interrupt` they glance at it for
     `glance_seconds` unless already looking at something; above it they turn to it for `turn_seconds`, show an alert, and either
@@ -51,7 +53,7 @@ def attend(world: World) -> list[Actor]:
             continue
         if level < rules["interrupt"]:
             # A glance never pulls the eyes off something they are already looking at.
-            if not actor["gaze"] or actor["gaze"]["until"] <= world["time"]:
+            if _turns(actor, stimulus) and (not actor["gaze"] or actor["gaze"]["until"] <= world["time"]):
                 look_at(actor, stimulus["cell"], world["time"] + rules["glance_seconds"], stimulus["id"])
         elif _alert(world, actor, stimulus):
             stops.append(actor)
@@ -60,8 +62,9 @@ def attend(world: World) -> list[Actor]:
 
 def _alert(world: World, actor: Actor, stimulus: Stimulus) -> bool:
     now = world["time"]
-    look_at(actor, stimulus["cell"], now + world["rules"]["attention"]["turn_seconds"], stimulus["id"])
-    show_emote(actor, "alert", now + world["rules"]["emote_seconds"]["alert"])
+    if _turns(actor, stimulus):
+        look_at(actor, stimulus["cell"], now + world["rules"]["attention"]["turn_seconds"], stimulus["id"])
+        show_emote(actor, "alert", now + world["rules"]["emote_seconds"]["alert"])
     heard = f"{stimulus['noun']} {_landmark(world['map'], stimulus['cell'])}"
     # Two guests between an invitation and its answer stay in their talk: broken off by every quarrel nearby, they
     # left 19 of 48 invitations unanswered in live evenings (seeds 1 and 5, 2026-10-25).
@@ -76,6 +79,13 @@ def _alert(world: World, actor: Actor, stimulus: Stimulus) -> bool:
     turned = "broke off and turned" if action else "turned"
     record_event(world, actor, "interrupted", f"{actor['name']} {turned} toward {heard}: {stimulus['cause']}")
     return action is not None
+
+
+def _turns(actor: Actor, stimulus: Stimulus) -> bool:
+    # Hearing is not looking: only a loud sound close by or from the stage turns a head, and never one that is absorbed
+    # in darts, dice, the WC or the tap.
+    action = actor["action"]
+    return draws_eyes(stimulus, (actor["x"], actor["y"])) and not (action and ACTIVITIES[action["verb"]].absorbed)
 
 
 def _wake(world: World, actor: Actor, stimulus: Stimulus) -> None:

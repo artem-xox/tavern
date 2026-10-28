@@ -63,22 +63,24 @@ def events(world: Mapping[str, Any], kind: str) -> list[str]:
     return [item["message"] for item in world["events"] if item["actor_id"] == "ada" and item["type"] == kind]
 
 
-@pytest.mark.parametrize("cell, prepare, noise, facing, verb", [
-    pytest.param((5, 6), drinking, ((8, 7), (9, 7)), "east", None, id="drinking-breaks-off"),
-    pytest.param((5, 6), lambda world: start(world, "sit", "chair-4"), ((8, 7), (9, 7)), "east", None,
+@pytest.mark.parametrize("cell, prepare, noise, facing, verb, alert", [
+    pytest.param((5, 6), drinking, ((8, 7), (9, 7)), "east", None, "alert", id="drinking-breaks-off"),
+    pytest.param((5, 6), lambda world: start(world, "sit", "chair-4"), ((8, 7), (9, 7)), "east", None, "alert",
                  id="sitting-breaks-off"),
-    pytest.param((2, 8), lambda world: start(world, "play_darts", "darts"), ((8, 7), (9, 7)), "east", None,
-                 id="darts-break-off"),
-    pytest.param((1, 4), lambda world: start(world, "watch", "window-1"), ((6, 4), (7, 4)), "east", None,
+    pytest.param((2, 8), lambda world: start(world, "play_darts", "darts"), ((8, 7), (9, 7)), None, None, None,
+                 id="darts-break-off-without-turning"),
+    pytest.param((1, 4), lambda world: start(world, "watch", "window-1"), ((6, 4), (7, 4)), "east", None, "alert",
                  id="watching-breaks-off"),
-    pytest.param((17, 3), lambda world: start(world, "use_toilet", "toilet"), ((12, 3), (11, 3)), "west",
-                 "use_toilet", id="wc-finishes-first"),
-    pytest.param((6, 3), lambda world: start(world, "take_beer", "tap"), ((8, 7), (9, 7)), "south-east", "take_beer",
-                 id="pouring-finishes-first"),
+    pytest.param((17, 3), lambda world: start(world, "use_toilet", "toilet"), ((12, 3), (11, 3)), None,
+                 "use_toilet", None, id="wc-finishes-first-without-turning"),
+    pytest.param((6, 3), lambda world: start(world, "take_beer", "tap"), ((8, 7), (9, 7)), None, "take_beer", None,
+                 id="pouring-finishes-first-without-turning"),
+    pytest.param((5, 6), drinking, ((17, 3), (16, 3)), None, "drink", None, id="far-quarrel-neither-turns-nor-breaks-off"),
 ])
 def test_a_shout_turns_heads_at_once_and_stops_what_can_stop(
         cell: tuple[int, int], prepare: Callable[[dict[str, Any]], None],
-        noise: tuple[tuple[int, int], ...], facing: str, verb: str | None) -> None:
+        noise: tuple[tuple[int, int], ...], facing: str | None, verb: str | None,
+        alert: str | None) -> None:
     world = hall(guest("ada", cell))
     prepare(world)
     quarrel(world, *noise)
@@ -86,8 +88,8 @@ def test_a_shout_turns_heads_at_once_and_stops_what_can_stop(
     turned = actor(world, "ada")["facing"]
     ticks(world, 4)
     action = actor(world, "ada")["action"]
-    assert (turned, action["verb"] if action else None, actor(world, "ada")["emote"]["kind"]) == (
-        facing, verb, "alert")
+    emote = actor(world, "ada")["emote"]
+    assert (turned, action["verb"] if action else None, emote["kind"] if emote else None) == (facing, verb, alert)
 
 
 def test_a_guest_in_the_wc_finishes_and_then_knows_why_heads_turned() -> None:
@@ -111,13 +113,19 @@ def darts_nearby(world: dict[str, Any]) -> None:
     assert start_action(world, "bea", {"id": "darts", "verb": "play_darts", "target_id": "darts"})["accepted"]
 
 
+def stage_speech(world: dict[str, Any]) -> None:
+    """Bea gives a speech."""
+    record_event(world, actor(world, "bea"), "gave_speech", 'Bea gave a speech: "Hear me!"')
+
+
 @pytest.mark.parametrize("cell, bea, cause, gaze", [
-    pytest.param((5, 11), (10, 12), door_opens, [10, 12], id="door-draws-a-glance"),
-    pytest.param((4, 10), (2, 8), darts_nearby, [2, 8], id="darts-draw-a-glance"),
+    pytest.param((5, 11), (10, 12), stage_speech, [10, 12], id="speech-draws-a-glance"),
+    pytest.param((5, 11), (10, 12), door_opens, None, id="door-is-heard-without-a-glance"),
+    pytest.param((4, 10), (2, 8), darts_nearby, None, id="darts-are-heard-without-a-glance"),
     pytest.param((16, 6), (2, 8), darts_nearby, None, id="darts-unheard-across-the-hall"),
     pytest.param((5, 11), (10, 12), lambda world: None, None, id="silence"),
 ])
-def test_quiet_sounds_only_draw_a_glance(cell: tuple[int, int], bea: tuple[int, int],
+def test_quiet_sounds_draw_no_glance(cell: tuple[int, int], bea: tuple[int, int],
                                          cause: Callable[[dict[str, Any]], None], gaze: list[int] | None) -> None:
     world = hall(guest("ada", cell), guest("bea", bea))
     actor(world, "ada")["inventory"]["beer"] = 1

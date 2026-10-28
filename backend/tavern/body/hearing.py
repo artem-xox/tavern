@@ -85,6 +85,28 @@ EVENT_SOUNDS: Mapping[str, Sound] = MappingProxyType({
 })
 
 
+# How far from its source each kind of sound turns a listener's head: a speech from the stage is meant for the whole
+# room, a quarrel or a brawl only for those close to it. Every other sound is heard, and breaks things off if loud
+# enough, without anyone turning to look.
+TURNING_SOUNDS: Mapping[str, float] = MappingProxyType({
+    "speech": 30.0, "heckle": 30.0, "quarrel": 8.0, "scuffle": 8.0, "brawl": 8.0,
+})
+
+
+def draws_eyes(stimulus: Stimulus, cell: Sequence[int]) -> bool:
+    """Tell whether a sound turns the head of a listener standing on a cell.
+
+    Args:
+        stimulus: The sound.
+        cell: Listener's cell.
+
+    Returns:
+        True when its kind is in `TURNING_SOUNDS` and the listener is within that many cells (Euclidean) of it.
+    """
+    turns_within = TURNING_SOUNDS.get(stimulus["kind"])
+    return turns_within is not None and math.dist(stimulus["cell"], cell) <= turns_within
+
+
 def emit(world: World, sound: Sound, sources: Sequence[str], cell: Sequence[int],
          about: Sequence[str], cause: str, event: str | None) -> Stimulus:
     """Make a sound in the hall; listeners attend to it at the end of the tick.
