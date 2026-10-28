@@ -102,7 +102,7 @@ def test_the_cast_listing_shows_each_face_with_its_occupation() -> None:
     greta = next(item for item in casts["guests"]["characters"] if item["id"] == "greta")
     assert (casts["guests"]["title"], [item["id"] for item in casts["guests"]["characters"]], greta["name"],
             greta["description"], len(casts["locals"]["characters"])) == (
-        "Guests", ["greta", "kardashian", "monroe", "musk", "putin", "queen", "sobchak", "thatcher", "trump", "tyson", "vucic", "zelensky", "zuckerberg"], "Greta", "young climate campaigner, a parody of Greta Thunberg", 6)
+        "Guests", ["greta", "kardashian", "monroe", "musk", "putin", "queen", "sobchak", "thatcher", "trump", "tyson", "vucic", "zelensky", "zuckerberg"], "Greta", "young climate campaigner", 6)
 
 
 def runtime(tmp_path: Path) -> TavernRuntime:
