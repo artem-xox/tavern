@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { CANDLES, candleLight, glowRadius, GLOW_RINGS } from "../src/candles.ts";
+import { CANDLES, candleBase, candleLight, glowRadius, GLOW_RINGS } from "../src/candles.ts";
 import { flicker, HEARTH_GLOW_RADIUS } from "../src/hearth.ts";
 
 const SIZE = 32;
@@ -19,8 +19,8 @@ const furniture = new Set(room.objects.filter((item) => !item.walkable).flatMap(
   return cells;
 }));
 
-test("there are four candles: the privy, the front door and two more on the walls", () => {
-  assert.equal(CANDLES.length, 4);
+test("there are three candles: the privy, the front door and the west wall", () => {
+  assert.equal(CANDLES.length, 3);
 });
 
 for (const candle of CANDLES) {
@@ -30,6 +30,15 @@ for (const candle of CANDLES) {
     const { dx, dy } = candleLight(candle, room.width, SIZE);
     const front = `${candle.x + dx},${candle.y + dy}`;
     assert.ok(!walls.has(front) && !furniture.has(front), `${front} is not free floor`);
+  });
+}
+
+for (const candle of CANDLES) {
+  test(`the candle at (${candle.x}, ${candle.y}) stands out on the floor side of its wall, not inside it`, () => {
+    const { dx, dy } = candleLight(candle, room.width, SIZE);
+    const base = candleBase(candle, room.width, SIZE);
+    const out = (base.x - (candle.x + 0.5) * SIZE) * dx + (base.y - (candle.y + 0.5) * SIZE) * dy;
+    assert.ok(out > SIZE / 2 && out < SIZE, `${out}px from the wall cell's middle`);
   });
 }
 
