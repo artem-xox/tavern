@@ -12,6 +12,7 @@ from tavern.mind.scripted import BORED, CONTENT, MAX_LINE, PRESSING
 from tavern.mind.turn_prompt import shared_prefix, turn_schema
 from tavern.social.conversation import ACTS
 from tavern.social.invitations import KINDS
+from tavern.social.quarrels import BOIL
 from tavern.social.turns import TurnResult, TurnWriter, check_turn
 
 MAX_TOPIC = 60  # Characters; a topic is a few words.
@@ -159,6 +160,9 @@ def _nudges(scene: Mapping[str, Any], me: Mapping[str, Any], invitations: Sequen
         "The others have been talking past the speaker, who cuts in uninvited: a quick remark on what was just said, "
         "or a claim on the talk, addressed to whom the speaker means."
         if scene.get("cutting_in") else "",
+        "The row has run hot, and one more insult and it boils over into blows or a storming-off: the speaker may land "
+        "a last, memorable jab, or back down."
+        if scene.get("heat", 0) >= BOIL - 1 else "",
         "The speaker has not yet told anyone here where the places they know are; someone may want to know."
         if me["places"] and not shared and "share_place" in acts else "",
         _worn(scene, me),

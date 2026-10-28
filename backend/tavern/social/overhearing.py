@@ -10,6 +10,7 @@ from tavern.hall.state import Actor, World
 from tavern.social import facts
 from tavern.social.conversation import ACTS
 from tavern.social.names import called
+from tavern.social.quarrels import ROW_ACTS
 from tavern.social.scenes import Conversation, Turn
 from tavern.social.social_acts import take_offence
 from tavern.social.thoughts import friends_of, learn_name
@@ -21,6 +22,8 @@ _SPEECH = Sound("chat", 0.25, 10.0, "voices talking")
 _LOUD: Mapping[str, Sound] = MappingProxyType({
     "joke": Sound("laughter", 0.25, 14.0, "laughter"),
     "insult": Sound("insult", 0.4, 14.0, "an angry insult"),
+    # A shout is meant for the whole hall: past the interrupt level, it turns every head and breaks off what can be.
+    "shout": Sound("shout", 0.7, 30.0, "a shouted insult"),
 })
 TURN_SOUNDS: Mapping[str, Sound] = MappingProxyType({act: _LOUD.get(act, _SPEECH) for act in ACTS})
 
@@ -68,7 +71,7 @@ def _catch(world: World, listener: Actor, turn: Turn, speaker: Actor,
         learn_name(listener, speaker, False, world["actors"])
     if gist and turn["act"] == "share_news":
         facts.overhear(world, listener, speaker, turn)
-    if turn["act"] != "insult":
+    if turn["act"] not in ROW_ACTS:
         return
     if not gist or addressee is None:
         record_event(world, listener, "overheard", f"{listener['name']} overheard an insult")

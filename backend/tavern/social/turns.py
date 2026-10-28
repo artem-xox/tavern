@@ -29,6 +29,7 @@ from tavern.social.heard import earlier_lines, hear_line, said_lines
 from tavern.social.invitations import offered_kinds, pending_for
 from tavern.social.names import as_known, called, knows_name, looks
 from tavern.social.overhearing import overhear_turn
+from tavern.social.quarrels import heat
 from tavern.social.scenes import Conversation, Turn, awaits_company_change
 from tavern.social.thoughts import active_thoughts, familiarity_of, opinion_of
 
@@ -128,7 +129,7 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
     Returns:
         `conversation`: ID, topic, index of the turn being written, participants (see
         `_participants`), every turn spoken in it so far, whether the speaker `cutting_in` on others talking past
-        them, and the pending `invitation`, if any;
+        them, how hot a quarrel runs (`quarrels.heat`), and the pending `invitation`, if any;
         `speaker`: their ID, name, needs, traits, visit, the places they could tell about (tap,
         WC, darts), their `opinions` of the others, `earlier`, everything they still remember saying and hearing
         in other scenes tonight (`heard.earlier_lines`), `said`, every line of their own they remember, this scene's
@@ -147,7 +148,8 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
               sorted(speaker["knowledge"]["objects"].items()) if item["kind"] in ("tap", "toilet", "darts")]
     view = {"conversation": {"id": scene["id"], "topic": scene["topic"], "turn": len(scene["turns"]),
                              "participants": _participants(world, scene, speaker),
-                             "turns": deepcopy(scene["turns"]), "cutting_in": cutting_in(scene) == speaker["id"]},
+                             "turns": deepcopy(scene["turns"]), "cutting_in": cutting_in(scene) == speaker["id"],
+                             "heat": heat(scene)},
             "speaker": {"id": speaker["id"], "name": speaker["name"], **deepcopy(
                 {key: speaker[key] for key in ("needs", "traits", "visit")}), "places": places,
                          **_mind(world, scene, speaker)},

@@ -13,6 +13,8 @@ from tavern.hall.memory import record_event
 from tavern.hall.state import Actor, World
 from tavern.social import commitments, facts, invitations, social_acts
 from tavern.social.names import called
+from tavern.social.hostility import grudge_against
+from tavern.social.quarrels import BOIL, heat
 from tavern.social.scenes import Conversation, end_conversation
 from tavern.social.thoughts import active_thoughts, opinion_of, think
 
@@ -88,6 +90,12 @@ def _insult(world: World, scene: Conversation, speaker: Actor,
         _quarrel(world, speaker, target, scene["topic"])
 
 
+def _shout(world: World, scene: Conversation, speaker: Actor,
+           addressee: Actor | None) -> None:
+    # A shout stings and is answered like an insult; it is only heard further (`overhearing.TURN_SOUNDS`).
+    _insult(world, scene, speaker, addressee)
+
+
 ACTS: Mapping[str, Act] = MappingProxyType({
     "greet": Act(None, "open the conversation, or welcome someone who joined it"),
     "remark": Act(None, "say something that needs no consequence, such as a question, an answer or an aside; "
@@ -113,7 +121,12 @@ ACTS: Mapping[str, Act] = MappingProxyType({
     "insult": Act(_insult, "insult the addressee, someone the speaker dislikes; it sours their mood and their "
                            "opinion of the speaker, offends anyone nearby who likes them, rings out across "
                            "the hall; if the addressee already thinks ill of the speaker it is answered in kind, "
-                           "a quarrel that ends the conversation"),
+                           f"a quarrel, and once {BOIL} insults have been traded it boils over into a fight or one "
+                           "of them storming off"),
+    "shout": Act(_shout, "shout an insult at the addressee across the whole hall, the next step of a row: it does what an "
+                         "insult does, but every guest in earshot hears it and turns to look. Only for a speaker who "
+                         "dislikes the addressee and is already trading insults with someone, or holds a grudge "
+                         "against them"),
     "apologize": Act(social_acts.apologize, "apologize to the addressee (everyone, if nobody in particular) "
                                             "for a wrong; it halves the latest grudge each holds against the "
                                             "speaker and warms them a little to the speaker"),
@@ -150,7 +163,8 @@ def offered_acts(world: Mapping[str, Any], scene: Conversation, speaker: Mapping
         Meaning per act, in `ACTS` order. Always offered: greet, remark, small talk, places,
         jokes, complaints, goodbye, compliments, boasts, agreeing and disagreeing. `introduce`
         while someone present knows the speaker only by their looks; `insult` while the
-        speaker thinks `DISLIKED` or less of someone present; `apologize` while someone holds
+        speaker thinks `DISLIKED` or less of someone present; `shout` while they think that of someone and a row is on
+        (`quarrels.heat`) or they hold a grudge against them; `apologize` while someone holds
         a grudge against them; `invite` while an invitation kind is possible and none is
         pending; `promise` while someone present has a table the speaker is not at and nothing is promised them;
         `share_news` while they hold any news. An invitee whose answer is due may only answer: `accept` or `decline`,
@@ -166,6 +180,9 @@ def offered_acts(world: Mapping[str, Any], scene: Conversation, speaker: Mapping
     situational = {
         "introduce": any(called(item, speaker) != speaker["name"] for item in others),
         "insult": any(opinion_of(speaker, item["id"], now) <= DISLIKED for item in others),
+        # A row already on, or a grudge, is what turns an insult into a shout at someone disliked.
+        "shout": any(opinion_of(speaker, item["id"], now) <= DISLIKED and (heat(scene) > 0 or grudge_against(speaker, item["id"]))
+                     for item in others),
         "apologize": any(thought["about"] == speaker["id"] and thought["opinion"] < 0
                          for item in others for thought in active_thoughts(item["thoughts"], now)),
         # Places are news only to someone who lacks one: told again, they are the same line to a listener who knows.

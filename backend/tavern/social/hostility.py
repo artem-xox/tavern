@@ -67,8 +67,8 @@ def hostile_targets(observation: Mapping[str, Any], verb: str) -> list[str]:
 
     Returns:
         IDs of those who sit at the guest's table or stand beside them, are not staff, are awake, are thought
-        ill of (see `HOSTILITY.opinion`), gave a recent cause (`HOSTILE_CAUSES`), and the guest's
-        urge reaches the verb's threshold; sorted.
+        ill of (see `HOSTILITY.opinion`), gave a recent cause (`HOSTILE_CAUSES`) or are held a grudge against (a tie
+        with a `grudge`), and the guest's urge reaches the verb's threshold; sorted.
 
     Raises:
         ValueError: The verb is not a hostile verb, or drunkenness is malformed.
@@ -84,6 +84,25 @@ def hostile_targets(observation: Mapping[str, Any], verb: str) -> list[str]:
                    and not person.get("fighting") and person.get("condition", "ok") not in ("down", "out")
                    and _near(observation, person) and _willing(observation, person["id"], verb, now)
                    and _caused(actor, person["id"], now)})
+
+
+def may_fight(actor: Mapping[str, Any], other_id: str, now: float) -> bool:
+    """Tell whether a guest's temper, drink and hatred bring them to a fight with one person.
+
+    Args:
+        actor: The guest, with `traits`, `drunkenness`, `relations` and `thoughts`.
+        other_id: The one they would turn on.
+        now: Current game time.
+
+    Returns:
+        Whether the guest's urge reaches a fight and `_willing` holds for `start_fight`; unlike `hostile_targets` it
+        looks at no cause or place, since the caller (a quarrel) has them in hand.
+
+    Raises:
+        ValueError: Drunkenness is not a number from 0 to 1.
+    """
+    observation = {"actor": actor}
+    return urge(observation) >= HOSTILITY.hatred_urge and _willing(observation, other_id, "start_fight", now)
 
 
 def _willing(observation: Mapping[str, Any], other_id: str, verb: str, now: float) -> bool:
@@ -103,8 +122,22 @@ def _near(observation: Mapping[str, Any], person: Mapping[str, Any]) -> bool:
     return bool(person.get("beside")) or bool(table and person.get("seat_id") and person.get("table_id") == table)
 
 
+def grudge_against(actor: Mapping[str, Any], other_id: str) -> bool:
+    """Tell whether a guest holds a grudge against someone.
+
+    Args:
+        actor: The guest, with their `ties` (missing on a bare record).
+        other_id: The other guest.
+
+    Returns:
+        Whether one of the guest's ties with the other carries a grudge.
+    """
+    return any(tie["with"] == other_id and "grudge" in tie for tie in actor.get("ties", []))
+
+
 def _caused(actor: Mapping[str, Any], other_id: str, now: float) -> bool:
-    # A thought lasts its kind's seconds from forming, so `expires_at` gives back when it formed.
-    return any(item["about"] == other_id and item["kind"] in HOSTILE_CAUSES
+    # A grudge is a cause that never goes stale. A thought lasts its kind's seconds from forming, so `expires_at`
+    # gives back when it formed.
+    return grudge_against(actor, other_id) or any(item["about"] == other_id and item["kind"] in HOSTILE_CAUSES
                and now - (item["expires_at"] - THOUGHTS[item["kind"]].seconds) <= HOSTILITY.recent
                for item in active_thoughts(actor.get("thoughts", []), now))

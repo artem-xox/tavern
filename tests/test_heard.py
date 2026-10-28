@@ -94,7 +94,7 @@ def test_heard_lines_survive_save_and_load(tmp_path: Path) -> None:
 
 def corrupt_line(world: dict[str, Any]) -> None:
     """Break the first remembered line of Ada's."""
-    actor(world, "ada")["heard"][0]["act"] = "shout"
+    actor(world, "ada")["heard"][0]["act"] = "sing_loudly"
 
 
 @pytest.mark.parametrize("corrupt", [

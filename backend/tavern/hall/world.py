@@ -38,6 +38,7 @@ from tavern.social.responses import mark_answered
 from tavern.social.invitations import errand_parties, invitations_of
 from tavern.social.tables import mark_ownership
 from tavern.social.walk_ups import face_walkers
+from tavern.social.quarrels import boil_over
 from tavern.social.scenes import check_conversations
 from tavern.social.thoughts import forget_expired
 from tavern.social.speeches import perform_overdue
@@ -74,7 +75,7 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> World:
     if type(manners) is not bool:
         raise ValueError(f"The layout's table_manners must be true or false, not {manners!r}")
     rules["manners"]["table_intrusion"] = manners
-    world = World(schema_version=19, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
+    world = World(schema_version=20, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
                   map=world_map, actors=actors, departed=[], expected=[], closes_at=None, last_call_at=None,
                   events=[], stimuli=[], next_stimulus_id=0, conversations=[], next_conversation_id=0,
                   commitments=[], invitations=[], projects=[], news=[], fights=[], rules=rules)
@@ -167,6 +168,7 @@ def step_world(world: World, dt: float) -> None:
     admit_arrivals(world)
     check_conversations(world)
     speak_turns(world)
+    boil_over(world, activate)
     perform_overdue(world)
     honor_invitations(world, start_action)
     honor_projects(world, start_action)

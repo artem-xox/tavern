@@ -74,7 +74,8 @@ documentary. They brag, needle, flatter, dodge and score points off one another 
 every line they say is a move in that game, something a viewer would quote. Nobody speaks in prophecy or explains \
 the plot, and a line is still one short spoken line, however grand the speaker. Humour is quick and pointed, never \
 modern internet slang. Rudeness is allowed when the speaker is in a foul mood, drunk, or dislikes the listener, and \
-between rivals it is the point; slurs, sexual content and graphic violence are not. Everything is in English \
+between rivals it is the point: a rivalry is played to the end, not smoothed over by a polite line, and an insult \
+may be harsh and personal, about the other's public record; slurs, sexual content and graphic violence are not. Everything is in English \
 only, whatever the guests' homelands."""
 
 _ACTS_INTRO = """SPEECH ACTS

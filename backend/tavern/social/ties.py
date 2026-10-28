@@ -11,7 +11,8 @@ KINDS = ("old friends", "rivals", "bad blood", "well known",
 class Tie(TypedDict):
     """Two guests' starting relationship: guest IDs `a` and `b`, a kind of KINDS, and a note in words.
 
-    `history` is the pair's shared past in three or four true sentences.
+    `history` is the pair's shared past in three or four true sentences. `grudge` is a reason in words for bad blood
+    that both hold from the start ("owes her money"), and a cause for either to lash out (see `hostility`).
     """
 
     a: str
@@ -19,12 +20,14 @@ class Tie(TypedDict):
     kind: str
     note: str
     history: NotRequired[str]
+    grudge: NotRequired[str]
 
 
 class Regard(TypedDict):
     """One guest's regard for another, which the other need not return: `holder`, `toward`, a kind and a note.
 
-    `history` is the pair's shared past in three or four true sentences, as far as the holder knows it.
+    `history` is the pair's shared past in three or four true sentences, as far as the holder knows it. `grudge` is
+    the holder's reason in words for bad blood, and a cause for them to lash out (see `hostility`).
     """
 
     holder: str
@@ -32,17 +35,28 @@ class Regard(TypedDict):
     kind: str
     note: str
     history: NotRequired[str]
+    grudge: NotRequired[str]
 
 
 # A tie as one guest holds it: the other guest's ID and name, the kind and the note. `with` is a
 # Python keyword, hence the functional form.
-OwnTie = TypedDict("OwnTie", {"with": str, "name": str, "kind": str, "note": str, "history": NotRequired[str]})
+OwnTie = TypedDict("OwnTie", {"with": str, "name": str, "kind": str, "note": str, "history": NotRequired[str],
+                              "grudge": NotRequired[str]})
+
+
+def _grudge(value: Any, what: str) -> str:
+    # A grudge needs words, like a note does.
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{what} grudge needs words")
+    return value
 
 
 def _held(other: str, names: Mapping[str, str], item: Mapping[str, Any]) -> OwnTie:
     tie = OwnTie({"with": other, "name": names[other], "kind": item["kind"], "note": item["note"]})
     if "history" in item:
         tie["history"] = item["history"]
+    if "grudge" in item:
+        tie["grudge"] = item["grudge"]
     return tie
 
 
@@ -69,8 +83,8 @@ def parse_ties(value: Any, guests: Sequence[str]) -> tuple[Tie, ...]:
 
 
 def _tie(data: Any, guests: Sequence[str]) -> Tie:
-    if not isinstance(data, Mapping) or not {"a", "b", "kind", "note"} <= set(data) <= {"a", "b", "kind", "note", "history"}:
-        raise ValueError("A relationship has a, b, kind and note, and may have a history")
+    if not isinstance(data, Mapping) or not {"a", "b", "kind", "note"} <= set(data) <= {"a", "b", "kind", "note", "history", "grudge"}:
+        raise ValueError("A relationship has a, b, kind and note, and may have a history and a grudge")
     if data["a"] not in guests or data["b"] not in guests or data["a"] == data["b"]:
         raise ValueError(f"A relationship ties two different guests of tonight, not {data['a']!r} and {data['b']!r}")
     if data["kind"] not in KINDS:
@@ -78,6 +92,8 @@ def _tie(data: Any, guests: Sequence[str]) -> Tie:
     if not isinstance(data["note"], str) or not data["note"].strip():
         raise ValueError("A relationship needs a note in words")
     tie = Tie(a=data["a"], b=data["b"], kind=data["kind"], note=data["note"])
+    if "grudge" in data:
+        tie["grudge"] = _grudge(data["grudge"], "A relationship's")
     if "history" in data:
         if not isinstance(data["history"], str) or not data["history"].strip():
             raise ValueError("A relationship's history needs words")
@@ -104,14 +120,18 @@ def parse_own_ties(value: Any) -> list[OwnTie]:
     """Validate the ties a guest holds, as kept in a saved world.
 
     Args:
-        value: List of `{with, name, kind, note}` records.
+        value: List of `{with, name, kind, note}` records, each with an optional `history` and `grudge`.
     Returns:
         The ties.
     Raises:
-        ValueError: The list or a tie is malformed or has an unknown kind.
+        ValueError: The list or a tie is malformed, has an unknown kind, or has a grudge without words.
     """
+    if isinstance(value, list):
+        for item in value:
+            if isinstance(item, Mapping) and "grudge" in item:
+                _grudge(item["grudge"], "A guest's tie's")
     if not isinstance(value, list) or any(
-            not isinstance(item, Mapping) or not {"with", "name", "kind", "note"} <= set(item) <= {"with", "name", "kind", "note", "history"}
+            not isinstance(item, Mapping) or not {"with", "name", "kind", "note"} <= set(item) <= {"with", "name", "kind", "note", "history", "grudge"}
             or not all(isinstance(field, str) and field for field in item.values()) for item in value):
         raise ValueError("A guest's ties are a list of {with, name, kind, note} texts")
     if any(item["kind"] not in KINDS for item in value):
@@ -147,8 +167,8 @@ def parse_regard(value: Any, ids: Sequence[str], tied: Sequence[Tie] = ()) -> tu
 def _regard(holder: Any, toward: Any, cell: Any, ids: Sequence[str], held: set[frozenset[str]]) -> Regard:
     if holder not in ids or toward not in ids or holder == toward:
         raise ValueError(f"Regard is between two different characters of the catalog, not {holder!r} and {toward!r}")
-    if not isinstance(cell, Mapping) or not {"kind", "note"} <= set(cell) <= {"kind", "note", "history"}:
-        raise ValueError(f"Regard of {holder!r} for {toward!r} has kind and note, and may have a history")
+    if not isinstance(cell, Mapping) or not {"kind", "note"} <= set(cell) <= {"kind", "note", "history", "grudge"}:
+        raise ValueError(f"Regard of {holder!r} for {toward!r} has kind and note, and may have a history and a grudge")
     if cell["kind"] not in KINDS:
         raise ValueError(f"Regard kind must be one of {', '.join(KINDS)}, not {cell['kind']!r}")
     if not isinstance(cell["note"], str) or not cell["note"].strip():
@@ -156,6 +176,8 @@ def _regard(holder: Any, toward: Any, cell: Any, ids: Sequence[str], held: set[f
     if frozenset((holder, toward)) in held:
         raise ValueError(f"Regard of {holder!r} for {toward!r} repeats a tie the catalog already gives the pair")
     regard = Regard(holder=holder, toward=toward, kind=cell["kind"], note=cell["note"])
+    if "grudge" in cell:
+        regard["grudge"] = _grudge(cell["grudge"], f"Regard of {holder!r} for {toward!r}'s")
     if "history" in cell:
         if not isinstance(cell["history"], str) or not cell["history"].strip():
             raise ValueError(f"Regard of {holder!r} for {toward!r} needs a history in words")
