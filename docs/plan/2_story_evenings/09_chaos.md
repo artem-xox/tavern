@@ -1,7 +1,7 @@
 ---
 id: S2-09
 title: Chaos
-status: doing
+status: done
 needs: [S2-04, S2-05]
 touches: [social/quarrels.py, social/conversation.py, social/turns.py, social/hostility.py, social/ties.py, social/social_acts.py, mind/fight_candidates.py, mind/turn_prompt.py, characters/guests/]
 ---
@@ -108,7 +108,7 @@ so the exit comes first.
    (the field and the gate); which pairs hold one is data, still to fill.
 5. `shout` act and its sound; far listeners react. Done.
 6. Writer prompt and the portrait; provocation was already the `needle` aim. Done.
-7. Five live Guests evenings: count quarrels, shouts, walk-offs and fights. **Not done**: it needs a live key.
+7. Five live Guests evenings: count quarrels, shouts, walk-offs and fights. Done (Results).
 
 ## Done when
 
@@ -122,6 +122,26 @@ story score, the `grudge` field with saves at version 20, six grudges in the dat
 and portrait changes. `make check`: 4556 passed, mypy clean, 260 node tests.
 
 Offline Guests evenings (scripted lines, seeds 1, 2, 3, 5, 7): unchanged by the grudges and the boil-over (the
-scripted writer never reaches a run of four insults, and its drunk hotheads rarely stand by a rival), so they
-cannot show the effect. The five live evenings of step 7 are still to run, and with them the "done when" and the
-closing of D27 and D28.
+scripted writer never reaches a run of four insults, and its drunk hotheads rarely stand by a rival).
+
+Live Guests evenings (step 7, 2026-10-27, `make evening CAST=guests SEED=n`, seeds 1-5; Haiku lines, Jev decisions).
+A quarrel and a fight log two events, one for each guest, so the fights below are halved:
+
+| seed | `quarrel` events | fights | `shout` | `stormed_off` |
+|------|------------------|--------|---------|---------------|
+| 1    | 24               | 3      | 0       | 0             |
+| 2    | 20               | 2      | 0       | 0             |
+| 3    | 8                | 1      | 0       | 0             |
+| 4    | 24               | 2      | 0       | 0             |
+| 5    | 14               | 2      | 1       | 0             |
+
+- All five evenings have a quarrel and a fight (done when: at least four and two). The replay of seed 5 gives a
+  byte-identical `events.jsonl`.
+- The boil-over works: in seed 1 Trump and Musk traded four insults and Trump hit Musk right after the fourth. No
+  run of insults between two guests went past `BOIL`; the longest run seen (4 Tyson insults to Musk) had no answer.
+- Not shown: `stormed_off` never happened (every boil-over found a hot fighter) and `shout` once. How often a
+  quarrel ends in a walk-off, and the bet or dice settlement of the Scope, stay open.
+- The cast of these evenings held Musk, Trump, Tyson, Sobchak, Vucic and Greta, so the grudges of Putin, Zelensky
+  and Zuckerberg were not played; the fights came from the boil-over and the existing gate.
+
+D27 and D28 are closed (their rows are out of `TECH_DEBT.md`).
