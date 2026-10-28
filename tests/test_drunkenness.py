@@ -180,6 +180,22 @@ def test_the_snapshot_tells_the_client_how_much_to_sway(tmp_path: Path) -> None:
     assert (mind["drunkenness"], mind["stage"], mind["sway"]) == (0.9, "wasted", drunk_stage(0.9).sway)
 
 
+@pytest.mark.parametrize("condition, action, sways", [
+    pytest.param("ok", None, True, id="awake-drunk-sways"),
+    pytest.param("down", None, False, id="knocked-down-lies-still"),
+    pytest.param("out", None, False, id="knocked-out-lies-still"),
+    pytest.param("ok", {"verb": "doze"}, False, id="sleeper-lies-still"),
+])
+def test_only_a_drunk_on_their_feet_and_awake_sways(
+        tmp_path: Path, condition: str, action: dict[str, str] | None, sways: bool) -> None:
+    runtime = TavernRuntime(table_room(), tmp_path / "save.json", {"typesafe_api_key": None})
+    ada = runtime.world["actors"][0]
+    ada.update(drunkenness=0.9, condition=condition, action=action)
+    mind = runtime.snapshot()["minds"]["ada"]
+    # The haze (stage) stays whoever lies still.
+    assert (mind["sway"], mind["stage"]) == (drunk_stage(0.9).sway if sways else 0.0, "wasted")
+
+
 def test_drunkenness_survives_save_and_load(tmp_path: Path) -> None:
     world = sleepy(0.9, sit=True)
     advance(world, 0.2)

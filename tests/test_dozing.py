@@ -48,8 +48,8 @@ def test_a_loud_sound_always_wakes_a_sleeper(heard: Sound, cell: tuple[int, int]
     sound(world, heard, cell)
     ticks(world, 1)
     ada = actor(world, "ada")
-    assert (ada["action"], ada["seat_id"], ada["emote"]["kind"], len(events(world, "woken")),
-            events(world, "interrupted")) == (None, "chair-4", "alert", 1, [])
+    assert (ada["action"], ada["seat_id"], ada["emote"], ada["gaze"], len(events(world, "woken")),
+            events(world, "interrupted")) == (None, "chair-4", None, None, 1, [])
     assert events(world, "woken")[0].startswith(f"Ada woke with a start at {heard.noun}")
 
 

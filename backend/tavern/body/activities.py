@@ -430,7 +430,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "ill of) and a short temper, more so with drink in them, would do it. Everyone hears it, the "
                       "one shoved will not forget it, and it may lead to worse. Most guests, even angry ones, "
                       "choose something else."),
-    Activity(verb="start_fight", fatigue_per_second=2.5, near_person=True, held=True, duration=2.0, on_arrival=_open_fight,
+    Activity(verb="start_fight", fatigue_per_second=2.5, absorbed=True, near_person=True, held=True, duration=2.0, on_arrival=_open_fight,
              label="Start a fight", status="fighting", pose="Fighting", doing="fighting", done="fought", family="confront",
              what="pick a fight with {target}, who sits at their table or stands beside them",
              guidance="The rarest act of the evening: a fistfight, one on one, with someone they think ill of after a "
@@ -549,7 +549,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              guidance="The brave and the strong, and friends of one of the two, step in; it may part them or it may "
                       "not, and the weak and the timid keep out of it. A guest who steps in is not fighting "
                       "anyone."),
-    Activity(verb="join_fight", fatigue_per_second=0.2, closes_in=True, held=True, duration=15.0,
+    Activity(verb="join_fight", fatigue_per_second=0.2, absorbed=True, closes_in=True, held=True, duration=15.0,
              on_arrival=_join_fight, label="Wait to fight", status="waiting to fight", pose="Fighting",
              doing="squaring up to take a turn", done="waited to fight", family="react",
              what="square up beside {target}, who is fighting, to take them on as soon as the fight in hand is over",
