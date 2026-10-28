@@ -3,7 +3,9 @@
 from collections.abc import Mapping
 from typing import Any, TypedDict
 
+from tavern.body.dozing import asleep
 from tavern.body.drunkenness import drunk_stage, speech_instruction
+from tavern.body.wounds import laid_out
 from tavern.social.facts import Inspected, inspected
 from tavern.social.thoughts import THOUGHTS, Thought, active_thoughts, mood, opinion_of, rankling
 
@@ -98,7 +100,7 @@ def minds(world: Mapping[str, Any]) -> dict[str, Mind]:
     Returns:
         Per visitor ID: derived mood, active thoughts oldest first, opinions of everyone
         they have a relation with in relation order, drunkenness, its stage, the sprite's
-        sway and their news by ID. Unrounded; the client formats them.
+        sway (none for a sleeper or someone lying on the floor, whose haze stays) and their news by ID. Unrounded; the client formats them.
     """
     now = world["time"]
     return {actor["id"]: Mind(
@@ -106,5 +108,5 @@ def minds(world: Mapping[str, Any]) -> dict[str, Mind]:
         opinions=[Opinion(id=other, name=relation["name"], opinion=opinion_of(actor, other, now),
                           familiarity=relation["familiarity"]) for other, relation in actor["relations"].items()],
         drunkenness=actor["drunkenness"], stage=drunk_stage(actor["drunkenness"]).name,
-        sway=drunk_stage(actor["drunkenness"]).sway, news=inspected(world, actor))
+        sway=0.0 if asleep(actor) or laid_out(actor) else drunk_stage(actor["drunkenness"]).sway, news=inspected(world, actor))
         for actor in [*world["actors"], *world["departed"]]}

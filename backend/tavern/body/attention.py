@@ -18,7 +18,7 @@ def attend(world: World) -> list[Actor]:
     """Let every visitor attend to the sounds made since the last tick, once each.
 
     A head turns (glance or alert) only to a sound `hearing.draws_eyes` and never of a visitor absorbed in their task
-    (`Activity.absorbed`); every other sound is heard and logged all the same, and interrupts as below.
+    (`Activity.absorbed`, fighting included); a sleeper wakes to a loud sound without turning; every other sound is heard and logged all the same, and interrupts as below.
     Each visitor reacts only to the most salient sound (the earliest on a tie). Below the
     `attention.glance` rule they ignore it; below `attention.interrupt` they glance at it for
     `glance_seconds` unless already looking at something; above it they turn to it for `turn_seconds`, show an alert, and either
@@ -83,15 +83,13 @@ def _alert(world: World, actor: Actor, stimulus: Stimulus) -> bool:
 
 def _turns(actor: Actor, stimulus: Stimulus) -> bool:
     # Hearing is not looking: only a loud sound close by or from the stage turns a head, and never one that is absorbed
-    # in darts, dice, the WC or the tap.
+    # in darts, dice, the WC, the tap or a fight.
     action = actor["action"]
     return draws_eyes(stimulus, (actor["x"], actor["y"])) and not (action and ACTIVITIES[action["verb"]].absorbed)
 
 
 def _wake(world: World, actor: Actor, stimulus: Stimulus) -> None:
     now = world["time"]
-    look_at(actor, stimulus["cell"], now + world["rules"]["attention"]["turn_seconds"], stimulus["id"])
-    show_emote(actor, "alert", now + world["rules"]["emote_seconds"]["alert"])
     heard = f"{stimulus['noun']} {_landmark(world['map'], stimulus['cell'])}"
     actor["interrupted_at"] = now
     record_event(world, actor, "woken", f"{actor['name']} woke with a start at {heard}: {stimulus['cause']}")

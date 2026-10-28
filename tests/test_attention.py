@@ -190,3 +190,15 @@ def interrupted_at(time: float | None) -> dict[str, Any]:
 def test_an_interrupt_makes_an_earlier_request_stale(interrupted: float | None, asked: dict[str, float],
                                                      expected: list[str]) -> None:
     assert stale_requests(interrupted_at(interrupted), asked) == expected
+
+
+@pytest.mark.parametrize("verb, target", [
+    pytest.param("start_fight", "bea", id="fighter"),
+])
+def test_a_fighter_is_not_turned_by_a_nearby_quarrel(verb: str, target: str) -> None:
+    world = hall(guest("ada", (5, 6)), guest("bea", (6, 6)))
+    start_action(world, "ada", {"id": verb, "verb": verb, "target_id": target})
+    quarrel(world, (8, 7), (9, 7))
+    ticks(world, 1)
+    ada = actor(world, "ada")
+    assert (ada["gaze"], (ada["emote"] or {}).get("kind")) == (None, "angry")
