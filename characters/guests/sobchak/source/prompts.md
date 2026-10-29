@@ -46,3 +46,11 @@ premise: public remarks include admiration for him.
 Relationships describe the tavern parodies' own views. Her adoration of Putin
 is deliberately unreciprocated. Existing conversations, public challenges,
 toasts, invitations and quarrels provide the interactions; no new verb is added.
+
+## Signature item pose (2026-10-28, S2-19)
+
+- `Interviewing` (state `30edab67-3bb7-4bae-8b8f-416f8124df72`), for `interview_guest` with the microphone. `create_character_state` on
+  the base, `use_color_palette_from_reference=true`, no size override, all eight views at 68×68. Edit: "Same Ksenia Sobchak, same face,
+  large dark angular glasses, honey-blonde bob, beige trouser suit, colors and scale; change only the pose. Standing and leaning
+  slightly forward, her right arm extends a black handheld microphone with a silver mesh head forward toward someone in front of
+  her, as if asking a sharp question." The card in her left hand did not come out; the microphone reads in every view.
