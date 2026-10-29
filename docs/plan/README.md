@@ -26,7 +26,7 @@ Known problems that no task owns are in [TECH_DEBT.md](TECH_DEBT.md).
 | S2-05 | [Story score](2_story_evenings/05_story_score.md): count what is worth retelling in every evening | — | done |
 | S2-06 | [Obsessions drive goals](2_story_evenings/06_obsessions.md): a guest's obsession becomes their goals and intentions | 03, 05 | done |
 | S2-07 | [Fun](2_story_evenings/07_fun.md): a need that chaos, games and signature acts fill | 05 | doing |
-| S2-08 | [Signature items](2_story_evenings/08_signature_items.md): what is in the backpack, and the act it unlocks | 03, 05 | todo |
+| S2-08 | [Signature items](2_story_evenings/08_signature_items.md): the mechanic (an item offers a verb to its carrier) and Kim's phone, `livestream` | 03, 05 | done |
 | S2-09 | [Chaos](2_story_evenings/09_chaos.md): a quarrel that boils over, rivals, shouting, quarrels that escalate into fights | 04, 05 | doing |
 | S2-10 | [Retelling](2_story_evenings/10_retelling.md): a strong model retells the log; a closing screen shows it | 05 | doing |
 | S2-11 | [Acceptance](2_story_evenings/11_acceptance.md): live Guest evenings meet the story targets | all | todo |
@@ -36,11 +36,13 @@ Known problems that no task owns are in [TECH_DEBT.md](TECH_DEBT.md).
 | S2-15 | [A stage worth climbing](2_story_evenings/15_stage_look.md): a square 2-by-2 platform with a lectern and footlights that flare during a number | 14 | done |
 | S2-16 | [Talk where you stand](2_story_evenings/16_standing_talk.md): two guests standing still near each other anywhere in the hall can start a conversation | — | done |
 | S2-17 | [Walk up to someone standing](2_story_evenings/17_walk_up.md): `approach` reaches a guest on their feet, who waits for the walker | 16 | done |
+| S2-18 | [Greta's protest sign](2_story_evenings/18_protest_sign.md): `raise_sign` at the guest she blames most, the whole hall hears | 08 | done |
+| S2-19 | [Sobchak's microphone](2_story_evenings/19_interview.md): `interview_guest`, a conversation that plays as an interview | 08 | done |
 
 Order: 00, 01 and 05 can run in parallel. 05 lands before 06–09 so that each of them is measured
 against a baseline. 08 and 09 both touch `activities.py`, `actions.py` and `local_policy.py`: do not run
 them at the same time. 17 builds on 16's rule and touches the same three files as 08 and 09: run it
-after 16 is merged and not alongside 08 or 09.
+after 16 is merged and not alongside 08 or 09. 18 and 19 build on 08 and touch the same files: run them one at a time, after 08 is merged.
 
 ## How the plan is kept
 

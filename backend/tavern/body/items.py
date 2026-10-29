@@ -21,6 +21,8 @@ class Item:
         cures: Whether it cures a guest who came in unwell (see `tavern.body.ailment`), or one who is hurt (see
             `tavern.body.wounds`): one given to them is used up.
         giftable: Whether it may be handed over; a weapon stays with whoever carries it.
+        offers: The verbs (`tavern.body.activities`) it gives whoever carries it: a signature item opens an act of its
+            own, and nobody else is offered that act.
     """
 
     kind: str
@@ -31,6 +33,7 @@ class Item:
     received: str
     cures: bool = False
     giftable: bool = True
+    offers: tuple[str, ...] = ()
 
     @property
     def visible(self) -> bool:
@@ -44,6 +47,13 @@ ITEMS: Mapping[str, Item] = MappingProxyType({
     "keepsake": Item("keepsake", "a keepsake", "keepsakes", held=None, hands=3, received="gifted"),
     # What a guest fights with when they hold one (`tavern.body.fights.weapon_of`); it is not a gift.
     "cudgel": Item("cudgel", "a cudgel", "cudgels", held="a cudgel", hands=1, received="gifted", giftable=False),
+    # Signature items: each belongs to one famous guest and gives them an act of their own (`Item.offers`).
+    "phone": Item("phone", "a phone", "phones", held="a phone held up to film", hands=1, received="gifted",
+                  giftable=False, offers=("livestream",)),
+    "protest_sign": Item("protest_sign", "a protest sign", "protest signs", held="a cardboard protest sign", hands=1,
+                         received="gifted", giftable=False, offers=("raise_sign",)),
+    "microphone": Item("microphone", "a microphone", "microphones", held="a reporter's microphone", hands=1,
+                       received="gifted", giftable=False, offers=("interview_guest",)),
 })
 
 

@@ -4,7 +4,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Literal, TypedDict
 
-from tavern.body.items import parse_carries
+from tavern.body.activities import ACTIVITIES
+from tavern.body.items import ITEMS, parse_carries
 from tavern.mind.cards import Card, PERSONA_LISTS, PERSONA_TEXT, TEXT_FIELDS, parse_card
 from tavern.social.ties import Regard, Tie, parse_regard, parse_ties
 
@@ -17,6 +18,20 @@ ROLE_POSES = {
     "guest": (*COMMON_POSES, "Fighting", "KnockedOut", "Hurt", "HurtSeated", "Shoving", "HelpingUp"),
     "bartender": (*COMMON_POSES, "PouringBeer"),
 }
+
+
+def poses_of(character: Mapping[str, Any]) -> tuple[str, ...]:
+    """List the poses a character's art must hold: those of their role, and of every act their carried items give.
+
+    Args:
+        character: A profile with its `role` and what it `carries`.
+
+    Returns:
+        The role's poses (`ROLE_POSES`), then the pose of each verb that an item they carry offers, without repeats.
+    """
+    offered = (ACTIVITIES[verb].pose for kind, item in ITEMS.items() if character["carries"].get(kind)
+               for verb in item.offers)
+    return tuple(dict.fromkeys([*ROLE_POSES[character["role"]], *(pose for pose in offered if pose)]))
 
 
 class Visuals(TypedDict):
@@ -99,7 +114,7 @@ class Catalog:
         """
         return {"characters": [
             {"id": item["id"], "role": item["role"], "cast": item["cast"], "name": item["name"], "color": item["color"],
-             "sprite": item["id"], "visuals": {**item["visuals"], "poses": list(ROLE_POSES[item["role"]])}}
+             "sprite": item["id"], "visuals": {**item["visuals"], "poses": list(poses_of(item))}}
             for item in sorted(self.characters.values(), key=lambda character: character["id"])
         ]}
 

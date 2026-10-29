@@ -89,7 +89,7 @@ EVENT_SOUNDS: Mapping[str, Sound] = MappingProxyType({
 # room, a quarrel or a brawl only for those close to it. Every other sound is heard, and breaks things off if loud
 # enough, without anyone turning to look.
 TURNING_SOUNDS: Mapping[str, float] = MappingProxyType({
-    "speech": 30.0, "heckle": 30.0, "quarrel": 8.0, "scuffle": 8.0, "brawl": 8.0,
+    "speech": 30.0, "heckle": 30.0, "protest": 30.0, "quarrel": 8.0, "scuffle": 8.0, "brawl": 8.0,
 })
 
 

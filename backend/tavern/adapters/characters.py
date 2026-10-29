@@ -5,7 +5,7 @@ import struct
 from pathlib import Path
 from typing import Any
 
-from tavern.mind.characters import CASTS, Catalog, ROLE_POSES, parse_catalog
+from tavern.mind.characters import CASTS, Catalog, ROLE_POSES, parse_catalog, poses_of
 
 
 DIRECTIONS = ("north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west")
@@ -35,7 +35,7 @@ def load_catalog(root: Path) -> Catalog:
     catalog = parse_catalog(records, _regard(root))
     for folder in folders:
         character = catalog.character(folder.name)
-        _check_art(folder, character["role"], character["visuals"]["size"])
+        _check_art(folder, poses_of(character), character["visuals"]["size"])
     return catalog
 
 
@@ -82,17 +82,11 @@ def _json(path: Path) -> Any:
         raise ValueError(f"Invalid JSON in {path}: {error.msg}") from error
 
 
-def _check_art(folder: Path, role: str, size: int) -> None:
-    for pose in _poses(role):
+def _check_art(folder: Path, poses: tuple[str, ...], size: int) -> None:
+    for pose in poses:
         for direction in DIRECTIONS:
             path = folder / "art" / pose / "rotations" / f"{direction}.png"
             _check_png(path, size)
-
-
-def _poses(role: str) -> tuple[str, ...]:
-    if role not in ROLE_POSES:
-        raise ValueError(f"Unknown character role {role!r}")
-    return ROLE_POSES[role]
 
 
 def _check_png(path: Path, size: int) -> None:

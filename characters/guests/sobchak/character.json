@@ -23,7 +23,7 @@
     "comfort": 0.9,
     "curiosity": 0.9
   },
-  "carries": {},
+  "carries": {"microphone": 1},
   "inspired_by": "Ksenia Sobchak, Russian journalist, interviewer and media personality",
   "origin": "real",
   "news": [

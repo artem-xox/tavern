@@ -23,6 +23,21 @@ const ICONS: Readonly<Record<string, Icon>> = {
     "....21144113....", ".....111113.....", "......1333......", "................"] },
 };
 
+/** Signature items are drawn from a picture file of their own (`static/items/`), not a pixel map. */
+const PICTURES: Readonly<Record<string, string>> = {
+  phone: "/items/phone.png", protest_sign: "/items/protest_sign.png", microphone: "/items/microphone.png",
+};
+
+/**
+ * The picture file of an item kind that has one.
+ *
+ * @param kind The inventory key.
+ * @returns The picture's URL, or null for a kind drawn from a pixel map (`iconPixels`).
+ */
+export function itemPicture(kind: string): string | null {
+  return Object.hasOwn(PICTURES, kind) ? PICTURES[kind]! : null;
+}
+
 /** What a kind without a picture of its own looks like: a tied bundle. */
 const BUNDLE: Icon = { palette: { 1: "#b08a5a", 2: "#d9b98a", 3: "#7a5a36", 4: "#c0392b" }, rows: [
   "................", "................", "......2..1......", ".......44.......", "......1441......", ".....211113.....",

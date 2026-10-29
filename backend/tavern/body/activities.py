@@ -20,6 +20,7 @@ from tavern.social.giving import hand_over
 from tavern.social.invitations import begin_errand
 from tavern.social.names import called
 from tavern.social.scenes import conversation_of, join_conversation, start_conversation
+from tavern.social.signature_acts import film_room, open_interview, raise_sign
 from tavern.social.tables import intrude
 from tavern.social.thoughts import opinion_of, think
 
@@ -191,6 +192,13 @@ def _approach_scene(world: World, actor: Actor, partner: Actor | None) -> None:
     begin_aim(world, actor, partner)
 
 
+def _interview(world: World, actor: Actor, partner: Actor | None) -> None:
+    if partner is None:
+        raise ValueError("An interview needs someone to interview")
+    _approach_scene(world, actor, partner)
+    open_interview(world, actor, partner)
+
+
 def _open_fight(world: World, actor: Actor, target: Any) -> None:
     # Both fighters carry the fight verb at each other; the one who chose it opens the fight, the other joins it.
     action = actor["action"]
@@ -321,6 +329,37 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "before they are thirsty: a table that is drinking together drinks another. It is pointless "
                       "while they already hold a mug, or when the tap has run dry, and not for a guest who is "
                       "already wasted."),
+    # Signature acts (`tavern.social.signature_acts`): each is offered only to whoever carries the item that gives it
+    # (`Item.offers`), and the world refuses it to anyone else (`requires_item`).
+    Activity(verb="livestream", fatigue_per_second=0.05, requires_item="phone", duration=8.0, leaves_seat=True, fun=0.6,
+             effect=film_room, label="Film the room", status="filming", pose="Filming",
+             stopped_at_last_call="The inn is closing: no more filming",
+             sound=Sound("filming", 0.3, 10.0, "someone narrating into a phone"),
+             doing="filming the room on a phone", done="filmed the room", family="company",
+             what="hold up the phone they carry and film the room for their followers: a fight, a quarrel or a speech "
+                  "in sight makes the footage, and with nothing happening it is only a selfie",
+             guidance="For the vain and the online: a fight or a quarrel in sight is exactly what the followers "
+                      "want, and whoever is filmed will not forget it. With nothing going on it is only a selfie, "
+                      "so it suits a bored guest a little and a scandal a great deal."),
+    Activity(verb="raise_sign", fatigue_per_second=0.2, requires_item="protest_sign", duration=10.0, leaves_seat=True,
+             fun=0.7, on_arrival=raise_sign, label="Raise a protest sign", status="protesting", pose="Protesting",
+             stopped_at_last_call="The inn is closing: no more protests",
+             doing="raising a protest sign and shouting", done="raised a protest sign", family="company",
+             what="stand up, raise the protest sign they carry at the guest they think worst of and shout, so that the "
+                  "whole hall hears",
+             guidance="For someone whose conscience will not keep quiet: the guest they blame most is shamed in front "
+                      "of the room, and whoever dislikes that guest too is glad of it. It is a loud scene, so it "
+                      "suits a real grievance, not a passing mood, and not twice in a short while."),
+    Activity(verb="interview_guest", fatigue_per_second=0.05, requires_item="microphone", partner=True, approaches=True,
+             duration=8.0, on_arrival=_interview, label="Interview a guest", status="interviewing",
+             pose="Interviewing", stopped_at_last_call="The inn is closing: no more interviews",
+             sound=Sound("chat", 0.25, 6.0, "a conversation"), doing="interviewing someone with a microphone",
+             done="interviewed someone", family="company", fun=0.6,
+             what="walk over to {target}, to the table where they sit or to where they stand, hold out the microphone "
+                  "they carry and interview them",
+             guidance="The way a celebrity interviewer works a room: she walks up with the microphone and asks the "
+                      "question everyone is afraid to ask. A guest who likes her enjoys it and one who does not feels "
+                      "grilled; whoever is near overhears the interview like any other talk."),
     # Never a candidate: the barkeep's own routine (`tavern.body.bartending`) pours for the guest waiting at the
     # tap, and a guest is refused it. The routine, not the timer, ends it.
     Activity(verb="pour_beer", duration=3.0, absorbed=True, served=True, staff_only=True, label="Pour a beer", status="pouring",

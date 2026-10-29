@@ -128,10 +128,11 @@ select { border: 0; border-radius: 8px; color: var(--ink); background: var(--rai
 .need.warn .pip.on { background: var(--warn); }
 .need.good .pip.on { background: var(--good); }
 .need .word { font-size: var(--t-label); color: var(--muted); min-width: 56px; text-align: right; }
-.slots { display: flex; gap: 8px; }
+.slots { display: flex; flex-wrap: wrap; gap: 8px; }
 .slot { position: relative; width: 52px; height: 52px; border-radius: 8px; background: var(--sunken); display: grid; place-items: center; }
 .slot.empty { opacity: .45; }
 .slot svg { width: 32px; height: 32px; }
+.slot .item-picture { width: 32px; height: 32px; image-rendering: pixelated; }
 .slot .count { position: absolute; right: 4px; bottom: 2px; font-size: var(--t-label); font-weight: 700; color: var(--gold-2); }
 .meta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; font-size: var(--t-small); color: var(--text-2); }
 .meta b { color: var(--gold-2); font-weight: 500; }
