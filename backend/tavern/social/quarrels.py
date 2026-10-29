@@ -9,7 +9,7 @@ from tavern.social.hostility import may_fight, urge
 from tavern.social.scenes import end_conversation
 
 # The run of insults (two each) at which a quarrel boils over.
-BOIL = 4
+BOIL = 5
 
 # The acts that make up a row: a shout is an insult flung across the hall.
 ROW_ACTS = ("insult", "shout")

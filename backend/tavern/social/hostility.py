@@ -34,7 +34,7 @@ class Hostility:
 # A fight takes a hotter head than a shove: a sober hothead shoves, only drink or fury fights.
 # A fight comes by two roads: strong drink (the `drunk` stage) in a hot head, or real hatred in a hot enough one.
 HOSTILITY = Hostility(opinion=-30.0, recent=120.0, urge=MappingProxyType({"shove": 0.45, "start_fight": 0.85}),
-                      drunk=0.3, hatred=-70.0, hatred_urge=0.45)
+                      drunk=0.36, hatred=-70.0, hatred_urge=0.54)
 
 # The thoughts that give a grudge a reason to be acted on.
 HOSTILE_CAUSES = ("insulted", "quarrel", "seat_taken", "friend_insulted", "line_cut")
