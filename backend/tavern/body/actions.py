@@ -65,6 +65,8 @@ def action_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Map
         return f"Only staff can {verb.replace('_', ' ')}"
     if activity.seated and not actor.get("seat_id"):
         return "This needs a seat at a table"
+    if activity.requires_item and actor["inventory"][activity.requires_item] <= 0:
+        return f"No {activity.requires_item} in inventory"
     if action.get("item") is not None and not activity.names_item:
         return "This action does not take an item"
     if action.get("aim") is not None and (verb not in AIM_VERBS or _bad_aim(action["aim"])):
@@ -81,8 +83,6 @@ def action_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Map
         return _talk_error(world, actor, action)
     if activity.near_person:
         return _confront_error(world, actor, action)
-    if activity.requires_item and actor["inventory"][activity.requires_item] <= 0:
-        return f"No {activity.requires_item} in inventory"
     if activity.target_kinds:
         return _target_error(world, actor, action)
     if action.get("target_id") is not None:

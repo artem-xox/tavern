@@ -13,6 +13,7 @@ from tavern.body.wounds import health_of, hurt
 from tavern.mind.fight_policy import hatred_scores, utilities as fight_utilities
 from tavern.mind.goals import GOALS, serving, serving_aim
 from tavern.mind.hall_view import in_use, line_place, steps_to
+from tavern.mind.signature_candidates import accused_in_sight, rivals_in_sight
 from tavern.social.giving import empty_handed_tablemates
 from tavern.social.hostility import urge
 from tavern.social.responses import answering
@@ -116,6 +117,7 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
         "inspect": 0.08 + 0.12 * traits.get("curiosity", 0.5) + 0.4 * missing_relief,
         "wait": max(0.0, 0.08 + 0.12 * traits.get("patience", 0.5) - 0.08 * max(thirst, fatigue, bladder)),
         "leave": _leave_utility(observation),
+        **_signature_utilities(observation, traits),
         "cut_in_line": 0.0,  # weighed against the wait in _score_lines
         "give": 0.0,  # weighed gift by gift in _score_gifts
         "bring_drink": 0.0,  # weighed with the gifts, as a trip for someone
@@ -138,6 +140,21 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
     _score_answers(observation, candidates, scores)
     hatred_scores(observation, candidates, scores)
     return scores
+
+
+def _signature_utilities(observation: Mapping[str, Any], traits: Mapping[str, float]) -> dict[str, float]:
+    # Filming is idle vanity until a fight or a speech is in sight; a protest wants a real grievance and an audience;
+    # an interview suits the curious and the sociable.
+    actor, now = observation["actor"], observation.get("time", -math.inf)
+    people, accused = observation.get("people", []), accused_in_sight(observation)
+    scene = 0.7 if any(person.get("fighting") for person in people) \
+        else 0.4 if any(person.get("doing") == "give_speech" for person in people) else 0.0
+    grievance = max(0.0, -opinion_of(actor, accused["id"], now)) / 100 if accused else 0.0
+    return {"livestream": min(1.0, 0.1 + 0.15 * traits.get("sociability", 0.5) + scene),
+            "raise_sign": min(1.0, 0.05 + 0.2 * traits.get("temper", 0.5) + 0.6 * grievance
+                              + 0.03 * len(rivals_in_sight(observation))),
+            "interview_guest": min(1.0, 0.15 + 0.35 * traits.get("curiosity", 0.5)
+                                   + 0.2 * actor["needs"].get("social", 0) / 100)}
 
 
 def _score_gifts(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
@@ -183,7 +200,7 @@ def _score_approaches(observation: Mapping[str, Any], candidates: Sequence[Mappi
     people = {item["id"]: item for item in [*observation.get("visitors", []), *observation.get("people", [])]}
     objects = {item["id"]: item for item in observation["objects"]}
     for action in candidates:
-        if action["verb"] != "approach":
+        if action["verb"] not in ("approach", "interview_guest"):
             continue
         table = objects.get(people.get(action["target_id"], {}).get("table_id"))
         person = people.get(action["target_id"], {})

@@ -12,13 +12,16 @@ WEIGHTS: Mapping[str, float] = {"quarrel": 2.0, "fight": 4.0, "knockout": 3.0, "
                                 # A heckle is the room answering back: worth a gift, less than the number it answers.
                                 "heckle": 1.0,
                                 # A walk-off ends a quarrel with the last word unsaid: a tale, but a fight is the better one.
-                                "stormed_off": 1.5}
+                                "stormed_off": 1.5,
+                                # A signature act (a livestream, a raised sign, an interview) is a set piece, below a fight.
+                                "signature_act": 2.0}
 
 # Logged event types that are a moment by themselves.
 # An insult is not one: every quarrel logs its own `quarrel` event beside it, so counting both would count twice.
 _BY_TYPE = {"quarrel": "quarrel", "fight_started": "fight", "dice_won": "played_together", "darts_won": "played_together",
             "gave": "gift", "dozed_off": "fell_asleep", "limped_home": "limped_home", "got_drunk": "got_drunk",
-            "gave_speech": "speech", "heckled": "heckle", "stormed_off": "stormed_off"}
+            "gave_speech": "speech", "heckled": "heckle", "stormed_off": "stormed_off",
+            "signature_act": "signature_act"}
 # The outcomes of `fight_ended` that knocked someone out.
 _KNOCKOUTS = ("knockout", "double_knockout")
 

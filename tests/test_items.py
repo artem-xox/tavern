@@ -13,7 +13,8 @@ def stocked(**counts: int) -> dict[str, int]:
 
 
 def test_an_empty_inventory_has_every_kind_at_zero() -> None:
-    assert empty_inventory() == {"beer": 0, "remedy": 0, "keepsake": 0, "cudgel": 0}
+    assert empty_inventory() == {"beer": 0, "remedy": 0, "keepsake": 0, "cudgel": 0, "phone": 0, "protest_sign": 0,
+                                 "microphone": 0}
 
 
 @pytest.mark.parametrize("inventory", [
@@ -61,12 +62,16 @@ def test_the_client_gets_the_wording_of_every_kind() -> None:
         "remedy": {"one": "a herbal remedy", "many": "herbal remedies"},
         "keepsake": {"one": "a keepsake", "many": "keepsakes"},
         "cudgel": {"one": "a cudgel", "many": "cudgels"},
+        "phone": {"one": "a phone", "many": "phones"},
+        "protest_sign": {"one": "a protest sign", "many": "protest signs"},
+        "microphone": {"one": "a microphone", "many": "microphones"},
     }
 
 
 def test_every_kind_is_received_with_a_thought_of_its_own() -> None:
     assert {kind: item.received for kind, item in ITEMS.items()} == {
-        "beer": "treated", "remedy": "cared_for", "keepsake": "gifted", "cudgel": "gifted"}
+        "beer": "treated", "remedy": "cared_for", "keepsake": "gifted", "cudgel": "gifted", "phone": "gifted",
+        "protest_sign": "gifted", "microphone": "gifted"}
 
 
 @pytest.mark.parametrize("carries,expected", [

@@ -16,6 +16,7 @@ from tavern.mind.hall_view import in_use, line_place
 from tavern.mind.local_policy import ASK_FLOOR, conviviality, local_aim_scores, local_answer_scores, local_scores, local_seat_scores
 from tavern.mind.observation import known_objects, own_actor
 from tavern.mind.options import aim_text, answer_text
+from tavern.mind.signature_candidates import signature_actions
 from tavern.mind.selection import bounded, drawable, read_aims, read_answers, read_lean, read_projects, read_temperature, select, spread, worth_asking
 from tavern.social.aims import AIM_VERBS, aim_candidates, offered_aims
 from tavern.social.invitations import answer_act
@@ -163,7 +164,9 @@ def _concrete_candidates(observation: Mapping[str, Any]) -> list[Action]:
             *_fetches(observation, actor, objects), *_round(observation, actor, objects),
             *_rematches(observation, actor, objects), *_nap(observation, actor), *_settling(observation, actor, objects),
             _action("inspect"), _action("wait"), *_hostile(observation),
-            *(_action(verb, target) for verb, target in room_reactions(observation))]
+            *(_action(verb, target) for verb, target in room_reactions(observation)),
+            *(_action(verb, target) for verb, target in
+              signature_actions(observation, [item["target_id"] for item in talks if item["verb"] == "approach"]))]
 
 
 def _line_options(observation: Mapping[str, Any], item: Mapping[str, Any], action: Action) -> list[Action]:

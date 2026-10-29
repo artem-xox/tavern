@@ -23,7 +23,7 @@
     "curiosity": 0.55
   },
   "sex": "female",
-  "carries": {},
+  "carries": {"phone": 1},
   "inspired_by": "Kim Kardashian, media personality and socialite",
   "origin": "real",
   "news": [

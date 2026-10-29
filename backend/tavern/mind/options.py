@@ -8,6 +8,7 @@ from tavern.body.activities import ACTIVITIES, FAMILIES
 from tavern.body.items import ITEMS
 from tavern.mind.fight_words import TEXTS as FIGHT_TEXTS
 from tavern.mind.goals import serving_aim
+from tavern.mind.signature_candidates import accused_in_sight
 from tavern.social.aims import aim_words
 from tavern.social.giving import empty_handed_tablemates
 from tavern.social.invitations import KINDS, known_place
@@ -327,6 +328,28 @@ def _speech(observation: Observation, action: Action) -> str:
             "(everyone in the hall hears it; some will cheer and some will groan)")
 
 
+def _livestream(observation: Observation, action: Action) -> str:
+    people = observation.get("people", [])
+    scene = (" (a fight is on, which is just what the followers want)" if any(person.get("fighting") for person in people)
+             else " (there is a speech on the stage)" if any(person.get("doing") == "give_speech" for person in people)
+             else " (nothing much is happening, so it would be only a selfie)")
+    return f"hold up the phone and film the room for the followers{scene}"
+
+
+def _protest(observation: Observation, action: Action) -> str:
+    accused = accused_in_sight(observation)
+    name = label_of(accused) if accused else "whoever they blame"
+    return (f"stand up, raise the protest sign at {name}, the guest they think worst of, and shout, so that the whole hall "
+            f"hears (it shames {name}, and it is not repeated soon)")
+
+
+def _interview(observation: Observation, action: Action) -> str:
+    partner = _someone(observation, action["target_id"])
+    name = label_of(partner) if partner else action["target_id"]
+    return (f"walk over to {name} and hold out the microphone for an interview, asking the sharp questions "
+            f"(whoever is near overhears, and {name} may enjoy it or feel grilled)")
+
+
 def _toilet(observation: Observation, action: Action) -> str:
     return f"walk {walk_words(steps_to(observation, _target(observation, action)))} to the WC"
 
@@ -366,6 +389,7 @@ _OPTIONS: Mapping[str, Callable[[Observation, Action], str]] = {
     "take_beer": _pour, "settle_in": _settle, "stand_a_round": _round, "rematch": _rematch, "drink": _drink, "rest": _rest, "seating": _seating, "sit": _sit, "doze": _doze, "talk": _talk,
     "approach": _approach, "join_conversation": _join, "play_darts": _darts, "stand_at_bar": _bar, "watch": _watch,
     "watch_dice": _watch_dice, "give_speech": _speech,
+    "livestream": _livestream, "raise_sign": _protest, "interview_guest": _interview,
     "use_toilet": _toilet, "give": _give, "bring_drink": _bring,
     "inspect": _inspect, "wait": _wait, "leave": _leave, "cut_in_line": _cut, "shove": _shove, "start_fight": _fight,
     **FIGHT_TEXTS}

@@ -97,6 +97,14 @@ THOUGHTS: Mapping[str, ThoughtKind] = MappingProxyType({
     "toasted": ThoughtKind(4.0, 15.0, 300.0, 2, "raised a toast to them", acquaints=True),
     "roasted": ThoughtKind(-6.0, -25.0, 300.0, 2, "roasted them from the stage", acquaints=True),
     "heckled": ThoughtKind(-4.0, -15.0, 300.0, 2, "heckled their speech", acquaints=True),
+    # Signature acts (`tavern.social.signature_acts`): held by those caught on a phone's camera and by one an interview
+    # was done with, about whoever did it; by the guest a protest sign was raised at, about the protester, and by a
+    # listener who dislikes that guest too.
+    "filmed": ThoughtKind(-2.0, -6.0, 240.0, 2, "filmed them on a phone", acquaints=True),
+    "shamed": ThoughtKind(-5.0, -20.0, 300.0, 2, "shamed them with a protest sign", acquaints=True),
+    "protest_cheered": ThoughtKind(2.0, 6.0, 240.0, 1, "stood up to someone they dislike", acquaints=True),
+    "interviewed": ThoughtKind(2.0, 4.0, 240.0, 1, "interviewed them", acquaints=True),
+    "grilled": ThoughtKind(-3.0, -10.0, 240.0, 1, "grilled them with a microphone", acquaints=True),
     # The same for a match at the two dart boards (`tavern.social.darts`).
     "won_at_darts": ThoughtKind(5.0, 2.0, 300.0, 3, "lost to them at darts", acquaints=True),
     "lost_at_darts": ThoughtKind(-4.0, -6.0, 300.0, 3, "beat them at darts", acquaints=True),

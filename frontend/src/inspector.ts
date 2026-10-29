@@ -2,7 +2,7 @@
 import { html, render, svg, type TemplateResult } from "lit-html";
 import { aimLabel } from "./aims";
 import { clock } from "./clock";
-import { iconPixels } from "./icons";
+import { iconPixels, itemPicture } from "./icons";
 import { projectLabel } from "./projects";
 import { chasing, mergeThoughts, NEED_PIPS, needPips, needTone, needWord, opinionBar, type MergedThought } from "./mindview";
 import { spriteOf, type SpriteRegistry } from "./sprites";
@@ -113,8 +113,10 @@ function slots(actor: Actor, ctx: InspectorContext): TemplateResult {
   })}</div>`;
 }
 
-/** An item's picture as an SVG of one square per pixel, kept crisp at any size. */
+/** An item's picture: its picture file when it has one, else an SVG of one square per pixel, kept crisp at any size. */
 function icon(kind: string): TemplateResult {
+  const picture: string | null = itemPicture(kind);
+  if (picture) return html`<img class="item-picture" src="${picture}" width="32" height="32" alt="" aria-hidden="true" />`;
   const { size, pixels } = iconPixels(kind);
   return html`<svg viewBox="0 0 ${size} ${size}" width="32" height="32" shape-rendering="crispEdges" aria-hidden="true">${pixels.map((pixel) => svg`<rect x="${pixel.x}" y="${pixel.y}" width="1" height="1" fill="${pixel.color}"/>`)}</svg>`;
 }
