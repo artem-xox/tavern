@@ -1,7 +1,7 @@
 ---
 id: S3-R17
 title: Take pose choice and click picking out of the Phaser scene into pure, tested modules
-status: todo
+status: done
 needs: []
 touches: [frontend/src/scene.ts, frontend/src/pose.ts (new), frontend/src/picking.ts (new), frontend/tests/pose.test.ts (new), frontend/tests/picking.test.ts (new)]
 ---
@@ -58,4 +58,13 @@ under the pointer with their emote word, the editing flag) and returns the strin
 
 ## Results
 
-Filled in when the task is done.
+- Step 1 `pose.ts` (`poseOf`, `isLow`, `onPot`) and step 2 `picking.ts` (`cellAt`, `visitorAt`, `objectAt`,
+  `hoverText`) done test first, one commit each. `npm --prefix frontend test`: 318 pass, 0 fail.
+- `make check` and `make build` pass (frontend tests 318/318, typecheck clean, `built in 6.35s`).
+- `scene.ts` is 377 lines, not about 340. `grep -n "Math.hypot\|Math.floor(pointer" frontend/src/scene.ts` finds one
+  line (255, the interpolation snap, not picking); the picking ones are gone.
+- Two small differences: `visitorAt` returns the nearest visitor in reach (the ticket's wording), where the old
+  loop took the first in map order; hover checks only emoting visitors, so it picks the nearest of those. A pointer
+  outside the map now leaves the hover line unchanged (the canvas is the map, so this should not happen).
+- Step 3 (manual check in `make run`: click a guest, hover the tap and a chair, toggle a wall) was NOT done in
+  this session; it needs a human or a later pass.
