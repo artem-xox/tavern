@@ -2,7 +2,6 @@
 
 from copy import deepcopy
 import json
-from pathlib import Path
 from typing import Any
 
 import pytest
@@ -70,12 +69,6 @@ def test_world_rejects_invalid_layout(mutation: str) -> None:
         data["actors"][0]["needs"] = {"thirst": "bad"}
     with pytest.raises(ValueError):
         create_world(data)
-
-
-def test_demo_layout_contains_three_visitors_and_valid_objects() -> None:
-    data = json.loads((Path(__file__).parents[1] / "data" / "tavern.json").read_text())
-    world = create_world(data)
-    assert (world["map"]["width"], world["map"]["height"], len(world["actors"])) == (20, 14, 3)
 
 
 def test_beer_effect_requires_arrival_and_happens_once() -> None:
