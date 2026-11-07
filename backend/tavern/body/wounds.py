@@ -71,12 +71,12 @@ def treat(actor: Actor) -> None:
 
     Args:
         actor: Visitor, updated in place: no longer `ailing` (and so much less tired, see `ailment.relieve`) and, where
-            they were hurt or laid low, mended (see `mend`).
+            they were hurt or laid low, mended (see `_mend`).
     """
     if actor["ailing"]:
         relieve(actor)
     if hurt(actor) or actor["condition"] != "ok":
-        mend(actor)
+        _mend(actor)
 
 
 def needs_cure(actor: Mapping[str, Any]) -> bool:
@@ -107,7 +107,7 @@ def lay_low(actor: Actor, condition: str, until: float) -> None:
     actor["condition"], actor["condition_until"] = condition, until
 
 
-def mend(actor: Actor) -> None:
+def _mend(actor: Actor) -> None:
     """Heal a visitor with a remedy: health back by `MENDS`, and a body that was down or groggy is up and whole.
 
     Args:
