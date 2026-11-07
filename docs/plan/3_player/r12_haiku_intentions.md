@@ -1,7 +1,7 @@
 ---
 id: S3-R12
 title: Split intentions.py: how Haiku is asked for an intention, apart from when and what it changes
-status: todo
+status: done
 needs: [S3-R00]
 touches: [mind/intentions.py, mind/haiku_intentions.py (new), app.py, scripts/evening.py, adapters/tracing.py, tests]
 ---
@@ -52,4 +52,17 @@ Test edits, import lines only, **approved by the owner, 2026-11-07**: the tests 
 
 ## Results
 
-Filled in when the task is done.
+Done 2026-11-07.
+
+- Step 1: `mind/haiku_intentions.py` (143 lines) holds `intention_question`, `_schema`, `parse_stance`,
+  `intention_writer`, `_wishes`, `_previous`, `_duty`, `_others`, `_earlier`, moved verbatim. `intentions.py` is 401 lines.
+  `check_intention` (with `_is_goal`, `_LONGEST`, `_ANSWER_FIELDS`) stays: it applies an answer. Importers updated:
+  `app.py`, `scripts/evening.py`; `adapters/tracing.py` needed no edit (it imports only `Intender`, `Written`).
+  Approved test import edits in 5 files, not 3: `test_heard`, `test_duty_stance`, `test_address_room`, `test_goals`,
+  `test_intentions`.
+- Golden: `make golden GOLDEN=runs/golden-now && diff -r runs/golden-base runs/golden-now` printed nothing.
+- `make test`: 4706 passed; `.venv/bin/mypy`: no issues found in 134 source files; `make check`: passed
+  (backend tests, mypy, frontend typecheck, 318 frontend tests, 0 failed).
+- Step 2: no recorded live evening exists on this machine (`ls runs/*/calls.jsonl` matches nothing, in this
+  worktree or the main checkout), so the byte-identical replay was not run. The golden check does not ask Haiku.
+
