@@ -9,6 +9,7 @@ import { stageLift } from "./stage";
 import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawFootlights, drawStage, drawTable, drawTap, drawToilet, drawWindow } from "./furniture";
 import { headingOf, headingToObject } from "./heading";
 import { drawFireplace, drawFlames, drawHearthGlow } from "./hearth";
+import { cellAt, hoverText, objectAt, visitorAt } from "./picking.ts";
 import { isLow, onPot, poseOf } from "./pose.ts";
 import { mapParts, type MapParts } from "./mapview";
 import { Speech } from "./speech";
@@ -333,34 +334,35 @@ export class TavernScene extends Phaser.Scene {
   private click(pointer: Phaser.Input.Pointer): void {
     if (!this.world) return;
     const size: number = this.world.map.tile_size;
-    const x: number = Math.floor(pointer.x / size);
-    const y: number = Math.floor(pointer.y / size);
-    if (x < 0 || y < 0 || x >= this.world.map.width || y >= this.world.map.height) return;
-    if (this.editing) { this.callbacks.cell(x, y); return; }
-    for (const [id, view] of this.visitors) {
-      if (Math.hypot(pointer.x - view.container.x, pointer.y - view.container.y) <= size * 0.65) {
-        this.callbacks.select(id);
-        return;
-      }
-    }
+    const cell: Cell | null = cellAt(pointer.x, pointer.y, this.world.map);
+    if (!cell) return;
+    if (this.editing) { this.callbacks.cell(cell[0], cell[1]); return; }
+    const id: string | null = visitorAt(pointer.x, pointer.y, this.drawnPositions(() => true), size);
+    if (id) this.callbacks.select(id);
+  }
+
+  /** Where each visitor passing the filter is drawn right now. */
+  private drawnPositions(keep: (view: ActorView) => boolean): Map<string, { x: number; y: number }> {
+    const positions: Map<string, { x: number; y: number }> = new Map();
+    for (const [id, view] of this.visitors) if (keep(view)) positions.set(id, { x: view.container.x, y: view.container.y });
+    return positions;
   }
 
   private hover(pointer: Phaser.Input.Pointer): void {
     if (!this.world) return;
-    for (const view of this.visitors.values()) {
-      if (view.emoteKind !== null && Math.hypot(pointer.x - view.container.x, pointer.y - view.container.y) <= this.world.map.tile_size * 0.65) {
-        this.callbacks.hover(`${view.name.text} · ${EMOTE_WORDS[view.emoteKind]}`);
-        return;
-      }
-    }
-    const x: number = Math.floor(pointer.x / this.world.map.tile_size);
-    const y: number = Math.floor(pointer.y / this.world.map.tile_size);
-    const object: WorldObject | undefined = this.world.map.objects.find((item: WorldObject): boolean => x >= item.x && x < item.x + (item.width ?? 1) && y >= item.y && y < item.y + (item.height ?? 1));
-    const owner: Actor | undefined = this.world.actors.find((actor: Actor): boolean => !!object && actor.favorite_seat_id === object.id);
-    const stock: string = object?.kind === "tap" ? ` · ${object.stock ?? 0} left` : "";
-    const players: string = object?.game ? ` · ${object.game.players.map((id: string): string => this.world?.actors.find((actor: Actor): boolean => actor.id === id)?.name ?? id).join(" and ")} playing` : "";
-    const details: string = stock + players + (object?.appeal !== undefined ? ` · appeal ${object.appeal.toFixed(2)}${object.comforts?.length ? ` (${object.comforts.join(", ")})` : ""}` : "");
-    this.callbacks.hover(object ? `${object.name} · ${object.reserved_by ? "reserved" : "available"}${owner ? ` · ${owner.name}'s seat` : ""}${details} · cell ${x}, ${y}` : `${this.editing ? "Click to toggle obstacle" : "Click a visitor to inspect"} · cell ${x}, ${y}`);
+    const world: World = this.world;
+    const cell: Cell | null = cellAt(pointer.x, pointer.y, world.map);
+    if (!cell) return;
+    const emoter: string | null = visitorAt(pointer.x, pointer.y, this.drawnPositions((view: ActorView): boolean => view.emoteKind !== null), world.map.tile_size);
+    const emoting: ActorView | undefined = emoter ? this.visitors.get(emoter) : undefined;
+    const object: WorldObject | null = objectAt(cell, world.map.objects);
+    const nameOf = (id: string): string => world.actors.find((actor: Actor): boolean => actor.id === id)?.name ?? id;
+    this.callbacks.hover(hoverText({
+      cell, object, editing: this.editing,
+      emoted: emoting?.emoteKind ? { name: emoting.name.text, word: EMOTE_WORDS[emoting.emoteKind] } : null,
+      owner: object ? world.actors.find((actor: Actor): boolean => actor.favorite_seat_id === object.id)?.name ?? null : null,
+      playerNames: object?.game ? object.game.players.map(nameOf) : [],
+    }));
   }
 }
 
