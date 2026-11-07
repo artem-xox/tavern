@@ -54,7 +54,7 @@ def log_event(world: World, actor_id: str | None, kind: str, message: str) -> di
     return event
 
 
-def fresh_events(events: Sequence[Mapping[str, Any]], last: Mapping[str, Any] | None) -> list[dict[str, Any]] | None:
+def fresh_events(events: Sequence[dict[str, Any]], last: Mapping[str, Any] | None) -> list[dict[str, Any]] | None:
     """Pick the events logged after the last one a runner has seen.
 
     Args:
