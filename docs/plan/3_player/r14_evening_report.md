@@ -1,7 +1,7 @@
 ---
 id: S3-R14
 title: Build the evening report in the core, not in the entry point
-status: todo
+status: done
 needs: [S3-R04]
 touches: [scripts/evening.py, evening/report.py (new), tests/test_report.py (new)]
 ---
@@ -57,4 +57,15 @@ manners, closing, ailment, fights, story, bar, writer`.
 
 ## Results
 
-Filled in when the task is done.
+Done 2026-11-07. The ticket's 38-key list matched `metrics.json` (checked on the golden run), no fix needed.
+
+- `evening_report` is in `backend/tavern/evening/report.py`; `scripts/evening.py` builds `run` and calls it, and imports no `*_metrics` module (395 lines).
+- `make golden GOLDEN=runs/golden-base` before the first edit, `make golden GOLDEN=runs/golden-now` after:
+  `diff -r runs/golden-base runs/golden-now` printed nothing (4 evenings).
+- `make check` (tests, typecheck, frontend tests) exited 0; last lines of its output:
+
+```
+ℹ tests 318
+ℹ pass 318
+ℹ fail 0
+```
