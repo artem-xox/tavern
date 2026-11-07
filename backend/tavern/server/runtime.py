@@ -18,7 +18,7 @@ from tavern.evening.retelling import Retelling, retell
 from tavern.evening.scenario import Scenario, open_evening
 from tavern.evening.story_score import WEIGHTS, Moment, story_moments, story_score
 from tavern.hall.memory import fresh_events, log_event
-from tavern.hall.staff import guests
+from tavern.hall.closing import all_gone
 from tavern.hall.state import World
 from tavern.hall.world import create_world, step_world
 from tavern.mind import agents
@@ -104,10 +104,6 @@ class Store(Protocol):
 
     def save(self, world: World, slot: str) -> None:
         """Replace the world in a slot."""
-
-
-def _anyone_to_come(world: Mapping[str, Any]) -> bool:
-    return bool(guests(world) or world["expected"])
 
 
 class TavernRuntime:
@@ -221,7 +217,7 @@ class TavernRuntime:
         """
         step_world(self.world, dt)
         self._note_story()
-        if not self.world["paused"] and self.world["closes_at"] is not None and not _anyone_to_come(self.world):
+        if not self.world["paused"] and self.world["closes_at"] is not None and all_gone(self.world):
             # Staff stay at their bars all night, so only guests, present or expected, keep an evening going.
             self.world["paused"] = True
             self._event("The last guest has left: the evening is over")

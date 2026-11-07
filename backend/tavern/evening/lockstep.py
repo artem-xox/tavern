@@ -9,6 +9,7 @@ from typing import Any, NotRequired, TypedDict
 from tavern.evening.decisions import free_to_decide
 from tavern.evening.mind_loop import MindLoop
 from tavern.hall.memory import fresh_events
+from tavern.hall.closing import all_gone
 from tavern.hall.staff import guests
 from tavern.hall.state import World
 from tavern.hall.world import step_world
@@ -180,7 +181,7 @@ def evening_over(world: Mapping[str, Any], time_limit: float) -> bool:
         reached. Staff stay on, so they never keep an evening going. Worlds without a scenario
         expect nobody.
     """
-    return (not guests(world) and not world.get("expected")) or world["time"] >= time_limit
+    return all_gone(world) or world["time"] >= time_limit
 
 
 def evening_mode(requested: str | None, keyed: bool) -> tuple[str, str | None]:
