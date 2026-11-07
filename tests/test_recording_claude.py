@@ -8,11 +8,12 @@ from typing import Any
 
 import pytest
 
-from tavern.adapters.claude import HAIKU_4_5, HAIKU_5_5, ClaudeError
+from tavern.adapters.claude import HAIKU_5_5, ClaudeError
 from tavern.mind.questions import Question
 from tavern.evening.recording import (Record, Tariff, cost_by_kind, format_record, parse_records, record_questions,
                               replay_questions, request_key)
 
+HAIKU_4_5 = Tariff(input=1.0, output=5.0, cache_read=0.10, cache_write=1.25)
 USAGE = {"input_tokens": 100, "output_tokens": 20, "cache_read_input_tokens": 4000,
          "cache_creation_input_tokens": 0}
 
