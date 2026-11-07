@@ -2,9 +2,10 @@
 
 import pytest
 
-from tavern.hall.memory import log_event
+from tavern.hall.memory import fresh_events, log_event, record_event
 from tavern.hall.state import find_actor
 from tavern.hall.validation import integer
+from tavern.hall.world import create_world
 
 
 @pytest.mark.parametrize("value, expected", [
@@ -49,3 +50,43 @@ def test_log_event_keeps_the_latest_200() -> None:
     log_event(world, "ann", "turn", "Ann spoke")
     assert len(world["events"]) == 200
     assert world["events"][-1] == {"time": 3.0, "actor_id": "ann", "type": "turn", "message": "Ann spoke"}
+
+
+def _hall() -> dict:
+    return create_world({"width": 4, "height": 3, "blocked": [], "objects": [],
+                         "actors": [{"id": "ann", "name": "Ann", "x": 1, "y": 1}]})
+
+
+@pytest.mark.parametrize("log", [
+    pytest.param(lambda world: record_event(world, world["actors"][0], "turn", "Ann spoke"), id="record-event"),
+    pytest.param(lambda world: log_event(world, "ann", "turn", "Ann spoke"), id="log-event"),
+])
+def test_logging_returns_the_event_it_appended(log) -> None:
+    world = _hall()
+    assert log(world) is world["events"][-1]
+
+
+def _log() -> list[dict]:
+    return [{"n": 1}, {"n": 2}, {"n": 3}]
+
+
+@pytest.mark.parametrize("last, expected", [
+    pytest.param(None, [{"n": 1}, {"n": 2}, {"n": 3}], id="no-last-takes-all"),
+    pytest.param(0, [{"n": 2}, {"n": 3}], id="last-in-the-middle-of-the-log"),
+    pytest.param(2, [], id="last-at-the-end"),
+])
+def test_fresh_events_follow_the_last_one_seen(last: int | None, expected: list[dict]) -> None:
+    events = _log()
+    assert fresh_events(events, None if last is None else events[last]) == expected
+
+
+@pytest.mark.parametrize("last", [
+    pytest.param({"n": 0}, id="trimmed-away"),
+    pytest.param({"n": 2}, id="equal-but-not-identical"),
+])
+def test_fresh_events_say_none_when_the_last_one_is_not_in_the_log(last: dict) -> None:
+    assert fresh_events(_log(), last) is None
+
+
+def test_fresh_events_of_an_empty_log() -> None:
+    assert fresh_events([], None) == []

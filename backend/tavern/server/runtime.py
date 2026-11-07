@@ -13,11 +13,11 @@ from tavern.adapters.jev import evaluate_actions, evaluate_aims, evaluate_answer
 from tavern.adapters.persistence import FileStore
 from tavern.body.activities import ACTIVITIES, client_activities
 from tavern.body.items import client_items
-from tavern.evening.decisions import log_control
 from tavern.evening.mind_loop import MindLoop, TaskCourier
 from tavern.evening.retelling import Retelling, retell
 from tavern.evening.scenario import Scenario, open_evening
 from tavern.evening.story_score import WEIGHTS, Moment, story_moments, story_score
+from tavern.hall.memory import fresh_events, log_event
 from tavern.hall.staff import guests
 from tavern.hall.state import World
 from tavern.hall.world import create_world, step_world
@@ -165,10 +165,10 @@ class TavernRuntime:
     def _note_story(self) -> None:
         # The world keeps only its latest 200 events, so the story is gathered tick by tick: what follows the
         # last event seen is new (an event is told apart by identity, as equal events do repeat).
-        events = self.world["events"]
-        seen = next((index for index in range(len(events) - 1, -1, -1) if events[index] is self.chronicle[-1]), -1) \
-            if self.chronicle else -1
-        fresh = events[seen + 1:]
+        # When the last one seen has been trimmed away, the whole log is taken.
+        fresh = fresh_events(self.world["events"], self.chronicle[-1] if self.chronicle else None)
+        if fresh is None:
+            fresh = list(self.world["events"])
         self.chronicle.extend(fresh)
         self.moments.extend(story_moments(fresh))
 
@@ -211,7 +211,7 @@ class TavernRuntime:
                 "telling": self._telling is not None and not self._telling.done()}
 
     def _event(self, message: str) -> None:
-        log_control(self.world, message)
+        log_event(self.world, None, "control", message)
 
     def advance(self, dt: float) -> None:
         """Advance the world without waiting for AI requests.

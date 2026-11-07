@@ -380,8 +380,8 @@ def _speak(world: World, scene: Conversation, speaker_id: str, result: Mapping[s
     scene.update({"topic": result["topic"], "writing": None, "written": None,
                   "next_turn_at": world["time"] + reading_time(result["line"], world["rules"]["conversation"])})
     listener = people[result["addressee"]]["name"] if result["addressee"] else "everyone"
-    log_event(world, speaker_id, "turn", f"{people[speaker_id]['name']} to {listener} ({result['act']}): {result['line']}")
-    spoken = world["events"][-1]
+    spoken = log_event(world, speaker_id, "turn",
+                       f"{people[speaker_id]['name']} to {listener} ({result['act']}): {result['line']}")
     note_spoken(world, scene, people[speaker_id])
     # Heard before the act takes effect, while the scene still holds everyone who spoke in it.
     hear_line(world, scene, turn)

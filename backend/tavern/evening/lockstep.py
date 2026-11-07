@@ -8,6 +8,7 @@ from typing import Any, NotRequired, TypedDict
 
 from tavern.evening.decisions import free_to_decide
 from tavern.evening.mind_loop import MindLoop
+from tavern.hall.memory import fresh_events
 from tavern.hall.staff import guests
 from tavern.hall.state import World
 from tavern.hall.world import step_world
@@ -280,12 +281,9 @@ def _record_choices(world: Mapping[str, Any], run: _Run, courier: LockstepCourie
 def _collect(world: Mapping[str, Any], run: _Run) -> None:
     # The world keeps only its latest events, so the new ones are those after the last event
     # collected. Identity, not equality, finds it: equal events can repeat.
-    events = world["events"]
-    if run.events:
-        last = next((index for index in range(len(events) - 1, -1, -1) if events[index] is run.events[-1]), None)
-        if last is None:
-            raise ValueError("Events were trimmed before they were collected; take smaller steps")
-        events = events[last + 1:]
+    events = fresh_events(world["events"], run.events[-1] if run.events else None)
+    if events is None:
+        raise ValueError("Events were trimmed before they were collected; take smaller steps")
     run.events.extend(events)
 
 
