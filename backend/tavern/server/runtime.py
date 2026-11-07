@@ -13,11 +13,11 @@ from tavern.adapters.jev import evaluate_actions, evaluate_aims, evaluate_answer
 from tavern.adapters.persistence import FileStore
 from tavern.body.activities import ACTIVITIES, client_activities
 from tavern.body.items import client_items
-from tavern.evening.decisions import log_control
 from tavern.evening.mind_loop import MindLoop, TaskCourier
 from tavern.evening.retelling import Retelling, retell
 from tavern.evening.scenario import Scenario, open_evening
 from tavern.evening.story_score import WEIGHTS, Moment, story_moments, story_score
+from tavern.hall.memory import log_event
 from tavern.hall.staff import guests
 from tavern.hall.state import World
 from tavern.hall.world import create_world, step_world
@@ -211,7 +211,7 @@ class TavernRuntime:
                 "telling": self._telling is not None and not self._telling.done()}
 
     def _event(self, message: str) -> None:
-        log_control(self.world, message)
+        log_event(self.world, None, "control", message)
 
     def advance(self, dt: float) -> None:
         """Advance the world without waiting for AI requests.

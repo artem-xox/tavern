@@ -82,3 +82,10 @@ def test_answer_starts_its_action_or_is_logged(
     logged = [event["message"] for event in world["events"] if event["type"] == "control"]
     assert ((ada["action"] or {}).get("verb"), ada["decision"]["error"], logged, rest_until) == (
         verb, error, control, world["time"] + 1.0)
+
+
+def test_control_events_keep_the_whole_event_log() -> None:
+    world = create_world(room())
+    world["events"] = [{"time": 0.0, "actor_id": None, "type": "note", "message": str(n)} for n in range(150)]
+    apply_decision(world, world["actors"][0], failure)
+    assert (len(world["events"]), world["events"][-1]["type"]) == (151, "control")
