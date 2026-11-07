@@ -301,7 +301,7 @@ def cost_by_kind(records: Sequence[Record], input_usd_per_million: float,
         records: Recorded calls.
         input_usd_per_million: USD tariff per million input tokens of every kind without a
             tariff of its own: Jev's, whose output tokens are free.
-        tariffs: Full tariffs of the kinds that have one, such as Claude's (`claude.HAIKU_4_5`).
+        tariffs: Full tariffs of the kinds that have one, such as Claude's (`claude.HAIKU_5_5`).
 
     Returns:
         Per kind, in name order: calls, failed calls, answered calls without reported usage,

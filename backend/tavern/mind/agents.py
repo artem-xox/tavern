@@ -81,15 +81,6 @@ class Evaluators:
     answers: Evaluator | None = None
 
 
-class Decision(TypedDict):
-    """A decision plus scores and a safe, visible fallback reason."""
-
-    action: Action
-    source: str
-    scores: dict[str, float]
-    error: str | None
-
-
 async def _unwired(view: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
                    config: Mapping[str, Any]) -> dict[str, float]:
     raise ValueError("Asking a model needs evaluators; the shell supplies them")

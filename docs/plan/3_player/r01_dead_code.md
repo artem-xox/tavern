@@ -1,7 +1,7 @@
 ---
 id: S3-R01
 title: Delete dead code, a dead script and a duplicated plan file
-status: todo
+status: done
 needs: [S3-R00]
 touches: [body/wounds.py, mind/agents.py, mind/model_health.py, adapters/claude.py, evening/recording.py, hall/world.py, scripts/benchmark_cost.py, Makefile, tests/test_turn_metrics.py, tests/test_recording_claude.py, docs/plan/2_story_evenings]
 ---
@@ -58,4 +58,18 @@ if a use appeared since 2026-11-07, stop and report it instead of deleting.
 
 ## Results
 
-Filled in when the task is done.
+Done 2026-11-07, four commits, one per step. All seven items are gone; nothing else changed
+(I also dropped the stale "Claude Haiku 4.5" words from the comment above `HAIKU_5_5`).
+
+- Step 1: `make test` 4706 passed, `mypy` no issues in 133 source files, golden diff empty.
+- Step 2: `pytest tests/test_turn_metrics.py tests/test_recording_claude.py` 40 passed.
+- Step 3: `make help` no longer lists `benchmark`; the grep over Makefile, README.md, docs/*.md and AGENTS.md finds nothing.
+- Final `make check` (tail; the run ends with the frontend tests, so everything before it passed):
+
+```
+ℹ tests 318
+ℹ pass 318
+ℹ fail 0
+```
+
+- Golden check after the last step: `make golden GOLDEN=runs/golden-now && diff -r runs/golden-base runs/golden-now` printed nothing.
