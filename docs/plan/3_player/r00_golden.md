@@ -1,7 +1,7 @@
 ---
 id: S3-R00
 title: Record golden evenings that every refactor is checked against
-status: todo
+status: done
 needs: []
 touches: [Makefile]
 ---
@@ -93,4 +93,7 @@ should be fully green (4,706 cases on 2026-11-07).
 
 ## Results
 
-Filled in when the task is done.
+- Added `golden` (with `GOLDEN ?= runs/golden`), its `.PHONY` entry and help line to the Makefile.
+- `make golden GOLDEN=runs/golden-a` and `GOLDEN=runs/golden-b`, then `diff -r runs/golden-a runs/golden-b`: no output. Each of the 4 directories holds `events.jsonl` and `metrics.json` (plus `calls.jsonl`).
+- Worktree case: with `PYTHONPATH=backend`, `tavern.__file__` is the worktree's own `backend/tavern/__init__.py`; without it, `/Users/artem.khokhlov/Desktop/playground/tavern/backend/tavern/__init__.py` (the main checkout).
+- `make check`: pytest `4706 passed in 212.65s`; mypy `Success: no issues found in 133 source files`; frontend `npm test`: 271 tests, 271 pass, 0 fail.
