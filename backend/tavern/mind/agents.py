@@ -300,14 +300,14 @@ def _seat_wish(observation: Mapping[str, Any], objects: Sequence[Mapping[str, An
     # Choosing a table seat takes two decisions: first whether to sit, then which chair.
     # Once seated, that chair is the visitor's own and they return to it; they choose again
     # only if it was taken, or to join company seen at a table with a free chair.
-    actor, visitors = observation["actor"], observation.get("visitors", [])
+    actor, people = observation["actor"], observation.get("people", [])
     free = _free_seats(observation, objects)
     own = next((item for item in free if item["id"] == actor.get("favorite_seat_id")), None)
     if own is None:
         return [_action("seating")] if free else []
     # Only company they like is worth moving to: a stranger's table is not theirs to sit at (walk over instead).
     now = observation.get("time", -math.inf)
-    company = {item.get("table_id") for item in visitors if item.get("seat_id")
+    company = {item.get("table_id") for item in people if item.get("seat_id")
                and liked(actor, item["id"], now)} - {own["table_id"]}
     joinable = any(item["table_id"] in company for item in free)
     return [_action("sit", own["id"]), *([_action("seating")] if joinable else [])]
@@ -334,8 +334,8 @@ def _social_candidates(observation: Mapping[str, Any], actor: Mapping[str, Any],
     # Seated tablemates, or anyone standing beside them (`people`, when observed): talk to whoever
     # is free, or join a conversation already going, once per scene through its first member seen.
     # Anyone seated at another table, and anyone standing in the open in company or busy, can be walked over to.
-    visitors, people = observation.get("visitors", []), observation.get("people", [])
-    if not isinstance(visitors, list) or not isinstance(people, list):
+    people = observation.get("people", [])
+    if not isinstance(people, list):
         raise ValueError("Visible visitors must be a list")
     seat = next((item for item in objects if item["id"] == actor.get("seat_id")), None)
     table = seat.get("table_id") if seat else None
@@ -344,12 +344,14 @@ def _social_candidates(observation: Mapping[str, Any], actor: Mapping[str, Any],
     # Company they like at a table with a free chair is joined by sitting down (`_seat_wish`), not by a walk over.
     now, open_tables = observation.get("time", -math.inf), {item["table_id"] for item in _free_seats(observation, objects)}
     # Somewhere to stand at that table: a walk over is pointless while every spot has someone on it.
-    taken = {(person["x"], person["y"]) for person in [*visitors, *people] if isinstance(person, Mapping)
+    taken = {(person["x"], person["y"]) for person in people if isinstance(person, Mapping)
              and "x" in person and "y" in person}
     standing_room = {item["id"]: not item.get("interaction_spots")
                      or any(tuple(spot) not in taken for spot in item["interaction_spots"])
                      for item in objects if item["kind"] == "table"}
-    for visitor in [*visitors, *people]:
+    # Seated company comes first, then the rest, each in sight order: the first person seen for a scene or
+    # a table sets the option, so this order decides which option the request lists first.
+    for visitor in sorted(people, key=lambda item: not (isinstance(item, Mapping) and item.get("seat_id"))):
         if not isinstance(visitor, Mapping) or not isinstance(visitor.get("id"), str) or not visitor["id"]:
             raise ValueError("Visible visitors must have nonempty IDs")
         near = (table and visitor.get("seat_id") and visitor.get("table_id") == table) or visitor.get("beside")

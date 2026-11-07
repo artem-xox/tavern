@@ -183,7 +183,7 @@ def test_social_candidates_deduplicate_visible_neighbors(visitors: list[dict[str
 
 def test_malformed_visible_visitor_fails_loudly() -> None:
     view = observe_actor(seated_world(), "ada")
-    view["visitors"] = [{"id": []}]
+    view["people"] = [{"id": []}]
     with pytest.raises(ValueError):
         build_candidates(view)
 
