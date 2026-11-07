@@ -17,7 +17,7 @@ from tavern.mind.local_policy import ASK_FLOOR, conviviality, local_aim_scores, 
 from tavern.mind.observation import known_objects, own_actor
 from tavern.mind.options import aim_text, answer_text
 from tavern.mind.signature_candidates import signature_actions
-from tavern.mind.selection import bounded, drawable, read_aims, read_answers, read_lean, read_projects, read_temperature, select, spread, worth_asking
+from tavern.mind.selection import bounded, drawable, read_answers, read_temperature, select, spread, worth_asking
 from tavern.social.aims import AIM_VERBS, aim_candidates, offered_aims
 from tavern.social.invitations import answer_act
 from tavern.social.giving import empty_handed_company, empty_handed_tablemates, gift_targets
@@ -70,7 +70,7 @@ class Evaluators:
     `actions` scores the first stage, one option per activity family; `seats` the chairs
     after `seating`; `family` the actions within another chosen family. Without `family`,
     `actions` scores those too: they are ordinary actions. `aims` scores the aims of a chosen social
-    option, when the config asks for them (`selection.read_aims`); a model cannot be asked without it. `answers` scores how
+    option; a model cannot be asked without it. `answers` scores how
     an invitee answers (`selection.read_answers`), likewise.
     """
 
@@ -387,8 +387,7 @@ async def choose_action(
 
     Args:
         observation: Private actor observation; no other NPC's state is used.
-        config: Explicit API key, model, timeout and selection temperature, and the settings `lean`, `aims` and
-            `projects` when on.
+        config: Explicit API key, model, timeout and selection temperature.
         rng: Seeded random generator owned by the calling simulation.
         evaluators: Model port asked when the config holds a key. New callers pass it;
             None asks no model: a config with a model key then fails loudly.
@@ -406,8 +405,8 @@ async def choose_action(
         ValueError: Observation, configuration or limit is malformed.
     """
     evaluators = evaluators or Evaluators(_unwired, _unwired)
-    # Projects are offered where the config allows them: the observation says which kinds exist (`_settling` reads it).
-    observation = {**observation, "projects": list(PROJECTS)} if read_projects(config) else observation
+    # The observation says which kinds of project exist (`_settling` reads it).
+    observation = {**observation, "projects": list(PROJECTS)}
     options, temperature = build_candidates(observation), read_temperature(config)
     # Every concrete action is scored together, so a family is worth its best member.
     local = local_scores(observation, [item for option in options for item in option.get("members", [option])])
@@ -433,16 +432,16 @@ def _at_chair(wish: Mapping[str, Any], seat: Mapping[str, Any]) -> Action:
 
 async def _aimed(observation: Mapping[str, Any], decision: dict[str, Any], evaluators: Evaluators,
                  draw: tuple[Mapping[str, Any], Random, float, int]) -> dict[str, Any]:
-    # The third stage: a social option is followed by what the guest means by it, when the config asks. One aim is
+    # The third stage: a social option is followed by what the guest means by it. One aim is
     # set without a request, and shows no stage.
     action, config = decision["action"], draw[0]
-    if action["verb"] not in AIM_VERBS or not read_aims(config):
+    if action["verb"] not in AIM_VERBS:
         return decision
     aims = offered_aims(observation, action)
     if len(aims) == 1:
         return {**decision, "action": {**action, "aim": aims[0]}}
     if config.get("typesafe_api_key") and evaluators.aims is None:
-        raise ValueError("The aims setting is on but no evaluator of aims is wired")
+        raise ValueError("A model is asked but no evaluator of aims is wired")
     candidates = aim_candidates(action, aims)
     stage = await _decide(observation, candidates, local_aim_scores(observation, candidates),
                           evaluators.aims or _unwired, *draw, view=_aim_view)
@@ -520,9 +519,9 @@ async def _decide(
     view: Callable[[Mapping[str, Any], Sequence[Mapping[str, Any]]], dict[str, Any]] = _evaluator_view,
 ) -> dict[str, Any]:
     asks = bool(config.get("typesafe_api_key"))
-    # Only a model's request is made lean, and only when the config says so: the local policy already ranks by these
-    # scores, so a model-less evening draws from the same options as before.
-    if asks and read_lean(config):
+    # Only a model's request is made lean: the local policy already ranks by these scores, so a model-less evening
+    # draws from the same options.
+    if asks:
         candidates = worth_asking(candidates, local, ASK_FLOOR, _in_line(observation, candidates))
     candidates = bounded(candidates, local, limit)
     scores, source, error = {action["id"]: local[action["id"]] for action in candidates}, "local", None

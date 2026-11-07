@@ -45,9 +45,6 @@ def create_default_app() -> FastAPI:
               "model": os.environ.get("TYPESAFE_MODEL", "jev-latest"),
               "timeout": float(os.environ.get("AI_TIMEOUT", "8")),
               "temperature": float(os.environ.get("AI_TEMPERATURE", "0.25")),
-              "lean": read_switch(os.environ.get("AI_LEAN"), True, "AI_LEAN"),
-              "aims": read_switch(os.environ.get("AI_AIMS"), True, "AI_AIMS"),
-              "projects": read_switch(os.environ.get("AI_PROJECTS"), True, "AI_PROJECTS"),
               "answers": read_switch(os.environ.get("AI_ANSWERS"), False, "AI_ANSWERS")}
     board = HealthBoard({"jev": bool(config["typesafe_api_key"]), "claude": bool(os.environ.get("ANTHROPIC_API_KEY"))},
                         log=logging.getLogger("tavern.health").warning)

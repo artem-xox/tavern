@@ -204,7 +204,10 @@ def test_a_flooded_choice_never_asks_about_more_than_the_limit(verb: str) -> Non
             return {action["id"]: float(action["verb"] == chosen) for action in candidates}
         return evaluate
 
-    evaluators = Evaluators(counting(verb), counting("sit"), counting("none"))
+    async def first_aim(observation: Any, candidates: Any, settings: Any) -> dict[str, float]:
+        return {action["id"]: float(index == 0) for index, action in enumerate(candidates)}
+
+    evaluators = Evaluators(counting(verb), counting("sit"), counting("none"), aims=first_aim)
     result = asyncio.run(choose_action(crowded_inn(), config(typesafe_api_key="test"), Random(0), evaluators,
                                        limit=8))
     concrete = sum(len(option.get("members", [option])) for option in build_candidates(crowded_inn()))

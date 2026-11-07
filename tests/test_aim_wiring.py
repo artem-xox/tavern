@@ -38,7 +38,7 @@ def test_the_aim_stage_is_recorded_as_a_choice_of_the_evening() -> None:
         step_world(world, 0.1)
     for item in world["actors"]:
         item["needs"]["social"] = 95.0
-    config = {"typesafe_api_key": "fake", "model": "jev-latest", "timeout": 1.0, "temperature": 0.0, "aims": True}
+    config = {"typesafe_api_key": "fake", "model": "jev-latest", "timeout": 1.0, "temperature": 0.0}
     evaluators = Evaluators(favouring(("talk", "company")), favouring("sit"), aims=favouring("win_over"))
     result = asyncio.run(run_evening(world, config, Random(3), evaluators, Pace(0.1, 1.0, 30.0)))
     kinds = {item["kind"] for item in result.choices}

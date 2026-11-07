@@ -42,6 +42,7 @@ def quarrelsome() -> dict[str, Any]:
         assert start_action(world, actor_id, command("sit", seat))["accepted"]
         actor = next(item for item in world["actors"] if item["id"] == actor_id)
         actor["needs"]["social"], actor["visit"]["beers"], actor["traits"]["patience"] = 100.0, 3, 0.0
+        actor["visit"]["seconds"] = 300.0  # a good while in: going home is worth putting to a model (`ASK_FLOOR`)
         other = "bea" if actor_id == "ada" else "ada"
         actor["relations"][other] = {"name": other.title(), "opinion": -40.0, "familiarity": "acquaintance"}
         actor["knowledge"]["objects"]["door"] = {**world["map"]["objects"][3], "last_seen": 0.0}

@@ -123,36 +123,6 @@ def _flag(config: Mapping[str, Any], name: str) -> bool:
     return value
 
 
-def read_lean(config: Mapping[str, Any]) -> bool:
-    """Read whether requests to a model are made lean (see `worth_asking`) from the AI config.
-
-    Args:
-        config: AI config, with a `lean` entry or none.
-
-    Returns:
-        The setting; requests are plain (every option) when the config does not say.
-
-    Raises:
-        ValueError: The setting is not a bool.
-    """
-    return _flag(config, "lean")
-
-
-def read_projects(config: Mapping[str, Any]) -> bool:
-    """Read whether guests may take on projects (see `tavern.body.projects`) from the AI config.
-
-    Args:
-        config: AI config, with a `projects` entry or none.
-
-    Returns:
-        The setting; no project is offered when the config does not say.
-
-    Raises:
-        ValueError: The setting is not a bool.
-    """
-    return _flag(config, "projects")
-
-
 def read_answers(config: Mapping[str, Any]) -> bool:
     """Read whether an invitee's answer is their own choice (see `tavern.mind.agents.choose_answer`) from the AI config.
 
@@ -166,21 +136,6 @@ def read_answers(config: Mapping[str, Any]) -> bool:
         ValueError: The setting is not a bool.
     """
     return _flag(config, "answers")
-
-
-def read_aims(config: Mapping[str, Any]) -> bool:
-    """Read whether a social option is followed by a choice of aim (see `tavern.social.aims`) from the AI config.
-
-    Args:
-        config: AI config, with an `aims` entry or none.
-
-    Returns:
-        The setting; no aim is chosen when the config does not say.
-
-    Raises:
-        ValueError: The setting is not a bool.
-    """
-    return _flag(config, "aims")
 
 
 def read_switch(text: str | None, default: bool, name: str) -> bool:
