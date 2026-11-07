@@ -11,7 +11,8 @@ import httpx
 import pytest
 
 from tavern.mind.agents import Evaluators, build_candidates, build_seat_candidates, choose_action
-from tavern.mind.local_policy import local_seat_scores
+from tavern.body.projects import PROJECTS
+from tavern.mind.local_policy import ASK_FLOOR, local_seat_scores
 from tavern.adapters.jev import JevError, evaluate_actions, evaluate_seats
 from tavern.hall.world import create_world, observe_actor
 from tavern.social.thoughts import THOUGHTS
@@ -297,7 +298,7 @@ def test_walking_out_needs_the_evaluators_endorsement(leave_score: float, drawn:
         return {action["id"]: leave_score if action["verb"] == "leave" else 0.5 for action in candidates}
 
     settings = config(typesafe_api_key="test", temperature=0.25)
-    verbs = {asyncio.run(choose_action(view([door()]), settings, Random(seed),
+    verbs = {asyncio.run(choose_action(view([door()], visit=visit(600, 3)), settings, Random(seed),
                                        Evaluators(actions, no_seat_judgement)))["action"]["verb"]
              for seed in range(100)}
     assert ("leave" in verbs) == drawn
@@ -328,7 +329,7 @@ def test_only_options_close_to_the_best_are_drawn(runner_up: float, drawn: bool)
         return {action["id"]: 1.0 if action["verb"] == "wait" else runner_up for action in candidates}
 
     settings = config(typesafe_api_key="test", temperature=0.25)
-    verbs = {asyncio.run(choose_action(view(), settings, Random(seed),
+    verbs = {asyncio.run(choose_action(view(needs={"thirst": 45}), settings, Random(seed),
                                        Evaluators(actions, no_seat_judgement)))["action"]["verb"]
              for seed in range(100)}
     assert ("inspect" in verbs) == drawn
@@ -355,11 +356,13 @@ def test_jev_reads_a_briefing_instead_of_raw_maps() -> None:
         return {action["id"]: 0.5 for action in candidates}
 
     layout = json.loads((Path(__file__).parents[1] / "data" / "tavern.json").read_text())
-    observation = observe_actor(create_world(layout), "edda")
+    observation = {**observe_actor(create_world(layout), "edda"), "projects": list(PROJECTS)}
     asyncio.run(choose_action(observation, config(typesafe_api_key="test"), Random(0),
                               Evaluators(actions, no_seat_judgement)))
     assert set(sent[0]) == {"situation", "options", "self"}
-    assert set(sent[0]["options"]) == {action["id"] for action in build_candidates(observation)}
+    # A calm guest is not asked about the fixtures with an `ASK_FLOOR` (inspect, wait, the toilet, the door).
+    assert set(sent[0]["options"]) == {action["id"] for action in build_candidates(observation)
+                                       if action["verb"] not in ASK_FLOOR}
     assert "knowledge" not in sent[0]["self"]
 
 
@@ -371,7 +374,8 @@ def test_demo_newcomers_mostly_head_for_a_seat_or_the_tap() -> None:
         for actor in world["actors"]:
             decision = asyncio.run(choose_action(observe_actor(world, actor["id"]), config(temperature=0.25), rng))
             verbs[decision["action"]["verb"]] += 1
-    assert (verbs["sit"] + verbs["take_beer"]) / sum(verbs.values()) >= 2 / 3
+    # `settle_in` is the project "pour a beer and take a seat": the same wish as `take_beer` and `sit` together.
+    assert (verbs["sit"] + verbs["take_beer"] + verbs["settle_in"]) / sum(verbs.values()) >= 2 / 3
 
 
 @pytest.mark.parametrize("phrase", [

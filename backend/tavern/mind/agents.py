@@ -17,7 +17,7 @@ from tavern.mind.local_policy import ASK_FLOOR, conviviality, local_aim_scores, 
 from tavern.mind.observation import known_objects, own_actor
 from tavern.mind.options import aim_text, answer_text
 from tavern.mind.signature_candidates import signature_actions
-from tavern.mind.selection import bounded, drawable, read_aims, read_answers, read_lean, read_projects, read_temperature, select, spread, worth_asking
+from tavern.mind.selection import bounded, drawable, read_answers, read_temperature, select, spread, worth_asking
 from tavern.social.aims import AIM_VERBS, aim_candidates, offered_aims
 from tavern.social.invitations import answer_act
 from tavern.social.giving import empty_handed_company, empty_handed_tablemates, gift_targets
@@ -407,7 +407,7 @@ async def choose_action(
     """
     evaluators = evaluators or Evaluators(_unwired, _unwired)
     # Projects are offered where the config allows them: the observation says which kinds exist (`_settling` reads it).
-    observation = {**observation, "projects": list(PROJECTS)} if read_projects(config) else observation
+    observation = {**observation, "projects": list(PROJECTS)}
     options, temperature = build_candidates(observation), read_temperature(config)
     # Every concrete action is scored together, so a family is worth its best member.
     local = local_scores(observation, [item for option in options for item in option.get("members", [option])])
@@ -436,7 +436,7 @@ async def _aimed(observation: Mapping[str, Any], decision: dict[str, Any], evalu
     # The third stage: a social option is followed by what the guest means by it, when the config asks. One aim is
     # set without a request, and shows no stage.
     action, config = decision["action"], draw[0]
-    if action["verb"] not in AIM_VERBS or not read_aims(config):
+    if action["verb"] not in AIM_VERBS:
         return decision
     aims = offered_aims(observation, action)
     if len(aims) == 1:
@@ -522,7 +522,7 @@ async def _decide(
     asks = bool(config.get("typesafe_api_key"))
     # Only a model's request is made lean, and only when the config says so: the local policy already ranks by these
     # scores, so a model-less evening draws from the same options as before.
-    if asks and read_lean(config):
+    if asks:
         candidates = worth_asking(candidates, local, ASK_FLOOR, _in_line(observation, candidates))
     candidates = bounded(candidates, local, limit)
     scores, source, error = {action["id"]: local[action["id"]] for action in candidates}, "local", None
