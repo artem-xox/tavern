@@ -99,7 +99,8 @@ def finish_parts(world: World) -> None:
         walking_over = action and ACTIVITIES[action["verb"]].approaches and actor["status"] != "interacting"
         if action and not walking_over and ACTIVITIES[action["verb"]].partner and conversation_of(
                 world, actor["id"]) is None:
-            record_event(world, actor, "action_completed", f"{actor['name']} completed {action['verb']}")
+            record_event(world, actor, "action_completed", f"{actor['name']} completed {action['verb']}",
+                 fields={"verb": action["verb"]})
             clear_action(world, actor)
 
 
@@ -137,7 +138,8 @@ def line_up(world: World, actor: Actor, action: Mapping[str, Any],
     clear_action(world, actor)
     actor.update({"action": {key: action.get(key) for key in ("id", "verb", "target_id")}, "status": "queued",
                   "_remaining": world["rules"]["durations"][action["verb"]]})
-    record_event(world, actor, "action_started", f"{actor['name']} chose {action['verb']}")
+    record_event(world, actor, "action_started", f"{actor['name']} chose {action['verb']}",
+                 fields={"verb": action["verb"]})
     join_line(world, target, actor, front)
     return {"accepted": True, "reason": None}
 
@@ -179,7 +181,8 @@ def activate(world: World, actor: Actor, action: Mapping[str, Any],
     target = _target(world, action)
     if target and not ACTIVITIES[action["verb"]].shared_target:
         target["reserved_by"] = actor["id"]
-    record_event(world, actor, "action_started", f"{actor['name']} chose {action['verb']}")
+    record_event(world, actor, "action_started", f"{actor['name']} chose {action['verb']}",
+                 fields={"verb": action["verb"]})
     if not plan[1]:
         _begin_interaction(world, actor)
 
@@ -318,7 +321,8 @@ def complete_action(world: World, actor: Actor) -> None:
     if action is None:
         raise ValueError(f"{actor['name']} has no action to finish")
     _apply_effect(world, actor)
-    record_event(world, actor, "action_completed", f"{actor['name']} completed {action['verb']}")
+    record_event(world, actor, "action_completed", f"{actor['name']} completed {action['verb']}",
+                 fields={"verb": action["verb"]})
     clear_action(world, actor)
     look(world, actor)
 

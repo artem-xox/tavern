@@ -258,7 +258,8 @@ def invite(world: World, scene: Conversation, speaker: Actor,
     if asked is not None:
         # An invitation made while one waits for the speaker turns that one down in favour of this: a counter.
         record_event(world, speaker, "invitation_countered", f"{speaker['name']} turned down an invitation to "
-                     f"{KINDS[asked['kind']]} and invited {addressee['name']} to {KINDS[kind]} instead")
+                     f"{KINDS[asked['kind']]} and invited {addressee['name']} to {KINDS[kind]} instead",
+                     fields={"invitation": asked["kind"], "inviter_id": asked["from"]})
 
 
 def accept(world: World, scene: Conversation, speaker: Actor,
@@ -279,7 +280,8 @@ def accept(world: World, scene: Conversation, speaker: Actor,
                       "stage": "accepted", "held": 0}  # The answer, decided or not, is not carried into the errand.
     world["invitations"].append(errand)
     record_event(world, speaker, "invitation_accepted", f"{speaker['name']} accepted an invitation to "
-                 f"{KINDS[invitation['kind']]} from {_people(world)[invitation['from']]['name']}")
+                 f"{KINDS[invitation['kind']]} from {_people(world)[invitation['from']]['name']}",
+                 fields={"invitation": invitation["kind"], "inviter_id": invitation["from"]})
 
 
 def begin_errand(world: World, host: Actor, guest: Actor, kind: str, unasked: bool = False) -> None:
@@ -340,7 +342,8 @@ def decline(world: World, scene: Conversation, speaker: Actor,
         scene["invitation"] = None
         inviter = _people(world)[invitation["from"]]
         message = f"{speaker['name']} declined an invitation to {KINDS[invitation['kind']]} from {inviter['name']}"
-        record_event(world, speaker, "invitation_declined", message)
+        record_event(world, speaker, "invitation_declined", message,
+                     fields={"invitation": invitation["kind"], "inviter_id": invitation["from"]})
         think(inviter, "turned_down", world["time"],
               f"{called(inviter, speaker)} turned down my invitation to {KINDS[invitation['kind']]}", message, about=speaker)
 

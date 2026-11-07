@@ -325,6 +325,11 @@ export interface WorldEvent {
   message: string;
   /** The words a character says aloud, for the `last_call` event, or a `turn` that ended its scene, which the scene shows in a bubble. */
   line?: string;
+  /** The action verb, on `action_started` and `action_completed`. */
+  verb?: string;
+  /** The invitation kind and who made it, on `invitation_accepted`, `_declined` and `_countered`. */
+  invitation?: string;
+  inviter_id?: string;
 }
 
 /** A sound in the hall waiting for the listeners' attention at the end of the tick. */
