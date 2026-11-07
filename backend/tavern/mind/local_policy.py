@@ -13,7 +13,7 @@ from tavern.body.wounds import health_of, hurt
 from tavern.mind.fight_policy import hatred_scores, utilities as fight_utilities
 from tavern.mind.goals import GOALS, serving, serving_aim
 from tavern.mind.hall_view import in_use, line_place, steps_to
-from tavern.mind.signature_candidates import accused_in_sight, rivals_in_sight
+from tavern.mind.signature_candidates import accused_in_sight, rivals_in_sight, threatened_in_sight
 from tavern.social.giving import empty_handed_tablemates
 from tavern.social.hostility import urge
 from tavern.social.responses import answering
@@ -144,15 +144,18 @@ def local_scores(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
 
 def _signature_utilities(observation: Mapping[str, Any], traits: Mapping[str, float]) -> dict[str, float]:
     # Filming is idle vanity until a fight or a speech is in sight; a protest wants a real grievance and an audience;
-    # an interview suits the curious and the sociable.
+    # a threat wants a real grudge in the guest's own temper; an interview suits the curious and the sociable.
     actor, now = observation["actor"], observation.get("time", -math.inf)
     people, accused = observation.get("people", []), accused_in_sight(observation)
     scene = 0.7 if any(person.get("fighting") for person in people) \
         else 0.4 if any(person.get("doing") == "give_speech" for person in people) else 0.0
     grievance = max(0.0, -opinion_of(actor, accused["id"], now)) / 100 if accused else 0.0
+    threatened = threatened_in_sight(observation)
+    menace = max(0.0, -opinion_of(actor, threatened["id"], now)) / 100 if threatened else 0.0
     return {"livestream": min(1.0, 0.1 + 0.15 * traits.get("sociability", 0.5) + scene),
             "raise_sign": min(1.0, 0.05 + 0.2 * traits.get("temper", 0.5) + 0.6 * grievance
                               + 0.03 * len(rivals_in_sight(observation))),
+            "brandish_flag": min(1.0, 0.05 + 0.3 * traits.get("temper", 0.5) + 0.6 * menace),
             "interview_guest": min(1.0, 0.15 + 0.35 * traits.get("curiosity", 0.5)
                                    + 0.2 * actor["needs"].get("social", 0) / 100)}
 
@@ -176,6 +179,8 @@ def _score_gifts(observation: Mapping[str, Any], candidates: Sequence[Mapping[st
             scores[action["id"]] = min(1.0, max(0.0, score))
             continue
         score = 0.1 + company + 0.25 * opinion_of(actor, action["target_id"], now) / 100
+        if action["verb"] == "give":
+            score += ITEMS[action["item"]].eagerness
         if action["verb"] == "bring_drink":
             score -= 0.3 * max(needs["fatigue"], needs["bladder"]) / 100
         elif action["item"] == "beer":

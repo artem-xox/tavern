@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { iconPixels, itemPicture } from "../src/icons.ts";
 
-const SIGNATURE: string[] = ["phone", "protest_sign", "microphone"];
+const SIGNATURE: string[] = ["phone", "protest_sign", "microphone", "flag", "potato"];
 
 for (const kind of SIGNATURE) {
   test(`itemPicture: ${kind} has a picture file that ships with the client`, () => {

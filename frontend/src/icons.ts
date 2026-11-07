@@ -23,9 +23,10 @@ const ICONS: Readonly<Record<string, Icon>> = {
     "....21144113....", ".....111113.....", "......1333......", "................"] },
 };
 
-/** Signature items are drawn from a picture file of their own (`static/items/`), not a pixel map. */
+/** Signature items, and the potato, are drawn from a picture file of their own (`static/items/`), not a pixel map. */
 const PICTURES: Readonly<Record<string, string>> = {
   phone: "/items/phone.png", protest_sign: "/items/protest_sign.png", microphone: "/items/microphone.png",
+  flag: "/items/flag.png", potato: "/items/potato.png",
 };
 
 /**

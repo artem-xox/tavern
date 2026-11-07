@@ -34,6 +34,7 @@ class Item:
     cures: bool = False
     giftable: bool = True
     offers: tuple[str, ...] = ()
+    eagerness: float = 0.0
 
     @property
     def visible(self) -> bool:
@@ -54,6 +55,10 @@ ITEMS: Mapping[str, Item] = MappingProxyType({
                          received="gifted", giftable=False, offers=("raise_sign",)),
     "microphone": Item("microphone", "a microphone", "microphones", held="a reporter's microphone", hands=1,
                        received="gifted", giftable=False, offers=("interview_guest",)),
+    "flag": Item("flag", "a little flag", "little flags", held="a little North Korean flag on a stick", hands=1,
+                 received="gifted", giftable=False, offers=("brandish_flag",)),
+    # Not a signature act but a habit: Lukashenko hands potatoes to whoever is near, and they are an ordinary gift.
+    "potato": Item("potato", "a potato", "potatoes", held="a potato", hands=5, received="gifted", eagerness=0.4),
 })
 
 
