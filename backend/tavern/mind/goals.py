@@ -64,7 +64,7 @@ class GoalKind:
 
 def _table_of(observation: Observation, person_id: str | None) -> str | None:
     # The table a person in sight sits at, as the guest sees it.
-    for person in [*observation.get("visitors", []), *observation.get("people", [])]:
+    for person in observation.get("people", []):
         if person["id"] == person_id and person.get("seat_id"):
             return person.get("table_id")
     return None
