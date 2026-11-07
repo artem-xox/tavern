@@ -10,7 +10,7 @@ from typing import Any
 
 from fastapi import FastAPI
 
-from tavern.adapters.claude import ClaudeError, ask_claude
+from tavern.adapters.claude import ClaudeError, ask_claude, claude_config
 from tavern.adapters.jev import (evaluate_actions, evaluate_actions_metered, evaluate_aims, evaluate_aims_metered, evaluate_answers, evaluate_answers_metered,
                                  evaluate_seats, evaluate_seats_metered)
 from tavern.adapters.probes import probes
@@ -76,7 +76,7 @@ def _claude_port(key: str | None, board: HealthBoard, tracer: Tracer | None,
     # The key stays on the server; without one the scripted writers run offline.
     if not key:
         return None
-    config = {"anthropic_api_key": key, "model": model, "timeout": 30.0, "retries": 1}
+    config = claude_config(key, model)
 
     async def metered(question: Question) -> tuple[dict[str, Any], Mapping[str, Any]]:
         return await ask_claude(question, config)
