@@ -1,7 +1,7 @@
 ---
 id: S3-R02
 title: Make the module-local functions private
-status: todo
+status: done
 needs: [S3-R00]
 touches: [adapters/database.py, body/bartending.py, body/fights.py, body/projects.py, body/wounds.py, evening/scenario.py, mind/intentions.py, mind/signature_candidates.py, social/aims.py, social/bystanders.py, social/dice.py, social/invitations.py, social/scenes.py, social/signature_acts.py, social/turns.py]
 ---
@@ -69,4 +69,8 @@ No test edits: no test imports any of these names. If one fails, the rename miss
 
 ## Results
 
-Filled in when the task is done.
+All 19 names renamed to `_<name>` (step-1 grep re-run first: no name had gained an outside use). Five commits, one per package: adapters, body, evening+hall comment, mind, social. The `"cutting_in"` view field in `social/turns.py` and the family name in `body/activities.py` were left alone.
+
+- `make check`: exit 0 (backend tests, mypy, frontend typecheck, 318 frontend tests pass).
+- `make golden GOLDEN=runs/golden-now && diff -r runs/golden-base runs/golden-now`: prints nothing.
+- `grep -rnwE "def (load_database_world|...|cutting_in)\(" backend`: finds nothing.
