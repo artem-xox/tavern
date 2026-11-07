@@ -177,7 +177,7 @@ def test_new_actions_are_generated_from_personal_observation() -> None:
 ])
 def test_social_candidates_deduplicate_visible_neighbors(visitors: list[dict[str, Any]], expected: int) -> None:
     view = observe_actor(seated_world(), "ada")
-    view["visitors"] = visitors
+    view["visitors"] = view["people"] = visitors
     assert sum(item["verb"] == "talk" for item in build_candidates(view)) == expected
 
 

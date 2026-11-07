@@ -164,6 +164,7 @@ def test_invalid_action_fails_without_mutating_inventory(verb: str, target: str 
 def test_individual_observation_does_not_leak_unknown_resources_or_private_state() -> None:
     data = room()
     data["width"] = 20
+    data["blocked"] = [[x, 2] for x in range(20)]  # Ada cannot see Bea: her id is public only in sight
     data["objects"][0]["x"] = 15
     data["objects"][0]["interaction_spots"] = [[14, 1]]
     world = create_world(data)

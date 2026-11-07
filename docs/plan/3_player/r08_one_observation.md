@@ -1,7 +1,7 @@
 ---
 id: S3-R08
 title: One observation, built in one place, with one list of people
-status: todo
+status: doing
 needs: [S3-R04]
 touches: [hall/world.py, evening/decisions.py, evening/mind_loop.py, mind/intentions.py, mind/goals.py, mind/options.py, mind/hall_view.py, mind/agents.py, mind/local_policy.py, mind/briefing.py, mind/fight_words.py, tests]
 ---
@@ -76,6 +76,17 @@ Test edits, **Approved by the owner, 2026-11-07**: hand-built observations that 
 3. Drop `visitors` from `observe_actor` and `_visible_visitors` from `world.py`; replace the three
    `Observation = Mapping[str, Any]` aliases with the `TypedDict`; the approved test edits. One commit.
    — check: `grep -rn '"visitors"' backend tests` finds nothing; `.venv/bin/mypy` green.
+
+## Triage
+
+Step 1 ran on 2026-11-07 on `claude/s3-r08-observation-2ca3c5` (tip of `claude/s3-prep` after R04): **2 failed, 4642 passed**.
+Of the 4 cases listed above, the two `test_seating.py` cases pass: R04's edits already gave them `people` (or a path that
+does not need it). Each failing case was run alone before any test edit.
+
+| Case | Failing assertion and cause | Edit |
+|------|-----------------------------|------|
+| `test_social::test_social_candidates_deduplicate_visible_neighbors[empty-company]` | `sum(...) == 0` got 1: the test replaces `view["visitors"]` with `[]`, but `observe_actor` now carries Bea (seated, in sight) in `people`, and the candidates read both lists | inputs: the test also sets `view["people"] = visitors`, so the company it hands over is the whole company it names. Assertion and expected values unchanged. Step 3's approved `visitors` to `people` switch then leaves only the `people` line |
+| `test_world::test_individual_observation_does_not_leak_unknown_resources_or_private_state` | `"bea" not in json.dumps(observation)`: Bea stands in plain sight of Ada, so her public id is now in `people`; the test meant that nothing private or unseen leaks | inputs: a wall of blocked cells across row 2 of the 20-wide room, so Ada cannot see Bea; the tap stays unseen as before. All three assertions unchanged |
 
 ## Done when
 
