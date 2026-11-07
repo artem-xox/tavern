@@ -9,7 +9,7 @@ from tavern.adapters.persistence import parse_world
 from tavern.hall.state import World
 
 
-def load_database_world(url: str, session_id: str, slot: str) -> World | None:
+def _load_database_world(url: str, session_id: str, slot: str) -> World | None:
     """Read a session's saved world, if one exists.
 
     Args:
@@ -30,7 +30,7 @@ def load_database_world(url: str, session_id: str, slot: str) -> World | None:
     return parse_world(row[0]) if row else None
 
 
-def save_database_world(world: Mapping[str, Any], url: str, session_id: str, slot: str) -> None:
+def _save_database_world(world: Mapping[str, Any], url: str, session_id: str, slot: str) -> None:
     """Atomically replace a session's saved world in PostgreSQL.
 
     Args:
@@ -77,9 +77,9 @@ class DatabaseStore:
         self.url, self.session_id = url, session_id
 
     def load(self, slot: str) -> World | None:
-        """Read the session's world in a slot (see `load_database_world`)."""
-        return load_database_world(self.url, self.session_id, slot)
+        """Read the session's world in a slot (see `_load_database_world`)."""
+        return _load_database_world(self.url, self.session_id, slot)
 
     def save(self, world: Mapping[str, Any], slot: str) -> None:
-        """Replace the session's world in a slot (see `save_database_world`)."""
-        save_database_world(world, self.url, self.session_id, slot)
+        """Replace the session's world in a slot (see `_save_database_world`)."""
+        _save_database_world(world, self.url, self.session_id, slot)
