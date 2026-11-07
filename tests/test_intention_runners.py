@@ -14,6 +14,7 @@ from tavern.server.runtime import TavernRuntime
 from tavern.mind.intentions import IntentionRules
 from tavern.evening.lockstep import Pace, run_evening
 from tavern.hall.world import create_world, start_action
+from social_hall import command
 
 RULES = IntentionRules(interval=180.0, min_gap=3.0)
 HOMEWARD = "Go home before this turns ugly."
@@ -32,11 +33,6 @@ def hall() -> dict[str, Any]:
         chair("west", 2, 2), chair("east", 5, 2),
         {"id": "door", "kind": "door", "name": "Door", "x": 0, "y": 5, "interaction_spots": [[0, 4]]},
     ], "actors": [{"id": "ada", "name": "Ada", "x": 2, "y": 2}, {"id": "bea", "name": "Bea", "x": 5, "y": 2}]}
-
-
-def command(verb: str, target: str | None = None) -> dict[str, Any]:
-    """Build an executable action."""
-    return {"id": verb if target is None else f"{verb}:{target}", "verb": verb, "target_id": target}
 
 
 def quarrelsome() -> dict[str, Any]:

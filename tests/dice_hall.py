@@ -4,7 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from tavern.hall.world import create_world, start_action, step_world
+from tavern.hall.world import create_world, start_action
+from social_hall import advance
 
 LAYOUT = json.loads((Path(__file__).parents[1] / "data" / "tavern.json").read_text())
 MIDDLING = {"patience": 0.5, "curiosity": 0.5, "courage": 0.5}
@@ -25,12 +26,6 @@ def table_hall(*actors: dict[str, Any], seed: int = 3) -> dict[str, Any]:
 def start(world: dict[str, Any], actor_id: str, verb: str, target: str | None = None) -> dict[str, Any]:
     """Start a visitor's action and return the world's answer."""
     return start_action(world, actor_id, {"id": f"{verb}:{target}", "verb": verb, "target_id": target})
-
-
-def advance(world: dict[str, Any], seconds: float) -> None:
-    """Advance the world without requesting decisions."""
-    for _ in range(round(seconds * 10)):
-        step_world(world, 0.1)
 
 
 def who(world: dict[str, Any], actor_id: str) -> dict[str, Any]:

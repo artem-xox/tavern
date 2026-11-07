@@ -1,7 +1,7 @@
 ---
 id: S3-R15
 title: One advance and one command for every hall test
-status: todo
+status: done
 needs: [S3-R00]
 touches: [tests]
 ---
@@ -53,4 +53,8 @@ AGENTS.md "Duplicate once; abstract on the third use". **Approved by the owner, 
 
 ## Results
 
-Filled in when the task is done.
+- Step 1: the comparison was re-run with an AST check (docstrings ignored); all 20 copies still matched `social_hall`.
+- Step 2: 20 copies deleted (10 `advance` incl. `dice_hall.py`, 10 `command`), imports added; `step_world` dropped from 9 files where it became unused.
+- Cases before: `4706 passed` (`make test`, run started before the edits; `--collect-only` on the stashed baseline also 4706).
+- Cases after: `4706 passed in 515.96s` (`make check`; frontend `pass 318`, fail 0).
+- The `grep -lnE "^def (advance|command)\(" tests/*.py` also lists `test_closing.py` (`advance` in 0.5 s ticks), `test_evening.py` (`command` with a different id: `verb:target` always) and `test_scenario.py` (`advance` with a `step` argument). They are not on the ticket's list and differ, so they are out of scope; the Done-when line missed them.

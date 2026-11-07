@@ -7,7 +7,8 @@ import pytest
 
 from tavern.body.expression import facing_toward, look_at
 from tavern.hall.memory import record_event
-from tavern.hall.world import create_world, start_action, step_world
+from tavern.hall.world import create_world, start_action
+from social_hall import advance, command
 
 
 def table_room() -> dict[str, Any]:
@@ -20,17 +21,6 @@ def table_room() -> dict[str, Any]:
         chair("table-south", 3, 4, "west"),
         {"id": "tap", "kind": "tap", "x": 7, "y": 0, "interaction_spots": [[6, 0]], "stock": 3},
     ], "actors": [{"id": "ada", "name": "Ada", "x": 2, "y": 2}, {"id": "bea", "name": "Bea", "x": 3, "y": 4}]}
-
-
-def command(verb: str, target: str | None = None) -> dict[str, Any]:
-    """Build an executable action."""
-    return {"id": verb if target is None else f"{verb}:{target}", "verb": verb, "target_id": target}
-
-
-def advance(world: dict[str, Any], seconds: float) -> None:
-    """Advance physical state in 0.1 s ticks."""
-    for _ in range(round(seconds * 10)):
-        step_world(world, 0.1)
 
 
 def actor(world: dict[str, Any], actor_id: str) -> dict[str, Any]:

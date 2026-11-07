@@ -7,6 +7,7 @@ import pytest
 
 from tavern.evening.decisions import apply_decision, decision_requests
 from tavern.hall.world import create_world, start_action, step_world
+from social_hall import command
 
 
 def room() -> dict[str, Any]:
@@ -18,11 +19,6 @@ def room() -> dict[str, Any]:
         {"id": "table", "kind": "table", "name": "Table", "x": 3, "y": 2}, chair("west", 2), chair("east", 4),
         {"id": "tap", "kind": "tap", "name": "Tap", "x": 7, "y": 0, "interaction_spots": [[6, 0]], "stock": 3},
     ], "actors": [{"id": "ada", "name": "Ada", "x": 1, "y": 4}, {"id": "bea", "name": "Bea", "x": 5, "y": 4}]}
-
-
-def command(verb: str, target: str | None = None) -> dict[str, Any]:
-    """Build an executable action."""
-    return {"id": verb if target is None else f"{verb}:{target}", "verb": verb, "target_id": target}
 
 
 def busy(world: dict[str, Any]) -> None:
