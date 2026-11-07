@@ -1,6 +1,6 @@
 """The shared event log and each visitor's personal memories."""
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from copy import deepcopy
 from typing import Any
 
@@ -52,3 +52,22 @@ def log_event(world: World, actor_id: str | None, kind: str, message: str) -> di
     world["events"].append(event)
     del world["events"][:-200]
     return event
+
+
+def fresh_events(events: Sequence[Mapping[str, Any]], last: Mapping[str, Any] | None) -> list[dict[str, Any]] | None:
+    """Pick the events logged after the last one a runner has seen.
+
+    Args:
+        events: The world's event log, oldest first.
+        last: The latest event the caller already took, or None when it has taken none.
+
+    Returns:
+        Every event after `last`, all of them when `last` is None, or None when `last` is no longer in the
+        log (trimmed away). `last` is found by identity, scanning from the end, because equal events repeat.
+    """
+    if last is None:
+        return list(events)
+    for index in range(len(events) - 1, -1, -1):
+        if events[index] is last:
+            return list(events[index + 1:])
+    return None
