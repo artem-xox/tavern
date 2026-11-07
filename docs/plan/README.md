@@ -55,10 +55,10 @@ merged before a task starts; tasks whose needs are met run at once.
 
 | ID | Task | Needs | Status |
 |----|------|-------|--------|
-| S3-R00 | [Golden evenings](3_player/r00_golden.md): `make golden`, the baseline every refactor diffs against | — | todo |
-| S3-R01 | [Delete dead code](3_player/r01_dead_code.md): 3 unused names, a retired tariff, the benchmark script, a duplicated plan file | R00 | todo |
-| S3-R02 | [Private names](3_player/r02_private_names.md): 19 module-local functions get an underscore | R00 | todo |
-| S3-R03 | [Retire the card compiler](3_player/r03_card_compiler.md): no client calls `POST /api/cards/compile` | R00 | todo |
+| S3-R00 | [Golden evenings](3_player/r00_golden.md): `make golden`, the baseline every refactor diffs against | — | done |
+| S3-R01 | [Delete dead code](3_player/r01_dead_code.md): 3 unused names, a retired tariff, the benchmark script, a duplicated plan file | R00 | doing |
+| S3-R02 | [Private names](3_player/r02_private_names.md): 19 module-local functions get an underscore | R00 | doing |
+| S3-R03 | [Retire the card compiler](3_player/r03_card_compiler.md): no client calls `POST /api/cards/compile` | R00 | doing |
 | S3-R04 | [Production switches](3_player/r04_production_switches.md): `lean`, `aims`, `projects` always on, so tests run the evening's path | R01, R03 | todo |
 | S3-R05 | [One event log](3_player/r05_event_log.md): one length (200), the logged event returned, one reader of new events | R02 | todo |
 | S3-R06 | [Rules read fields](3_player/r06_rules_read_fields.md): `verb`, `invitation`, `inviter_id` on events; save version 23 | R05 | todo |
@@ -68,13 +68,13 @@ merged before a task starts; tasks whose needs are met run at once.
 | S3-R09 | [Whereabouts](3_player/r09_whereabouts.md): table, bar and reach move to `hall/whereabouts.py` | R02 | todo |
 | S3-R10 | [The turn view](3_player/r10_turn_view.md): to `mind/turn_view.py`; `TurnResult` out of the cycle (D16) | R02 | todo |
 | S3-R11 | [Candidates](3_player/r11_candidates.md): `mind/candidates.py` apart from choosing | R01, R04, R08 | todo |
-| S3-R12 | [Haiku's intention question](3_player/r12_haiku_intentions.md): `mind/haiku_intentions.py` | R00 | todo |
+| S3-R12 | [Haiku's intention question](3_player/r12_haiku_intentions.md): `mind/haiku_intentions.py` | R00 | doing |
 | S3-R13 | [One wiring](3_player/r13_evening_wiring.md): config, Claude config, mind loop and end rule shared (D09) | R04 | todo |
 | S3-R14 | [The evening report](3_player/r14_evening_report.md): `evening/report.py`, tested | R04 | todo |
-| S3-R15 | [Shared test steps](3_player/r15_test_steps.md): 20 copied `advance` / `command` helpers go | R00 | todo |
-| S3-R16 | [Test audit](3_player/r16_test_audit.md): wording, data and tuning pins; twins merged | R00 | todo |
-| S3-R17 | [Pure pose and picking](3_player/r17_scene_logic.md): out of `scene.ts`, tested | — | todo |
-| S3-R18 | [Frontend tests in CI](3_player/r18_ci_frontend_tests.md): Node 24, `npm test` | — | todo |
+| S3-R15 | [Shared test steps](3_player/r15_test_steps.md): 20 copied `advance` / `command` helpers go | R00 | doing |
+| S3-R16 | [Test audit](3_player/r16_test_audit.md): wording, data and tuning pins; twins merged | R00 | doing |
+| S3-R17 | [Pure pose and picking](3_player/r17_scene_logic.md): out of `scene.ts`, tested | — | done |
+| S3-R18 | [Frontend tests in CI](3_player/r18_ci_frontend_tests.md): Node 24, `npm test` | — | done |
 | S3-R19 | [Close the series](3_player/r19_close_the_series.md): AGENTS.md, tech debt, index, names, stale docs | all | todo |
 
 ## How the plan is kept
