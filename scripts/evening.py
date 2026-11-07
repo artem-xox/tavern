@@ -112,9 +112,6 @@ def config(values: Mapping[str, Any], mode: str) -> dict[str, Any]:
     key = {"live": values.get("TYPESAFE_API_KEY"), "replay": "replay", "local": None}[mode]
     return {"typesafe_api_key": key, "model": values.get("TYPESAFE_MODEL", "jev-latest"),
             "timeout": float(values.get("AI_TIMEOUT", "8")), "temperature": float(values.get("AI_TEMPERATURE", "0.25")),
-            "lean": read_switch(values.get("AI_LEAN"), True, "AI_LEAN"),
-            "aims": read_switch(values.get("AI_AIMS"), True, "AI_AIMS"),
-            "projects": read_switch(values.get("AI_PROJECTS"), True, "AI_PROJECTS"),
             "answers": read_switch(values.get("AI_ANSWERS"), False, "AI_ANSWERS")}
 
 
@@ -391,11 +388,10 @@ def main(root: Path) -> None:
     if tracer is not None:
         # The client uploads in the background; what is still queued must leave before the process ends.
         tracer.client.flush()
-    # A replay matches its recording only with the same seed, pace, temperature, lean, aims, projects and answers settings, so they are shown.
+    # A replay matches its recording only with the same seed, pace, temperature and answers settings, so they are shown.
     report = {"run": {"mode": mode, "decides": DECIDES[mode], "note": note, "seed": args.seed,
                       "model": settings["model"], "temperature": settings["temperature"],
-                      "lean": settings["lean"], "aims": settings["aims"],
-                      "projects": settings["projects"], "answers": settings["answers"], "step": pace.step,
+                      "answers": settings["answers"], "step": pace.step,
                       "model_latency": pace.model_latency, "time_limit": pace.time_limit,
                       "stuck_threshold": args.stuck_threshold, "input_usd_per_million": args.input_price,
                       "writer": writer, "writer_model": CLAUDE_MODEL if writer == "haiku" else None,
