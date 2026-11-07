@@ -23,7 +23,8 @@ from tavern.social.dice import PLAY, open_chairs
 from tavern.social.errands import fetching_a_drink
 from tavern.social.invitations import errand_parties, known_place
 from tavern.social.responses import calling, mark_answered
-from tavern.social.scenes import conversation_of, table_of, within_reach
+from tavern.hall.whereabouts import table_of, within_reach
+from tavern.social.scenes import conversation_of
 
 # Starts an action the way `world.start_action` does: world, visitor ID, action; returns acceptance.
 Start = Callable[[World, str, Mapping[str, Any]], Mapping[str, Any]]

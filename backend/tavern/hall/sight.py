@@ -15,8 +15,9 @@ from tavern.hall.sightlines import line_visible
 from tavern.hall.staff import on_staff, post_of
 from tavern.hall.state import Actor, find_actor
 from tavern.hall.validation import saved_cell
+from tavern.hall.whereabouts import at_table, within_reach
 from tavern.social.names import called
-from tavern.social.scenes import at_table, conversation_of, pressed, within_reach
+from tavern.social.scenes import conversation_of, pressed
 
 
 def visible_cells(world: Mapping[str, Any], actor: Mapping[str, Any], radius: int) -> list[list[int]]:

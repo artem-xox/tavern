@@ -13,7 +13,7 @@ from tavern.hall.state import Actor, World, find_actor
 from tavern.social.aftermath import bout_ended
 from tavern.social.hostility import HOSTILITY
 from tavern.social.names import called
-from tavern.social.scenes import within_reach
+from tavern.hall.whereabouts import within_reach
 from tavern.social.thoughts import opinion_of, think
 
 # What may have brought someone to start a fight.

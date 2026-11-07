@@ -1,7 +1,7 @@
 ---
 id: S3-R09
 title: Move "where is someone" out of conversation scenes into hall/whereabouts.py
-status: todo
+status: done
 needs: [S3-R02]
 touches: [social/scenes.py, hall/whereabouts.py (new), body/actions.py, body/activities.py, body/bartending.py, body/fights.py, body/projects.py, hall/routes.py, hall/sight.py, hall/world.py, mind/agents.py, social/errands.py, social/hostility.py, social/walk_ups.py, tests]
 ---
@@ -57,4 +57,10 @@ Test edits, import lines only, **approved by the owner, 2026-11-07**: `tests/tes
 
 ## Results
 
-Filled in when the task is done.
+Done 2026-11-07. `hall/whereabouts.py` holds the six functions moved verbatim (imports only `hall/` modules);
+`scenes.py` is 408 lines (was 527); every importer and the four test files' import lines updated; three
+comments naming `scenes.side_by_side` now name `whereabouts.side_by_side`.
+
+- `make check`: `4649 passed in 343.46s`, frontend `318 pass, 0 fail`, mypy `Success: no issues found in 133 source files`.
+- Step-1 grep for the moved names imported from `tavern.social.scenes`: no output.
+- `make golden GOLDEN=runs/golden-now && diff -r runs/golden-base runs/golden-now`: no output (empty).
