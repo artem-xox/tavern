@@ -62,11 +62,11 @@ def call_last_orders(world: World, since: float) -> None:
     barkeep = next((actor for actor in world["actors"] if on_staff(actor)), None)
     if barkeep is None:
         message = f'The innkeeper called out: "{LAST_CALL_LINE}"'
-        log_event(world, None, "last_call", message)
+        event = log_event(world, None, "last_call", message)
         emit(world, EVENT_SOUNDS["last_call"], [], _innkeeper(world["map"]), [], message, "last_call")
     else:
-        record_event(world, barkeep, "last_call", f'{barkeep["name"]} called out: "{LAST_CALL_LINE}"')
-    world["events"][-1]["line"] = LAST_CALL_LINE
+        event = record_event(world, barkeep, "last_call", f'{barkeep["name"]} called out: "{LAST_CALL_LINE}"')
+    event["line"] = LAST_CALL_LINE
 
 
 def call_closing(world: World, since: float) -> None:

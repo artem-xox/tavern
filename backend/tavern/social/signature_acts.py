@@ -42,8 +42,7 @@ def _log_act(world: World, actor: Actor, verb: str, item: str, subjects: Sequenc
         subjects: IDs of the guests it was done to or about; empty for none.
         message: What happened, in words.
     """
-    record_event(world, actor, "signature_act", message)
-    for entry in (world["events"][-1], actor["memory"][-1]):
+    for entry in (record_event(world, actor, "signature_act", message), actor["memory"][-1]):
         entry.update(verb=verb, item=item, subject=list(subjects))
 
 

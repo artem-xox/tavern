@@ -45,8 +45,8 @@ def note_started(world: World) -> None:
                   message, about=attacker)
         barkeep = next((actor for actor in world["actors"] if on_staff(actor)), None)
         if barkeep is not None and line_visible((barkeep["x"], barkeep["y"]), (attacker["x"], attacker["y"]), walls):
-            record_event(world, barkeep, "barkeep_shout", f'{barkeep["name"]} called out: "{BRAWL_LINE}"')
-            world["events"][-1]["line"] = BRAWL_LINE
+            record_event(world, barkeep, "barkeep_shout",
+                         f'{barkeep["name"]} called out: "{BRAWL_LINE}"')["line"] = BRAWL_LINE
 
 
 def _fighters_in_sight(observation: Mapping[str, Any]) -> dict[str, str]:

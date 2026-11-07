@@ -45,8 +45,7 @@ def heckle(world: World, heckler: Actor, performer: Actor, line: str) -> None:
         line: The words shouted.
     """
     message = f'{heckler["name"]} heckled {performer["name"]}: "{line}"'
-    record_event(world, heckler, "heckled", message)
-    world["events"][-1].update(line=line, performer_id=performer["id"])
+    record_event(world, heckler, "heckled", message).update(line=line, performer_id=performer["id"])
     think(performer, "heckled", world["time"], f"{called(performer, heckler)} heckled my speech: “{line}”", message,
           about=heckler)
 
@@ -60,8 +59,8 @@ def answer_heckle(world: World, performer: Actor, heckler: Actor, line: str) -> 
         heckler: Guest who heckled them.
         line: The comeback.
     """
-    record_event(world, performer, "heckle_answered", f'{performer["name"]} answered {heckler["name"]}: "{line}"')
-    world["events"][-1].update(line=line, heckler_id=heckler["id"])
+    record_event(world, performer, "heckle_answered",
+                 f'{performer["name"]} answered {heckler["name"]}: "{line}"').update(line=line, heckler_id=heckler["id"])
 
 
 def scripted_heckle(heckler: Mapping[str, Any], performer: Mapping[str, Any]) -> str:
