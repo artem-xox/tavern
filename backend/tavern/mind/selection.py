@@ -159,6 +159,33 @@ def read_switch(text: str | None, default: bool, name: str) -> bool:
     return text == "true"
 
 
+def _read_number(text: str | None, default: str, name: str) -> float:
+    try:
+        return float(text or default)
+    except ValueError:
+        raise ValueError(f"{name} must be a number, not {text!r}") from None
+
+
+def read_ai_config(values: Mapping[str, str | None], key: str | None) -> dict[str, Any]:
+    """Read the AI config that decisions use from the environment.
+
+    Args:
+        values: Environment variables; unset or empty ones take today's defaults.
+        key: The Jev API key, chosen by the caller; None runs the local policy.
+
+    Returns:
+        Config with `typesafe_api_key`, `model` (TYPESAFE_MODEL), `timeout` (AI_TIMEOUT, seconds),
+        `temperature` (AI_TEMPERATURE) and `answers` (AI_ANSWERS).
+
+    Raises:
+        ValueError: A number or the switch is malformed; the message names the variable.
+    """
+    return {"typesafe_api_key": key, "model": values.get("TYPESAFE_MODEL") or "jev-latest",
+            "timeout": _read_number(values.get("AI_TIMEOUT"), "8", "AI_TIMEOUT"),
+            "temperature": _read_number(values.get("AI_TEMPERATURE"), "0.25", "AI_TEMPERATURE"),
+            "answers": read_switch(values.get("AI_ANSWERS"), False, "AI_ANSWERS")}
+
+
 @dataclass(frozen=True)
 class Spread:
     """How a guest's draw spreads: the `window` below the best score that chance still reaches (see `drawable`) and the
