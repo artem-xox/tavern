@@ -19,7 +19,6 @@ from tavern.mind.intentions import Intender
 from tavern.mind.model_health import HealthBoard
 from tavern.mind.questions import Ask
 from tavern.mind.scripted import write_scripted_turn
-from tavern.server.cards_api import card_routes
 from tavern.server.runtime import Answerer, Chooser, Lineup, Store, TavernRuntime
 from tavern.server.sessions import TavernSessions
 from tavern.social.stage_lines import StageWriter, write_scripted_stage
@@ -72,7 +71,7 @@ async def _serve_socket(socket: WebSocket, sessions: TavernSessions) -> None:
 def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
                run_loop: bool = True, database_url: str | None = None, seed: int = 0,
                scenario_path: Path | None = None, characters_dir: Path | None = None,
-               staff_dir: Path | None = None, ask: Ask | None = None, writer: TurnWriter = write_scripted_turn,
+               staff_dir: Path | None = None, writer: TurnWriter = write_scripted_turn,
                writer_label: str = "scripted", intender: Intender | None = None,
                store_for: Callable[[str], Store] | None = None, choose: Chooser | None = None,
                health: HealthBoard | None = None,
@@ -100,8 +99,6 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
             scenario participant and default relationship, and is published at `/api/characters`.
         scenarios_dir: Optional folder of one scenario per cast (`locals.json`, `guests.json`), which
             offers the start screen's lineups; it needs `catalog_dir`.
-        ask: Optional Claude port bound to the server's key, for the card compiler; without
-            it the compiler runs its labeled offline mode.
         writer: Turn writer of every session's conversation lines; scripted by default.
         writer_label: Name of that writer shown to the client (`haiku` or `scripted`).
         stage_writer: Writer of the words on and at the stage; scripted by default.
@@ -158,7 +155,6 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
     app.state.sessions = sessions
     app.state.catalog = catalog
     _register_routes(app, sessions, health, catalog, templates)
-    app.include_router(card_routes(ask))
     return app
 
 
