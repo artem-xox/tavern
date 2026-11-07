@@ -19,7 +19,7 @@ def in_use(observation: Observation, item: Mapping[str, Any]) -> bool:
         under 10 seconds old. A place seen busy longer ago is probably free again; without
         a clock the memory is trusted.
     """
-    if item["id"] in {person.get("seat_id") for person in observation.get("visitors", [])}:
+    if item["id"] in {person["seat_id"] for person in observation.get("people", []) if person.get("seat_id")}:
         return True
     if item.get("reserved_by") in (None, observation["actor"]["id"]):
         return False
@@ -96,7 +96,7 @@ def visible_visitor(observation: Observation, visitor_id: Any) -> Mapping[str, A
     Returns:
         Their public record, or None.
     """
-    return next((item for item in observation.get("visitors", []) if item["id"] == visitor_id), None)
+    return next((item for item in observation.get("people", []) if item["id"] == visitor_id and item.get("seat_id")), None)
 
 
 def steps_to(observation: Observation, item: Mapping[str, Any]) -> int:
@@ -150,7 +150,7 @@ def company_at(observation: Observation, table_id: Any) -> str:
     Returns:
         "Ann and Bea sitting there", or "nobody else there".
     """
-    names = [label_of(item) for item in observation.get("visitors", [])
+    names = [label_of(item) for item in observation.get("people", [])
              if item.get("seat_id") and item.get("table_id") == table_id]
     return f"{' and '.join(names)} sitting there" if names else "nobody else there"
 
@@ -199,7 +199,7 @@ def hosts_words(observation: Observation, table_id: Any) -> str:
     if not hosts:
         return ""
     names = " and ".join(item["name"] for item in hosts)
-    sitting = {label_of(item) for item in observation.get("visitors", [])
+    sitting = {label_of(item) for item in observation.get("people", [])
                if item.get("seat_id") and item.get("table_id") == table_id}
     away = f", though {names} {'is' if len(hosts) == 1 else 'are'} away" if not sitting & {i["name"] for i in hosts} else ""
     return f"{names}'s table{away}"
