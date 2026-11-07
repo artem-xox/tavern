@@ -32,7 +32,7 @@ def create_default_app() -> FastAPI:
 
     Returns:
         Server initialized from the repository's map, first-evening scenario, and
-        environment variables; `ANTHROPIC_API_KEY` enables the card compiler and Haiku lines,
+        environment variables; `ANTHROPIC_API_KEY` enables Haiku lines, intentions and stage numbers,
         and `TAVERN_TRACE=true` (`make run TRACE=true`) traces Jev and Claude calls to LangSmith.
 
     Raises:
@@ -73,14 +73,14 @@ def create_default_app() -> FastAPI:
                       database_url=database_url, seed=Random().randrange(1 << 30),
                       scenario_path=root / "data" / "scenarios" / "locals.json", catalog_dir=root / "characters",
                       scenarios_dir=root / "data" / "scenarios",
-                      ask=ask, intender=intender,
+                      intender=intender,
                       choose=choosers[0], answer=choosers[1], storyteller=storyteller, health=board, probes=probes(config, os.environ.get("ANTHROPIC_API_KEY")),
                       **lines)
 
 
 def _claude_port(key: str | None, board: HealthBoard, tracer: Tracer | None,
                  model: str = "claude-haiku-5-5") -> Ask | None:
-    # The key stays on the server; without one the card compiler runs offline.
+    # The key stays on the server; without one the scripted writers run offline.
     if not key:
         return None
     config = {"anthropic_api_key": key, "model": model, "timeout": 30.0, "retries": 1}
