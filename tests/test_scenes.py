@@ -9,7 +9,8 @@ import pytest
 from tavern.body.hearing import EVENT_SOUNDS, Sound, emit
 from tavern.adapters.persistence import load_world, save_world
 from tavern.social.scenes import conversation_of, side_by_side
-from tavern.hall.world import create_world, start_action, step_world
+from tavern.hall.world import create_world, start_action
+from social_hall import advance, command
 
 
 def chair(chair_id: str, x: int, y: int) -> dict[str, Any]:
@@ -37,17 +38,6 @@ def hall(*guests: dict[str, Any]) -> dict[str, Any]:
          "interaction_spots": [[1, 8]], "appeal": 0.2, "reach": 3},
         {"id": "door", "kind": "door", "name": "Door", "x": 11, "y": 9, "interaction_spots": [[10, 9]]},
     ], "actors": list(guests)}
-
-
-def command(verb: str, target: Any = None) -> dict[str, Any]:
-    """Build an executable action."""
-    return {"id": verb if target is None else f"{verb}:{target}", "verb": verb, "target_id": target}
-
-
-def advance(world: dict[str, Any], seconds: float) -> None:
-    """Advance the world in 0.1 s ticks, without anyone deciding."""
-    for _ in range(round(seconds * 10)):
-        step_world(world, 0.1)
 
 
 def actor(world: dict[str, Any], actor_id: str) -> dict[str, Any]:

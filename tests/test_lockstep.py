@@ -13,6 +13,7 @@ from tavern.adapters.jev import JevError
 from tavern.evening.lockstep import Evening, Pace, evening_mode, evening_over, run_evening
 from tavern.evening.recording import Record, format_record, parse_records, record_calls, replay_calls
 from tavern.hall.world import create_world, start_action, step_world
+from social_hall import command
 
 KEYED = {"typesafe_api_key": "fake", "model": "jev-latest", "timeout": 1.0, "temperature": 0.0}
 
@@ -107,11 +108,6 @@ def seated_pair() -> dict[str, Any]:
     for _ in range(300):
         step_world(world, 0.1)
     return world
-
-
-def command(verb: str, target: str | None = None) -> dict[str, Any]:
-    """Build an executable action."""
-    return {"id": verb if target is None else f"{verb}:{target}", "verb": verb, "target_id": target}
 
 
 def test_partner_is_not_pulled_from_a_chat_by_a_late_answer() -> None:

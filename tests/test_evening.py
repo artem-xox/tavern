@@ -13,6 +13,7 @@ from tavern.server.runtime import TavernRuntime
 from tavern.adapters.persistence import load_world, save_world
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action, step_world
 from tavern.social.thoughts import rankling
+from social_hall import advance
 
 
 def table(table_id: str, x: int, y: int) -> list[dict[str, Any]]:
@@ -60,12 +61,6 @@ def appeal_room(sources: list[dict[str, Any]]) -> dict[str, Any]:
 def command(verb: str, target: Any = None) -> dict[str, Any]:
     """Build an executable action."""
     return {"id": f"{verb}:{target}", "verb": verb, "target_id": target}
-
-
-def advance(world: dict[str, Any], seconds: float) -> None:
-    """Advance physical state without requesting decisions."""
-    for _ in range(round(seconds * 10)):
-        step_world(world, 0.1)
 
 
 def visitor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
