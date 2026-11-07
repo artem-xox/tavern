@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help install run test check build benchmark evening eval golden
+.PHONY: help install run test check build evening eval golden
 
 SEED ?= 0
 CAST ?= locals
@@ -19,7 +19,6 @@ help:
 	@printf 'make test     Run backend tests\n'
 	@printf 'make check    Run backend tests, mypy and TypeScript checks\n'
 	@printf 'make build    Build the browser client\n'
-	@printf 'make benchmark Measure one NPC minute using real Jev requests\n'
 	@printf 'make evening  Play a headless evening; writes events.jsonl, metrics.json (+ calls.jsonl live) to OUT\n'
 	@printf '              CAST=locals|guests SEED=0 OUT=runs/evening-SEED LIMIT=1200 game seconds\n'
 	@printf '              MODE=live (default when .env has TYPESAFE_API_KEY), local, or replay CALLS=path/calls.jsonl\n'
@@ -48,9 +47,6 @@ check: test
 
 build:
 	npm --prefix frontend run build
-
-benchmark:
-	.venv/bin/python scripts/benchmark_cost.py
 
 evening:
 	.venv/bin/python scripts/evening.py --cast $(CAST) --seed $(SEED) --out $(OUT) --time-limit $(LIMIT) \
