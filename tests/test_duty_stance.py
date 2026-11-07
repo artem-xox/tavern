@@ -6,8 +6,8 @@ import pytest
 from staff_hall import HOB, hob_of, opened
 
 from tavern.mind.goals import GOALS
-from tavern.mind.intentions import INTENTION_RULES, intention_due, intention_question, intention_requests, \
-    intention_view, parse_stance
+from tavern.mind.haiku_intentions import intention_question, parse_stance
+from tavern.mind.intentions import INTENTION_RULES, intention_due, intention_requests, intention_view
 
 OTHERS = {"ada": "Ada", "bea": "Bea"}
 THOUGHT = {"thought": "A quiet bar.", "intention": "Keep the mugs full."}
