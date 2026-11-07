@@ -12,7 +12,7 @@ from tavern.mind.intentions import UNMETERED, IntentionRules, intention_due
 from tavern.mind.local_policy import local_scores
 from tavern.mind.scripted import scripted_turn
 from tavern.social.scenes import conversation_of
-from tavern.social.turns import turn_view
+from tavern.mind.turn_view import turn_view
 from hostile_view import view
 from social_hall import actor as guest_of, command, seated_talk
 from staff_hall import HOB, advance, opened

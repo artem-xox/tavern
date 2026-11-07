@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 
 from tavern.adapters.characters import load_catalog
-from tavern.mind.cards import PARAMS, parse_card, parse_card_text, parse_cards
+from tavern.mind.cards import PARAMS, TEXT_FIELDS, card_words, parse_card, parse_card_text, parse_cards
 
 ROOT = Path(__file__).parents[1]
 
@@ -129,3 +129,14 @@ def test_a_card_without_persona_fields_has_none() -> None:
 def test_invalid_persona_fails_loudly(fields: dict[str, Any]) -> None:
     with pytest.raises(ValueError):
         parse_card(card(**persona(**fields)))
+
+
+@pytest.mark.parametrize("fields, extra", [
+    pytest.param({}, set(), id="no-persona"),
+    pytest.param(persona(), {"Inspired by", "Public persona", "Catchphrases to echo or twist, never repeat word for word",
+                             "Obsessions tonight"}, id="with-persona"),
+])
+def test_card_words_are_the_text_fields_and_the_persona_words(fields: dict[str, Any], extra: set[str]) -> None:
+    words = card_words(parse_card(card(**fields)))
+    assert set(words) == set(TEXT_FIELDS) | extra
+    assert {key: words[key] for key in TEXT_FIELDS} == text()

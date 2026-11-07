@@ -1,7 +1,7 @@
 ---
 id: S3-R10
 title: What a line writer sees moves to mind/; the written line's type leaves the import cycle
-status: todo
+status: done
 needs: [S3-R02]
 touches: [social/turns.py, social/scenes.py, mind/turn_view.py (new), mind/scripted.py, mind/haiku_turns.py, mind/cards.py, social/stage_lines.py, adapters/tracing.py, evening/mind_loop.py, tests]
 ---
@@ -59,4 +59,18 @@ Test edits, import lines only, **approved by the owner, 2026-11-07**: the 16 tes
 
 ## Results
 
-Filled in when the task is done.
+Done 2026-11-07, three commits (step 4, the D16 row, is in the step 1 commit).
+
+- `TurnResult` is in `social/scenes.py`; `grep -rn TYPE_CHECKING backend` lists only `hall/state.py`.
+- `card_words` in `mind/cards.py`, red/green in `tests/test_cards.py`; both copies call it.
+- `turn_view` and its helpers are in `mind/turn_view.py`. `social/turns.py` imports from `mind/` only
+  `mind.scripted` and `mind.turn_view`. The 16 test files changed their import line only.
+- **Deviation:** `next_speaker` and `_cutting_in` (with `CUT_IN_AFTER`) moved to `mind/turn_view.py` too. The view
+  reads them, and `turns.py` imports the view, so leaving them in `turns.py` would recreate the import cycle this
+  task removes. Two more import lines changed for it: `evening/mind_loop.py` and `tests/test_turns.py`
+  (`next_speaker`). `social/turns.py` is 199 lines, not about 280, for the same reason.
+
+```
+make check: 4651 passed in 295.71s; mypy: Success: no issues found in 133 source files; frontend 318 pass, 0 fail
+golden: make golden GOLDEN=runs/golden-now && diff -r runs/golden-base runs/golden-now  -> prints nothing
+```

@@ -19,7 +19,8 @@ from tavern.mind.agents import Evaluators
 from tavern.mind.feelings import minds
 from tavern.mind.haiku_turns import RejectedTurn, parse_turn, turn_question
 from tavern.mind.scripted import scripted_turn
-from tavern.social.turns import check_turn, turn_view
+from tavern.mind.turn_view import turn_view
+from tavern.social.turns import check_turn
 from social_hall import actor, advance, scene_of, say, seated_talk
 
 

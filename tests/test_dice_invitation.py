@@ -20,7 +20,7 @@ from tavern.mind.haiku_turns import turn_content, turn_question
 from tavern.mind.scripted import scripted_turn
 from tavern.social.dice import open_chairs
 from tavern.social.invitations import KINDS, offered_kinds
-from tavern.social.turns import turn_view
+from tavern.mind.turn_view import turn_view
 from social_hall import actor, advance, command, hall, know, say, scene_of
 
 ROOT = Path(__file__).resolve().parents[1]

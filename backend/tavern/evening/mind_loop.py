@@ -17,9 +17,11 @@ from tavern.hall.world import observe_actor, observe_people
 from tavern.mind.goals import settle_goals
 from tavern.mind.intentions import (UNMETERED, IntentionRules, Intender, deliver_intention, intention_requests,
                                     stale_intentions)
+from tavern.mind.turn_view import next_speaker
 from tavern.social.invitations import answer_options
 from tavern.social.stage_lines import StageClaim, deliver_stage, stage_claims, write_scripted_stage
-from tavern.social.turns import TurnResult, claim_turns, deliver_turn, next_speaker
+from tavern.social.scenes import TurnResult
+from tavern.social.turns import claim_turns, deliver_turn
 
 # One answer in flight. What it is belongs to the courier: a task live, a stored coroutine in lockstep.
 Ticket = Any

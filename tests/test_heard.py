@@ -12,7 +12,7 @@ from tavern.mind.haiku_turns import turn_question
 from tavern.mind.haiku_intentions import intention_question
 from tavern.mind.intentions import intention_view
 from tavern.social.heard import hear_line
-from tavern.social.turns import turn_view
+from tavern.mind.turn_view import turn_view
 from social_hall import LOOKS, actor, advance, command, say, scene_of, seated_talk
 
 

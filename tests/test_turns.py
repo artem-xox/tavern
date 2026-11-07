@@ -14,7 +14,8 @@ from tavern.server.runtime import TavernRuntime
 from tavern.evening.lockstep import Pace, run_evening
 from tavern.social.scenes import conversation_of
 from tavern.mind.scripted import scripted_turn
-from tavern.social.turns import check_turn, claim_turns, deliver_turn, next_speaker, reading_time, turn_view
+from tavern.mind.turn_view import next_speaker, turn_view
+from tavern.social.turns import check_turn, claim_turns, deliver_turn, reading_time
 from tavern.hall.world import create_world, start_action
 from social_hall import advance, command
 

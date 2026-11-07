@@ -13,7 +13,8 @@ from tavern.mind.turn_prompt import shared_prefix, turn_schema
 from tavern.social.conversation import ACTS
 from tavern.social.invitations import KINDS
 from tavern.social.quarrels import BOIL
-from tavern.social.turns import TurnResult, TurnWriter, check_turn
+from tavern.social.scenes import TurnResult
+from tavern.social.turns import TurnWriter, check_turn
 
 MAX_TOPIC = 60  # Characters; a topic is a few words.
 MAX_TOKENS = 200  # Bounds the answer: a short JSON object.

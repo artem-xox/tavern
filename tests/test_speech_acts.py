@@ -10,7 +10,8 @@ from tavern.social.conversation import ACTS
 from tavern.social.responses import calling
 from tavern.mind.scripted import scripted_turn
 from tavern.social.thoughts import THOUGHTS, familiarity_of, opinion_of, think, thought_mood
-from tavern.social.turns import check_turn, turn_view
+from tavern.mind.turn_view import turn_view
+from tavern.social.turns import check_turn
 from social_hall import actor, advance, know, say, scene_of, seated_talk
 
 NEW_ACTS = ("remark", "introduce", "compliment", "boast", "insult", "apologize", "agree", "disagree", "invite",

@@ -15,7 +15,7 @@ from tavern.hall.chance import roll
 from tavern.hall.memory import log_event
 from tavern.hall.state import Actor, World
 from tavern.mind.briefing import recollections
-from tavern.mind.cards import TEXT_FIELDS, persona_words
+from tavern.mind.cards import card_words
 from tavern.mind.feelings import feelings
 from tavern.mind.portrait import portrait
 from tavern.social.heckles import answer_heckle, heckle, scripted_comeback, scripted_heckle
@@ -109,7 +109,7 @@ def _speaker(world: Mapping[str, Any], speaker: Mapping[str, Any]) -> dict[str, 
     # Who speaks and how they feel, in the shape a line writer's card block reads (`haiku_turns.card_block`).
     now, card = world["time"], speaker["card"]
     return {"id": speaker["id"], "name": speaker["name"],
-            "card": None if card is None else {**{key: card[key] for key in TEXT_FIELDS}, **persona_words(card)},
+            "card": None if card is None else card_words(card),
             "portrait": portrait(speaker), "feelings": feelings({"actor": {**speaker, "drunkenness": 0.0}, "time": now}),
             "drink": speech_instruction(speaker["drunkenness"]) or "They are sober.",
             "intention": None if speaker["intention"] is None else speaker["intention"]["intention"],

@@ -10,7 +10,7 @@ from tavern.mind.haiku_turns import turn_question
 from tavern.mind.local_policy import local_scores
 from tavern.mind.options import option_text
 from tavern.social.scenes import conversation_of
-from tavern.social.turns import turn_view
+from tavern.mind.turn_view import turn_view
 from hostile_view import person, view
 from social_hall import actor, command, seated_talk
 
