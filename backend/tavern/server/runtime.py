@@ -13,7 +13,7 @@ from tavern.adapters.jev import evaluate_actions, evaluate_aims, evaluate_answer
 from tavern.adapters.persistence import FileStore
 from tavern.body.activities import ACTIVITIES, client_activities
 from tavern.body.items import client_items
-from tavern.evening.mind_loop import MindLoop, TaskCourier
+from tavern.evening.mind_loop import EveningPorts, TaskCourier, evening_mind
 from tavern.evening.retelling import Retelling, retell
 from tavern.evening.scenario import Scenario, open_evening
 from tavern.evening.story_score import WEIGHTS, Moment, story_moments, story_score
@@ -140,9 +140,10 @@ class TavernRuntime:
         # With the answers setting on, an invitee's answer is their own choice, asked before their line.
         answers = ((lambda observation, invitation, options: answer(observation, invitation, options, self.ai_config,
                                                                     self.rng)) if read_answers(self.ai_config) else None)
-        self.mind = MindLoop(TaskCourier(), lambda observation: choose(observation, self.ai_config, self.rng),
-                             lambda view: self.writer(view, self.ai_config), intender, intention_rules, answers,
-                             lambda view: stage_writer(view, self.ai_config))
+        self.mind = evening_mind(TaskCourier(), EveningPorts(
+            lambda observation: choose(observation, self.ai_config, self.rng), answers,
+            lambda view: self.writer(view, self.ai_config), lambda view: stage_writer(view, self.ai_config), intender),
+            intention_rules)
 
     @property
     def pending(self) -> dict[str, tuple[Any, int]]:
