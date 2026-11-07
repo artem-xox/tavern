@@ -1,7 +1,7 @@
 ---
 id: S3-R08
 title: One observation, built in one place, with one list of people
-status: doing
+status: done
 needs: [S3-R04]
 touches: [hall/world.py, evening/decisions.py, evening/mind_loop.py, mind/intentions.py, mind/goals.py, mind/options.py, mind/hall_view.py, mind/agents.py, mind/local_policy.py, mind/briefing.py, mind/fight_words.py, tests]
 ---
@@ -95,4 +95,32 @@ does not need it). Each failing case was run alone before any test edit.
 
 ## Results
 
-Filled in when the task is done.
+Done 2026-11-07 on `claude/s3-r08-observation-2ca3c5` (step 1; step 2 one commit per module; step 3).
+
+- `make check`: `4644 passed in 276.09s`, `mypy: Success: no issues found in 134 source files`, frontend `tsc --noEmit` clean
+  and `node:test` 318 pass, 0 fail. Frontend untouched, so no `make build`.
+- Golden: `make golden GOLDEN=runs/golden-now && diff -r runs/golden-base runs/golden-now` printed nothing after step 1,
+  after each module of step 2 and after step 3.
+- `grep -rn '"visitors"' backend tests` finds nothing. `observe_actor` is the one function that builds an observation and returns
+  `Observation`; no reader merges two lists of people.
+
+Deviations from the ticket, with reasons:
+
+- **`Observation` lives in `hall/state.py`, not `hall/world.py`.** `world.py` imports `social.commitments`, which imports
+  `mind.goals`, which would import `Observation` back: an import cycle. `state.py` already holds the `World` and `Actor`
+  TypedDicts; `world.py` imports it from there.
+- **The reader aliases `Observation = Mapping[str, Any]` stay** (four, not three: `hall_view.py` too). Replacing them with the
+  TypedDict gave 18 mypy errors in callers that pass a `Mapping` or a plain `dict` copy that has gained keys (`social/aims.py`,
+  `intentions.py`, `agents.py`, `local_policy.py`), and the tests pass hand-built dicts that lack most keys. Fixing them means
+  editing files the ticket does not name. The typed observation is the return type of `observe_actor` only.
+- **Order is not free in `agents._social_candidates`.** Plain iteration over `people` changed the golden log (guests-1 and
+  guests-5: the first person seen for a scene or a table sets the option, so the request listed options in another order).
+  The loop now takes seated people first, then the rest, each in sight order, which is exactly the old
+  `[*visitors, *people]` order; golden is empty again.
+- `hall_view.visible_visitor` and `_seats_taken` keep their "seated only" meaning by filtering `seat_id` on `people`.
+- `briefing._people` lost its "bare observation knows only seated company" branch: `observe_actor` always has `people` and no
+  test pinned that text.
+- The approved test edits that a reader switch needed were made in that module's commit, with the hand-built helpers of
+  `test_families.py` and `test_seating.py` carrying both keys for the commits in between and `people` alone at step 3.
+- Tests were run in 8 parallel chunks between steps; the two `*_stills_ship_with_browser_build` asset tests build the frontend
+  and fail only when run in parallel; they pass alone and in `make check`.
