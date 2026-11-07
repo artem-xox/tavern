@@ -9,7 +9,8 @@ from tavern.evening.story_score import WEIGHTS, story_moments, story_score
 from tavern.mind.haiku_turns import turn_question
 from tavern.social.conversation import ACTS
 from tavern.social.quarrels import BOIL, heat
-from tavern.social.turns import claim_turns, turn_view
+from tavern.mind.turn_view import turn_view
+from tavern.social.turns import claim_turns
 from social_hall import actor, advance, say, scene_of as scene_in, seated_talk
 
 
