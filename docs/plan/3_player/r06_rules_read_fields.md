@@ -1,7 +1,7 @@
 ---
 id: S3-R06
 title: Rules read event fields, never event wording
-status: todo
+status: done
 needs: [S3-R05]
 touches: [hall/memory.py, hall/lifecycle.py, social/invitations.py, body/projects.py, mind/briefing.py, hall/world.py, adapters/persistence.py, frontend/src/types.ts, tests]
 ---
@@ -89,4 +89,13 @@ EOF
 
 ## Results
 
-Filled in when the task is done.
+Four commits, one per step. `record_event(..., fields=)` added; `verb` on action_started/completed and
+`invitation`/`inviter_id` on the three invitation events; `types.ts` gained the optional fields; `_no_game`,
+`briefing._memory` and `recollections` read them; `schema_version` 22 → 23 (`create_world`, `parse_world`),
+with `test_new_worlds_are_version_23` and the version in `tests/test_database.py` edited as approved.
+
+- `make check`: 4645 passed (backend), mypy clean on 134 files, `tsc --noEmit` clean, frontend 318 passed.
+- `make build`: `✓ built in 8.62s`.
+- Golden script: `identical apart from the new fields`.
+- `grep -n '\["message"\]'` on projects.py and briefing.py: only briefing.py:341 and :344, which show
+  the wording (the done phrase, the failure text); no rule reads words.
