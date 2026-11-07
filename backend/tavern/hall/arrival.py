@@ -23,7 +23,7 @@ def create_actor(data: Mapping[str, Any], world_map: Mapping[str, Any]) -> Actor
     Args:
         data: Actor definition with ID, cell, and optional name, color, sprite, needs, traits, inventory,
             whether they come in `ailing` (see `tavern.body.ailment`), and the character card and ties of a
-            scenario guest (validated by `scenario.parse_guest`).
+            scenario guest (validated by `scenario._parse_guest`).
             A visitor without a sprite of their own looks like the generic `visitor`.
         world_map: Validated map the visitor stands in.
     Returns:
