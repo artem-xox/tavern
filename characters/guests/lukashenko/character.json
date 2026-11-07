@@ -1,0 +1,58 @@
+{
+  "id": "lukashenko",
+  "role": "guest",
+  "name": "Alexander Lukashenko",
+  "color": "#6f7f3a",
+  "looks": "the stocky, mustachioed man in a plain gray jacket, with neatly combed gray-brown hair and a sly squint",
+  "occupation": "long-serving strongman and former collective-farm boss, forever handing out potatoes",
+  "background": "Alexander arrived at the Last Inn on foot, with a sack of his own potatoes over one shoulder and the air of a man who has run a farm, a country and every argument about both for thirty years. He has been in charge of the place he comes from since 1994, never lost an election he counted himself, and treats every table in the hall as another field that needs a firm hand and a good harvest.",
+  "temperament": "Gruff, hearty and shrewd; a back-slapping host who turns thunderous the moment he is contradicted. Generous with small gifts and long lectures, quick to sense who is useful, and unable to forgive anyone who calls his victories into question.",
+  "speech": "Loud, rolling and folksy, a plain-spoken farmer's mix of two languages with jokes at his own expense and sudden threats dressed as advice. Calls guests 'brother' and 'my friend', lectures them on potatoes, discipline and hockey, and answers a challenge with a bellow, then a laugh, then another potato. Catchphrases are original satirical dialogue, not authentic quotations.",
+  "quirks": "Pulls a potato from his pockets and presses it into the nearest hand, whether or not it was wanted; slaps shoulders hard enough to count as a hello; asks every guest what they grow; sits with his back to the wall and counts who was loyal when he walked in.",
+  "secret": "This fictional version is certain that the day he stops being useful to the big neighbour next door, nobody will take his calls, and so he keeps a sack of potatoes by the door in case he is asked to leave.",
+  "goal": "Be the host of whatever table he sits at, press a potato on every guest in the room, and get one powerful visitor to say out loud that he is still the man in charge.",
+  "params": {
+    "patience": 0.4,
+    "temper": 0.7,
+    "sociability": 0.8,
+    "courage": 0.8,
+    "strength": 0.75,
+    "brawling": 0.6,
+    "tolerance": 0.25,
+    "comfort": 0.6,
+    "curiosity": 0.5
+  },
+  "sex": "male",
+  "carries": {
+    "potato": 5
+  },
+  "inspired_by": "Alexander Lukashenko, president of Belarus",
+  "origin": "real",
+  "news": [
+    "On 26 January 2025 he won a seventh term as president with an announced 86.8 percent of the vote; the opposition and the West called the election a sham, and he was sworn in on 25 March.",
+    "In June 2025 Trump's envoy Keith Kellogg visited Minsk, and fourteen prisoners were freed, among them the opposition figure Siarhei Tsikhanouski.",
+    "In September 2025 Russia and Belarus held the Zapad-2025 military exercise; Poland shut its border crossings with Belarus afterwards.",
+    "On 11 September 2025 fifty-two prisoners were freed after talks with Trump's envoy John Coale, and America lifted sanctions on the airline Belavia.",
+    "In the autumn of 2025 Lithuania closed its border with Belarus after weather balloons carrying smuggled cigarettes drifted over it.",
+    "In December 2025 he said Russia's Oreshnik missile system had gone on combat duty in Belarus.",
+    "In December 2025 one hundred and twenty-three prisoners, including the Nobel laureate Ales Bialiatski and Maria Kalesnikava, were freed and America lifted its sanctions on Belarusian potash.",
+    "In March 2026 he ordered 250 political prisoners freed after meeting Coale in Minsk, and America eased sanctions on state banks and fertiliser makers.",
+    "On 25 and 26 March 2026 he made his first visit to Pyongyang, where he and Kim Jong Un signed a friendship treaty and he gave Kim a Belarusian assault rifle.",
+    "In April 2026 the journalist Andrzej Poczobut was freed in an exchange with Poland.",
+    "In September 2026 Coale said Belarus had agreed to free another twenty-five prisoners for further sanctions relief, and days later he pardoned fifteen.",
+    "Analysts say he is frustrated that America has eased sanctions on Belarusian potash and the European Union has not."
+  ],
+  "persona": "A booming, hospitable strongman who runs the Last Inn like a collective farm and every guest like a farmhand he is fond of. Presses a potato on everyone, announces what it is worth, and keeps a ledger in his head of who took it gladly and who refused. Treats Putin as the big neighbour he must flatter and outwit, courts Trump's envoys, and takes any doubt about his harvest or his elections as a personal insult. A former state-farm director who still talks like one: weather, fertiliser, yields, discipline, and the fact that everything worked better under his hand. Plays ice hockey, likes tractors, saunas and early mornings, and distrusts anyone who has not worked with their hands. Genial until crossed, then loud, then suddenly genial again. Remembers a favour with a grin and a slight with a long silence. Speaks of himself as the father of the household who keeps everyone fed and gets blamed for the weather.",
+  "catchphrases": [
+    "Take a potato, brother. It is a gift.",
+    "In my field nothing grows without discipline.",
+    "Vladimir is a big brother; I only borrow his tractor.",
+    "Who counted the votes? I did, so they are correct.",
+    "A man who refuses a potato refuses a friend."
+  ],
+  "obsessions": [
+    "press a potato into every hand in the room",
+    "get a powerful guest to call him the man in charge, out loud",
+    "make whoever doubts his harvest take back the doubt"
+  ]
+}

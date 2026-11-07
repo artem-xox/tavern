@@ -1,4 +1,4 @@
-"""Signature acts: what a famous guest's own item lets them do (film, protest, interview), and what the room makes of it."""
+"""Signature acts: what a famous guest's own item lets them do (film, protest, threaten, interview), and what the room makes of it."""
 
 from collections.abc import Mapping, Sequence
 from typing import Any, TypeVar
@@ -21,8 +21,14 @@ Guest = TypeVar("Guest", bound=Mapping[str, Any])
 RAISES_AGAIN_AFTER = 180.0
 # The insults two guests have traded (see `quarrels.heat`) from which a scene is a quarrel worth filming, not a single remark.
 FILMABLE_HEAT = 2
+# Game seconds after brandishing a flag during which the holder does not brandish it again; the threat has been made.
+BRANDISHES_AGAIN_AFTER = 120.0
+# The opinion of someone at or above which a guest has no grudge worth a threat; below it, the flag comes out.
+BRANDISH_BELOW = -15.0
 # The shout of a raised protest sign: heard across the hall, loud enough to turn heads but not to break anything off.
 PROTEST = Sound("protest", 0.6, 30.0, "a protest shouted across the hall")
+# The bark that goes with a brandished flag: carries across a table or two, no further.
+THREAT = Sound("threat", 0.4, 12.0, "a threat barked across the room")
 
 
 def log_act(world: World, actor: Actor, verb: str, item: str, subjects: Sequence[str], message: str) -> None:
@@ -71,6 +77,13 @@ def accused_of(actor: Mapping[str, Any], candidates: Sequence[Guest], now: float
     return min(candidates, key=lambda other: (opinion_of(actor, other["id"], now), other["id"]), default=None)
 
 
+def _acted_lately(observation: Mapping[str, Any], verb: str, window: float) -> bool:
+    now = observation.get("time")
+    return now is not None and any(item["type"] == "signature_act" and item.get("verb") == verb
+                                   and now - item["time"] < window
+                                   for item in observation["actor"].get("memory", []))
+
+
 def raised_lately(observation: Mapping[str, Any]) -> bool:
     """Tell whether a guest raised their protest sign so recently that they would not raise it again.
 
@@ -80,10 +93,35 @@ def raised_lately(observation: Mapping[str, Any]) -> bool:
     Returns:
         True when a `raise_sign` act in their memory is under `RAISES_AGAIN_AFTER` seconds old.
     """
-    now = observation.get("time")
-    return now is not None and any(item["type"] == "signature_act" and item.get("verb") == "raise_sign"
-                                   and now - item["time"] < RAISES_AGAIN_AFTER
-                                   for item in observation["actor"].get("memory", []))
+    return _acted_lately(observation, "raise_sign", RAISES_AGAIN_AFTER)
+
+
+def brandished_lately(observation: Mapping[str, Any]) -> bool:
+    """Tell whether a guest brandished their flag so recently that they would not brandish it again.
+
+    Args:
+        observation: The guest's observation, with their memory and the game `time`.
+
+    Returns:
+        True when a `brandish_flag` act in their memory is under `BRANDISHES_AGAIN_AFTER` seconds old.
+    """
+    return _acted_lately(observation, "brandish_flag", BRANDISHES_AGAIN_AFTER)
+
+
+def threatened_by(actor: Mapping[str, Any], candidates: Sequence[Guest], now: float) -> Guest | None:
+    """Pick whom a flag is brandished at: the guest the holder thinks worst of, if they hold a real grudge.
+
+    Args:
+        actor: The guest with the flag, with their relations and thoughts.
+        candidates: The guests present, each with an `id`.
+        now: Current game time.
+
+    Returns:
+        What `accused_of` names, unless the holder's opinion of them is `BRANDISH_BELOW` or better: a threat needs a
+        grudge. None when nobody is present or nobody is disliked enough.
+    """
+    target = accused_of(actor, candidates, now)
+    return target if target is not None and opinion_of(actor, target["id"], now) < BRANDISH_BELOW else None
 
 
 def _footage(world: Mapping[str, Any], seen: Sequence[Actor]) -> list[str]:
@@ -142,6 +180,27 @@ def raise_sign(world: World, actor: Actor, target: Any) -> None:
                 opinion_of(listener, accused["id"], world["time"]) < 0:
             think(listener, "protest_cheered", world["time"], f"{called(listener, actor)} stood up to someone I dislike",
                   message, about=actor)
+
+
+def brandish_flag(world: World, actor: Actor, target: Any) -> None:
+    """Pull out a little flag and brandish it at the guest the holder dislikes most: they are shaken, the hall hears.
+
+    Args:
+        world: World whose sounds, guests, thoughts and log are updated in place.
+        actor: Guest with the flag.
+        target: Unused: the world, not the choice, picks the one threatened.
+
+    Raises:
+        ValueError: Nobody in sight is disliked enough to threaten.
+    """
+    threatened = threatened_by(actor, in_sight(world, actor), world["time"])
+    if threatened is None:
+        raise ValueError(f"{actor['name']} has nobody to brandish a flag at")
+    message = f"{actor['name']} brandishes a little flag at {threatened['name']} and threatens them"
+    log_act(world, actor, "brandish_flag", "flag", [threatened["id"]], message)
+    emit(world, THREAT, [actor["id"]], [actor["x"], actor["y"]], [threatened["id"]], message, "signature_act")
+    think(threatened, "threatened", world["time"], f"{called(threatened, actor)} threatened me with a little flag",
+          message, about=actor)
 
 
 def open_interview(world: World, actor: Actor, partner: Actor) -> None:

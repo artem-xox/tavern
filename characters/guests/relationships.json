@@ -54,6 +54,16 @@
       "kind": "disliked",
       "note": "Sobchak keeps discovering nuance exactly where a powerful man should answer a direct question.",
       "history": "They have never met or interviewed each other. Greta has stood with Ukraine since Russia's invasion of February 2022. Sobchak left Russia in October 2022 and has since interviewed Russian exiles and celebrities on her own YouTube channel. Neither has said much about the other."
+    },
+    "lukashenko": {
+      "kind": "disliked",
+      "note": "A man who jails people for protesting, and she wants to hear how that fits with what he says.",
+      "history": "They have never met. Lukashenko has led Belarus since 1994, and after the disputed election of August 2020 thousands of people were arrested for protesting. Greta has stood with protesters and with Ukraine since Russia's invasion in February 2022. Russian forces entered Ukraine from Belarusian soil."
+    },
+    "kim_jong_un": {
+      "kind": "disliked",
+      "note": "A man who answers every question with a missile, and she asks what he has actually done for his people.",
+      "history": "They have never met. North Korea ratified the Paris climate agreement in August 2016, and Greta began her school strike two years later. Kim has led the country since December 2011 and has put its money into weapons."
     }
   },
   "monroe": {
@@ -116,6 +126,16 @@
       "kind": "well known",
       "note": "Sobchak asks what everyone wants to know, but I would rather she asked what I want to say.",
       "history": "They have never met. Sobchak became a household name in Russia as the glamorous hostess of the reality show Dom-2 from 2004. Marilyn is the original blonde sex symbol who wanted to be taken seriously, and Sobchak has since turned to journalism and politics for the same reason."
+    },
+    "lukashenko": {
+      "kind": "well known",
+      "note": "A big-laughing farmer turned president, who brings potatoes to a party.",
+      "history": "They have never met. Marilyn was already a film star in 1954, the year she married Joe DiMaggio and sang for American troops in Korea. In August of that year Alexander was born in a village in Belarus, then part of the Soviet Union, and he later ran a state farm before going into politics."
+    },
+    "kim_jong_un": {
+      "kind": "well known",
+      "note": "A man who runs a country the way a studio boss runs a lot.",
+      "history": "They have never met. In February 1954 Marilyn sang for American troops in Korea, months after the war's armistice that still has no peace treaty. Kim's grandfather Kim Il Sung ruled the North then, and Kim has ruled it since December 2011."
     }
   },
   "musk": {
@@ -174,6 +194,16 @@
       "kind": "admired",
       "note": "Sobchak wants to interview me, which is an excellent starting position for understanding the future.",
       "history": "They have no recorded meeting. Sobchak left Russia in October 2022, the same month Musk bought Twitter and published his Ukraine peace plan. She has since worked mainly through YouTube and Telegram."
+    },
+    "lukashenko": {
+      "kind": "well known",
+      "note": "A joker with a sack of potatoes and a tractor-load of his own legends about Tesla.",
+      "history": "Their history runs through Twitter. In September 2019 Lukashenko said a Tesla he drove was a gift from Musk, and Musk answered 'Uh no'. In August 2020 Musk asked how he could help Belarus during the protests, and some users suggested launching Lukashenko into space. In January 2025 Lukashenko commented on Musk's gesture at Trump's inauguration."
+    },
+    "kim_jong_un": {
+      "kind": "looked down on",
+      "note": "A man with a rocket that works, which is more than a parade can say.",
+      "history": "They have never met. Musk builds rockets that land themselves and launches satellites for paying customers. In November 2023 North Korea put its first spy satellite into orbit, and in May 2024 a second attempt exploded soon after launch."
     }
   },
   "putin": {
@@ -237,6 +267,16 @@
       "kind": "looked down on",
       "note": "Sobchak is useful so long as she knows which follow-up to leave unasked.",
       "history": "Putin was the deputy of Ksenia's father Anatoly Sobchak, the mayor of St Petersburg, in the 1990s, and he helped to spirit Anatoly out of the country when he was threatened with arrest in 1997. Putin spoke at Anatoly's funeral in 2000, and Ksenia has long called him something close to a godfather. In 2018 she ran for president against him and won about 1.7 percent. In October 2022 she left Russia after a raid on her home."
+    },
+    "lukashenko": {
+      "kind": "well known",
+      "note": "A neighbour who is always useful and always asking for something in return.",
+      "history": "Russia and Belarus signed the Union State treaty in December 1999, and the two presidents have met many times since. Russian troops entered Ukraine from Belarus in February 2022, and Russia placed tactical nuclear weapons there in 2023. In June 2023 Lukashenko helped end the Wagner mutiny by brokering a deal with Prigozhin. In December 2025 he said the Oreshnik missile system had gone on combat duty in Belarus."
+    },
+    "kim_jong_un": {
+      "kind": "well known",
+      "note": "A comrade who pays for friendship in oil and wheat, and in the rest of the world's attention.",
+      "history": "In September 2023 Kim met Putin at the Vostochny space centre in Russia's far east. In June 2024 Putin visited Pyongyang and signed a treaty that promises mutual defence. North Korean troops were sent to Russia's Kursk region in the autumn of that year. In September 2025 the two stood together at Beijing's military parade."
     }
   },
   "queen": {
@@ -299,6 +339,16 @@
       "kind": "looked down on",
       "note": "Sobchak knows every rank at the table and still insists her deference is independence.",
       "history": "They have never met. The Queen's state visit to Russia in October 1994 took in St Petersburg, which was then governed by Ksenia's father Anatoly Sobchak as mayor. Ksenia was twelve years old that autumn. She later became one of Russia's best known television faces."
+    },
+    "lukashenko": {
+      "kind": "disliked",
+      "note": "A man who has made a country his own, and been shown the door by hers.",
+      "history": "They have never met. The Queen came to the throne in 1952, two years before he was born. In September 2020 her government put him under sanctions after the disputed August election, freezing his assets and banning him from entering Britain. He has led Belarus since 1994."
+    },
+    "kim_jong_un": {
+      "kind": "looked down on",
+      "note": "A ruler of a very old and very polite country that has never once called on him.",
+      "history": "They have never met. The Queen visited South Korea in April 1999, and Britain established diplomatic relations with North Korea in December 2000. Britain opened an embassy in Pyongyang in 2001. Kim has led the country since December 2011."
     }
   },
   "thatcher": {
@@ -361,6 +411,16 @@
       "kind": "disliked",
       "note": "Sobchak is remarkably fearless until a powerful guest actually requires an answer.",
       "history": "They have never met. In the 1990s Thatcher's name was shorthand in Russia for market reform, and Ksenia's father Anatoly Sobchak ran one of the first market-minded city administrations as mayor of St Petersburg. Thatcher had championed Gorbachev as a man the West could do business with, as early as 1984. Ksenia grew up in that world of hopes."
+    },
+    "lukashenko": {
+      "kind": "disliked",
+      "note": "A collective farmer who voted against the end of the Soviet Union and kept the job.",
+      "history": "Thatcher left office in November 1990 after a decade of facing the Soviet Union down. In December 1991 Lukashenko was the only deputy in the Belarusian parliament to vote against the agreement that dissolved the Soviet Union. In 1994 he became president, and he has led Belarus ever since."
+    },
+    "kim_jong_un": {
+      "kind": "disliked",
+      "note": "A regime she would have called an enemy before breakfast.",
+      "history": "They have never met. Thatcher left office in 1990, when Kim's grandfather Kim Il Sung still ruled the North. The Korean War, in which British troops fought, ended in an armistice in 1953 with no peace treaty. Kim has kept the country on that footing ever since and tested missiles."
     }
   },
   "trump": {
@@ -414,6 +474,16 @@
       "kind": "looked down on",
       "note": "Sobchak wants my audience and calls it an interview, then complains when I give the answers.",
       "history": "They have no recorded meeting. Trump brought the Miss Universe pageant to Moscow in November 2013, in the same Russian celebrity world Sobchak moved in. She visited Washington in 2018 and said Russia and America were slipping into a new cold war. No interview with him is recorded."
+    },
+    "lukashenko": {
+      "kind": "well known",
+      "note": "A strongman who hands over prisoners on request, which Donald calls a deal.",
+      "history": "In June 2025 Trump's envoy Keith Kellogg visited Minsk and fourteen prisoners were freed. In September 2025 another envoy, John Coale, won the release of fifty-two more, and America lifted sanctions on the airline Belavia. In March 2026 a further 250 were freed and sanctions on banks and fertiliser makers were eased."
+    },
+    "kim_jong_un": {
+      "kind": "well known",
+      "note": "A flatterer he met three times and remembers best for the third.",
+      "history": "Trump and Kim met in Singapore in June 2018 and in Hanoi in February 2019, where the talks ended without a deal. In June 2019 Trump stepped across the border line at Panmunjom, the first sitting president to enter North Korea. Earlier, in 2017, Trump had called him Rocket Man and Kim had called Trump a dotard. In October 2025 Trump said he was open to meeting him again."
     }
   },
   "tyson": {
@@ -476,6 +546,16 @@
       "kind": "well known",
       "note": "Sobchak can ask me something quiet if she lets me finish answering it.",
       "history": "They have no recorded meeting. Sobchak interviews celebrities for her YouTube channel, and a boxer with Tyson's story would suit her. He has been a headline for decades in Russia as elsewhere."
+    },
+    "lukashenko": {
+      "kind": "well known",
+      "note": "A president who plays hockey and keeps a country in shape with a firm hand.",
+      "history": "They have never met. Lukashenko, who plays ice hockey and long ran his country's Olympic committee, was barred by the International Olympic Committee in December 2020 over its treatment of athletes. Tyson, who became heavyweight champion at twenty, keeps pigeons and has said so for years."
+    },
+    "kim_jong_un": {
+      "kind": "well known",
+      "note": "A man who keeps his word in the ring and his birds in a coop.",
+      "history": "They have never met. Kim loves basketball, and the best-known American sportsman to visit him was the former player Dennis Rodman in 2013. Tyson became heavyweight champion at twenty and keeps pigeons."
     }
   },
   "zelensky": {
@@ -540,6 +620,16 @@
       "kind": "disliked",
       "note": "Sobchak will challenge a comedian all evening but explain a strongman's answer for him.",
       "history": "They have no confirmed meeting. In 2019, before Zelenskyy's election, Sobchak was reported to have gone to Kyiv; she said she was visiting a friend. A Ukrainian television host later claimed that Sobchak turned down a chance to interview him. In 2024 and 2025 she did interview his former adviser Alexei Arestovich."
+    },
+    "lukashenko": {
+      "kind": "loathed",
+      "note": "A neighbour's president whose country was invaded across his own border.",
+      "history": "In October 2019 the two met in Zhytomyr, in Ukraine, and shook hands for the cameras. In February 2022 Russian forces entered Ukraine from Belarus, and the first talks between the two sides took place that month near the Belarusian border. Lukashenko has denied that Belarus took part in the fighting."
+    },
+    "kim_jong_un": {
+      "kind": "loathed",
+      "note": "A man who sent his young soldiers to a foreign war and called it friendship.",
+      "history": "In October 2024 Zelensky said that thousands of North Korean soldiers had reached Russia's Kursk region. In January 2025 Ukrainian forces captured two North Korean soldiers. In April 2025 Kim publicly acknowledged that his troops had fought in Kursk."
     }
   },
   "zuckerberg": {
@@ -603,6 +693,16 @@
       "kind": "well known",
       "note": "Sobchak understands attention, though she prefers a guest list to an open network.",
       "history": "They have no recorded meeting. Sobchak's channel and the Telegram and Instagram followings behind it depend on platforms like his. Russia banned Facebook and Instagram in March 2022. She left Russia seven months later."
+    },
+    "lukashenko": {
+      "kind": "disliked",
+      "note": "A man who turns the internet off when a vote goes badly.",
+      "history": "They have never met. In August 2020 Belarus cut mobile internet access during the election and the protests that followed. Zuckerberg built his company on keeping people connected, and has argued that open networks help people organise."
+    },
+    "kim_jong_un": {
+      "kind": "looked down on",
+      "note": "A man who has been blocked at every border he has never crossed.",
+      "history": "They have never met. Facebook is blocked in North Korea, where most people can reach only a state-run intranet. Zuckerberg's company reaches billions of people, almost none of them in North Korea."
     }
   },
   "kardashian": {
@@ -665,6 +765,16 @@
       "kind": "well known",
       "note": "Sobchak knows the guest list, but I know when another woman wants to turn my scandal into her interview.",
       "history": "They have no recorded meeting. Sobchak was long called Russia's Paris Hilton, a society girl turned TV host, and Kim got her start as Paris Hilton's closet organiser and assistant. Both turned being looked at into a business. Sobchak then added journalism and a presidential campaign, in 2018, to the mix."
+    },
+    "lukashenko": {
+      "kind": "looked down on",
+      "note": "A man in a plain jacket and a moustache with no feed worth following.",
+      "history": "They have never met. Kim built her fame on a reality show that began in 2007, and her followers number in the hundreds of millions. Lukashenko, who has led Belarus since 1994, runs a country where the state controls most of the media and independent journalists have been jailed."
+    },
+    "kim_jong_un": {
+      "kind": "looked down on",
+      "note": "A man with the same first name, no followers and a worse haircut.",
+      "history": "They share a first name and almost nothing else. Kardashian has built a media empire from a reality show that began in 2007. Kim leads a country where most people can reach only a state-run intranet, not the internet she posts on."
     }
   },
   "vucic": {
@@ -727,6 +837,16 @@
       "kind": "well known",
       "note": "She has interviewed me and knows when a friendly question can become a useful public answer.",
       "history": "Sobchak interviewed Vucic, and in a long interview published on 20 October 2026 he told her that a world war was almost unavoidable. He also talked about a tense meeting with Putin in 2016. The interview came days before Serbia's early elections on 25 October 2026. She knows his two-chairs routine well and likes asking about it."
+    },
+    "lukashenko": {
+      "kind": "well known",
+      "note": "An old friend of Serbia who is also a useful friend for the price of a visit.",
+      "history": "Vucic went to Minsk for the European Games in June 2019, and Lukashenko made a state visit to Belgrade that December. Lukashenko has said Belarus will not change its position on Serbia's territorial integrity. They met again on the sidelines of the Baku climate summit in November 2024, where Lukashenko proposed deeper ties."
+    },
+    "kim_jong_un": {
+      "kind": "well known",
+      "note": "A man who stood in the same square and is wise enough not to say so.",
+      "history": "Yugoslavia established diplomatic relations with North Korea in 1948, and Serbia has kept them. In September 2025 Vucic went to Beijing for the military parade where Xi, Putin and Kim also appeared. Serbia has not joined Western sanctions on Russia."
     }
   },
   "sobchak": {
@@ -789,6 +909,160 @@
       "kind": "well known",
       "note": "My interviewee can turn two reserved chairs into a very long answer about having only one.",
       "history": "Sobchak interviewed Vucic, and in a long interview published on 20 October 2026 he told her that a world war was almost unavoidable. He also talked about a tense meeting with Putin in 2016. The interview came days before Serbia's early elections on 25 October 2026. She knows his two-chairs routine well and likes asking about it."
+    },
+    "lukashenko": {
+      "kind": "well known",
+      "note": "A host she interviewed for three hours and has not been able to forget.",
+      "history": "In May 2014 she interviewed him in Minsk for the Dozhd channel. The conversation lasted about three hours and covered Ukraine, a dispute over potash and whether he was divorced, which he denied. He said he did not believe that the exiled oligarch Berezovsky had taken his own life. Commentators noted that he sounded less like the Kremlin's close ally than usual."
+    },
+    "kim_jong_un": {
+      "kind": "well known",
+      "note": "A man she is waiting to see across a microphone, from the right distance.",
+      "history": "They have never met. Her father Anatoly Sobchak was the mayor of St Petersburg and the early patron of Vladimir Putin. Putin has since signed a treaty with Kim, and she has taken an interviewer's interest in who stands beside whom."
+    }
+  },
+  "lukashenko": {
+    "greta": {
+      "kind": "looked down on",
+      "note": "A schoolgirl with a placard, and he asks who is feeding her.",
+      "history": "They have never met. Lukashenko has led Belarus since 1994, and after the disputed election of August 2020 thousands of people were arrested for protesting. Greta has stood with protesters and with Ukraine since Russia's invasion in February 2022. Russian forces entered Ukraine from Belarusian soil."
+    },
+    "kardashian": {
+      "kind": "looked down on",
+      "note": "A woman who is famous for being photographed, which he does not call work.",
+      "history": "They have never met. Kardashian built her fame on a reality show that began in 2007, and her followers number in the hundreds of millions. Lukashenko, a state-farm director before he became president, judges people by what they grow."
+    },
+    "monroe": {
+      "kind": "admired",
+      "note": "A star of the old pictures, whom the whole Soviet Union secretly watched.",
+      "history": "They have never met. Marilyn was a film star by 1954, the year she married Joe DiMaggio and sang for American troops in Korea. In August of that year Alexander was born in a Belarusian village and grew up in the Soviet Union, where American films were hard to see."
+    },
+    "musk": {
+      "kind": "admired",
+      "note": "A man with real rockets and a legend about a car he insists was a present.",
+      "history": "Their history runs through Twitter. In September 2019 Lukashenko said a Tesla he drove was a gift from Musk, and Musk answered 'Uh no'. In August 2020 Musk asked how he could help Belarus during the protests. Lukashenko still talks about Musk as an admirer would, and sometimes as a man who owes him a car."
+    },
+    "putin": {
+      "kind": "admired",
+      "note": "The big brother next door, to be flattered, counted on and outwitted.",
+      "history": "Russia and Belarus signed the Union State treaty in December 1999, and the two presidents have met many times since. Russian troops entered Ukraine from Belarus in February 2022, and Russia placed tactical nuclear weapons there in 2023. In June 2023 Lukashenko helped end the Wagner mutiny by brokering a deal with Prigozhin, and he has not let anyone forget it."
+    },
+    "queen": {
+      "kind": "looked down on",
+      "note": "A very old throne, and she is no help with sanctions.",
+      "history": "They have never met. The Queen came to the throne in 1952, two years before he was born. In September 2020 her government put him under sanctions after the disputed August election. He has led Belarus since 1994, and sanctions have not changed that."
+    },
+    "sobchak": {
+      "kind": "well known",
+      "note": "A clever interviewer who asked about his divorce and got three hours of answers.",
+      "history": "In May 2014 she interviewed him in Minsk for the Dozhd channel. The conversation lasted about three hours and covered Ukraine, a dispute over potash and whether he was divorced, which he denied. He said he did not believe that the exiled oligarch Berezovsky had taken his own life. He remembers that she stayed to the end."
+    },
+    "thatcher": {
+      "kind": "looked down on",
+      "note": "A woman who spent a decade facing down a country he was proud of.",
+      "history": "Thatcher left office in November 1990 after a decade of facing the Soviet Union down. In December 1991 Lukashenko was the only deputy in the Belarusian parliament to vote against the agreement that dissolved the Soviet Union. He still counts that vote among the things he is proud of."
+    },
+    "trump": {
+      "kind": "admired",
+      "note": "A bigger boss who likes a deal and sends envoys instead of lectures.",
+      "history": "In June 2025 Trump's envoy Keith Kellogg visited Minsk and fourteen prisoners were freed. In September 2025 another envoy, John Coale, won the release of fifty-two more, and America lifted sanctions on the airline Belavia. In March 2026 a further 250 were freed and sanctions on banks and fertiliser makers were eased. Lukashenko hopes the next envoy comes with a bigger present."
+    },
+    "tyson": {
+      "kind": "admired",
+      "note": "A champion who knows what a firm hand is, and who keeps pigeons like a farmer.",
+      "history": "They have never met. Lukashenko, who plays ice hockey and long ran his country's Olympic committee, was barred by the International Olympic Committee in December 2020 over its treatment of athletes. Tyson, who became heavyweight champion at twenty, keeps pigeons, and Lukashenko respects a man who keeps his own stock."
+    },
+    "vucic": {
+      "kind": "well known",
+      "note": "A friend in Belgrade who is useful and careful not to promise too much.",
+      "history": "Vucic went to Minsk for the European Games in June 2019, and Lukashenko made a state visit to Belgrade that December. Lukashenko has said Belarus will not change its position on Serbia's territorial integrity. They met again on the sidelines of the Baku climate summit in November 2024, where Lukashenko proposed deeper ties."
+    },
+    "zelensky": {
+      "kind": "loathed",
+      "note": "The man whose country he is accused of helping to attack, and who has never forgotten it.",
+      "history": "In October 2019 the two met in Zhytomyr, in Ukraine, and shook hands for the cameras. In February 2022 Russian forces entered Ukraine from Belarus, and the first talks between the two sides took place that month near the Belarusian border. Lukashenko denies that Belarus took part in the fighting."
+    },
+    "zuckerberg": {
+      "kind": "disliked",
+      "note": "A boy who thinks a country can be run from a screen.",
+      "history": "They have never met. In August 2020 Belarus cut mobile internet access during the election and the protests that followed. Zuckerberg built his company on keeping people connected, and has argued that open networks help people organise."
+    },
+    "kim_jong_un": {
+      "kind": "admired",
+      "note": "A man who grows a hard land and keeps guests warm with swords and vases.",
+      "history": "The two met in September 2025 in Beijing, where Kim invited Lukashenko to visit. In March 2026 Lukashenko made his first trip to Pyongyang and the two leaders signed a friendship treaty. Kim gave him a sword and a vase with his portrait, and Lukashenko gave him an assault rifle made in Belarus."
+    }
+  },
+  "kim_jong_un": {
+    "greta": {
+      "kind": "looked down on",
+      "note": "A young scold who speaks as if the world could be told what to do.",
+      "history": "They have never met. North Korea ratified the Paris climate agreement in August 2016, and Greta began her school strike two years later. Kim has led the country since December 2011 and does not take instruction from children."
+    },
+    "kardashian": {
+      "kind": "looked down on",
+      "note": "A woman with the same name who is famous for being photographed.",
+      "history": "They share a first name and almost nothing else. Kardashian has built a media empire from a reality show that began in 2007. Kim leads a country where most people can reach only a state-run intranet, which he thinks is the right amount of internet."
+    },
+    "monroe": {
+      "kind": "well known",
+      "note": "A star whose pictures the old people in his country still cannot see.",
+      "history": "They have never met. In February 1954 Marilyn sang for American troops in Korea, months after the war's armistice that still has no peace treaty. Kim's grandfather Kim Il Sung ruled the North then, and Kim has ruled it since December 2011."
+    },
+    "musk": {
+      "kind": "well known",
+      "note": "A man with a rocket program that mostly works and a mouth that never stops.",
+      "history": "They have never met. Musk builds rockets that land themselves and launches satellites for paying customers. In November 2023 North Korea put its first spy satellite into orbit. A second attempt in May 2024 exploded soon after launch."
+    },
+    "putin": {
+      "kind": "admired",
+      "note": "The comrade who signed for his friendship and sent a plane to prove it.",
+      "history": "In September 2023 Kim met Putin at the Vostochny space centre in Russia's far east. In June 2024 Putin visited Pyongyang and signed a treaty that promises mutual defence. North Korean troops were sent to Russia's Kursk region in the autumn of that year. In September 2025 the two stood together at Beijing's military parade."
+    },
+    "queen": {
+      "kind": "well known",
+      "note": "An old and polite throne that has never needed to call on him.",
+      "history": "They have never met. The Queen visited South Korea in April 1999, and Britain established diplomatic relations with North Korea in December 2000. Britain opened an embassy in Pyongyang in 2001."
+    },
+    "sobchak": {
+      "kind": "well known",
+      "note": "The daughter of Putin's old patron, and he watches what she writes.",
+      "history": "They have never met. Her father Anatoly Sobchak was the mayor of St Petersburg and the early patron of Vladimir Putin. Putin has since signed a treaty with Kim, and Russian journalists are among the few foreigners who write about him at length."
+    },
+    "thatcher": {
+      "kind": "looked down on",
+      "note": "An enemy of an enemy's friend, from an old war he did not start.",
+      "history": "They have never met. Thatcher left office in 1990, when Kim's grandfather Kim Il Sung still ruled the North. The Korean War, in which British troops fought, ended in an armistice in 1953 with no peace treaty. Kim has kept the country on that footing ever since."
+    },
+    "trump": {
+      "kind": "well known",
+      "note": "A man who stepped across a line to shake his hand and then wanted a deal.",
+      "history": "Trump and Kim met in Singapore in June 2018 and in Hanoi in February 2019, where the talks ended without a deal. In June 2019 Trump stepped across the border line at Panmunjom, the first sitting president to enter North Korea. Earlier, in 2017, Trump had called him Rocket Man and Kim had called Trump a dotard. In October 2025 Trump said he was open to meeting him again."
+    },
+    "tyson": {
+      "kind": "admired",
+      "note": "A champion from a country of hard hits, who keeps birds in a coop.",
+      "history": "They have never met. Kim loves basketball, and the best-known American sportsman to visit him was the former player Dennis Rodman in 2013. Tyson became heavyweight champion at twenty and keeps pigeons."
+    },
+    "vucic": {
+      "kind": "well known",
+      "note": "A careful man who stood in the same square and speaks softly of it.",
+      "history": "Yugoslavia established diplomatic relations with North Korea in 1948, and Serbia has kept them. In September 2025 Vucic went to Beijing for the military parade where Xi, Putin and Kim also appeared. Serbia has not joined Western sanctions on Russia."
+    },
+    "zelensky": {
+      "kind": "loathed",
+      "note": "The man who captured two of his soldiers and showed them to the cameras.",
+      "history": "In October 2024 Zelensky said that thousands of North Korean soldiers had reached Russia's Kursk region. In January 2025 Ukrainian forces captured two North Korean soldiers. In April 2025 Kim publicly acknowledged that his troops had fought in Kursk."
+    },
+    "zuckerberg": {
+      "kind": "looked down on",
+      "note": "A man whose screens are good for other people's countries.",
+      "history": "They have never met. Facebook is blocked in North Korea, where most people can reach only a state-run intranet. Zuckerberg's company reaches billions of people, almost none of them in North Korea."
+    },
+    "lukashenko": {
+      "kind": "admired",
+      "note": "A friendly ruler who brought a rifle as a present, and a farmer's sense of order.",
+      "history": "The two met in September 2025 in Beijing, where Kim invited Lukashenko to visit. In March 2026 Lukashenko made his first trip to Pyongyang and the two leaders signed a friendship treaty. Kim gave him a sword and a vase with his portrait, and Lukashenko gave him an assault rifle made in Belarus."
     }
   }
 }

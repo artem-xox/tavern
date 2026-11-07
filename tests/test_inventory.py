@@ -83,7 +83,9 @@ def test_the_snapshot_names_every_kind_of_item(tmp_path: Path) -> None:
         "cudgel": {"one": "a cudgel", "many": "cudgels"},
         "phone": {"one": "a phone", "many": "phones"},
         "protest_sign": {"one": "a protest sign", "many": "protest signs"},
-        "microphone": {"one": "a microphone", "many": "microphones"}}
+        "microphone": {"one": "a microphone", "many": "microphones"},
+        "flag": {"one": "a little flag", "many": "little flags"},
+        "potato": {"one": "a potato", "many": "potatoes"}}
 
 
 def guest_room() -> dict[str, Any]:

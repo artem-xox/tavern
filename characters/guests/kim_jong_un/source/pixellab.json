@@ -1,0 +1,645 @@
+{
+  "group_id": "4c2abd01-ed2d-46f2-858d-79cc65cd9af8",
+  "states": [
+    {
+      "character": {
+        "id": "1902329b-69c9-4af7-892e-781796331610",
+        "name": "Idle",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:02:52.183625+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "29eca895-0da5-4257-a877-c1ac6ee15233",
+        "name": "Brandishing",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:43:37.031124+00:00"
+      },
+      "folder": "Brandishing",
+      "frames": {
+        "rotations": {
+          "south": "Brandishing/rotations/south.png",
+          "south-east": "Brandishing/rotations/south-east.png",
+          "east": "Brandishing/rotations/east.png",
+          "north-east": "Brandishing/rotations/north-east.png",
+          "north": "Brandishing/rotations/north.png",
+          "north-west": "Brandishing/rotations/north-west.png",
+          "west": "Brandishing/rotations/west.png",
+          "south-west": "Brandishing/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "d78f786b-fe17-4f21-8b82-b128db5b00d0",
+        "name": "Seated",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:43:37.202369+00:00"
+      },
+      "folder": "Seated",
+      "frames": {
+        "rotations": {
+          "south": "Seated/rotations/south.png",
+          "south-east": "Seated/rotations/south-east.png",
+          "east": "Seated/rotations/east.png",
+          "north-east": "Seated/rotations/north-east.png",
+          "north": "Seated/rotations/north.png",
+          "north-west": "Seated/rotations/north-west.png",
+          "west": "Seated/rotations/west.png",
+          "south-west": "Seated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "162a423c-8401-4d18-bc1b-b44ac0d315d7",
+        "name": "Darts",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:43:37.360988+00:00"
+      },
+      "folder": "Darts",
+      "frames": {
+        "rotations": {
+          "south": "Darts/rotations/south.png",
+          "south-east": "Darts/rotations/south-east.png",
+          "east": "Darts/rotations/east.png",
+          "north-east": "Darts/rotations/north-east.png",
+          "north": "Darts/rotations/north.png",
+          "north-west": "Darts/rotations/north-west.png",
+          "west": "Darts/rotations/west.png",
+          "south-west": "Darts/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "1640073e-adad-4e8f-a3fd-d5a001940b8e",
+        "name": "Bathroom",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:43:37.519425+00:00"
+      },
+      "folder": "Bathroom",
+      "frames": {
+        "rotations": {
+          "south": "Bathroom/rotations/south.png",
+          "south-east": "Bathroom/rotations/south-east.png",
+          "east": "Bathroom/rotations/east.png",
+          "north-east": "Bathroom/rotations/north-east.png",
+          "north": "Bathroom/rotations/north.png",
+          "north-west": "Bathroom/rotations/north-west.png",
+          "west": "Bathroom/rotations/west.png",
+          "south-west": "Bathroom/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "0d8faffb-4d4f-4d2b-977a-e967035bd133",
+        "name": "Drinking",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:43:37.684165+00:00"
+      },
+      "folder": "Drinking",
+      "frames": {
+        "rotations": {
+          "south": "Drinking/rotations/south.png",
+          "south-east": "Drinking/rotations/south-east.png",
+          "east": "Drinking/rotations/east.png",
+          "north-east": "Drinking/rotations/north-east.png",
+          "north": "Drinking/rotations/north.png",
+          "north-west": "Drinking/rotations/north-west.png",
+          "west": "Drinking/rotations/west.png",
+          "south-west": "Drinking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "6e56399e-c363-4cef-968c-4ac8c3147568",
+        "name": "DrinkingSeated",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:43:37.854204+00:00"
+      },
+      "folder": "DrinkingSeated",
+      "frames": {
+        "rotations": {
+          "south": "DrinkingSeated/rotations/south.png",
+          "south-east": "DrinkingSeated/rotations/south-east.png",
+          "east": "DrinkingSeated/rotations/east.png",
+          "north-east": "DrinkingSeated/rotations/north-east.png",
+          "north": "DrinkingSeated/rotations/north.png",
+          "north-west": "DrinkingSeated/rotations/north-west.png",
+          "west": "DrinkingSeated/rotations/west.png",
+          "south-west": "DrinkingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "aec3c828-f381-4030-9611-ba8777121c7f",
+        "name": "TalkingSeated",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:43:38.044642+00:00"
+      },
+      "folder": "TalkingSeated",
+      "frames": {
+        "rotations": {
+          "south": "TalkingSeated/rotations/south.png",
+          "south-east": "TalkingSeated/rotations/south-east.png",
+          "east": "TalkingSeated/rotations/east.png",
+          "north-east": "TalkingSeated/rotations/north-east.png",
+          "north": "TalkingSeated/rotations/north.png",
+          "north-west": "TalkingSeated/rotations/north-west.png",
+          "west": "TalkingSeated/rotations/west.png",
+          "south-west": "TalkingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "746b3357-766e-49bd-89c0-d6fbec8f2e42",
+        "name": "TakeBeer",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:43:38.238362+00:00"
+      },
+      "folder": "TakeBeer",
+      "frames": {
+        "rotations": {
+          "south": "TakeBeer/rotations/south.png",
+          "south-east": "TakeBeer/rotations/south-east.png",
+          "east": "TakeBeer/rotations/east.png",
+          "north-east": "TakeBeer/rotations/north-east.png",
+          "north": "TakeBeer/rotations/north.png",
+          "north-west": "TakeBeer/rotations/north-west.png",
+          "west": "TakeBeer/rotations/west.png",
+          "south-west": "TakeBeer/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "7ec995a7-cda8-42a3-8c99-d20b6c16719c",
+        "name": "Walking",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:43:38.424283+00:00"
+      },
+      "folder": "Walking",
+      "frames": {
+        "rotations": {
+          "south": "Walking/rotations/south.png",
+          "south-east": "Walking/rotations/south-east.png",
+          "east": "Walking/rotations/east.png",
+          "north-east": "Walking/rotations/north-east.png",
+          "north": "Walking/rotations/north.png",
+          "north-west": "Walking/rotations/north-west.png",
+          "west": "Walking/rotations/west.png",
+          "south-west": "Walking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "babba99d-e275-4966-ac6f-a6870a58d1cc",
+        "name": "Talking",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:43:38.603215+00:00"
+      },
+      "folder": "Talking",
+      "frames": {
+        "rotations": {
+          "south": "Talking/rotations/south.png",
+          "south-east": "Talking/rotations/south-east.png",
+          "east": "Talking/rotations/east.png",
+          "north-east": "Talking/rotations/north-east.png",
+          "north": "Talking/rotations/north.png",
+          "north-west": "Talking/rotations/north-west.png",
+          "west": "Talking/rotations/west.png",
+          "south-west": "Talking/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "e80c53c9-230a-4929-85f6-cd3263d58a97",
+        "name": "Giving",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:43:38.787122+00:00"
+      },
+      "folder": "Giving",
+      "frames": {
+        "rotations": {
+          "south": "Giving/rotations/south.png",
+          "south-east": "Giving/rotations/south-east.png",
+          "east": "Giving/rotations/east.png",
+          "north-east": "Giving/rotations/north-east.png",
+          "north": "Giving/rotations/north.png",
+          "north-west": "Giving/rotations/north-west.png",
+          "west": "Giving/rotations/west.png",
+          "south-west": "Giving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "c5bb8b6d-066b-41d6-9f49-453d9573d111",
+        "name": "Receiving",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:43:38.982715+00:00"
+      },
+      "folder": "Receiving",
+      "frames": {
+        "rotations": {
+          "south": "Receiving/rotations/south.png",
+          "south-east": "Receiving/rotations/south-east.png",
+          "east": "Receiving/rotations/east.png",
+          "north-east": "Receiving/rotations/north-east.png",
+          "north": "Receiving/rotations/north.png",
+          "north-west": "Receiving/rotations/north-west.png",
+          "west": "Receiving/rotations/west.png",
+          "south-west": "Receiving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "6d3a7b88-a950-4793-9bed-0f89e77e6eee",
+        "name": "GivingSeated",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:43:39.253897+00:00"
+      },
+      "folder": "GivingSeated",
+      "frames": {
+        "rotations": {
+          "south": "GivingSeated/rotations/south.png",
+          "south-east": "GivingSeated/rotations/south-east.png",
+          "east": "GivingSeated/rotations/east.png",
+          "north-east": "GivingSeated/rotations/north-east.png",
+          "north": "GivingSeated/rotations/north.png",
+          "north-west": "GivingSeated/rotations/north-west.png",
+          "west": "GivingSeated/rotations/west.png",
+          "south-west": "GivingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "365fd397-2182-41eb-b058-a523da38a8cd",
+        "name": "ReceivingSeated",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:43:39.930948+00:00"
+      },
+      "folder": "ReceivingSeated",
+      "frames": {
+        "rotations": {
+          "south": "ReceivingSeated/rotations/south.png",
+          "south-east": "ReceivingSeated/rotations/south-east.png",
+          "east": "ReceivingSeated/rotations/east.png",
+          "north-east": "ReceivingSeated/rotations/north-east.png",
+          "north": "ReceivingSeated/rotations/north.png",
+          "north-west": "ReceivingSeated/rotations/north-west.png",
+          "west": "ReceivingSeated/rotations/west.png",
+          "south-west": "ReceivingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "6ea76ae8-9f54-4cef-8278-92a3833f18b3",
+        "name": "SleepingSeated",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:43:40.109537+00:00"
+      },
+      "folder": "SleepingSeated",
+      "frames": {
+        "rotations": {
+          "south": "SleepingSeated/rotations/south.png",
+          "south-east": "SleepingSeated/rotations/south-east.png",
+          "east": "SleepingSeated/rotations/east.png",
+          "north-east": "SleepingSeated/rotations/north-east.png",
+          "north": "SleepingSeated/rotations/north.png",
+          "north-west": "SleepingSeated/rotations/north-west.png",
+          "west": "SleepingSeated/rotations/west.png",
+          "south-west": "SleepingSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "58728fc4-5eb4-42c3-81f8-8f7b53a0c1ba",
+        "name": "KnockedOut",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:43:40.299951+00:00"
+      },
+      "folder": "KnockedOut",
+      "frames": {
+        "rotations": {
+          "south": "KnockedOut/rotations/south.png",
+          "south-east": "KnockedOut/rotations/south-east.png",
+          "east": "KnockedOut/rotations/east.png",
+          "north-east": "KnockedOut/rotations/north-east.png",
+          "north": "KnockedOut/rotations/north.png",
+          "north-west": "KnockedOut/rotations/north-west.png",
+          "west": "KnockedOut/rotations/west.png",
+          "south-west": "KnockedOut/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "07f66c8c-838a-4e2e-a7f9-058868f0bb74",
+        "name": "Fighting",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:43:40.482380+00:00"
+      },
+      "folder": "Fighting",
+      "frames": {
+        "rotations": {
+          "south": "Fighting/rotations/south.png",
+          "south-east": "Fighting/rotations/south-east.png",
+          "east": "Fighting/rotations/east.png",
+          "north-east": "Fighting/rotations/north-east.png",
+          "north": "Fighting/rotations/north.png",
+          "north-west": "Fighting/rotations/north-west.png",
+          "west": "Fighting/rotations/west.png",
+          "south-west": "Fighting/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "a3e1a49a-84ca-4158-ba7e-998c135f0350",
+        "name": "Hurt",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:43:40.655875+00:00"
+      },
+      "folder": "Hurt",
+      "frames": {
+        "rotations": {
+          "south": "Hurt/rotations/south.png",
+          "south-east": "Hurt/rotations/south-east.png",
+          "east": "Hurt/rotations/east.png",
+          "north-east": "Hurt/rotations/north-east.png",
+          "north": "Hurt/rotations/north.png",
+          "north-west": "Hurt/rotations/north-west.png",
+          "west": "Hurt/rotations/west.png",
+          "south-west": "Hurt/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "e8c0a31e-91d5-4ac6-aa18-ab69229fce53",
+        "name": "HurtSeated",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:43:40.841134+00:00"
+      },
+      "folder": "HurtSeated",
+      "frames": {
+        "rotations": {
+          "south": "HurtSeated/rotations/south.png",
+          "south-east": "HurtSeated/rotations/south-east.png",
+          "east": "HurtSeated/rotations/east.png",
+          "north-east": "HurtSeated/rotations/north-east.png",
+          "north": "HurtSeated/rotations/north.png",
+          "north-west": "HurtSeated/rotations/north-west.png",
+          "west": "HurtSeated/rotations/west.png",
+          "south-west": "HurtSeated/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "0c898fde-c7b5-4996-8969-5d7b42387604",
+        "name": "Shoving",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:44:33.402700+00:00"
+      },
+      "folder": "Shoving",
+      "frames": {
+        "rotations": {
+          "south": "Shoving/rotations/south.png",
+          "south-east": "Shoving/rotations/south-east.png",
+          "east": "Shoving/rotations/east.png",
+          "north-east": "Shoving/rotations/north-east.png",
+          "north": "Shoving/rotations/north.png",
+          "north-west": "Shoving/rotations/north-west.png",
+          "west": "Shoving/rotations/west.png",
+          "south-west": "Shoving/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "02d32a04-9655-47b5-bf61-809a5446ba1b",
+        "name": "HelpingUp",
+        "prompt": "Kim Jong Un, recognizable young stocky East Asian male public figure: short black hair shaved at the sides with a pompadour top, round pale face, heavy stocky build, wearing a dark gray buttoned Mao-style suit with a high collar and black shoes. Full body, standing upright in a neutral relaxed Idle pose with empty hands. Pixel-art game character sprite for a medieval tavern ensemble: 68x68 transparent canvas, centered with breathing room, low top-down three-quarter view, crisp dark umber outline, restrained warm palette, simple readable shading, clean silhouette. No text, no logo, no flags, no scenery, no floor, no furniture, no props, no watermark.",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-07T11:45:08.473853+00:00"
+      },
+      "folder": "HelpingUp",
+      "frames": {
+        "rotations": {
+          "south": "HelpingUp/rotations/south.png",
+          "south-east": "HelpingUp/rotations/south-east.png",
+          "east": "HelpingUp/rotations/east.png",
+          "north-east": "HelpingUp/rotations/north-east.png",
+          "north": "HelpingUp/rotations/north.png",
+          "north-west": "HelpingUp/rotations/north-west.png",
+          "west": "HelpingUp/rotations/west.png",
+          "south-west": "HelpingUp/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-07T11:50:09.477672"
+}

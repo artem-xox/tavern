@@ -19,30 +19,30 @@ def gift(message: str, time: float = 1.0) -> list[dict[str, Any]]:
 
 def nothing(**counts: Any) -> dict[str, Any]:
     """The counts of an evening without any giving, with some fields changed."""
-    base = {"gifts": {"beer": 0, "remedy": 0, "keepsake": 0}, "refused": 0,
+    base = {"gifts": {"beer": 0, "remedy": 0, "keepsake": 0, "potato": 0}, "refused": 0,
             "errands": {"begun": 0, "done": 0, "failed": 0}}
     return {**base, **counts}
 
 
 @pytest.mark.parametrize("events, expected", [
     pytest.param([], nothing(), id="empty"),
-    pytest.param(gift("Ada gave Bea a mug of ale"), nothing(gifts={"beer": 1, "remedy": 0, "keepsake": 0}),
+    pytest.param(gift("Ada gave Bea a mug of ale"), nothing(gifts={"beer": 1, "remedy": 0, "keepsake": 0, "potato": 0}),
                  id="one-gift-is-logged-twice-and-counted-once"),
-    pytest.param(gift("Ada gave Bea a herbal remedy"), nothing(gifts={"beer": 0, "remedy": 1, "keepsake": 0}),
+    pytest.param(gift("Ada gave Bea a herbal remedy"), nothing(gifts={"beer": 0, "remedy": 1, "keepsake": 0, "potato": 0}),
                  id="a-remedy"),
-    pytest.param(gift("Toren gave Rurik a keepsake"), nothing(gifts={"beer": 0, "remedy": 0, "keepsake": 1}),
+    pytest.param(gift("Toren gave Rurik a keepsake"), nothing(gifts={"beer": 0, "remedy": 0, "keepsake": 1, "potato": 0}),
                  id="a-keepsake"),
     pytest.param([*gift("Ada gave Bea a mug of ale", 1.0), *gift("Ada gave Bea a mug of ale", 200.0)],
-                 nothing(gifts={"beer": 2, "remedy": 0, "keepsake": 0}), id="the-same-gift-twice-at-different-times"),
+                 nothing(gifts={"beer": 2, "remedy": 0, "keepsake": 0, "potato": 0}), id="the-same-gift-twice-at-different-times"),
     pytest.param([*gift("Ada gave Bea a herbal remedy"), *gift("Bea gave Ada a keepsake")],
-                 nothing(gifts={"beer": 0, "remedy": 1, "keepsake": 1}), id="two-gifts-at-the-same-moment"),
+                 nothing(gifts={"beer": 0, "remedy": 1, "keepsake": 1, "potato": 0}), id="two-gifts-at-the-same-moment"),
     pytest.param([event("gift_refused", "Bea would not take a keepsake from Ada", "ada"),
                   event("gift_refused", "Bea would not take a keepsake from Ada", "bea")], nothing(refused=1),
                  id="a-refusal-is-logged-twice-and-counted-once"),
     pytest.param([event("fetch_begun"), event("fetch_begun"), event("fetch_done"), event("fetch_failed")],
                  nothing(errands={"begun": 2, "done": 1, "failed": 1}), id="errands"),
     pytest.param([event("turn"), *gift("Ada gave Bea a mug of ale"), event("quarrel")],
-                 nothing(gifts={"beer": 1, "remedy": 0, "keepsake": 0}), id="mixed-with-other-events"),
+                 nothing(gifts={"beer": 1, "remedy": 0, "keepsake": 0, "potato": 0}), id="mixed-with-other-events"),
 ])
 def test_giving_is_counted(events: list[dict[str, Any]], expected: dict[str, Any]) -> None:
     assert giving_counts(events) == expected

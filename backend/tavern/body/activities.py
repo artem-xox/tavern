@@ -20,7 +20,7 @@ from tavern.social.giving import hand_over
 from tavern.social.invitations import begin_errand
 from tavern.social.names import called
 from tavern.social.scenes import conversation_of, join_conversation, start_conversation
-from tavern.social.signature_acts import film_room, open_interview, raise_sign
+from tavern.social.signature_acts import brandish_flag, film_room, open_interview, raise_sign
 from tavern.social.tables import intrude
 from tavern.social.thoughts import opinion_of, think
 
@@ -350,6 +350,15 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              guidance="For someone whose conscience will not keep quiet: the guest they blame most is shamed in front "
                       "of the room, and whoever dislikes that guest too is glad of it. It is a loud scene, so it "
                       "suits a real grievance, not a passing mood, and not twice in a short while."),
+    Activity(verb="brandish_flag", fatigue_per_second=0.2, requires_item="flag", duration=6.0, leaves_seat=True,
+             fun=0.4, on_arrival=brandish_flag, label="Brandish a flag", status="threatening", pose="Brandishing",
+             stopped_at_last_call="The inn is closing: no more threats",
+             doing="brandishing a little flag and threatening someone", done="brandished a little flag",
+             family="company",
+             what="pull out the little flag they carry and brandish it at the guest they dislike most, as a threat",
+             guidance="For a guest who answers an argument or a slight with menace: the one they dislike most is shaken "
+                      "and will not forget it, and the hall hears the bark. It needs a real grudge, so it does not "
+                      "suit idle company, and not twice in a short while."),
     Activity(verb="interview_guest", fatigue_per_second=0.05, requires_item="microphone", partner=True, approaches=True,
              duration=8.0, on_arrival=_interview, label="Interview a guest", status="interviewing",
              pose="Interviewing", stopped_at_last_call="The inn is closing: no more interviews",

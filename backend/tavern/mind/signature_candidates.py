@@ -1,10 +1,10 @@
-"""What a guest's signature items offer them to do: the acts, their targets, and the guest a protest would name."""
+"""What a guest's signature items offer them to do: the acts, their targets, and the guest a protest or threat would name."""
 
 from collections.abc import Mapping, Sequence
 from typing import Any
 
 from tavern.body.items import ITEMS
-from tavern.social.signature_acts import accused_of, raised_lately
+from tavern.social.signature_acts import accused_of, brandished_lately, raised_lately, threatened_by
 
 
 def offered_verbs(actor: Mapping[str, Any]) -> set[str]:
@@ -43,6 +43,18 @@ def accused_in_sight(observation: Mapping[str, Any]) -> Mapping[str, Any] | None
     return accused_of(observation["actor"], rivals_in_sight(observation), observation.get("time", 0.0))
 
 
+def threatened_in_sight(observation: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    """Tell whom a flag would be brandished at from where the guest stands (`signature_acts.threatened_by`).
+
+    Args:
+        observation: The guest's observation.
+
+    Returns:
+        The person in sight the guest dislikes enough to threaten, or None when there is none.
+    """
+    return threatened_by(observation["actor"], rivals_in_sight(observation), observation.get("time", 0.0))
+
+
 def signature_actions(observation: Mapping[str, Any], walk_overs: Sequence[str | None]) -> list[tuple[str, str | None]]:
     """List the signature acts a guest may take now.
 
@@ -52,7 +64,8 @@ def signature_actions(observation: Mapping[str, Any], walk_overs: Sequence[str |
 
     Returns:
         `(verb, target_id)` pairs: filming when they carry a phone; a protest sign, once rivals are in sight and the
-        last raising is long enough ago; an interview toward each guest they could walk over to when they carry a
+        last raising is long enough ago; a flag, once someone in sight is disliked enough and the last brandishing is
+        long enough ago; an interview toward each guest they could walk over to when they carry a
         microphone.
     """
     verbs = offered_verbs(observation["actor"])
@@ -61,6 +74,8 @@ def signature_actions(observation: Mapping[str, Any], walk_overs: Sequence[str |
         acts.append(("livestream", None))
     if "raise_sign" in verbs and rivals_in_sight(observation) and not raised_lately(observation):
         acts.append(("raise_sign", None))
+    if "brandish_flag" in verbs and threatened_in_sight(observation) and not brandished_lately(observation):
+        acts.append(("brandish_flag", None))
     if "interview_guest" in verbs:
         acts.extend(("interview_guest", person_id) for person_id in walk_overs)
     return acts

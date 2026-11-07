@@ -8,7 +8,7 @@ from tavern.body.activities import ACTIVITIES, FAMILIES
 from tavern.body.items import ITEMS
 from tavern.mind.fight_words import TEXTS as FIGHT_TEXTS
 from tavern.mind.goals import serving_aim
-from tavern.mind.signature_candidates import accused_in_sight
+from tavern.mind.signature_candidates import accused_in_sight, threatened_in_sight
 from tavern.social.aims import aim_words
 from tavern.social.giving import empty_handed_tablemates
 from tavern.social.invitations import KINDS, known_place
@@ -343,6 +343,13 @@ def _protest(observation: Observation, action: Action) -> str:
             f"hears (it shames {name}, and it is not repeated soon)")
 
 
+def _threat(observation: Observation, action: Action) -> str:
+    threatened = threatened_in_sight(observation)
+    name = label_of(threatened) if threatened else "whoever they dislike"
+    return (f"pull out the little flag and brandish it at {name}, the guest they dislike most, as a threat (it shakes "
+            f"{name}, and it is not repeated soon)")
+
+
 def _interview(observation: Observation, action: Action) -> str:
     partner = _someone(observation, action["target_id"])
     name = label_of(partner) if partner else action["target_id"]
@@ -389,7 +396,7 @@ _OPTIONS: Mapping[str, Callable[[Observation, Action], str]] = {
     "take_beer": _pour, "settle_in": _settle, "stand_a_round": _round, "rematch": _rematch, "drink": _drink, "rest": _rest, "seating": _seating, "sit": _sit, "doze": _doze, "talk": _talk,
     "approach": _approach, "join_conversation": _join, "play_darts": _darts, "stand_at_bar": _bar, "watch": _watch,
     "watch_dice": _watch_dice, "give_speech": _speech,
-    "livestream": _livestream, "raise_sign": _protest, "interview_guest": _interview,
+    "livestream": _livestream, "raise_sign": _protest, "brandish_flag": _threat, "interview_guest": _interview,
     "use_toilet": _toilet, "give": _give, "bring_drink": _bring,
     "inspect": _inspect, "wait": _wait, "leave": _leave, "cut_in_line": _cut, "shove": _shove, "start_fight": _fight,
     **FIGHT_TEXTS}
