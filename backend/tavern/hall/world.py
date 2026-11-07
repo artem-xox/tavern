@@ -32,9 +32,8 @@ from tavern.social.aftermath import keep_cursing
 from tavern.social.bystanders import note_started
 from tavern.social.dice import settle_games
 from tavern.social.commitments import promises_of, settle_commitments
-from tavern.social.responses import note_calls
+from tavern.social.responses import mark_answered, note_calls
 from tavern.social.errands import honor_invitations
-from tavern.social.responses import mark_answered
 from tavern.social.invitations import errand_parties, invitations_of
 from tavern.social.tables import mark_ownership
 from tavern.social.walk_ups import face_walkers

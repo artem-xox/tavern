@@ -17,7 +17,6 @@ CONDITIONS = ("ok", "staggered", "down", "out", "groggy")
 LOCKING = ("staggered", "down", "out")
 # Health below which a visitor visibly bears a bruise, and below which they are battered.
 HURT = 70.0
-BATTERED = 40.0
 # How long a knocked-out guest stays groggy on their feet: a remedy in that time puts them right, and with none they
 # slip away home on their own (the body's rule, not a choice).
 GROGGY_SECONDS = 30.0
