@@ -75,7 +75,7 @@ def reading_time(line: str, rules: Mapping[str, Any]) -> float:
 CUT_IN_AFTER = 2
 
 
-def cutting_in(scene: Conversation) -> str | None:
+def _cutting_in(scene: Conversation) -> str | None:
     """Tell who cuts in on the talk now, if anyone.
 
     Args:
@@ -101,14 +101,14 @@ def next_speaker(scene: Conversation) -> str:
         scene: Scene with at least one participant.
 
     Returns:
-        Whoever cuts in (see `cutting_in`); otherwise whoever the last line addressed, if still there and not
+        Whoever cuts in (see `_cutting_in`); otherwise whoever the last line addressed, if still there and not
         its speaker; otherwise the participant after the last speaker, in order of joining; and the starter
         for the first line, or after the last speaker left.
     """
     people = scene["participants"]
     if not scene["turns"]:
         return people[0]
-    interrupter = cutting_in(scene)
+    interrupter = _cutting_in(scene)
     if interrupter is not None:
         return interrupter
     last = scene["turns"][-1]
@@ -128,7 +128,7 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
 
     Returns:
         `conversation`: ID, topic, index of the turn being written, participants (see
-        `_participants`), every turn spoken in it so far, whether the speaker `cutting_in` on others talking past
+        `_participants`), every turn spoken in it so far, whether the speaker `_cutting_in` on others talking past
         them, how hot a quarrel runs (`quarrels.heat`), and the pending `invitation`, if any;
         `speaker`: their ID, name, needs, traits, visit, the places they could tell about (tap,
         WC, darts), their `opinions` of the others, `earlier`, everything they still remember saying and hearing
@@ -148,7 +148,7 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
               sorted(speaker["knowledge"]["objects"].items()) if item["kind"] in ("tap", "toilet", "darts")]
     view = {"conversation": {"id": scene["id"], "topic": scene["topic"], "turn": len(scene["turns"]),
                              "participants": _participants(world, scene, speaker),
-                             "turns": deepcopy(scene["turns"]), "cutting_in": cutting_in(scene) == speaker["id"],
+                             "turns": deepcopy(scene["turns"]), "cutting_in": _cutting_in(scene) == speaker["id"],
                              "heat": heat(scene)},
             "speaker": {"id": speaker["id"], "name": speaker["name"], **deepcopy(
                 {key: speaker[key] for key in ("needs", "traits", "visit")}), "places": places,

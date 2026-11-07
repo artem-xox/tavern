@@ -258,7 +258,7 @@ def begin_aim(world: World, actor: Actor, about: Mapping[str, Any]) -> None:
     record_event(world, actor, "aim_set", f"{actor['name']} means to {_words(world, actor, entry)} ({aim})")
 
 
-def aim_of(scene: Mapping[str, Any], actor_id: str) -> SceneAim | None:
+def _aim_of(scene: Mapping[str, Any], actor_id: str) -> SceneAim | None:
     """Find what a member of a scene came for.
 
     Args:
@@ -284,7 +284,7 @@ def aim_view(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str
         act must name (the news ID or the invitation kind, else None) and whether it is `done`; None when they came
         with no aim.
     """
-    entry = aim_of(scene, speaker["id"])
+    entry = _aim_of(scene, speaker["id"])
     if entry is None:
         return None
     kind, _, detail = entry["aim"].partition(":")
@@ -300,7 +300,7 @@ def note_spoken(world: World, scene: Conversation, speaker: Actor) -> None:
         scene: The scene, whose latest line has just been spoken.
         speaker: Who spoke it.
     """
-    entry = aim_of(scene, speaker["id"])
+    entry = _aim_of(scene, speaker["id"])
     if entry is None or entry["kept"] or not carried_out(entry["aim"], speaker["id"], scene["turns"]):
         return
     entry["kept"] = True

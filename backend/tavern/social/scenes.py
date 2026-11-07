@@ -346,7 +346,7 @@ def check_conversations(world: World) -> None:
         _drop_departed(world, scene)
         _tidy_aims(world, scene)
         _see_off_leaver(world, scene)
-        if scene in world["conversations"] and has_run_its_course(world, scene) and _heard_out(world, scene):
+        if scene in world["conversations"] and _has_run_its_course(world, scene) and _heard_out(world, scene):
             end_conversation(world, scene, pleasant=True)
 
 
@@ -362,12 +362,12 @@ def awaits_company_change(world: Mapping[str, Any], scene: Conversation) -> bool
         scene: Scene to judge.
 
     Returns:
-        True while the scene is about to end (`has_run_its_course`) or its last speaker is about to leave.
+        True while the scene is about to end (`_has_run_its_course`) or its last speaker is about to leave.
     """
-    return has_run_its_course(world, scene) or _saying_goodbye(scene) is not None
+    return _has_run_its_course(world, scene) or _saying_goodbye(scene) is not None
 
 
-def has_run_its_course(world: Mapping[str, Any], scene: Conversation) -> bool:
+def _has_run_its_course(world: Mapping[str, Any], scene: Conversation) -> bool:
     """Tell whether a scene has had its exchange and everyone in it has had enough company.
 
     Args:
