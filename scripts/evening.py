@@ -16,29 +16,12 @@ from tavern.adapters.claude import HAIKU_5_5, ClaudeError, ask_claude
 from tavern.adapters.probes import probes
 from tavern.adapters.tracing import (Scorer, Tracer, open_tracer, traced_intender, traced_question, traced_scores,
                                      traced_writer)
-from tavern.evening.aim_metrics import aim_counts
-from tavern.evening.choice_metrics import choice_counts
 from tavern.evening.lockstep import Pace, evening_mode, run_evening
-from tavern.evening.metrics import (attention_counts, bar_metrics, conversation_counts, dice_metrics, evening_metrics,
-                                    intention_counts, news_metrics, sleep_metrics, unspoken_calls, writer_stats)
-from tavern.evening.ailment_metrics import ailment_counts
-from tavern.evening.closing_metrics import closing_counts
-from tavern.evening.fight_metrics import fight_counts
-from tavern.evening.giving_metrics import giving_counts
-from tavern.evening.manner_metrics import manner_counts
-from tavern.evening.drink_metrics import drink_counts
-from tavern.evening.speech_metrics import speech_counts, stage_counts
-from tavern.evening.goal_metrics import chased_counts, goal_counts, goal_kind_counts, promise_counts
-from tavern.evening.repetition import ALIKE, repetition_counts
+from tavern.evening.report import evening_report
 from tavern.evening.retelling import retell
-from tavern.evening.response_metrics import response_counts
-from tavern.evening.story_score import WEIGHTS, story_moments, story_score
-from tavern.evening.invitation_metrics import invitation_counts
-from tavern.evening.project_metrics import project_counts
 from tavern.evening.recording import (Record, format_record, parse_records, record_calls, record_questions, replay_calls,
                               replay_questions)
 from tavern.evening.scenario import open_evening, parse_scenario
-from tavern.hall.staff import on_staff
 from tavern.mind.agents import Evaluators
 from tavern.adapters.characters import load_catalog
 from tavern.mind.haiku_stage import claude_stage_writer
@@ -389,35 +372,14 @@ def main(root: Path) -> None:
         # The client uploads in the background; what is still queued must leave before the process ends.
         tracer.client.flush()
     # A replay matches its recording only with the same seed, pace, temperature and answers settings, so they are shown.
-    report = {"run": {"mode": mode, "decides": DECIDES[mode], "note": note, "seed": args.seed,
-                      "model": settings["model"], "temperature": settings["temperature"],
-                      "answers": settings["answers"], "step": pace.step,
-                      "model_latency": pace.model_latency, "time_limit": pace.time_limit,
-                      "stuck_threshold": args.stuck_threshold, "input_usd_per_million": args.input_price,
-                      "writer": writer, "writer_model": CLAUDE_MODEL if writer == "haiku" else None,
-                      "writer_note": writer_note, "intentions": minded},
-              **evening_metrics(evening, calls, args.input_price, args.stuck_threshold, TARIFFS),
-              "intentions": intention_counts(evening), "repetition": repetition_counts(evening.events, ALIKE),
-              "choice": choice_counts(evening.choices, evening.events),
-              "responses": response_counts(evening.events), "aims": aim_counts(evening.events),
-              "projects": project_counts(evening.events), "invitations": invitation_counts(evening.events),
-              "goals": goal_counts(evening.events), "goal_kinds": goal_kind_counts(evening.events),
-              "chased": chased_counts(evening.events), "promises": promise_counts(evening.events),
-              "attention": attention_counts(evening), "conversation": conversation_counts(evening),
-              "news": news_metrics(world), "dice": dice_metrics(evening.events),
-              "sleep": sleep_metrics(evening.events, world["departed"], world["closes_at"]),
-              "drink": drink_counts(evening.events, [*world["actors"], *world["departed"]]),
-              "speeches": speech_counts(evening.events), "stage": stage_counts(evening.events),
-              "giving": giving_counts(evening.events), "manners": manner_counts(evening.events),
-              "closing": closing_counts(world["departed"], world["last_call_at"], world["closes_at"]),
-              "ailment": ailment_counts(evening.events, {item["id"]: item["name"]
-                                                         for item in [*world["actors"], *world["departed"]]}),
-              "fights": fight_counts(world["fights"], evening.events, {item["id"]: item["name"]
-                                                                       for item in [*world["actors"], *world["departed"]]}),
-              "story": story_score(story_moments(evening.events), WEIGHTS),
-              "bar": bar_metrics(evening.events, [item["id"] for item in world["actors"] if on_staff(item)]),
-              "writer": {**writer_stats(evening, calls, "turn", HAIKU_5_5),
-                         "unspoken_calls": unspoken_calls(evening, calls, "turn")}}
+    run = {"mode": mode, "decides": DECIDES[mode], "note": note, "seed": args.seed,
+           "model": settings["model"], "temperature": settings["temperature"],
+           "answers": settings["answers"], "step": pace.step,
+           "model_latency": pace.model_latency, "time_limit": pace.time_limit,
+           "stuck_threshold": args.stuck_threshold, "input_usd_per_million": args.input_price,
+           "writer": writer, "writer_model": CLAUDE_MODEL if writer == "haiku" else None,
+           "writer_note": writer_note, "intentions": minded}
+    report = evening_report(evening, world, calls, run, args.input_price, args.stuck_threshold, TARIFFS, HAIKU_5_5)
     (args.out / "events.jsonl").write_text("".join(json.dumps(event, sort_keys=True) + "\n" for event in evening.events))
     (args.out / "metrics.json").write_text(json.dumps(rounded(report), indent=2) + "\n")
     print(json.dumps(rounded(report), indent=2))
