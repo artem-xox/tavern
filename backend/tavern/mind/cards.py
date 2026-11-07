@@ -145,6 +145,17 @@ def persona_words(card: Mapping[str, Any]) -> dict[str, str]:
             for key, label in labels if key in card}
 
 
+def card_words(card: Mapping[str, Any]) -> dict[str, str]:
+    """A speaker's card as a line writer reads it: the text fields, then the persona words.
+
+    Args:
+        card: A card, with or without persona fields.
+    Returns:
+        Each of the TEXT_FIELDS, then `persona_words(card)`.
+    """
+    return {**{key: card[key] for key in TEXT_FIELDS}, **persona_words(card)}
+
+
 def _add_persona(card: Card, fields: Mapping[str, Any], present: set[str]) -> None:
     for key in PERSONA_TEXT:
         if key in present:
