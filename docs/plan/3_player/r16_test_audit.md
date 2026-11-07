@@ -1,7 +1,7 @@
 ---
 id: S3-R16
 title: Delete tests that pin wording, data or a tuning number, and merge same-shape twins
-status: todo
+status: done
 needs: [S3-R00]
 touches: [tests]
 ---
@@ -74,4 +74,19 @@ stays, the other five go. The "Keep" list above stays.
 
 ## Results
 
-Filled in when the task is done.
+Done 2026-11-07, one commit per file.
+
+Case count (`pytest --collect-only -q`): **4,706 before, 4,674 after: 32 fewer**, exactly the deleted cases:
+
+| File | Deleted cases |
+|------|---------------|
+| `test_story_tavern.py` (8 tests) | 21 (3 + 2 + 2 + 2 + 5 + 1 + 1 + 5) |
+| `test_hall_layout.py` (5 tests; `test_the_hall_is_walled_all_round` stays) | 7 (1 + 1 + 1 + 3 + 1) |
+| `test_evening.py` (2 tests) | 2 |
+| `test_world.py` (1 test) | 1 |
+| `test_speeches.py` (1 test) | 1 |
+| `test_agents.py`, `test_jev.py` (twins merged, ids unchanged) | 0 |
+
+Unused imports and helpers left by the deletions were removed. The rubric is in AGENTS.md under Testing.
+
+`make check`: `4674 passed in 385.79s (0:06:25)`, frontend `tests 318, pass 318, fail 0` (log: `runs/r16-check.log`).
