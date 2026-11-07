@@ -164,6 +164,11 @@ TypeScript (`frontend/`): no `any`; `types.ts` is the contract with the backend 
   not 20-line inline literals.
 - Run the narrowest test after every change and `make check` before finishing. Paste
   the output.
+- Do not write a test that pins:
+  a wording (a phrase in prompt text; test that the text is *used*, not what it says),
+  data (positions, counts or names in `data/tavern.json`; test a rule over a hand-made hall),
+  a tuning number (a constant equal to a literal; test the behavior it produces),
+  or a twin (same body and assertion shape as another test; add cases to its `parametrize`).
 
 ## Boundaries
 

@@ -57,6 +57,8 @@ def test_candidates_use_only_observed_resources(view, expected):
     pytest.param(observation([resource("tap", stock="many")]), id="malformed-stock"),
     pytest.param(observation([resource("chair"), resource("tap", stock=2)]), id="conflicting-duplicates"),
     pytest.param(observation(needs={"thirst": float("nan"), "fatigue": 0, "bladder": 0}), id="malformed-need"),
+    pytest.param(observation([resource("chair", reserved_by=123)]), id="malformed-reservation"),
+    pytest.param({**observation(), "actor": {**observation()["actor"], "id": ""}}, id="empty-actor-id"),
 ])
 def test_candidates_reject_malformed_observations(view):
     with pytest.raises(ValueError):
@@ -126,15 +128,6 @@ def test_jev_error_produces_visible_local_fallback():
     result = asyncio.run(choose_action(observation(), config(typesafe_api_key="test"), Random(0),
                                        Evaluators(evaluate, no_seat_judgement)))
     assert (result["source"], result["error"]) == ("local", "Jev request timed out")
-
-
-@pytest.mark.parametrize("view", [
-    pytest.param(observation([resource("chair", reserved_by=123)]), id="malformed-reservation"),
-    pytest.param({**observation(), "actor": {**observation()["actor"], "id": ""}}, id="empty-actor-id"),
-])
-def test_malformed_actor_or_reservation_is_not_silently_ignored(view):
-    with pytest.raises(ValueError):
-        build_candidates(view)
 
 
 def preferring(verb: str) -> Evaluator:

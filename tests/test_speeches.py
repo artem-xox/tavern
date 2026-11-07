@@ -4,7 +4,6 @@ from typing import Any
 
 import pytest
 
-from tavern.body.activities import ACTIVITIES
 from tavern.body.hearing import EVENT_SOUNDS
 from tavern.social.speeches import PERFORM_WAIT
 from tavern.social.thoughts import active_thoughts
@@ -88,10 +87,6 @@ def test_giving_a_speech_logs_it_with_the_words() -> None:
 
 def test_a_speech_is_louder_than_a_cheer_and_quieter_than_a_brawl() -> None:
     assert EVENT_SOUNDS["dice_won"].loudness < EVENT_SOUNDS["gave_speech"].loudness < EVENT_SOUNDS["fight_started"].loudness
-
-
-def test_a_speech_is_fun() -> None:
-    assert ACTIVITIES["give_speech"].fun == 0.8
 
 
 @pytest.mark.parametrize("cell, hears", [

@@ -463,22 +463,6 @@ def demo() -> dict[str, Any]:
     return json.loads((Path(__file__).parents[1] / "data" / "tavern.json").read_text())
 
 
-def test_demo_inn_has_five_identical_two_seat_tables() -> None:
-    objects = create_world(demo())["map"]["objects"]
-    tables = [item for item in objects if item["kind"] == "table"]
-    sides = [sorted((chair["x"] - item["x"], chair["y"] - item["y"])
-                    for chair in objects if chair.get("table_id") == item["id"]) for item in tables]
-    assert [(item.get("width", 1), item.get("height", 1)) for item in tables] == [(1, 1)] * 5
-    assert sides == [[(-1, 0), (1, 0)]] * 5
-
-
-def test_only_the_hearth_table_of_the_demo_inn_is_appealing() -> None:
-    objects = create_world(demo())["map"]["objects"]
-    appeal = {item["name"]: item["appeal"] for item in objects if item["kind"] == "table"}
-    assert appeal == {"Hearth table": 0.5, "Window table": 0.0, "Garden table": 0.0, "Corner table": 0.0,
-                      "East table": 0.0}
-
-
 def test_demo_evening_begins_with_everyone_inside_the_door() -> None:
     world = create_world(demo())
     door = next(item for item in world["map"]["objects"] if item["kind"] == "door")
