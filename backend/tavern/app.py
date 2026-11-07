@@ -20,7 +20,7 @@ from tavern.mind.agents import Evaluator, EvaluatorError, Evaluators, choose_act
 from tavern.mind.haiku_stage import claude_stage_writer
 from tavern.mind.haiku_turns import claude_writer
 from tavern.mind.haiku_intentions import intention_writer
-from tavern.mind.selection import read_switch
+from tavern.mind.selection import read_ai_config
 from tavern.mind.model_health import HealthBoard
 from tavern.mind.questions import Ask, Question
 from tavern.server.api import create_app
@@ -41,11 +41,7 @@ def create_default_app() -> FastAPI:
     working_root = Path.cwd()
     root = (working_root if (working_root / "data" / "tavern.json").is_file()
             else Path(__file__).resolve().parents[2])
-    config = {"typesafe_api_key": os.environ.get("TYPESAFE_API_KEY"),
-              "model": os.environ.get("TYPESAFE_MODEL", "jev-latest"),
-              "timeout": float(os.environ.get("AI_TIMEOUT", "8")),
-              "temperature": float(os.environ.get("AI_TEMPERATURE", "0.25")),
-              "answers": read_switch(os.environ.get("AI_ANSWERS"), False, "AI_ANSWERS")}
+    config = read_ai_config(os.environ, os.environ.get("TYPESAFE_API_KEY"))
     board = HealthBoard({"jev": bool(config["typesafe_api_key"]), "claude": bool(os.environ.get("ANTHROPIC_API_KEY"))},
                         log=logging.getLogger("tavern.health").warning)
     # Traces spend LangSmith quota, so only an explicit switch turns them on; one server run is one evening.

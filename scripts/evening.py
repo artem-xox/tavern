@@ -48,7 +48,7 @@ from tavern.mind.intentions import Intender
 from tavern.mind.model_health import HealthBoard, banner, blocking
 from tavern.mind.questions import Question
 from tavern.mind.scripted import write_scripted_turn
-from tavern.mind.selection import read_switch
+from tavern.mind.selection import read_ai_config
 from tavern.social.stage_lines import StageWriter, write_scripted_stage
 from tavern.social.turns import TurnWriter
 
@@ -110,9 +110,7 @@ def config(values: Mapping[str, Any], mode: str) -> dict[str, Any]:
     # A replay answers from its recording: the placeholder key only switches decisions to the
     # model and is never sent anywhere.
     key = {"live": values.get("TYPESAFE_API_KEY"), "replay": "replay", "local": None}[mode]
-    return {"typesafe_api_key": key, "model": values.get("TYPESAFE_MODEL", "jev-latest"),
-            "timeout": float(values.get("AI_TIMEOUT", "8")), "temperature": float(values.get("AI_TEMPERATURE", "0.25")),
-            "answers": read_switch(values.get("AI_ANSWERS"), False, "AI_ANSWERS")}
+    return read_ai_config(values, key)
 
 
 def keeper(calls: list[Record], log: Path) -> Callable[[Record], None]:
