@@ -1,7 +1,7 @@
 ---
 id: S3-R18
 title: CI runs the frontend tests, on the Node version they need
-status: todo
+status: done
 needs: []
 touches: [.github/workflows/ci.yml]
 ---
@@ -42,4 +42,11 @@ AGENTS.md: ".github/ ... deploy config: ask first". **Approved by the owner, 202
 
 ## Results
 
-Filled in when the task is done.
+Done 2026-11-07. `.github/workflows/ci.yml`: `node-version: 24`, and `- run: npm test --prefix frontend` after
+`npm run check --prefix frontend`.
+
+Local checks: the YAML parses (`yaml.safe_load` OK, PyYAML from the main checkout's `.venv`). On Node v24.5.0,
+`npm test --prefix frontend` ends with `tests 271 / pass 271 / fail 0`.
+
+CI itself is not proven yet: it runs only after the owner pushes the series branch. Then paste the run link and
+the step's last lines here.
