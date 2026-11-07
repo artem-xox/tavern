@@ -7,7 +7,7 @@ from tavern.body.items import ITEMS
 from tavern.social.signature_acts import accused_of, brandished_lately, raised_lately, threatened_by
 
 
-def offered_verbs(actor: Mapping[str, Any]) -> set[str]:
+def _offered_verbs(actor: Mapping[str, Any]) -> set[str]:
     """List the verbs the things a guest carries give them (`Item.offers`).
 
     Args:
@@ -20,7 +20,7 @@ def offered_verbs(actor: Mapping[str, Any]) -> set[str]:
 
 
 def rivals_in_sight(observation: Mapping[str, Any]) -> list[Mapping[str, Any]]:
-    """List the guests a protest could name: everyone in sight who is not staff (as `signature_acts.in_sight` does).
+    """List the guests a protest could name: everyone in sight who is not staff (as `signature_acts._in_sight` does).
 
     Args:
         observation: The guest's observation, with the `people` in sight.
@@ -68,7 +68,7 @@ def signature_actions(observation: Mapping[str, Any], walk_overs: Sequence[str |
         long enough ago; an interview toward each guest they could walk over to when they carry a
         microphone.
     """
-    verbs = offered_verbs(observation["actor"])
+    verbs = _offered_verbs(observation["actor"])
     acts: list[tuple[str, str | None]] = []
     if "livestream" in verbs:
         acts.append(("livestream", None))
