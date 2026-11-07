@@ -38,6 +38,8 @@ Known problems that no task owns are in [TECH_DEBT.md](TECH_DEBT.md).
 | S2-17 | [Walk up to someone standing](2_story_evenings/17_walk_up.md): `approach` reaches a guest on their feet, who waits for the walker | 16 | done |
 | S2-18 | [Greta's protest sign](2_story_evenings/18_protest_sign.md): `raise_sign` at the guest she blames most, the whole hall hears | 08 | done |
 | S2-19 | [Sobchak's microphone](2_story_evenings/19_interview.md): `interview_guest`, a conversation that plays as an interview | 08 | done |
+| S2-20 | [Lukashenko and his potatoes](2_story_evenings/20_lukashenko_potato.md): a new guest who presses a potato into every hand near him | 08 | done |
+| S2-21 | [Kim Jong Un's little flag](2_story_evenings/21_kim_flag.md): `brandish_flag` at the guest he dislikes most, a threat | 08 | done |
 
 Order: 00, 01 and 05 can run in parallel. 05 lands before 06–09 so that each of them is measured
 against a baseline. 08 and 09 both touch `activities.py`, `actions.py` and `local_policy.py`: do not run
