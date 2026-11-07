@@ -71,6 +71,13 @@ def accused_of(actor: Mapping[str, Any], candidates: Sequence[Guest], now: float
     return min(candidates, key=lambda other: (opinion_of(actor, other["id"], now), other["id"]), default=None)
 
 
+def _acted_lately(observation: Mapping[str, Any], verb: str, window: float) -> bool:
+    now = observation.get("time")
+    return now is not None and any(item["type"] == "signature_act" and item.get("verb") == verb
+                                   and now - item["time"] < window
+                                   for item in observation["actor"].get("memory", []))
+
+
 def raised_lately(observation: Mapping[str, Any]) -> bool:
     """Tell whether a guest raised their protest sign so recently that they would not raise it again.
 
@@ -80,10 +87,7 @@ def raised_lately(observation: Mapping[str, Any]) -> bool:
     Returns:
         True when a `raise_sign` act in their memory is under `RAISES_AGAIN_AFTER` seconds old.
     """
-    now = observation.get("time")
-    return now is not None and any(item["type"] == "signature_act" and item.get("verb") == "raise_sign"
-                                   and now - item["time"] < RAISES_AGAIN_AFTER
-                                   for item in observation["actor"].get("memory", []))
+    return _acted_lately(observation, "raise_sign", RAISES_AGAIN_AFTER)
 
 
 def _footage(world: Mapping[str, Any], seen: Sequence[Actor]) -> list[str]:
