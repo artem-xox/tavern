@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any, Literal, NotRequired, TypedDict
 
 if TYPE_CHECKING:
     from tavern.mind.cards import Card
+    from tavern.mind.goals import Goal
     from tavern.body.expression import Emote, Gaze
     from tavern.body.fights import Fight
     from tavern.body.hearing import Stimulus
@@ -269,3 +270,21 @@ def find_actor(world: Mapping[str, Any], actor_id: Any) -> Actor | None:
         The visitor's record, or None.
     """
     return next((item for item in world["actors"] if item["id"] == actor_id), None)
+
+
+class Observation(TypedDict):
+    """What one visitor observes: own state, what they know and everyone in sight."""
+
+    actor: Actor
+    objects: list[dict[str, Any]]
+    people: list[dict[str, Any]]
+    memory: list[dict[str, Any]]
+    visible_cells: list[list[int]]
+    time: float
+    invitations: list[dict[str, Any]]
+    promises: list["Goal"]
+    map: dict[str, int]
+    closed: bool
+    called_closing: float | None
+    giving: dict[str, float]
+    on_errands: list[str]

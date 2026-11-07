@@ -33,7 +33,7 @@ def view(thoughts: list[dict[str, Any]] | None = None, people: list[dict[str, An
                       "thoughts": thoughts if thoughts is not None else []},
             "objects": [{"id": "w", "kind": "chair", "table_id": "near", "x": 2, "y": 2, "interaction_spots": [[2, 2]],
                          "reserved_by": None}],
-            "people": [person("bea")] if people is None else people, "visitors": [], "memory": [], "time": NOW,
+            "people": [person("bea")] if people is None else people, "memory": [], "time": NOW,
             **fields}
 
 

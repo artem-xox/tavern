@@ -154,11 +154,12 @@ def test_bad_furniture_footprints_fail_validation(mutation: str) -> None:
 def test_observation_exposes_visible_company_without_private_state() -> None:
     world = seated_world()
     view = observe_actor(world, "ada")
-    assert [item["id"] for item in view["visitors"]] == ["bea"]
-    assert not {"needs", "memory", "inventory", "traits", "knowledge"} & view["visitors"][0].keys()
+    seated = [item for item in view["people"] if item["seat_id"]]
+    assert [item["id"] for item in seated] == ["bea"]
+    assert not {"needs", "memory", "inventory", "traits", "knowledge"} & seated[0].keys()
     world["map"]["blocked"] = [[7, y] for y in range(8)]
     world["actors"][1].update(x=9, y=3, seat_id=None)
-    assert observe_actor(world, "ada")["visitors"] == []
+    assert [item for item in observe_actor(world, "ada")["people"] if item["seat_id"]] == []
 
 
 def test_new_actions_are_generated_from_personal_observation() -> None:
@@ -177,7 +178,7 @@ def test_new_actions_are_generated_from_personal_observation() -> None:
 ])
 def test_social_candidates_deduplicate_visible_neighbors(visitors: list[dict[str, Any]], expected: int) -> None:
     view = observe_actor(seated_world(), "ada")
-    view["visitors"] = view["people"] = visitors
+    view["people"] = visitors
     assert sum(item["verb"] == "talk" for item in build_candidates(view)) == expected
 
 

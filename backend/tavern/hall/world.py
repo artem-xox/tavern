@@ -2,7 +2,7 @@
 
 from collections.abc import Mapping
 from copy import deepcopy
-from typing import Any, TypedDict
+from typing import Any
 
 from tavern.body.actions import action_error
 from tavern.body.activities import ACTIVITIES
@@ -26,9 +26,8 @@ from tavern.hall.routes import plan_route
 from tavern.hall.rules import default_rules
 from tavern.hall.sight import look_around, people_in_sight, visible_cells
 from tavern.hall.staff import check_staff_cells, on_staff
-from tavern.hall.state import Actor, World, find_actor
+from tavern.hall.state import Observation, World, find_actor
 from tavern.hall.validation import number, unique_ids
-from tavern.mind.goals import Goal
 from tavern.social.aftermath import keep_cursing
 from tavern.social.bystanders import note_started
 from tavern.social.dice import settle_games
@@ -228,25 +227,6 @@ def _see_off(world: World) -> None:
                 f"{actor['name']} left the inn after {beers} {'beer' if beers == 1 else 'beers'}")
 
 
-class Observation(TypedDict):
-    """What one visitor observes: own state, what they know and everyone in sight."""
-
-    actor: Actor
-    objects: list[dict[str, Any]]
-    visitors: list[dict[str, Any]]
-    people: list[dict[str, Any]]
-    memory: list[dict[str, Any]]
-    visible_cells: list[list[int]]
-    time: float
-    invitations: list[dict[str, Any]]
-    promises: list[Goal]
-    map: dict[str, int]
-    closed: bool
-    called_closing: float | None
-    giving: dict[str, float]
-    on_errands: list[str]
-
-
 def observe_actor(world: Mapping[str, Any], actor_id: str) -> Observation:
     """Refresh and return a visitor's personal observation without private leaks.
 
@@ -269,17 +249,12 @@ def observe_actor(world: Mapping[str, Any], actor_id: str) -> Observation:
     objects = deepcopy(list(actor["knowledge"]["objects"].values()))
     mark_ownership(world, actor, objects)
     return {"actor": deepcopy(actor), "objects": objects,
-            "visitors": _visible_visitors(world, actor), "people": people_in_sight(world, actor),
+            "people": people_in_sight(world, actor),
             "memory": deepcopy(actor["memory"][-10:]), "visible_cells": visible, "time": world["time"],
             "invitations": invitations_of(world, actor), "promises": promises_of(world, actor_id),
             "map": {"width": world["map"]["width"], "height": world["map"]["height"]},
             "closed": inn_closed(world), "called_closing": since_last_call(world), "giving": dict(world["rules"]["giving"]),
             "on_errands": errand_parties(world)}
-
-
-def _visible_visitors(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[dict[str, Any]]:
-    # Only seated company is actionable in this small social demo.
-    return [person for person in people_in_sight(world, actor) if person["seat_id"]]
 
 
 def observe_people(world: Mapping[str, Any], actor_id: str) -> list[dict[str, Any]]:
