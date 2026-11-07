@@ -7,7 +7,8 @@ import pytest
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action
 from tavern.mind.agents import build_candidates
 from tavern.mind.briefing import brief
-from tavern.social.scenes import conversation_of, within_reach
+from tavern.hall.whereabouts import within_reach
+from tavern.social.scenes import conversation_of
 from social_hall import actor, advance, command, say, spotted_hall
 
 

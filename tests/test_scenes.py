@@ -8,7 +8,8 @@ import pytest
 
 from tavern.body.hearing import EVENT_SOUNDS, Sound, emit
 from tavern.adapters.persistence import load_world, save_world
-from tavern.social.scenes import conversation_of, side_by_side
+from tavern.hall.whereabouts import side_by_side
+from tavern.social.scenes import conversation_of
 from tavern.hall.world import create_world, start_action
 from social_hall import advance, command
 

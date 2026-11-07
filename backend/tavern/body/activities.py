@@ -426,7 +426,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "is how a stranger gets to know people; it is poor manners to barge in on someone who "
                       "wronged them tonight."),
     # Leaning on the bar is how a guest comes within reach of the barkeep: standing there they are side by side
-    # with him (`scenes.side_by_side`), and chat with him as with a neighbour.
+    # with him (`whereabouts.side_by_side`), and chat with him as with a neighbour.
     # A guest with a number to give climbs up and addresses the whole room once its words are written
     # (`tavern.social.stage_lines`), or after `speeches.PERFORM_WAIT` with scripted ones; long enough for a heckle and
     # the comeback while they are still up there.

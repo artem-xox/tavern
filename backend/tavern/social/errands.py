@@ -17,7 +17,7 @@ from tavern.social.dice import PLAY, open_chairs
 from tavern.social.giving import formed_since
 from tavern.social.invitations import KINDS, Errand, free_chair, free_table, home_table, known_place, open_chairs_at
 from tavern.social.names import called
-from tavern.social.scenes import at_table
+from tavern.hall.whereabouts import at_table
 from tavern.social.thoughts import think
 
 # Starts an action the way `world.start_action` does: world, visitor ID, action; returns acceptance.

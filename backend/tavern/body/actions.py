@@ -14,7 +14,8 @@ from tavern.hall.state import find_actor
 from tavern.social.aims import AIM_VERBS, check_aim
 from tavern.social.giving import gift_error
 from tavern.social.invitations import fetch_error
-from tavern.social.scenes import at_table, conversation_of, pressed, side_by_side, table_of, within_reach
+from tavern.hall.whereabouts import at_table, side_by_side, table_of, within_reach
+from tavern.social.scenes import conversation_of, pressed
 
 
 def stored_action(action: Mapping[str, Any]) -> dict[str, Any]:

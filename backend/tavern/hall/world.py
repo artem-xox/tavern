@@ -272,7 +272,7 @@ def observe_people(world: Mapping[str, Any], actor_id: str) -> list[dict[str, An
     Returns:
         Public facts about each visible person: ID, name, cell, seat and table, whether they
         are free to talk (in no conversation and in no hurry), the conversation they are in,
-        whether they stand beside the viewer (`scenes.side_by_side`), and their current action
+        whether they stand beside the viewer (`whereabouts.side_by_side`), and their current action
         verb and target name. Needs, inventory, traits and memories stay private.
 
     Raises:
