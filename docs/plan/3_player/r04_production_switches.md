@@ -1,7 +1,7 @@
 ---
 id: S3-R04
 title: Retire the lean, aims and projects switches, so tests run the path evenings run
-status: todo
+status: done-but-one-case-needs-the-owner
 needs: [S3-R01, S3-R03]
 touches: [mind/selection.py, mind/agents.py, app.py, scripts/evening.py, .env.example, tests]
 ---
@@ -119,4 +119,16 @@ for d in runs/golden-base/*/; do n=$(basename $d); cmp $d/events.jsonl runs/gold
 
 ## Results
 
-Filled in when the task is done.
+Done 2026-11-07 on `claude/s3-r04-switches-a65fe1` (3 commits: ticket triage + switch removal + test edits; configs and docs).
+
+- `make check` (`make test`; the typecheck did not run because make stops at the red test):
+  `1 failed, 4632 passed` (was 23 failed, 4626 passed with the defaults flipped). The one failure is
+  `test_facts.py::test_a_news_item_reaches_a_third_guest_in_other_words[seed-1]`: **needs the owner**, see Triage.
+  Frontend untouched, so no `make build`.
+- Golden: `cmp` of `events.jsonl` identical for guests-1, guests-5, locals-1, locals-5. `diff -r runs/golden-base runs/golden-now`
+  shows only the three removed `run` keys (`lean`, `aims`, `projects`) in each `metrics.json`.
+- `grep -rn "read_lean\|read_aims\|read_projects\|AI_LEAN\|AI_AIMS\|AI_PROJECTS" backend scripts tests .env.example` finds nothing.
+  The error for a keyed config with no aims evaluator now reads "A model is asked but no evaluator of aims is wired".
+- Found on the way, out of scope: under lean a guest with a local `leave` score under 0.25 is never offered `leave` to the model,
+  even when their intention says to go home (the quarrel case: Bea did not leave in 30 s). A patience-0 guest is never offered `wait`.
+  Both are production behavior now specified by the tests; worth a look when the player tasks arrive.
