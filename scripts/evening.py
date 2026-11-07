@@ -43,7 +43,8 @@ from tavern.mind.agents import Evaluators
 from tavern.adapters.characters import load_catalog
 from tavern.mind.haiku_stage import claude_stage_writer
 from tavern.mind.haiku_turns import claude_writer, writer_mode
-from tavern.mind.intentions import Intender, intention_writer
+from tavern.mind.haiku_intentions import intention_writer
+from tavern.mind.intentions import Intender
 from tavern.mind.model_health import HealthBoard, banner, blocking
 from tavern.mind.questions import Question
 from tavern.mind.scripted import write_scripted_turn

@@ -6,9 +6,9 @@ from typing import Any
 
 import pytest
 
+from tavern.mind.haiku_intentions import intention_question, intention_writer
 from tavern.mind.intentions import (IntentionRules, check_intention, deliver_intention, intention_due,
-                               intention_question, intention_requests, intention_view, intention_writer,
-                               stale_intentions)
+                               intention_requests, intention_view, stale_intentions)
 from tavern.evening.repetition import repetition_counts
 from tavern.hall.memory import record_event
 from tavern.social.thoughts import think

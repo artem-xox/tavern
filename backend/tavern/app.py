@@ -19,7 +19,7 @@ from tavern.adapters.tracing import (Scorer, Tracer, open_tracer, traced_intende
 from tavern.mind.agents import Evaluator, EvaluatorError, Evaluators, choose_action, choose_answer
 from tavern.mind.haiku_stage import claude_stage_writer
 from tavern.mind.haiku_turns import claude_writer
-from tavern.mind.intentions import intention_writer
+from tavern.mind.haiku_intentions import intention_writer
 from tavern.mind.selection import read_switch
 from tavern.mind.model_health import HealthBoard
 from tavern.mind.questions import Ask, Question
