@@ -1,7 +1,7 @@
 ---
 id: S3-R03
 title: Retire the card compiler, which no client calls
-status: todo
+status: done
 needs: [S3-R00]
 touches: [mind/card_compiler.py, server/cards_api.py, server/api.py, app.py, scripts/evening.py, .env.example, tests/test_card_compiler.py, tests/test_cards_api.py, docs/CHARACTER_CATALOG.md]
 ---
@@ -58,4 +58,8 @@ path).
 
 ## Results
 
-Filled in when the task is done.
+Two commits on `claude/s3-r03-cards-f132c6`: step 1 (deletions), steps 2-6 (wiring, tariff, `.env.example`, catalog).
+
+- `make check`: `4681 passed in 355.95s`; frontend `tests 318, pass 318, fail 0`; exit 0. (4706 before: the two deleted files held 25 cases.)
+- Golden: `make golden GOLDEN=runs/golden-now && diff -r runs/golden-base runs/golden-now` printed nothing, after the last commit.
+- Step 7 grep (excluding `runs/`): only `docs/plan/*/archive.md`, this file, and mentions in files this lane may not edit: `docs/plan/README.md:61`, `docs/plan/3_player/README.md:26,52`, `docs/plan/3_player/r02_private_names.md:22` (all describe the task, not code). The integrator keeps those.
