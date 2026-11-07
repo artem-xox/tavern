@@ -9,7 +9,8 @@ from tavern.body.hearing import sound_event
 from tavern.hall.state import Actor, World
 
 
-def record_event(world: World, actor: Actor, kind: str, message: str, outcome: str | None = None) -> None:
+def record_event(world: World, actor: Actor, kind: str, message: str,
+                 outcome: str | None = None) -> dict[str, Any]:
     """Log an event for the room and remember it; it may be heard and show on the visitor's face.
 
     Args:
@@ -19,6 +20,9 @@ def record_event(world: World, actor: Actor, kind: str, message: str, outcome: s
         message: Human-readable description.
         outcome: How it came out, for the events that have one (a fight's `ENDINGS`), kept as a field so that
             nothing has to read it from the words.
+
+    Returns:
+        The event just logged, so a caller can add fields to it.
     """
     event = {"time": world["time"], "actor_id": actor["id"], "type": kind, "message": message}
     if outcome is not None:
@@ -29,9 +33,10 @@ def record_event(world: World, actor: Actor, kind: str, message: str, outcome: s
     emote_event(world, actor, kind)
     del world["events"][:-200]
     del actor["memory"][:-100]
+    return event
 
 
-def log_event(world: World, actor_id: str | None, kind: str, message: str) -> None:
+def log_event(world: World, actor_id: str | None, kind: str, message: str) -> dict[str, Any]:
     """Log an event for the room only: no visitor remembers it, and nobody hears it.
 
     Args:
@@ -39,6 +44,11 @@ def log_event(world: World, actor_id: str | None, kind: str, message: str) -> No
         actor_id: Visitor the event concerns, or None.
         kind: Event type.
         message: Human-readable description.
+
+    Returns:
+        The event just logged, so a caller can add fields to it.
     """
-    world["events"].append({"time": world["time"], "actor_id": actor_id, "type": kind, "message": message})
+    event = {"time": world["time"], "actor_id": actor_id, "type": kind, "message": message}
+    world["events"].append(event)
     del world["events"][:-200]
+    return event
