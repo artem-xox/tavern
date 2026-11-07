@@ -1,7 +1,7 @@
 ---
 id: S3-R05
 title: One event log, one length, one way to read what is new
-status: todo
+status: done
 needs: [S3-R02]
 touches: [hall/memory.py, evening/decisions.py, server/runtime.py, evening/lockstep.py, social/speeches.py, social/bystanders.py, social/turns.py, social/heckles.py, social/signature_acts.py, hall/closing.py, tests/test_decisions.py]
 ---
@@ -70,4 +70,14 @@ policy for None: lockstep raises its current `ValueError`, the runtime takes the
 
 ## Results
 
-Filled in when the task is done.
+- Step 1+2 (one commit, test and fix together): the red run failed with `assert (100, 'control') == (151, 'control')`.
+  `log_control` is gone; callers use `log_event(world, None, "control", ...)`.
+- Golden after step 2: `diff -r runs/golden-base runs/golden-r05` is empty, so `diff --stat` is empty. The four
+  golden evenings never refused a decision with more than 100 events in the log.
+- Step 5: the red run was an `ImportError` (`fresh_events` did not exist yet), not a behavioral assertion.
+- Steps 4 and 6: `diff -r runs/golden-r05 runs/golden-now` is empty after each. `test_lockstep.py` and
+  `test_runtime_story.py` are unchanged and green.
+- `fresh_events` takes `Sequence[dict[str, Any]]` (not `Mapping`) so that mypy accepts the returned list.
+- `grep -rn 'world\["events"\]\[-1\]\|log_control' backend` finds nothing.
+- `make check`: 4658 passed, mypy clean, frontend typecheck clean, 318 frontend tests passed.
+- The series branch was not merged into this lane (the lane brief said to report only).
