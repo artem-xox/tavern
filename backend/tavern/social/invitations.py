@@ -177,7 +177,7 @@ def _dice_table_free(world: Mapping[str, Any], actor: Mapping[str, Any]) -> bool
     return table is not None and bool(open_chairs(world, table))
 
 
-def counter_kinds(world: Mapping[str, Any], scene: Mapping[str, Any], speaker: Mapping[str, Any]) -> list[str]:
+def _counter_kinds(world: Mapping[str, Any], scene: Mapping[str, Any], speaker: Mapping[str, Any]) -> list[str]:
     """List what a guest could offer instead of the invitation waiting for them.
 
     Args:
@@ -203,9 +203,9 @@ def answer_options(world: Mapping[str, Any], scene: Mapping[str, Any], invitee: 
         invitee: The guest asked.
 
     Returns:
-        `accept`, `decline`, and `counter:<kind>` for each kind in `counter_kinds`.
+        `accept`, `decline`, and `counter:<kind>` for each kind in `_counter_kinds`.
     """
-    return ["accept", "decline", *(f"counter:{kind}" for kind in counter_kinds(world, scene, invitee))]
+    return ["accept", "decline", *(f"counter:{kind}" for kind in _counter_kinds(world, scene, invitee))]
 
 
 def answer_act(answer: str) -> str:

@@ -123,7 +123,7 @@ _ANSWER_FIELDS = {"thought", "intention", "goal", "obsession"}
 Intender = Callable[[Mapping[str, Any]], Coroutine[Any, Any, Written]]
 
 
-def latest_trigger(world: Mapping[str, Any], actor: Mapping[str, Any], since: float) -> Trigger | None:
+def _latest_trigger(world: Mapping[str, Any], actor: Mapping[str, Any], since: float) -> Trigger | None:
     """Find the newest salient event a guest met after a game time.
 
     Args:
@@ -169,7 +169,7 @@ def intention_due(world: Mapping[str, Any], actor: Mapping[str, Any], rules: Int
         return None
     if current is None:
         return Trigger(kind="arrival", text=f"{actor['name']} has just come in", time=now)
-    salient = latest_trigger(world, actor, current["written_at"]) or _talked(world, actor, current["written_at"],
+    salient = _latest_trigger(world, actor, current["written_at"]) or _talked(world, actor, current["written_at"],
                                                                                rules.talk_lines)
     if salient is not None:
         return salient
@@ -231,7 +231,7 @@ def stale_intentions(world: Mapping[str, Any], asked_at: Mapping[str, float]) ->
     """
     present = {actor["id"]: actor for actor in world["actors"]}
     return [actor_id for actor_id, asked in asked_at.items()
-            if actor_id not in present or latest_trigger(world, present[actor_id], asked) is not None]
+            if actor_id not in present or _latest_trigger(world, present[actor_id], asked) is not None]
 
 
 def intention_view(world: Mapping[str, Any], actor: Mapping[str, Any], trigger: Trigger) -> dict[str, Any]:

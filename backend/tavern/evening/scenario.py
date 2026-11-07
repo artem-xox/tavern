@@ -103,7 +103,7 @@ def _fields(data: Any, required: set[str], optional: set[str], label: str) -> Ma
     return data
 
 
-def parse_guest(data: Any) -> Guest:
+def _parse_guest(data: Any) -> Guest:
     """Validate one guest expected tonight.
 
     Args:
@@ -135,7 +135,7 @@ def parse_guest(data: Any) -> Guest:
     return guest
 
 
-def parse_staff_member(data: Any) -> StaffMember:
+def _parse_staff_member(data: Any) -> StaffMember:
     """Validate one staff member of the evening.
 
     Args:
@@ -181,7 +181,7 @@ def parse_scenario(data: Any, cards: Mapping[str, Card] | None = None,
             items; every item is told as listed without it), an optional `last_call_at` (game seconds after
             the start, before closing time, when the barkeep calls closing time), an optional `ailment`
             (see `ailment.parse_ailment`: one guest who carries no cure comes in unwell) and optional `staff`
-            (see `parse_staff_member`). A guest is either described inline with `traits`, or cast from a character card named by ID in `card`, with
+            (see `_parse_staff_member`). A guest is either described inline with `traits`, or cast from a character card named by ID in `card`, with
             the card's name and sprite; so is a staff member, from the staff cards.
         cards: Character cards by ID. Without them only the schedule is read: guests cast from
             a card come with no card and middling traits.
@@ -261,7 +261,7 @@ def _opening_window(value: Any, closes_at: float) -> tuple[float, float] | None:
 def _guests(value: Any, closes_at: float, cards: Mapping[str, Card] | None, catalog: Catalog | None) -> tuple[Guest, ...]:
     if not isinstance(value, Sequence) or isinstance(value, str) or not value:
         raise ValueError("Scenario guests must be a nonempty list")
-    guests = tuple(parse_guest(_cast(item, cards, catalog, "guest")) for item in value)
+    guests = tuple(_parse_guest(_cast(item, cards, catalog, "guest")) for item in value)
     unique_ids(guests, "guest")
     late = [item["id"] for item in guests if item["arrives_at"] >= closes_at]
     if late:
@@ -272,7 +272,7 @@ def _guests(value: Any, closes_at: float, cards: Mapping[str, Card] | None, cata
 def _staff(value: Any, guests: Sequence[Guest], cards: Mapping[str, Card] | None, catalog: Catalog | None) -> tuple[StaffMember, ...]:
     if not isinstance(value, Sequence) or isinstance(value, str):
         raise ValueError("Scenario staff must be a list")
-    staff = tuple(parse_staff_member(_cast(item, cards, catalog, "bartender")) for item in value)
+    staff = tuple(_parse_staff_member(_cast(item, cards, catalog, "bartender")) for item in value)
     unique_ids([*guests, *staff], "guests and staff")
     return staff
 
@@ -392,4 +392,4 @@ def _expected_guest(item: Any, world: Mapping[str, Any]) -> Guest:
         number(value, need, 0, 100)
     if type(item.get("ailing", False)) is not bool:
         raise ValueError("Saved expected guest has a malformed ailing flag")
-    return parse_guest({key: value for key, value in item.items() if key not in ("needs", "ailing")})
+    return _parse_guest({key: value for key, value in item.items() if key not in ("needs", "ailing")})
