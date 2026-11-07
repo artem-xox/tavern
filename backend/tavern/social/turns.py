@@ -10,7 +10,7 @@ one that has no answer `rules.conversation.turn_timeout` seconds after it was du
 from collections.abc import Callable, Coroutine, Mapping
 from copy import deepcopy
 import re
-from typing import Any, NotRequired, TypedDict
+from typing import Any, TypedDict
 
 from tavern.body.wounds import hurt
 from tavern.hall.closing import closing_called
@@ -30,22 +30,8 @@ from tavern.social.invitations import offered_kinds, pending_for
 from tavern.social.names import as_known, called, knows_name, looks
 from tavern.social.overhearing import overhear_turn
 from tavern.social.quarrels import heat
-from tavern.social.scenes import Conversation, Turn, awaits_company_change
+from tavern.social.scenes import Conversation, Turn, TurnResult, awaits_company_change
 from tavern.social.thoughts import active_thoughts, familiarity_of, opinion_of
-
-
-class TurnResult(TypedDict):
-    """A written line: the words, the speech act (one of `conversation.ACTS`), whom it addresses
-    (another participant, or None for everyone), and the topic the scene moves on to. An
-    `invite` also names its `invitation` kind (one of the view's `invitations`), and a `share_news` the
-    `fact_id` of the news it tells (one of the speaker's `news`)."""
-
-    line: str
-    act: str
-    addressee: str | None
-    topic: str
-    invitation: NotRequired[str]
-    fact_id: NotRequired[str]
 
 
 # Writes the next line of a scene from the speaker's view (see `turn_view`) and the AI config.

@@ -4,13 +4,12 @@ from collections.abc import Mapping
 from random import Random
 import re
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from tavern.body.drunkenness import drunk_stage
 from tavern.body.ailment import urgent_needs
 
-if TYPE_CHECKING:  # turns imports this module, so the types cross the cycle only for the checker.
-    from tavern.social.turns import TurnResult
+from tavern.social.scenes import TurnResult
 
 # Lines stay under 38 characters, so each reads in the minimum gap; {name} is the addressee and
 # {me} the speaker.
@@ -56,7 +55,7 @@ BORED = 50.0  # A guest this bored asks for a game, of darts or of dice.
 BOLD = 0.5  # A guest this brave (courage trait) prefers dice, a game of chance, to darts.
 
 
-def scripted_turn(view: Mapping[str, Any]) -> "TurnResult":
+def scripted_turn(view: Mapping[str, Any]) -> TurnResult:
     """Write the next line of a scene by a seeded rule, without a model.
 
     The first line greets. An invitee answers a pending invitation first (see `_answer`). A
@@ -93,7 +92,7 @@ def scripted_turn(view: Mapping[str, Any]) -> "TurnResult":
         line = INVITE_LINES[kind]
     else:
         line = rng.choice(LINES[kind])
-    result: "TurnResult" = {"line": line.format(name=name, me=me["name"]), "act": act,
+    result: TurnResult = {"line": line.format(name=name, me=me["name"]), "act": act,
                             "addressee": addressee["id"], "topic": scene["topic"]}
     if act == "invite":
         result["invitation"] = kind
@@ -255,7 +254,7 @@ def _temper(me: Mapping[str, Any]) -> float:
     return min(1.0, 0.5 * max(0, me["visit"]["beers"] - 1) * (1 - patience))
 
 
-async def write_scripted_turn(view: Mapping[str, Any], config: Mapping[str, Any]) -> "TurnResult":
+async def write_scripted_turn(view: Mapping[str, Any], config: Mapping[str, Any]) -> TurnResult:
     """Write a scripted line through the turn writer port (`turns.TurnWriter`), offline.
 
     Args:

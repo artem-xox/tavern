@@ -19,7 +19,8 @@ from tavern.mind.intentions import (UNMETERED, IntentionRules, Intender, deliver
                                     stale_intentions)
 from tavern.social.invitations import answer_options
 from tavern.social.stage_lines import StageClaim, deliver_stage, stage_claims, write_scripted_stage
-from tavern.social.turns import TurnResult, claim_turns, deliver_turn, next_speaker
+from tavern.social.scenes import TurnResult
+from tavern.social.turns import claim_turns, deliver_turn, next_speaker
 
 # One answer in flight. What it is belongs to the courier: a task live, a stored coroutine in lockstep.
 Ticket = Any

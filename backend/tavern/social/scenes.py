@@ -9,7 +9,7 @@ timer, ends. When the next turn is spoken is `tavern.social.turns`' business; wh
 
 from collections.abc import Collection, Mapping
 import math
-from typing import TYPE_CHECKING, Any, NotRequired, TypedDict
+from typing import Any, NotRequired, TypedDict
 
 from tavern.body.ailment import urgent_needs
 from tavern.hall.closing import inn_closed
@@ -23,10 +23,6 @@ from tavern.social.names import called
 from tavern.social.responses import calling
 from tavern.social.thoughts import think
 
-if TYPE_CHECKING:  # turns imports this module, so the type crosses the cycle only for the checker.
-    from tavern.social.turns import TurnResult
-
-
 class Turn(TypedDict):
     """One spoken line: who said it, to whom (None for everyone), the speech act, and the game time.
 
@@ -39,6 +35,20 @@ class Turn(TypedDict):
     line: str
     act: str
     time: float
+    invitation: NotRequired[str]
+    fact_id: NotRequired[str]
+
+
+class TurnResult(TypedDict):
+    """A written line: the words, the speech act (one of `conversation.ACTS`), whom it addresses
+    (another participant, or None for everyone), and the topic the scene moves on to. An
+    `invite` also names its `invitation` kind (one of the view's `invitations`), and a `share_news` the
+    `fact_id` of the news it tells (one of the speaker's `news`)."""
+
+    line: str
+    act: str
+    addressee: str | None
+    topic: str
     invitation: NotRequired[str]
     fact_id: NotRequired[str]
 
@@ -69,7 +79,7 @@ class Conversation(TypedDict):
     started_at: float
     next_turn_at: float
     writing: Claim | None
-    written: "TurnResult | None"
+    written: TurnResult | None
     invitation: dict[str, str] | None
     # What each member came for (`tavern.social.aims`), by speaker; present only once someone came with an aim.
     aims: NotRequired[dict[str, Any]]

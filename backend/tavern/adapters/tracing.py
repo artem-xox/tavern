@@ -12,7 +12,8 @@ from tavern.adapters.jev import request_body
 from tavern.evening.recording import MeteredAsk
 from tavern.mind.intentions import Intender, Written
 from tavern.mind.questions import Question
-from tavern.social.turns import TurnResult, TurnWriter
+from tavern.social.scenes import TurnResult
+from tavern.social.turns import TurnWriter
 
 DEFAULT_ENDPOINT = "https://api.smith.langchain.com"
 DEFAULT_PROJECT = "tavern"
