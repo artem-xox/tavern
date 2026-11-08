@@ -1,12 +1,13 @@
 """The player's typed lines: the reader port, and the boundary that makes a turn of a reading."""
 
 from collections.abc import Callable, Coroutine, Mapping
-from typing import Any
+from typing import Any, TypedDict
 
 from tavern.hall.memory import log_event
 from tavern.hall.player import steered
 from tavern.hall.state import World
-from tavern.mind.turn_view import turn_view
+from tavern.mind.turn_view import next_speaker, turn_view
+from tavern.social.scenes import conversation_of
 from tavern.social.turns import check_turn
 
 # Reads the act of words already written: the played guest's view (`turn_view` as them), the text, and `to`
@@ -87,3 +88,40 @@ def _candidate(answer: Any, text: str, to: str) -> dict[str, Any]:
     if to != "auto":
         turn["addressee"] = None if to == "everyone" else to
     return turn
+
+
+class PlayerTurn(TypedDict):
+    """What the played guest's scene waits for, as the chat shows it."""
+
+    scene_id: str | None
+    state: str  # "none" | "free" | "your_turn" | "reading" (the stage's "on_stage" and "comeback" come with S3-06)
+    silence_at: float | None  # game time the turn passes in silence; only for "your_turn"
+
+
+def player_turn(world: World) -> PlayerTurn | None:
+    """Tell what the played guest's scene waits for.
+
+    Args:
+        world: Current world.
+
+    Returns:
+        None without a player. Otherwise the guest's scene and the state: `none` (on autopilot or in no scene),
+        `reading` (their typed line is being read or waits to be spoken), `your_turn` (the scene waits for their
+        line, which passes in silence at `silence_at`, as `turns` plays it) or `free` (someone else speaks next,
+        and they can still cut in).
+    """
+    player = world["player"]
+    if player is None:
+        return None
+    scene = conversation_of(world, player["actor_id"])
+    if scene is None or not steered(world, player["actor_id"]):
+        return {"scene_id": None if scene is None else scene["id"], "state": "none", "silence_at": None}
+    claim = scene["writing"]
+    if claim is not None and claim["speaker"] == player["actor_id"]:
+        return {"scene_id": scene["id"], "state": "reading", "silence_at": None}
+    if next_speaker(scene) != player["actor_id"]:
+        return {"scene_id": scene["id"], "state": "free", "silence_at": None}
+    typed = player.get("typing_at")
+    held_since = scene["next_turn_at"] if typed is None else max(scene["next_turn_at"], typed)
+    return {"scene_id": scene["id"], "state": "your_turn",
+            "silence_at": held_since + world["rules"]["player"]["silence"] * world["speed"]}
