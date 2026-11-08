@@ -150,8 +150,8 @@ ACTS: Mapping[str, Act] = MappingProxyType({
     "decline": Act(invitations.decline, "decline the invitation waiting for the speaker; nothing follows"),
     # Spoken only by the world, for a guest the player steers who neither typed nor spoke in time (`turns.speak_turns`):
     # never offered to a writer (`offered_acts`), and declining what the silent guest was asked.
-    "silence": Act(invitations.decline, "say nothing; the turn passes, and an invitation waiting for the speaker goes "
-                                        "unanswered, which declines it"),
+    "silence": Act(invitations.decline, "never choose it: it is what the world speaks for a guest "
+                                        "whose player stayed silent, and it declines an invitation waiting for them"),
 })
 
 

@@ -305,8 +305,7 @@ def turn_question(view: Mapping[str, Any]) -> Question:
     """
     # Every act is explained and allowed by the schema, so neither changes from turn to turn;
     # `check_turn` then holds the answer to what is offered now.
-    # `silence` is the world's own act for a player who said nothing: never explained to, nor allowed a writer.
-    acts = {name: act.meaning for name, act in ACTS.items() if name != "silence"}
+    acts = {name: act.meaning for name, act in ACTS.items()}
     return Question(system=[shared_prefix(acts), card_block(view["speaker"])],
                     content=turn_content(view), schema=turn_schema(acts, tuple(KINDS)), max_tokens=MAX_TOKENS)
 
