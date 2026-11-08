@@ -65,12 +65,36 @@ def stage_claims(world: Mapping[str, Any]) -> list[StageClaim]:
         if (heckler and performer and not asleep(heckler) and not steered(world, heckler["id"])
                 and not _answered(world, event, "heckled", "performer_id")):
             owed.append(_answer_claim(world, "heckle", heckler, performer, event))
-    for event in _recent(world, "heckled"):
-        heckler, performer = people.get(event["actor_id"]), people.get(event["performer_id"])
-        if (heckler and performer and not asleep(performer) and not steered(world, performer["id"])
-                and not _answered(world, event, "heckle_answered", "heckler_id")):
+    for heckler, performer, event in _unanswered_heckles(world):
+        if not steered(world, performer["id"]):
             owed.append(_answer_claim(world, "comeback", performer, heckler, event))
     return owed
+
+
+def comeback_owed_to(world: Mapping[str, Any], performer_id: str) -> Actor | None:
+    """Find the heckler a performer still owes a comeback, however the comeback is to be written.
+
+    Args:
+        world: Current world.
+        performer_id: Guest who was heckled from the floor.
+
+    Returns:
+        The latest heckler within `HECKLE_WITHIN` seconds whose heckle the performer has not answered, or None.
+    """
+    owed = [heckler for heckler, performer, _ in _unanswered_heckles(world) if performer["id"] == performer_id]
+    return owed[-1] if owed else None
+
+
+def _unanswered_heckles(world: Mapping[str, Any]) -> list[tuple[Actor, Actor, dict[str, Any]]]:
+    # (heckler, performer, event) of the heckles within reach of a comeback, the performer awake and in the hall.
+    people = {item["id"]: item for item in world["actors"]}
+    found = []
+    for event in _recent(world, "heckled"):
+        heckler, performer = people.get(event["actor_id"]), people.get(event["performer_id"])
+        if (heckler and performer and not asleep(performer)
+                and not _answered(world, event, "heckle_answered", "heckler_id")):
+            found.append((heckler, performer, event))
+    return found
 
 
 def _recent(world: Mapping[str, Any], kind: str) -> list[dict[str, Any]]:
@@ -86,14 +110,28 @@ def _answered(world: Mapping[str, Any], event: Mapping[str, Any], answer: str, f
 def _number_claim(world: Mapping[str, Any], speaker: Actor, climbed_at: float) -> StageClaim:
     # The number a performer owes: which one and at whom (`speeches.number_for`), what the writer is asked, and the
     # scripted words should it fail.
+    return {"key": ("number", speaker["id"], climbed_at), "kind": "number", "view": number_view(world, speaker)}
+
+
+def number_view(world: Mapping[str, Any], speaker: Actor) -> dict[str, Any]:
+    """Build what a model is shown of a performer on the stage: who they are, the room, and the number to give.
+
+    The writer of a guest's number and the reader of the player's number share it.
+
+    Args:
+        world: Current world.
+        speaker: Guest on the stage.
+
+    Returns:
+        The view of a `number` claim.
+    """
     kind, target_id = number_for(world, speaker)
     target = next((item for item in world["actors"] if item["id"] == target_id), None)
     name = called(speaker, target) if target else None
-    return {"key": ("number", speaker["id"], climbed_at), "kind": "number",
-            "view": {"kind": "number", "speaker": _speaker(world, speaker), "room": _room(world, speaker),
-                     "number": {"kind": kind, "target_id": target_id, "target": name,
-                                "brief": NUMBERS[kind].brief.format(target=name)},
-                     "scripted": scripted_number(speaker, kind, name, roll(world, "speech", speaker["id"]))}}
+    return {"kind": "number", "speaker": _speaker(world, speaker), "room": _room(world, speaker),
+            "number": {"kind": kind, "target_id": target_id, "target": name,
+                       "brief": NUMBERS[kind].brief.format(target=name)},
+            "scripted": scripted_number(speaker, kind, name, roll(world, "speech", speaker["id"]))}
 
 
 def _answer_claim(world: Mapping[str, Any], kind: str, speaker: Actor, other: Actor,
@@ -155,6 +193,36 @@ def deliver_stage(world: World, claim: StageClaim, outcome: Callable[[], Sequenc
         heckle(world, speaker, people[due["view"]["at"]["id"]], lines[0])
     else:
         answer_heckle(world, speaker, people[due["view"]["at"]["id"]], lines[0])
+
+
+def deliver_number(world: World, speaker_id: str, text: str, outcome: Callable[[], Mapping[str, Any]]) -> None:
+    """Perform the player's typed number as the reader understood it: the words are theirs, the kind is the reading's.
+
+    A reading that fails, names a kind that does not exist, or names a target that is not in the hall, or leaves an
+    aimed kind without one, becomes a pitch to the hall, and a `misread` event records why. Never a scripted number.
+
+    Args:
+        world: World updated in place.
+        speaker_id: The played guest, on the stage.
+        text: What the player typed; the number's only line.
+        outcome: Returns the reading `{"number", "target"}`, or raises the reader's error.
+
+    Returns:
+        None. A number for a performer who has left the stage or has already given theirs is dropped.
+    """
+    speaker = next((item for item in world["actors"] if item["id"] == speaker_id), None)
+    if speaker is None or not steered(world, speaker_id) or on_stage_for(world, speaker) is None:
+        return
+    try:
+        answer = outcome()
+        kind, target_id = answer["number"], answer["target"]
+        target = next((item for item in world["actors"] if item["id"] == target_id), None)
+        if kind not in NUMBERS or NUMBERS[kind].aimed != (target is not None):
+            raise ValueError(f"A {kind!r} number cannot be aimed at {target_id!r} in this hall")
+    except Exception as error:  # Any failure of the reader makes the words a pitch, as a line's makes a remark.
+        kind, target_id = "pitch", None
+        log_event(world, speaker_id, "misread", f"{speaker['name']}'s number was read as a pitch ({error})")
+    perform(world, speaker, kind, target_id, [text])
 
 
 async def write_scripted_stage(view: Mapping[str, Any], config: Mapping[str, Any]) -> list[str]:
