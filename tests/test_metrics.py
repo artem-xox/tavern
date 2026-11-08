@@ -10,14 +10,14 @@ from tavern.evening.metrics import completed_activities, evening_metrics, stuck_
 from tavern.evening.recording import Record, request_key
 
 
-def event(kind: str, message: str, time: float = 1.0, actor_id: str | None = "ada") -> dict[str, Any]:
-    """Build a logged event."""
-    return {"time": time, "actor_id": actor_id, "type": kind, "message": message}
+def event(kind: str, message: str, time: float = 1.0, actor_id: str | None = "ada", **fields: Any) -> dict[str, Any]:
+    """Build a logged event, with the fields the game logs beside the message."""
+    return {"time": time, "actor_id": actor_id, "type": kind, "message": message, **fields}
 
 
 def done(verb: str, name: str = "Ada") -> dict[str, Any]:
     """Build the event of a completed activity."""
-    return event("action_completed", f"{name} completed {verb}")
+    return event("action_completed", f"{name} completed {verb}", verb=verb)
 
 
 def spell(actor_id: str, start: float, end: float) -> Spell:
@@ -39,11 +39,10 @@ def test_completed_activities_are_counted_per_verb(events: list[dict[str, Any]],
 
 @pytest.mark.parametrize("message", [
     pytest.param("Ada finished her drink", id="malformed-message"),
-    pytest.param("Ada completed ", id="empty-verb"),
-    pytest.param("Ada completed Drink!", id="not-a-verb"),
+    pytest.param("Ada completed drink", id="verb-only-in-the-words"),
 ])
-def test_unreadable_completion_fails_loudly(message: str) -> None:
-    with pytest.raises(ValueError, match="completed"):
+def test_completion_without_a_verb_fails_loudly(message: str) -> None:
+    with pytest.raises(ValueError, match="verb"):
         completed_activities([event("action_completed", message)])
 
 
