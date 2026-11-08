@@ -68,7 +68,10 @@ def default_rules() -> Rules:
             "giving": {"refuse_below": -20.0, "again_after": 120.0, "carry_for": 30.0},
             # Manners (`tavern.social.tables`): a hall asks for table manners in its layout (`table_manners`), so
             # that one without tables to speak of, or a test, can do without them.
-            "manners": {"table_intrusion": False}}
+            "manners": {"table_intrusion": False},
+            # Player (`tavern.hall.player`): real seconds a player may neither type nor speak when it is their
+            # turn before it passes in silence (a world at speed s waits `silence × s` game seconds).
+            "player": {"silence": 20.0}}
 
 
 def check_rules(world: Mapping[str, Any]) -> None:
@@ -110,6 +113,7 @@ def check_rules(world: Mapping[str, Any]) -> None:
     _validate_bartending_rules(rules.get("bartending"))
     _validate_giving_rules(rules.get("giving"))
     _validate_manners_rules(rules.get("manners"))
+    _validate_player_rules(rules.get("player"))
 
 
 def _validate_manners_rules(manners: Any) -> None:
@@ -124,6 +128,13 @@ def _validate_giving_rules(giving: Any) -> None:
     number(giving["again_after"], "Saved giving wait", 0, math.inf)
     if not 0 < number(giving["carry_for"], "Saved giving carry time", 0, math.inf):
         raise ValueError("A saved giving carry time must be positive")
+
+
+def _validate_player_rules(player: Any) -> None:
+    if not isinstance(player, dict) or set(player) != {"silence"}:
+        raise ValueError("Invalid saved player rules")
+    if not 0 < number(player["silence"], "Saved player silence", 0, math.inf):
+        raise ValueError("A saved player silence must be positive")
 
 
 def _validate_bartending_rules(bartending: Any) -> None:

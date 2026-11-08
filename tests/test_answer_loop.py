@@ -121,3 +121,19 @@ def test_in_a_headless_evening_the_invitees_own_choice_is_the_answer_their_line_
     spoken = [item["message"] for item in result.events if item["type"] == "turn" and item["actor_id"] == "bea"][:1]
     assert (spoken[0].split("(")[1].split(")")[0], [e["type"] for e in result.events].count("invitation_declined")) == (
         "decline", 1)
+
+
+def test_a_steered_invitee_is_asked_for_no_answer() -> None:
+    courier, world = ManualCourier(), inviting("dice_together", ("darts",))
+    world["player"] = {"actor_id": "bea", "steering": True}
+    mind = loop(courier)
+    mind.tick(world)
+    assert (mind.answering, mind.answered) == ({}, set())
+
+
+def test_an_invitee_on_autopilot_is_asked_for_an_answer() -> None:
+    courier, world = ManualCourier(), inviting("dice_together", ("darts",))
+    world["player"] = {"actor_id": "bea", "steering": False}
+    mind = loop(courier)
+    mind.tick(world)
+    assert len(mind.answering) == 1

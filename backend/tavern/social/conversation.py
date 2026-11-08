@@ -148,6 +148,10 @@ ACTS: Mapping[str, Act] = MappingProxyType({
     "accept": Act(invitations.accept, "accept the invitation waiting for the speaker; the game then sets "
                                       "both moving, which ends their part in the conversation"),
     "decline": Act(invitations.decline, "decline the invitation waiting for the speaker; nothing follows"),
+    # Spoken only by the world, for a guest the player steers who neither typed nor spoke in time (`turns.speak_turns`):
+    # never offered to a writer (`offered_acts`), and declining what the silent guest was asked.
+    "silence": Act(invitations.decline, "never choose it: it is what the world speaks for a guest "
+                                        "whose player stayed silent, and it declines an invitation waiting for them"),
 })
 
 
@@ -191,7 +195,7 @@ def offered_acts(world: Mapping[str, Any], scene: Conversation, speaker: Mapping
         "invite": bool(invitations.offered_kinds(world, scene, speaker))
                   and all(opinion_of(speaker, item["id"], now) > LOATHED for item in others),
         "promise": any(commitments.promisable(world, speaker, item) for item in others),
-        "accept": False, "decline": False}
+        "accept": False, "decline": False, "silence": False}
     return {name: act.meaning for name, act in ACTS.items() if situational.get(name, True)}
 
 

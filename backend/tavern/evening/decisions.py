@@ -5,6 +5,7 @@ from typing import Any
 
 from tavern.body.projects import on_project
 from tavern.body.queues import out_of_patience
+from tavern.hall.player import steered
 from tavern.hall.staff import on_staff
 from tavern.hall.memory import log_event
 from tavern.hall.state import Actor, Decision, World
@@ -22,13 +23,13 @@ def free_to_decide(world: Mapping[str, Any], actor: Mapping[str, Any]) -> bool:
         actor: Visitor in that world.
 
     Returns:
-        True when they are a guest, idle or out of patience in a line, are not out fetching someone a
+        True when they are a guest the player does not steer (`player.steered`: the player decides for them), idle or out of patience in a line, are not out fetching someone a
         drink (`errands.fetching_a_drink`) or carrying out a project (`projects.on_project`), have nobody walking up to
         them (`walk_ups.walker_toward`: they wait for the walker), and take part in no
         conversation scene (staff never decide: their routine is `tavern.body.bartending`): members leave a scene by its own rules (a goodbye, an interrupt,
         closing time), never by being pulled away mid-chat.
     """
-    return (not on_staff(actor) and (actor["status"] == "idle" or out_of_patience(world, actor))
+    return (not on_staff(actor) and not steered(world, actor["id"]) and (actor["status"] == "idle" or out_of_patience(world, actor))
             and conversation_of(world, actor["id"]) is None and not fetching_a_drink(world, actor["id"])
             and not on_project(world, actor["id"]) and walker_toward(world, actor["id"]) is None)
 

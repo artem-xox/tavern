@@ -437,6 +437,13 @@ export interface Fact {
   overheard: boolean;
 }
 
+/** The person playing tonight: which guest they play, and whether they hold the wheel. */
+export interface Player {
+  actor_id: string;
+  /** True: the player decides for that guest; false: autopilot, the guest's own mind. */
+  steering: boolean;
+}
+
 export interface World {
   schema_version: number;
   tick: number;
@@ -463,6 +470,8 @@ export interface World {
   next_stimulus_id: number;
   conversations: Conversation[];
   next_conversation_id: number;
+  /** Who the person plays tonight; null for an evening with no player. */
+  player: Player | null;
   /** Accepted invitations under way. */
   invitations: Errand[];
   /** Plans under way, at most one per guest. */
@@ -534,4 +543,5 @@ export type Command =
   | { type: "block"; x: number; y: number; blocked: boolean }
   | { type: "force_action"; actor_id: string; action: Action }
   | { type: "start"; cast: string; guests: string[]; minutes: number }
+  | { type: "steer"; on: boolean }
   | { type: "save" | "load" | "reset" };

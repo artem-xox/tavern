@@ -133,7 +133,8 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
     if templates:
         if catalog is None:
             raise ValueError("Lineups need a character catalog")
-        lineup = lambda cast, ids, minutes: lineup_scenario(templates, catalog, cast, ids, minutes)
+        lineup = lambda cast, ids, minutes, player: lineup_scenario(
+            templates, catalog, cast, ids, minutes, player)
     if database_url and store_for is None:
         initialize_database(database_url)
         store_for = lambda session_id: DatabaseStore(database_url, session_id)

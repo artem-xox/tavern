@@ -11,9 +11,10 @@ from collections.abc import Callable, Coroutine, Mapping
 from typing import Any
 
 from tavern.hall.memory import log_event
+from tavern.hall.player import steered
 from tavern.hall.state import World
 from tavern.mind.scripted import scripted_turn
-from tavern.mind.turn_view import turn_view
+from tavern.mind.turn_view import next_speaker, turn_view
 from tavern.social.aims import note_spoken
 from tavern.social.conversation import ACTS
 from tavern.social.heard import hear_line
@@ -25,6 +26,8 @@ from tavern.social.scenes import Conversation, Turn, TurnResult, awaits_company_
 # raises falls back to a scripted line.
 TurnWriter = Callable[[Mapping[str, Any], Mapping[str, Any]], Coroutine[Any, Any, TurnResult]]
 
+# The line of the turn that passes when a steered guest's player neither types nor speaks.
+SILENCE_LINE = "…"
 _FIELDS = {"line", "act", "addressee", "topic"}
 _OPTIONAL = {"invitation", "fact_id"}
 
@@ -114,7 +117,9 @@ def claim_turns(world: Mapping[str, Any]) -> list[tuple[str, int, dict[str, Any]
     claims = []
     for scene in world["conversations"]:
         # A line for a scene that is about to end, or to lose a guest, would never be spoken; none is asked for.
-        if scene["writing"] is None and scene["written"] is None and not awaits_company_change(world, scene):
+        # The player speaks for a steered guest, so no writer is asked (the scene waits: see `speak_turns`).
+        if (scene["writing"] is None and scene["written"] is None and not awaits_company_change(world, scene)
+                and not steered(world, next_speaker(scene))):
             view = turn_view(world, scene)
             scene["writing"] = {"turn": view["conversation"]["turn"], "speaker": view["speaker"]["id"],
                                 "since": world["time"]}
@@ -164,12 +169,28 @@ def speak_turns(world: World) -> None:
     for scene in list(world["conversations"]):
         if scene not in world["conversations"] or world["time"] < scene["next_turn_at"]:
             continue
+        speaker_id = next_speaker(scene)
+        if steered(world, speaker_id):
+            _await_player(world, scene, speaker_id)
+            continue
         awaited = scene["writing"] is not None and scene["written"] is None
         # The model answers in real seconds, so a faster world waits proportionally more game seconds for it.
         if awaited and world["time"] < scene["next_turn_at"] + rules["turn_timeout"] * world["speed"]:
             continue
         view = turn_view(world, scene)
         _speak(world, scene, view["speaker"]["id"], scene["written"] or scripted_turn(view))
+
+
+def _await_player(world: World, scene: Conversation, speaker_id: str) -> None:
+    # A steered guest's due line is the player's to write (`scene["written"]`, once they have). Nobody else, scripted
+    # writer included, speaks for them: when `rules.player.silence` real seconds (more game seconds at a faster speed)
+    # pass with no line, the turn passes in silence.
+    if scene["written"] is None and world["time"] >= scene["next_turn_at"] + (
+            world["rules"]["player"]["silence"] * world["speed"]):
+        _speak(world, scene, speaker_id, {"line": SILENCE_LINE, "act": "silence", "addressee": None,
+                                          "topic": scene["topic"]})
+    elif scene["written"] is not None:
+        _speak(world, scene, speaker_id, scene["written"])
 
 
 def _speak(world: World, scene: Conversation, speaker_id: str, result: Mapping[str, Any]) -> None:
@@ -187,10 +208,11 @@ def _speak(world: World, scene: Conversation, speaker_id: str, result: Mapping[s
     spoken = log_event(world, speaker_id, "turn",
                        f"{people[speaker_id]['name']} to {listener} ({result['act']}): {result['line']}")
     spoken["act"], spoken["addressee"] = result["act"], result["addressee"]
-    note_spoken(world, scene, people[speaker_id])
-    # Heard before the act takes effect, while the scene still holds everyone who spoke in it.
-    hear_line(world, scene, turn)
-    overhear_turn(world, scene, turn)
+    if result["act"] != "silence":  # Nothing was said, so nothing is noted, heard or overheard.
+        note_spoken(world, scene, people[speaker_id])
+        # Heard before the act takes effect, while the scene still holds everyone who spoke in it.
+        hear_line(world, scene, turn)
+        overhear_turn(world, scene, turn)
     effect = ACTS[result["act"]].effect
     if effect:
         effect(world, scene, people[speaker_id], people.get(result["addressee"]))

@@ -358,3 +358,34 @@ def test_an_aimed_number_lands_on_its_target(world: dict[str, Any], actor_id: st
 ])
 def test_a_number_names_who_will_heckle_it(world: dict[str, Any], heckler: str | None) -> None:
     assert numbers_given(world)[0]["heckler_id"] == heckler
+
+
+@pytest.mark.parametrize("player, given", [
+    pytest.param(None, 1, id="no-player"),
+    pytest.param({"actor_id": "ada", "steering": False}, 1, id="the-performer-is-on-autopilot"),
+    pytest.param({"actor_id": "ada", "steering": True}, 0, id="the-performer-has-the-wheel"),
+])
+def test_no_scripted_number_is_given_for_a_steered_performer(player: dict[str, Any] | None, given: int) -> None:
+    world = table_hall(speaker(), guest("bea", (15, 7)))
+    world["player"] = player
+    assert start(world, "ada", "give_speech", "stage")["accepted"]
+    advance(world, PERFORM_WAIT + 1.0)
+    assert (len(numbers_given(world)), who(world, "ada")["action"]["verb"]) == (given, "give_speech")
+
+
+@pytest.mark.parametrize("player, heckler", [
+    pytest.param(None, "bea", id="no-player"),
+    pytest.param({"actor_id": "bea", "steering": False}, "bea", id="the-target-is-on-autopilot"),
+    pytest.param({"actor_id": "bea", "steering": True}, "cid", id="the-steered-target-never-heckles-so-the-next-rival-does"),
+    pytest.param({"actor_id": "cid", "steering": True}, "bea", id="a-steered-rival-is-never-picked"),
+])
+def test_a_steered_guest_is_never_chosen_to_heckle(player: dict[str, Any] | None, heckler: str) -> None:
+    world = table_hall(guest("ada", STAGE_SPOT, card=PERFORMER), guest("bea", (15, 8)), rival())
+    ada = who(world, "ada")
+    ada["relations"]["bea"] = {"name": "Bea", "opinion": -40.0, "familiarity": "acquaintance", "knows_name": True}
+    who(world, "cid")["relations"]["ada"] = {"name": "Ada", "opinion": -40.0, "familiarity": "acquaintance",
+                                           "knows_name": True}
+    world["player"] = player
+    assert start(world, "ada", "give_speech", "stage")["accepted"]
+    advance(world, PERFORM_WAIT + 1.0)
+    assert numbers_given(world)[0]["heckler_id"] == heckler

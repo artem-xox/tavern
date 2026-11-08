@@ -13,6 +13,7 @@ from tavern.body.dozing import asleep
 from tavern.body.drunkenness import speech_instruction
 from tavern.hall.chance import roll
 from tavern.hall.memory import log_event
+from tavern.hall.player import steered
 from tavern.hall.state import Actor, World
 from tavern.mind.briefing import recollections
 from tavern.mind.cards import card_words
@@ -57,16 +58,17 @@ def stage_claims(world: Mapping[str, Any]) -> list[StageClaim]:
     owed: list[StageClaim] = []
     for actor in world["actors"]:
         since = on_stage_for(world, actor)
-        if since is not None:
+        if since is not None and not steered(world, actor["id"]):
             owed.append(_number_claim(world, actor, round(world["time"] - since, 3)))
     for event in _recent(world, "gave_speech"):
         heckler, performer = people.get(event.get("heckler_id") or ""), people.get(event["actor_id"])
-        if heckler and performer and not asleep(heckler) and not _answered(world, event, "heckled", "performer_id"):
+        if (heckler and performer and not asleep(heckler) and not steered(world, heckler["id"])
+                and not _answered(world, event, "heckled", "performer_id")):
             owed.append(_answer_claim(world, "heckle", heckler, performer, event))
     for event in _recent(world, "heckled"):
         heckler, performer = people.get(event["actor_id"]), people.get(event["performer_id"])
-        if heckler and performer and not asleep(performer) and not _answered(world, event, "heckle_answered",
-                                                                             "heckler_id"):
+        if (heckler and performer and not asleep(performer) and not steered(world, performer["id"])
+                and not _answered(world, event, "heckle_answered", "heckler_id")):
             owed.append(_answer_claim(world, "comeback", performer, heckler, event))
     return owed
 

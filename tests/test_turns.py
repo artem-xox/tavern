@@ -17,7 +17,8 @@ from tavern.mind.scripted import scripted_turn
 from tavern.mind.turn_view import next_speaker, turn_view
 from tavern.social.turns import check_turn, claim_turns, deliver_turn, reading_time
 from tavern.hall.world import create_world, start_action
-from social_hall import advance, command
+from social_hall import advance, command, scene_of
+from test_invitation_answers import inviting
 
 RULES = {"min_gap": 2.5, "chars_per_second": 15.0}
 
@@ -474,3 +475,53 @@ def test_the_model_gets_the_timeout_in_real_seconds_at_any_speed(speed: float, r
     claim_turns(world)
     advance(world, real_seconds)
     assert any(event["type"] == "turn" for event in world["events"]) == scripted
+
+
+@pytest.mark.parametrize("player, claimed", [
+    pytest.param(None, 1, id="no-player"),
+    pytest.param({"actor_id": "bea", "steering": True}, 1, id="another-guest-has-the-wheel"),
+    pytest.param({"actor_id": "ada", "steering": True}, 0, id="the-speaker-has-the-wheel"),
+    pytest.param({"actor_id": "ada", "steering": False}, 1, id="the-speaker-is-on-autopilot"),
+])
+def test_no_writer_is_asked_for_the_line_of_a_steered_speaker(player: dict[str, Any] | None, claimed: int) -> None:
+    world = talking()
+    world["player"] = player
+    assert len(claim_turns(world)) == claimed
+
+
+def scene_lines(world: dict[str, Any]) -> list[tuple[str, str, str | None, str]]:
+    """The scene's lines so far as (speaker, act, addressee, line)."""
+    return [(item["speaker"], item["act"], item["addressee"], item["line"])
+            for item in conversation_of(world, "ada")["turns"]]
+
+
+@pytest.mark.parametrize("speed, real_seconds, lines", [
+    pytest.param(1.0, 19.0, [], id="the-line-waits-while-the-player-may-still-type"),
+    pytest.param(1.0, 21.0, [("ada", "silence", None, "…")], id="a-silent-turn-passes-after-the-silence-rule"),
+    pytest.param(4.0, 19.0, [], id="a-fast-world-waits-the-same-real-seconds"),
+    pytest.param(4.0, 21.0, [("ada", "silence", None, "…")], id="and-then-passes-the-turn"),
+])
+def test_a_steered_speakers_turn_waits_in_real_seconds_then_passes_in_silence(
+        speed: float, real_seconds: float, lines: list[tuple[str, str, str | None, str]]) -> None:
+    world = talking()
+    world.update(speed=speed, player={"actor_id": "ada", "steering": True})
+    advance(world, real_seconds)
+    assert scene_lines(world)[:1] == lines
+
+
+def test_after_a_silent_turn_the_scene_goes_on_with_the_next_speaker() -> None:
+    world = talking()
+    world["player"] = {"actor_id": "ada", "steering": True}
+    advance(world, 25)
+    assert [item[0] for item in scene_lines(world)][:2] == ["ada", "bea"]
+
+
+@pytest.mark.parametrize("real_seconds, declined", [
+    pytest.param(19.0, 0, id="the-invitation-waits-for-the-player"),
+    pytest.param(25.0, 1, id="the-silence-declines-it"),
+])
+def test_a_silent_turn_declines_the_invitation_waiting_for_the_silent_guest(real_seconds: float, declined: int) -> None:
+    world = inviting("dice_together", ("darts",))
+    world["player"] = {"actor_id": "bea", "steering": True}
+    advance(world, real_seconds)
+    assert len([item for item in world["events"] if item["type"] == "invitation_declined"]) == declined

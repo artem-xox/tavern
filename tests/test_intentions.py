@@ -123,6 +123,29 @@ def test_requests_go_to_guests_due_free_and_past_their_gap(
     assert [actor_id for actor_id, _view in intention_requests(world, pending, next_allowed, RULES)] == expected
 
 
+@pytest.mark.parametrize("player, expected", [
+    pytest.param(None, ["ada", "bea"], id="no-player"),
+    pytest.param({"actor_id": "ada", "steering": True}, ["bea"], id="the-played-guest-has-the-wheel"),
+    pytest.param({"actor_id": "ada", "steering": False}, ["ada", "bea"], id="the-played-guest-on-autopilot"),
+])
+def test_a_steered_guest_is_asked_for_no_intention(player: dict[str, Any] | None, expected: list[str]) -> None:
+    world = create_world(hall())
+    world["player"] = player
+    assert [actor_id for actor_id, _view in intention_requests(world, (), {}, RULES)] == expected
+
+
+@pytest.mark.parametrize("player, expected", [
+    pytest.param(None, [], id="no-player"),
+    pytest.param({"actor_id": "ada", "steering": True}, ["ada"], id="the-wheel-was-taken-while-asking"),
+    pytest.param({"actor_id": "ada", "steering": False}, [], id="autopilot"),
+])
+def test_an_intention_in_flight_for_a_steered_guest_is_stale(
+        player: dict[str, Any] | None, expected: list[str]) -> None:
+    world = fresh()
+    world["player"] = player
+    assert stale_intentions(world, {"ada": 20.0}) == expected
+
+
 @pytest.mark.parametrize("change, expected", [
     pytest.param(lambda world: None, [], id="nothing-happened"),
     pytest.param(lambda world: heard(world, "interrupted", 25.0), ["ada"], id="interrupt-overtakes-the-request"),
