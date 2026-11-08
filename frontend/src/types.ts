@@ -526,6 +526,8 @@ export interface Snapshot {
   story: Story;
   /** The storyteller's retelling of the evening, once it is over; null until then, and offline. */
   retelling: Retelling | null;
+  /** The lines the retelling may cite, by log position (the world's own log is trimmed, so it cannot be used). */
+  retelling_events: Record<number, CitedEvent>;
   /** Whether the storyteller is writing the retelling right now. */
   telling: boolean;
 }
@@ -547,6 +549,13 @@ export interface Chapter {
 export interface Retelling {
   title: string;
   chapters: Chapter[];
+}
+
+/** What the client knows of a log line a chapter cites, by its position: what it was, who did it, and whether the player typed it. */
+export interface CitedEvent {
+  type: string;
+  actor_id: string | null;
+  player: boolean;
 }
 
 export type Command =

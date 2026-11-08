@@ -35,3 +35,35 @@ for (const [name, telling, recap, dismissed, expected] of [
     assert.equal(retellingWindow(telling, recap, dismissed), expected);
   });
 }
+
+import { playerChapters, playerFirst } from "../src/storyview.ts";
+import type { CitedEvent } from "../src/types.ts";
+
+const cite = (type: string, actor_id: string, player = false): CitedEvent => ({ type, actor_id, player });
+const chapter = (...events: number[]) => ({ text: "S", events, actors: [] });
+const log: Record<number, CitedEvent> = {
+  0: cite("turn", "ada", true), 1: cite("player_act", "ada"), 2: cite("turn", "ada"), 3: cite("quarrel", "bram"), 4: cite("player_act", "bram"),
+};
+
+for (const [name, chapters, playerId, expected] of [
+  ["no player: nothing is marked", [chapter(0), chapter(1)], null, []],
+  ["no chapter cites the player", [chapter(2), chapter(3)], "ada", []],
+  ["a typed line and an act mark their chapters", [chapter(2), chapter(0, 3), chapter(1), chapter(3)], "ada", [1, 2]],
+  ["a cited position missing from the log is ignored", [chapter(99), chapter(99, 1)], "ada", [1]],
+  ["an act of someone else's is not the player's", [chapter(4)], "ada", []],
+] as const) {
+  test(`playerChapters: ${name}`, () => {
+    assert.deepEqual(playerChapters({ title: "T", chapters: [...chapters] }, log, playerId), expected);
+  });
+}
+
+for (const [name, ids, playerId, expected] of [
+  ["no player leaves the order", ["bram", "ada"], null, ["bram", "ada"]],
+  ["the player moves to the front", ["bram", "ada", "cy"], "ada", ["ada", "bram", "cy"]],
+  ["a player who is not in the chapter adds no face", ["bram"], "ada", ["bram"]],
+  ["no faces", [], "ada", []],
+] as const) {
+  test(`playerFirst: ${name}`, () => {
+    assert.deepEqual(playerFirst(ids, playerId), expected);
+  });
+}

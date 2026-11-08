@@ -242,3 +242,6 @@ summary > span:last-child { color: var(--muted); font-size: var(--t-label); text
 .role-sheet dd { margin: 0; }
 .play-as { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
 .play-as button[aria-pressed="true"] { border-color: var(--gold-2); color: var(--on-gold); }
+.chapter.yours { border-left: 3px solid #d8b24a; padding-left: 8px; }
+.face .you { position: absolute; left: 0; right: 0; bottom: 0; font-size: 9px; text-align: center; background: #d8b24a; color: #1f1a15; }
+.you-mark { color: #d8b24a; }
