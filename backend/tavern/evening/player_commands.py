@@ -3,9 +3,13 @@
 from collections.abc import Mapping
 from typing import Any
 
+from tavern.body.activities import ACTIVITIES
 from tavern.evening.mind_loop import MindLoop
 from tavern.hall.memory import log_event
-from tavern.hall.state import World
+from tavern.hall.player import steered
+from tavern.hall.state import Actor, World, find_actor
+from tavern.hall.world import observe_actor, start_action
+from tavern.mind.candidates import open_actions
 from tavern.mind.scripted import MAX_LINE
 from tavern.social.scenes import conversation_of
 
@@ -60,6 +64,72 @@ def _drop_requests(world: World, mind: MindLoop, actor_id: str) -> None:
             mind.courier.cancel(mind.writing.pop(key))
         if key in mind.answering:
             mind.courier.cancel(mind.answering.pop(key)[0])
+
+
+def _played_guest(world: World, command: str) -> Actor:
+    # The body the player holds the wheel of, or the reason they cannot use their hands now.
+    player = world["player"]
+    if player is None:
+        raise ValueError(f"{command} needs a player, and this evening has none")
+    if not steered(world, player["actor_id"]):
+        raise ValueError(f"{command} needs the wheel, and the guest is on autopilot")
+    guest = find_actor(world, player["actor_id"])
+    if guest is None:
+        raise ValueError(f"{command}: the played guest is not in the hall")
+    return guest
+
+
+def act(world: World, command: Mapping[str, Any]) -> None:
+    """Start an action for the played guest, as a decision of their own would.
+
+    The world checks it like any guest's (`start_action`), and the guest's `decision` says the player chose it.
+    Leaving a scene for another action ends the guest's part in it by the scene's own rule.
+
+    Args:
+        world: Authoritative world, whose played guest and event log are updated in place.
+        command: `{"type": "act", "action": {"id", "verb", "target_id"?, "item"?, "cell"?}}`.
+
+    Raises:
+        ValueError: The evening has no player, the guest is on autopilot or not in the hall, the command names no
+            action, or the world refuses it (the world's reason). Nothing starts then.
+    """
+    guest = _played_guest(world, "act")
+    action = command.get("action")
+    if not isinstance(action, Mapping):
+        raise ValueError(f"act needs an action, not {action!r}")
+    result = start_action(world, guest["id"], action)
+    if not result["accepted"]:
+        raise ValueError(result["reason"])
+    guest["decision"] = {"source": "player", "scores": {}, "error": None}
+    log_event(world, guest["id"], "player_act", f"{guest['name']} chose {action['verb']}")["verb"] = action["verb"]
+
+
+def options(world: World, command: Mapping[str, Any]) -> dict[str, Any]:
+    """List the actions open to the played guest now, as their own mind would be offered them.
+
+    The world stays as it is, apart from the knowledge refresh `observe_actor` does for every decision.
+
+    Args:
+        world: Current world.
+        command: `{"type": "options", "target_id"?: str}`; with a target, only the actions aimed at it.
+
+    Returns:
+        `{"type": "options", "target_id": str | None, "options": [{"action": Action, "label": str}]}`, the label
+        being the verb's own (`Activity.label`).
+
+    Raises:
+        ValueError: The evening has no player, the guest is on autopilot or not in the hall, or `target_id` is
+            not a nonempty string.
+    """
+    guest = _played_guest(world, "options")
+    target = command.get("target_id")
+    if target is not None and (not isinstance(target, str) or not target):
+        raise ValueError(f"options needs target_id to be a nonempty string, not {target!r}")
+    listed = [item for item in open_actions(observe_actor(world, guest["id"]))
+              if target is None or item["target_id"] == target]
+    return {"type": "options", "target_id": target,
+            "options": [{"action": item, "label": ACTIVITIES[item["verb"]].label or item["verb"].replace("_", " ")}
+                        for item in listed]}
 
 
 def say(world: World, mind: MindLoop, command: Mapping[str, Any]) -> None:

@@ -14,7 +14,7 @@ from tavern.adapters.persistence import FileStore
 from tavern.body.activities import ACTIVITIES, client_activities
 from tavern.body.items import client_items
 from tavern.evening.mind_loop import EveningPorts, TaskCourier, evening_mind
-from tavern.evening.player_commands import say, steer
+from tavern.evening.player_commands import act, options, say, steer
 from tavern.evening.retelling import Retelling, retell
 from tavern.evening.scenario import Scenario, open_evening
 from tavern.evening.story_score import WEIGHTS, Moment, story_moments, story_score
@@ -301,11 +301,14 @@ class TavernRuntime:
                                command.get("player"))
         self._reset(command)
 
-    def command(self, command: Mapping[str, Any]) -> None:
-        """Validate and apply an operator command atomically.
+    def command(self, command: Mapping[str, Any]) -> dict[str, Any] | None:
+        """Validate and apply a command from the browser atomically.
 
         Args:
             command: JSON command from the browser.
+        Returns:
+            The reply to send before the snapshot (`options` has one), or None. The player's hands (`act`, `options`)
+            are not the operator's, so they leave no "Operator" event.
         Raises:
             ValueError: A command or its arguments are invalid.
         """
@@ -318,11 +321,15 @@ class TavernRuntime:
                     "say": lambda item: say(self.world, self.mind, item)}
         if not isinstance(command, Mapping) or not isinstance(command.get("type"), str):
             raise ValueError("Expected a command with a type")
+        hands = {"act": lambda item: act(self.world, item), "options": lambda item: options(self.world, item)}
+        if command["type"] in hands:
+            return hands[command["type"]](command)
         handler = handlers.get(command["type"])
         if handler is None:
             raise ValueError("Unknown command")
         handler(command)
         self._event(f"Operator: {command['type']}")
+        return None
 
     async def close(self) -> None:
         """Cancel and drain model requests when the server stops."""

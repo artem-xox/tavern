@@ -87,6 +87,15 @@ export interface Action {
   item?: string;
   /** What a social verb is for (`pass_time`, `tell_news:<fact>`, `invite:<kind>`, ...); absent for the others. */
   aim?: string;
+  /** The `[x, y]` cell a `walk_to` action goes to; absent for the others. */
+  cell?: [number, number];
+}
+
+/** The reply to the `options` command: what is open to the played guest now, each action with its verb's label. */
+export interface OptionsMessage {
+  type: "options";
+  target_id: string | null;
+  options: { action: Action; label: string }[];
 }
 
 export interface Actor {
@@ -206,6 +215,8 @@ export interface CharacterCard {
   looks?: string;
   /** What a famous guest cannot leave alone tonight, up to three; an intention's `obsession` indexes it. */
   obsessions?: string[];
+  /** Lines the guest is known for; the first closes a number on the stage. */
+  catchphrases?: string[];
   /** Counts only in how much punishment a fighter takes. */
   sex?: "female" | "male";
 }
@@ -544,7 +555,9 @@ export type Command =
   | { type: "refill"; object_id: string; amount: number }
   | { type: "block"; x: number; y: number; blocked: boolean }
   | { type: "force_action"; actor_id: string; action: Action }
-  | { type: "start"; cast: string; guests: string[]; minutes: number }
+  | { type: "start"; cast: string; guests: string[]; minutes: number; player: string | null }
   | { type: "steer"; on: boolean }
   | { type: "say"; text: string; to: "auto" | "everyone" | string }
+  | { type: "act"; action: Action }
+  | { type: "options"; target_id?: string }
   | { type: "save" | "load" | "reset" };

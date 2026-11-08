@@ -96,6 +96,7 @@ Rules:
   effects, wording, pose, family), plus its candidate rule in `candidates.py`, its local utility
   in `local_policy.py` and its option sentence in `options.py`. The world, Jev, saves, and
   the client read the table.
+  The one verb with no candidate rule, local utility or option sentence is `walk_to`: only the player walks to a floor cell.
   Put it in an existing `FAMILIES` entry when it answers the same wish; a new family widens
   every first-stage request.
   Do not add a new per-verb copy where one source can be imported.

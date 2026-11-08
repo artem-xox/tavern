@@ -1,5 +1,6 @@
 """Guests due at opening come in one by one, in a random order, from the first to the last second of the opening window."""
 
+from dataclasses import replace
 from typing import Any
 
 import pytest
@@ -60,3 +61,32 @@ def test_without_a_window_opening_guests_walk_in_at_once_in_listed_order() -> No
 def test_window_must_end_before_closing(window: Any) -> None:
     with pytest.raises(ValueError):
         parse_scenario(plan((0,), opening_window=window))
+
+
+def played_schedule(data: dict[str, Any], seed: int, player: str | None) -> list[tuple[str, float]]:
+    """Open the evening with `player` taking the wheel and list who is expected, with the second they come in."""
+    world = open_evening(hall(), replace(parse_scenario(data), player=player), seed)
+    return [(item["id"], item["arrives_at"]) for item in world["expected"]]
+
+
+@pytest.mark.parametrize("player", [
+    pytest.param("ada", id="first-in-the-seeded-order-anyway"),
+    pytest.param("dan", id="from-the-middle"),
+    pytest.param("fay", id="from-the-end"),
+])
+def test_the_played_guest_comes_in_first_and_the_others_keep_their_seeded_order(player: str) -> None:
+    data = plan((0, 0, 0, 0, 0, 0), opening_window=[1, 30])
+    free = schedule(data, 4)
+    played = played_schedule(data, 4, player)
+    assert ([name for name, _ in played], [time for _, time in played]) == (
+        [player, *[name for name, _ in free if name != player]], [time for _, time in free])
+
+
+def test_without_a_player_the_opening_order_is_unchanged() -> None:
+    data = plan((0, 0, 0, 0, 0, 0), opening_window=[1, 30])
+    assert played_schedule(data, 4, None) == schedule(data, 4)
+
+
+def test_a_played_guest_due_later_keeps_their_time() -> None:
+    data = plan((0, 0, 90), opening_window=[1, 30])
+    assert dict(played_schedule(data, 3, "cid"))["cid"] == 90

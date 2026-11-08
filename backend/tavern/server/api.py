@@ -55,7 +55,9 @@ async def _serve_socket(socket: WebSocket, sessions: TavernSessions) -> None:
         sender = asyncio.create_task(_send_snapshots(socket, runtime, 0.1))
         while True:
             try:
-                runtime.command(await socket.receive_json())
+                reply = runtime.command(await socket.receive_json())
+                if reply is not None:
+                    await socket.send_json(reply)
                 await socket.send_json(runtime.snapshot())
             except ValueError as error:
                 await socket.send_json({"type": "error", "message": str(error)})

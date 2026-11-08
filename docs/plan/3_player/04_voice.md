@@ -128,3 +128,5 @@ text whatever the reader returned (case `reader-returns-its-own-line`).
 **Notes.** The reader is wired in `server/runtime.py` and `app.py` (R13's one shared wiring is not merged); the headless
 `lockstep` keeps the offline `read_as_remark` until S3-10. `deliver_turn` now drops an answer whose claim belongs to someone
 other than the next speaker.
+
+**After merging main (S3-03, S3-07).** `make check`: `4830 passed`, mypy clean, frontend 0 failures; `make build` ok; golden diff empty. Conflicts were textual (keep both): `player_commands.py`, `runtime.py`, `types.ts`.

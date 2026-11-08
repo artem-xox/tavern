@@ -208,6 +208,12 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              what="explore the room to discover or re-check places",
              guidance="Worthwhile only when something they need has not been found yet; otherwise it is aimless "
                       "wandering."),
+    # Never a candidate: only the player walks to a spot on the floor (`tavern.evening.player_commands`).
+    Activity(verb="walk_to", to_cell=True, leaves_seat=True, fatigue_per_second=0.25, duration=0.5, label="Walk here",
+             status="walking", doing="walking across the hall", done="walked across the hall", interruptible=True,
+             family="exploring",
+             what="walk to a spot on the floor and stand there",
+             guidance="Nobody chooses it: only the player walks to a spot they point at."),
     Activity(verb="wait", duration=1.0, label="Wait a little", doing="waiting", interruptible=True, done="waited",
              family="idling",
              what="wait a moment and do nothing",
