@@ -2,6 +2,7 @@
 
 import argparse
 import asyncio
+from dataclasses import replace
 from datetime import datetime
 import json
 from pathlib import Path
@@ -19,11 +20,13 @@ from tavern.adapters.tracing import (Scorer, Tracer, open_tracer, traced_intende
 from tavern.evening.lockstep import Pace, evening_mode, run_evening
 from tavern.evening.report import evening_report
 from tavern.evening.retelling import retell
+from tavern.evening.player_script import parse_player_script
 from tavern.evening.recording import (Record, format_record, parse_records, record_calls, record_questions, replay_calls,
                               replay_questions)
 from tavern.evening.scenario import open_evening, parse_scenario
 from tavern.mind.agents import Evaluators
 from tavern.adapters.characters import load_catalog
+from tavern.mind.haiku_reading import claude_reader
 from tavern.mind.haiku_stage import claude_stage_writer
 from tavern.mind.haiku_turns import claude_writer, writer_mode
 from tavern.mind.haiku_intentions import intention_writer
@@ -32,6 +35,7 @@ from tavern.mind.model_health import HealthBoard, banner, blocking
 from tavern.mind.questions import Question
 from tavern.mind.scripted import write_scripted_turn
 from tavern.mind.selection import read_ai_config
+from tavern.social.player_lines import ReadLine, read_as_remark
 from tavern.social.stage_lines import StageWriter, write_scripted_stage
 from tavern.social.turns import TurnWriter
 
@@ -39,7 +43,7 @@ DECIDES = {"local": "the local policy (no model)", "live": "Jev, recorded", "rep
 RETELLING_MODEL = "claude-sonnet-5-5"  # Tells the evening at the end: one call, so a stronger model costs cents.
 CLAUDE_MODEL = "claude-haiku-5-5"  # The model `app.py` asks too: a measured evening costs what the server's would.
 CASTS_WITH_SCENARIOS = ("locals", "guests")
-TARIFFS = {"turn": HAIKU_5_5, "intention": HAIKU_5_5, "stage": HAIKU_5_5}
+TARIFFS = {"turn": HAIKU_5_5, "intention": HAIKU_5_5, "stage": HAIKU_5_5, "reading": HAIKU_5_5}
 
 
 def arguments(root: Path) -> argparse.ArgumentParser:
@@ -56,6 +60,8 @@ def arguments(root: Path) -> argparse.ArgumentParser:
                         help="which cast's scenario to play: data/scenarios/<cast>.json")
     parser.add_argument("--scenario", type=Path,
                         help="who comes tonight, when, and when the inn closes; default: the --cast scenario")
+    parser.add_argument("--player-script", type=Path,
+                        help="a data/players/<name>.json script: its player is the person at the wheel, played by its steps")
     parser.add_argument("--characters", type=Path, default=root / "characters",
                         help="complete character catalog the scenario casts from")
     parser.add_argument("--mode", choices=("local", "live", "replay"),
@@ -195,6 +201,30 @@ def stage_writer(writer: str, mode: str, calls: list[Record], keep: Callable[[Re
     async def ask(question: Question) -> Any:
         return await ask_claude(question, config)
     return claude_stage_writer(record_questions("stage", ask, keep, time.monotonic, ClaudeError))
+
+
+def line_reader(writer: str, mode: str, calls: list[Record], keep: Callable[[Record], None],
+                values: Mapping[str, Any]) -> ReadLine:
+    """Wire the reader of the player's typed lines, as the line writer is wired.
+
+    Args:
+        writer: `haiku` or `scripted`, the same as the line writer; scripted reads every line as a remark.
+        mode: Evening mode; a replay answers from `calls`.
+        calls: The evening's calls, loaded for a replay.
+        keep: Receives each live call as soon as it ends, recorded as `reading`.
+        values: Parsed env file with ANTHROPIC_API_KEY.
+    Returns:
+        The reader port.
+    """
+    if writer == "scripted":
+        return read_as_remark
+    if mode == "replay":
+        return claude_reader(replay_questions("reading", calls, ClaudeError))
+    config = claude_config(values["ANTHROPIC_API_KEY"], CLAUDE_MODEL)
+
+    async def ask(question: Question) -> Any:
+        return await ask_claude(question, config)
+    return claude_reader(record_questions("reading", ask, keep, time.monotonic, ClaudeError))
 
 
 def mind(mode: str, values: Mapping[str, Any], prefix: str, calls: list[Record],
@@ -350,10 +380,16 @@ def main(root: Path) -> None:
     stage = stage_writer(writer, mode, calls, keep, values)
     room = json.loads((root / "data" / "tavern.json").read_text())
     try:
+        script = parse_player_script(json.loads(args.player_script.read_text())) if args.player_script else None
+    except (OSError, ValueError) as error:
+        parser.error(f"cannot read the player script: {error}")
+    try:
         scenario_path = args.scenario or root / "data" / "scenarios" / f"{args.cast}.json"
         catalog = load_catalog(args.characters)
-        world = open_evening(room, parse_scenario(json.loads(scenario_path.read_text()), catalog=catalog),
-                             args.seed)
+        scenario = parse_scenario(json.loads(scenario_path.read_text()), catalog=catalog)
+        if script is not None:
+            scenario = replace(scenario, player=script.player)
+        world = open_evening(room, scenario, args.seed)
     except (OSError, ValueError) as error:
         parser.error(f"cannot open the evening: {error}")
     settings = config(values, mode)
@@ -362,7 +398,8 @@ def main(root: Path) -> None:
     announce_health(parser, mode, writer, settings, values)
     started = time.monotonic()
     evening = asyncio.run(run_evening(world, settings, Random(args.seed), ports, pace, lines, intender=intender,
-                                      stage_writer=stage))
+                                      stage_writer=stage, script=script,
+                                      reader=line_reader(writer, mode, calls, keep, values)))
     wall = time.monotonic() - started
     if tracer is not None:
         # The client uploads in the background; what is still queued must leave before the process ends.
@@ -374,7 +411,8 @@ def main(root: Path) -> None:
            "model_latency": pace.model_latency, "time_limit": pace.time_limit,
            "stuck_threshold": args.stuck_threshold, "input_usd_per_million": args.input_price,
            "writer": writer, "writer_model": CLAUDE_MODEL if writer == "haiku" else None,
-           "writer_note": writer_note, "intentions": minded}
+           "writer_note": writer_note, "intentions": minded,
+           **({"player_script": str(args.player_script)} if script is not None else {})}
     report = evening_report(evening, world, calls, run, args.input_price, args.stuck_threshold, TARIFFS, HAIKU_5_5)
     (args.out / "events.jsonl").write_text("".join(json.dumps(event, sort_keys=True) + "\n" for event in evening.events))
     (args.out / "metrics.json").write_text(json.dumps(rounded(report), indent=2) + "\n")

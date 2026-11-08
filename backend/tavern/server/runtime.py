@@ -14,7 +14,7 @@ from tavern.adapters.persistence import FileStore
 from tavern.body.activities import ACTIVITIES, client_activities
 from tavern.body.items import client_items
 from tavern.evening.mind_loop import EveningPorts, TaskCourier, evening_mind
-from tavern.evening.player_commands import act, options, say, steer, typing
+from tavern.evening.player_commands import PLAYER_COMMANDS, apply_command
 from tavern.evening.retelling import Retelling, retell
 from tavern.evening.scenario import Scenario, open_evening
 from tavern.evening.story_score import WEIGHTS, Moment, story_moments, story_score
@@ -316,15 +316,14 @@ class TavernRuntime:
                     "speed": lambda item: set_speed(self.world, item),
                     "refill": lambda item: refill_tap(self.world, item),
                     "block": self._block, "force_action": self._force_action,
-                    "save": self._save, "load": self._load, "reset": self._reset, "start": self._start,
-                    "steer": lambda item: steer(self.world, self.mind, item),
-                    "say": lambda item: say(self.world, self.mind, item)}
+                    "save": self._save, "load": self._load, "reset": self._reset, "start": self._start}
         if not isinstance(command, Mapping) or not isinstance(command.get("type"), str):
             raise ValueError("Expected a command with a type")
-        hands = {"act": lambda item: act(self.world, item), "options": lambda item: options(self.world, item),
-                 "typing": lambda item: typing(self.world, item)}
-        if command["type"] in hands:
-            return hands[command["type"]](command)
+        if command["type"] in PLAYER_COMMANDS:
+            reply = apply_command(self.world, self.mind, command)
+            if command["type"] in ("steer", "say"):
+                self._event(f"Operator: {command['type']}")
+            return reply
         handler = handlers.get(command["type"])
         if handler is None:
             raise ValueError("Unknown command")

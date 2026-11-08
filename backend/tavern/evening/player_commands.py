@@ -197,3 +197,36 @@ def typing(world: World, command: Mapping[str, Any]) -> None:
     if player is None or not player["steering"]:
         raise ValueError("typing needs a player who holds the wheel")
     player["typing_at"] = world["time"]
+
+
+PLAYER_COMMANDS = ("steer", "act", "say", "options", "typing")
+
+
+def apply_command(world: World, mind: MindLoop, command: Mapping[str, Any]) -> dict[str, Any] | None:
+    """Route one player command to its handler: the one door the live runtime and a scripted evening share.
+
+    Args:
+        world: Authoritative world.
+        mind: The evening's requests in flight.
+        command: A `steer`, `act`, `say`, `options` or `typing` command.
+
+    Returns:
+        The reply to send back (`options` has one), or None.
+
+    Raises:
+        ValueError: The type is not a player command, or the handler refuses the command.
+    """
+    kind = command.get("type")
+    if kind == "steer":
+        steer(world, mind, command)
+    elif kind == "act":
+        act(world, command)
+    elif kind == "say":
+        say(world, mind, command)
+    elif kind == "options":
+        return options(world, command)
+    elif kind == "typing":
+        typing(world, command)
+    else:
+        raise ValueError(f"Unknown player command {kind!r}; choose one of {PLAYER_COMMANDS}")
+    return None
