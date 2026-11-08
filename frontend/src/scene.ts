@@ -13,6 +13,7 @@ import { cellAt, hoverText, objectAt, visitorAt } from "./picking.ts";
 import { isLow, onPot, poseOf } from "./pose.ts";
 import { mapParts, type MapParts } from "./mapview";
 import { Speech } from "./speech";
+import { drawRoute } from "./routeview";
 import { markerAt } from "./wheel";
 import { aura, auraPhase, type Haze } from "./aura";
 import { shippedPose, spriteOf, stills, type SpriteRegistry } from "./sprites";
@@ -310,39 +311,7 @@ export class TavernScene extends Phaser.Scene {
   }
 
   private drawRoute(): void {
-    this.route.clear();
-    if (!this.world) return;
-    const size: number = this.world.map.tile_size;
-    this.drawOwnSeats(size);
-    const actor: Actor | undefined = this.world.actors.find((visitor: Actor): boolean => visitor.id === this.selectedId);
-    if (actor && actor.path.length > 0) {
-      const cells: Cell[] = [[actor.x, actor.y], ...actor.path];
-      this.route.lineStyle(2, 0xf3d297, 0.8).beginPath();
-      cells.forEach(([x, y]: Cell, index: number): void => {
-        if (index === 0) this.route.moveTo((x + 0.5) * size, (y + 0.5) * size);
-        else this.route.lineTo((x + 0.5) * size, (y + 0.5) * size);
-      });
-      this.route.strokePath();
-      for (const [x, y] of actor.path) this.route.fillStyle(0xf3d297, 0.75).fillCircle((x + 0.5) * size, (y + 0.5) * size, 3);
-    }
-    if (this.editing) {
-      for (const object of this.world.map.objects) {
-        for (const [x, y] of object.interaction_spots) this.route.lineStyle(1, 0xe9d8a6, 0.4).strokeRect(x * size + 7, y * size + 7, size - 14, size - 14);
-      }
-    }
-  }
-
-  /** Mark each visitor's own seat with a ribbon in their colour, so a taken seat is visible. */
-  private drawOwnSeats(size: number): void {
-    for (const actor of this.world?.actors ?? []) {
-      const seat: WorldObject | undefined = this.world?.map.objects.find((object: WorldObject): boolean => object.id === actor.favorite_seat_id);
-      if (!seat) continue;
-      const color: number = Phaser.Display.Color.ValueToColor(actor.color).color;
-      const x: number = (seat.x + (seat.facing === "west" ? 0.82 : 0.18)) * size;
-      const y: number = (seat.y + 0.2) * size;
-      this.route.fillStyle(0x221b16, 0.8).fillCircle(x, y, 4.5);
-      this.route.fillStyle(color).fillCircle(x, y, 3.2);
-    }
+    drawRoute(this.route, this.world, this.selectedId, this.editing);
   }
 
   private click(pointer: Phaser.Input.Pointer): void {
