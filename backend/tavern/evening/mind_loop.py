@@ -21,8 +21,9 @@ from tavern.mind.intentions import (UNMETERED, IntentionRules, Intender, deliver
                                     stale_intentions)
 from tavern.mind.turn_view import next_speaker, turn_view
 from tavern.social.invitations import answer_options
-from tavern.social.player_lines import ReadLine, deliver_reading, read_as_remark
-from tavern.social.stage_lines import StageClaim, deliver_stage, stage_claims, write_scripted_stage
+from tavern.social.player_lines import ReadLine, ReadNumber, deliver_reading, read_as_pitch, read_as_remark
+from tavern.social.stage_lines import (StageClaim, deliver_number, deliver_stage, number_view, stage_claims,
+                                       write_scripted_stage)
 from tavern.social.scenes import TurnResult
 from tavern.social.turns import claim_turns, deliver_turn
 
@@ -97,7 +98,7 @@ class MindLoop:
 
     def __init__(self, courier: Courier, decide: Decide, write: Write, intender: Intender | None,
                  rules: IntentionRules, answer: Answer | None = None, stage: Stage | None = None,
-                 read: ReadLine = read_as_remark) -> None:
+                 read: ReadLine = read_as_remark, read_number: ReadNumber = read_as_pitch) -> None:
         """Create a loop with nothing in flight.
 
         Args:
@@ -109,9 +110,12 @@ class MindLoop:
             answer: Asks how an invitee answers; None leaves the answer to the line writer, as before.
             stage: Asks for the words on and at the stage; None answers with the scripted ones.
             read: Reads the act of the player's typed lines; the offline one makes them remarks.
+            read_number: Reads the kind and target of the player's number on the stage; the offline one a pitch.
         """
         self.courier, self.decide, self.write, self.answer = courier, decide, write, answer
-        self.read = read
+        self.read, self.read_the_number = read, read_number
+        # The player's typed numbers being read, per performer: ticket and text.
+        self.numbering: dict[str, tuple[Ticket, str]] = {}
         # The player's typed lines being read, per claimed turn (scene ID, turn index): ticket, text, `to`.
         self.reading: dict[tuple[str, int], tuple[Ticket, str, str]] = {}
         self.stage: Stage = stage or (lambda view: write_scripted_stage(view, {}))
@@ -147,6 +151,7 @@ class MindLoop:
         self._deliver_lines(world)
         self._ask_lines(world)
         self._deliver_readings(world)
+        self._deliver_numbers(world)
         self._deliver_stage(world)
         self._ask_stage(world)
         if self.intender is not None:
@@ -166,7 +171,7 @@ class MindLoop:
         for ticket in self._tickets():
             self.courier.cancel(ticket)
         for requests in (self.pending, self.writing, self.answering, self.answered, self.intending, self.next_intention, self.asked_at,
-                         self.revisions, self.next_decision, self.made, self.staging, self.staged, self.reading):
+                         self.revisions, self.next_decision, self.made, self.staging, self.staged, self.reading, self.numbering):
             requests.clear()
 
     async def close(self) -> None:
@@ -180,6 +185,7 @@ class MindLoop:
                 *(ticket for ticket, _ in self.answering.values()),
                 *(ticket for ticket, _ in self.staging.values()),
                 *(ticket for ticket, _, _ in self.reading.values()),
+                *(ticket for ticket, _ in self.numbering.values()),
                 *(ticket for ticket, _, _ in self.intending.values())]
 
     def _drop_stale_decisions(self, world: World) -> None:
@@ -280,6 +286,28 @@ class MindLoop:
                 del self.reading[key]
                 deliver_reading(world, *key, text, to, self.courier.outcome(ticket))
 
+    def read_number(self, world: World, text: str) -> None:
+        """Send the player's typed number on the stage to be read as a kind and a target.
+
+        Args:
+            world: World whose played guest stands on the stage.
+            text: What the player typed.
+        """
+        player = world["player"]
+        if player is None:
+            raise ValueError("A number can be read only for a player, and this evening has none")
+        speaker = find_actor(world, player["actor_id"])
+        if speaker is None:
+            raise ValueError("A number can be read only for a guest in the hall")
+        self.numbering[speaker["id"]] = (
+            self.courier.send(self.read_the_number(number_view(world, speaker), text), world["time"]), text)
+
+    def _deliver_numbers(self, world: World) -> None:
+        for actor_id, (ticket, text) in list(self.numbering.items()):
+            if self.courier.ready(ticket, world["time"]):
+                del self.numbering[actor_id]
+                deliver_number(world, actor_id, text, self.courier.outcome(ticket))
+
     def _deliver_stage(self, world: World) -> None:
         for key, (ticket, claim) in list(self.staging.items()):
             if self.courier.ready(ticket, world["time"]):
@@ -320,7 +348,7 @@ class EveningPorts:
 
     `choose` decides for a visitor, `answer` is how an invitee answers (None: the line writer decides),
     `write` writes a conversation line, `stage` the words on and at the stage, and `intender` writes
-    intentions (None offline); `read` reads the player's typed lines.
+    intentions (None offline); `read` reads the player's typed lines and `read_number` their numbers.
     """
 
     choose: Decide
@@ -329,6 +357,7 @@ class EveningPorts:
     stage: Stage
     intender: Intender | None
     read: ReadLine = read_as_remark
+    read_number: ReadNumber = read_as_pitch
 
 
 def evening_mind(courier: Courier, ports: EveningPorts, rules: IntentionRules) -> MindLoop:
@@ -342,4 +371,5 @@ def evening_mind(courier: Courier, ports: EveningPorts, rules: IntentionRules) -
     Returns:
         A loop with nothing in flight.
     """
-    return MindLoop(courier, ports.choose, ports.write, ports.intender, rules, ports.answer, ports.stage, ports.read)
+    return MindLoop(courier, ports.choose, ports.write, ports.intender, rules, ports.answer, ports.stage, ports.read,
+                    ports.read_number)

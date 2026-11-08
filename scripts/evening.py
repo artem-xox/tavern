@@ -26,7 +26,7 @@ from tavern.evening.recording import (Record, format_record, parse_records, reco
 from tavern.evening.scenario import open_evening, parse_scenario
 from tavern.mind.agents import Evaluators
 from tavern.adapters.characters import load_catalog
-from tavern.mind.haiku_reading import claude_reader
+from tavern.mind.haiku_reading import claude_number_reader, claude_reader
 from tavern.mind.haiku_stage import claude_stage_writer
 from tavern.mind.haiku_turns import claude_writer, writer_mode
 from tavern.mind.haiku_intentions import intention_writer
@@ -35,7 +35,7 @@ from tavern.mind.model_health import HealthBoard, banner, blocking
 from tavern.mind.questions import Question
 from tavern.mind.scripted import write_scripted_turn
 from tavern.mind.selection import read_ai_config
-from tavern.social.player_lines import ReadLine, read_as_remark
+from tavern.social.player_lines import ReadLine, ReadNumber, read_as_pitch, read_as_remark
 from tavern.social.stage_lines import StageWriter, write_scripted_stage
 from tavern.social.turns import TurnWriter
 
@@ -43,7 +43,8 @@ DECIDES = {"local": "the local policy (no model)", "live": "Jev, recorded", "rep
 RETELLING_MODEL = "claude-sonnet-5-5"  # Tells the evening at the end: one call, so a stronger model costs cents.
 CLAUDE_MODEL = "claude-haiku-5-5"  # The model `app.py` asks too: a measured evening costs what the server's would.
 CASTS_WITH_SCENARIOS = ("locals", "guests")
-TARIFFS = {"turn": HAIKU_5_5, "intention": HAIKU_5_5, "stage": HAIKU_5_5, "reading": HAIKU_5_5}
+TARIFFS = {"turn": HAIKU_5_5, "intention": HAIKU_5_5, "stage": HAIKU_5_5, "reading": HAIKU_5_5,
+           "number_reading": HAIKU_5_5}
 
 
 def arguments(root: Path) -> argparse.ArgumentParser:
@@ -227,6 +228,30 @@ def line_reader(writer: str, mode: str, calls: list[Record], keep: Callable[[Rec
     return claude_reader(record_questions("reading", ask, keep, time.monotonic, ClaudeError))
 
 
+def number_reader(writer: str, mode: str, calls: list[Record], keep: Callable[[Record], None],
+                  values: Mapping[str, Any]) -> ReadNumber:
+    """Wire the reader of the player's numbers on the stage, as the line reader is wired.
+
+    Args:
+        writer: `haiku` or `scripted`, the same as the line writer; scripted reads every number as a pitch.
+        mode: Evening mode; a replay answers from `calls`.
+        calls: The evening's calls, loaded for a replay.
+        keep: Receives each live call as soon as it ends, recorded as `number_reading`.
+        values: Parsed env file with ANTHROPIC_API_KEY.
+    Returns:
+        The reader port.
+    """
+    if writer == "scripted":
+        return read_as_pitch
+    if mode == "replay":
+        return claude_number_reader(replay_questions("number_reading", calls, ClaudeError))
+    config = claude_config(values["ANTHROPIC_API_KEY"], CLAUDE_MODEL)
+
+    async def ask(question: Question) -> Any:
+        return await ask_claude(question, config)
+    return claude_number_reader(record_questions("number_reading", ask, keep, time.monotonic, ClaudeError))
+
+
 def mind(mode: str, values: Mapping[str, Any], prefix: str, calls: list[Record],
          log: Path, tracer: Tracer | None) -> tuple[Intender | None, str]:
     """Wire the mind port that writes guests' intentions, and say how it runs.
@@ -399,7 +424,8 @@ def main(root: Path) -> None:
     started = time.monotonic()
     evening = asyncio.run(run_evening(world, settings, Random(args.seed), ports, pace, lines, intender=intender,
                                       stage_writer=stage, script=script,
-                                      reader=line_reader(writer, mode, calls, keep, values)))
+                                      reader=line_reader(writer, mode, calls, keep, values),
+                                      number_reader=number_reader(writer, mode, calls, keep, values)))
     wall = time.monotonic() - started
     if tracer is not None:
         # The client uploads in the background; what is still queued must leave before the process ends.

@@ -73,9 +73,8 @@ turn passes, and typing pings that hold the turn.
 ### 2026-11-08 — built; live run still open
 
 - `player_lines.player_turn(world)` and `PlayerTurn`, added to the snapshot as `player_turn` (computed, not saved: no schema bump).
-  States built: `none` (no scene, or autopilot), `free`, `your_turn` (with `silence_at`), `reading`. The stage's
-  `on_stage` and `comeback` are in `types.ts` and `chat.ts` (placeholder, no picker) but the backend does not produce
-  them: S3-06 was not merged. Wire them in `player_turn` when it lands.
+  States: `none` (no scene, or autopilot), `free`, `your_turn` (with `silence_at`), `reading`, and, after merging S3-06,
+  `on_stage` (`silence_at` is when they step down) and `comeback`.
 - `chat.ts` (`chatModel`, `nextPing`, `sayCommand`) with `frontend/tests/chat.test.ts`; `chatpanel.ts` docked under the
   hall (lines, faces, To: picker, 200-char input with counter, Enter sends, pings through `connection.send`, an `error`
   reply stays under the input until the next keystroke). Faces set "To:"; it resets to Auto when the scene changes.

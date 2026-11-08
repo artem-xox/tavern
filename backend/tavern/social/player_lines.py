@@ -1,13 +1,15 @@
-"""The player's typed lines: the reader port, and the boundary that makes a turn of a reading."""
+"""The player's typed lines: the reader ports, and the boundary that makes a turn of a reading."""
 
 from collections.abc import Callable, Coroutine, Mapping
 from typing import Any, TypedDict
 
 from tavern.hall.memory import log_event
 from tavern.hall.player import steered
-from tavern.hall.state import World
+from tavern.hall.state import World, find_actor
 from tavern.mind.turn_view import next_speaker, turn_view
 from tavern.social.scenes import conversation_of
+from tavern.social.speeches import on_stage_for
+from tavern.social.stage_lines import comeback_owed_to
 from tavern.social.turns import check_turn
 
 # Reads the act of words already written: the played guest's view (`turn_view` as them), the text, and `to`
@@ -15,6 +17,10 @@ from tavern.social.turns import check_turn
 # `deliver_reading` checks like a guest's turn. Any failure it raises makes the line a remark.
 ReadLine = Callable[[Mapping[str, Any], str, str], Coroutine[Any, Any, Mapping[str, Any]]]
 _EXTRAS = ("invitation", "fact_id")
+# Reads the number of words already written for the stage: the performer's view (`stage_lines.number_view`) and the
+# text. Answers `{number, target}`: one of `numbers.NUMBERS` and a guest in the hall, or None for a number with no
+# target. `stage_lines.deliver_number` checks it; any failure it raises makes the text a pitch to the hall.
+ReadNumber = Callable[[Mapping[str, Any], str], Coroutine[Any, Any, Mapping[str, Any]]]
 
 
 async def read_as_remark(view: Mapping[str, Any], text: str, to: str) -> Mapping[str, Any]:
@@ -36,6 +42,19 @@ async def read_as_remark(view: Mapping[str, Any], text: str, to: str) -> Mapping
     else:
         addressee = None if to == "everyone" else to
     return {"act": "remark", "addressee": addressee, "topic": view["conversation"]["topic"]}
+
+
+async def read_as_pitch(view: Mapping[str, Any], text: str) -> Mapping[str, Any]:
+    """Read every number as a pitch to the hall: the offline reader.
+
+    Args:
+        view: The performer's view of the stage.
+        text: What they typed.
+
+    Returns:
+        A pitch with no target.
+    """
+    return {"number": "pitch", "target": None}
 
 
 def deliver_reading(world: World, scene_id: str, turn: int, text: str, to: str, outcome: Callable[[], Any]) -> None:
@@ -94,7 +113,7 @@ class PlayerTurn(TypedDict):
     """What the played guest's scene waits for, as the chat shows it."""
 
     scene_id: str | None
-    state: str  # "none" | "free" | "your_turn" | "reading" (the stage's "on_stage" and "comeback" come with S3-06)
+    state: str  # "none" | "free" | "your_turn" | "reading" | "on_stage" | "comeback"
     silence_at: float | None  # game time the turn passes in silence; only for "your_turn"
 
 
@@ -106,13 +125,17 @@ def player_turn(world: World) -> PlayerTurn | None:
 
     Returns:
         None without a player. Otherwise the guest's scene and the state: `none` (on autopilot or in no scene),
-        `reading` (their typed line is being read or waits to be spoken), `your_turn` (the scene waits for their
+        `comeback` (a heckle is owed an answer), `on_stage` (up there with no number given; `silence_at` is when they
+        step down), `reading` (their typed line is being read or waits to be spoken), `your_turn` (the scene waits for their
         line, which passes in silence at `silence_at`, as `turns` plays it) or `free` (someone else speaks next,
         and they can still cut in).
     """
     player = world["player"]
     if player is None:
         return None
+    staged = _on_the_stage(world, player)
+    if staged is not None:
+        return staged
     scene = conversation_of(world, player["actor_id"])
     if scene is None or not steered(world, player["actor_id"]):
         return {"scene_id": None if scene is None else scene["id"], "state": "none", "silence_at": None}
@@ -124,4 +147,20 @@ def player_turn(world: World) -> PlayerTurn | None:
     typed = player.get("typing_at")
     held_since = scene["next_turn_at"] if typed is None else max(scene["next_turn_at"], typed)
     return {"scene_id": scene["id"], "state": "your_turn",
+            "silence_at": held_since + world["rules"]["player"]["silence"] * world["speed"]}
+
+
+def _on_the_stage(world: World, player: Mapping[str, Any]) -> PlayerTurn | None:
+    # The stage's states come before the scene's, as `say` tries the stage first. None when the guest is on neither errand.
+    performer = find_actor(world, player["actor_id"])
+    if performer is None or not steered(world, performer["id"]):
+        return None
+    if comeback_owed_to(world, performer["id"]) is not None:
+        return {"scene_id": None, "state": "comeback", "silence_at": None}
+    since = on_stage_for(world, performer)
+    if since is None:
+        return None
+    climbed = performer["action"].get("climbed_at", world["time"] - since)
+    held_since = max(climbed, player.get("typing_at") or 0.0)
+    return {"scene_id": None, "state": "on_stage",
             "silence_at": held_since + world["rules"]["player"]["silence"] * world["speed"]}

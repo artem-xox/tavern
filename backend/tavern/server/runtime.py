@@ -30,7 +30,7 @@ from tavern.mind.intentions import INTENTION_RULES, Intender, IntentionRules
 from tavern.mind.model_health import HealthBoard
 from tavern.mind.scripted import write_scripted_turn
 from tavern.server.controls import forced_action, refill_tap, set_paused, set_speed, toggle_block
-from tavern.social.player_lines import ReadLine, player_turn, read_as_remark
+from tavern.social.player_lines import ReadLine, ReadNumber, player_turn, read_as_pitch, read_as_remark
 from tavern.social.stage_lines import StageWriter, write_scripted_stage
 from tavern.social.turns import TurnWriter
 
@@ -119,7 +119,7 @@ class TavernRuntime:
                  choose: Chooser = choose_action, health: HealthBoard | None = None,
                  answer: Answerer = choose_invitation_answer, storyteller: Ask | None = None,
                  lineup: Lineup | None = None, stage_writer: StageWriter = write_scripted_stage,
-                 reader: ReadLine = read_as_remark) -> None:
+                 reader: ReadLine = read_as_remark, number_reader: ReadNumber = read_as_pitch) -> None:
         self.map_data = deepcopy(dict(map_data))
         self.scenario = scenario
         # Makes the evening of a `start` command; None where the start screen is not offered.
@@ -145,7 +145,8 @@ class TavernRuntime:
                                                                     self.rng)) if read_answers(self.ai_config) else None)
         self.mind = evening_mind(TaskCourier(), EveningPorts(
             lambda observation: choose(observation, self.ai_config, self.rng), answers,
-            lambda view: self.writer(view, self.ai_config), lambda view: stage_writer(view, self.ai_config), intender, reader),
+            lambda view: self.writer(view, self.ai_config), lambda view: stage_writer(view, self.ai_config), intender, reader,
+            number_reader),
             intention_rules)
 
     @property
