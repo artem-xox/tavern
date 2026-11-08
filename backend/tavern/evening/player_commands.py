@@ -179,3 +179,34 @@ def _drop_claim(mind: MindLoop, scene_id: str, turn: int) -> None:
         mind.courier.cancel(mind.writing.pop(key))
     if key in mind.answering:
         mind.courier.cancel(mind.answering.pop(key)[0])
+
+
+PLAYER_COMMANDS = ("steer", "act", "say", "options")
+
+
+def apply_command(world: World, mind: MindLoop, command: Mapping[str, Any]) -> dict[str, Any] | None:
+    """Route one player command to its handler: the one door the live runtime and a scripted evening share.
+
+    Args:
+        world: Authoritative world.
+        mind: The evening's requests in flight.
+        command: A `steer`, `act`, `say` or `options` command.
+
+    Returns:
+        The reply to send back (`options` has one), or None.
+
+    Raises:
+        ValueError: The type is not a player command, or the handler refuses the command.
+    """
+    kind = command.get("type")
+    if kind == "steer":
+        steer(world, mind, command)
+    elif kind == "act":
+        act(world, command)
+    elif kind == "say":
+        say(world, mind, command)
+    elif kind == "options":
+        return options(world, command)
+    else:
+        raise ValueError(f"Unknown player command {kind!r}; choose one of {PLAYER_COMMANDS}")
+    return None
