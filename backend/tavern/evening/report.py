@@ -16,6 +16,7 @@ from tavern.evening.lockstep import Evening
 from tavern.evening.manner_metrics import manner_counts
 from tavern.evening.metrics import (attention_counts, bar_metrics, conversation_counts, dice_metrics, evening_metrics,
                                     intention_counts, news_metrics, sleep_metrics, unspoken_calls, writer_stats)
+from tavern.evening.player_metrics import player_counts
 from tavern.evening.project_metrics import project_counts
 from tavern.evening.recording import Record, Tariff
 from tavern.evening.repetition import ALIKE, repetition_counts
@@ -43,6 +44,7 @@ def evening_report(evening: Evening, world: World, calls: Sequence[Record], run:
     Returns:
         The `run` section, then one section per measurement, in the order `metrics.json` shows them.
     """
+    player = player_counts(evening.events, None if world["player"] is None else world["player"]["actor_id"])
     names = {item["id"]: item["name"] for item in [*world["actors"], *world["departed"]]}
     return {"run": run,
             **evening_metrics(evening, calls, input_usd_per_million, stuck_threshold, tariffs),
@@ -64,4 +66,5 @@ def evening_report(evening: Evening, world: World, calls: Sequence[Record], run:
             "story": story_score(story_moments(evening.events), WEIGHTS),
             "bar": bar_metrics(evening.events, [item["id"] for item in world["actors"] if on_staff(item)]),
             "writer": {**writer_stats(evening, calls, "turn", writer_tariff),
-                       "unspoken_calls": unspoken_calls(evening, calls, "turn")}}
+                       "unspoken_calls": unspoken_calls(evening, calls, "turn")},
+            **({} if player is None else {"player": player})}

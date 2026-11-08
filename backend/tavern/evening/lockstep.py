@@ -9,7 +9,7 @@ from typing import Any, NotRequired, TypedDict
 from tavern.evening.decisions import free_to_decide
 from tavern.evening.mind_loop import EveningPorts, MindLoop, evening_mind
 from tavern.evening.player_commands import apply_command
-from tavern.evening.player_script import PlayerScript, Step
+from tavern.evening.player_script import REFUSAL_PREFIX, PlayerScript, Step
 from tavern.hall.memory import fresh_events, log_event
 from tavern.hall.closing import all_gone
 from tavern.hall.staff import guests
@@ -281,7 +281,7 @@ def _run_due_steps(world: World, mind: MindLoop, waiting: list[Step]) -> None:
         try:
             apply_command(world, mind, step.command)
         except ValueError as error:
-            log_event(world, None, "control", f"Player script: {step.command['type']} refused: {error}")
+            log_event(world, None, "control", f"{REFUSAL_PREFIX}{step.command['type']} refused: {error}")
 
 
 def _record_choices(world: Mapping[str, Any], run: _Run, courier: LockstepCourier,

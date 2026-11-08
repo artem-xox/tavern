@@ -9,6 +9,10 @@ from typing import Any
 SCRIPTED_TYPES = ("steer", "act", "say", "typing")
 
 
+# How the log opens the `control` event of a refused step ("Player script: say refused: ..."); metrics count them.
+REFUSAL_PREFIX = "Player script: "
+
+
 @dataclass(frozen=True)
 class Step:
     """One command due at game second `at`."""
