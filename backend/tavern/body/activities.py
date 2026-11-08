@@ -1,326 +1,22 @@
-"""The verbs visitors perform: targets, timing, effects, and how people and models name them."""
+"""The verbs visitors perform: targets, timing, and how people and models name them."""
 
-from collections.abc import Callable, Mapping
-from dataclasses import dataclass, field
+from collections.abc import Mapping
 from types import MappingProxyType
 from typing import Any
 
-from tavern.body.blows import shove_result
-from tavern.body.drunkenness import drink_beer, drunk_stage
-from tavern.body.fights import fight_of, fighter_of, open_fight, opponent_of, try_separating
+from tavern.body.activity import Activity
+from tavern.body.effects import (
+    approach_scene, ask_for_remedy, bring_drink, drink, fall_asleep, give, go_home, help_up, intervene, interview,
+    join_fight, join_scene, open_scene, pour, settle, shove, start_fight, use_remedy, wake_up,
+)
 from tavern.body.hearing import Sound
-from tavern.body.items import ITEMS
-from tavern.body.wounds import DOWN_SECONDS, GROGGY_SECONDS, STAGGER_SECONDS, lay_low, treat
-from tavern.hall.chance import roll
-from tavern.hall.memory import record_event
-from tavern.hall.state import Actor, World, find_actor
-from tavern.social.aims import begin_aim
 from tavern.social.darts import settle_match
-from tavern.social.giving import hand_over
-from tavern.social.invitations import begin_errand
-from tavern.social.names import called
-from tavern.social.scenes import conversation_of, join_conversation, start_conversation
-from tavern.social.signature_acts import brandish_flag, film_room, open_interview, raise_sign
-from tavern.social.tables import intrude
-from tavern.social.thoughts import opinion_of, think
-
-# An effect receives the world, the visitor, and the target: an object, a partner, or None.
-# The target is a place or, for a part in a conversation, the partner.
-Effect = Callable[[World, Actor, Any], None]
-
-# Boredom, on the 0–100 scale of needs, that a fully fun activity (`Activity.fun` of 1) takes away.
-FUN_RELIEF = 100.0
-
-
-@dataclass(frozen=True)
-class Activity:
-    """One verb: what it needs, how long it takes, what it changes, and how it is described.
-
-    Attributes:
-        verb: Action verb used in actions, events, and saved worlds.
-        target_kinds: Object kinds it can target; empty for verbs without an object target.
-        partner: Whether it targets another visitor instead of an object. Such a verb is a part in a
-            conversation scene (`tavern.social.scenes`): the scene, not a timer, ends it.
-        joins: Whether it joins the partner's scene instead of starting one with them.
-        approaches: Whether the part walks first, to a spot at the table the partner is at or, when they stand in the
-            open, to a free cell beside them, and then joins the partner's scene or starts one with them
-            (`tavern.social.scenes`); a partner standing in the open waits for the walker (`tavern.social.walk_ups`).
-        near_person: Whether it targets another visitor at the actor's table or beside them, as a chat does:
-            no scene, no walking, and the timer ends it. Shoving (`tavern.social.hostility`) is such a verb, and
-            fighting is one that the world ends (`held`).
-        closes_in: Whether it targets another visitor and walks to a spot at the table they sit at unless the actor is
-            already within reach of them, and acts there (`tavern.hall.routes`): stepping between fighters, helping
-            someone up, asking a healer for a remedy. No scene.
-        asks_cure: Whether the visitor it targets must be someone known to carry a cure.
-        held: Whether the world, not this timer, ends it: a fight until it is decided (`tavern.body.fights`), lying where
-            one fell until the condition is up (`tavern.body.wounds`); `duration` is only nominal.
-        names_item: Whether the action names an item from the actor's hands in `Action.item`, as giving does.
-        opens_errand: Whether it sends the actor off on an errand for the visitor it targets (see
-            `tavern.social.errands`); like giving, it needs that visitor near.
-        opens_project: The kind of `tavern.body.projects.PROJECTS` it opens instead of an action of its own, or None;
-            the world starts the project when the verb is chosen, and the project's steps do the walking.
-        chooses_chair: Whether a second decision picks the chair it is about, as for `seating`.
-        duration: Seconds of interaction (nominal for a scene part), or None for a decision step
-            that never runs in the world.
-        family: The `FAMILIES` entry it is chosen under: a first decision picks the family, a
-            second the action within it, so requests stay small as verbs and guests grow.
-        requires_item: Inventory item the visitor must hold to start.
-        empty_target: Refusal when the target has no stock left, or None when stock does not matter.
-        shared_target: Whether several visitors may use the target at once, so it is never reserved;
-            each takes a spot of their own, and the spots are the target's capacity.
-        leaves_seat: Whether starting it gives up the visitor's seat even without walking away.
-        game: Whether a game, not this timer, ends it (`tavern.social.dice`); `duration` is only nominal.
-        served: Whether, while staff tend a bar (`tavern.hall.staff.tended`), the bar's service, not this timer,
-            ends it (`tavern.body.bartending`); `duration` is then only nominal. Without staff the timer does.
-        staff_only: Whether only staff do it, and only the bar's own routine starts it: a guest is refused.
-        fun: How much of boredom it relieves, 0–1: `fun × FUN_RELIEF` is taken off boredom on completion, so a game together
-            relieves it most, and sitting or drinking alone not at all. It is the only source of relief from boredom: an
-            activity with `fun` may not list a `boredom` change in `needs`.
-        needs: Changes to needs on completion, clamped to 0–100.
-        fatigue_per_second: Tiredness gained each second while walking to it or doing it (see `tavern.body.energy`);
-            negative when it restores energy.
-        effect: Further consequences on completion.
-        on_arrival: Called when the visitor reaches the target, before the interaction runs.
-        label: Command name in the inspector.
-        status: Short status shown under the visitor, or None to show the verb.
-        pose: Character pose while interacting, or None for the resting pose.
-        doing: How others see someone doing it, in the briefing.
-        done: How a visitor remembers having done it, in the briefing.
-        what: Wording for the evaluator; `{target}` stands for the quoted target ID.
-        guidance: When the evaluator should consider it natural.
-        interruptible: Whether a loud enough stimulus stops it; otherwise the visitor finishes first.
-        absorbed: Whether the visitor's eyes stay on the task: no sound turns their head (it still breaks off or
-            alerts them as `interruptible` says).
-        asleep: Whether the visitor sleeps while doing it: others see a sleeper, and only a loud sound wakes them.
-        seated: Whether it can only be done from a seat at a table.
-        stopped_at_last_call: Refusal given to anyone who starts it after the barkeep has called closing time, or None
-            when it goes on. What began before the call still finishes.
-        sound: What others hear when the interaction begins, or None for a silent activity.
-    """
-
-    verb: str
-    what: str
-    guidance: str
-    duration: float | None
-    family: str
-    target_kinds: tuple[str, ...] = ()
-    partner: bool = False
-    joins: bool = False
-    approaches: bool = False
-    near_person: bool = False
-    closes_in: bool = False
-    asks_cure: bool = False
-    held: bool = False
-    names_item: bool = False
-    opens_errand: bool = False
-    opens_project: str | None = None
-    chooses_chair: bool = False
-    requires_item: str | None = None
-    empty_target: str | None = None
-    shared_target: bool = False
-    leaves_seat: bool = False
-    game: bool = False
-    served: bool = False
-    staff_only: bool = False
-    fun: float = 0.0
-    needs: Mapping[str, float] = field(default_factory=lambda: MappingProxyType({}))
-    fatigue_per_second: float = 0.0
-    effect: Effect | None = None
-    on_arrival: Effect | None = None
-    label: str | None = None
-    status: str | None = None
-    pose: str | None = None
-    doing: str | None = None
-    done: str | None = None
-    interruptible: bool = False
-    absorbed: bool = False
-    asleep: bool = False
-    seated: bool = False
-    stopped_at_last_call: str | None = None
-    sound: Sound | None = None
-
-    def __post_init__(self) -> None:
-        if isinstance(self.fun, bool) or not 0.0 <= self.fun <= 1.0:
-            raise ValueError(f"Fun of {self.verb!r} must be from 0 to 1, not {self.fun!r}")
-        if self.fun > 0.0:
-            if "boredom" in self.needs:
-                raise ValueError(f"{self.verb!r} sets boredom by `fun` and by `needs`; use one")
-            object.__setattr__(self, "needs", MappingProxyType({**self.needs, "boredom": -FUN_RELIEF * self.fun}))
-
-
-def _pour(world: World, actor: Actor, tap: dict[str, Any] | None) -> None:
-    if tap is None:
-        raise ValueError("Pouring a beer needs a tap")
-    tap["stock"] -= 1
-    actor["inventory"]["beer"] += 1
-
-
-def _drink(world: World, actor: Actor, target: dict[str, Any] | None) -> None:
-    actor["inventory"]["beer"] -= 1
-    actor["visit"]["beers"] += 1
-    # Guests without a tolerance trait (cards add it in E10) drink like a middling drinker.
-    tolerance = actor["traits"].get("tolerance", 0.5)
-    before = drunk_stage(actor["drunkenness"])
-    actor["drunkenness"] = drink_beer(actor["drunkenness"], tolerance, world["rules"]["drunkenness"])
-    after = drunk_stage(actor["drunkenness"])
-    # Crossing into drunk or wasted is a moment of its own: the client shows it, and the evening's metrics count it.
-    if after.floor > before.floor and after.name in ("drunk", "wasted"):
-        record_event(world, actor, f"got_{after.name}", f"{actor['name']} is {after.name} now")
-
-
-def _open_scene(world: World, actor: Actor, partner: Actor | None) -> None:
-    if partner is None:
-        raise ValueError("Starting a conversation needs a partner")
-    start_conversation(world, actor, partner)
-    begin_aim(world, actor, partner)
-
-
-def _join_scene(world: World, actor: Actor, member: Actor | None) -> None:
-    if member is None:
-        raise ValueError("Joining a conversation needs a member to join")
-    join_conversation(world, actor, member)
-    begin_aim(world, actor, member)
-
-
-def _approach_scene(world: World, actor: Actor, partner: Actor | None) -> None:
-    if partner is None:
-        raise ValueError("Walking over for a word needs a partner")
-    if conversation_of(world, partner["id"]) is None:
-        start_conversation(world, actor, partner)
-    else:
-        join_conversation(world, actor, partner)
-    begin_aim(world, actor, partner)
-
-
-def _interview(world: World, actor: Actor, partner: Actor | None) -> None:
-    if partner is None:
-        raise ValueError("An interview needs someone to interview")
-    _approach_scene(world, actor, partner)
-    open_interview(world, actor, partner)
-
-
-def _open_fight(world: World, actor: Actor, target: Any) -> None:
-    # Both fighters carry the fight verb at each other; the one who chose it opens the fight, the other joins it.
-    action = actor["action"]
-    victim = find_actor(world, action["target_id"]) if action else None
-    if victim is None or fight_of(world, actor["id"]) is not None:
-        return
-    open_fight(world, actor, victim)
-
-
-def _give(world: World, actor: Actor, receiver: Actor | None) -> None:
-    action = actor["action"]
-    if receiver is None or action is None or action.get("item") is None:
-        raise ValueError("Giving needs someone to give to and an item to give")
-    hand_over(world, actor, receiver, action["item"])
-
-
-def _bring_drink(world: World, actor: Actor, receiver: Actor | None) -> None:
-    if receiver is None:
-        raise ValueError("Bringing a drink needs someone to bring it to")
-    begin_errand(world, actor, receiver, "buy_drink", unasked=True)
-
-
-_SHOVES = {"staggered": ("stumbled back", STAGGER_SECONDS), "down": ("went sprawling", DOWN_SECONDS)}
-
-
-def _shove(world: World, actor: Actor, victim: Actor | None) -> None:
-    # Both remember it, and it is one sound; the shoved holds a grudge, and may be staggered or thrown to the floor.
-    if victim is None:
-        raise ValueError("A hostile act needs someone to turn on")
-    message = f"{actor['name']} shoved {victim['name']}"
-    for member in (actor, victim):
-        record_event(world, member, "shove", message)
-    think(victim, "shoved", world["time"], f"{called(victim, actor)} shoved me", message, about=actor)
-    result = shove_result(fighter_of(actor, "fists"), fighter_of(victim, "fists"),
-                          roll(world, "shove", actor["id"], victim["id"]))
-    if result in _SHOVES and fight_of(world, victim["id"]) is None:
-        words, seconds = _SHOVES[result]
-        lay_low(victim, result, world["time"] + seconds)
-        record_event(world, victim, result, f"{victim['name']} {words}")
-
-
-def _use_remedy(world: World, actor: Actor, target: Any) -> None:
-    actor["inventory"]["remedy"] -= 1
-    treat(actor)
-    record_event(world, actor, "tended", f"{actor['name']} took a remedy and looks better already")
-
-
-def _ask_for_remedy(world: World, actor: Actor, healer: Actor | None) -> None:
-    # The healer hands one over unless they think too ill of the asker, as a receiver refuses a gift from a foe.
-    kind = next((name for name, item in ITEMS.items() if item.cures and healer and healer["inventory"][name] > 0), None)
-    if healer is None or kind is None:
-        name = healer["name"] if healer else "Nobody"
-        record_event(world, actor, "no_remedy", f"{name} had no remedy to give {actor['name']}")
-    elif opinion_of(healer, actor["id"], world["time"]) < world["rules"]["giving"]["refuse_below"]:
-        message = f"{healer['name']} would not give {actor['name']} a remedy"
-        for member in (healer, actor):
-            record_event(world, member, "remedy_refused", message)
-    else:
-        hand_over(world, healer, actor, kind)
-
-
-def _help_up(world: World, actor: Actor, fallen: Actor | None) -> None:
-    if fallen is None or fallen["condition"] not in ("down", "out"):
-        return
-    fallen["condition"], fallen["condition_until"] = "groggy", world["time"] + GROGGY_SECONDS
-    message = f"{actor['name']} helped {fallen['name']} to their feet"
-    for member in (actor, fallen):
-        record_event(world, member, "helped_up", message)
-    think(fallen, "helped_up", world["time"], f"{called(fallen, actor)} helped me up off the floor", message, about=actor)
-
-
-def _intervene(world: World, actor: Actor, fighter: Actor | None) -> None:
-    fight = fight_of(world, fighter["id"]) if fighter else None
-    if fight is None:
-        return
-    other = find_actor(world, opponent_of(fight, fighter["id"])) if fighter else None
-    if fighter is None or other is None or not try_separating(world, fight, actor, (fighter, other)):
-        record_event(world, actor, "brushed_off", f"{actor['name']} tried to part them and was shaken off")
-
-
-def _join_fight(world: World, actor: Actor, target: Actor | None) -> None:
-    # They take their place beside the fight; the next duel is theirs when this one is over (`fights.begin_waiting`).
-    fight = fight_of(world, target["id"]) if target else None
-    if target is None or fight is None or any(item["against"] == target["id"] for item in fight["waiting"]):
-        return
-    fight["waiting"].append({"id": actor["id"], "against": target["id"]})
-    record_event(world, actor, "joined_fray", f"{actor['name']} squared up to wait a turn against {target['name']}")
-
-
-def _go_home(world: World, actor: Actor, door: dict[str, Any] | None) -> None:
-    # step_world moves the visitor out once every actor has finished this tick.
-    actor["visit"]["left_at"] = world["time"]
-
-
-def _fall_asleep(world: World, actor: Actor, target: Any) -> None:
-    record_event(world, actor, "dozed_off", f"{actor['name']} fell asleep at the table")
-
-
-def _wake_up(world: World, actor: Actor, target: Any) -> None:
-    record_event(world, actor, "woke_up", f"{actor['name']} woke up at the table")
-
-
-def _settle(world: World, actor: Actor, seat: dict[str, Any] | None) -> None:
-    # The chair a visitor sits down on becomes their own; taking someone else's own seat wrongs them, and sitting down
-    # at a table others hold without being welcome there upsets its hosts.
-    if seat is None:
-        raise ValueError("Settling down needs a seat")
-    if actor["seat_id"] != seat["id"]:
-        for owner in world["actors"]:
-            if owner["id"] != actor["id"] and owner["favorite_seat_id"] == seat["id"]:
-                message = f"{actor['name']} took {owner['name']}'s seat ({seat['name']})"
-                record_event(world, owner, "seat_taken", message)
-                think(owner, "seat_taken", world["time"], f"{called(owner, actor)} took my seat ({seat['name']})",
-                      message, about=actor)
-    if actor["seat_id"] != seat["id"]:
-        intrude(world, actor, seat)
-    actor.update({"seat_id": seat["id"], "favorite_seat_id": seat["id"]})
+from tavern.social.signature_acts import brandish_flag, film_room, raise_sign
 
 
 ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity for activity in (
     Activity(verb="take_beer", fatigue_per_second=0.25, target_kinds=("tap",), duration=0.8, empty_target="Beer tap is empty",
-             stopped_at_last_call="The bar has stopped serving", leaves_seat=True, served=True, absorbed=True, effect=_pour, label="Get a beer", status="getting ale", pose="TakeBeer",
+             stopped_at_last_call="The bar has stopped serving", leaves_seat=True, served=True, absorbed=True, effect=pour, label="Get a beer", status="getting ale", pose="TakeBeer",
              doing="fetching ale", done="poured a mug of ale",
              family="refreshment",
              what="walk to the tap {target} and get a mug of ale to carry: the barkeep pours it, or they pour "
@@ -360,7 +56,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "and will not forget it, and the hall hears the bark. It needs a real grudge, so it does not "
                       "suit idle company, and not twice in a short while."),
     Activity(verb="interview_guest", fatigue_per_second=0.05, requires_item="microphone", partner=True, approaches=True,
-             duration=8.0, on_arrival=_interview, label="Interview a guest", status="interviewing",
+             duration=8.0, on_arrival=interview, label="Interview a guest", status="interviewing",
              pose="Interviewing", stopped_at_last_call="The inn is closing: no more interviews",
              sound=Sound("chat", 0.25, 6.0, "a conversation"), doing="interviewing someone with a microphone",
              done="interviewed someone", family="company", fun=0.6,
@@ -377,7 +73,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              what="pour a mug of ale for the guest waiting at the tap",
              guidance="Nobody chooses it: the barkeep pours for whoever waits at the tap."),
     Activity(verb="drink", fatigue_per_second=0.2, duration=3.0, requires_item="beer",
-             needs=MappingProxyType({"thirst": -60, "bladder": 25}), effect=_drink, label="Drink beer", interruptible=True,
+             needs=MappingProxyType({"thirst": -60, "bladder": 25}), effect=drink, label="Drink beer", interruptible=True,
              status="sipping ale", pose="Drinking", doing="drinking", done="drank a beer",
              family="refreshment",
              what="drink the mug of ale they are holding",
@@ -390,7 +86,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              what="rest on the chair {target}",
              guidance="A short sit-down; it does not ease tiredness, only sleep does."),
     Activity(verb="sit", target_kinds=("chair",), duration=14.0,
-             on_arrival=_settle, label="Sit at a table", status="seated", pose="Seated",
+             on_arrival=settle, label="Sit at a table", status="seated", pose="Seated",
              interruptible=True,
              doing="heading to a seat", done="sat a while",
              family="resting",
@@ -398,7 +94,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              guidance="Sitting in their own seat is a guest's natural resting state: it is "
                       "where they sip their ale, and it lets them chat with whoever shares the table. Getting "
                       "up needs a reason."),
-    Activity(verb="talk", fatigue_per_second=0.05, partner=True, duration=8.0, on_arrival=_open_scene, label="Chat with a neighbor",
+    Activity(verb="talk", fatigue_per_second=0.05, partner=True, duration=8.0, on_arrival=open_scene, label="Chat with a neighbor",
              status="chatting", pose="Talking",
              sound=Sound("chat", 0.25, 6.0, "a conversation"), doing="talking", done="chatted",
              family="company",
@@ -408,7 +104,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "ends in a quarrel, leaving both in a sour mood and thinking less of each other. Right after "
                       "a chat, with their wish for company satisfied, a quiet sip or a rest is more natural "
                       "than yet another chat."),
-    Activity(verb="approach", fatigue_per_second=0.05, partner=True, approaches=True, duration=8.0, on_arrival=_approach_scene,
+    Activity(verb="approach", fatigue_per_second=0.05, partner=True, approaches=True, duration=8.0, on_arrival=approach_scene,
              label="Walk over for a word", status="chatting", pose="Talking",
              sound=Sound("chat", 0.25, 6.0, "a conversation"), doing="walking over for a word",
              done="went over for a word",
@@ -417,7 +113,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              guidance="The polite way to seek out someone sitting at another table, or standing about the room: nobody's chair is taken. It "
                       "eases the wish for company like any chat, and standing there they may suggest moving to a "
                       "free table together, a game or an ale. Pointless with someone they dislike."),
-    Activity(verb="join_conversation", fatigue_per_second=0.05, partner=True, joins=True, duration=8.0, on_arrival=_join_scene,
+    Activity(verb="join_conversation", fatigue_per_second=0.05, partner=True, joins=True, duration=8.0, on_arrival=join_scene,
              label="Join a conversation", status="chatting", pose="Talking", doing="joining a conversation",
              done="joined a conversation",
              family="company",
@@ -469,7 +165,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              guidance="A game of dice draws a crowd: watching eases boredom, and curious guests love to see who "
                       "wins. It means leaving their seat until the game ends."),
     # Offered only to a guest with a grudge, a temper and, as drink loosens it, the nerve (`tavern.social.hostility`).
-    Activity(verb="shove", fatigue_per_second=1.5, near_person=True, duration=1.0, effect=_shove, label="Shove", status="shoving",
+    Activity(verb="shove", fatigue_per_second=1.5, near_person=True, duration=1.0, effect=shove, label="Shove", status="shoving",
              doing="shoving someone", done="shoved someone", family="confront",
              what="shove {target}, who sits at their table or stands beside them, hard enough that the whole room "
                   "turns to look",
@@ -478,7 +174,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "ill of) and a short temper, more so with drink in them, would do it. Everyone hears it, the "
                       "one shoved will not forget it, and it may lead to worse. Most guests, even angry ones, "
                       "choose something else."),
-    Activity(verb="start_fight", fatigue_per_second=2.5, near_person=True, held=True, duration=2.0, on_arrival=_open_fight,
+    Activity(verb="start_fight", fatigue_per_second=2.5, near_person=True, held=True, duration=2.0, on_arrival=start_fight,
              label="Start a fight", status="fighting", pose="Fighting", doing="fighting", done="fought", family="confront",
              what="pick a fight with {target}, who sits at their table or stands beside them",
              guidance="The rarest act of the evening: a fistfight, one on one, with someone they think ill of after a "
@@ -487,13 +183,13 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "knocked out, or giving up, or both parted and still cursing; whoever loses is hurt and has "
                       "to see to their wounds. A guest who holds a cudgel makes it far more dangerous. Even an angry "
                       "guest almost always chooses something else."),
-    Activity(verb="give", fatigue_per_second=0.25, near_person=True, names_item=True, duration=1.5, effect=_give, label="Give",
+    Activity(verb="give", fatigue_per_second=0.25, near_person=True, names_item=True, duration=1.5, effect=give, label="Give",
              status="giving", pose="Giving", doing="handing something over", done="gave something away",
              family="company", what="hand {item} to {target}, who sits at their table or stands beside them",
              guidance="A kindness between people who get on: a drink for a thirsty friend, a remedy for someone "
                       "worried about sickness, a keepsake for someone they like. It costs the giver what they hand "
                       "over, and someone who dislikes them may refuse it."),
-    Activity(verb="bring_drink", fatigue_per_second=0.25, near_person=True, opens_errand=True, duration=0.5, effect=_bring_drink,
+    Activity(verb="bring_drink", fatigue_per_second=0.25, near_person=True, opens_errand=True, duration=0.5, effect=bring_drink,
              label="Bring a drink", status="fetching a drink", doing="going to fetch someone an ale",
              done="went to fetch someone an ale", family="fetching",
              what="fetch a mug of ale and bring it to {target}, who sits at their table or stands beside them",
@@ -516,7 +212,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              family="idling",
              what="wait a moment and do nothing",
              guidance="Idling where they stand is rarely the most natural thing."),
-    Activity(verb="leave", fatigue_per_second=0.25, target_kinds=("door",), shared_target=True, duration=1.0, effect=_go_home, label="Go home",
+    Activity(verb="leave", fatigue_per_second=0.25, target_kinds=("door",), shared_target=True, duration=1.0, effect=go_home, label="Go home",
              status="going home", doing="heading for the door", done="left",
              family="going_home",
              what="leave the inn for the night through {target}, ending their visit for good",
@@ -549,7 +245,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
     # A wasted guest at their table nods off by themselves (`dozing.nodding_off`); a tired one may also choose it.
     # Either way a loud enough sound wakes them (`dozing.waking_sound`) and a quiet one does not.
     Activity(verb="doze", fatigue_per_second=-0.75, duration=40.0, label="Sleep at the table", status="asleep",
-             pose="SleepingSeated", interruptible=True, asleep=True, seated=True, on_arrival=_fall_asleep, effect=_wake_up,
+             pose="SleepingSeated", interruptible=True, asleep=True, seated=True, on_arrival=fall_asleep, effect=wake_up,
              doing="asleep at the table", done="slept at the table", family="resting",
              what="put their head down and sleep a while right here in their seat (it restores some energy; nobody "
                   "at an inn minds a sleeper, and a loud noise will wake them)",
@@ -565,14 +261,14 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              guidance="Nobody chooses it: a guest thrown to the floor or knocked out lies there until their time is up."),
     # What a hurt guest does instead of everything else (see `tavern.mind.agents`): a remedy at hand, a healer to ask,
     # or the way home to rest.
-    Activity(verb="use_remedy", fatigue_per_second=0.05, requires_item="remedy", duration=2.0, effect=_use_remedy,
+    Activity(verb="use_remedy", fatigue_per_second=0.05, requires_item="remedy", duration=2.0, effect=use_remedy,
              label="Take a remedy", status="taking a remedy", doing="taking a remedy", done="took a remedy",
              family="hurt",
              what="take one of the herbal remedies they carry to mend their hurts",
              guidance="What a hurt guest who carries a remedy does first: it puts them right at once and is "
                       "worth more to them than a drink, a chat or a seat."),
     Activity(verb="seek_remedy", fatigue_per_second=0.1, closes_in=True, asks_cure=True, duration=2.0,
-             effect=_ask_for_remedy, label="Ask for a remedy", status="asking for a remedy", pose="Talking",
+             effect=ask_for_remedy, label="Ask for a remedy", status="asking for a remedy", pose="Talking",
              doing="going to ask for a remedy", done="asked for a remedy", family="hurt",
              what="go to {target}, a healer who carries remedies, and ask for one to mend their hurts",
              guidance="What a hurt guest does when someone in the room carries a remedy: beaten or bruised, they "
@@ -590,7 +286,7 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
              what="shout and cheer the fighters on",
              guidance="Rowdy company, the sociable and those with drink in them cheer a fight on. It is not a "
                       "kindness: the fighters hear it."),
-    Activity(verb="intervene", fatigue_per_second=0.5, closes_in=True, duration=1.5, effect=_intervene, label="Part them",
+    Activity(verb="intervene", fatigue_per_second=0.5, closes_in=True, duration=1.5, effect=intervene, label="Part them",
              status="stepping between them", pose="Shoving", doing="stepping between the fighters",
              done="tried to part the fighters", family="react",
              what="step between {target} and whoever they fight, and try to part them",
@@ -598,13 +294,13 @@ ACTIVITIES: Mapping[str, Activity] = MappingProxyType({activity.verb: activity f
                       "not, and the weak and the timid keep out of it. A guest who steps in is not fighting "
                       "anyone."),
     Activity(verb="join_fight", fatigue_per_second=0.2, closes_in=True, held=True, duration=15.0,
-             on_arrival=_join_fight, label="Wait to fight", status="waiting to fight", pose="Fighting",
+             on_arrival=join_fight, label="Wait to fight", status="waiting to fight", pose="Fighting",
              doing="squaring up to take a turn", done="waited to fight", family="react",
              what="square up beside {target}, who is fighting, to take them on as soon as the fight in hand is over",
              guidance="Only for a guest who hates one of the fighters, or whose friend is the one being beaten, and has "
                       "the nerve: fights are one on one, so they wait their turn, and take on whoever is left "
                       "standing."),
-    Activity(verb="help_up", fatigue_per_second=0.25, closes_in=True, duration=2.0, effect=_help_up, label="Help up",
+    Activity(verb="help_up", fatigue_per_second=0.25, closes_in=True, duration=2.0, effect=help_up, label="Help up",
              status="helping someone up", pose="HelpingUp", doing="helping someone up off the floor",
              done="helped someone up", family="react",
              what="help {target}, who lies on the floor, up on their feet",

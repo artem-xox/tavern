@@ -54,7 +54,7 @@ Functional core, imperative shell. Dependencies point inward only.
   - `hall/` the world and its state (`world.py` public API, `lifecycle.py` action state
     machine, `state.py` types, `rules.py`, `chance`, `room`, `routes`, `sight`, `sightlines`, `staff`, `arrival`, `closing`,
     `memory` event log, `validation`, `whereabouts`: at which table or bar, whom one can reach).
-  - `body/` what executes an action: `activities.py` (the verb table), `actions`, `items` (what a visitor
+  - `body/` what executes an action: `activity.py` (what a verb is), `effects.py` (what it does when it lands), `activities.py` (the verb table), `actions`, `items` (what a visitor
     can carry), `queues`, `bartending`, `hearing`, `attention`, `expression`, `drunkenness`, `dozing`.
   - `social/` guests among guests: `thoughts`, `ties`, `names`, `scenes`, `conversation`,
     `social_acts`, `invitations`, `errands`, `giving`, `dice`, `overhearing`, `turns`.
@@ -92,7 +92,7 @@ Rules:
 - A new game system (signature items, fun, retelling) is a new module named for
   the concept: pure, tested alone, wired in with one small edit. Do not grow files over
   ~400 lines (`scene.ts` today); split first, as a separate step.
-- Adding a verb means one `Activity` in `activities.py` (targets, timing, preconditions,
+- Adding a verb means one `Activity` in `activities.py` (an effect it needs goes in `effects.py`; targets, timing, preconditions,
   effects, wording, pose, family), plus its candidate rule in `candidates.py`, its local utility
   in `local_policy.py` and its option sentence in `options.py`. The world, Jev, saves, and
   the client read the table.

@@ -1,7 +1,7 @@
 ---
 id: S3-01
 title: Split the verb table
-status: todo
+status: done
 needs: []
 touches: [backend/tavern/body/activities.py, backend/tavern/body/activity.py (new), backend/tavern/body/effects.py (new), backend/tavern/hall/lifecycle.py, AGENTS.md, docs/plan/TECH_DEBT.md]
 ---
@@ -59,3 +59,8 @@ report it.
 - `wc -l backend/tavern/body/activit*.py backend/tavern/body/effects.py`: each file is under 400 lines.
 
 ## Results
+
+- Golden: `diff -r runs/golden-base runs/golden-now` printed nothing after step 2 and after step 3.
+- `make check`: backend `4667 passed`, frontend `node:test` 318 pass, 0 fail, exit 0.
+- `wc -l`: `activities.py` 383, `activity.py` 132, `effects.py` 190.
+- One deviation from the Shape: the fight-opening effect is `start_fight`, not `open_fight`, because `body/fights.py` already exports `open_fight` and `effects.py` imports it.
