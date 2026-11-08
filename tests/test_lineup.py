@@ -92,6 +92,28 @@ def test_a_malformed_lineup_is_refused_by_name(ids: Any, minutes: Any, message: 
         lineup("locals", ids, minutes)
 
 
+@pytest.mark.parametrize("ids, player, expected", [
+    pytest.param(["greta", "trump"], None, None, id="no-player"),
+    pytest.param(["greta", "trump"], "trump", "trump", id="a-picked-guest"),
+    pytest.param(["greta"], "greta", "greta", id="the-only-guest"),
+])
+def test_the_player_is_one_of_the_picked_guests_or_nobody(ids: list[str], player: Any, expected: Any) -> None:
+    scenario = lineup_scenario(TEMPLATES, CATALOG, "guests", ids, 5, player)
+    world = open_evening(json.loads((ROOT / "data" / "tavern.json").read_text()), scenario, 1)
+    assert (scenario.player, world["player"]) == (
+        expected, None if expected is None else {"actor_id": expected, "steering": True})
+
+
+@pytest.mark.parametrize("player, message", [
+    pytest.param("putin", "putin", id="not-picked"),
+    pytest.param("hob", "hob", id="staff"),
+    pytest.param(["trump"], "player", id="not-text"),
+])
+def test_a_player_who_is_not_a_picked_guest_is_refused(player: Any, message: str) -> None:
+    with pytest.raises(ValueError, match=message):
+        lineup_scenario(TEMPLATES, CATALOG, "guests", ["greta", "trump"], 5, player)
+
+
 def test_an_unknown_cast_is_refused() -> None:
     with pytest.raises(ValueError, match="Unknown cast 'staff'"):
         lineup("staff", ["hob"])
@@ -108,7 +130,7 @@ def test_the_cast_listing_shows_each_face_with_its_occupation() -> None:
 def runtime(tmp_path: Path) -> TavernRuntime:
     room = json.loads((ROOT / "data" / "tavern.json").read_text())
     return TavernRuntime(room, tmp_path / "save.json", {"typesafe_api_key": None},
-                         lineup=lambda cast, ids, minutes: lineup(cast, ids, minutes))
+                         lineup=lambda cast, ids, minutes, player=None: lineup(cast, ids, minutes))
 
 
 def test_the_start_command_opens_a_running_evening_for_the_picked_guests(tmp_path: Path) -> None:

@@ -93,7 +93,7 @@ Answerer = Callable[[Mapping[str, Any], Mapping[str, Any], Sequence[str], Mappin
 
 
 # Builds the evening of a cast for the guests picked on the start screen: cast, guest IDs, minutes.
-Lineup = Callable[[Any, Any, Any], Scenario]
+Lineup = Callable[[Any, Any, Any, Any], Scenario]
 
 
 class Store(Protocol):
@@ -294,7 +294,8 @@ class TavernRuntime:
         # The picked lineup becomes the scenario, so a later restart replays it.
         if self.lineup is None:
             raise ValueError("No lineups are offered")
-        self.scenario = self.lineup(command.get("cast"), command.get("guests"), command.get("minutes"))
+        self.scenario = self.lineup(command.get("cast"), command.get("guests"), command.get("minutes"),
+                               command.get("player"))
         self._reset(command)
 
     def command(self, command: Mapping[str, Any]) -> None:

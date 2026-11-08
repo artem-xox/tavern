@@ -11,7 +11,7 @@ from typing import Any, NotRequired, TypedDict, cast
 from tavern.body.ailment import draw_ailing, eligible, parse_ailment
 from tavern.body.items import parse_carries
 from tavern.hall.arrival import admit_arrivals, arrival_ranges, arriving, take_posts
-from tavern.hall.state import World
+from tavern.hall.state import Player, World
 from tavern.hall.validation import number, unique_ids
 from tavern.hall.world import create_world
 from tavern.mind.cards import Card, parse_card
@@ -71,7 +71,8 @@ class Scenario:
 
     `last_call_at`, when set, is when the barkeep calls closing time out loud: after the start and before `closes_at`.
     `ailing_fatigue`, when set, makes one guest who carries no cure, drawn by the evening's seed, come in unwell with
-    that much tiredness (see `tavern.body.ailment`).
+    that much tiredness (see `tavern.body.ailment`). `player`, when set, is the ID of the guest a person plays
+    tonight (see `tavern.hall.player`); the lineup sets it, a scenario file never does.
 
     `ties` are the starting relationships between guests, in listed order: what later
     systems seed opinions and familiarity from. `news` is what the evening's guests start
@@ -92,6 +93,7 @@ class Scenario:
     news_tonight: int | None = None
     last_call_at: float | None = None
     ailing_fatigue: float | None = None
+    player: str | None = None
 
 
 def _fields(data: Any, required: set[str], optional: set[str], label: str) -> Mapping[str, Any]:
@@ -333,7 +335,9 @@ def open_evening(room: Mapping[str, Any], scenario: Scenario, seed: int) -> Worl
     news = scenario.news if scenario.news_tonight is None else draw_news(
         scenario.news, scenario.news_tonight, Random(f"{seed}:news"))
     world.update({"expected": _expected(scenario, seed), "closes_at": scenario.closes_at,
-                  "last_call_at": scenario.last_call_at, "news": [News(**item) for item in news]})
+                  "last_call_at": scenario.last_call_at,
+                  "player": None if scenario.player is None else Player(actor_id=scenario.player, steering=True),
+                  "news": [News(**item) for item in news]})
     take_posts(world, scenario.staff)
     admit_arrivals(world)
     return world

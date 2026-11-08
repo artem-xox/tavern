@@ -1,6 +1,7 @@
 """The lineup: the evening a player builds on the start screen from a cast's scenario, and the casts offered."""
 
 from collections.abc import Mapping, Sequence
+from dataclasses import replace
 from typing import Any
 
 from tavern.body.ailment import eligible
@@ -20,7 +21,7 @@ CAST_TITLES = {"locals": "Locals", "guests": "Guests"}
 
 
 def lineup_scenario(templates: Mapping[str, Mapping[str, Any]], catalog: Catalog, cast: str,
-                    character_ids: Any, minutes: Any) -> Scenario:
+                    character_ids: Any, minutes: Any, player: Any = None) -> Scenario:
     """Build a cast's evening for the picked guests.
 
     The cast's template keeps its needs and staff. The picked guests are due at opening and the opening window
@@ -34,11 +35,12 @@ def lineup_scenario(templates: Mapping[str, Mapping[str, Any]], catalog: Catalog
         cast: ID of the cast to take the template from.
         character_ids: IDs of the picked guests, from 1 to 8, each once, all of that cast; their order is kept.
         minutes: Length of the evening in minutes of game time, from 1 to 80.
+        player: ID of the picked guest a person plays, or None for an evening with no player.
     Returns:
         The validated scenario.
     Raises:
         ValueError: The cast is unknown, the guests are not a list of 1 to 6 distinct characters of that cast,
-            or the length is out of range.
+            the length is out of range, or the player is not one of the picked guests.
     """
     if cast not in templates:
         raise ValueError(f"Unknown cast {cast!r}")
@@ -51,7 +53,9 @@ def lineup_scenario(templates: Mapping[str, Mapping[str, Any]], catalog: Catalog
     # An unwell guest must carry no cure; a lone healer, say, has nobody to fall ill, so they come in well.
     if not eligible([{"carries": catalog.character(item)["carries"]} for item in ids]):
         data.pop("ailment", None)
-    return parse_scenario(data, catalog=catalog)
+    if player is not None and (not isinstance(player, str) or player not in ids):
+        raise ValueError(f"The player {player!r} must be one of the picked guests, {ids}")
+    return replace(parse_scenario(data, catalog=catalog), player=player)
 
 
 def _picked(character_ids: Any, catalog: Catalog, cast: str) -> list[str]:
