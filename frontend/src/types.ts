@@ -87,6 +87,15 @@ export interface Action {
   item?: string;
   /** What a social verb is for (`pass_time`, `tell_news:<fact>`, `invite:<kind>`, ...); absent for the others. */
   aim?: string;
+  /** The `[x, y]` cell a `walk_to` action goes to; absent for the others. */
+  cell?: [number, number];
+}
+
+/** The reply to the `options` command: what is open to the played guest now, each action with its verb's label. */
+export interface OptionsMessage {
+  type: "options";
+  target_id: string | null;
+  options: { action: Action; label: string }[];
 }
 
 export interface Actor {
@@ -544,4 +553,6 @@ export type Command =
   | { type: "force_action"; actor_id: string; action: Action }
   | { type: "start"; cast: string; guests: string[]; minutes: number }
   | { type: "steer"; on: boolean }
+  | { type: "act"; action: Action }
+  | { type: "options"; target_id?: string }
   | { type: "save" | "load" | "reset" };
