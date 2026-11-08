@@ -353,6 +353,8 @@ def _expected(scenario: Scenario, seed: int) -> list[ExpectedGuest]:
     if scenario.opening_window and opening:
         first, last = scenario.opening_window
         Random(f"{seed}:opening").shuffle(opening)
+        # The person at the wheel walks in first; the others keep the order drawn above, so the draw is the same.
+        opening.sort(key=lambda item: item["id"] != scenario.player)
         for place, item in enumerate(opening):
             item["arrives_at"] = first + (last - first) * place / max(len(opening) - 1, 1)
     if scenario.ailing_fatigue is not None:

@@ -13,6 +13,7 @@ import { cellAt, hoverText, objectAt, visitorAt } from "./picking.ts";
 import { isLow, onPot, poseOf } from "./pose.ts";
 import { mapParts, type MapParts } from "./mapview";
 import { Speech } from "./speech";
+import { markerAt } from "./wheel";
 import { aura, auraPhase, type Haze } from "./aura";
 import { shippedPose, spriteOf, stills, type SpriteRegistry } from "./sprites";
 import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Facing, Mind, Turn, Verb, World, WorldObject } from "./types";
@@ -79,6 +80,8 @@ export class TavernScene extends Phaser.Scene {
   /** Dice in the air over the dice table and a winner's stars, redrawn every frame. */
   private dicePlay!: Phaser.GameObjects.Graphics;
   private route!: Phaser.GameObjects.Graphics;
+  /** The "you" arrow over the played guest, redrawn every frame. */
+  private you!: Phaser.GameObjects.Graphics;
   private readonly visitors: Map<string, ActorView> = new Map();
   /** The fingerprints of the map as drawn; empty before the first snapshot, so everything draws once. */
   private drawn: MapParts = { size: "", floor: "", furniture: "" };
@@ -109,6 +112,7 @@ export class TavernScene extends Phaser.Scene {
     this.dartPlay = this.add.graphics().setDepth(9);
     this.dicePlay = this.add.graphics().setDepth(9);
     this.route = this.add.graphics();
+    this.you = this.add.graphics().setDepth(20);
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer): void => this.click(pointer));
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer): void => this.hover(pointer));
     this.ready = true;
@@ -157,6 +161,7 @@ export class TavernScene extends Phaser.Scene {
       drawAura(view.glow, view.bubbles, aura(view.stage, time, view.phase));
       view.speech.place(view.container.x, view.container.y, this.time.now, this.scale);
     }
+    this.drawYou(time);
     if (this.world) {
       const { objects, width, tile_size: size } = this.world.map;
       drawHearthGlow(this.hearthGlow, objects, width, size, time);
@@ -166,6 +171,15 @@ export class TavernScene extends Phaser.Scene {
       drawDartPlay(this.dartPlay, objects, this.world.actors, this.world.events, this.world.time, size, time);
       drawDicePlay(this.dicePlay, objects, this.world.actors, this.world.events, this.world.time, size, time);
     }
+  }
+
+  /** The arrow over the played guest, the same whether the player steers or the guest is on autopilot. */
+  private drawYou(time: number): void {
+    this.you.clear();
+    const view: ActorView | undefined = this.visitors.get(this.world?.player?.actor_id ?? "");
+    if (!view) return;
+    const tip = markerAt(view.container.x, view.container.y, time);
+    this.you.fillStyle(0xffe0a3).lineStyle(2, 0x322b24).fillTriangle(tip.x - 7, tip.y - 9, tip.x + 7, tip.y - 9, tip.x, tip.y).strokeTriangle(tip.x - 7, tip.y - 9, tip.x + 7, tip.y - 9, tip.x, tip.y);
   }
 
   private renderMap(world: World): void {

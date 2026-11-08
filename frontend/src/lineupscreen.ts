@@ -1,11 +1,13 @@
 import { html, nothing, render, type TemplateResult } from "lit-html";
-import { canStart, DEFAULT_MINUTES, MAX_GUESTS, MINUTE_CHOICES, startCommand, togglePick } from "./lineup";
+import { canStart, DEFAULT_MINUTES, keepPlayer, MAX_GUESTS, MINUTE_CHOICES, startCommand, togglePick } from "./lineup";
 import type { Cast, Command } from "./types";
 
 /** The start screen: choose a cast, click up to six faces, choose the length, and open the evening. */
 export class LineupScreen {
   private cast: Cast | null = null;
   private picked: string[] = [];
+  /** The picked guest the person plays; null is "Just watch". */
+  private player: string | null = null;
   private minutes: number = DEFAULT_MINUTES;
   private resumable = false;
 
@@ -21,6 +23,7 @@ export class LineupScreen {
   open(resumable: boolean): void {
     this.cast = null;
     this.picked = [];
+    this.player = null;
     this.resumable = resumable;
     this.host.hidden = false;
     this.draw();
@@ -43,10 +46,15 @@ export class LineupScreen {
   }
 
   private faces(cast: Cast): TemplateResult {
-    return html`<div class="lineup-faces">${cast.characters.map((person) => html`<button class="lineup-face ${this.picked.includes(person.id) ? "picked" : ""}" aria-pressed=${this.picked.includes(person.id)} @click=${(): void => { this.picked = togglePick(this.picked, person.id); this.draw(); }}>
+    return html`<div class="lineup-faces">${cast.characters.map((person) => html`<button class="lineup-face ${this.picked.includes(person.id) ? "picked" : ""}" aria-pressed=${this.picked.includes(person.id)} @click=${(): void => { this.picked = togglePick(this.picked, person.id); this.player = keepPlayer(this.picked, this.player); this.draw(); }}>
         <img src="/characters/${person.id}/Idle/rotations/south.png" alt="" width="68" height="68"><strong>${person.name}</strong><span>${person.description}</span></button>`)}</div>
+      <div class="play-as" role="group" aria-label="Play as">
+        <span>Play as</span>
+        <button aria-pressed=${this.player === null} @click=${(): void => { this.player = null; this.draw(); }}>Just watch</button>
+        ${this.picked.map((id: string) => html`<button aria-pressed=${this.player === id} @click=${(): void => { this.player = id; this.draw(); }}>${cast.characters.find((person) => person.id === id)?.name ?? id}</button>`)}
+      </div>
       <div class="lineup-actions">
-        <button @click=${(): void => { this.cast = null; this.picked = []; this.draw(); }}>← Casts</button>
+        <button @click=${(): void => { this.cast = null; this.picked = []; this.player = null; this.draw(); }}>← Casts</button>
         <span class="muted">${this.picked.length} of ${MAX_GUESTS} picked</span>
         <label>Evening <select @change=${(event: Event): void => { this.minutes = Number((event.target as HTMLSelectElement).value); }}>${MINUTE_CHOICES.map((minutes: number) => html`<option value=${minutes} ?selected=${minutes === this.minutes}>${minutes} min</option>`)}</select></label>
         <button class="primary" ?disabled=${!canStart(this.picked)} @click=${(): void => this.start(cast)}>▶ Open the doors</button>
@@ -54,7 +62,7 @@ export class LineupScreen {
   }
 
   private start(cast: Cast): void {
-    this.send(startCommand(cast.id, this.picked, this.minutes));
+    this.send(startCommand(cast.id, this.picked, this.minutes, this.player));
     this.close();
   }
 }

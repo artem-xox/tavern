@@ -215,6 +215,8 @@ export interface CharacterCard {
   looks?: string;
   /** What a famous guest cannot leave alone tonight, up to three; an intention's `obsession` indexes it. */
   obsessions?: string[];
+  /** Lines the guest is known for; the first closes a number on the stage. */
+  catchphrases?: string[];
   /** Counts only in how much punishment a fighter takes. */
   sex?: "female" | "male";
 }
@@ -551,7 +553,7 @@ export type Command =
   | { type: "refill"; object_id: string; amount: number }
   | { type: "block"; x: number; y: number; blocked: boolean }
   | { type: "force_action"; actor_id: string; action: Action }
-  | { type: "start"; cast: string; guests: string[]; minutes: number }
+  | { type: "start"; cast: string; guests: string[]; minutes: number; player: string | null }
   | { type: "steer"; on: boolean }
   | { type: "act"; action: Action }
   | { type: "options"; target_id?: string }
