@@ -1,7 +1,9 @@
 # AGENTS.md
 
 Shared instructions for coding agents. Keep this file tool-agnostic and short: every
-line must prevent a mistake an agent would otherwise make.
+line must prevent a mistake an agent would otherwise make. When a critic finding or a
+user correction exposes a missing rule, propose the one line in your PR; do not edit
+this file on your own.
 
 ## Project
 
@@ -25,8 +27,9 @@ make eval      # local only, live models: dialogue eval of two famous guests (da
 .venv/bin/python -m pytest tests/test_navigation.py -k path -x   # one behavior, fast
 ```
 
-"Done" means `make check` passes, plus `make build` if `frontend/` changed. Paste the
-run. Never write "tests pass" without it.
+"Done" means `make check` passes, plus `make build` if `frontend/` changed, and the
+critic's findings are triaged (Independent review). Paste the run. Never write "tests
+pass" or "verified" without the command and its output.
 
 ## Workflow
 
@@ -38,13 +41,37 @@ Test first for everything with a Python seam: core, adapters (with fakes), HTTP.
 3. Green: write the least code that passes. No behavior the tests do not demand.
 4. Refactor: only while green, without editing tests. If a refactor needs a test edit,
    it changed behavior: go back to step 2.
-5. Bug fix: first a failing test that reproduces it, then the fix.
+5. Bug fix: first a failing test that reproduces it, then the fix. Two fixes failed for
+   the same failure: stop editing, write down the competing explanations and test them
+   one at a time. Never stack a fix on a guess.
 6. Keep refactors and behavior changes in separate commits.
+7. Review: run the critic on the diff (below) before you call the task done.
 
 `frontend/` keeps logic out of Phaser and the DOM. A pure module (`bubble.ts`, `pixels.ts`) is tested
 in `frontend/tests/<module>.test.ts` with `node:test` (Node 24 runs `.ts` directly: import `../src/<module>.ts`
 with the extension, and a pure module that imports another one writes `.ts` there too; `tsconfig` allows it). Run `npm --prefix frontend test`
 (`make check` does). Verify the rest with `make check`, `make build`, and by running the app.
+
+## Independent review
+
+The reasoning that wrote a bug also excuses it, so no agent signs off its own change to
+code or tests. The critic is a fresh agent that never saw your conversation, prompted
+by `.claude/agents/critic.md` (Claude Code: the `critic` subagent; another tool: a new
+session with that file as its prompt). Give it the task file, the mode, the base
+branch and your claims, never your reasoning. It reads and runs; it never edits.
+
+- Plan mode, before code, when the task changes the snapshot, the saved-world format,
+  a port, or more than three modules: the critic reads Shape and Steps and looks for a
+  missing case, a wrong layer, a simpler design.
+- Diff mode, after `make check` is green.
+- Triage every finding: fix it (a bug starts with a failing test) or decline it in one
+  line. Decline a finding that has neither a failure scenario nor an AGENTS.md rule
+  behind it: fixing every remark grows abstractions and tests nobody needs.
+- After fixing a blocker or major, run a new critic on the new diff: at most three
+  diff-mode runs per task, then report what is still open.
+- Cannot start an agent (you are a subagent yourself)? Say so in your report; your
+  caller runs the critic before accepting the work. Never skip it silently.
+- The PR lists each finding with its disposition, next to the pasted `make check`.
 
 ## Architecture
 
@@ -197,8 +224,10 @@ the tested workflow and current limit.
 Bias toward caution over speed; for trivial tasks, use judgment.
 
 - **Think before coding.** State assumptions. If several readings exist, present them.
-  If a simpler approach exists, say so and push back. If something is unclear, stop and
-  ask.
+  If a simpler approach exists, say so and push back. Ask only when the readings lead
+  to a different Shape (fields, ports, saves) or the work is on the Ask first list;
+  otherwise take the reading closest to the task file (or the request), list it under
+  Assumptions in the PR description, and go on.
 - **Simplicity first.** The minimum code that solves the problem; nothing speculative: no
   extra features, flexibility or error handling nobody asked for. The layers above exist
   to keep the core pure, not to be added for their own sake. If 200 lines could be 50,
