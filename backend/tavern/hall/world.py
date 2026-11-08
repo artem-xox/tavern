@@ -13,7 +13,7 @@ from tavern.body.drunkenness import wear_off
 from tavern.body.energy import tire
 from tavern.body.expression import update_expression
 from tavern.body.fights import Fight, begin_waiting, engage_defenders, run_fights
-from tavern.body.projects import honor_projects, open_project
+from tavern.body.projects import honor_projects, open_project, project_error
 from tavern.body.queues import check_lines, cut_in, line_of, must_wait
 from tavern.body.wounds import RECOVER, step_wounds
 from tavern.hall.arrival import admit_arrivals, arrival_ranges, arriving, create_actor
@@ -125,6 +125,37 @@ def start_action(world: World, actor_id: str, action: Mapping[str, Any]) -> dict
     activate(world, actor, action, plan)
     mark_answered(world, actor, action)
     return {"accepted": True, "reason": None}
+
+
+def start_refusal(world: Mapping[str, Any], actor_id: str, action: Mapping[str, Any]) -> str | None:
+    """Tell why `start_action` would refuse an action now, without starting it or changing the world.
+
+    Args:
+        world: Current world.
+        actor_id: Visitor who would do it.
+        action: Action with an ID, a verb, and an optional target ID (and item or cell).
+
+    Returns:
+        The refusal reason `start_action` would give, or None when it would accept the action: start it, open its
+        project, or put the visitor in line for it.
+    """
+    actor = find_actor(world, actor_id)
+    reason = _visitor_refusal(actor)
+    if actor is None or reason:
+        return reason
+    verb = action.get("verb")
+    activity = ACTIVITIES.get(verb) if isinstance(verb, str) else None
+    if activity is not None and activity.opens_project:
+        return project_error(world, actor, activity.opens_project, action.get("target_id"))
+    resolved, reason = _checked(world, actor, action)
+    if reason:
+        return reason
+    activity = ACTIVITIES[resolved["verb"]]
+    # Talking from a line and waiting in one need no route now; the rest walk, so a target nobody can reach is refused.
+    if (activity.partner and not activity.approaches and line_of(world, actor_id) is not None) \
+            or must_wait(world, actor, resolved):
+        return None
+    return None if plan_route(world, actor, resolved) is not None else NO_ROUTE
 
 
 # The refusal of an action whose target has no interaction spot the visitor can walk to.
