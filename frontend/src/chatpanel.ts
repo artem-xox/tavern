@@ -86,7 +86,8 @@ export class ChatPanel {
       <p class=${line.mine ? "chat-line mine" : "chat-line"}><strong>${line.speaker}</strong>${line.addressee ? html` <span class="muted">to ${line.addressee}</span>` : nothing}: ${line.words}</p>`)}
       ${this.pending ? html`<p class="chat-line mine pending">${this.pending.text} <span class="muted">being read…</span></p>` : nothing}</div>
       <div class="chat-faces">${model.picker ? this.picker(model.members) : nothing}
-        ${model.secondsLeft !== null ? html`<span class="chat-turn">Your turn · ${Math.ceil(model.secondsLeft)} s</span>` : nothing}</div>
+        ${model.secondsLeft !== null ? html`<span class="chat-turn">Your turn · ${Math.ceil(model.secondsLeft)} s</span>` : nothing}
+        ${model.held ? html`<span class="chat-turn">Your turn · the hall waits</span>` : nothing}</div>
       <div class="chat-input"><input type="text" maxlength=${MAX_LINE} autocomplete="off" aria-label="Say" .value=${this.draft}
         ?disabled=${!model.enabled} placeholder=${model.placeholder}
         @focus=${(): void => { this.focused = true; }} @blur=${(): void => { this.focused = false; }}

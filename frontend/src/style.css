@@ -232,6 +232,7 @@ summary > span:last-child { color: var(--muted); font-size: var(--t-label); text
 .wheel-switch { display: inline-flex; gap: 2px; }
 .wheel-switch button[aria-pressed="true"] { border-color: var(--gold-2); color: var(--on-gold); }
 .wheel-pause { margin-left: auto; }
+.wheel-held { color: #f0c36a; font-weight: 600; }
 .wheel kbd { font-size: var(--t-small); opacity: 0.7; }
 .role-sheet { margin-top: 8px; font-size: var(--t-small); }
 .role-sheet summary { cursor: pointer; font-weight: 600; }

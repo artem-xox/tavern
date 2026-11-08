@@ -1,7 +1,7 @@
 /** The wheel bar above the hall: the played guest's face and name, a You / Autopilot switch, Pause, and the role sheet. */
 import { html, nothing, render } from "lit-html";
 import { roleSheet, roleSheetView } from "./rolesheet";
-import type { Actor, Command, World } from "./types";
+import type { Actor, Command, PlayerTurn, World } from "./types";
 import { wheelState, type WheelState } from "./wheel";
 
 /** Whether a key press is meant for a field the person is typing in (or a control that takes Space itself). */
@@ -23,8 +23,12 @@ export class WheelBar {
     });
   }
 
-  /** Redraw from the world; the bar hides itself in an evening with no player. */
-  apply(world: World): void {
+  /**
+   * Redraw from the world; the bar hides itself in an evening with no player.
+   *
+   * @param turn What the played guest's scene waits for, whether the clock holds still for it (auto-pause).
+   */
+  apply(world: World, turn: { state: PlayerTurn["state"] | null; held: boolean } = { state: null, held: false }): void {
     this.world = world;
     const state: WheelState | null = wheelState(world);
     this.host.hidden = state === null;
@@ -37,6 +41,8 @@ export class WheelBar {
         <button aria-pressed=${state.steering} @click=${(): void => this.send({ type: "steer", on: true })}>You</button>
         <button aria-pressed=${!state.steering} @click=${(): void => this.send({ type: "steer", on: false })}>Autopilot</button>
       </span>
+      ${turn.held ? html`<span class="wheel-held" role="status">The hall waits for your line</span>` : nothing}
+      ${state.steering && (turn.state === "your_turn" || turn.state === "comeback") ? html`<button class="wheel-pass" title="Say nothing: the turn passes in silence now" @click=${(): void => this.send({ type: "let_pass" })}>Let it pass</button>` : nothing}
       <button class="wheel-pause" @click=${(): void => this.send({ type: "pause", paused: !state.paused })}>${state.paused ? "Resume" : "Pause"} <kbd>Space</kbd></button>
     </div>${actor ? roleSheetView(roleSheet(actor), state.name) : nothing}`, this.host);
   }

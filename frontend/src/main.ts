@@ -122,7 +122,7 @@ function applySnapshot(snapshot: Snapshot): void {
   if (first) lineup.open(world.tick > 0);
   scene.setWorld(world, snapshot.activities, snapshot.minds);
   dashboard.apply(snapshot);
-  wheel.apply(world);
+  wheel.apply(world, { state: snapshot.player_turn?.state ?? null, held: snapshot.turn_held });
   chat.apply(snapshot);
   // Departed visitors stay selectable, so their evening can still be inspected.
   if (!selectedId || ![...world.actors, ...world.departed].some((actor): boolean => actor.id === selectedId)) {

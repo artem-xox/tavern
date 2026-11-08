@@ -12,6 +12,8 @@ export interface ChatModel {
   secondsLeft: number | null;
   placeholder: string;
   enabled: boolean;
+  /** Whether the hall's clock holds still for the player's line (auto-pause): no countdown runs. */
+  held: boolean;
   /** Whether the "To:" picker shows (the stage speaks to the hall). */
   picker: boolean;
 }
@@ -45,9 +47,10 @@ export function chatModel(snapshot: Snapshot): ChatModel | null {
     words: item.act === "silence" ? "…" : item.line,
     mine: item.speaker === player.actor_id,
   }));
-  const secondsLeft: number | null = turn.silence_at === null ? null : Math.max(0, (turn.silence_at - time) / speed);
+  const held: boolean = snapshot.turn_held === true;
+  const secondsLeft: number | null = turn.silence_at === null || held ? null : Math.max(0, (turn.silence_at - time) / speed);
   const enabled: boolean = player.steering && turn.state !== "none" && turn.state !== "reading";
-  return { members, lines, state: turn.state, secondsLeft, placeholder: PLACEHOLDERS[turn.state], enabled,
+  return { members, lines, state: turn.state, secondsLeft, placeholder: PLACEHOLDERS[turn.state], enabled, held,
     picker: turn.state !== "on_stage" && turn.state !== "none" };
 }
 

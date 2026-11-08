@@ -17,6 +17,7 @@ from tavern.evening.mind_loop import EveningPorts, TaskCourier, evening_mind
 from tavern.evening.player_commands import PLAYER_COMMANDS, apply_command
 from tavern.evening.retelling import Retelling, cited_events, retell, told
 from tavern.evening.scenario import Scenario, open_evening
+from tavern.evening.turn_hold import owed_line
 from tavern.evening.story_score import WEIGHTS, Moment, story_moments, story_score
 from tavern.hall.memory import fresh_events, log_event
 from tavern.hall.closing import all_gone
@@ -119,9 +120,13 @@ class TavernRuntime:
                  choose: Chooser = choose_action, health: HealthBoard | None = None,
                  answer: Answerer = choose_invitation_answer, storyteller: Ask | None = None,
                  lineup: Lineup | None = None, stage_writer: StageWriter = write_scripted_stage,
-                 reader: ReadLine = read_as_remark, number_reader: ReadNumber = read_as_pitch) -> None:
+                 reader: ReadLine = read_as_remark, number_reader: ReadNumber = read_as_pitch,
+                 auto_pause: bool = False) -> None:
         self.map_data = deepcopy(dict(map_data))
         self.scenario = scenario
+        # A person at the wheel: the clock holds still when their line falls due (`_hold_for_the_player`). Scripted
+        # and lockstep evenings never set it, so their silence runs on `rules.player.silence` alone.
+        self.auto_pause = auto_pause
         # Makes the evening of a `start` command; None where the start screen is not offered.
         self.lineup = lineup
         self.world = self._open(seed)
@@ -163,6 +168,9 @@ class TavernRuntime:
         self.retelling: Retelling | None = None
         self.retelling_events: dict[int, dict[str, Any]] = {}  # What the client needs of the lines it cites.
         self._telling = None
+        # A new world owes no line yet: the last line the clock held for, and whether it holds now.
+        self._held_line: str | None = None
+        self._holding = False
 
     def _note_story(self) -> None:
         # The world keeps only its latest 200 events, so the story is gathered tick by tick: what follows the
@@ -205,7 +213,8 @@ class TavernRuntime:
             Independent world copy, public evaluator configuration, how the client
             names, shows, and targets each verb, how it words each kind of item, and each visitor's inner state (`feelings.minds`).
             `ai.writer` names who writes conversation lines; `ai.health` says how Jev and Claude are
-            doing (`model_health`), when a board is watching them.
+            doing (`model_health`), when a board is watching them. `turn_held` says the clock holds still for
+            the person's due line (auto-pause).
         """
         configured = bool(self.ai_config.get("typesafe_api_key"))
         health = {} if self.health is None else {"health": self.health.snapshot()}
@@ -217,7 +226,7 @@ class TavernRuntime:
                 "story": story_score(self.moments, WEIGHTS), "retelling": self.retelling,
                 "retelling_events": self.retelling_events if self.retelling else {},
                 "telling": self._telling is not None and not self._telling.done(),
-                "player_turn": player_turn(self.world)}
+                "player_turn": player_turn(self.world), "turn_held": self._holding}
 
     def _event(self, message: str) -> None:
         log_event(self.world, None, "control", message)
@@ -239,6 +248,24 @@ class TavernRuntime:
                 self._telling = asyncio.get_running_loop().create_task(self._tell())
         if not self.world["paused"]:
             self.mind.tick(self.world)
+        if self.auto_pause and not self.world["paused"]:
+            self._hold_for_the_player()
+
+    def _hold_for_the_player(self) -> None:
+        # Each line the person owes holds the clock once, so a resume without a word lets the silence run.
+        owed = owed_line(self.world)
+        if owed is not None and owed != self._held_line:
+            self._held_line, self._holding = owed, True
+            self.world["paused"] = True
+
+    def _let_go(self, command: Mapping[str, Any]) -> None:
+        # Any move of the person's lets a held clock run again (from a keystroke the silence counts as usual);
+        # a pause command is the operator's own say over the clock.
+        if not self._holding or command["type"] == "options":
+            return
+        self._holding = False
+        if command["type"] in PLAYER_COMMANDS:
+            self.world["paused"] = False
 
     def _block(self, command: Mapping[str, Any]) -> None:
         toggle_block(self.world, self.map_data["blocked"], command)
@@ -330,6 +357,7 @@ class TavernRuntime:
             raise ValueError("Expected a command with a type")
         if command["type"] in PLAYER_COMMANDS:
             reply = apply_command(self.world, self.mind, command)
+            self._let_go(command)
             if command["type"] in ("steer", "say"):
                 self._event(f"Operator: {command['type']}")
             return reply
@@ -337,6 +365,7 @@ class TavernRuntime:
         if handler is None:
             raise ValueError("Unknown command")
         handler(command)
+        self._let_go(command)
         self._event(f"Operator: {command['type']}")
         return None
 

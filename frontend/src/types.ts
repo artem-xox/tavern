@@ -543,6 +543,8 @@ export interface Snapshot {
   telling: boolean;
   /** What the player's scene waits for; null in an evening with no player. */
   player_turn: PlayerTurn | null;
+  /** True while the hall's clock holds still for the person's due line (auto-pause). */
+  turn_held: boolean;
 }
 
 /** The server's story score: moments counted per kind, and their weighted total. */
@@ -580,6 +582,7 @@ export type Command =
   | { type: "start"; cast: string; guests: string[]; minutes: number; player: string | null }
   | { type: "steer"; on: boolean }
   | { type: "typing" }
+  | { type: "let_pass" }
   | { type: "say"; text: string; to: "auto" | "everyone" | string }
   | { type: "act"; action: Action }
   | { type: "options"; target_id?: string }
