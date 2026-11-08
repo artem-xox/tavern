@@ -383,6 +383,8 @@ def test_a_steered_guest_is_never_chosen_to_heckle(player: dict[str, Any] | None
     world = table_hall(guest("ada", STAGE_SPOT, card=PERFORMER), guest("bea", (15, 8)), rival())
     ada = who(world, "ada")
     ada["relations"]["bea"] = {"name": "Bea", "opinion": -40.0, "familiarity": "acquaintance", "knows_name": True}
+    who(world, "cid")["relations"]["ada"] = {"name": "Ada", "opinion": -40.0, "familiarity": "acquaintance",
+                                           "knows_name": True}
     world["player"] = player
     assert start(world, "ada", "give_speech", "stage")["accepted"]
     advance(world, PERFORM_WAIT + 1.0)
