@@ -38,7 +38,7 @@ def view(objects: list[dict[str, Any]], needs: dict[str, float] | None = None,
     own = {"id": "ada", "name": "Ada", "x": 5, "y": 5, "inventory": {"beer": 0}, "needs": {**calm, **(needs or {})},
            "traits": {"patience": 0.5, "comfort": 0.5, "curiosity": 0.5}, "favorite_seat_id": None,
            "visit": {"seconds": 120.0, "beers": 1}}
-    return {"actor": {**own, **actor}, "objects": objects, "visitors": visitors or [], "memory": []}
+    return {"actor": {**own, **actor}, "objects": objects, "people": visitors or [], "memory": []}
 
 
 def pastimes() -> list[dict[str, Any]]:

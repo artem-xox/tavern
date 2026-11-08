@@ -26,7 +26,7 @@ def view(objects: list[dict[str, Any]] | None = None, needs: dict[str, float] | 
            "needs": {**calm, **(needs or {})},
            "traits": {"patience": 0.5, "comfort": 0.5, "curiosity": 0.5},
            "favorite_seat_id": None, "visit": {"seconds": 0.0, "beers": 0}}
-    return {"actor": {**own, **actor}, "objects": objects or [], "visitors": visitors or [], "memory": []}
+    return {"actor": {**own, **actor}, "objects": objects or [], "people": visitors or [], "memory": []}
 
 
 def company(seat_id: str, table_id: str) -> dict[str, Any]:

@@ -130,7 +130,7 @@ def view(thoughts: list[dict[str, Any]], time: float) -> dict[str, Any]:
            "traits": {"patience": 0.3, "comfort": 0.5, "curiosity": 0.5}, "favorite_seat_id": None,
            "visit": {"seconds": 120.0, "beers": 0}, "thoughts": thoughts, "relations": {}}
     door = {"id": "door", "kind": "door", "x": 5, "y": 9, "reserved_by": None}
-    return {"actor": own, "objects": [door], "visitors": [], "memory": [], "time": time}
+    return {"actor": own, "objects": [door], "people": [], "memory": [], "time": time}
 
 
 def quarrels(count: int) -> list[dict[str, Any]]:

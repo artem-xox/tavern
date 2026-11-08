@@ -22,7 +22,7 @@ from tavern.hall.closing import closing_called
 from tavern.hall.memory import log_event
 from tavern.hall.staff import on_staff, post_of
 from tavern.hall.state import World, find_actor
-from tavern.hall.world import observe_actor, observe_people
+from tavern.hall.world import observe_actor
 from tavern.mind.briefing import brief
 from tavern.mind.cards import PARAMS, TEXT_FIELDS, persona_words
 from tavern.mind.goals import GOALS, STATUSES, Goal, goal_words, open_alone, open_kinds
@@ -248,7 +248,7 @@ def intention_view(world: Mapping[str, Any], actor: Mapping[str, Any], trigger: 
         (the latest 8 lines they said or heard tonight, see `heard.earlier_lines`) and `drink`
         (drunkenness stage).
     """
-    observation = {**observe_actor(world, actor["id"]), "people": observe_people(world, actor["id"])}
+    observation: dict[str, Any] = dict(observe_actor(world, actor["id"]))
     # The previous intention is shown on its own, so the situation leaves it out.
     observation["actor"]["intention"] = None
     return {"actor_id": actor["id"], "name": actor["name"], "time": world["time"], "trigger": dict(trigger),

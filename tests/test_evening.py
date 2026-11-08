@@ -200,7 +200,7 @@ def test_departure_frees_the_seat_and_removes_the_visitor_from_view() -> None:
     assert start_action(world, "ada", command("leave", "door"))["accepted"]
     advance(world, 6)
     assert furniture(world, "warm-west")["reserved_by"] is None
-    assert observe_actor(world, "bea")["visitors"] == []
+    assert [item for item in observe_actor(world, "bea")["people"] if item["seat_id"]] == []
 
 
 @pytest.mark.parametrize("target", [
@@ -226,7 +226,7 @@ def test_seated_company_is_seen_across_the_hall_but_not_through_walls(walled: bo
     advance(world, 5)
     if walled:
         world["map"]["blocked"].extend([x, 5] for x in range(11))
-    assert [item["id"] for item in observe_actor(world, "ada")["visitors"]] == expected
+    assert [item["id"] for item in observe_actor(world, "ada")["people"] if item["seat_id"]] == expected
 
 
 @pytest.mark.parametrize("trouble, field, learned", [

@@ -8,7 +8,7 @@ from tavern.body.queues import out_of_patience
 from tavern.hall.staff import on_staff
 from tavern.hall.memory import log_event
 from tavern.hall.state import Actor, Decision, World
-from tavern.hall.world import observe_actor, observe_people, start_action
+from tavern.hall.world import observe_actor, start_action
 from tavern.social.errands import fetching_a_drink
 from tavern.social.scenes import conversation_of
 from tavern.social.walk_ups import walker_toward
@@ -52,8 +52,7 @@ def decision_requests(world: Mapping[str, Any], pending: Container[str],
         if world["time"] < next_decision.get(actor["id"], 0):
             continue
         # Decisions also see who else is about and what they are visibly doing.
-        requests.append((actor["id"], {**observe_actor(world, actor["id"]),
-                                       "people": observe_people(world, actor["id"])}))
+        requests.append((actor["id"], dict(observe_actor(world, actor["id"]))))
     return requests
 
 

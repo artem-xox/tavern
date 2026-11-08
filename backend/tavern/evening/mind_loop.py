@@ -13,7 +13,7 @@ from typing import Any, Protocol
 
 from tavern.evening.decisions import apply_decision, decision_requests, free_to_decide, stale_requests
 from tavern.hall.state import World, find_actor
-from tavern.hall.world import observe_actor, observe_people
+from tavern.hall.world import observe_actor
 from tavern.mind.goals import settle_goals
 from tavern.mind.intentions import (UNMETERED, IntentionRules, Intender, deliver_intention, intention_requests,
                                     stale_intentions)
@@ -215,7 +215,7 @@ class MindLoop:
                     or next_speaker(scene) != invitation["to"]):
                 continue
             options = answer_options(world, scene, invitee)
-            seen = {**observe_actor(world, invitee["id"]), "people": observe_people(world, invitee["id"])}
+            seen = observe_actor(world, invitee["id"])
             scene["writing"] = {"turn": key[1], "speaker": invitee["id"], "since": world["time"]}
             self.answered.add(key)
             self.answering[key] = (self.courier.send(self.answer(seen, dict(invitation), options), world["time"]),

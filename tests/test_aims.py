@@ -34,7 +34,7 @@ def sight(opinion: float = 0.0, familiarity: str = "acquaintance", facts: dict[s
     return {"actor": {"id": "ada", "name": "Ada", "inventory": {"beer": beer}, "seat_id": seat_id,
                       "relations": {"bea": {"name": "Bea", "opinion": opinion, "familiarity": familiarity}},
                       "thoughts": thoughts or [], "knowledge": {"objects": {}, "cells": [], "facts": facts or {}}},
-            "objects": objects or [], "visitors": [], "time": NOW, "on_errands": [],
+            "objects": objects or [], "people": [], "time": NOW, "on_errands": [],
             "people": [{"id": "bea", "name": "Bea", "beside": True, "holding": holding or {}}]}
 
 

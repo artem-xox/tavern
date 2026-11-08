@@ -202,7 +202,7 @@ def _score_approaches(observation: Mapping[str, Any], candidates: Sequence[Mappi
     # The walk costs a little, a long one more; company they like draws and company they dislike repels.
     actor, now = observation["actor"], observation.get("time", -math.inf)
     healer = carries_cure(actor["inventory"])
-    people = {item["id"]: item for item in [*observation.get("visitors", []), *observation.get("people", [])]}
+    people = {item["id"]: item for item in observation.get("people", [])}
     objects = {item["id"]: item for item in observation["objects"]}
     for action in candidates:
         if action["verb"] not in ("approach", "interview_guest"):
@@ -429,7 +429,7 @@ SOMEONES_OWN = 0.5
 def _score_seats(observation: Mapping[str, Any], candidates: Sequence[Mapping[str, Any]],
                  scores: dict[str, float]) -> None:
     actor, now = observation["actor"], observation.get("time", -math.inf)
-    company = {item.get("table_id") for item in observation.get("visitors", []) if item.get("seat_id")}
+    company = {item.get("table_id") for item in observation.get("people", []) if item.get("seat_id")}
     objects = {item["id"]: item for item in observation["objects"]}
     for action in candidates:
         if action["verb"] != "sit":

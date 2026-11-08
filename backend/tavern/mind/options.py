@@ -52,7 +52,7 @@ def aim_text(observation: Observation, candidate: Action) -> str:
     Raises:
         ValueError: The person is not in sight, or the action cannot be described.
     """
-    person = next((item for item in [*observation.get("visitors", []), *observation.get("people", [])]
+    person = next((item for item in observation.get("people", [])
                    if item["id"] == candidate["target_id"]), None)
     if person is None:
         raise ValueError(f"Cannot describe an aim towards {candidate['target_id']!r}, who is not in sight")
@@ -76,7 +76,7 @@ def answer_text(observation: Observation, invitation: Mapping[str, Any], answer:
     Raises:
         ValueError: The inviter is not in sight, or the answer is none of the three.
     """
-    inviter = next((item for item in [*observation.get("visitors", []), *observation.get("people", [])]
+    inviter = next((item for item in observation.get("people", [])
                     if item["id"] == invitation["from"]), None)
     if inviter is None:
         raise ValueError(f"Cannot describe an answer to {invitation['from']!r}, who is not in sight")
@@ -291,7 +291,7 @@ def _join(observation: Observation, action: Action) -> str:
     member = _someone(observation, action["target_id"])
     if member is None:
         raise ValueError(f"Cannot describe joining an unseen visitor {action['target_id']!r}")
-    company = observation.get("people") or observation.get("visitors", [])
+    company = observation.get("people", [])
     names = [label_of(item) for item in company if item.get("conversation") == member.get("conversation")]
     where = ("at their table" if observation["actor"].get("seat_id") else "at the table they stand by") \
         if member.get("seat_id") else "beside them"
