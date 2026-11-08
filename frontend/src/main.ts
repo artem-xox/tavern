@@ -73,8 +73,9 @@ function showMenu(reply: OptionsMessage): void {
 let inspectTarget: () => void = (): void => {};
 
 function showError(message: string): void {
-  if (chat.fail(message)) return;
   const played: string | undefined = world?.player?.actor_id;
+  // A refused line leaves the chat with its words back in the input, and a toast over the played guest.
+  if (chat.fail(message)) { if (played) scene.toast(played, message); return; }
   if (steeringNow() && played) scene.toast(played, message);
   else dashboard.showError(message);
 }
@@ -93,7 +94,8 @@ application.querySelector(".game-surround")?.before(wheelHost);
 const wheel: WheelBar = new WheelBar(wheelHost, (command): void => connection.send(command));
 const chatHost: HTMLElement = document.createElement("div");
 application.append(chatHost);
-const chat: ChatPanel = new ChatPanel(chatHost, (command): void => connection.send(command));
+const chat: ChatPanel = new ChatPanel(chatHost, (command): void => connection.send(command),
+  (): void => scene.setPending(world?.player ? chat.pendingBubble(world.player.actor_id) : null));
 const menu: OrderMenu = new OrderMenu(document.body, {
   act: (action): void => connection.send({ type: "act", action }),
   inspect: (): void => inspectTarget(),

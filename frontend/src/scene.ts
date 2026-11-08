@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { callout, newer } from "./bubble";
+import { callout, newer, type Spoken } from "./bubble";
 import { drawCandles, drawSconces } from "./candles";
 import { drawDartPlay, throwMotion } from "./dartplay.ts";
 import { drawDicePlay, rollLunge } from "./diceplay.ts";
@@ -71,6 +71,8 @@ export class TavernScene extends Phaser.Scene {
   private world: World | null = null;
   private activities: Record<Verb, ActivityView> = {};
   private minds: Record<string, Mind> = {};
+  /** The played guest's line sent and not yet spoken, shown over them at once. */
+  private pending: Spoken | null = null;
   private floor!: Phaser.GameObjects.Graphics;
   private hearthGlow!: Phaser.GameObjects.Graphics;
   private furniture!: Phaser.GameObjects.Graphics;
@@ -284,7 +286,8 @@ export class TavernScene extends Phaser.Scene {
       : actor.action?.verb === "play_darts" && target ? Math.sign(target.x - actor.x) : 0;
     const talk: Conversation | undefined = this.world?.conversations.find((item: Conversation): boolean => item.participants.includes(actor.id));
     const turn: Turn | undefined = talk?.turns[talk.turns.length - 1];
-    view.speech.tell(newer(turn?.speaker === actor.id ? turn : null, callout(this.world?.events ?? [], actor.id, this.world?.time ?? 0)), this.time.now, view.stage);
+    const said: Spoken | null = newer(turn?.speaker === actor.id ? turn : null, callout(this.world?.events ?? [], actor.id, this.world?.time ?? 0));
+    view.speech.tell(newer(said, this.pending?.speaker === actor.id ? this.pending : null), this.time.now, view.stage);
     this.showEmote(view, actor);
     view.container.setDepth(10 + y / 1000);
   }
@@ -331,6 +334,13 @@ export class TavernScene extends Phaser.Scene {
     if (id) this.callbacks.pick({ kind: "visitor", id }, page);
     else if (object) this.callbacks.pick({ kind: "object", id: object.id }, page);
     else this.callbacks.pick({ kind: "cell", cell }, page);
+  }
+
+  /** Show the played guest's pending line over them until it is spoken (null: none waits). */
+  setPending(line: Spoken | null): void {
+    if (line?.line === this.pending?.line && line?.speaker === this.pending?.speaker) return;
+    this.pending = line;
+    if (this.world) this.setWorld(this.world, this.activities, this.minds);
   }
 
   /** Float a short message above a visitor for a few seconds. */
