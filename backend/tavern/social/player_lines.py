@@ -160,7 +160,9 @@ def _on_the_stage(world: World, player: Mapping[str, Any]) -> PlayerTurn | None:
     since = on_stage_for(world, performer)
     if since is None:
         return None
-    climbed = performer["action"].get("climbed_at", world["time"] - since)
+    action = performer["action"]  # on_stage_for found a give_speech under way
+    assert action is not None
+    climbed = action.get("climbed_at", world["time"] - since)
     held_since = max(climbed, player.get("typing_at") or 0.0)
     return {"scene_id": None, "state": "on_stage",
             "silence_at": held_since + world["rules"]["player"]["silence"] * world["speed"]}

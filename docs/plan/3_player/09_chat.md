@@ -78,7 +78,7 @@ turn passes, and typing pings that hold the turn.
 - `chat.ts` (`chatModel`, `nextPing`, `sayCommand`) with `frontend/tests/chat.test.ts`; `chatpanel.ts` docked under the
   hall (lines, faces, To: picker, 200-char input with counter, Enter sends, pings through `connection.send`, an `error`
   reply stays under the input until the next keystroke). Faces set "To:"; it resets to Auto when the scene changes.
-- `make check`: 4894 passed, mypy, `tsc`, 362 frontend tests, exit 0. `make build`: built, exit 0.
-  `make golden` diff against the pre-edit baseline: empty.
+- `make check` (after merging main): 4936 passed, mypy clean, `tsc`, 362 frontend tests. `make build`: built.
+  `make golden` diff against main's golden: empty.
 - **Not done:** the `make run` look in the built-in browser and the live Monroe/Putin/Trump evening. The browser pane was
   hidden and refused navigation, and no live-model run was made. Screenshots and the scene's lines are still owed.
