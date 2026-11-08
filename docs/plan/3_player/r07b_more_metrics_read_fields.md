@@ -1,7 +1,7 @@
 ---
 id: S3-R07b
 title: Metrics of aims, goals, responses, projects and speeches read event fields, not wording
-status: todo
+status: done
 needs: [S3-R06]
 touches: [social/aims.py, mind/intentions.py, social/responses.py, body/projects.py, social/speeches.py, evening/aim_metrics.py, evening/goal_metrics.py, evening/response_metrics.py, evening/project_metrics.py, evening/speech_metrics.py, frontend/src/types.ts]
 ---
@@ -55,4 +55,24 @@ missing-field test, are the only approved edits; list each in Results. **Approve
 
 ## Results
 
-Filled in when the task is done.
+Six commits plus one mypy fix. Source commit: `aim` on `aim_set`/`aim_kept`; `goal` (the `GOALS` key) on `goal_set`;
+`obsession` on `intention` when named; `response` and `after` (unrounded seconds) on `answered`; `project` on the
+`project_*` ends; `admired`, `groaned` on `speech_reaction`. `types.ts` gained the optional fields. Then one commit per
+reader; `response_counts` rounds `after` with `round()`, equal to the message's `:.0f`. Regexes, `_GOAL_PATTERNS`, `CHASING`
+import and `THOUGHTS` import removed.
+
+Test edits (approved): `aim`/`project`/`response`/`goal`/`obsession`/`admired`/`groaned` added to hand-built events in
+`test_aim_metrics`, `test_goal_metrics`, `test_project_metrics`, `test_response_metrics`, `test_speech_metrics`; the four
+parse-error tests became missing-field tests (`test_goal_metrics` one renamed `test_a_goal_that_cannot_be_read_fails_loudly`;
+response's two became an unknown/missing `response` and a missing `after`); added `test_the_mean_delay_is_taken_over_whole_seconds...`
+and `test_a_speech_reaction_without_its_counts_fails_loudly`.
+
+- Golden (`runs/cmp.py`, R06's script with `NEW` widened): `identical apart from the new fields; metrics.json identical`
+  for all four runs. The offline casts log no `goal_set`/`intention`, so those two are covered by unit tests only.
+- `grep '\["message"\]' evening/*_metrics.py`: only identity uses `(time, message)` (ailment, fight, manner, giving) and the
+  R07 readers still unmerged here (choice, dialogue, invitation, fight reactions).
+- `make check`: 4662 passed, 6 failed (asset tests in `test_character*_assets.py`), mypy then fixed (clean on 135 files),
+  frontend 318 passed. The 6 failures and `make build` fail the same way: `tsc` TS2688 "Cannot find type definition file
+  for 'estree 2'" and "'trusted-types 2'". Stray `estree 2` / `trusted-types 2` directories in the shared
+  `node_modules/@types` (main checkout) make `tsc` fail; no other TS error, none from my `types.ts`. Environmental, not touched.
+- `git merge claude/s3-prep`: already up to date.
