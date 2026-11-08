@@ -150,9 +150,26 @@ ACTS: Mapping[str, Act] = MappingProxyType({
     "decline": Act(invitations.decline, "decline the invitation waiting for the speaker; nothing follows"),
     # Spoken only by the world, for a guest the player steers who neither typed nor spoke in time (`turns.speak_turns`):
     # never offered to a writer (`offered_acts`), and declining what the silent guest was asked.
-    "silence": Act(invitations.decline, "never choose it: it is what the world speaks for a guest "
-                                        "whose player stayed silent, and it declines an invitation waiting for them"),
+    "silence": Act(lambda world, scene, speaker, addressee: _let_down_by_silence(world, scene, speaker),
+                   "never choose it: it is what the world speaks for a guest whose player stayed silent, and it "
+                   "declines an invitation waiting for them and lets down whoever spoke to them last"),
 })
+
+
+def _let_down_by_silence(world: World, scene: Conversation, silent: Actor) -> None:
+    # Whoever last spoke to the silent guest (their invitation, if one waited, else the line before the silence)
+    # thinks they were ignored; a line to everyone or to someone else lets nobody down. The invitation is declined.
+    invitation = invitations.pending_for(scene, silent["id"])
+    spoke = scene["turns"][-2] if len(scene["turns"]) > 1 else None  # the last turn is the silence itself
+    ignored_id = invitation["from"] if invitation is not None else (
+        spoke["speaker"] if spoke is not None and spoke["addressee"] == silent["id"] else None)
+    invitations.decline(world, scene, silent, None)
+    ignored = next((item for item in world["actors"] if item["id"] == ignored_id), None)
+    if ignored is None:
+        return
+    message = f"{ignored['name']} was ignored by {silent['name']}"
+    record_event(world, ignored, "ignored", message, fields={"ignored_by": silent["id"]})
+    think(ignored, "ignored", world["time"], f"{called(ignored, silent)} ignored me", message, about=silent)
 
 
 def offered_acts(world: Mapping[str, Any], scene: Conversation, speaker: Mapping[str, Any]) -> dict[str, str]:
