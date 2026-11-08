@@ -89,3 +89,14 @@ def test_control_events_keep_the_whole_event_log() -> None:
     world["events"] = [{"time": 0.0, "actor_id": None, "type": "note", "message": str(n)} for n in range(150)]
     apply_decision(world, world["actors"][0], failure)
     assert (len(world["events"]), world["events"][-1]["type"]) == (151, "control")
+
+
+@pytest.mark.parametrize("player, expected", [
+    pytest.param(None, ["ada", "bea"], id="no-player"),
+    pytest.param({"actor_id": "ada", "steering": True}, ["bea"], id="the-played-guest-has-the-wheel"),
+    pytest.param({"actor_id": "ada", "steering": False}, ["ada", "bea"], id="the-played-guest-on-autopilot"),
+])
+def test_a_steered_guest_is_asked_for_no_decision(player: dict[str, Any] | None, expected: list[str]) -> None:
+    world = create_world(room())
+    world["player"] = player
+    assert [actor_id for actor_id, _view in decision_requests(world, [], {})] == expected
