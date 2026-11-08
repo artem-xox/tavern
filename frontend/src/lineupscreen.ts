@@ -1,5 +1,5 @@
 import { html, nothing, render, type TemplateResult } from "lit-html";
-import { canStart, DEFAULT_MINUTES, keepPlayer, MAX_GUESTS, MINUTE_CHOICES, startCommand, togglePick } from "./lineup";
+import { canStart, eveningMinutes, keepPlayer, MAX_GUESTS, MINUTE_CHOICES, startCommand, togglePick } from "./lineup";
 import type { Cast, Command } from "./types";
 
 /** The start screen: choose a cast, click up to six faces, choose the length, and open the evening. */
@@ -8,7 +8,8 @@ export class LineupScreen {
   private picked: string[] = [];
   /** The picked guest the person plays; null is "Just watch". */
   private player: string | null = null;
-  private minutes: number = DEFAULT_MINUTES;
+  /** The length the person picked; null follows the default for watching or playing (`eveningMinutes`). */
+  private chosen: number | null = null;
   private resumable = false;
 
   constructor(private readonly host: HTMLElement, private readonly casts: readonly Cast[], private readonly send: (command: Command) => void) {
@@ -56,13 +57,13 @@ export class LineupScreen {
       <div class="lineup-actions">
         <button @click=${(): void => { this.cast = null; this.picked = []; this.player = null; this.draw(); }}>← Casts</button>
         <span class="muted">${this.picked.length} of ${MAX_GUESTS} picked</span>
-        <label>Evening <select @change=${(event: Event): void => { this.minutes = Number((event.target as HTMLSelectElement).value); }}>${MINUTE_CHOICES.map((minutes: number) => html`<option value=${minutes} ?selected=${minutes === this.minutes}>${minutes} min</option>`)}</select></label>
+        <label>Evening <select @change=${(event: Event): void => { this.chosen = Number((event.target as HTMLSelectElement).value); }}>${MINUTE_CHOICES.map((minutes: number) => html`<option value=${minutes} ?selected=${minutes === eveningMinutes(this.player, this.chosen)}>${minutes} min</option>`)}</select></label>
         <button class="primary" ?disabled=${!canStart(this.picked)} @click=${(): void => this.start(cast)}>▶ Open the doors</button>
       </div>`;
   }
 
   private start(cast: Cast): void {
-    this.send(startCommand(cast.id, this.picked, this.minutes, this.player));
+    this.send(startCommand(cast.id, this.picked, eveningMinutes(this.player, this.chosen), this.player));
     this.close();
   }
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { canStart, DEFAULT_MINUTES, keepPlayer, MAX_GUESTS, startCommand, togglePick } from "../src/lineup.ts";
+import { canStart, DEFAULT_MINUTES, eveningMinutes, keepPlayer, MAX_GUESTS, startCommand, togglePick } from "../src/lineup.ts";
 
 test("togglePick: a face clicked once is picked, clicked again is put back", () => {
   assert.deepEqual(togglePick([], "edda"), ["edda"]);
@@ -44,3 +44,14 @@ test("keepPlayer: the choice stands while the guest is picked and resets to just
   assert.equal(keepPlayer(togglePick(["monroe", "putin"], "monroe"), "monroe"), null);
   assert.equal(keepPlayer([], null), null);
 });
+
+for (const item of [
+  { id: "watching-default", player: null, chosen: null, minutes: 5 },
+  { id: "playing-default", player: "monroe", chosen: null, minutes: 10 },
+  { id: "playing-chosen", player: "monroe", chosen: 3, minutes: 3 },
+  { id: "watching-chosen", player: null, chosen: 15, minutes: 15 },
+]) {
+  test(`eveningMinutes: ${item.id}`, () => {
+    assert.equal(eveningMinutes(item.player, item.chosen), item.minutes);
+  });
+}
