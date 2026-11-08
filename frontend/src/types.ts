@@ -344,6 +344,8 @@ export interface WorldEvent {
   /** The speech act and who it was addressed to (an actor ID, or null for everyone), on `turn`. */
   act?: string;
   addressee?: string | null;
+  /** A line the player typed and a person said, on `turn`. */
+  player?: boolean;
   /** Whose line failed, on `turn_failed`. */
   speaker_id?: string;
   /** The aim, on `aim_set` and `aim_kept` (a kind, or `kind:detail`). */
@@ -555,6 +557,7 @@ export type Command =
   | { type: "force_action"; actor_id: string; action: Action }
   | { type: "start"; cast: string; guests: string[]; minutes: number; player: string | null }
   | { type: "steer"; on: boolean }
+  | { type: "say"; text: string; to: "auto" | "everyone" | string }
   | { type: "act"; action: Action }
   | { type: "options"; target_id?: string }
   | { type: "save" | "load" | "reset" };

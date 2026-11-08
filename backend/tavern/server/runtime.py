@@ -14,7 +14,7 @@ from tavern.adapters.persistence import FileStore
 from tavern.body.activities import ACTIVITIES, client_activities
 from tavern.body.items import client_items
 from tavern.evening.mind_loop import EveningPorts, TaskCourier, evening_mind
-from tavern.evening.player_commands import act, options, steer
+from tavern.evening.player_commands import act, options, say, steer
 from tavern.evening.retelling import Retelling, retell
 from tavern.evening.scenario import Scenario, open_evening
 from tavern.evening.story_score import WEIGHTS, Moment, story_moments, story_score
@@ -30,6 +30,7 @@ from tavern.mind.intentions import INTENTION_RULES, Intender, IntentionRules
 from tavern.mind.model_health import HealthBoard
 from tavern.mind.scripted import write_scripted_turn
 from tavern.server.controls import forced_action, refill_tap, set_paused, set_speed, toggle_block
+from tavern.social.player_lines import ReadLine, read_as_remark
 from tavern.social.stage_lines import StageWriter, write_scripted_stage
 from tavern.social.turns import TurnWriter
 
@@ -117,7 +118,8 @@ class TavernRuntime:
                  intender: Intender | None = None, intention_rules: IntentionRules = INTENTION_RULES,
                  choose: Chooser = choose_action, health: HealthBoard | None = None,
                  answer: Answerer = choose_invitation_answer, storyteller: Ask | None = None,
-                 lineup: Lineup | None = None, stage_writer: StageWriter = write_scripted_stage) -> None:
+                 lineup: Lineup | None = None, stage_writer: StageWriter = write_scripted_stage,
+                 reader: ReadLine = read_as_remark) -> None:
         self.map_data = deepcopy(dict(map_data))
         self.scenario = scenario
         # Makes the evening of a `start` command; None where the start screen is not offered.
@@ -143,7 +145,7 @@ class TavernRuntime:
                                                                     self.rng)) if read_answers(self.ai_config) else None)
         self.mind = evening_mind(TaskCourier(), EveningPorts(
             lambda observation: choose(observation, self.ai_config, self.rng), answers,
-            lambda view: self.writer(view, self.ai_config), lambda view: stage_writer(view, self.ai_config), intender),
+            lambda view: self.writer(view, self.ai_config), lambda view: stage_writer(view, self.ai_config), intender, reader),
             intention_rules)
 
     @property
@@ -315,7 +317,8 @@ class TavernRuntime:
                     "refill": lambda item: refill_tap(self.world, item),
                     "block": self._block, "force_action": self._force_action,
                     "save": self._save, "load": self._load, "reset": self._reset, "start": self._start,
-                    "steer": lambda item: steer(self.world, self.mind, item)}
+                    "steer": lambda item: steer(self.world, self.mind, item),
+                    "say": lambda item: say(self.world, self.mind, item)}
         if not isinstance(command, Mapping) or not isinstance(command.get("type"), str):
             raise ValueError("Expected a command with a type")
         hands = {"act": lambda item: act(self.world, item), "options": lambda item: options(self.world, item)}

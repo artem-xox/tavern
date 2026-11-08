@@ -1,7 +1,7 @@
 ---
 id: S3-04
 title: The player's voice
-status: todo
+status: done
 needs: [S3-02]
 touches: [backend/tavern/social/player_lines.py (new), backend/tavern/mind/haiku_reading.py (new), backend/tavern/social/turns.py, backend/tavern/mind/turn_view.py, backend/tavern/evening/mind_loop.py, backend/tavern/evening/player_commands.py, backend/tavern/server/runtime.py, backend/tavern/app.py, frontend/src/types.ts]
 ---
@@ -95,3 +95,38 @@ with the same `check_turn`.
   other than the player's own.
 
 ## Results
+
+**Checks (2026-11-08).**
+
+- `make check`: `4784 passed`, `Success: no issues found in 142 source files`, frontend `node:test` `fail 0`; exit 0.
+- `make build`: `✓ built`, exit 0.
+- Golden: `make golden GOLDEN=runs/golden-now && diff -r runs/golden-base runs/golden-now` prints nothing (checked after steps 1-4 and again on the final code).
+- No save-format bump: no saved field changed. `player: true` is an added optional field of the `turn` event only.
+
+**Step 7, reading check (local, real Haiku 5.5 key, throwaway script, not committed).** Twelve lines in four scenes; the acts
+`invite`, `apologize`, `share_news` and the kinds `darts_together`, `buy_drink` were offered in the view, as a scene would
+offer them. A first run without those acts offered misread three lines for lack of the right act, so it is not counted.
+
+| Line | Read as | A person would say |
+|------|---------|--------------------|
+| a joke | `joke` | joke: same |
+| a toast | `joke` | toast/remark: close, accepted |
+| nonsense | `remark` | remark: same |
+| an insult | `insult` | insult: same |
+| an apology | `apologize` | apology: same |
+| agreement | `agree` | agree: same |
+| invitation to darts | `invite` (`darts_together`) | invite: same |
+| a compliment | `compliment` | compliment: same |
+| a question | `remark` | remark: same |
+| news | `share_news` (`f1`) | news: same |
+| a boast | `boast` | boast: same |
+| a goodbye | `leave_conversation` | goodbye: same |
+
+12 of 12 (11 exact, the toast close). Every line is spoken in the player's own words: `deliver_reading` sets `line` from the
+text whatever the reader returned (case `reader-returns-its-own-line`).
+
+**Notes.** The reader is wired in `server/runtime.py` and `app.py` (R13's one shared wiring is not merged); the headless
+`lockstep` keeps the offline `read_as_remark` until S3-10. `deliver_turn` now drops an answer whose claim belongs to someone
+other than the next speaker.
+
+**After merging main (S3-03, S3-07).** `make check`: `4830 passed`, mypy clean, frontend 0 failures; `make build` ok; golden diff empty. Conflicts were textual (keep both): `player_commands.py`, `runtime.py`, `types.ts`.
