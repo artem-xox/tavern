@@ -267,7 +267,10 @@ class MindLoop:
             to: `auto`, `everyone` or a guest's ID.
         """
         scene = next(item for item in world["conversations"] if item["id"] == scene_id)
-        view = turn_view(world, scene, world["player"]["actor_id"])
+        player = world["player"]
+        if player is None:
+            raise ValueError("A line can be read only for a player, and this evening has none")
+        view = turn_view(world, scene, player["actor_id"])
         self.reading[(scene_id, view["conversation"]["turn"])] = (
             self.courier.send(self.read(view, text, to), world["time"]), text, to)
 
