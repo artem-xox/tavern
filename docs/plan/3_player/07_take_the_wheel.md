@@ -1,7 +1,7 @@
 ---
 id: S3-07
 title: Take the wheel
-status: todo
+status: done
 needs: [S3-02]
 touches: [backend/tavern/evening/scenario.py, frontend/src/lineup.ts, frontend/src/lineupscreen.ts, frontend/src/wheel.ts (new), frontend/src/wheelbar.ts (new), frontend/src/rolesheet.ts (new), frontend/src/scene.ts, frontend/src/main.ts, frontend/src/style.css, frontend/src/types.ts, frontend/tests/]
 ---
@@ -59,3 +59,8 @@ the role, because the owner chose a sheet from the card over checked goals.
   resumes; the sheet shows Monroe's obsessions. Screenshots in Results.
 
 ## Results
+
+- Backend: `tests/test_opening_window.py` (3 new tests, parametrized over the played guest) failed first (`['ada', 'cid', ...] != ['dan', 'ada', ...]`), then passed after `open_evening` sorted the played guest to the head of the opening guests (stable, so the others keep the seeded order). `make golden` diff against a baseline taken before the edit: empty.
+- Frontend: `lineup.ts` (`keepPlayer`, `startCommand(..., player)` throws for a player who is not picked), `wheel.ts` (`wheelState`, `markerAt`, `decisionTag`), `rolesheet.ts` and tests; `wheelbar.ts`, the marker in `scene.ts` (now 391 lines) and the Space key. The inspector's decision tag reads PLAYER while the guest is steered (derived from `world.player`; the backend does not label the decision itself). Two existing `startCommand` assertions in `lineup.test.ts` gained `player: null`, because the task changes the command's shape.
+- `make check`: 4730 passed (backend), frontend `node:test` 0 failed, `tsc` clean. `make build`: built.
+- Run (own ports, built-in browser, offline local policy): picked Guests → Monroe, Putin, Trump, play as Monroe. World state: Monroe in at once, Putin expected at 16 s and Trump at 31 s; the bar shows Monroe, You/Autopilot, Pause and the sheet (persona, obsessions, catchphrases, rivals Putin and Trump). The inspector tag was PLAYER with You and LOCAL on Autopilot (back to PLAYER with You); the Pause button and a Space key event both toggled `paused`. **Not seen:** the browser pane was hidden (session not open in a window), so Phaser did not paint and the "you" arrow and the hall could not be screenshotted; no screenshots were taken.
