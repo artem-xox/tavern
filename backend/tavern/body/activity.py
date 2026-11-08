@@ -35,6 +35,8 @@ class Activity:
         closes_in: Whether it targets another visitor and walks to a spot at the table they sit at unless the actor is
             already within reach of them, and acts there (`tavern.hall.routes`): stepping between fighters, helping
             someone up, asking a healer for a remedy. No scene.
+        to_cell: Whether it targets a cell of the floor, named in `Action.cell`, where the walker ends idle and standing:
+            only a player walks so (`tavern.evening.player_commands`), and no candidate rule offers it.
         asks_cure: Whether the visitor it targets must be someone known to carry a cure.
         held: Whether the world, not this timer, ends it: a fight until it is decided (`tavern.body.fights`), lying where
             one fell until the condition is up (`tavern.body.wounds`); `duration` is only nominal.
@@ -93,6 +95,7 @@ class Activity:
     approaches: bool = False
     near_person: bool = False
     closes_in: bool = False
+    to_cell: bool = False
     asks_cure: bool = False
     held: bool = False
     names_item: bool = False

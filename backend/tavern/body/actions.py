@@ -9,6 +9,7 @@ from tavern.body.dozing import asleep
 from tavern.body.fights import fight_of, opponent_of
 from tavern.body.wounds import laid_out
 from tavern.hall.room import find_object
+from tavern.hall.routes import standing_error
 from tavern.hall.staff import on_staff
 from tavern.hall.state import find_actor
 from tavern.social.aims import AIM_VERBS, check_aim
@@ -25,11 +26,11 @@ def stored_action(action: Mapping[str, Any]) -> dict[str, Any]:
         action: Action with an ID, a verb, a target ID, and maybe the item it names.
 
     Returns:
-        The ID, verb and target, plus the item only when the action names one and the aim only when it carries
-        one, so other actions keep their plain shape.
+        The ID, verb and target, plus the item only when the action names one, the aim only when it carries
+        one, and the cell only when it walks to one, so other actions keep their plain shape.
     """
     kept = {key: action.get(key) for key in ("id", "verb", "target_id")}
-    kept.update({key: action[key] for key in ("item", "aim") if action.get(key) is not None})
+    kept.update({key: action[key] for key in ("item", "aim", "cell") if action.get(key) is not None})
     return kept
 
 
@@ -72,6 +73,10 @@ def action_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Map
         return "This action does not take an item"
     if action.get("aim") is not None and (verb not in AIM_VERBS or _bad_aim(action["aim"])):
         return "This action does not take that aim"
+    if activity.to_cell:
+        return standing_error(world, actor, action)
+    if action.get("cell") is not None:
+        return "This action does not take a cell"
     if activity.names_item:
         return _give_error(world, actor, action)
     if activity.opens_errand:
