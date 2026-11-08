@@ -4,6 +4,7 @@ import { Dashboard } from "./dashboard";
 import { LineupScreen } from "./lineupscreen";
 import { TavernScene } from "./scene";
 import { spriteSheets } from "./sprites";
+import { WheelBar } from "./wheelbar";
 import type { Cast, CharacterCatalog, Snapshot, World } from "./types";
 import "./style.css";
 
@@ -52,6 +53,9 @@ const dashboard: Dashboard = new Dashboard(application, {
   select: selectVisitor,
   lineup: (): void => lineup.open(true),
 }, sprites);
+const wheelHost: HTMLElement = document.createElement("div");
+application.querySelector(".game-surround")?.before(wheelHost);
+const wheel: WheelBar = new WheelBar(wheelHost, (command): void => connection.send(command));
 const lineupHost: HTMLElement = document.createElement("div");
 application.append(lineupHost);
 const lineup: LineupScreen = new LineupScreen(lineupHost, offered, (command): void => connection.send(command));
@@ -74,6 +78,7 @@ function applySnapshot(snapshot: Snapshot): void {
   if (first) lineup.open(world.tick > 0);
   scene.setWorld(world, snapshot.activities, snapshot.minds);
   dashboard.apply(snapshot);
+  wheel.apply(world);
   // Departed visitors stay selectable, so their evening can still be inspected.
   if (!selectedId || ![...world.actors, ...world.departed].some((actor): boolean => actor.id === selectedId)) {
     selectedId = world.actors[0]?.id ?? null;

@@ -206,6 +206,8 @@ export interface CharacterCard {
   looks?: string;
   /** What a famous guest cannot leave alone tonight, up to three; an intention's `obsession` indexes it. */
   obsessions?: string[];
+  /** Lines the guest is known for; the first closes a number on the stage. */
+  catchphrases?: string[];
   /** Counts only in how much punishment a fighter takes. */
   sex?: "female" | "male";
 }
