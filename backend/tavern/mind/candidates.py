@@ -61,18 +61,18 @@ def build_candidates(observation: Mapping[str, Any]) -> list[dict[str, Any]]:
         observation: Own actor state and known/visible object records.
 
     Returns:
-        The concrete actions of `_concrete_candidates`, grouped by `families.group_families`:
+        The concrete actions of `open_actions`, grouped by `families.group_families`:
         a family with a single action is offered as that action, one with several as a
         family option holding its members, resolved by a second stage of the choice.
 
     Raises:
         ValueError: Observation, needs, inventory, closing flag or object records are malformed.
     """
-    return group_families(_concrete_candidates(observation))
+    return group_families(open_actions(observation))
 
 
-def _concrete_candidates(observation: Mapping[str, Any]) -> list[Action]:
-    """Generate actions from personal inventory and individually observed objects.
+def open_actions(observation: Mapping[str, Any]) -> list[Action]:
+    """List the concrete actions open to a visitor now, from personal inventory and individually observed objects.
 
     Args:
         observation: Own actor state and known/visible object records.
