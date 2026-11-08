@@ -9,7 +9,7 @@ from tavern.evening.project_metrics import project_counts
 
 def ended(outcome: str, kind: str = "settle_in") -> dict[str, Any]:
     """A logged project end."""
-    return {"time": 1.0, "actor_id": "ada", "type": f"project_{outcome}", "message": f"Ada did it ({kind})"}
+    return {"time": 1.0, "actor_id": "ada", "type": f"project_{outcome}", "message": f"Ada did it ({kind})", "project": kind}
 
 
 @pytest.mark.parametrize("events, expected", [
@@ -26,10 +26,10 @@ def test_projects_are_counted(events: list[dict[str, Any]], expected: dict[str, 
     assert project_counts(events) == expected
 
 
-@pytest.mark.parametrize("message", [
-    pytest.param("Ada did it", id="no-kind"),
-    pytest.param("Ada did it (dance)", id="unknown-kind"),
+@pytest.mark.parametrize("fields", [
+    pytest.param({}, id="no-project-field"),
+    pytest.param({"project": "dance"}, id="unknown-kind"),
 ])
-def test_a_project_event_that_cannot_be_read_fails_loudly(message: str) -> None:
+def test_a_project_event_that_cannot_be_read_fails_loudly(fields: dict[str, Any]) -> None:
     with pytest.raises(ValueError):
-        project_counts([{"time": 1.0, "actor_id": "ada", "type": "project_done", "message": message}])
+        project_counts([{"time": 1.0, "actor_id": "ada", "type": "project_done", "message": "Ada did it", **fields}])
