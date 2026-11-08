@@ -10,7 +10,7 @@ from tavern.evening.aim_metrics import aim_counts
 def event(kind: str, aim: str, actor_id: str = "ada") -> dict[str, Any]:
     """A logged `aim_set` or `aim_kept` event."""
     words = "means to pass the time with Bea" if kind == "aim_set" else "got round to it: pass the time with Bea"
-    return {"time": 1.0, "actor_id": actor_id, "type": kind, "message": f"Ada {words} ({aim})"}
+    return {"time": 1.0, "actor_id": actor_id, "type": kind, "message": f"Ada {words} ({aim})", "aim": aim}
 
 
 NONE: dict[str, Any] = {"set": 0, "kept": 0, "by_kind": {}}
@@ -35,10 +35,10 @@ def test_aims_are_counted(events: list[dict[str, Any]], expected: dict[str, Any]
     assert aim_counts(events) == expected
 
 
-@pytest.mark.parametrize("message", [
-    pytest.param("Ada means to pass the time", id="no-aim-in-the-message"),
-    pytest.param("Ada means to do something (nothing)", id="an-unknown-kind"),
+@pytest.mark.parametrize("fields", [
+    pytest.param({}, id="no-aim-field"),
+    pytest.param({"aim": "nothing"}, id="an-unknown-kind"),
 ])
-def test_an_aim_event_that_cannot_be_read_fails_loudly(message: str) -> None:
+def test_an_aim_event_that_cannot_be_read_fails_loudly(fields: dict[str, Any]) -> None:
     with pytest.raises(ValueError):
-        aim_counts([{"time": 1.0, "actor_id": "ada", "type": "aim_set", "message": message}])
+        aim_counts([{"time": 1.0, "actor_id": "ada", "type": "aim_set", "message": "Ada means to do something", **fields}])
