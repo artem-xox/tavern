@@ -130,3 +130,25 @@ def test_the_evening_is_not_being_retold_before_it_ends(tmp_path: Path) -> None:
         return opened.snapshot()["telling"]
 
     assert asyncio.run(evening()) is False
+
+
+def test_the_storyteller_is_told_who_was_played_and_the_client_gets_the_cited_lines(tmp_path: Path) -> None:
+    async def evening() -> Any:
+        ask = storyteller()
+        asked: list[str] = []
+
+        async def spy(question: Any) -> Any:
+            asked.append(question["content"])
+            return await ask(question)
+        opened = runtime(tmp_path, spy)
+        opened.advance(0.1)
+        opened.world["player"] = {"actor_id": "ada", "steering": True}
+        opened.world["events"].append({"time": 1.0, "actor_id": "ada", "type": "player_act", "message": "Ada chose sit"})
+        opened.advance(0.1)
+        last_guest_leaves(opened)
+        await opened.await_retelling()
+        return asked, opened.snapshot()
+
+    asked, snapshot = asyncio.run(evening())
+    assert "Ada" in asked[0].split("Moments counted")[1]
+    assert {item["type"] for item in snapshot["retelling_events"].values()} >= {"player_act"}

@@ -11,7 +11,10 @@ from tavern.hall.state import Actor, World, find_actor
 from tavern.hall.world import observe_actor, start_action
 from tavern.mind.candidates import open_actions
 from tavern.mind.scripted import MAX_LINE
+from tavern.social.heckles import answer_heckle
 from tavern.social.scenes import conversation_of
+from tavern.social.speeches import on_stage_for
+from tavern.social.stage_lines import comeback_owed_to
 
 
 def steer(world: World, mind: MindLoop, command: Mapping[str, Any]) -> None:
@@ -145,7 +148,8 @@ def say(world: World, mind: MindLoop, command: Mapping[str, Any]) -> None:
         command: `{"type": "say", "text": str, "to": "auto" | "everyone" | <guest id>}`; `to` defaults to auto.
 
     Raises:
-        ValueError: The evening has no player or the guest is on autopilot; the guest is in no scene; the text,
+        ValueError: The evening has no player or the guest is on autopilot; the guest is in no scene and on no
+            stage ("Nobody is listening"); the text,
             once trimmed, is empty or longer than `MAX_LINE`; `to` names nobody else in the scene; or a line of
             theirs is already being read or waits to be spoken there. Nothing changes then.
     """
@@ -153,12 +157,14 @@ def say(world: World, mind: MindLoop, command: Mapping[str, Any]) -> None:
     if player is None or not player["steering"]:
         raise ValueError("say needs a player who holds the wheel")
     actor_id = player["actor_id"]
-    scene = conversation_of(world, actor_id)
-    if scene is None:
-        raise ValueError("say needs the played guest to be in a conversation")
     text, to = command.get("text"), command.get("to", "auto")
     if not isinstance(text, str) or not text.strip() or len(text.strip()) > MAX_LINE:
         raise ValueError(f"say needs text of 1 to {MAX_LINE} characters, not {text!r}")
+    if _say_on_stage(world, mind, actor_id, text.strip()):
+        return
+    scene = conversation_of(world, actor_id)
+    if scene is None:
+        raise ValueError("Nobody is listening: join a conversation or climb the stage to say anything")
     if to not in ("auto", "everyone") and (not isinstance(to, str) or to == actor_id
                                            or to not in scene["participants"]):
         raise ValueError(f"say needs to to be auto, everyone or someone else in the scene, not {to!r}")
@@ -170,6 +176,24 @@ def say(world: World, mind: MindLoop, command: Mapping[str, Any]) -> None:
     scene["written"] = None
     scene["writing"] = {"turn": len(scene["turns"]), "speaker": actor_id, "since": world["time"]}
     mind.read_line(world, scene["id"], text.strip(), to)
+
+
+def _say_on_stage(world: World, mind: MindLoop, actor_id: str, text: str) -> bool:
+    # A heckle owed a comeback takes the text as the comeback at once; a performer with no number given takes it as
+    # their number, after a reading. Returns False when the played guest is on neither errand: the scene's path.
+    performer = find_actor(world, actor_id)
+    if performer is None:
+        return False
+    heckler = comeback_owed_to(world, actor_id)
+    if heckler is not None:
+        answer_heckle(world, performer, heckler, text)
+        return True
+    if on_stage_for(world, performer) is None:
+        return False
+    if actor_id in mind.numbering:
+        raise ValueError("A number of the player's is being read: one at a time")
+    mind.read_number(world, text)
+    return True
 
 
 def _drop_claim(mind: MindLoop, scene_id: str, turn: int) -> None:
@@ -197,3 +221,36 @@ def typing(world: World, command: Mapping[str, Any]) -> None:
     if player is None or not player["steering"]:
         raise ValueError("typing needs a player who holds the wheel")
     player["typing_at"] = world["time"]
+
+
+PLAYER_COMMANDS = ("steer", "act", "say", "options", "typing")
+
+
+def apply_command(world: World, mind: MindLoop, command: Mapping[str, Any]) -> dict[str, Any] | None:
+    """Route one player command to its handler: the one door the live runtime and a scripted evening share.
+
+    Args:
+        world: Authoritative world.
+        mind: The evening's requests in flight.
+        command: A `steer`, `act`, `say`, `options` or `typing` command.
+
+    Returns:
+        The reply to send back (`options` has one), or None.
+
+    Raises:
+        ValueError: The type is not a player command, or the handler refuses the command.
+    """
+    kind = command.get("type")
+    if kind == "steer":
+        steer(world, mind, command)
+    elif kind == "act":
+        act(world, command)
+    elif kind == "say":
+        say(world, mind, command)
+    elif kind == "options":
+        return options(world, command)
+    elif kind == "typing":
+        typing(world, command)
+    else:
+        raise ValueError(f"Unknown player command {kind!r}; choose one of {PLAYER_COMMANDS}")
+    return None

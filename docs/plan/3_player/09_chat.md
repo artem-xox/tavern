@@ -1,7 +1,7 @@
 ---
 id: S3-09
 title: The chat
-status: todo
+status: in-progress
 needs: [S3-04, S3-05, S3-07]
 touches: [backend/tavern/social/player_lines.py, backend/tavern/server/runtime.py, frontend/src/chat.ts (new), frontend/src/chatpanel.ts (new), frontend/src/connection.ts, frontend/src/main.ts, frontend/src/style.css, frontend/src/types.ts, frontend/tests/chat.test.ts (new)]
 ---
@@ -69,3 +69,16 @@ turn passes, and typing pings that hold the turn.
   guest who spoke feel ignored. The turn waits while Monroe types. Screenshots and the scene's lines in Results.
 
 ## Results
+
+### 2026-11-08 — built; live run still open
+
+- `player_lines.player_turn(world)` and `PlayerTurn`, added to the snapshot as `player_turn` (computed, not saved: no schema bump).
+  States: `none` (no scene, or autopilot), `free`, `your_turn` (with `silence_at`), `reading`, and, after merging S3-06,
+  `on_stage` (`silence_at` is when they step down) and `comeback`.
+- `chat.ts` (`chatModel`, `nextPing`, `sayCommand`) with `frontend/tests/chat.test.ts`; `chatpanel.ts` docked under the
+  hall (lines, faces, To: picker, 200-char input with counter, Enter sends, pings through `connection.send`, an `error`
+  reply stays under the input until the next keystroke). Faces set "To:"; it resets to Auto when the scene changes.
+- `make check` (after merging main): 4936 passed, mypy clean, `tsc`, 362 frontend tests. `make build`: built.
+  `make golden` diff against main's golden: empty.
+- **Not done:** the `make run` look in the built-in browser and the live Monroe/Putin/Trump evening. The browser pane was
+  hidden and refused navigation, and no live-model run was made. Screenshots and the scene's lines are still owed.

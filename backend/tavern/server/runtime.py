@@ -14,8 +14,8 @@ from tavern.adapters.persistence import FileStore
 from tavern.body.activities import ACTIVITIES, client_activities
 from tavern.body.items import client_items
 from tavern.evening.mind_loop import EveningPorts, TaskCourier, evening_mind
-from tavern.evening.player_commands import act, options, say, steer, typing
-from tavern.evening.retelling import Retelling, retell
+from tavern.evening.player_commands import PLAYER_COMMANDS, apply_command
+from tavern.evening.retelling import Retelling, cited_events, retell, told
 from tavern.evening.scenario import Scenario, open_evening
 from tavern.evening.story_score import WEIGHTS, Moment, story_moments, story_score
 from tavern.hall.memory import fresh_events, log_event
@@ -30,7 +30,7 @@ from tavern.mind.intentions import INTENTION_RULES, Intender, IntentionRules
 from tavern.mind.model_health import HealthBoard
 from tavern.mind.scripted import write_scripted_turn
 from tavern.server.controls import forced_action, refill_tap, set_paused, set_speed, toggle_block
-from tavern.social.player_lines import ReadLine, read_as_remark
+from tavern.social.player_lines import ReadLine, ReadNumber, player_turn, read_as_pitch, read_as_remark
 from tavern.social.stage_lines import StageWriter, write_scripted_stage
 from tavern.social.turns import TurnWriter
 
@@ -119,7 +119,7 @@ class TavernRuntime:
                  choose: Chooser = choose_action, health: HealthBoard | None = None,
                  answer: Answerer = choose_invitation_answer, storyteller: Ask | None = None,
                  lineup: Lineup | None = None, stage_writer: StageWriter = write_scripted_stage,
-                 reader: ReadLine = read_as_remark) -> None:
+                 reader: ReadLine = read_as_remark, number_reader: ReadNumber = read_as_pitch) -> None:
         self.map_data = deepcopy(dict(map_data))
         self.scenario = scenario
         # Makes the evening of a `start` command; None where the start screen is not offered.
@@ -145,7 +145,8 @@ class TavernRuntime:
                                                                     self.rng)) if read_answers(self.ai_config) else None)
         self.mind = evening_mind(TaskCourier(), EveningPorts(
             lambda observation: choose(observation, self.ai_config, self.rng), answers,
-            lambda view: self.writer(view, self.ai_config), lambda view: stage_writer(view, self.ai_config), intender, reader),
+            lambda view: self.writer(view, self.ai_config), lambda view: stage_writer(view, self.ai_config), intender, reader,
+            number_reader),
             intention_rules)
 
     @property
@@ -160,6 +161,7 @@ class TavernRuntime:
         self.chronicle: list[dict[str, Any]] = list(self.world["events"])
         self.moments: list[Moment] = story_moments(self.chronicle)
         self.retelling: Retelling | None = None
+        self.retelling_events: dict[int, dict[str, Any]] = {}  # What the client needs of the lines it cites.
         self._telling = None
 
     def _note_story(self) -> None:
@@ -176,7 +178,12 @@ class TavernRuntime:
         score = story_score(self.moments, WEIGHTS)
         try:
             assert self.storyteller is not None
-            self.retelling = await retell(self.chronicle, score, self.storyteller)
+            player = self.world["player"]
+            # The played guest may have left by closing, so the departed are searched too.
+            played = None if player is None else next(
+                (guest["name"] for guest in [*self.world["actors"], *self.world["departed"]] if guest["id"] == player["actor_id"]), None)
+            self.retelling = await retell(self.chronicle, score, self.storyteller, played)
+            self.retelling_events = cited_events(told(self.chronicle))
         except (ClaudeError, ValueError) as error:
             self._event(f"The evening could not be retold: {error}")
 
@@ -208,7 +215,9 @@ class TavernRuntime:
             **health,
         }, "activities": client_activities(ACTIVITIES), "items": client_items(), "minds": minds(self.world),
                 "story": story_score(self.moments, WEIGHTS), "retelling": self.retelling,
-                "telling": self._telling is not None and not self._telling.done()}
+                "retelling_events": self.retelling_events if self.retelling else {},
+                "telling": self._telling is not None and not self._telling.done(),
+                "player_turn": player_turn(self.world)}
 
     def _event(self, message: str) -> None:
         log_event(self.world, None, "control", message)
@@ -316,15 +325,14 @@ class TavernRuntime:
                     "speed": lambda item: set_speed(self.world, item),
                     "refill": lambda item: refill_tap(self.world, item),
                     "block": self._block, "force_action": self._force_action,
-                    "save": self._save, "load": self._load, "reset": self._reset, "start": self._start,
-                    "steer": lambda item: steer(self.world, self.mind, item),
-                    "say": lambda item: say(self.world, self.mind, item)}
+                    "save": self._save, "load": self._load, "reset": self._reset, "start": self._start}
         if not isinstance(command, Mapping) or not isinstance(command.get("type"), str):
             raise ValueError("Expected a command with a type")
-        hands = {"act": lambda item: act(self.world, item), "options": lambda item: options(self.world, item),
-                 "typing": lambda item: typing(self.world, item)}
-        if command["type"] in hands:
-            return hands[command["type"]](command)
+        if command["type"] in PLAYER_COMMANDS:
+            reply = apply_command(self.world, self.mind, command)
+            if command["type"] in ("steer", "say"):
+                self._event(f"Operator: {command['type']}")
+            return reply
         handler = handlers.get(command["type"])
         if handler is None:
             raise ValueError("Unknown command")

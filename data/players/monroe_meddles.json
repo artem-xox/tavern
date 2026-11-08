@@ -1,0 +1,10 @@
+{"player": "monroe", "steps": [
+  {"at": 20.0, "command": {"type": "act", "action": {"id": "take_beer:tap", "verb": "take_beer", "target_id": "tap"}}},
+  {"at": 40.0, "command": {"type": "act", "action": {"id": "sit:chair-1", "verb": "sit", "target_id": "chair-1"}}},
+  {"at": 70.0, "command": {"type": "act", "action": {"id": "talk:putin", "verb": "talk", "target_id": "putin"}}},
+  {"at": 73.0, "command": {"type": "say", "text": "Vladimir, darling, you look lonely. Such a serious man.", "to": "auto"}},
+  {"at": 105.0, "command": {"type": "say", "text": "Donald, honey, I have heard better speeches from a coat rack.", "to": "auto"}},
+  {"at": 130.0, "command": {"type": "say", "text": "Come on, someone, a game of darts. Who is brave enough?", "to": "everyone"}},
+  {"at": 200.0, "command": {"type": "act", "action": {"id": "play_darts:darts", "verb": "play_darts", "target_id": "darts"}}},
+  {"at": 500.0, "command": {"type": "act", "action": {"id": "give_speech:stage", "verb": "give_speech", "target_id": "stage"}}}
+]}

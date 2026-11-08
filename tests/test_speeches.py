@@ -5,7 +5,7 @@ from typing import Any
 import pytest
 
 from tavern.body.hearing import EVENT_SOUNDS
-from tavern.social.speeches import PERFORM_WAIT
+from tavern.social.speeches import PERFORM_WAIT, perform
 from tavern.social.thoughts import active_thoughts
 from dice_hall import advance, guest, happened, start, who
 from dice_hall import table_hall as bare_hall
@@ -389,3 +389,71 @@ def test_a_steered_guest_is_never_chosen_to_heckle(player: dict[str, Any] | None
     assert start(world, "ada", "give_speech", "stage")["accepted"]
     advance(world, PERFORM_WAIT + 1.0)
     assert numbers_given(world)[0]["heckler_id"] == heckler
+
+
+def steered_on_stage() -> dict[str, Any]:
+    """Ada, played by a person, climbs the stage; Bea listens."""
+    world = table_hall(speaker(), guest("bea", (15, 7)))
+    world["player"] = {"actor_id": "ada", "steering": True, "typing_at": None}
+    assert start(world, "ada", "give_speech", "stage")["accepted"]
+    return world
+
+
+def up_there(world: dict[str, Any]) -> bool:
+    """Whether Ada still stands on the stage giving the speech."""
+    return (who(world, "ada")["action"] or {}).get("verb") == "give_speech"
+
+
+def type_for(world: dict[str, Any], seconds: float, every: float = 5.0) -> None:
+    """The player presses a key every few seconds for a while."""
+    for _ in range(int(seconds / every)):
+        advance(world, every)
+        world["player"]["typing_at"] = world["time"]
+
+
+@pytest.mark.parametrize("typing, then_wait, up", [
+    pytest.param(0.0, 10.0, True, id="the-speech-timer-does-not-run-out-in-silence"),
+    pytest.param(30.0, 15.0, True, id="typing-keeps-the-stage-past-the-speech-timer"),
+    pytest.param(30.0, 25.0, False, id="a-silence-after-the-last-keystroke-steps-them-down"),
+])
+def test_a_steered_performer_keeps_the_stage_while_they_may_still_type(typing: float, then_wait: float, up: bool) -> None:
+    world = steered_on_stage()
+    type_for(world, typing)
+    advance(world, then_wait)
+    assert up_there(world) == up
+
+
+@pytest.mark.parametrize("speed, waited, up", [
+    pytest.param(1.0, 15.0, True, id="real-silence-not-yet-passed"),
+    pytest.param(2.0, 15.0, True, id="a-faster-world-waits-more-game-seconds"),
+    pytest.param(2.0, 25.0, False, id="and-then-steps-down"),
+])
+def test_the_silence_on_the_stage_counts_in_real_seconds(speed: float, waited: float, up: bool) -> None:
+    world = steered_on_stage()
+    world["speed"] = speed
+    advance(world, waited)
+    assert up_there(world) == up
+
+
+def test_stepping_down_in_silence_is_logged() -> None:
+    world = steered_on_stage()
+    advance(world, 30.0)
+    assert happened(world, "stage_silent") == ["Ada stood on the stage and said nothing"]
+
+
+def test_a_number_ends_the_stage_after_its_reading_time_not_the_silence() -> None:
+    world = steered_on_stage()
+    advance(world, 6.0)
+    perform(world, who(world, "ada"), "pitch", None, ["Friends, drink up."])
+    advance(world, 3.0)
+    still_up = up_there(world)
+    advance(world, 10.0)
+    assert (still_up, up_there(world), happened(world, "stage_silent")) == (True, False, [])
+
+
+def test_a_performer_given_back_to_autopilot_gives_a_scripted_number_after_the_usual_wait() -> None:
+    world = steered_on_stage()
+    advance(world, 10.0)
+    world["player"]["steering"] = False
+    advance(world, PERFORM_WAIT + 1.0)
+    assert len(numbers_given(world)) == 1

@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 
 from tavern.social.speeches import PERFORM_WAIT
-from tavern.social.stage_lines import HECKLE_WITHIN, deliver_stage, stage_claims, write_scripted_stage
+from tavern.social.stage_lines import HECKLE_WITHIN, deliver_number, deliver_stage, stage_claims, write_scripted_stage
 from tavern.social.thoughts import active_thoughts
 from dice_hall import advance, guest, start, table_hall, who
 
@@ -163,3 +163,56 @@ def test_nothing_is_owed_by_a_steered_guest_on_or_at_the_stage(
     on_autopilot = len(claims(world, kind))
     world["player"] = {"actor_id": steered_id, "steering": True}
     assert (owed, on_autopilot, len(claims(world, kind))) == (1, 1, 0)
+
+
+def reading(number: str, target: str | None) -> Any:
+    """An outcome that hands back a reader's answer."""
+    return lambda: {"number": number, "target": target}
+
+
+def broken() -> Any:
+    """A reader that failed."""
+    def outcome() -> dict[str, Any]:
+        raise TimeoutError("the reader did not answer")
+    return outcome
+
+
+TYPED = "Cid, you magnificent liar!"
+
+
+@pytest.mark.parametrize("outcome, number, target_id", [
+    pytest.param(reading("toast", "cid"), "toast", "cid", id="toast-to-trump"),
+    pytest.param(reading("roast", "cid"), "roast", "cid", id="roast-of-putin"),
+    pytest.param(reading("pitch", None), "pitch", None, id="pitch-to-the-hall"),
+    pytest.param(reading("sermon", None), "pitch", None, id="unknown-kind-is-pitch"),
+    pytest.param(reading("roast", "nobody"), "pitch", None, id="target-not-in-hall-is-pitch"),
+    pytest.param(reading("toast", None), "pitch", None, id="aimed-kind-without-target-is-pitch"),
+    pytest.param(broken(), "pitch", None, id="reader-failed-is-pitch"),
+])
+def test_the_players_number_is_performed_in_their_words_as_the_reading_says(
+        outcome: Any, number: str, target_id: str | None) -> None:
+    world = on_stage()
+    world["player"] = {"actor_id": "ada", "steering": True}
+    deliver_number(world, "ada", TYPED, outcome)
+    [event] = events(world, "gave_speech")
+    assert (event["line"], event["number"], event["target_id"]) == (TYPED, number, target_id)
+
+
+@pytest.mark.parametrize("outcome, misreads", [
+    pytest.param(reading("roast", "cid"), 0, id="a-clean-reading"),
+    pytest.param(reading("roast", "nobody"), 1, id="target-not-in-hall"),
+    pytest.param(broken(), 1, id="reader-failed"),
+])
+def test_a_reading_that_is_not_taken_as_it_stands_is_logged(outcome: Any, misreads: int) -> None:
+    world = on_stage()
+    world["player"] = {"actor_id": "ada", "steering": True}
+    deliver_number(world, "ada", TYPED, outcome)
+    assert len(events(world, "misread")) == misreads
+
+
+def test_a_number_read_for_a_performer_who_left_the_stage_is_dropped() -> None:
+    world = on_stage()
+    world["player"] = {"actor_id": "ada", "steering": True}
+    who(world, "ada")["action"] = None
+    deliver_number(world, "ada", TYPED, reading("pitch", None))
+    assert events(world, "gave_speech") == []

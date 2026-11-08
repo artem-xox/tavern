@@ -7,6 +7,7 @@ import { spriteSheets } from "./sprites";
 import { OrderMenu } from "./ordermenu";
 import { clickOrder, menuRows, walkAction, type Pick } from "./orders";
 import { WheelBar } from "./wheelbar";
+import { ChatPanel } from "./chatpanel";
 import type { Cast, CharacterCatalog, OptionsMessage, Snapshot, World } from "./types";
 import "./style.css";
 
@@ -72,6 +73,7 @@ function showMenu(reply: OptionsMessage): void {
 let inspectTarget: () => void = (): void => {};
 
 function showError(message: string): void {
+  if (chat.fail(message)) return;
   const played: string | undefined = world?.player?.actor_id;
   if (steeringNow() && played) scene.toast(played, message);
   else dashboard.showError(message);
@@ -89,6 +91,9 @@ const dashboard: Dashboard = new Dashboard(application, {
 const wheelHost: HTMLElement = document.createElement("div");
 application.querySelector(".game-surround")?.before(wheelHost);
 const wheel: WheelBar = new WheelBar(wheelHost, (command): void => connection.send(command));
+const chatHost: HTMLElement = document.createElement("div");
+application.append(chatHost);
+const chat: ChatPanel = new ChatPanel(chatHost, (command): void => connection.send(command));
 const menu: OrderMenu = new OrderMenu(document.body, {
   act: (action): void => connection.send({ type: "act", action }),
   inspect: (): void => inspectTarget(),
@@ -116,6 +121,7 @@ function applySnapshot(snapshot: Snapshot): void {
   scene.setWorld(world, snapshot.activities, snapshot.minds);
   dashboard.apply(snapshot);
   wheel.apply(world);
+  chat.apply(snapshot);
   // Departed visitors stay selectable, so their evening can still be inspected.
   if (!selectedId || ![...world.actors, ...world.departed].some((actor): boolean => actor.id === selectedId)) {
     selectedId = world.actors[0]?.id ?? null;

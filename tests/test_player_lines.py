@@ -7,8 +7,10 @@ from typing import Any
 import pytest
 
 from social_hall import seated_talk
+from test_app import room
+from tavern.server.runtime import TavernRuntime
 from tavern.mind.turn_view import turn_view
-from tavern.social.player_lines import deliver_reading, read_as_remark
+from tavern.social.player_lines import deliver_reading, player_turn, read_as_remark
 from tavern.social.scenes import Conversation, conversation_of
 
 TEXT = "Nice weather for a quarrel, Bea."
@@ -120,3 +122,59 @@ def test_the_offline_reader_makes_a_remark_to_whom_it_was_told(
                            "act": "greet", "time": 0.0})
     answer = asyncio.run(read_as_remark(turn_view(world, scene, "ada"), TEXT, to))
     assert answer == {"act": "remark", "addressee": expected, "topic": scene["topic"]}
+
+
+def turn_of(player: dict[str, Any] | None, claim_by: str | None = None, typed: float | None = None,
+            alone: bool = False, speed: float = 1.0) -> Any:
+    """The player_turn of Ada's talk with Bea (Ada speaks first), the played guest and what is going on varying."""
+    world = seated_talk()
+    world.update(player=player, speed=speed)
+    scene = conversation_of(world, "ada")
+    assert scene is not None
+    if player is not None and typed is not None:
+        player["typing_at"] = typed
+    if claim_by is not None:
+        scene["writing"] = {"turn": 0, "speaker": claim_by, "since": world["time"]}
+    if alone:
+        world["conversations"].remove(scene)
+    return player_turn(world), scene
+
+
+@pytest.mark.parametrize("player, kwargs, state, has_silence", [
+    pytest.param(None, {}, None, False, id="no-player"),
+    pytest.param({"actor_id": "ada", "steering": True}, {"alone": True}, "none", False, id="in-no-scene"),
+    pytest.param({"actor_id": "bea", "steering": True}, {}, "free", False, id="someone-else-next"),
+    pytest.param({"actor_id": "ada", "steering": True}, {}, "your_turn", True, id="addressed"),
+    pytest.param({"actor_id": "ada", "steering": True}, {"claim_by": "ada"}, "reading", False, id="being-read"),
+    pytest.param({"actor_id": "ada", "steering": False}, {}, "none", False, id="autopilot"),
+])
+def test_the_players_turn_names_what_the_scene_waits_for(
+        player: Any, kwargs: dict[str, Any], state: str | None, has_silence: bool) -> None:
+    turn, _ = turn_of(player, **kwargs)
+    assert (None if turn is None else turn["state"]) == state
+    assert turn is None or (turn["silence_at"] is not None) == has_silence
+
+
+@pytest.mark.parametrize("typed, speed, offset", [
+    pytest.param(None, 1.0, 20.0, id="from-the-line-falling-due"),
+    pytest.param(None, 2.0, 40.0, id="faster-world-waits-longer"),
+    pytest.param(1000.0, 1.0, None, id="a-keystroke-holds-the-turn"),
+])
+def test_the_turn_passes_in_silence_after_the_wait(typed: float | None, speed: float, offset: float | None) -> None:
+    turn, scene = turn_of({"actor_id": "ada", "steering": True}, typed=typed, speed=speed)
+    expected = scene["next_turn_at"] + offset if offset is not None else typed + 20.0
+    assert turn["silence_at"] == expected
+
+
+@pytest.mark.parametrize("player, state", [
+    pytest.param(None, None, id="no-player-no-turn"),
+    pytest.param({"actor_id": "ada", "steering": True}, "your_turn", id="played-guest-is-asked"),
+])
+def test_the_snapshot_carries_the_players_turn_computed_not_saved(tmp_path: Any, player: Any, state: str | None) -> None:
+    runtime = TavernRuntime(room(), tmp_path / "save.json", {"typesafe_api_key": None})
+    world = seated_talk()
+    world["player"] = player
+    runtime.world = world
+    shown = runtime.snapshot()["player_turn"]
+    assert (None if shown is None else shown["state"]) == state
+    assert "player_turn" not in world
