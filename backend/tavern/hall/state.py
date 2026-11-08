@@ -198,6 +198,12 @@ class GivingRules(TypedDict):
     carry_for: float
 
 
+class PlayerRules(TypedDict):
+    """When the turn passes a player who neither types nor speaks."""
+
+    silence: float
+
+
 class Rules(TypedDict):
     """The tunable rules of the world, kept in every save."""
 
@@ -218,6 +224,7 @@ class Rules(TypedDict):
     bartending: BartendingRules
     giving: GivingRules
     manners: MannersRules
+    player: PlayerRules
 
 
 class HallMap(TypedDict):
@@ -228,6 +235,13 @@ class HallMap(TypedDict):
     tile_size: int
     blocked: list[list[int]]
     objects: list[dict[str, Any]]
+
+
+class Player(TypedDict):
+    """The person playing tonight: which guest they play, and whether they hold the wheel."""
+
+    actor_id: str  # an actor cast from one of the scenario's guests, never staff
+    steering: bool  # True: the player decides for that guest; False: autopilot, the guest's own mind
 
 
 class World(TypedDict):
@@ -256,6 +270,7 @@ class World(TypedDict):
     projects: "list[Project]"
     news: "list[News]"
     fights: "list[Fight]"
+    player: Player | None
     rules: Rules
 
 
