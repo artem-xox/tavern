@@ -1,7 +1,7 @@
 ---
 id: S3-06
 title: The player on the stage
-status: todo
+status: done
 needs: [S3-04, S3-05]
 touches: [backend/tavern/social/player_lines.py, backend/tavern/social/speeches.py, backend/tavern/social/stage_lines.py, backend/tavern/hall/lifecycle.py, backend/tavern/mind/haiku_reading.py, backend/tavern/evening/mind_loop.py, backend/tavern/evening/player_commands.py, frontend/src/types.ts]
 ---
@@ -69,3 +69,45 @@ words, answer a heckle, and stay up there for as long as they are typing.
   the roasted guest gets the roast's thought, and a heckle, if one comes, can be answered with a second `say`.
 
 ## Results
+
+Done on `claude/s3-06-stage-8cc700`.
+
+- **`say` routing** (`player_commands._say_on_stage`): a heckle owed a comeback (`stage_lines.comeback_owed_to`, within
+  `HECKLE_WITHIN`) takes the text as `answer_heckle`, with no reading; a performer with no number given
+  (`speeches.on_stage_for`) has it read by `MindLoop.read_number`; in a scene it is S3-04's path; otherwise
+  `ValueError` "Nobody is listening: join a conversation or climb the stage to say anything" ("to say anything" keeps
+  `say` in the message for the existing refusal test). `to` is ignored on the stage; one number is read at a time.
+- **`ReadNumber`** (`player_lines`, beside `ReadLine`; offline `read_as_pitch`). `stage_lines.number_view` is the view
+  both the guest's writer and the reader get; `deliver_number` performs `[text]` as the reading says, and a failed or
+  impossible reading (unknown kind, target not in the hall, aimed kind without a target) becomes a pitch with a
+  `misread` event. The stage view's `room` entries now carry the guest's `id`, so the reading names a target by the name
+  the model sees and the parse maps it back.
+- **Haiku** (`haiku_reading.number_question`, `parse_number`, `claude_number_reader`): the same first system block as the
+  line reading, then number rules; the schema enumerates `NUMBERS` and the hall's names.
+- **Stage time** (`speeches.holds_stage`, called from `lifecycle._interact`): for a steered performer with no number the
+  speech timer stands still until `rules.player.silence × speed` has passed since the later of the climb and
+  `typing_at`; then `stage_silent` ("Marilyn Monroe stood on the stage and said nothing") and they step down. The climb
+  time is kept as `climbed_at` on the action itself, so the next climb starts afresh. After the number
+  (`perform` for a steered speaker) the timer is `give_speech − PERFORM_WAIT`, what a guest has left after the same
+  wait.
+- **Wiring**: `MindLoop`/`EveningPorts.read_number`; `number_reader` through `run_evening`, `TavernRuntime`,
+  `TavernSessions`, `create_app`, `app.py` (Claude when keyed) and `scripts/evening.py` (`number_reading` calls, recorded
+  and replayed). `types.ts` needed no change: `WorldEvent.type` is a plain string and the client lists no event types.
+- **No schema bump.** `climbed_at` is an optional key of a saved action, which the loader does not restrict, and nothing
+  else is saved; old saves load as before and no version pin changed.
+- **Golden** (`make golden`, base taken before the first edit): four of five evenings are identical. The fifth, the
+  scripted-player evening `monroe-5`, differs by design: Marilyn climbs the stage and types nothing, so she now steps
+  down at the silence (`stage_silent`, t=525.4) instead of at the 14 s timer (t=519.5). Nothing else in its log moved.
+  The baseline is refreshed to that.
+- **Tests**: `tests/test_player_stage.py` (routing, refusals, and the lockstep evening: the played guest climbs by
+  `act give_speech`, roasts Cid, Cid keeps the `roasted` thought, Cid's heckle is answered by a second `say`),
+  `tests/test_stage_lines.py` (`deliver_number`), `tests/test_speeches.py` (stage time), `tests/test_haiku_number_reading.py`.
+  No existing test was edited.
+- **Not done live**: Haiku's reading of a real number was not run against the model (the question and parse are tested
+  with a fake port).
+
+```
+make check:  4922 passed in 171.01s (backend); mypy: Success: no issues found in 144 source files;
+             frontend node:test: tests 354, pass 354, fail 0; exit 0
+make build:  ✓ built in 3.87s; exit 0
+```

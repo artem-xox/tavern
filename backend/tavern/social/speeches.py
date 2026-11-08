@@ -52,6 +52,35 @@ def on_stage_for(world: Mapping[str, Any], actor: Mapping[str, Any]) -> float | 
     return None if given else since
 
 
+def holds_stage(world: World, actor: Actor, elapsed: float) -> bool:
+    """Tell whether the performer the player steers keeps the stage this tick, while no number is given.
+
+    The speech's timer stands still for them: a person types slowly. They keep the stage until a silence
+    (`rules.player.silence` real seconds, so more game seconds at a faster speed) has passed since the later of their
+    climbing up and their last keystroke; then they step down, and a `stage_silent` event records it. The climb is
+    noted on the action itself (`climbed_at`), so a later climb starts afresh.
+
+    Args:
+        world: Current world.
+        actor: Guest doing `give_speech`; updated in place when the silence passes (the action ends this tick).
+        elapsed: Game seconds this tick covers.
+
+    Returns:
+        True when the speech's timer is to stand still; False for a guest the player does not steer, one who has
+        given their number (the timer runs on as for any guest), or one whose silence has just passed.
+    """
+    action, player = actor["action"], world["player"]
+    if action is None or player is None or not steered(world, actor["id"]) or on_stage_for(world, actor) is None:
+        return False
+    climbed = action.setdefault("climbed_at", world["time"] - elapsed)
+    typed = player.get("typing_at")
+    if world["time"] < max(climbed, typed or 0.0) + world["rules"]["player"]["silence"] * world["speed"]:
+        return True
+    log_event(world, actor["id"], "stage_silent", f"{actor['name']} stood on the stage and said nothing")
+    actor["_remaining"] = 0.0
+    return False
+
+
 def number_for(world: Mapping[str, Any], speaker: Mapping[str, Any]) -> tuple[str, str | None]:
     """Choose the number a guest on the stage gives now, from who is in the hall (`numbers.choose_number`).
 
@@ -109,6 +138,9 @@ def perform(world: World, speaker: Actor, kind: str, target_id: str | None, line
     line = " ".join(lines)
     told = _TOLD[kind].format(target=target["name"] if target else "")
     message = f'{speaker["name"]} {told}: "{line}"'
+    if steered(world, speaker["id"]):
+        # Their number was typed, not waited for: the room hears it for as long as any guest's number would be heard.
+        speaker["_remaining"] = world["rules"]["durations"]["give_speech"] - PERFORM_WAIT
     event = record_event(world, speaker, "gave_speech", message)
     event.update(line=line, number=kind, target_id=target_id)
     speaker["memory"][-1]["number"] = kind

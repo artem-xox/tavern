@@ -19,6 +19,7 @@ from tavern.hall.staff import off_limits, on_staff, tended
 from tavern.hall.state import Actor, World, find_actor
 from tavern.hall.validation import saved_cell
 from tavern.social.scenes import conversation_of, leave_conversation
+from tavern.social.speeches import holds_stage
 
 
 def _target(world: Mapping[str, Any], action: Mapping[str, Any]) -> dict[str, Any] | None:
@@ -292,6 +293,8 @@ def _interact(world: World, actor: Actor, elapsed: float) -> None:
     reason = _interaction_error(world, actor)
     if reason:
         _fail(world, actor, reason)
+        return
+    if holds_stage(world, actor, elapsed):
         return
     actor["_remaining"] -= elapsed
     # A part in a conversation lasts as long as the scene does (see `finish_parts`), a game as long as the

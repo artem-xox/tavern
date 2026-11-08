@@ -1,4 +1,4 @@
-"""The player's typed lines: the reader port, and the boundary that makes a turn of a reading."""
+"""The player's typed lines: the reader ports, and the boundary that makes a turn of a reading."""
 
 from collections.abc import Callable, Coroutine, Mapping
 from typing import Any
@@ -14,6 +14,10 @@ from tavern.social.turns import check_turn
 # `deliver_reading` checks like a guest's turn. Any failure it raises makes the line a remark.
 ReadLine = Callable[[Mapping[str, Any], str, str], Coroutine[Any, Any, Mapping[str, Any]]]
 _EXTRAS = ("invitation", "fact_id")
+# Reads the number of words already written for the stage: the performer's view (`stage_lines.number_view`) and the
+# text. Answers `{number, target}`: one of `numbers.NUMBERS` and a guest in the hall, or None for a number with no
+# target. `stage_lines.deliver_number` checks it; any failure it raises makes the text a pitch to the hall.
+ReadNumber = Callable[[Mapping[str, Any], str], Coroutine[Any, Any, Mapping[str, Any]]]
 
 
 async def read_as_remark(view: Mapping[str, Any], text: str, to: str) -> Mapping[str, Any]:
@@ -35,6 +39,19 @@ async def read_as_remark(view: Mapping[str, Any], text: str, to: str) -> Mapping
     else:
         addressee = None if to == "everyone" else to
     return {"act": "remark", "addressee": addressee, "topic": view["conversation"]["topic"]}
+
+
+async def read_as_pitch(view: Mapping[str, Any], text: str) -> Mapping[str, Any]:
+    """Read every number as a pitch to the hall: the offline reader.
+
+    Args:
+        view: The performer's view of the stage.
+        text: What they typed.
+
+    Returns:
+        A pitch with no target.
+    """
+    return {"number": "pitch", "target": None}
 
 
 def deliver_reading(world: World, scene_id: str, turn: int, text: str, to: str, outcome: Callable[[], Any]) -> None:
