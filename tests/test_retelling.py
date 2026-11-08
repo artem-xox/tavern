@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 
-from tavern.evening.retelling import MAX_CHAPTERS, MAX_CHAPTER_TEXT, MAX_LINES, parse_retelling, retell, retelling_question, told
+from tavern.evening.retelling import MAX_CHAPTERS, MAX_CHAPTER_TEXT, MAX_LINES, cited_events, parse_retelling, retell, retelling_question, told
 from tavern.evening.story_score import WEIGHTS, story_moments, story_score
 
 
@@ -182,3 +182,39 @@ def test_a_storyteller_with_no_cited_chapter_left_tells_nothing() -> None:
 def test_the_storytellers_own_failure_is_not_hidden() -> None:
     with pytest.raises(RuntimeError, match="down"):
         asyncio.run(retell(LOG, score(LOG), teller(RuntimeError("down"))))
+
+
+def test_a_played_guest_is_named_to_the_storyteller_and_no_player_changes_nothing() -> None:
+    events = [event("dozed_off", "Ada fell asleep at the table")]
+    plain = retelling_question(events, score(events))
+    played = retelling_question(events, score(events), played="Marilyn Monroe")
+    assert "Marilyn Monroe" in played["content"] and "Marilyn Monroe" not in plain["content"]
+    assert retelling_question(events, score(events), played=None) == plain
+
+
+def test_the_player_is_named_again_in_the_second_question() -> None:
+    events = [event("dozed_off", "Ada fell asleep at the table")]
+    again = retelling_question(events, score(events), "chapter 2 cites #99", played="Marilyn Monroe")
+    assert "Marilyn Monroe" in again["content"] and "chapter 2 cites #99" in again["content"]
+
+
+def test_the_storyteller_is_asked_with_the_played_guest() -> None:
+    ask = teller(answer(chapter(cites=[0])))
+    asyncio.run(retell(LOG, score(LOG), ask, played="Marilyn Monroe"))
+    assert "Marilyn Monroe" in ask.asked[0]["content"]
+
+
+def test_the_player_s_line_and_act_stay_in_what_the_storyteller_sees() -> None:
+    line = {**event("turn", "Ada to Bram (chat): hello"), "player": True}
+    act = event("player_act", "Ada chose pour_beer")
+    other = event("action_completed", "x")
+    shown = told([other, line, act])
+    assert shown == {1: line, 2: act} and shown[1]["player"] is True
+
+
+def test_cited_player_events_are_listed_for_the_client() -> None:
+    line = {**event("turn", "Ada to Bram (chat): hello"), "player": True}
+    shown = {1: line, 2: event("player_act", "Ada chose pour_beer", actor_id="ada"), 3: event("quarrel", "q", actor_id="bram")}
+    assert cited_events(shown) == {1: {"type": "turn", "player": True, "actor_id": "ada"},
+                                   2: {"type": "player_act", "player": False, "actor_id": "ada"},
+                                   3: {"type": "quarrel", "player": False, "actor_id": "bram"}}
