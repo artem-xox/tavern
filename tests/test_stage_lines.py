@@ -148,3 +148,18 @@ def test_the_scripted_writer_answers_with_the_scripted_words() -> None:
 def test_a_failed_writer_is_logged_with_its_reason() -> None:
     [event] = events(performed(failed()), "stage_fallback")
     assert (event["actor_id"], "the writer did not answer" in event["message"]) == ("ada", True)
+
+
+@pytest.mark.parametrize("make, steered_id, kind", [
+    pytest.param(on_stage, "ada", "number", id="a-steered-performer-is-owed-no-number"),
+    pytest.param(performed, "cid", "heckle", id="a-steered-heckler-is-owed-no-heckle"),
+    pytest.param(heckled, "ada", "comeback", id="a-steered-performer-is-owed-no-comeback"),
+])
+def test_nothing_is_owed_by_a_steered_guest_on_or_at_the_stage(
+        make: Callable[[], dict[str, Any]], steered_id: str, kind: str) -> None:
+    world = make()
+    owed = len(claims(world, kind))
+    world["player"] = {"actor_id": steered_id, "steering": False}
+    on_autopilot = len(claims(world, kind))
+    world["player"] = {"actor_id": steered_id, "steering": True}
+    assert (owed, on_autopilot, len(claims(world, kind))) == (1, 1, 0)
