@@ -1,7 +1,7 @@
 ---
 id: S3-R07
 title: Metrics of actions, invitations and talk read event fields, not wording
-status: todo
+status: done
 needs: [S3-R06, S3-R10]
 touches: [social/turns.py, evening/metrics.py, evening/invitation_metrics.py, evening/choice_metrics.py, evening/fight_metrics.py, evening/dialogue_metrics.py, frontend/src/types.ts]
 ---
@@ -69,4 +69,19 @@ Results. **Approved by the owner, 2026-11-07.**
 
 ## Results
 
-Filled in when the task is done.
+Five commits: step 1 logs `act`/`addressee` on `turn` and `speaker_id` on `turn_failed` (`social/turns.py`,
+`types.ts`); step 2 switches `metrics.completed_activities`, `choice_metrics._repeats`, `fight_metrics` reactions,
+`invitation_metrics` (`_ANSWERED`, `_COUNTERED`, `_WORDS`, `_BY_WORDS` deleted) and `dialogue_metrics` (`_TURN` deleted;
+the line's words are still cut from the message) to the fields. Each parse-error `ValueError` became a missing-field one.
+
+- `make check`: `4663 passed in 171.60s`, `Success: no issues found in 135 source files`, frontend `pass 318 / fail 0`.
+- `make build`: `✓ built in 3.64s` (on a private copy of `node_modules` without the stray `* 2` dirs, which break `tsc` in the shared one).
+- Golden: `identical apart from the new fields`; `metrics.json` identical for guests-1, guests-5, locals-1, locals-5.
+- `grep '\["message"\]'` on the five readers: only the `(time, message)` dedup in `metrics._occurrences` and
+  `fight_metrics.once` (left alone by the Scope) and `dialogue_metrics` taking a line's words.
+
+Test edits (all approved): `test_metrics.py` (`event` takes fields, `done` passes `verb`; the old malformed-message
+test is now `test_completion_without_a_verb_fails_loudly`, its three cases cut to two); `test_choice_metrics.py` (action
+fixture carries `verb`); `test_fight_metrics.py` (`event` takes fields; `verb` on the action events);
+`test_invitation_metrics.py` (`act`, `invitation` on hand-built events); `test_dialogue_metrics.py` (`said` carries
+`act`/`addressee`, `failed` carries `speaker_id`).
