@@ -7,16 +7,16 @@ import pytest
 from tavern.evening.invitation_metrics import invitation_counts
 
 
-def logged(kind: str, message: str) -> dict[str, Any]:
+def logged(kind: str, message: str, **fields: Any) -> dict[str, Any]:
     """A logged event."""
-    return {"time": 1.0, "actor_id": "bea", "type": kind, "message": message}
+    return {"time": 1.0, "actor_id": "bea", "type": kind, "message": message, **fields}
 
 
-MADE = logged("turn", "Ada to Bea (invite): Fancy a game?")
-YES = logged("invitation_accepted", "Bea accepted an invitation to play a game of dice from Ada")
-NO = logged("invitation_declined", "Bea declined an invitation to play darts together from Ada")
+MADE = logged("turn", "Ada to Bea (invite): Fancy a game?", act="invite")
+YES = logged("invitation_accepted", "Bea accepted an invitation to play a game of dice from Ada", invitation="dice_together")
+NO = logged("invitation_declined", "Bea declined an invitation to play darts together from Ada", invitation="darts_together")
 COUNTER = logged("invitation_countered",
-                 "Bea turned down an invitation to play a game of dice and invited Ada to play darts together instead")
+                 "Bea turned down an invitation to play a game of dice and invited Ada to play darts together instead", invitation="dice_together")
 
 
 def counts(made: int = 0, **by_kind: dict[str, int]) -> dict[str, Any]:
@@ -36,7 +36,7 @@ def counts(made: int = 0, **by_kind: dict[str, int]) -> dict[str, Any]:
     pytest.param([MADE, MADE, YES, YES], counts(2, dice_together={"accepted": 2}), id="duplicates"),
     pytest.param([MADE, NO, YES], counts(1, darts_together={"declined": 1}, dice_together={"accepted": 1}),
                  id="kinds-in-table-order"),
-    pytest.param([logged("turn", "Ada to Bea (greet): Evening.")], counts(), id="other-lines-ignored"),
+    pytest.param([logged("turn", "Ada to Bea (greet): Evening.", act="greet")], counts(), id="other-lines-ignored"),
 ])
 def test_invitations_are_counted(events: list[dict[str, Any]], expected: dict[str, Any]) -> None:
     result = invitation_counts(events)
@@ -45,7 +45,7 @@ def test_invitations_are_counted(events: list[dict[str, Any]], expected: dict[st
 
 @pytest.mark.parametrize("event", [
     pytest.param(logged("invitation_accepted", "Bea said yes"), id="not-in-the-logged-form"),
-    pytest.param(logged("invitation_declined", "Bea declined an invitation to do the waltz from Ada"), id="an-unknown-kind"),
+    pytest.param(logged("invitation_declined", "Bea declined an invitation to do the waltz from Ada", invitation="waltz"), id="an-unknown-kind"),
 ])
 def test_an_invitation_event_that_cannot_be_read_fails_loudly(event: dict[str, Any]) -> None:
     with pytest.raises(ValueError):

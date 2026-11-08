@@ -330,6 +330,11 @@ export interface WorldEvent {
   /** The invitation kind and who made it, on `invitation_accepted`, `_declined` and `_countered`. */
   invitation?: string;
   inviter_id?: string;
+  /** The speech act and who it was addressed to (an actor ID, or null for everyone), on `turn`. */
+  act?: string;
+  addressee?: string | null;
+  /** Whose line failed, on `turn_failed`. */
+  speaker_id?: string;
 }
 
 /** A sound in the hall waiting for the listeners' attention at the end of the tick. */

@@ -17,8 +17,8 @@ def fight(a: str = "ada", b: str = "bea", outcome: str | None = "knockout", lose
             "waiting": [], "witnessed": True, "cause": cause, "outcome": outcome, "loser": loser, "ended_at": ended_at}
 
 
-def event(kind: str, message: str, time: float = 20.0) -> dict[str, Any]:
-    return {"type": kind, "message": message, "time": time, "actor_id": "ada"}
+def event(kind: str, message: str, time: float = 20.0, **fields: Any) -> dict[str, Any]:
+    return {"type": kind, "message": message, "time": time, "actor_id": "ada", **fields}
 
 
 def test_no_fights_is_an_empty_count() -> None:
@@ -45,8 +45,8 @@ def test_outcomes_and_causes_are_counted(fights: list[dict[str, Any]], outcomes:
 
 
 def test_reactions_and_treatment_are_counted_from_the_events() -> None:
-    events = [event("action_started", "Cid chose cheer"), event("action_started", "Cid chose cheer", 30.0),
-              event("action_started", "Cid chose intervene"), event("action_started", "Cid chose sit"),
+    events = [event("action_started", "Cid chose cheer", verb="cheer"), event("action_started", "Cid chose cheer", 30.0, verb="cheer"),
+              event("action_started", "Cid chose intervene", verb="intervene"), event("action_started", "Cid chose sit", verb="sit"),
               event("tended", "Ada took Bea's remedy and looks better already"),
               event("tended", "Ada took Bea's remedy and looks better already"),
               event("remedy_refused", "Bea would not give Ada a remedy"), event("limped_home", "Ada slipped out")]

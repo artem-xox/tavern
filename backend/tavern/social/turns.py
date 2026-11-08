@@ -149,8 +149,9 @@ def deliver_turn(world: World, scene_id: str, turn: int, outcome: Callable[[], A
         scene["written"] = check_turn(view, answer)
     except Exception as error:
         scene["written"] = scripted_turn(view)
-        log_event(world, None, "turn_failed",
-             f"A line for {view['speaker']['name']} failed ({error}); a scripted one stands in")
+        failed = log_event(world, None, "turn_failed",
+                           f"A line for {view['speaker']['name']} failed ({error}); a scripted one stands in")
+        failed["speaker_id"] = view["speaker"]["id"]
 
 
 def speak_turns(world: World) -> None:
@@ -185,6 +186,7 @@ def _speak(world: World, scene: Conversation, speaker_id: str, result: Mapping[s
     listener = people[result["addressee"]]["name"] if result["addressee"] else "everyone"
     spoken = log_event(world, speaker_id, "turn",
                        f"{people[speaker_id]['name']} to {listener} ({result['act']}): {result['line']}")
+    spoken["act"], spoken["addressee"] = result["act"], result["addressee"]
     note_spoken(world, scene, people[speaker_id])
     # Heard before the act takes effect, while the scene still holds everyone who spoke in it.
     hear_line(world, scene, turn)
