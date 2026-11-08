@@ -1,0 +1,5 @@
+{"player": "edda", "steps": [
+  {"at": 20.0, "command": {"type": "act", "action": {"id": "take_beer:tap", "verb": "take_beer", "target_id": "tap"}}},
+  {"at": 40.0, "command": {"type": "act", "action": {"id": "sit:chair-3", "verb": "sit", "target_id": "chair-3"}}},
+  {"at": 120.0, "command": {"type": "act", "action": {"id": "play_darts:darts", "verb": "play_darts", "target_id": "darts"}}}
+]}

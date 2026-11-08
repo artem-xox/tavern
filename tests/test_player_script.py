@@ -1,5 +1,7 @@
 """The player script: timed player commands for a headless evening."""
 
+import json
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -51,3 +53,10 @@ def test_parse_good_script(data: dict[str, Any], expected: PlayerScript) -> None
 def test_parse_bad_script_names_the_value(data: Any, named: str) -> None:
     with pytest.raises(ValueError, match=named):
         parse_player_script(data)
+
+
+@pytest.mark.parametrize("name", [pytest.param("monroe_meddles", id="monroe-meddles"),
+                                  pytest.param("locals_smoke", id="locals-smoke")])
+def test_the_sample_scripts_parse(name: str) -> None:
+    path = Path(__file__).resolve().parents[1] / "data" / "players" / f"{name}.json"
+    assert parse_player_script(json.loads(path.read_text())).steps
