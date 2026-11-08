@@ -27,10 +27,10 @@ Known problems that no task owns are in [TECH_DEBT.md](TECH_DEBT.md).
 | S2-06 | [Obsessions drive goals](2_story_evenings/06_obsessions.md): a guest's obsession becomes their goals and intentions | 03, 05 | done |
 | S2-07 | [Fun](2_story_evenings/07_fun.md): a need that chaos, games and signature acts fill | 05 | doing |
 | S2-08 | [Signature items](2_story_evenings/08_signature_items.md): the mechanic (an item offers a verb to its carrier) and Kim's phone, `livestream` | 03, 05 | done |
-| S2-09 | [Chaos](2_story_evenings/09_chaos.md): a quarrel that boils over, rivals, shouting, quarrels that escalate into fights | 04, 05 | doing |
+| S2-09 | [Chaos](2_story_evenings/09_chaos.md): a quarrel that boils over, rivals, shouting, quarrels that escalate into fights | 04, 05 | done |
 | S2-10 | [Retelling](2_story_evenings/10_retelling.md): a strong model retells the log; a closing screen shows it | 05 | doing |
 | S2-11 | [Acceptance](2_story_evenings/11_acceptance.md): live Guest evenings meet the story targets | all | todo |
-| S2-12 | [The stage](2_story_evenings/12_stage.md): a small stage from which a guest addresses the whole room | 06, 07 | doing |
+| S2-12 | [The stage](2_story_evenings/12_stage.md): a small stage from which a guest addresses the whole room | 06, 07 | done |
 | S2-13 | [Livelier talk](2_story_evenings/13_livelier_talk.md): no dice nudge on every line, no repeated invitations, a prompt that plays famous guests for satire, a `funny` judge | 03 | doing |
 | S2-14 | [Stage numbers](2_story_evenings/14_stage_numbers.md): toast, roast, pitch or confession, written by Haiku; a heckle from the floor and a comeback | 12, 13 | done |
 | S2-15 | [A stage worth climbing](2_story_evenings/15_stage_look.md): a square 2-by-2 platform with a lectern and footlights that flare during a number | 14 | done |
