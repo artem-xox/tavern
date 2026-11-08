@@ -196,7 +196,8 @@ def _await_player(world: World, scene: Conversation, speaker_id: str) -> None:
         return
     if scene["writing"] is not None:
         return
-    typed = world["player"].get("typing_at")
+    player = world["player"]  # a steered guest means there is one
+    typed = player.get("typing_at") if player is not None else None
     held_since = scene["next_turn_at"] if typed is None else max(scene["next_turn_at"], typed)
     if world["time"] >= held_since + world["rules"]["player"]["silence"] * world["speed"]:
         _speak(world, scene, speaker_id, {"line": SILENCE_LINE, "act": "silence", "addressee": None,
