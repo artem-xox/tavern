@@ -410,9 +410,9 @@ def main(root: Path) -> None:
            "answers": settings["answers"], "step": pace.step,
            "model_latency": pace.model_latency, "time_limit": pace.time_limit,
            "stuck_threshold": args.stuck_threshold, "input_usd_per_million": args.input_price,
-           "player_script": str(args.player_script) if args.player_script else None,
            "writer": writer, "writer_model": CLAUDE_MODEL if writer == "haiku" else None,
-           "writer_note": writer_note, "intentions": minded}
+           "writer_note": writer_note, "intentions": minded,
+           **({"player_script": str(args.player_script)} if script is not None else {})}
     report = evening_report(evening, world, calls, run, args.input_price, args.stuck_threshold, TARIFFS, HAIKU_5_5)
     (args.out / "events.jsonl").write_text("".join(json.dumps(event, sort_keys=True) + "\n" for event in evening.events))
     (args.out / "metrics.json").write_text(json.dumps(rounded(report), indent=2) + "\n")
