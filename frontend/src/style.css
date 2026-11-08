@@ -250,3 +250,18 @@ summary > span:last-child { color: var(--muted); font-size: var(--t-label); text
 .order-menu button { text-align: left; border: 0; background: transparent; padding: 6px 10px; }
 .order-menu button:hover { background: #4a3a2a; }
 .order-empty { padding: 6px 10px; opacity: 0.8; }
+
+/* The chat under the hall (S3-09). */
+.chat { padding: 10px 24px; border-top: 1px solid #5a4a30; display: grid; gap: 6px; }
+.chat-lines { max-height: 9em; overflow-y: auto; display: grid; gap: 2px; }
+.chat-line { margin: 0; }
+.chat-line.mine { text-align: right; }
+.chat-line.pending { opacity: 0.5; }
+.chat-faces { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.chat-face { padding: 0; width: 32px; height: 32px; }
+.chat-face img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.chat-face[aria-pressed="true"] { border-color: var(--gold-2); }
+.chat-turn { margin-left: auto; color: var(--gold-2); }
+.chat-input { display: flex; gap: 8px; align-items: center; }
+.chat-input input { flex: 1; }
+.chat-error { margin: 0; color: #e07060; }
