@@ -15,12 +15,13 @@ def said(speaker: str, line: str, act: str = "complain", to: str | None = None) 
     """A `turn` event, worded as the world logs it."""
     listener = to or next(item for item in PAIR if item != speaker)
     return {"type": "turn", "actor_id": speaker, "time": 0.0,
+            "act": act, "addressee": listener,
             "message": f"{NAMES[speaker]} to {NAMES[listener]} ({act}): {line}"}
 
 
 def failed(speaker: str) -> dict[str, Any]:
     """A `turn_failed` event about a speaker."""
-    return {"type": "turn_failed", "actor_id": None, "time": 0.0,
+    return {"type": "turn_failed", "actor_id": None, "time": 0.0, "speaker_id": speaker,
             "message": f"A line for {NAMES[speaker]} failed (too long); a scripted one stands in"}
 
 
