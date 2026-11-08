@@ -7,6 +7,7 @@ from tavern.body.expression import look_at
 from tavern.body.hearing import EVENT_SOUNDS, emit, heard_loudness
 from tavern.hall.chance import roll
 from tavern.hall.memory import log_event, record_event
+from tavern.hall.player import steered
 from tavern.hall.state import Actor, World
 from tavern.social.heckles import heckler_of
 from tavern.social.names import called
@@ -67,12 +68,15 @@ def number_for(world: Mapping[str, Any], speaker: Mapping[str, Any]) -> tuple[st
 def perform_overdue(world: World) -> None:
     """Let every performer still waiting for words `PERFORM_WAIT` seconds after climbing up say scripted ones.
 
+    A performer the player steers (`player.steered`) is left waiting.
+
     Args:
         world: World whose performers may give their number now.
     """
     for actor in list(world["actors"]):
         since = on_stage_for(world, actor)
-        if since is not None and since >= PERFORM_WAIT:
+        # A steered performer's number is the player's to give: they stand on the stage until the speech ends.
+        if since is not None and since >= PERFORM_WAIT and not steered(world, actor["id"]):
             kind, target_id = number_for(world, actor)
             target = next((item for item in world["actors"] if item["id"] == target_id), None)
             lines = scripted_number(actor, kind, called(actor, target) if target else None,
@@ -111,7 +115,7 @@ def perform(world: World, speaker: Actor, kind: str, target_id: str | None, line
     listeners = _hear(world, speaker, message, line)
     if target is not None:
         _land(world, speaker, kind, target, listeners, message)
-    event["heckler_id"] = heckler_of(speaker, target_id, listeners, world["time"])
+    event["heckler_id"] = heckler_of(world, speaker, target_id, listeners)
 
 
 def _hear(world: World, speaker: Actor, message: str, line: str) -> list[Actor]:

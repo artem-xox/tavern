@@ -4,6 +4,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 from tavern.hall.memory import record_event
+from tavern.hall.player import steered
 from tavern.hall.staff import on_staff
 from tavern.hall.state import Actor, World
 from tavern.social.names import called
@@ -14,24 +15,25 @@ from tavern.social.thoughts import opinion_of, think
 HECKLES_AT = -10.0
 
 
-def heckler_of(performer: Mapping[str, Any], target_id: str | None, listeners: Sequence[Mapping[str, Any]],
-               now: float) -> str | None:
+def heckler_of(world: Mapping[str, Any], performer: Mapping[str, Any], target_id: str | None,
+               listeners: Sequence[Mapping[str, Any]]) -> str | None:
     """Choose who shouts back at a number from the floor.
 
     Args:
+        world: Current world, for the time (opinions) and who the player steers.
         performer: Guest on the stage.
         target_id: The one the number was aimed at, or None.
         listeners: Guests who heard it, the performer excepted.
-        now: Game time, for opinions.
 
     Returns:
         The target's ID when they heard it; otherwise the guest who thinks least of the performer, at `HECKLES_AT` or
-        below (the lower ID on a tie); None when nobody minds. Staff at work never heckle.
+        below (the lower ID on a tie); None when nobody minds. Staff at work never heckle, nor a guest the player steers (`player.steered`).
     """
-    guests = [item for item in listeners if item["id"] != performer["id"] and not on_staff(item)]
+    guests = [item for item in listeners if item["id"] != performer["id"] and not on_staff(item)
+              and not steered(world, item["id"])]
     if target_id is not None and any(item["id"] == target_id for item in guests):
         return target_id
-    hostile = sorted((opinion_of(item, performer["id"], now), item["id"]) for item in guests)
+    hostile = sorted((opinion_of(item, performer["id"], world["time"]), item["id"]) for item in guests)
     return hostile[0][1] if hostile and hostile[0][0] <= HECKLES_AT else None
 
 
