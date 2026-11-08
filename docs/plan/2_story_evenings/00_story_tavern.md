@@ -1,7 +1,7 @@
 ---
 id: S2-00
 title: The Story Tavern
-status: doing
+status: done
 needs: []
 touches: [mind/turn_prompt.py, data/minds/intention_prefix.md, hall/closing.py, server/api.py, frontend/index.html, frontend/src/dashboard.ts, .agents/skills/add-npc]
 ---
@@ -52,3 +52,8 @@ The line writer and the mind now also carry a dated briefing of the world's wars
 (`mind/world_now.py`, copied into `intention_prefix.md`; refresh both before an evening), and scenes no longer
 open on "stories from the road".
 Step 3 (a live Locals evening, `make evening SEED=5`) is not run: it needs a Jev key.
+
+Closed by the owner, 2026-11-08, with two leftovers accepted: step 3 (the live Locals evening) was not run, and ten
+guest cards (`characters/guests/*/character.json`: putin, kim_jong_un, thatcher, monroe, vucic, kardashian,
+zuckerberg, lukashenko, zelensky, queen) still say "the Last Inn" in `background` or `persona`. A guest may name the
+old inn in talk; reword the cards when Stage 3 touches them.

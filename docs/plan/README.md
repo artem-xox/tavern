@@ -18,20 +18,20 @@ Known problems that no task owns are in [TECH_DEBT.md](TECH_DEBT.md).
 
 | ID | Task | Needs | Status |
 |----|------|-------|--------|
-| S2-00 | [The Story Tavern](2_story_evenings/00_story_tavern.md): new name and setting in the UI, prompts and skill | — | doing |
+| S2-00 | [The Story Tavern](2_story_evenings/00_story_tavern.md): new name and setting in the UI, prompts and skill | — | done |
 | S2-01 | [Two casts](2_story_evenings/01_casts.md): `characters/locals/`, `characters/guests/`, the barkeep as staff | — | done |
 | S2-02 | [Lineup screen](2_story_evenings/02_lineup_screen.md): pick Locals or Guests, then 1–8 faces, before the evening | 01 | done |
-| S2-03 | [Persona cards](2_story_evenings/03_persona_cards.md): public persona, catchphrases, obsessions, mute characters, parody names | 01 | doing |
-| S2-04 | [First guests](2_story_evenings/04_first_guests.md): three famous guests with full art and a scenario | 01, 03 | doing |
+| S2-03 | [Persona cards](2_story_evenings/03_persona_cards.md): public persona, catchphrases, obsessions, mute characters, parody names | 01 | done |
+| S2-04 | [First guests](2_story_evenings/04_first_guests.md): three famous guests with full art and a scenario | 01, 03 | done |
 | S2-05 | [Story score](2_story_evenings/05_story_score.md): count what is worth retelling in every evening | — | done |
 | S2-06 | [Obsessions drive goals](2_story_evenings/06_obsessions.md): a guest's obsession becomes their goals and intentions | 03, 05 | done |
-| S2-07 | [Fun](2_story_evenings/07_fun.md): a need that chaos, games and signature acts fill | 05 | doing |
+| S2-07 | [Fun](2_story_evenings/07_fun.md): a need that chaos, games and signature acts fill | 05 | done |
 | S2-08 | [Signature items](2_story_evenings/08_signature_items.md): the mechanic (an item offers a verb to its carrier) and Kim's phone, `livestream` | 03, 05 | done |
 | S2-09 | [Chaos](2_story_evenings/09_chaos.md): a quarrel that boils over, rivals, shouting, quarrels that escalate into fights | 04, 05 | done |
-| S2-10 | [Retelling](2_story_evenings/10_retelling.md): a strong model retells the log; a closing screen shows it | 05 | doing |
+| S2-10 | [Retelling](2_story_evenings/10_retelling.md): a strong model retells the log; a closing screen shows it | 05 | done |
 | S2-11 | [Acceptance](2_story_evenings/11_acceptance.md): live Guest evenings meet the story targets | all | todo |
 | S2-12 | [The stage](2_story_evenings/12_stage.md): a small stage from which a guest addresses the whole room | 06, 07 | done |
-| S2-13 | [Livelier talk](2_story_evenings/13_livelier_talk.md): no dice nudge on every line, no repeated invitations, a prompt that plays famous guests for satire, a `funny` judge | 03 | doing |
+| S2-13 | [Livelier talk](2_story_evenings/13_livelier_talk.md): no dice nudge on every line, no repeated invitations, a prompt that plays famous guests for satire, a `funny` judge | 03 | done |
 | S2-14 | [Stage numbers](2_story_evenings/14_stage_numbers.md): toast, roast, pitch or confession, written by Haiku; a heckle from the floor and a comeback | 12, 13 | done |
 | S2-15 | [A stage worth climbing](2_story_evenings/15_stage_look.md): a square 2-by-2 platform with a lectern and footlights that flare during a number | 14 | done |
 | S2-16 | [Talk where you stand](2_story_evenings/16_standing_talk.md): two guests standing still near each other anywhere in the hall can start a conversation | — | done |

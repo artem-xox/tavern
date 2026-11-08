@@ -1,7 +1,7 @@
 ---
 id: S2-03
 title: Persona cards
-status: doing
+status: done
 needs: [S2-01]
 touches: [adapters/characters.py, mind/cards.py, mind/turn_prompt.py, mind/intentions.py, social/turns.py, .agents/skills/add-npc]
 ---

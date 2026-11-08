@@ -1,7 +1,7 @@
 ---
 id: S2-13
 title: Livelier talk, the quick fixes
-status: doing
+status: done
 needs: [S2-03]
 touches: [mind/haiku_turns.py, mind/turn_prompt.py, social/scenes.py, social/thoughts.py, social/invitations.py, evening/dialogue_judge.py]
 ---
