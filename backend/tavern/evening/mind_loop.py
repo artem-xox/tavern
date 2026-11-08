@@ -19,8 +19,9 @@ from tavern.hall.world import observe_actor
 from tavern.mind.goals import settle_goals
 from tavern.mind.intentions import (UNMETERED, IntentionRules, Intender, deliver_intention, intention_requests,
                                     stale_intentions)
-from tavern.mind.turn_view import next_speaker
+from tavern.mind.turn_view import next_speaker, turn_view
 from tavern.social.invitations import answer_options
+from tavern.social.player_lines import ReadLine, deliver_reading, read_as_remark
 from tavern.social.stage_lines import StageClaim, deliver_stage, stage_claims, write_scripted_stage
 from tavern.social.scenes import TurnResult
 from tavern.social.turns import claim_turns, deliver_turn
@@ -95,7 +96,8 @@ class MindLoop:
     """
 
     def __init__(self, courier: Courier, decide: Decide, write: Write, intender: Intender | None,
-                 rules: IntentionRules, answer: Answer | None = None, stage: Stage | None = None) -> None:
+                 rules: IntentionRules, answer: Answer | None = None, stage: Stage | None = None,
+                 read: ReadLine = read_as_remark) -> None:
         """Create a loop with nothing in flight.
 
         Args:
@@ -106,8 +108,12 @@ class MindLoop:
             rules: When guests take stock.
             answer: Asks how an invitee answers; None leaves the answer to the line writer, as before.
             stage: Asks for the words on and at the stage; None answers with the scripted ones.
+            read: Reads the act of the player's typed lines; the offline one makes them remarks.
         """
         self.courier, self.decide, self.write, self.answer = courier, decide, write, answer
+        self.read = read
+        # The player's typed lines being read, per claimed turn (scene ID, turn index): ticket, text, `to`.
+        self.reading: dict[tuple[str, int], tuple[Ticket, str, str]] = {}
         self.stage: Stage = stage or (lambda view: write_scripted_stage(view, {}))
         self.staging: dict[tuple[str, str, float], tuple[Ticket, StageClaim]] = {}
         self.staged: set[tuple[str, str, float]] = set()
@@ -140,6 +146,7 @@ class MindLoop:
         self._ask_answers(world)
         self._deliver_lines(world)
         self._ask_lines(world)
+        self._deliver_readings(world)
         self._deliver_stage(world)
         self._ask_stage(world)
         if self.intender is not None:
@@ -159,7 +166,7 @@ class MindLoop:
         for ticket in self._tickets():
             self.courier.cancel(ticket)
         for requests in (self.pending, self.writing, self.answering, self.answered, self.intending, self.next_intention, self.asked_at,
-                         self.revisions, self.next_decision, self.made, self.staging, self.staged):
+                         self.revisions, self.next_decision, self.made, self.staging, self.staged, self.reading):
             requests.clear()
 
     async def close(self) -> None:
@@ -172,6 +179,7 @@ class MindLoop:
         return [*(ticket for ticket, _revision in self.pending.values()), *self.writing.values(),
                 *(ticket for ticket, _ in self.answering.values()),
                 *(ticket for ticket, _ in self.staging.values()),
+                *(ticket for ticket, _, _ in self.reading.values()),
                 *(ticket for ticket, _, _ in self.intending.values())]
 
     def _drop_stale_decisions(self, world: World) -> None:
@@ -249,6 +257,26 @@ class MindLoop:
                 del self.writing[key]
                 deliver_turn(world, *key, self.courier.outcome(ticket))
 
+    def read_line(self, world: World, scene_id: str, text: str, to: str) -> None:
+        """Send the player's typed line to be read as a speech act.
+
+        Args:
+            world: World whose scene holds the player's claim on its next turn.
+            scene_id: Scene the line was typed in.
+            text: What the player typed.
+            to: `auto`, `everyone` or a guest's ID.
+        """
+        scene = next(item for item in world["conversations"] if item["id"] == scene_id)
+        view = turn_view(world, scene, world["player"]["actor_id"])
+        self.reading[(scene_id, view["conversation"]["turn"])] = (
+            self.courier.send(self.read(view, text, to), world["time"]), text, to)
+
+    def _deliver_readings(self, world: World) -> None:
+        for key, (ticket, text, to) in list(self.reading.items()):
+            if self.courier.ready(ticket, world["time"]):
+                del self.reading[key]
+                deliver_reading(world, *key, text, to, self.courier.outcome(ticket))
+
     def _deliver_stage(self, world: World) -> None:
         for key, (ticket, claim) in list(self.staging.items()):
             if self.courier.ready(ticket, world["time"]):
@@ -289,7 +317,7 @@ class EveningPorts:
 
     `choose` decides for a visitor, `answer` is how an invitee answers (None: the line writer decides),
     `write` writes a conversation line, `stage` the words on and at the stage, and `intender` writes
-    intentions (None offline).
+    intentions (None offline); `read` reads the player's typed lines.
     """
 
     choose: Decide
@@ -297,6 +325,7 @@ class EveningPorts:
     write: Write
     stage: Stage
     intender: Intender | None
+    read: ReadLine = read_as_remark
 
 
 def evening_mind(courier: Courier, ports: EveningPorts, rules: IntentionRules) -> MindLoop:
@@ -310,4 +339,4 @@ def evening_mind(courier: Courier, ports: EveningPorts, rules: IntentionRules) -
     Returns:
         A loop with nothing in flight.
     """
-    return MindLoop(courier, ports.choose, ports.write, ports.intender, rules, ports.answer, ports.stage)
+    return MindLoop(courier, ports.choose, ports.write, ports.intender, rules, ports.answer, ports.stage, ports.read)

@@ -147,6 +147,8 @@ def deliver_turn(world: World, scene_id: str, turn: int, outcome: Callable[[], A
     scene = next((item for item in world["conversations"] if item["id"] == scene_id), None)
     if scene is None or scene["writing"] is None or scene["writing"]["turn"] != turn:
         return
+    if scene["writing"]["speaker"] != next_speaker(scene):
+        return  # The slot went to someone else since the claim: the player cut in, and the answer is no longer wanted.
     view = turn_view(world, scene)
     try:
         if failure is not None:
@@ -169,7 +171,9 @@ def speak_turns(world: World) -> None:
     for scene in list(world["conversations"]):
         if scene not in world["conversations"] or world["time"] < scene["next_turn_at"]:
             continue
-        speaker_id = next_speaker(scene)
+        # A steered guest's claim (the player cut in, or it is their turn) is spoken by them, whoever is next.
+        claim = scene["writing"]
+        speaker_id = claim["speaker"] if claim is not None and steered(world, claim["speaker"]) else next_speaker(scene)
         if steered(world, speaker_id):
             _await_player(world, scene, speaker_id)
             continue
@@ -208,6 +212,8 @@ def _speak(world: World, scene: Conversation, speaker_id: str, result: Mapping[s
     spoken = log_event(world, speaker_id, "turn",
                        f"{people[speaker_id]['name']} to {listener} ({result['act']}): {result['line']}")
     spoken["act"], spoken["addressee"] = result["act"], result["addressee"]
+    if steered(world, speaker_id):
+        spoken["player"] = True
     if result["act"] != "silence":  # Nothing was said, so nothing is noted, heard or overheard.
         note_spoken(world, scene, people[speaker_id])
         # Heard before the act takes effect, while the scene still holds everyone who spoke in it.
