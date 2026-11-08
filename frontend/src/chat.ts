@@ -1,8 +1,13 @@
 /** What the chat panel shows and sends, worked out from a snapshot: the scene's lines, who is in it, what the input says. */
+import { readingOf, refusedTurns, type Reading } from "./readings.ts";
 import type { Actor, Command, Conversation, PlayerTurn, Snapshot, Turn } from "./types";
 
 export interface ChatMember { id: string; name: string; face: string }
-export interface ChatLine { speaker: string; addressee: string | null; words: string; mine: boolean }
+export interface ChatLine {
+  speaker: string; addressee: string | null; words: string; mine: boolean;
+  /** How the world read the player's own line (`readings.ts`); null for others' lines and a silence. */
+  reading: Reading | null;
+}
 
 export interface ChatModel {
   members: ChatMember[];
@@ -39,11 +44,15 @@ export function chatModel(snapshot: Snapshot): ChatModel | null {
   const members: ChatMember[] = (scene?.participants ?? [])
     .filter((id: string): boolean => id !== player.actor_id && names.has(id))
     .map((id: string): ChatMember => ({ id, name: nameOf(id), face: names.get(id)?.sprite ?? id }));
-  const lines: ChatLine[] = (scene?.turns ?? []).map((item: Turn): ChatLine => ({
+  const turns: Turn[] = scene?.turns ?? [];
+  // A snapshot always carries the log; `?? []` only spares hand-made test snapshots that leave it out.
+  const refused: Set<number> = refusedTurns(turns, snapshot.state.events ?? [], player.actor_id);
+  const lines: ChatLine[] = turns.map((item: Turn, index: number): ChatLine => ({
     speaker: nameOf(item.speaker),
     addressee: item.addressee === null ? null : nameOf(item.addressee),
     words: item.act === "silence" ? "…" : item.line,
     mine: item.speaker === player.actor_id,
+    reading: item.speaker === player.actor_id ? readingOf(item, refused.has(index), nameOf) : null,
   }));
   const secondsLeft: number | null = turn.silence_at === null ? null : Math.max(0, (turn.silence_at - time) / speed);
   const enabled: boolean = player.steering && turn.state !== "none" && turn.state !== "reading";

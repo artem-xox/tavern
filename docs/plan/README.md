@@ -96,6 +96,7 @@ The decisions behind them (owner, 2026-11-08), the principles and the order are 
 | S3-10 | [A scripted player](3_player/10_scripted_player.md): headless evenings with a player, golden, replay, metrics | 03, 04 | todo |
 | S3-11 | [The player in the story](3_player/11_story.md): the retelling and the closing screen know who was played | 04 | todo |
 | S3-12 | [Acceptance](3_player/12_acceptance.md): played and scripted evenings meet the stage's "done when" | all | todo |
+| S3-15 | [Show what the words did](3_player/15_show_what_words_did.md): a chip under each player line, reactions over the people it touched | 04, 09 | done |
 
 ## How the plan is kept
 

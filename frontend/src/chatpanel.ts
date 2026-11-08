@@ -69,7 +69,8 @@ export class ChatPanel {
     this.host.hidden = model === null;
     if (model === null) { render(nothing, this.host); return; }
     render(html`<div class="chat-lines" aria-live="polite">${model.lines.slice(-12).map((line: ChatLine): TemplateResult => html`
-      <p class=${line.mine ? "chat-line mine" : "chat-line"}><strong>${line.speaker}</strong>${line.addressee ? html` <span class="muted">to ${line.addressee}</span>` : nothing}: ${line.words}</p>`)}
+      <p class=${line.mine ? "chat-line mine" : "chat-line"}><strong>${line.speaker}</strong>${line.addressee ? html` <span class="muted">to ${line.addressee}</span>` : nothing}: ${line.words}${line.reading ? html`<span class=${line.reading.refused ? "chat-reading refused" : "chat-reading"}
+        title=${line.reading.refused ? "The world could not read this as meant" : "How the world read it"}>${line.reading.text}</span>` : nothing}</p>`)}
       ${this.sent && model.state === "reading" ? html`<p class="chat-line mine pending">${this.sent.text}</p>` : nothing}</div>
       <div class="chat-faces">${model.picker ? this.picker(model.members) : nothing}
         ${model.secondsLeft !== null ? html`<span class="chat-turn">Your turn · ${Math.ceil(model.secondsLeft)} s</span>` : nothing}</div>

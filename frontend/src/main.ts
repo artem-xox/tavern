@@ -8,6 +8,7 @@ import { OrderMenu } from "./ordermenu";
 import { clickOrder, menuRows, walkAction, type Pick } from "./orders";
 import { WheelBar } from "./wheelbar";
 import { ChatPanel } from "./chatpanel";
+import { reactions, stacked } from "./reactions";
 import type { Cast, CharacterCatalog, OptionsMessage, Snapshot, World } from "./types";
 import "./style.css";
 
@@ -113,6 +114,9 @@ const game: Phaser.Game = new Phaser.Game({
   scene,
 });
 
+/** The snapshot before this one, for what the player's lines and acts caused since. */
+let previous: Snapshot | null = null;
+
 function applySnapshot(snapshot: Snapshot): void {
   const first: boolean = world === null;
   world = snapshot.state;
@@ -122,6 +126,8 @@ function applySnapshot(snapshot: Snapshot): void {
   dashboard.apply(snapshot);
   wheel.apply(world);
   chat.apply(snapshot);
+  for (const [actor, text] of stacked(reactions(previous, snapshot))) scene.toast(actor, text);
+  previous = snapshot;
   // Departed visitors stay selectable, so their evening can still be inspected.
   if (!selectedId || ![...world.actors, ...world.departed].some((actor): boolean => actor.id === selectedId)) {
     selectedId = world.actors[0]?.id ?? null;

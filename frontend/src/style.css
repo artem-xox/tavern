@@ -257,6 +257,10 @@ summary > span:last-child { color: var(--muted); font-size: var(--t-label); text
 .chat-line { margin: 0; }
 .chat-line.mine { text-align: right; }
 .chat-line.pending { opacity: 0.5; }
+/* How the world read the player's line (P1): gold as meant, dashed grey when refused and spoken as a remark. */
+.chat-reading { display: block; width: fit-content; margin: 2px 0 0 auto; padding: 0 6px; border: 1px solid var(--gold-2);
+  border-radius: 8px; font-size: 0.75em; color: var(--gold-2); }
+.chat-reading.refused { border-style: dashed; border-color: #8a8070; color: #a89f90; font-style: italic; }
 .chat-faces { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .chat-face { padding: 0; width: 32px; height: 32px; }
 .chat-face img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
