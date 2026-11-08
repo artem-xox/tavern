@@ -1,7 +1,7 @@
 ---
 id: S3-02
 title: Who steers a body
-status: todo
+status: done
 needs: []
 touches: [backend/tavern/hall/player.py (new), backend/tavern/hall/state.py, backend/tavern/hall/world.py, backend/tavern/hall/rules.py, backend/tavern/adapters/persistence.py, backend/tavern/evening/scenario.py, backend/tavern/evening/lineup.py, backend/tavern/evening/decisions.py, backend/tavern/evening/mind_loop.py, backend/tavern/evening/player_commands.py (new), backend/tavern/mind/intentions.py, backend/tavern/social/turns.py, backend/tavern/social/conversation.py, backend/tavern/social/speeches.py, backend/tavern/social/stage_lines.py, backend/tavern/social/heckles.py, backend/tavern/server/runtime.py, frontend/src/types.ts]
 ---
@@ -100,3 +100,40 @@ particular, every golden evening has no player, so its log must not change.
   to the steered one, say so.
 
 ## Results
+
+**Check** (`make check`, after the last code change; `make build` ran on the final `types.ts`):
+
+```
+================== 4725 passed in ~200s ==================   (pytest)
+ℹ tests 318 / ℹ pass 318 / ℹ fail 0                          (frontend node:test; the typecheck ran before it)
+exit 0
+make build: ✓ built in 4.63s, exit 0
+```
+
+**Golden:** `make golden GOLDEN=runs/golden-base` before the first edit and `GOLDEN=runs/golden-now` after the last
+one: `diff -r runs/golden-base runs/golden-now` prints nothing.
+
+**Lockstep, 300 s, Putin steered** (guests: Trump, Putin, Zelensky, Thatcher; a throwaway script, scripted writer,
+offline local decisions, a fake intender; seeds 3, 1, 5 and 7): Putin got 0 decisions, 0 intentions asked and 0 lines
+asked of a writer; the other three got 184 decisions, 17 intentions and 73 lines (seed 3). **No guest spoke to him
+and he spoke in no scene, so there is no `silence` turn to quote**: the turn wait and the silence act are covered by
+`tests/test_turns.py` (speed 1 and 4, the invitation declined).
+
+**Tests that changed** (all the approved 23 → 24 bump): `tests/test_database.py` (the pinned version) and
+`tests/test_intention_saves.py::test_new_worlds_are_version_23`, which the task did not list: its name and literal
+became 24. One fixture, not an assertion: the `lineup=` lambda in `tests/test_lineup.py::runtime` takes the new fourth
+argument (`player=None`), because `Lineup` now has four.
+
+**Deviations and notes**
+- `Lineup` is `(cast, ids, minutes, player)` as the task says; `lineup_scenario`'s `player` defaults to None so its
+  other callers are untouched.
+- `heckles.heckler_of` now takes `(world, performer, target_id, listeners)` instead of `now`: it needs the world to
+  ask `steered`. Its only caller is `speeches.perform`.
+- `silence` sits in `conversation.ACTS` (effect `invitations.decline`), so the Haiku writer's prompt table and schema,
+  which `test_acts_and_their_meanings_come_from_the_table` pins to the whole of `ACTS`, now list it; its meaning
+  says never to choose it, and `check_turn` refuses it anyway (`offered_acts` never offers it). Filtering it out of
+  the prompt would change that test: a follow-up for the owner's call.
+- A silent turn is logged and kept in the scene's `turns`, but makes no sound and is neither noted for aims, heard,
+  nor overheard (nothing was said).
+- The wait also holds when a claim is outstanding for a steered speaker, so the scripted timeout never speaks for them.
+- The played guest is not yet first in (S3-07); `world.player` is set at opening even while they are still expected.
