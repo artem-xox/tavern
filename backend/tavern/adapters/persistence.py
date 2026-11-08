@@ -77,6 +77,18 @@ def _check_saved_item(action: Mapping[str, Any]) -> None:
         raise ValueError("Invalid saved action item")
 
 
+def _check_saved_cell(action: Mapping[str, Any], world_map: Mapping[str, Any]) -> None:
+    # Only a verb that walks to a cell carries one, and it lies inside the hall.
+    cell = action.get("cell")
+    if ACTIVITIES[action["verb"]].to_cell != (cell is not None):
+        raise ValueError("Invalid saved action cell")
+    if cell is not None:
+        try:
+            saved_cell(cell, world_map)
+        except ValueError as error:
+            raise ValueError("Invalid saved action cell") from error
+
+
 def _validate_actor_runtime(world: Mapping[str, Any]) -> None:
     actor_ids = {actor["id"] for actor in world["actors"]}
     verbs = set(world["rules"]["durations"])
@@ -88,6 +100,7 @@ def _validate_actor_runtime(world: Mapping[str, Any]) -> None:
             raise ValueError("Invalid saved actor action")
         if action is not None:
             _check_saved_item(action)
+            _check_saved_cell(action, world["map"])
         if not all(isinstance(actor.get(key), dict) for key in ("knowledge", "inventory", "decision")):
             raise ValueError("Incomplete saved actor state")
         check_inventory(actor["inventory"])
@@ -207,7 +220,7 @@ def parse_world(encoded: str) -> World:
     """
     try:
         world = json.loads(encoded)
-        if not isinstance(world, dict) or world.get("schema_version") != 24:
+        if not isinstance(world, dict) or world.get("schema_version") != 25:
             raise ValueError("Unsupported snapshot version")
         json.dumps(world, allow_nan=False)
         _validate_clock(world)

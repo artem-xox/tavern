@@ -47,6 +47,8 @@ def plan_route(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mappi
     world_map = world["map"]
     obstacles = impassable_cells(world_map) + off_limits(world_map, actor) + _other_reservations(world, actor)
     start = (actor["x"], actor["y"])
+    if ACTIVITIES[action["verb"]].to_cell:
+        return _cell_plan(world, actor, action)
     if action["verb"] == "inspect":
         return _inspection_plan(world, actor, obstacles)
     if ACTIVITIES[action["verb"]].approaches:
@@ -60,6 +62,53 @@ def plan_route(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mappi
         return None, []
     selected = select_interaction_spot(start, target["interaction_spots"], world_map["width"], world_map["height"], obstacles)
     return ([*selected[0]], [list(cell) for cell in selected[1][1:]]) if selected else None
+
+
+def standing_error(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any]) -> str | None:
+    """Tell why a visitor may not walk to the cell an action names.
+
+    Args:
+        world: Current world.
+        actor: Visitor who would walk.
+        action: A `walk_to` action with `cell` and no target.
+
+    Returns:
+        A refusal: the cell is not an `[x, y]` of integers, nobody can stand there (outside the hall, a wall, off
+        limits, held by someone), or there is no way there; None when the visitor can go.
+    """
+    cell = action.get("cell")
+    if not (isinstance(cell, list) and len(cell) == 2 and all(type(item) is int for item in cell)) \
+            or action.get("target_id") is not None:
+        return "Choose a cell to walk to"
+    if tuple(cell) in occupied_cells(world, actor):
+        return "Nobody can stand there"
+    return None if _route_to_cell(world, actor, cell) is not None else _why_not_there(world, actor, cell)
+
+
+def _route_to_cell(world: Mapping[str, Any], actor: Mapping[str, Any], cell: list[int]) -> list[tuple[int, int]] | None:
+    world_map = world["map"]
+    if not (0 <= cell[0] < world_map["width"] and 0 <= cell[1] < world_map["height"]):
+        return None
+    obstacles = _obstacles(world, actor)
+    route = find_path((actor["x"], actor["y"]), cell, world_map["width"], world_map["height"], obstacles)
+    return route or None
+
+
+def _obstacles(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[tuple[int, int]]:
+    return (impassable_cells(world["map"]) + off_limits(world["map"], actor) + _other_reservations(world, actor))
+
+
+def _why_not_there(world: Mapping[str, Any], actor: Mapping[str, Any], cell: list[int]) -> str:
+    world_map = world["map"]
+    inside = 0 <= cell[0] < world_map["width"] and 0 <= cell[1] < world_map["height"]
+    if not inside or tuple(cell) in _obstacles(world, actor):
+        return "Nobody can stand there"
+    return "No way there"
+
+
+def _cell_plan(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any]) -> tuple[list[int] | None, list[list[int]]] | None:
+    route = _route_to_cell(world, actor, action["cell"])
+    return None if route is None else ([*action["cell"]], [list(cell) for cell in route[1:]])
 
 
 def _approach_plan(world: Mapping[str, Any], actor: Mapping[str, Any], action: Mapping[str, Any],
