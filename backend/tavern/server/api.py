@@ -21,7 +21,7 @@ from tavern.mind.questions import Ask
 from tavern.mind.scripted import write_scripted_turn
 from tavern.server.runtime import Answerer, Chooser, Lineup, Store, TavernRuntime
 from tavern.server.sessions import TavernSessions
-from tavern.social.player_lines import ReadLine, read_as_remark
+from tavern.social.player_lines import ReadLine, ReadNumber, read_as_pitch, read_as_remark
 from tavern.social.stage_lines import StageWriter, write_scripted_stage
 from tavern.social.turns import TurnWriter
 
@@ -81,7 +81,8 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
                probes: Mapping[str, Callable[[], Awaitable[object]]] | None = None,
                answer: Answerer | None = None, catalog_dir: Path | None = None,
                storyteller: Ask | None = None, scenarios_dir: Path | None = None,
-               stage_writer: StageWriter = write_scripted_stage, reader: ReadLine = read_as_remark) -> FastAPI:
+               stage_writer: StageWriter = write_scripted_stage, reader: ReadLine = read_as_remark,
+               number_reader: ReadNumber = read_as_pitch) -> FastAPI:
     """Construct the local server with explicit paths and AI configuration.
 
     Args:
@@ -106,6 +107,7 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
         writer_label: Name of that writer shown to the client (`haiku` or `scripted`).
         stage_writer: Writer of the words on and at the stage; scripted by default.
         reader: Reader of the player's typed lines (`player_lines.ReadLine`); the offline one makes them remarks.
+        number_reader: Reader of the player's numbers on the stage (`player_lines.ReadNumber`); the offline one pitches.
         intender: Optional mind port writing guests' intentions; without it guests have none
             and the snapshot says so.
         store_for: Optional maker of a session's store from its ID, in place of the database or
@@ -143,7 +145,8 @@ def create_app(map_path: Path, save_dir: Path, ai_config: Mapping[str, Any],
         initialize_database(database_url)
         store_for = lambda session_id: DatabaseStore(database_url, session_id)
     sessions = TavernSessions(map_data, save_dir, ai_config, seed, database_url, scenario, writer, writer_label,
-                              intender, store_for, choose, health, answer, storyteller, lineup, stage_writer, reader)
+                              intender, store_for, choose, health, answer, storyteller, lineup, stage_writer, reader,
+                              number_reader)
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         ticker = asyncio.create_task(_run_world(sessions, 0.1)) if run_loop else None

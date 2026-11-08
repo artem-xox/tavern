@@ -8,7 +8,10 @@ import pytest
 
 from random import Random
 
-from tavern.evening.lockstep import LockstepCourier
+from tavern.evening.lockstep import LockstepCourier, Pace, run_evening
+from tavern.evening.player_script import PlayerScript, Step
+from tavern.mind.agents import Evaluators
+from tavern.social.thoughts import active_thoughts
 from tavern.evening.mind_loop import EveningPorts, MindLoop, evening_mind
 from tavern.evening.player_commands import say
 from tavern.mind.agents import choose_action
@@ -91,3 +94,38 @@ def test_a_say_goes_where_the_played_guest_is(make: Callable[[], dict[str, Any]]
 def test_a_say_with_nobody_listening_is_refused(make: Callable[[], dict[str, Any]]) -> None:
     with pytest.raises(ValueError, match="Nobody is listening"):
         say(make(), mind_for(), {"type": "say", "text": TEXT})
+
+
+ROAST = "Cid, you sold this hall a roof it never had!"
+COMEBACK = "At least my roof stood up, Cid."
+
+
+def a_roast_of_cid() -> Any:
+    """A reader that takes the typed number for a roast of Cid, as Haiku would."""
+    async def read(view: Any, text: str) -> dict[str, Any]:
+        return {"number": "roast", "target": "cid"}
+    return read
+
+
+def test_the_played_guest_climbs_the_stage_roasts_a_guest_and_answers_the_heckle() -> None:
+    world = on_stage(seconds=0.0)
+    who(world, "ada")["action"] = None
+    who(world, "ada").update(status="idle", _remaining=0.0)
+    world["events"].clear()
+    steer(world, "ada")
+    script = PlayerScript("ada", (
+        Step(0.5, {"type": "act", "action": {"id": "give_speech:stage", "verb": "give_speech", "target_id": "stage"}}),
+        Step(3.0, {"type": "say", "text": ROAST}), Step(9.0, {"type": "say", "text": COMEBACK})))
+    config = {"model": "jev-latest", "timeout": 1.0, "temperature": 0.25, "typesafe_api_key": None}
+
+    async def never_asked(*arguments: Any) -> dict[str, float]:
+        raise AssertionError("Jev was asked in an offline evening")
+    evening = asyncio.run(run_evening(
+        world, config, Random(1), Evaluators(never_asked, never_asked),
+        Pace(step=0.25, model_latency=1.0, time_limit=14.0), script=script, number_reader=a_roast_of_cid()))
+    given = [item for item in evening.events if item["type"] == "gave_speech"]
+    answered = [item for item in evening.events if item["type"] == "heckle_answered"]
+    thoughts = [item["kind"] for item in active_thoughts(who(world, "cid")["thoughts"], world["time"])]
+    assert ([(item["line"], item["number"], item["target_id"]) for item in given],
+            "roasted" in thoughts, [item["line"] for item in answered]) == (
+        [(ROAST, "roast", "cid")], True, [COMEBACK])

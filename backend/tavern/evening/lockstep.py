@@ -19,7 +19,7 @@ from tavern.mind.agents import Evaluators, choose_action, choose_answer
 from tavern.mind.intentions import INTENTION_RULES, Intender, IntentionRules
 from tavern.mind.scripted import write_scripted_turn
 from tavern.mind.selection import read_answers
-from tavern.social.player_lines import ReadLine, read_as_remark
+from tavern.social.player_lines import ReadLine, ReadNumber, read_as_pitch, read_as_remark
 from tavern.social.stage_lines import StageWriter, write_scripted_stage
 from tavern.social.turns import TurnWriter
 
@@ -214,7 +214,7 @@ async def run_evening(world: World, config: Mapping[str, Any], rng: Random, eval
                       pace: Pace, writer: TurnWriter = write_scripted_turn, intender: Intender | None = None,
                       intention_rules: IntentionRules = INTENTION_RULES,
                       stage_writer: StageWriter = write_scripted_stage, script: PlayerScript | None = None,
-                      reader: ReadLine = read_as_remark) -> Evening:
+                      reader: ReadLine = read_as_remark, number_reader: ReadNumber = read_as_pitch) -> Evening:
     """Play an evening to its end in lockstep.
 
     Each tick advances the world by one step, applies the answers that are due, then asks
@@ -238,6 +238,7 @@ async def run_evening(world: World, config: Mapping[str, Any], rng: Random, eval
         intention_rules: When guests take stock.
         stage_writer: Writer of the words on and at the stage (`tavern.social.stage_lines`); scripted by default.
         reader: Reader of the player's typed lines (`tavern.social.player_lines`); every line a remark by default.
+        number_reader: Reader of the player's numbers on the stage; every number a pitch by default.
         script: The player's timed commands; each runs in the tick its time falls in, before the minds are asked.
             A refused step is logged as a `control` event and the evening goes on.
 
@@ -259,7 +260,8 @@ async def run_evening(world: World, config: Mapping[str, Any], rng: Random, eval
                                                                       evaluators)) if read_answers(config) else None)
     mind = evening_mind(courier, EveningPorts(
         lambda observation: choose_action(observation, config, rng, evaluators), answer,
-        lambda view: writer(view, config), lambda view: stage_writer(view, config), intender, reader), intention_rules)
+        lambda view: writer(view, config), lambda view: stage_writer(view, config), intender, reader,
+        number_reader), intention_rules)
     _track(world, run)
     waiting = list(script.steps) if script is not None else []
     while not evening_over(world, pace.time_limit):
