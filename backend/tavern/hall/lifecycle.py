@@ -6,7 +6,8 @@ import math
 from typing import Any
 
 from tavern.body.actions import action_error, stored_action
-from tavern.body.activities import ACTIVITIES, Activity
+from tavern.body.activities import ACTIVITIES
+from tavern.body.activity import Activity
 from tavern.body.hearing import sound_activity
 from tavern.body.queues import join_line, leave_line, line_full, line_of, stay_in_line, step_line
 from tavern.hall.memory import record_event
