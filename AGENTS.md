@@ -111,8 +111,11 @@ Rules:
 ## Extending
 
 - A new game system (signature items, fun, retelling) is a new module named for
-  the concept: pure, tested alone, wired in with one small edit. Do not grow files over
-  ~400 lines (`scene.ts` today); split first, as a separate step.
+  the concept: pure, tested alone, wired in with one small edit. No source file in
+  `backend/tavern/` or `frontend/src/` grows past 400 lines; split first, as a separate
+  step. `tests/test_module_rules.py` holds the ones already past it at their exact size
+  (`CAPS`): lower a cap in the commit that shrinks its file, drop it at 400 or under,
+  re-key it when the file moves; never raise or add one.
 - Adding a verb means one `Activity` in `activities.py` (an effect it needs goes in `effects.py`; targets, timing, preconditions,
   effects, wording, pose, family), plus its candidate rule in `candidates.py`, its local utility
   in `local_policy.py` and its option sentence in `options.py`. The world, Jev, saves, and
@@ -138,8 +141,10 @@ SOLID, applied only where it earns its keep:
 ## Navigability
 
 - Name files, functions and tests for the domain concept (`story_score.py`, `find_path`).
-  Never `utils`, `helpers`, `common`, `manager` or `base`.
-- Open every module with a one-line docstring saying what it owns. Read a module's test
+  Never `utils`, `helpers`, `common`, `manager` or `base` (`test_module_rules.py` checks
+  source file names; function, test and package names are on review).
+- Open every module with a one-line docstring saying what it owns (checked for
+  `backend/tavern/`). Read a module's test
   file first: it is the spec.
 - Anything not imported elsewhere is `_private`. No `import *`, no re-export modules, no
   string-keyed dynamic dispatch: grep must find every caller.
@@ -167,7 +172,8 @@ TypeScript (`frontend/`): no `any`; `types.ts` is the contract with the backend 
 
 - Never modify an existing test to make it pass. If a test looks wrong, stop and
   explain why instead of editing it. A test changes only when the user asked for the
-  behavior it specifies to change; name the test and the reason before editing.
+  behavior it specifies to change; name the test and the reason before editing. The
+  one unasked edit: lowering, dropping or re-keying a `CAPS` entry (Extending).
   Never delete, skip, `xfail` or weaken an assertion to get green.
 - pytest only. No `unittest` classes, no assert helpers that hide the comparison.
 - Use `@pytest.mark.parametrize` by default: the case list is the visible spec. Every
