@@ -28,7 +28,7 @@ help:
 	@printf '              TRACE=true traces live calls to LangSmith, one thread per character\n'
 	@printf 'make eval     Local only: play the dialogue eval scenarios live (Jev + Haiku), measure and judge a minute\n'
 	@printf '              of talk; writes runs/evals/<time>/report.md. SEEDS="1 2" ENV=path/.env\n'
-	@printf '              PLAYER=data/players/monroe_meddles.json SCENARIO=data/scenarios/monroe_night.json puts that guest at the wheel\n'
+	@printf '              PLAYER=data/players/monroe_meddles.json SCENARIO=data/evenings/monroe_night.json puts that guest at the wheel\n'
 	@printf 'make golden   Play five offline evenings (locals, guests × seeds 1, 5, then Monroe at the wheel) into GOLDEN=runs/golden, to diff before and after a refactor\n'
 
 install:
@@ -64,7 +64,7 @@ golden:
 			--no-retelling --env-file /dev/null --out $(GOLDEN)/$$cast-$$seed \
 			> $(GOLDEN)-$$cast-$$seed.log 2>&1 || { cat $(GOLDEN)-$$cast-$$seed.log; exit 1; }; \
 	done; done
-	@PYTHONPATH=backend .venv/bin/python scripts/evening.py --cast guests --scenario data/scenarios/monroe_night.json \
+	@PYTHONPATH=backend .venv/bin/python scripts/evening.py --cast guests --scenario data/evenings/monroe_night.json \
 		--player-script data/players/monroe_meddles.json --seed 5 --mode local --writer scripted \
 		--no-retelling --env-file /dev/null --out $(GOLDEN)/monroe-5 \
 		> $(GOLDEN)-monroe-5.log 2>&1 || { cat $(GOLDEN)-monroe-5.log; exit 1; }
