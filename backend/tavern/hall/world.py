@@ -101,19 +101,16 @@ def start_action(world: World, actor_id: str, action: Mapping[str, Any]) -> dict
         ValueError: Not raised for rejected commands; refusals are returned.
     """
     actor = find_actor(world, actor_id)
-    if actor is None:
-        return {"accepted": False, "reason": "Unknown visitor"}
-    if on_staff(actor):
-        # Only the bar's own routine (`tavern.body.bartending`) moves staff, not a decision or an operator.
-        return {"accepted": False, "reason": f"{actor['name']} works behind the bar"}
+    reason = _visitor_refusal(actor)
+    if actor is None or reason:
+        return {"accepted": False, "reason": reason}
     verb = action.get("verb")
     activity = ACTIVITIES.get(verb) if isinstance(verb, str) else None
     if activity is not None and activity.opens_project:
         # A plan, not an action: the project's own steps start the actions (`tavern.body.projects`).
         return open_project(world, actor, activity.opens_project, action.get("target_id"))
     cutting = action.get("verb") == "cut_in_line"
-    action, reason = cut_in(world, action)
-    reason = reason or action_error(world, actor, action) or _last_call_error(world, action)
+    action, reason = _checked(world, actor, action)
     if reason:
         notice_target(world, actor, action)
         return reject(world, actor, reason)
@@ -124,10 +121,30 @@ def start_action(world: World, actor_id: str, action: Mapping[str, Any]) -> dict
         return line_up(world, actor, action, cutting)
     plan = plan_route(world, actor, action)
     if plan is None:
-        return reject(world, actor, "No reachable interaction spot")
+        return reject(world, actor, NO_ROUTE)
     activate(world, actor, action, plan)
     mark_answered(world, actor, action)
     return {"accepted": True, "reason": None}
+
+
+# The refusal of an action whose target has no interaction spot the visitor can walk to.
+NO_ROUTE = "No reachable interaction spot"
+
+
+def _visitor_refusal(actor: Mapping[str, Any] | None) -> str | None:
+    if actor is None:
+        return "Unknown visitor"
+    if on_staff(actor):
+        # Only the bar's own routine (`tavern.body.bartending`) moves staff, not a decision or an operator.
+        return f"{actor['name']} works behind the bar"
+    return None
+
+
+def _checked(world: Mapping[str, Any], actor: Mapping[str, Any],
+             action: Mapping[str, Any]) -> tuple[dict[str, Any], str | None]:
+    # A cut in line read as the use of its place, and the reason the body may not do it, if any.
+    resolved, reason = cut_in(world, action)
+    return resolved, reason or action_error(world, actor, resolved) or _last_call_error(world, resolved)
 
 
 def _last_call_error(world: Mapping[str, Any], action: Mapping[str, Any]) -> str | None:
