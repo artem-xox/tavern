@@ -7,8 +7,10 @@ from random import Random
 from typing import Any, NotRequired, TypedDict
 
 from tavern.evening.decisions import free_to_decide
-from tavern.evening.mind_loop import EveningPorts, evening_mind
-from tavern.hall.memory import fresh_events
+from tavern.evening.mind_loop import EveningPorts, MindLoop, evening_mind
+from tavern.evening.player_commands import apply_command
+from tavern.evening.player_script import PlayerScript, Step
+from tavern.hall.memory import fresh_events, log_event
 from tavern.hall.closing import all_gone
 from tavern.hall.staff import guests
 from tavern.hall.state import World
@@ -210,7 +212,7 @@ def evening_mode(requested: str | None, keyed: bool) -> tuple[str, str | None]:
 async def run_evening(world: World, config: Mapping[str, Any], rng: Random, evaluators: Evaluators,
                       pace: Pace, writer: TurnWriter = write_scripted_turn, intender: Intender | None = None,
                       intention_rules: IntentionRules = INTENTION_RULES,
-                      stage_writer: StageWriter = write_scripted_stage) -> Evening:
+                      stage_writer: StageWriter = write_scripted_stage, script: PlayerScript | None = None) -> Evening:
     """Play an evening to its end in lockstep.
 
     Each tick advances the world by one step, applies the answers that are due, then asks
@@ -233,6 +235,8 @@ async def run_evening(world: World, config: Mapping[str, Any], rng: Random, eval
         intender: Mind port writing guests' intentions; None (offline) writes none.
         intention_rules: When guests take stock.
         stage_writer: Writer of the words on and at the stage (`tavern.social.stage_lines`); scripted by default.
+        script: The player's timed commands; each runs in the tick its time falls in, before the minds are asked.
+            A refused step is logged as a `control` event and the evening goes on.
 
     Returns:
         The evening's complete log, choices, stalled spells, guests and end time. A guest is
@@ -254,8 +258,10 @@ async def run_evening(world: World, config: Mapping[str, Any], rng: Random, eval
         lambda observation: choose_action(observation, config, rng, evaluators), answer,
         lambda view: writer(view, config), lambda view: stage_writer(view, config), intender), intention_rules)
     _track(world, run)
+    waiting = list(script.steps) if script is not None else []
     while not evening_over(world, pace.time_limit):
         step_world(world, pace.step)
+        _run_due_steps(world, mind, waiting)
         asked = mind.tick(world)
         await courier.settle()
         _record_choices(world, run, courier, asked)
@@ -266,6 +272,16 @@ async def run_evening(world: World, config: Mapping[str, Any], rng: Random, eval
     # the first before it is seen; every logged interrupt or alert did turn a head.
     turned = sum(event["type"] in ("interrupted", "alerted") for event in run.events)
     return Evening(run.events, run.choices, run.spells, run.guests, world["time"], max(len(run.gazes), turned))
+
+
+def _run_due_steps(world: World, mind: MindLoop, waiting: list[Step]) -> None:
+    # Game time sums float steps; the margin absorbs rounding far below one step.
+    while waiting and waiting[0].at <= world["time"] + 1e-9:
+        step = waiting.pop(0)
+        try:
+            apply_command(world, mind, step.command)
+        except ValueError as error:
+            log_event(world, None, "control", f"Player script: {step.command['type']} refused: {error}")
 
 
 def _record_choices(world: Mapping[str, Any], run: _Run, courier: LockstepCourier,
