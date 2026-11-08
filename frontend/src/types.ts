@@ -450,6 +450,15 @@ export interface Fact {
   overheard: boolean;
 }
 
+/** What the player's scene waits for: the chat reads it (`player_lines.player_turn`); null where the evening has no player. */
+export interface PlayerTurn {
+  scene_id: string | null;
+  /** none: no scene; free: someone else speaks next; your_turn; reading: the typed line is being read; on_stage; comeback. */
+  state: "none" | "free" | "your_turn" | "reading" | "on_stage" | "comeback";
+  /** Game time the turn passes in silence; null unless it is the player's turn. */
+  silence_at: number | null;
+}
+
 /** The person playing tonight: which guest they play, and whether they hold the wheel. */
 export interface Player {
   actor_id: string;
@@ -532,6 +541,8 @@ export interface Snapshot {
   retelling_events: Record<number, CitedEvent>;
   /** Whether the storyteller is writing the retelling right now. */
   telling: boolean;
+  /** What the player's scene waits for; null in an evening with no player. */
+  player_turn: PlayerTurn | null;
 }
 
 /** The server's story score: moments counted per kind, and their weighted total. */

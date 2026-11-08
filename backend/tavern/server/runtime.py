@@ -30,7 +30,7 @@ from tavern.mind.intentions import INTENTION_RULES, Intender, IntentionRules
 from tavern.mind.model_health import HealthBoard
 from tavern.mind.scripted import write_scripted_turn
 from tavern.server.controls import forced_action, refill_tap, set_paused, set_speed, toggle_block
-from tavern.social.player_lines import ReadLine, ReadNumber, read_as_pitch, read_as_remark
+from tavern.social.player_lines import ReadLine, ReadNumber, player_turn, read_as_pitch, read_as_remark
 from tavern.social.stage_lines import StageWriter, write_scripted_stage
 from tavern.social.turns import TurnWriter
 
@@ -216,7 +216,8 @@ class TavernRuntime:
         }, "activities": client_activities(ACTIVITIES), "items": client_items(), "minds": minds(self.world),
                 "story": story_score(self.moments, WEIGHTS), "retelling": self.retelling,
                 "retelling_events": self.retelling_events if self.retelling else {},
-                "telling": self._telling is not None and not self._telling.done()}
+                "telling": self._telling is not None and not self._telling.done(),
+                "player_turn": player_turn(self.world)}
 
     def _event(self, message: str) -> None:
         log_event(self.world, None, "control", message)

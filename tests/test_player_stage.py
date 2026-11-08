@@ -17,6 +17,7 @@ from tavern.evening.player_commands import say
 from tavern.mind.agents import choose_action
 from tavern.mind.intentions import INTENTION_RULES
 from tavern.mind.scripted import write_scripted_turn
+from tavern.social.player_lines import player_turn
 from tavern.social.stage_lines import write_scripted_stage
 from tavern.social.scenes import conversation_of
 from dice_hall import advance, who
@@ -129,3 +130,14 @@ def test_the_played_guest_climbs_the_stage_roasts_a_guest_and_answers_the_heckle
     assert ([(item["line"], item["number"], item["target_id"]) for item in given],
             "roasted" in thoughts, [item["line"] for item in answered]) == (
         [(ROAST, "roast", "cid")], True, [COMEBACK])
+
+
+@pytest.mark.parametrize("make, state, has_silence", [
+    pytest.param(owed_a_comeback, "comeback", False, id="owed-a-comeback"),
+    pytest.param(on_stage_no_number, "on_stage", True, id="on-stage"),
+    pytest.param(number_given, "none", False, id="number-given-and-no-scene"),
+])
+def test_the_players_turn_names_the_stage(make: Callable[[], dict[str, Any]], state: str, has_silence: bool) -> None:
+    turn = player_turn(make())
+    assert turn is not None
+    assert (turn["state"], turn["silence_at"] is not None) == (state, has_silence)
