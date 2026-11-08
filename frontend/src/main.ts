@@ -8,6 +8,7 @@ import { OrderMenu } from "./ordermenu";
 import { clickOrder, menuRows, walkAction, type Pick } from "./orders";
 import { WheelBar } from "./wheelbar";
 import { ChatPanel } from "./chatpanel";
+import { canSkip, SKIP_SPEED, SKIP_WORDS, skipFrom, skipStop, type Skip } from "./skipahead";
 import type { Cast, CharacterCatalog, OptionsMessage, Snapshot, World } from "./types";
 import "./style.css";
 
@@ -91,7 +92,7 @@ const dashboard: Dashboard = new Dashboard(application, {
 }, sprites);
 const wheelHost: HTMLElement = document.createElement("div");
 application.querySelector(".game-surround")?.before(wheelHost);
-const wheel: WheelBar = new WheelBar(wheelHost, (command): void => connection.send(command));
+const wheel: WheelBar = new WheelBar(wheelHost, (command): void => connection.send(command), (): void => skipAhead());
 const chatHost: HTMLElement = document.createElement("div");
 application.append(chatHost);
 const chat: ChatPanel = new ChatPanel(chatHost, (command): void => connection.send(command),
@@ -115,14 +116,39 @@ const game: Phaser.Game = new Phaser.Game({
   scene,
 });
 
+/** A skip ahead under way, and the snapshot last seen (to tell whether one may start). */
+let skip: Skip | null = null;
+let latest: Snapshot | null = null;
+
+/** Start a skip ahead, or call off the one running: the hall runs at full speed until something concerns the player. */
+function skipAhead(): void {
+  if (skip) { connection.send({ type: "speed", value: skip.speed }); skip = null; return; }
+  if (!latest || !canSkip(latest)) return;
+  skip = skipFrom(latest.state);
+  connection.send({ type: "speed", value: SKIP_SPEED });
+}
+
+/** Drop a skip back to its speed once something concerns the player, and say what. */
+function followSkip(snapshot: Snapshot): void {
+  const stop = skip ? skipStop(skip, snapshot) : null;
+  if (!skip || stop === null) return;
+  connection.send({ type: "speed", value: skip.speed });
+  skip = null;
+  const words: string | null = SKIP_WORDS[stop];
+  if (words && snapshot.state.player) scene.toast(snapshot.state.player.actor_id, words);
+}
+
 function applySnapshot(snapshot: Snapshot): void {
   const first: boolean = world === null;
   world = snapshot.state;
+  latest = snapshot;
+  followSkip(snapshot);
   // The screen greets a page that has just opened; an evening restored from a save can be resumed from it.
   if (first) lineup.open(world.tick > 0);
   scene.setWorld(world, snapshot.activities, snapshot.minds);
   dashboard.apply(snapshot);
-  wheel.apply(world, { state: snapshot.player_turn?.state ?? null, held: snapshot.turn_held });
+  wheel.apply(world, { state: snapshot.player_turn?.state ?? null, held: snapshot.turn_held,
+    skip: skip ? "running" : canSkip(snapshot) ? "can" : "no" });
   chat.apply(snapshot);
   // Departed visitors stay selectable, so their evening can still be inspected.
   if (!selectedId || ![...world.actors, ...world.departed].some((actor): boolean => actor.id === selectedId)) {

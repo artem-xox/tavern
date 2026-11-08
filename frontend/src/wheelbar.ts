@@ -13,11 +13,14 @@ export function typingTarget(target: EventTarget | null): boolean {
 export class WheelBar {
   private world: World | null = null;
 
-  constructor(private readonly host: HTMLElement, private readonly send: (command: Command) => void) {
+  constructor(private readonly host: HTMLElement, private readonly send: (command: Command) => void,
+              private readonly skip: () => void = (): void => {}) {
     this.host.className = "wheel";
     this.host.hidden = true;
     window.addEventListener("keydown", (event: KeyboardEvent): void => {
-      if (event.code !== "Space" || event.repeat || typingTarget(event.target) || !this.world?.player) return;
+      if (event.repeat || typingTarget(event.target) || !this.world?.player) return;
+      if (event.code === "KeyF") { event.preventDefault(); this.skip(); return; }
+      if (event.code !== "Space") return;
       event.preventDefault();
       this.send({ type: "pause", paused: !this.world.paused });
     });
@@ -26,9 +29,10 @@ export class WheelBar {
   /**
    * Redraw from the world; the bar hides itself in an evening with no player.
    *
-   * @param turn What the played guest's scene waits for, whether the clock holds still for it (auto-pause).
+   * @param turn What the played guest's scene waits for, whether the clock holds still for it (auto-pause), and
+   *   whether a skip ahead may start or is running.
    */
-  apply(world: World, turn: { state: PlayerTurn["state"] | null; held: boolean } = { state: null, held: false }): void {
+  apply(world: World, turn: { state: PlayerTurn["state"] | null; held: boolean; skip?: "can" | "running" | "no" } = { state: null, held: false }): void {
     this.world = world;
     const state: WheelState | null = wheelState(world);
     this.host.hidden = state === null;
@@ -43,6 +47,7 @@ export class WheelBar {
       </span>
       ${turn.held ? html`<span class="wheel-held" role="status">The hall waits for your line</span>` : nothing}
       ${state.steering && (turn.state === "your_turn" || turn.state === "comeback") ? html`<button class="wheel-pass" title="Say nothing: the turn passes in silence now" @click=${(): void => this.send({ type: "let_pass" })}>Let it pass</button>` : nothing}
+      ${state.steering && turn.skip !== undefined ? html`<button class="wheel-skip" aria-pressed=${turn.skip === "running"} ?disabled=${turn.skip === "no"} title="Run the hall fast until something concerns you" @click=${(): void => this.skip()}>${turn.skip === "running" ? "Skipping…" : "Skip ahead"} <kbd>F</kbd></button>` : nothing}
       <button class="wheel-pause" @click=${(): void => this.send({ type: "pause", paused: !state.paused })}>${state.paused ? "Resume" : "Pause"} <kbd>Space</kbd></button>
     </div>${actor ? roleSheetView(roleSheet(actor), state.name) : nothing}`, this.host);
   }
