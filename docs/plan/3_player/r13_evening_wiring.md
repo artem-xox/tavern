@@ -1,9 +1,9 @@
 ---
 id: S3-R13
 title: Wire an evening once: one AI config reader, one Claude config, one mind loop builder, one end rule
-status: todo
+status: done
 needs: [S3-R04]
-touches: [mind/selection.py, adapters/claude.py, evening/mind_loop.py, hall/closing.py, server/runtime.py, evening/lockstep.py, app.py, scripts/evening.py, docs/plan/TECH_DEBT.md, tests]
+touches: [mind/selection.py, scripts/dialogue_eval.py, adapters/claude.py, evening/mind_loop.py, hall/closing.py, server/runtime.py, evening/lockstep.py, app.py, scripts/evening.py, docs/plan/TECH_DEBT.md, tests]
 ---
 
 # S3-R13 — One wiring for both runners (D09)
@@ -74,4 +74,23 @@ Golden check after every commit: empty diff. `tests/test_lockstep.py`, `tests/te
 
 ## Results
 
-Filled in when the task is done.
+Commits on `claude/s3-r13-wiring-bd29dd`, one per step (steps 5 and 6 share one):
+`82e9f17` read_ai_config, `0710d8d` app and script use it, `7bdb3f1` claude_config, `6afbed8` all_gone,
+`b815756` evening_mind and EveningPorts, D09 deleted.
+
+Notes:
+- R04 had already removed the lean/aims/projects switches, so `read_ai_config` reads only the key, model,
+  timeout, temperature and answers, as the Shape says.
+- `scripts/dialogue_eval.py` also held a `"retries": 1` copy; it uses `claude_config` too, so the done-when
+  grep holds. `probes.py` keeps `retries: 0` on purpose (a different config).
+- `lockstep.evening_over` stays (its tests call it) and now delegates to `all_gone`.
+- Red phases for new functions failed at import (the function did not exist yet), not on an assertion.
+- New tests: `tests/test_ai_config.py`, `tests/test_evening_mind.py`, and cases in `test_closing.py`,
+  `test_claude.py`. No existing test was edited.
+
+Golden check after every commit: `diff -r runs/golden-base runs/golden-now` printed nothing (also after the last).
+
+`make check`: `4660 passed in 358.47s (0:05:58)`; frontend `ℹ tests 318 / ℹ pass 318 / ℹ fail 0`; exit 0.
+
+`grep -n '"retries": 1' backend scripts` finds only `adapters/claude.py:145` (`claude_config`). The remaining
+`lambda`s in `runtime.py` and `lockstep.py` are the port bindings plus the unrelated command handlers.

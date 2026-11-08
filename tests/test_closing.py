@@ -9,6 +9,7 @@ import pytest
 from tavern.mind.agents import build_candidates, choose_action
 from tavern.mind.briefing import brief
 from tavern.evening.scenario import open_evening, parse_scenario
+from tavern.hall.closing import all_gone
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action, step_world
 
 
@@ -123,3 +124,19 @@ def test_malformed_closing_flag_is_rejected() -> None:
     observation = {**look(evening(), "ada"), "closed": "yes"}
     with pytest.raises(ValueError):
         build_candidates(observation)
+
+
+@pytest.mark.parametrize("actors, expected, gone", [
+    pytest.param([{"id": "ada"}], [], False, id="a-guest-is-present"),
+    pytest.param([{"id": "ada"}, {"id": "bea"}], [{"id": "cy"}], False, id="guests-present-and-one-expected"),
+    pytest.param([{"id": "barkeep", "post": "bar"}], [], True, id="only-staff-present"),
+    pytest.param([], [{"id": "cy"}], False, id="nobody-present-but-someone-expected"),
+    pytest.param([], [], True, id="nobody-at-all"),
+])
+def test_all_gone_when_no_guest_is_present_or_expected(actors: list[dict[str, Any]], expected: list[dict[str, Any]],
+                                                       gone: bool) -> None:
+    assert all_gone({"actors": actors, "expected": expected}) is gone
+
+
+def test_all_gone_in_a_world_without_a_scenario_expects_nobody() -> None:
+    assert all_gone({"actors": []}) is True

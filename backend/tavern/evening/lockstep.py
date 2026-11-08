@@ -7,8 +7,9 @@ from random import Random
 from typing import Any, NotRequired, TypedDict
 
 from tavern.evening.decisions import free_to_decide
-from tavern.evening.mind_loop import MindLoop
+from tavern.evening.mind_loop import EveningPorts, evening_mind
 from tavern.hall.memory import fresh_events
+from tavern.hall.closing import all_gone
 from tavern.hall.staff import guests
 from tavern.hall.state import World
 from tavern.hall.world import step_world
@@ -180,7 +181,7 @@ def evening_over(world: Mapping[str, Any], time_limit: float) -> bool:
         reached. Staff stay on, so they never keep an evening going. Worlds without a scenario
         expect nobody.
     """
-    return (not guests(world) and not world.get("expected")) or world["time"] >= time_limit
+    return all_gone(world) or world["time"] >= time_limit
 
 
 def evening_mode(requested: str | None, keyed: bool) -> tuple[str, str | None]:
@@ -249,9 +250,9 @@ async def run_evening(world: World, config: Mapping[str, Any], rng: Random, eval
     # With the answers setting on, an invitee's answer is their own choice, asked before their line (C7).
     answer = ((lambda observation, invitation, options: choose_answer(observation, invitation, options, config, rng,
                                                                       evaluators)) if read_answers(config) else None)
-    mind = MindLoop(courier, lambda observation: choose_action(observation, config, rng, evaluators),
-                    lambda view: writer(view, config), intender, intention_rules, answer,
-                    lambda view: stage_writer(view, config))
+    mind = evening_mind(courier, EveningPorts(
+        lambda observation: choose_action(observation, config, rng, evaluators), answer,
+        lambda view: writer(view, config), lambda view: stage_writer(view, config), intender), intention_rules)
     _track(world, run)
     while not evening_over(world, pace.time_limit):
         step_world(world, pace.step)

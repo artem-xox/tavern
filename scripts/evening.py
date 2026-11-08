@@ -12,7 +12,7 @@ from typing import Any, Callable, Mapping
 from dotenv import dotenv_values
 
 from tavern.adapters import jev
-from tavern.adapters.claude import HAIKU_5_5, ClaudeError, ask_claude
+from tavern.adapters.claude import HAIKU_5_5, ClaudeError, ask_claude, claude_config
 from tavern.adapters.probes import probes
 from tavern.adapters.tracing import (Scorer, Tracer, open_tracer, traced_intender, traced_question, traced_scores,
                                      traced_writer)
@@ -31,7 +31,7 @@ from tavern.mind.intentions import Intender
 from tavern.mind.model_health import HealthBoard, banner, blocking
 from tavern.mind.questions import Question
 from tavern.mind.scripted import write_scripted_turn
-from tavern.mind.selection import read_switch
+from tavern.mind.selection import read_ai_config
 from tavern.social.stage_lines import StageWriter, write_scripted_stage
 from tavern.social.turns import TurnWriter
 
@@ -93,9 +93,7 @@ def config(values: Mapping[str, Any], mode: str) -> dict[str, Any]:
     # A replay answers from its recording: the placeholder key only switches decisions to the
     # model and is never sent anywhere.
     key = {"live": values.get("TYPESAFE_API_KEY"), "replay": "replay", "local": None}[mode]
-    return {"typesafe_api_key": key, "model": values.get("TYPESAFE_MODEL", "jev-latest"),
-            "timeout": float(values.get("AI_TIMEOUT", "8")), "temperature": float(values.get("AI_TEMPERATURE", "0.25")),
-            "answers": read_switch(values.get("AI_ANSWERS"), False, "AI_ANSWERS")}
+    return read_ai_config(values, key)
 
 
 def keeper(calls: list[Record], log: Path) -> Callable[[Record], None]:
@@ -164,8 +162,7 @@ def turn_writer(writer: str, mode: str, calls: list[Record], keep: Callable[[Rec
         return write_scripted_turn
     if mode == "replay":
         return claude_writer(replay_questions("turn", calls, ClaudeError))
-    # One SDK retry at most, so slow calls show in the latency measure rather than hide in retries.
-    config = {"anthropic_api_key": values["ANTHROPIC_API_KEY"], "model": CLAUDE_MODEL, "timeout": 30.0, "retries": 1}
+    config = claude_config(values["ANTHROPIC_API_KEY"], CLAUDE_MODEL)
 
     async def ask(question: Question) -> Any:
         return await ask_claude(question, config)
@@ -193,7 +190,7 @@ def stage_writer(writer: str, mode: str, calls: list[Record], keep: Callable[[Re
         return write_scripted_stage
     if mode == "replay":
         return claude_stage_writer(replay_questions("stage", calls, ClaudeError))
-    config = {"anthropic_api_key": values["ANTHROPIC_API_KEY"], "model": CLAUDE_MODEL, "timeout": 30.0, "retries": 1}
+    config = claude_config(values["ANTHROPIC_API_KEY"], CLAUDE_MODEL)
 
     async def ask(question: Question) -> Any:
         return await ask_claude(question, config)
@@ -220,8 +217,7 @@ def mind(mode: str, values: Mapping[str, Any], prefix: str, calls: list[Record],
         return intention_writer(prefix, replay_questions("intention", calls, ClaudeError)), "Claude answers replayed"
     if mode == "local" or not values.get("ANTHROPIC_API_KEY"):
         return None, f"offline: {'local mode' if mode == 'local' else 'no ANTHROPIC_API_KEY'}, so no intentions"
-    claude = {"anthropic_api_key": values["ANTHROPIC_API_KEY"], "model": CLAUDE_MODEL, "timeout": 30.0,
-              "retries": 1}
+    claude = claude_config(values["ANTHROPIC_API_KEY"], CLAUDE_MODEL)
 
     async def metered(question: Question) -> tuple[dict[str, Any], Mapping[str, int]]:
         answer, usage = await ask_claude(question, claude)
@@ -268,7 +264,7 @@ def write_retelling(out: Path, events: list[dict[str, Any]], story: Mapping[str,
     if mode == "replay" or not values.get("ANTHROPIC_API_KEY"):
         print("no retelling: " + ("a replay asks no model" if mode == "replay" else "no ANTHROPIC_API_KEY"))
         return
-    claude = {"anthropic_api_key": values["ANTHROPIC_API_KEY"], "model": RETELLING_MODEL, "timeout": 60.0, "retries": 1}
+    claude = claude_config(values["ANTHROPIC_API_KEY"], RETELLING_MODEL, 60.0)
 
     async def ask(question: Question) -> dict[str, Any]:
         return (await ask_claude(question, claude))[0]

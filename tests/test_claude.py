@@ -8,7 +8,7 @@ from typing import Any
 import httpx2
 import pytest
 
-from tavern.adapters.claude import ClaudeError, ask_claude
+from tavern.adapters.claude import ClaudeError, ask_claude, claude_config
 from tavern.mind.questions import Question
 
 SCHEMA = {"type": "object", "properties": {"mood": {"type": "string"}}, "required": ["mood"],
@@ -159,3 +159,16 @@ def test_an_http_failure_says_what_the_api_said_cut_short(message: str, expected
     with pytest.raises(ClaudeError) as raised:
         ask(reply(body, 404))
     assert str(raised.value) == expected
+
+
+@pytest.mark.parametrize(
+    "arguments, expected",
+    [
+        pytest.param(("k", "claude-haiku-5-5"), {"anthropic_api_key": "k", "model": "claude-haiku-5-5",
+                                                 "timeout": 30.0, "retries": 1}, id="default-timeout"),
+        pytest.param(("k", "claude-sonnet-5-5", 60.0), {"anthropic_api_key": "k", "model": "claude-sonnet-5-5",
+                                                       "timeout": 60.0, "retries": 1}, id="longer-timeout"),
+    ],
+)
+def test_claude_config_asks_with_one_sdk_retry(arguments, expected) -> None:
+    assert claude_config(*arguments) == expected

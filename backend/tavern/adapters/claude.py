@@ -131,6 +131,20 @@ def _usage(message: Any) -> ClaudeUsage:
             "cache_creation_input_tokens": usage.cache_creation_input_tokens or 0}
 
 
+def claude_config(key: str, model: str, timeout: float = 30.0) -> dict[str, Any]:
+    """Build the config `ask_claude` reads.
+
+    Args:
+        key: Anthropic API key.
+        model: Claude model ID.
+        timeout: Seconds one request may take.
+
+    Returns:
+        Config with one SDK retry at most, so slow calls show in the latency measure rather than hide in retries.
+    """
+    return {"anthropic_api_key": key, "model": model, "timeout": timeout, "retries": 1}
+
+
 async def ask_claude(question: Question, config: Mapping[str, Any],
                      client: httpx2.AsyncClient | None = None) -> tuple[dict[str, Any], ClaudeUsage]:
     """Ask Claude a structured question and report the tokens it took.
