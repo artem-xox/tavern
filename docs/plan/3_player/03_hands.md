@@ -1,7 +1,7 @@
 ---
 id: S3-03
 title: The player's hands
-status: todo
+status: done
 needs: [S3-01, S3-02]
 touches: [backend/tavern/body/activities.py, backend/tavern/body/actions.py, backend/tavern/hall/lifecycle.py, backend/tavern/hall/world.py, backend/tavern/mind/candidates.py, backend/tavern/evening/player_commands.py, backend/tavern/adapters/persistence.py, backend/tavern/server/runtime.py, backend/tavern/server/api.py, frontend/src/types.ts, AGENTS.md]
 ---
@@ -74,3 +74,28 @@ guest needs, which is to walk to a spot on the floor and stand there.
   through `act`.
 
 ## Results
+
+**Check** (`make check`, then `make build`, after the last code change):
+
+```
+4744+ passed (pytest; see the run below)   frontend node:test: fail 0   exit 0
+make build: ✓ built in 9.13s, exit 0
+```
+
+**Golden:** `make golden GOLDEN=runs/golden-base` before the first edit and `GOLDEN=runs/golden-now` after the last
+one: `diff -r runs/golden-base runs/golden-now` prints nothing (exit 0).
+
+**Save bump:** schema 24 → 25. A saved action now carries `cell` exactly when its verb is `to_cell` (`walk_to`), and
+the cell must lie inside the map (`persistence._check_saved_cell`). Tests changed for the bump only:
+`tests/test_database.py` (the pinned version) and `tests/test_intention_saves.py::test_new_worlds_are_version_25`
+(renamed from `_24`). No other existing test changed.
+
+**Notes**
+- New tests: `tests/test_walk_to.py` (verb, refusals, saved cell), `tests/test_player_hands.py` (`act`, `options`),
+  `tests/test_player_hands_socket.py` (the socket walk, beer and drink). `act`/`options` tests sit in their own file,
+  not `test_player_commands.py`, so that S3-04's parallel edits to it merge cleanly.
+- `walk_to` lives in `activities.py` under the `exploring` family (the table requires a family); no candidate rule
+  offers it. A cell held by another guest is refused ("Nobody can stand there"). The route check is
+  `routes.standing_error`, shared by `action_error` and `plan_route`.
+- `TavernRuntime.command` now returns the reply (`options`) or None; `act` and `options` log no "Operator" event.
+- The client ignores the `options` message until S3-08.
