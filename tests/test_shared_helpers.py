@@ -66,6 +66,15 @@ def test_logging_returns_the_event_it_appended(log) -> None:
     assert log(world) is world["events"][-1]
 
 
+def test_record_event_fields_reach_the_logged_event_and_the_memory() -> None:
+    world = _hall()
+    ann = world["actors"][0]
+    event = record_event(world, ann, "action_started", "Ann chose talk", fields={"verb": "talk"})
+    assert event["verb"] == "talk"
+    assert world["events"][-1]["verb"] == "talk"
+    assert ann["memory"][-1]["verb"] == "talk"
+
+
 def _log() -> list[dict]:
     return [{"n": 1}, {"n": 2}, {"n": 3}]
 

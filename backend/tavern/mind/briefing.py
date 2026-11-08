@@ -337,7 +337,7 @@ def _ago(seconds: float) -> str:
 
 def _memory(memory: Mapping[str, Any]) -> str:
     if memory["type"] == "action_completed":
-        activity = ACTIVITIES.get(memory["message"].rsplit(" ", 1)[-1])
+        activity = ACTIVITIES.get(memory["verb"])
         return activity.done if activity and activity.done else memory["message"]
     if memory["type"] == "action_failed":
         return f"was turned away ({memory['message']})"
@@ -356,7 +356,7 @@ def recollections(memory: Sequence[Mapping[str, Any]], now: float) -> list[str]:
         are left out, and so is a finished chat, which is already remembered as the conversation itself.
     """
     kept = [item for item in memory if item["type"] not in ("action_started", "interrupted", "alerted")
-            and not (item["type"] == "action_completed" and item["message"].endswith(" talk"))]
+            and not (item["type"] == "action_completed" and item["verb"] == "talk")]
     return [f"{_ago(now - item['time'])}, {_memory(item)}" for item in kept]
 
 

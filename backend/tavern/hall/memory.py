@@ -10,7 +10,7 @@ from tavern.hall.state import Actor, World
 
 
 def record_event(world: World, actor: Actor, kind: str, message: str,
-                 outcome: str | None = None) -> dict[str, Any]:
+                 outcome: str | None = None, fields: Mapping[str, Any] | None = None) -> dict[str, Any]:
     """Log an event for the room and remember it; it may be heard and show on the visitor's face.
 
     Args:
@@ -20,6 +20,8 @@ def record_event(world: World, actor: Actor, kind: str, message: str,
         message: Human-readable description.
         outcome: How it came out, for the events that have one (a fight's `ENDINGS`), kept as a field so that
             nothing has to read it from the words.
+        fields: Further facts of the event (a `verb`, an `invitation`) kept the same way, merged in before the
+            event is logged, remembered and heard.
 
     Returns:
         The event just logged, so a caller can add fields to it.
@@ -27,6 +29,8 @@ def record_event(world: World, actor: Actor, kind: str, message: str,
     event = {"time": world["time"], "actor_id": actor["id"], "type": kind, "message": message}
     if outcome is not None:
         event["outcome"] = outcome
+    if fields is not None:
+        event.update(fields)
     world["events"].append(event)
     actor["memory"].append(deepcopy(event))
     sound_event(world, actor, event)

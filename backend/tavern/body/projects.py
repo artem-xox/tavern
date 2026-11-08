@@ -210,9 +210,8 @@ def _no_game(world: Mapping[str, Any], actor: Mapping[str, Any], project: Projec
     other = find_actor(world, project["target"])
     if other is None:
         return "they went home"
-    refused = f"from {actor['name']}"
-    if any(item["type"] == "invitation_declined" and item["time"] >= project["started_at"] and refused in item["message"]
-           and "dice" in item["message"] for item in world["events"]):
+    if any(item["type"] == "invitation_declined" and item["time"] >= project["started_at"]
+           and item["inviter_id"] == actor["id"] and item["invitation"] == "dice_together" for item in world["events"]):
         return "they would not play"
     agreed = any(item["kind"] == "dice_together" and {item["from"], item["to"]} == {actor["id"], other["id"]}
                  for item in world["invitations"])
