@@ -78,25 +78,19 @@ branch and your claims, never your reasoning. It reads and runs; it never edits.
 Functional core, imperative shell. Dependencies point inward only.
 
 - **Core** — pure rules, no I/O, in `backend/tavern/` packages named for a concept:
-  - `hall/` the world and its state (`world.py` public API, `lifecycle.py` action state
-    machine, `state.py` types, `rules.py`, `chance`, `room`, `routes`, `sight`, `sightlines`, `staff`, `arrival`, `closing`,
-    `memory` event log, `validation`, `whereabouts`: at which table or bar, whom one can reach).
-  - `body/` what executes an action: `activity.py` (what a verb is), `effects.py` (what it does when it lands), `activities.py` (the verb table), `actions`, `items` (what a visitor
-    can carry), `queues`, `bartending`, `hearing`, `attention`, `expression`, `drunkenness`, `dozing`.
-  - `social/` guests among guests: `thoughts`, `ties`, `names`, `scenes`, `conversation`,
-    `social_acts`, `invitations`, `errands`, `giving`, `dice`, `overhearing`, `turns`.
-  - `mind/` what a guest observes and decides: `briefing`, `options`, `hall_view`,
-    `candidates` (the options open now), `agents` (decisions), `local_policy`, `intentions`, `cards`,
-    `turn_view` (what a line writer sees), `haiku_turns`, `haiku_intentions` (Haiku's intention question),
-    the model ports (`questions`).
-  - `evening/` an evening as a whole: `scenario`, `decisions`, `mind_loop` (the requests in
-    flight, with a `Courier` port), `lockstep` (headless runs), `metrics`, `recording`, `report` (the report of `make evening`).
+  `hall/` the world and its state (`world.py` is its public API), `body/` what executes
+  an action (`activities.py` is the verb table), `social/` guests among guests, `mind/`
+  what a guest observes and decides (`questions.py` holds the model ports), `evening/`
+  an evening as a whole (`mind_loop`, `lockstep`, `metrics`).
 - **Adapters** — `adapters/`, one per outside system: `jev.py` (LLM over HTTP), `claude.py`,
   `persistence.py` (JSON files, `FileStore`), `database.py` (PostgreSQL, `DatabaseStore`).
 - **Shell** — `server/` (FastAPI/WebSocket `api.py`, sessions, the live `runtime.py`,
   operator `controls.py`) and `app.py`, the only place that reads the environment and
   wires concrete adapters (`create_default_app`).
 - **Client** — `frontend/src/`: renders snapshots and sends commands.
+
+The module map is the docstrings, never a list here: `grep -m1 -H '"""'
+backend/tavern/<package>/*.py` prints what each module owns.
 
 Rules:
 - Core imports only the stdlib and other core modules. Never `fastapi`, `httpx`,
@@ -203,21 +197,12 @@ TypeScript (`frontend/`): no `any`; `types.ts` is the contract with the backend 
 ## Boundaries
 
 - **Always**: follow the nearest existing pattern; keep `types.ts` in step with the
-  snapshot.
+  snapshot; make character art by `docs/CHARACTER_ART_PIPELINE.md` (all eight views).
 - **Ask first**: a new dependency (pip or npm); a new top-level package or layer;
   changing the saved-world format (sessions persist in files and PostgreSQL); `.github/`
   or `.do/` deploy config; spending PixelLab credits.
 - **Never**: commit secrets or `.env`; call the real Jev or network from tests; edit
   generated `frontend/dist/`; add module-level mutable state.
-
-## Character art rule
-
-Generate and ship all eight compass views for tavern characters: north,
-north-east, east, south-east, south, south-west, west, and north-west. Check
-the actual PixelLab export size before generating poses; the standard 68 px
-request has returned 96 px. PixelLab Pro Flash's eight-view export is the
-approved route for a 68 px character. See `docs/CHARACTER_ART_PIPELINE.md` for
-the tested workflow and current limit.
 
 ## Working principles
 
