@@ -11,7 +11,7 @@ from tavern.adapters.persistence import parse_world
 from tavern.body.attention import attend
 from tavern.hall.memory import record_event
 from tavern.hall.world import create_world, observe_actor, start_action
-from tavern.mind.agents import build_candidates, build_seat_candidates
+from tavern.mind.candidates import build_candidates, build_seat_candidates
 from tavern.mind.briefing import brief
 from tavern.mind.hall_view import place_words
 from tavern.mind.observation import known_objects

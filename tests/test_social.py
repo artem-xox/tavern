@@ -9,7 +9,8 @@ from typing import Any
 
 import pytest
 
-from tavern.mind.agents import build_candidates, choose_action
+from tavern.mind.agents import choose_action
+from tavern.mind.candidates import build_candidates
 from tavern.server.runtime import TavernRuntime
 from tavern.adapters.persistence import load_world, save_world
 from tavern.hall.world import create_world, observe_actor, start_action, step_world

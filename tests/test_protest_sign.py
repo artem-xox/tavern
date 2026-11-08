@@ -5,7 +5,7 @@ from typing import Any
 import pytest
 
 from tavern.hall.world import create_world, start_action
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.mind.options import option_text
 from tavern.social.signature_acts import RAISES_AGAIN_AFTER, accused_of
 from social_hall import actor, advance, command, hall

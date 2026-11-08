@@ -12,7 +12,7 @@ from tavern.body.fights import open_fight
 from tavern.body.items import ITEMS, empty_inventory
 from tavern.evening.story_score import WEIGHTS, story_moments, story_score
 from tavern.hall.world import create_world, start_action
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.social.scenes import start_conversation
 from tavern.social.signature_acts import film_room
 from social_hall import actor, advance, command, hall

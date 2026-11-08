@@ -9,7 +9,8 @@ import httpx
 import pytest
 
 from tavern.body.activities import ACTIVITIES, FAMILIES
-from tavern.mind.agents import Evaluator, Evaluators, build_candidates, choose_action
+from tavern.mind.agents import Evaluator, Evaluators, choose_action
+from tavern.mind.candidates import build_candidates
 from tavern.mind.briefing import brief
 from tavern.evening.decisions import apply_decision
 from tavern.mind.families import family_scores, group_families

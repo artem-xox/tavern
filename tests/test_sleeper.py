@@ -5,7 +5,7 @@ from typing import Any
 import pytest
 
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.mind.briefing import brief
 from tavern.social.giving import empty_handed_company, gift_targets
 from tavern.social.hostility import hostile_targets

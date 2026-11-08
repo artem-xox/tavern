@@ -10,7 +10,7 @@ from tavern.body.hearing import EVENT_SOUNDS
 from tavern.evening.scenario import parse_scenario
 from tavern.hall.closing import LAST_CALL_LINE, call_last_orders, closing_called
 from tavern.hall.world import create_world, start_action
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from staff_hall import HOB, advance, events, hob_of, opened, order_beer, person, plan, sees
 
 CALL = 60.0

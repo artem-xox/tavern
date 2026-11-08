@@ -8,7 +8,7 @@ import pytest
 from tavern.adapters.persistence import parse_world
 from tavern.body.wounds import GROGGY_SECONDS, health_of, hurt, laid_out
 from tavern.hall.world import observe_actor, observe_people, start_action
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.mind.briefing import brief
 from social_hall import actor, advance, command, know
 from fight_hall import at_blows, battered, table_of_three, until_fight_ends

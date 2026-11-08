@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 
 from tavern.hall.world import start_action
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.mind.haiku_turns import turn_content
 from tavern.mind.scripted import scripted_turn
 from tavern.social.invitations import offered_kinds

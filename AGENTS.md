@@ -91,7 +91,7 @@ Rules:
   the concept: pure, tested alone, wired in with one small edit. Do not grow files over
   ~400 lines (`scene.ts` today); split first, as a separate step.
 - Adding a verb means one `Activity` in `activities.py` (targets, timing, preconditions,
-  effects, wording, pose, family), plus its candidate rule in `agents.py`, its local utility
+  effects, wording, pose, family), plus its candidate rule in `candidates.py`, its local utility
   in `local_policy.py` and its option sentence in `options.py`. The world, Jev, saves, and
   the client read the table.
   Put it in an existing `FAMILIES` entry when it answers the same wish; a new family widens

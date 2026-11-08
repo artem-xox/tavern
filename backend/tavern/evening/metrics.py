@@ -354,7 +354,7 @@ def sleep_metrics(events: Sequence[Mapping[str, Any]], departed: Sequence[Mappin
         closes_at: Closing time; a guest who left at or after it was sent home, so did not choose to go tired.
             None for an evening that never closes.
         tired: Tiredness (0–100) from which a guest counts as having gone home tired; the sleep candidate's
-            threshold (`tavern.mind.agents.SLEEPY`) by default.
+            threshold (`tavern.mind.candidates.SLEEPY`) by default.
 
     Returns:
         The counts, with naps per guest ID in order of the first nap.

@@ -6,7 +6,8 @@ from typing import Any
 
 import pytest
 
-from tavern.mind.agents import Evaluator, Evaluators, build_candidates, choose_action
+from tavern.mind.agents import Evaluator, Evaluators, choose_action
+from tavern.mind.candidates import build_candidates
 from tavern.adapters.jev import JevError
 
 

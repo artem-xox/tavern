@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.mind.briefing import brief
 from tavern.evening.decisions import decision_requests
 from tavern.evening.lockstep import Evening

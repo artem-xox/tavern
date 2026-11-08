@@ -1,7 +1,7 @@
 ---
 id: S3-R11
 title: Split agents.py: the options a guest has, apart from how one is chosen
-status: todo
+status: done
 needs: [S3-R01, S3-R04, S3-R08]
 touches: [mind/agents.py, mind/candidates.py (new), evening/metrics.py, AGENTS.md, tests]
 ---
@@ -56,4 +56,14 @@ Test edits, import lines only, **approved by the owner, 2026-11-07**: 34 test fi
 
 ## Results
 
-Filled in when the task is done.
+Split done in one commit. `agents.py` 216 lines, `candidates.py` 343; `candidates.py` imports nothing from `agents.py`;
+`grep -c "def _" agents.py` = 9 (8 choosing helpers + `__init__`). One non-verbatim edit: `_line_options`' parameter
+`action` renamed `plain`, since it shadowed the new public `action()`.
+
+- mypy: `Success: no issues found in 136 source files`.
+- Golden: `diff -r runs/golden-base runs/golden-new` prints nothing.
+- `git merge claude/s3-prep`: Already up to date.
+- `make check`: `6 failed, 4658 passed`. All 6 are asset tests that run `npm --prefix frontend run build`
+  (`tests/test_character_action_assets.py` x5, `tests/test_character_assets.py` x1); the build fails with
+  `TS2688: Cannot find type definition file for 'estree 2'` / `'trusted-types 2'` (stray dirs in the shared
+  `frontend/node_modules`), unrelated to this change.

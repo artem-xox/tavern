@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.mind.briefing import brief
 from tavern.mind.cards import PARAMS, parse_cards
 from tavern.evening.scenario import open_evening, parse_scenario

@@ -10,7 +10,8 @@ from tavern.body.activities import FAMILIES
 from tavern.body.items import carried_words, empty_inventory
 from tavern.hall.rules import default_rules
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action
-from tavern.mind.agents import Evaluators, build_candidates, choose_action
+from tavern.mind.agents import Evaluators, choose_action
+from tavern.mind.candidates import build_candidates
 from tavern.mind.briefing import brief
 from tavern.mind.local_policy import local_scores
 from tavern.mind.options import option_text

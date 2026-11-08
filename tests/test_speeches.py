@@ -123,7 +123,7 @@ def test_the_speaker_has_no_opinion_of_their_own_speech() -> None:
 # --- the wish to speak: the option, its utility and its sentence ------------------------------------------------
 
 from tavern.hall.world import observe_actor, observe_people  # noqa: E402
-from tavern.mind.agents import build_candidates  # noqa: E402
+from tavern.mind.candidates import build_candidates  # noqa: E402
 from tavern.mind.local_policy import local_scores  # noqa: E402
 from tavern.mind.options import option_text  # noqa: E402
 
