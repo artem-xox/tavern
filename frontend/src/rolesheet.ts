@@ -41,7 +41,7 @@ export function roleSheet(actor: Actor): RoleSheet {
 export function roleSheetView(sheet: RoleSheet, name: string): TemplateResult {
   const list = (title: string, items: readonly string[]): TemplateResult | typeof nothing =>
     items.length === 0 ? nothing : html`<h4>${title}</h4><ul>${items.map((item) => html`<li>${item}</li>`)}</ul>`;
-  return html`<details class="role-sheet" open><summary>Your role · ${name}</summary>
+  return html`<details class="role-sheet"><summary>Your role · ${name}</summary>
     ${sheet.persona.length === 0 ? nothing : html`<dl>${sheet.persona.map(([label, text]) => html`<dt>${label}</dt><dd>${text}</dd>`)}</dl>`}
     ${list("Obsessions", sheet.obsessions)}${list("Catchphrases", sheet.catchphrases)}
     ${sheet.rivals.length === 0 ? nothing : html`<h4>Rivals</h4><ul>${sheet.rivals.map((rival) => html`<li><strong>${rival.name}</strong>${rival.why ? html` · ${rival.why}` : nothing}</li>`)}</ul>`}
