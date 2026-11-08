@@ -69,10 +69,11 @@ def holds_stage(world: World, actor: Actor, elapsed: float) -> bool:
         True when the speech's timer is to stand still; False for a guest the player does not steer, one who has
         given their number (the timer runs on as for any guest), or one whose silence has just passed.
     """
-    if not steered(world, actor["id"]) or on_stage_for(world, actor) is None:
+    action, player = actor["action"], world["player"]
+    if action is None or player is None or not steered(world, actor["id"]) or on_stage_for(world, actor) is None:
         return False
-    climbed = actor["action"].setdefault("climbed_at", world["time"] - elapsed)
-    typed = world["player"].get("typing_at")
+    climbed = action.setdefault("climbed_at", world["time"] - elapsed)
+    typed = player.get("typing_at")
     if world["time"] < max(climbed, typed or 0.0) + world["rules"]["player"]["silence"] * world["speed"]:
         return True
     log_event(world, actor["id"], "stage_silent", f"{actor['name']} stood on the stage and said nothing")
