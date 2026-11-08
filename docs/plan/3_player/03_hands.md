@@ -78,7 +78,7 @@ guest needs, which is to walk to a spot on the floor and stand there.
 **Check** (`make check`, then `make build`, after the last code change):
 
 ```
-4744+ passed (pytest; see the run below)   frontend node:test: fail 0   exit 0
+4766 passed in 247s (pytest)   frontend node:test: 318 pass, 0 fail   exit 0
 make build: ✓ built in 9.13s, exit 0
 ```
 
