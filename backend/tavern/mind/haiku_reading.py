@@ -1,4 +1,4 @@
-"""Haiku's reading of a player's line: the question and the parse."""
+"""Haiku's reading of a player's line and of a number they give on the stage: the question and the parse."""
 
 from collections.abc import Mapping
 from typing import Any
@@ -7,7 +7,8 @@ from tavern.mind.haiku_turns import MAX_TOPIC
 from tavern.mind.questions import Ask, Question
 from tavern.mind.turn_prompt import shared_prefix
 from tavern.social.conversation import ACTS
-from tavern.social.player_lines import ReadLine
+from tavern.social.numbers import NUMBERS
+from tavern.social.player_lines import ReadLine, ReadNumber
 from tavern.social.turns import check_turn
 
 MAX_TOKENS = 120  # Bounds the answer: a short JSON object, with no line in it.
@@ -27,6 +28,20 @@ whole company or to no one in particular, the addressee is null.
 - An invite names one of the invitation kinds offered, and only an invite does. Telling news names the id of one \
 of the news items the speaker holds, and only that act does. Everything else has both null.
 - The topic is a few words on what the talk is about after these words."""
+
+
+_NUMBER_RULES = """READING A NUMBER THAT IS ALREADY WRITTEN
+
+This request is different from the others too. A person playing a guest has climbed onto the stage and typed what \
+they say to the whole hall themselves, and the words are final: you do not write, change, shorten or answer them. \
+You only read which kind of number the words are, and at whom it is aimed.
+
+- Choose from the kinds offered in this request only. Name the kind the words are, not the one that would make the \
+better story: a toast praises, a roast mocks, a pitch announces an idea or a cause, a confession gives away a \
+secret.
+- A toast and a roast are aimed at one person in the hall, named as the request names them. A pitch and a \
+confession are aimed at no one: the target is null.
+- When the words fit no kind clearly, or you are unsure, choose pitch with a null target."""
 
 
 class RejectedReading(ValueError):
@@ -80,6 +95,81 @@ def parse_reading(view: Mapping[str, Any], text: str, answer: Any) -> dict[str, 
     if len(turn["topic"]) > MAX_TOPIC:
         raise RejectedReading(f"A topic is a few words, not {turn['topic']!r}")
     return {key: value for key, value in turn.items() if key != "line"}
+
+
+def number_question(view: Mapping[str, Any], text: str) -> Question:
+    """Ask for the kind and target of a number the player has typed on the stage.
+
+    Args:
+        view: The performer's view (`stage_lines.number_view`).
+        text: What the player typed.
+
+    Returns:
+        A question whose first system block is the line reading's, byte for byte, so that its cache is shared, and
+        whose answer schema enumerates the number kinds and the people in the hall.
+    """
+    acts = {name: act.meaning for name, act in ACTS.items()}
+    return Question(system=[shared_prefix(acts), _NUMBER_RULES], content=_number_content(view, text),
+                    schema=_number_schema(view), max_tokens=MAX_TOKENS)
+
+
+def parse_number(view: Mapping[str, Any], answer: Any) -> dict[str, Any]:
+    """Check the model's reading of a number at the boundary.
+
+    Args:
+        view: The view the number was read for.
+        answer: The decoded answer object.
+
+    Returns:
+        `{"number": <a kind of numbers.NUMBERS>, "target": <the ID of a guest in the hall> | None}`.
+
+    Raises:
+        RejectedReading: It is not exactly a number and a target; the kind does not exist; the target is not in the
+            hall; or an aimed kind has no target, or a kind that is not aimed has one.
+    """
+    if not isinstance(answer, Mapping) or set(answer) != {"number", "target"}:
+        raise RejectedReading(f"A number reading has exactly a number and a target, not {answer!r}")
+    kind, name = answer["number"], answer["target"]
+    ids = {item["name"]: item["id"] for item in view["room"]}
+    if kind not in NUMBERS:
+        raise RejectedReading(f"There is no number {kind!r}; choose one of {list(NUMBERS)}")
+    if name is not None and name not in ids:
+        raise RejectedReading(f"{name!r} is not in the hall")
+    if NUMBERS[kind].aimed != (name is not None):
+        raise RejectedReading(f"A {kind} {'needs' if NUMBERS[kind].aimed else 'takes'} no target, but got {name!r}")
+    return {"number": kind, "target": None if name is None else ids[name]}
+
+
+def claude_number_reader(ask: Ask) -> ReadNumber:
+    """Make a reader of numbers (`player_lines.ReadNumber`) that asks Claude through a port.
+
+    Args:
+        ask: The Claude port, e.g. `claude.ask_claude` bound to its config.
+
+    Returns:
+        A reader that asks one question per number and returns the checked reading. It raises RejectedReading or the
+        port's error, after which the number is a pitch to the hall.
+    """
+    async def read(view: Mapping[str, Any], text: str) -> Mapping[str, Any]:
+        return parse_number(view, await ask(number_question(view, text)))
+    return read
+
+
+def _number_content(view: Mapping[str, Any], text: str) -> str:
+    kinds = "\n".join(f"- {name}: {number.brief.format(target='the target')}" for name, number in NUMBERS.items())
+    room = "\n".join(f"- {item['name']}" for item in view["room"]) or "Nobody else is here."
+    return "\n\n".join([f"THE SPEAKER\n\n{view['speaker']['name']} is up on the stage, before the whole hall.",
+                        f"KINDS OF NUMBER OFFERED NOW\n\n{kinds}", f"EVERYONE ELSE IN THE HALL\n\n{room}",
+                        f"THE WORDS\n\nThe speaker says: \"{text}\"", "Read the number now."])
+
+
+def _number_schema(view: Mapping[str, Any]) -> dict[str, Any]:
+    names = [item["name"] for item in view["room"]]
+    target = ({"anyOf": [{"type": "string", "enum": names}, {"type": "null"}]} if names else {"type": "null"})
+    return {"type": "object", "properties": {
+        "number": {"type": "string", "enum": list(NUMBERS), "description": "The kind of number the words are."},
+        "target": {**target, "description": "The one person a toast or a roast is aimed at; otherwise null."}},
+        "required": ["number", "target"], "additionalProperties": False}
 
 
 def claude_reader(ask: Ask) -> ReadLine:

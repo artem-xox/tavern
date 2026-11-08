@@ -159,7 +159,7 @@ def _speaker(world: Mapping[str, Any], speaker: Mapping[str, Any]) -> dict[str, 
 
 def _room(world: Mapping[str, Any], speaker: Actor) -> list[dict[str, Any]]:
     # Everyone else in the hall, as the speaker knows them, and what the speaker thinks of them.
-    return [{"name": called(speaker, item), "opinion": opinion_of(speaker, item["id"], world["time"])}
+    return [{"id": item["id"], "name": called(speaker, item), "opinion": opinion_of(speaker, item["id"], world["time"])}
             for item in world["actors"] if item["id"] != speaker["id"]]
 
 
