@@ -33,8 +33,15 @@ happened. At closing the evening is retold as a short story the player wants to 
 **Guests** (famous characters) or the **Locals** (the original border folk, kept for tests and experiments).
 During the evening the player watches and inspects; debug controls stay in a debug panel.
 
-**Next (Stage 3):** the player walks into the same room as a character and talks to the guests in typed
-lines. The guests answer, remember it, and act on it.
+**Next (Stage 3):** the player walks into the same room as one of the guests (Monroe, say) and plays them.
+Everyone in the hall takes the player for that guest: same card, same rivals, same backpack. The player walks,
+pours a beer, sits, plays and climbs the stage by clicking (a click on the floor walks there; a click on a
+thing or a person opens the verbs open now), under the same rules as any guest. They talk in typed English
+lines inside a conversation, to one member or to all of it. A model reads each line as a speech act, which is
+what the world acts on, while the guests hear the words as typed. When it is the player's turn, their scene waits
+for them; pause is always at hand; a player who stays silent lets the turn pass, and the guest who spoke to them
+feels ignored. An autopilot hands the body back to the guest's own mind at any moment. No model ever speaks for
+the player. The decisions and tasks are in [Stage 3](plan/3_player/README.md).
 
 ## Characters
 

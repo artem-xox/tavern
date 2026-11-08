@@ -10,7 +10,7 @@ What we build and why is in [DESIGN.md](../DESIGN.md).
 | [0 — Demo](0_demo/README.md) | Agents move, drink, sit and talk in a browser tavern | done |
 | [1 — A believable evening](1_evening/README.md) | The engine: bodies, minds, talk, news, dice, fights, the barkeep | done (foundation) |
 | [2 — Story evenings](2_story_evenings/README.md) | Famous guests whose evenings turn into chaos worth retelling | **current** |
-| [3 — The player at the bar](3_player/README.md) | The player walks into the same room and talks to guests in typed lines | prep: the R series |
+| [3 — The player at the bar](3_player/README.md) | The player plays one of the guests: walks, drinks, climbs the stage, and talks to the others in typed lines | R series done; tasks S3-01–S3-12 written |
 
 Known problems that no task owns are in [TECH_DEBT.md](TECH_DEBT.md).
 
@@ -76,6 +76,26 @@ merged before a task starts; tasks whose needs are met run at once.
 | S3-R17 | [Pure pose and picking](3_player/r17_scene_logic.md): out of `scene.ts`, tested | — | done |
 | S3-R18 | [Frontend tests in CI](3_player/r18_ci_frontend_tests.md): Node 24, `npm test` | — | done |
 | S3-R19 | [Close the series](3_player/r19_close_the_series.md): AGENTS.md, tech debt, index, names, stale docs | all | done |
+
+## Stage 3 tasks
+
+The decisions behind them (owner, 2026-11-08), the principles and the order are in
+[3_player/README.md](3_player/README.md).
+
+| ID | Task | Needs | Status |
+|----|------|-------|--------|
+| S3-01 | [Split the verb table](3_player/01_verb_table_split.md): `activity.py`, `effects.py`, `activities.py` (D31) | — | todo |
+| S3-02 | [Who steers a body](3_player/02_steering.md): `world.player`, `steered`, no model or script for a steered guest, `silence`, autopilot | — | todo |
+| S3-03 | [The player's hands](3_player/03_hands.md): `act`, `options`, the `walk_to` verb | 01, 02 | todo |
+| S3-04 | [The player's voice](3_player/04_voice.md): `say`, a model reads the text as a speech act, cutting in | 02 | todo |
+| S3-05 | [Silence and typing](3_player/05_silence.md): typing holds the turn, silence makes the speaker feel ignored | 04 | todo |
+| S3-06 | [The player on the stage](3_player/06_stage.md): the player's own number, a comeback to a heckle | 04, 05 | todo |
+| S3-07 | [Take the wheel](3_player/07_take_the_wheel.md): "Play as", the "you" marker, autopilot, pause, the cheat sheet | 02 | todo |
+| S3-08 | [Click to act](3_player/08_click_to_act.md): walk on a click, a menu of the verbs open now | 03, 07 | todo |
+| S3-09 | [The chat](3_player/09_chat.md): the scene's lines, the input, "To:", "your turn" | 04, 05, 07 | todo |
+| S3-10 | [A scripted player](3_player/10_scripted_player.md): headless evenings with a player, golden, replay, metrics | 03, 04 | todo |
+| S3-11 | [The player in the story](3_player/11_story.md): the retelling and the closing screen know who was played | 04 | todo |
+| S3-12 | [Acceptance](3_player/12_acceptance.md): played and scripted evenings meet the stage's "done when" | all | todo |
 
 ## How the plan is kept
 

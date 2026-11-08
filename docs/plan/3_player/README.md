@@ -1,20 +1,104 @@
-# Stage 3 — The player at the bar (prep)
+# Stage 3 — The player at the bar
 
-**Goal:** the player walks into the same evening as a character and talks to the guests in typed lines.
-The guests answer, remember it, and act on it.
-
-**R series: done.** The first player task is the next one to write (start with the design question at the end of this file). The R series below: cleanup and refactors that make
-the code ready for a third kind of actor. The outline of the player work:
-
-- **An avatar in the room.** The player has a body on the same activity system: walk, sit, drink, play,
-  shove. The world validates every player action as it does a guest's.
-- **Typed lines.** The player writes free text; a model turns it into a speech act (ask, joke, insult,
-  invite, give news) the world can validate. The text itself is what the guests hear.
-- **Guests answer the player.** The player joins scenes like a guest; the line writer treats them as one,
-  and their words reach thoughts, relationships and intentions.
-- **The player in the story.** The story score and the retelling include what the player did.
+**Goal:** the player walks into the evening as one of the famous guests and plays them. They walk, pour a
+beer, sit, play, climb the stage, and talk to the others in typed lines, to one guest or to the whole company.
+The guests take them for the character they play: they answer, remember what was said, and act on it.
 
 **Done when:** a player line changes how an evening's main incident ends, and the retelling shows it.
+
+The R series (below) prepared the code. Tasks S3-01 to S3-12 build the player.
+
+## Decisions (owner, 2026-11-08)
+
+| Question | Decision |
+|----------|----------|
+| Whom the player plays | A guest from the catalog, picked on the lineup screen from that evening's guests ("Play as"). The body, card, persona, backpack and ties are that guest's, so the guests who are rivals of the player's Putin hate him from the first minute. A card of the player's own comes in a later stage |
+| Who drives when the player does not | An autopilot switch. On autopilot, the guest's own mind (Jev, Haiku) plays them like any other guest. With the wheel, the player decides. The switch can be flipped at any moment |
+| Time while the player types | When it is the player's turn, their scene waits for them while the rest of the hall goes on. The player can cut in at any moment: the line takes the scene's next free slot. Pause is always at hand for thinking |
+| Silence | If the player neither types nor speaks for `rules.player.silence` real seconds, the turn passes, and whoever spoke to them feels ignored. That is story material |
+| To whom | Inside a scene, as for guests: to one member or to everyone in it, and neighbours overhear by the hearing rules. To talk to someone outside the scene, the player first walks up to them (click the guest, then Talk). The stage reaches the whole hall |
+| What the words do | A model reads the player's free text as a speech act, with its addressee, invitation kind or news, and the world validates it. There are no act buttons. The guests hear the player's text word for word. A reading the world refuses becomes a `remark` |
+| Addressee | "To: auto" by default: the model picks the addressee from the text. The player may pick "everyone" or one member instead, in a picker or by clicking a face |
+| The body | Click the floor to walk there. Click a thing or a person to get a menu of the verbs open now: the same legal options a guest's mind chooses from. The world validates every action |
+| Language | English everywhere, as now |
+| What the player sees | Everything an observer sees: the inspector, minds, moods. This is a story toy, not a game of hidden information |
+| Goals | A cheat sheet from the card: obsessions, catchphrases, rivals. Nothing is checked or scored |
+| Saves | Save-format bumps that reject older saves are approved for every Stage 3 task; each task names its own bump |
+
+## Principles
+
+1. **One body, two drivers.** The world does not care who decides. `hall/player.py` answers a single question,
+   `steered`: does the player hold the wheel of this body right now? Every place that asks a model or a script
+   for a guest (a decision, an intention, a line, an invitation answer, a number on the stage, a heckle) skips
+   a steered body. Nothing else changes. This also answers the design question at the end of this file:
+   `on_staff` still says what a body may do, and `steered` says who decides for it.
+2. **Same rules.** The player's actions go through `start_action` and their lines through `check_turn`, like a
+   guest's. Needs, drunkenness, wounds and thoughts run on their body as on anyone's. Since no decision is asked
+   for them, nothing makes them act, but the world's own effects still land: a knock-out, a quarrel, a pressing
+   need that others can see.
+3. **No words in the player's mouth.** No model line and no scripted line is ever spoken for a steered guest:
+   no scripted fallback for their turn, no scripted number on the stage, no heckle. Silence is a legal outcome.
+4. **Text is untrusted.** A player line is 1–200 characters (`scripted.MAX_LINE`). It reaches other guests'
+   prompts only as a quoted line of the scene, like a guest's line, and its reading is checked at the boundary
+   (`check_turn`).
+5. **One path for every runner.** The player's commands are core functions (`evening/player_commands.py`), and the
+   live runtime only routes them there. Readings travel through the mind loop's courier. A headless evening with a
+   scripted player (S3-10) therefore plays exactly the code a person plays, and it replays byte for byte.
+
+## How a typed line travels
+
+```
+client ──say {text, to}──► player_commands.say ──► the scene's next slot is claimed for the player
+                                   │                (an NPC's line in flight is dropped)
+                                   ▼
+                          MindLoop.read_line ──courier──► reader (Haiku; offline: a remark)
+                                                                │ {act, addressee, topic, invitation?, fact_id?}
+                                                                ▼
+   scene speaks it when due ◄── player_lines.deliver_reading: line = the text, check_turn, refused → remark
+   (hear_line, overhear_turn, the act's effect: as for any guest)
+```
+
+When the scene's next speaker is the steered guest, no writer is asked. The scene waits until the player's line
+arrives, or until `rules.player.silence` passes with no typing, which plays a `silence` turn.
+
+## New shapes, by task
+
+| Shape | Task |
+|-------|------|
+| `world.player`: `{actor_id, steering}`; `rules.player.silence`; `Scenario.player`; the `steer` command; the `silence` act | S3-02 |
+| The `walk_to` verb with `Action.cell`; the `act` and `options` commands; the `player_act` event | S3-03 |
+| The `say` command; the `ReadLine` port; `turn` events from the player carry `player: true` | S3-04 |
+| `world.player.typing_at`; the `typing` command; the `ignored` thought | S3-05 |
+| The `ReadNumber` port; `say` on the stage | S3-06 |
+| `start.player` from the lineup screen; the played guest comes in first | S3-07 |
+| The snapshot's `player_turn` | S3-09 |
+| Player scripts (`data/players/`); `player` in `metrics.json` | S3-10 |
+
+## Tasks
+
+| ID | Task | Needs |
+|----|------|-------|
+| S3-01 | [Split the verb table](01_verb_table_split.md): `activity.py`, `effects.py`, `activities.py` (D31), before the first player verb | — |
+| S3-02 | [Who steers a body](02_steering.md): `world.player`, `steered`, no model or script for a steered guest, `silence`, autopilot | — |
+| S3-03 | [The player's hands](03_hands.md): `act`, `options`, the `walk_to` verb | 01, 02 |
+| S3-04 | [The player's voice](04_voice.md): `say`, a model reads the text as a speech act, cutting in | 02 |
+| S3-05 | [Silence and typing](05_silence.md): typing holds the turn, silence makes the speaker feel ignored | 04 |
+| S3-06 | [The player on the stage](06_stage.md): the player's own number, a comeback to a heckle | 04, 05 |
+| S3-07 | [Take the wheel](07_take_the_wheel.md): "Play as" on the lineup, the "you" marker, autopilot, pause, the cheat sheet | 02 |
+| S3-08 | [Click to act](08_click_to_act.md): walk on a click, a menu of the verbs open now | 03, 07 |
+| S3-09 | [The chat](09_chat.md): the scene's lines, the input, "To:", "your turn" | 04, 05, 07 |
+| S3-10 | [A scripted player](10_scripted_player.md): headless evenings with a player, golden, replay, metrics | 03, 04 |
+| S3-11 | [The player in the story](11_story.md): the retelling and the closing screen know who was played | 04 |
+| S3-12 | [Acceptance](12_acceptance.md): evenings played by a person and by scripts meet the stage's "done when" | all |
+
+Order: 01 and 02 can start together. Once 02 is merged, 04 and 07 can run beside 03, and 11 can start once 04
+is in. 03, 04, 05 and 10 all
+add handlers to `evening/player_commands.py` and commands to `frontend/src/types.ts`. The conflicts there are
+textual: keep both sides. 05 and 06 both change when a steered guest's wait ends, so run 06 after 05. Client tasks
+(07, 08, 09) can run beside the backend ones once their commands exist.
+
+**Not in this stage:** a card of the player's own; several players in one evening; heckling from the floor or
+shouting to the hall from outside a scene; goals that are checked or scored; other languages.
 
 ## The R series: prepare the code for the player
 
@@ -145,9 +229,10 @@ These files are shared by tasks that run at once; the conflicts are textual, and
 
 A conflict in any other file, or inside one function on both sides, is a surprise: stop and ask the integrator.
 
-### First design question of Stage 3 (not a task yet)
+### First design question of Stage 3 (answered 2026-11-08)
 
 Today `hall.staff.on_staff` answers two questions at once: what a body may do (staff cells, never a target)
 and who decides for it (`decisions.free_to_decide`, intentions, line writing skip staff). A player is a guest's
-body whose decisions, answers and lines come from a person. Decide that split when the first player task is
-written; the R series leaves it alone.
+body whose decisions, answers and lines come from a person. **Answer:** `on_staff` keeps the first question.
+The second becomes `hall.player.steered` (principle 1 above, task [S3-02](02_steering.md)). Staff still never
+decide, through their own routine; a steered guest never decides, because the player does it for them.
