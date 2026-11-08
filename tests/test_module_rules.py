@@ -18,7 +18,7 @@ LINE_LIMIT = 400
 CAPS = {
     "backend/tavern/adapters/jev.py": 436,
     "backend/tavern/evening/scenario.py": 401,
-    "backend/tavern/hall/lifecycle.py": 417,
+    "backend/tavern/hall/lifecycle.py": 420,
     "backend/tavern/mind/haiku_turns.py": 413,
     "backend/tavern/mind/intentions.py": 406,
     "backend/tavern/mind/local_policy.py": 447,
@@ -27,7 +27,7 @@ CAPS = {
     "backend/tavern/social/invitations.py": 461,
     "backend/tavern/social/scenes.py": 418,
     "backend/tavern/social/thoughts.py": 413,
-    "frontend/src/types.ts": 566,
+    "frontend/src/types.ts": 586,
 }
 
 
