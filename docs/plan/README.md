@@ -75,7 +75,7 @@ merged before a task starts; tasks whose needs are met run at once.
 | S3-R16 | [Test audit](3_player/r16_test_audit.md): wording, data and tuning pins; twins merged | R00 | done |
 | S3-R17 | [Pure pose and picking](3_player/r17_scene_logic.md): out of `scene.ts`, tested | — | done |
 | S3-R18 | [Frontend tests in CI](3_player/r18_ci_frontend_tests.md): Node 24, `npm test` | — | done |
-| S3-R19 | [Close the series](3_player/r19_close_the_series.md): AGENTS.md, tech debt, index, names, stale docs | all | doing |
+| S3-R19 | [Close the series](3_player/r19_close_the_series.md): AGENTS.md, tech debt, index, names, stale docs | all | todo |
 
 ## How the plan is kept
 
