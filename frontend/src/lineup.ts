@@ -16,6 +16,13 @@ export function canStart(picked: readonly string[]): boolean {
   return picked.length >= 1 && picked.length <= MAX_GUESTS;
 }
 
-export function startCommand(cast: string, picked: readonly string[], minutes: number = DEFAULT_MINUTES): Command {
-  return { type: "start", cast, guests: [...picked], minutes };
+/** The played guest after a pick changed: kept while they are still picked, otherwise back to "Just watch" (null). */
+export function keepPlayer(picked: readonly string[], player: string | null): string | null {
+  return player !== null && picked.includes(player) ? player : null;
+}
+
+/** The start command; `player` is the picked guest the person plays, or null to just watch. */
+export function startCommand(cast: string, picked: readonly string[], minutes: number = DEFAULT_MINUTES, player: string | null = null): Command {
+  if (player !== null && !picked.includes(player)) throw new Error(`Cannot play ${player}: not one of the picked guests`);
+  return { type: "start", cast, guests: [...picked], minutes, player };
 }

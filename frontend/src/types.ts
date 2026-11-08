@@ -542,6 +542,6 @@ export type Command =
   | { type: "refill"; object_id: string; amount: number }
   | { type: "block"; x: number; y: number; blocked: boolean }
   | { type: "force_action"; actor_id: string; action: Action }
-  | { type: "start"; cast: string; guests: string[]; minutes: number }
+  | { type: "start"; cast: string; guests: string[]; minutes: number; player: string | null }
   | { type: "steer"; on: boolean }
   | { type: "save" | "load" | "reset" };
