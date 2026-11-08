@@ -1,10 +1,7 @@
 """Speeches in an evening: how many were given, by whom, and how the room took them."""
 
 from collections.abc import Mapping, Sequence
-import re
 from typing import Any, TypedDict
-
-_REACTION = re.compile(r"(\d+) admired it, (\d+) groaned$")
 
 
 class SpeechCounts(TypedDict):
@@ -27,7 +24,7 @@ def speech_counts(events: Sequence[Mapping[str, Any]]) -> SpeechCounts:
         Speeches, their speakers once each in the order they first spoke, and the listeners who admired or groaned.
 
     Raises:
-        ValueError: A `speech_reaction` message is not in the words `give_speech` logs.
+        ValueError: A `speech_reaction` has no `admired` and `groaned` counts.
         KeyError: An event has no type.
     """
     given = [event for event in events if event["type"] == "gave_speech"]
@@ -35,10 +32,9 @@ def speech_counts(events: Sequence[Mapping[str, Any]]) -> SpeechCounts:
     for event in events:
         if event["type"] != "speech_reaction":
             continue
-        match = _REACTION.search(event["message"])
-        if match is None:
-            raise ValueError(f"A speech taken in words give_speech does not log: {event['message']!r}")
-        admired, groaned = admired + int(match[1]), groaned + int(match[2])
+        if "admired" not in event or "groaned" not in event:
+            raise ValueError(f"The speech reaction {event['message']!r} has no `admired` and `groaned` fields")
+        admired, groaned = admired + event["admired"], groaned + event["groaned"]
     return {"speeches": len(given), "speakers": list(dict.fromkeys(event["actor_id"] for event in given)),
             "admired": admired, "groaned": groaned}
 

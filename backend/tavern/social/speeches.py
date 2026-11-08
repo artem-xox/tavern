@@ -144,7 +144,8 @@ def _hear(world: World, speaker: Actor, message: str, line: str) -> list[Actor]:
             taken[kind] += 1
             listeners.append(listener)
     log_event(world, speaker["id"], "speech_reaction",
-              f"{speaker['name']}'s speech: {taken['speech_admired']} admired it, {taken['speech_tiresome']} groaned")
+              f"{speaker['name']}'s speech: {taken['speech_admired']} admired it, {taken['speech_tiresome']} groaned"
+              ).update(admired=taken["speech_admired"], groaned=taken["speech_tiresome"])
     return listeners
 
 

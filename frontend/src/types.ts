@@ -335,6 +335,20 @@ export interface WorldEvent {
   addressee?: string | null;
   /** Whose line failed, on `turn_failed`. */
   speaker_id?: string;
+  /** The aim, on `aim_set` and `aim_kept` (a kind, or `kind:detail`). */
+  aim?: string;
+  /** The goal kind, on `goal_set`. */
+  goal?: string;
+  /** The index of the obsession an `intention` serves, when it names one. */
+  obsession?: number;
+  /** The kind of thought answered and the game seconds since it, on `answered`. */
+  response?: string;
+  after?: number;
+  /** The project kind, on the `project_*` events that end one. */
+  project?: string;
+  /** The listeners who admired and who groaned, on `speech_reaction`. */
+  admired?: number;
+  groaned?: number;
 }
 
 /** A sound in the hall waiting for the listeners' attention at the end of the tick. */

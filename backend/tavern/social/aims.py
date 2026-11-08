@@ -255,7 +255,8 @@ def begin_aim(world: World, actor: Actor, about: Mapping[str, Any]) -> None:
         raise ValueError(f"{actor['name']} came for {aim!r} but is in no conversation")
     entry = SceneAim(aim=aim, about=about["id"], kept=False)
     scene.setdefault("aims", {})[actor["id"]] = entry
-    record_event(world, actor, "aim_set", f"{actor['name']} means to {_words(world, actor, entry)} ({aim})")
+    record_event(world, actor, "aim_set", f"{actor['name']} means to {_words(world, actor, entry)} ({aim})",
+                 fields={"aim": aim})
 
 
 def _aim_of(scene: Mapping[str, Any], actor_id: str) -> SceneAim | None:
@@ -305,7 +306,7 @@ def note_spoken(world: World, scene: Conversation, speaker: Actor) -> None:
         return
     entry["kept"] = True
     record_event(world, speaker, "aim_kept", f"{speaker['name']} got round to it: {_words(world, speaker, entry)} "
-                                              f"({entry['aim']})")
+                                              f"({entry['aim']})", fields={"aim": entry["aim"]})
 
 
 def check_saved_aims(world: Mapping[str, Any]) -> None:

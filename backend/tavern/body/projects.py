@@ -316,7 +316,8 @@ def honor_projects(world: World, start: Start) -> None:
             words = {"done": kind.done_words, "expired": f"gave up {kind.gerund}",
                      "dropped": f"was called away from {kind.gerund}"}
             message = words[outcome[0]] if outcome[0] in words else f"could not {kind.wording}: {outcome[1]}"
-            record_event(world, actor, f"project_{outcome[0]}", f"{actor['name']} {message} ({project['kind']})")
+            record_event(world, actor, f"project_{outcome[0]}", f"{actor['name']} {message} ({project['kind']})",
+                         fields={"project": project["kind"]})
 
 
 def _carry_on(world: World, actor: Actor, project: Project, start: Start) -> tuple[str, str] | None:

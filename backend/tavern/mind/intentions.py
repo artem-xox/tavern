@@ -356,10 +356,13 @@ def deliver_intention(world: World, actor_id: str, view: Mapping[str, Any],
         intention["obsession"] = written["obsession"]
     actor["intention"] = intention
     chasing = f"{CHASING}{view['obsessions'][written['obsession']]}" if "obsession" in written else ""
-    log_event(world, actor_id, "intention", f"{actor['name']} thinks: {written['thought']} Intends: "
-                                       f"{written['intention']} (after: {view['trigger']['text']}{chasing})")
+    logged = log_event(world, actor_id, "intention", f"{actor['name']} thinks: {written['thought']} Intends: "
+                                                 f"{written['intention']} (after: {view['trigger']['text']}{chasing})")
+    if "obsession" in written:
+        logged["obsession"] = written["obsession"]
     if goal is not None and not kept:
-        log_event(world, actor_id, "goal_set", f"{actor['name']} set out to {goal_words(goal, view['others'].get(goal['target']))}")
+        log_event(world, actor_id, "goal_set", f"{actor['name']} set out to {goal_words(goal, view['others'].get(goal['target']))}"
+                  ).update(goal=goal["kind"])
     return world["time"] + rules.min_gap
 
 
