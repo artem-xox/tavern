@@ -14,7 +14,7 @@ from tavern.adapters.persistence import FileStore
 from tavern.body.activities import ACTIVITIES, client_activities
 from tavern.body.items import client_items
 from tavern.evening.mind_loop import EveningPorts, TaskCourier, evening_mind
-from tavern.evening.player_commands import act, options, say, steer
+from tavern.evening.player_commands import act, options, say, steer, typing
 from tavern.evening.retelling import Retelling, retell
 from tavern.evening.scenario import Scenario, open_evening
 from tavern.evening.story_score import WEIGHTS, Moment, story_moments, story_score
@@ -321,7 +321,8 @@ class TavernRuntime:
                     "say": lambda item: say(self.world, self.mind, item)}
         if not isinstance(command, Mapping) or not isinstance(command.get("type"), str):
             raise ValueError("Expected a command with a type")
-        hands = {"act": lambda item: act(self.world, item), "options": lambda item: options(self.world, item)}
+        hands = {"act": lambda item: act(self.world, item), "options": lambda item: options(self.world, item),
+                 "typing": lambda item: typing(self.world, item)}
         if command["type"] in hands:
             return hands[command["type"]](command)
         handler = handlers.get(command["type"])
