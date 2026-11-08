@@ -1,7 +1,7 @@
 ---
 id: S3-08
 title: Click to act
-status: todo
+status: done
 needs: [S3-03, S3-07]
 touches: [frontend/src/orders.ts (new), frontend/src/ordermenu.ts (new), frontend/src/picking.ts, frontend/src/scene.ts, frontend/src/connection.ts, frontend/src/main.ts, frontend/src/style.css, frontend/src/types.ts, frontend/tests/orders.test.ts (new)]
 ---
@@ -54,3 +54,13 @@ browser: walk, pour a beer, sit, drink, play darts or dice, climb the stage, giv
   menu and of one refusal toast in Results.
 
 ## Results
+
+- `make check`: `4830 passed in 352.46s`, `Success: no issues found in 142 source files`, frontend `pass 345 / fail 0`, exit 0.
+- `make build`: `built in 6.71s`, exit 0 (only the usual chunk-size warning).
+- `scene.ts` split first (route drawing moved to `routeview.ts`), now 374 lines.
+- Protocol run against a live local backend over a WebSocket (greta played, steering): `options` listed the open verbs;
+  `act` with `walk_to:12,12` was accepted and the snapshot's action carried `cell [12, 12]` (what the destination mark
+  reads); a walk to a blocked cell came back `error: "Nobody can stand there"` (what the toast shows).
+- **Not seen in a browser:** the built-in browser pane was hidden and refused navigation, so the menu, the toast and the
+  mark were not looked at, and there are no screenshots. The full Monroe walkthrough (tap, sit, drink, stage, shove
+  Trump, talk to Putin) was not played by hand.

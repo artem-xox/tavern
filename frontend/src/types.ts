@@ -455,6 +455,8 @@ export interface Player {
   actor_id: string;
   /** True: the player decides for that guest; false: autopilot, the guest's own mind. */
   steering: boolean;
+  /** Game time of the last `typing` command; absent or null before the first. */
+  typing_at?: number | null;
 }
 
 export interface World {
@@ -566,6 +568,7 @@ export type Command =
   | { type: "force_action"; actor_id: string; action: Action }
   | { type: "start"; cast: string; guests: string[]; minutes: number; player: string | null }
   | { type: "steer"; on: boolean }
+  | { type: "typing" }
   | { type: "say"; text: string; to: "auto" | "everyone" | string }
   | { type: "act"; action: Action }
   | { type: "options"; target_id?: string }

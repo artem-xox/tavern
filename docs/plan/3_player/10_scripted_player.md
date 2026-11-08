@@ -1,7 +1,7 @@
 ---
 id: S3-10
 title: A scripted player
-status: todo
+status: done
 needs: [S3-03, S3-04]
 touches: [backend/tavern/evening/player_script.py (new), backend/tavern/evening/player_commands.py, backend/tavern/evening/lockstep.py, backend/tavern/evening/report.py, backend/tavern/evening/player_metrics.py (new), backend/tavern/server/runtime.py, scripts/evening.py, Makefile, data/players/ (new)]
 ---
@@ -74,3 +74,44 @@ like every other model call, and the golden check then guards the player's path 
 - `make golden` plays five evenings, twice in a row with an empty diff.
 
 ## Results
+
+**Checks (2026-11-08).** No schema bump: the saved world is unchanged.
+
+- `make check`: `4859 passed in 220.03s`, `Success: no issues found in 144 source files`, frontend `ℹ pass 331`, `ℹ fail 0`, exit 0. `frontend/` is untouched, so no `make build`.
+- `make golden`: baseline on the commit before the first edit; the four old evenings are byte-identical to it after the
+  change (`diff -r` empty for locals-1, locals-5, guests-1, guests-5, `metrics.json` included), and three runs of five
+  evenings (the fifth is `monroe-5`) differ nowhere.
+
+**Deviations.**
+
+- The plan's example script has Monroe, Putin and Trump, but `data/scenarios/guests.json` seats Musk, Tyson, Trump, Greta,
+  Vucic and Sobchak. The golden evenings must not change, so the fifth evening has a scenario of its own,
+  `data/evenings/monroe_night.json` (Monroe, Putin, Trump, Tyson, Vucic, Sobchak; not in `data/scenarios/`, which the lineup
+  lists as casts). `make evening PLAYER=data/players/monroe_meddles.json SCENARIO=data/evenings/monroe_night.json`.
+- `apply_command` routes `steer`, `act`, `say`, `options` and (after merging S3-05) `typing`.
+- The script's "invite someone to darts" step is a `say`: an offline reader makes it a remark. Live, Haiku read it as `decline`
+  (the model's reading, left as it is).
+- Live and replay read the player's lines through a new call kind, `reading` (`line_reader` in `scripts/evening.py`).
+- The Monroe script is timed to the offline bar, where the first mug waits long for most guests; it takes a seat at 40 s and
+  talks to Putin at 70 s.
+
+**Live evening and replay (seed 5, Jev + Haiku 5.5, `monroe_night` with `monroe_meddles`).** `calls.jsonl` holds 3 `reading`
+calls. `cmp runs/live/events.jsonl runs/replay/events.jsonl`: identical (no output).
+
+The `player` section of the live run:
+
+```json
+{"actor": "monroe", "lines": {"compliment": 1, "insult": 1, "decline": 1}, "misread": 0, "silences": 2, "ignored": 0,
+ "actions": {"take_beer": 1, "sit": 1, "talk": 1, "play_darts": 1, "give_speech": 1}, "refused": 0}
+```
+
+A scripted line and its answer, live:
+
+```
+74.0  Marilyn Monroe to Vladimir Putin (compliment): Vladimir, darling, you look lonely. Such a serious man.
+106.1 Marilyn Monroe to Donald Trump (insult): Donald, honey, I have heard better speeches from a coat rack.
+110.2 Vladimir Putin to Marilyn Monroe (invite): Marilyn, that was a compliment to me, I think. So let us speak of something better. Dice? ...
+117.8 Donald Trump to Vladimir Putin (boast): Dice? Marilyn, you'd lose your shirt to me. Best dice game in the world, believe me. ...
+```
+
+`ignored` is 0 in the live run, which was played before S3-05 was merged.

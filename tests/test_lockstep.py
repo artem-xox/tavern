@@ -14,6 +14,7 @@ from tavern.evening.lockstep import Evening, Pace, evening_mode, evening_over, r
 from tavern.evening.recording import Record, format_record, parse_records, record_calls, replay_calls
 from tavern.hall.world import create_world, start_action, step_world
 from social_hall import command
+from tavern.mind.feelings import minds
 
 KEYED = {"typesafe_api_key": "fake", "model": "jev-latest", "timeout": 1.0, "temperature": 0.0}
 
@@ -259,3 +260,30 @@ def test_every_logged_choice_keeps_the_scores_it_was_drawn_from() -> None:
     assert result.choices and all(
         item["scores"] and max(item["scores"], key=item["scores"].__getitem__) == "wait" for item in result.choices
         if item["kind"] == "actions")
+
+
+def test_a_player_who_types_but_never_sends_is_passed_over_a_silence_after_the_last_keystroke() -> None:
+    world = create_world(hall(), 3)
+    world["player"] = {"actor_id": "ada", "steering": True, "typing_at": None}
+    for guest, seat in (("ada", "west"), ("bea", "east")):
+        assert start_action(world, guest, command("sit", f"table-{seat}"))["accepted"]
+    for _ in range(300):
+        step_world(world, 0.1)
+    for guest in world["actors"]:
+        guest["needs"]["social"] = 90.0
+    assert start_action(world, "bea", command("talk", "ada"))["accepted"]
+    evaluate, began = preferring("wait"), world["time"]
+
+    def play_to(seconds: float) -> list[dict[str, Any]]:
+        game_time = began + seconds
+        asyncio.run(run_evening(world, KEYED, Random(3), Evaluators(evaluate, evaluate, aims=evaluate),
+                                Pace(step=0.1, model_latency=1.0, time_limit=game_time)))
+        return [item for item in world["events"] if item["type"] == "turn" and item.get("player")]
+
+    for second in (10.0, 20.0, 30.0, 40.0):  # a keystroke every ten seconds, then nothing
+        assert play_to(second) == []
+        world["player"]["typing_at"] = world["time"]
+    assert play_to(40.0 + 19.0) == []
+    passed = play_to(40.0 + 21.0)
+    assert ([item["act"] for item in passed], [item["kind"] for item in minds(world)["bea"]["thoughts"]]) == (
+        ["silence"], ["ignored"])

@@ -45,6 +45,8 @@ THOUGHTS: Mapping[str, ThoughtKind] = MappingProxyType({
     "compliment": ThoughtKind(4.0, 8.0, 240.0, 2, "paid them a compliment", acquaints=True),
     "boast_admired": ThoughtKind(1.0, 3.0, 180.0, 2, "told a fine tale of themselves", acquaints=True),
     "boast_tiresome": ThoughtKind(-1.0, -4.0, 180.0, 2, "boasted at them", acquaints=True),
+    # Held by whoever spoke to a guest (or invited them) and got only silence, about the silent one (`conversation.ACTS`).
+    "ignored": ThoughtKind(-2.0, -6.0, 240.0, 2, "ignored them", acquaints=False),
     "insulted": ThoughtKind(-6.0, -20.0, 300.0, 3, "insulted them", acquaints=True),
     "agreed": ThoughtKind(0.0, 3.0, 240.0, 3, "agreed with them", acquaints=True),
     "disagreed": ThoughtKind(0.0, -3.0, 240.0, 3, "disagreed with them", acquaints=True),

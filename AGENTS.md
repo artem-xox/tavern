@@ -19,8 +19,8 @@ make run       # backend + browser client at http://127.0.0.1:5173
 make test      # all backend tests
 make check     # tests + frontend typecheck; CI runs this plus `make build`
 make build     # frontend production build
-make evening   # headless scenario evening (Jev with a .env key); SEED, MODE, OUT, LIMIT
-make golden   # four offline evenings, to diff before and after a refactor (S3-R00)
+make evening   # headless scenario evening (Jev with a .env key); SEED, MODE, OUT, LIMIT, PLAYER (+SCENARIO) for a scripted player
+make golden   # five offline evenings (the fifth with a scripted player), to diff before and after a refactor (S3-R00)
 make eval      # local only, live models: dialogue eval of two famous guests (data/evals/); after a prompt or mind change
 .venv/bin/python -m pytest tests/test_navigation.py -k path -x   # one behavior, fast
 ```
