@@ -187,14 +187,21 @@ def speak_turns(world: World) -> None:
 
 def _await_player(world: World, scene: Conversation, speaker_id: str) -> None:
     # A steered guest's due line is the player's to write (`scene["written"]`, once they have). Nobody else, scripted
-    # writer included, speaks for them: when `rules.player.silence` real seconds (more game seconds at a faster speed)
-    # pass with no line, the turn passes in silence.
-    if scene["written"] is None and world["time"] >= scene["next_turn_at"] + (
-            world["rules"]["player"]["silence"] * world["speed"]):
+    # writer included, speaks for them. With no line and none being read (`scene["writing"]` is the player's claim),
+    # the turn passes in silence `rules.player.silence` real seconds (more game seconds at a faster speed) after the
+    # later of the line falling due and the player's last keystroke. Game time stands still while paused, and so does
+    # the wait.
+    if scene["written"] is not None:
+        _speak(world, scene, speaker_id, scene["written"])
+        return
+    if scene["writing"] is not None:
+        return
+    player = world["player"]  # a steered guest means there is one
+    typed = player.get("typing_at") if player is not None else None
+    held_since = scene["next_turn_at"] if typed is None else max(scene["next_turn_at"], typed)
+    if world["time"] >= held_since + world["rules"]["player"]["silence"] * world["speed"]:
         _speak(world, scene, speaker_id, {"line": SILENCE_LINE, "act": "silence", "addressee": None,
                                           "topic": scene["topic"]})
-    elif scene["written"] is not None:
-        _speak(world, scene, speaker_id, scene["written"])
 
 
 def _speak(world: World, scene: Conversation, speaker_id: str, result: Mapping[str, Any]) -> None:

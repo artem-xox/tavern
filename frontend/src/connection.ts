@@ -1,9 +1,11 @@
-import type { Command, Snapshot } from "./types";
+import type { Command, OptionsMessage, Snapshot } from "./types";
 
 interface Callbacks {
   snapshot: (snapshot: Snapshot) => void;
   status: (connected: boolean, message: string) => void;
   error: (message: string) => void;
+  /** The reply to an `options` command. */
+  options: (reply: OptionsMessage) => void;
 }
 
 /** Connect the view to the authoritative world and reconnect after interruptions. */
@@ -52,8 +54,9 @@ export class WorldConnection {
 
   private receive(data: string): void {
     try {
-      const message: Snapshot | { type: "error"; message: string } = JSON.parse(data);
+      const message: Snapshot | OptionsMessage | { type: "error"; message: string } = JSON.parse(data);
       if (message.type === "snapshot") this.callbacks.snapshot(message);
+      if (message.type === "options") this.callbacks.options(message);
       if (message.type === "error") this.callbacks.error(message.message);
     } catch (error: unknown) {
       this.callbacks.error(`Could not display server state: ${String(error)}`);

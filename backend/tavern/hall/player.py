@@ -36,8 +36,11 @@ def check_player(world: Mapping[str, Any]) -> None:
     player = world["player"]
     if player is None:
         return
-    if not isinstance(player, dict) or set(player) != {"actor_id", "steering"}:
+    if not isinstance(player, dict) or not {"actor_id", "steering"} <= set(player) <= {"actor_id", "steering", "typing_at"}:
         raise ValueError(f"Invalid saved player record {player!r}")
+    typed = player.get("typing_at")
+    if typed is not None and (type(typed) not in (int, float) or typed < 0):
+        raise ValueError(f"Invalid saved player: typing_at must be a game time or null, not {typed!r}")
     if type(player["steering"]) is not bool:
         raise ValueError(f"Invalid saved player: steering must be true or false, not {player['steering']!r}")
     everyone = [*world["actors"], *world["departed"], *world["expected"]]

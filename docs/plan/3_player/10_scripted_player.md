@@ -88,8 +88,7 @@ like every other model call, and the golden check then guards the player's path 
   Vucic and Sobchak. The golden evenings must not change, so the fifth evening has a scenario of its own,
   `data/evenings/monroe_night.json` (Monroe, Putin, Trump, Tyson, Vucic, Sobchak; not in `data/scenarios/`, which the lineup
   lists as casts). `make evening PLAYER=data/players/monroe_meddles.json SCENARIO=data/evenings/monroe_night.json`.
-- `apply_command` routes `steer`, `act`, `say` and `options`. `typing` has no handler until S3-05 lands: a scripted `typing`
-  step is refused and logged until that task adds one line to `apply_command`. The parser already accepts it.
+- `apply_command` routes `steer`, `act`, `say`, `options` and (after merging S3-05) `typing`.
 - The script's "invite someone to darts" step is a `say`: an offline reader makes it a remark. Live, Haiku read it as `decline`
   (the model's reading, left as it is).
 - Live and replay read the player's lines through a new call kind, `reading` (`line_reader` in `scripts/evening.py`).
@@ -115,4 +114,4 @@ A scripted line and its answer, live:
 117.8 Donald Trump to Vladimir Putin (boast): Dice? Marilyn, you'd lose your shirt to me. Best dice game in the world, believe me. ...
 ```
 
-`ignored` is 0 because S3-05 (the `ignored` event) is not merged yet.
+`ignored` is 0 in the live run, which was played before S3-05 was merged.

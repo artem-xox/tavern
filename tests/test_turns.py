@@ -525,3 +525,68 @@ def test_a_silent_turn_declines_the_invitation_waiting_for_the_silent_guest(real
     world["player"] = {"actor_id": "bea", "steering": True}
     advance(world, real_seconds)
     assert len([item for item in world["events"] if item["type"] == "invitation_declined"]) == declined
+
+
+def _silent_turn_time(typed_at: float | None, speed: float, claim: bool) -> float | None:
+    # The game time when a steered Ada's silent turn is spoken (None if not within 100 game seconds), given the game
+    # time of her one keystroke and whether a line of hers is being read.
+    world = talking()
+    world.update(speed=speed, player={"actor_id": "ada", "steering": True, "typing_at": None})
+    if claim:
+        conversation_of(world, "ada")["writing"] = {"turn": 0, "speaker": "ada", "since": 0.0}
+    while world["time"] < 100:
+        if typed_at is not None and world["player"]["typing_at"] is None and world["time"] >= typed_at:
+            world["player"]["typing_at"] = world["time"]
+        advance(world, 0.1)
+        if scene_lines(world):
+            return world["time"]
+    return None
+
+
+@pytest.mark.parametrize("typed_at, speed, claim, passes", [
+    pytest.param(None, 1.0, False, 20.5, id="no-typing"),
+    pytest.param(8.0, 1.0, False, 28.0, id="typed-after-due"),
+    pytest.param(0.0, 1.0, False, 20.5, id="typed-before-due"),
+    pytest.param(None, 4.0, False, 80.5, id="fast-world"),
+    pytest.param(5.0, 1.0, True, None, id="while-reading"),
+])
+def test_the_silent_turn_passes_a_silence_after_the_last_keystroke(
+        typed_at: float | None, speed: float, claim: bool, passes: float | None) -> None:
+    result = _silent_turn_time(typed_at, speed, claim)
+    assert result == (pytest.approx(passes, abs=0.45) if passes is not None else None)
+
+
+def _after_a_line(speaker: str | None, addressee: str | None) -> dict[str, Any]:
+    # Ada, steered, is due to speak; Bea's line to the given addressee came just before.
+    world = talking()
+    world["player"] = {"actor_id": "ada", "steering": True, "typing_at": None}
+    if speaker is not None:
+        scene = conversation_of(world, "ada")
+        scene["turns"].append({"speaker": speaker, "addressee": addressee, "line": "Well?", "act": "remark",
+                               "time": 0.0})
+    return world
+
+
+def _ignored(world: dict[str, Any]) -> set[tuple[str, str | None]]:
+    # (who thinks it, about whom) for every `ignored` thought, once Ada's silence has passed the turn.
+    advance(world, 25)
+    return {(item["id"], thought["about"]) for item in world["actors"] for thought in item["thoughts"]
+            if thought["kind"] == "ignored"}
+
+
+@pytest.mark.parametrize("speaker, addressee, expected", [
+    pytest.param("bea", "ada", {("bea", "ada")}, id="addressed-by-bea"),
+    pytest.param("bea", None, set(), id="addressed-to-everyone"),
+    pytest.param(None, None, set(), id="no-line-before"),
+])
+def test_a_guest_who_spoke_to_the_silent_player_thinks_they_were_ignored(
+        speaker: str | None, addressee: str | None, expected: set[tuple[str, str]]) -> None:
+    assert _ignored(_after_a_line(speaker, addressee)) == expected
+
+
+def test_the_inviter_is_the_one_ignored_when_the_silence_declines_their_invitation() -> None:
+    world = inviting("dice_together", ("darts",))
+    world["player"] = {"actor_id": "bea", "steering": True, "typing_at": None}
+    assert _ignored(world) == {("ada", "bea")}
+    assert [item["type"] for item in world["events"] if item["type"] in ("ignored", "invitation_declined")] == [
+        "invitation_declined", "ignored"]
