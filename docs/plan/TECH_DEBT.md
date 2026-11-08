@@ -8,7 +8,8 @@ Stage numbers in older evidence refer to the [Stage 1 archive](1_evening/archive
 
 | ID | Problem | Evidence | Resolution |
 |----|---------|----------|------------|
-| D05 | Part of the world state still has no types | 80 `dict[str, Any]` remain: map objects, events, memories, `Activity` targets. Underscored progress fields (`_spot`, `_remaining`) are in saves | Type map objects and events when a task touches them (`World`, `Actor` exist since R2) |
+| D05 | Part of the world state still has no types | 148 `dict[str, Any]` remain (`grep -ro "dict\[str, Any\]" backend | wc -l`, 2026-11-08): map objects, events, memories, `Activity` targets. Underscored progress fields (`_spot`, `_remaining`) are in saves | Type map objects and events when a task touches them (`World`, `Actor` exist since R2) |
+| D31 | Three files are over ~400 lines on purpose, left by the R series | `social/scenes.py` 418; `body/activities.py` 687 (the verb table, one source by design); `mind/turn_prompt.py` 505 (prompt text). R04: `test_facts::test_a_news_item_reaches_a_third_guest_in_other_words` moved from seed 1 to seed 2 by the owner's decision (2026-11-07), no case waits for the owner | Split `activities.py` when the first player verb is added; split `scenes.py` when it next grows; leave the prompt text |
 | D08 | Every save carries a copy of the rules | `state.Rules` in `world["rules"]`, written by `rules.default_rules()` | Taking rules out of saves changes the save format: do it with the next approved schema bump |
 | D12 | `observe_actor` deep-copies state for every decision | most of the headless wall time (E03) | When headless runs get too slow for S2-11's offline evenings |
 | D16 | Some types cross an import cycle only for the checker | `TYPE_CHECKING` imports in `state.py` (~~`scripted.py`→`TurnResult`, `scenes.py`→`TurnResult`~~ fixed by S3-R10) | Move `TurnResult` and the other cross-module records to the module that owns the concept when one gets a third user |

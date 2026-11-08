@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "the-last-inn"
+name = "story-tavern"
 version = "0.1.0"
-description = "Autonomous tavern agents in a browser simulation"
+description = "The Story Tavern: famous guests, model-driven, in one evening"
 requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.115,<1",

@@ -1,7 +1,7 @@
 ---
 id: S3-R19
 title: Close the R series: AGENTS.md, tech debt, plan index, names and stale docs
-status: todo
+status: done
 needs: [S3-R01, S3-R02, S3-R03, S3-R04, S3-R05, S3-R06, S3-R07, S3-R07b, S3-R08, S3-R09, S3-R10, S3-R11, S3-R12, S3-R13, S3-R14, S3-R15, S3-R16, S3-R17, S3-R18]
 touches: [AGENTS.md, README.md, docs/plan/README.md, docs/plan/TECH_DEBT.md, docs/plan/3_player/README.md, pyproject.toml, frontend/package.json, frontend/package-lock.json]
 ---
@@ -53,4 +53,19 @@ only what landed.
 
 ## Results
 
-Filled in when the task is done.
+All five steps done, one commit each. AGENTS.md "Testing" already carried R16's rubric.
+
+`make check` (log `runs/r19-check.log`): see below; exit 0. `make build`: `✓ built in 3.57s`, exit 0.
+
+`4667 passed in 159.61s (0:02:39)`
+
+Frontend: `tests 318, pass 318, fail 0`.
+
+**Stage 2 tasks still `doing`, for the owner to close or keep:** S2-00, S2-03, S2-04, S2-07, S2-10, S2-13
+(S2-11 is `todo`). S2-09 and S2-12 were set to `done` in the index.
+
+**Done-when grep for "last.inn" does not come back clean:** `characters/guests/*/character.json` (10 guests:
+putin, kim_jong_un, thatcher, monroe, vucic, kardashian, zuckerberg, lukashenko, zelensky, queen) still say
+"the Last Inn" in `background` / `persona`, and `docs/plan/2_story_evenings/00_story_tavern.md` (the S2-00 task,
+still `doing`) and R16/R19/Stage 3 README mention it in text. Character content is outside this ticket; the owner
+decides whether to reword it (S2-00's job). Also: D31 added to TECH_DEBT.md (placed before D08, not in ID order).
