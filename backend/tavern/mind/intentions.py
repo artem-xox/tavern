@@ -20,6 +20,7 @@ from tavern.body.dozing import asleep
 from tavern.body.drunkenness import drunk_stage
 from tavern.hall.closing import closing_called
 from tavern.hall.memory import log_event
+from tavern.hall.player import steered
 from tavern.hall.staff import on_staff, post_of
 from tavern.hall.state import World, find_actor
 from tavern.hall.world import observe_actor
@@ -208,7 +209,8 @@ def intention_requests(world: Mapping[str, Any], pending: Container[str], next_a
     """
     requests = []
     for actor in world["actors"]:
-        if actor["id"] in pending or world["time"] < next_allowed.get(actor["id"], 0.0):
+        # The player decides for a steered guest, so nothing writes their intentions.
+        if actor["id"] in pending or steered(world, actor["id"]) or world["time"] < next_allowed.get(actor["id"], 0.0):
             continue
         trigger = intention_due(world, actor, rules)
         spent = rules.budget is not None and (made or {}).get(actor["id"], 0) >= rules.budget
@@ -225,12 +227,12 @@ def stale_intentions(world: Mapping[str, Any], asked_at: Mapping[str, float]) ->
         asked_at: Game time each pending request was made, per guest.
 
     Returns:
-        Guests, in `asked_at` order, who left or met a salient event after asking; their answer
-        is dropped and they are asked anew. The interval alone never makes a request stale.
+        Guests, in `asked_at` order, who left, are steered by the player (`player.steered`) or met a
+        salient event after asking; their answer is dropped and they are asked anew. The interval alone never makes a request stale.
     """
     present = {actor["id"]: actor for actor in world["actors"]}
     return [actor_id for actor_id, asked in asked_at.items()
-            if actor_id not in present or _latest_trigger(world, present[actor_id], asked) is not None]
+            if actor_id not in present or steered(world, actor_id) or _latest_trigger(world, present[actor_id], asked) is not None]
 
 
 def intention_view(world: Mapping[str, Any], actor: Mapping[str, Any], trigger: Trigger) -> dict[str, Any]:
