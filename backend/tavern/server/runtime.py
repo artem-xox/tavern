@@ -14,6 +14,7 @@ from tavern.adapters.persistence import FileStore
 from tavern.body.activities import ACTIVITIES, client_activities
 from tavern.body.items import client_items
 from tavern.evening.mind_loop import EveningPorts, TaskCourier, evening_mind
+from tavern.evening.player_commands import steer
 from tavern.evening.retelling import Retelling, retell
 from tavern.evening.scenario import Scenario, open_evening
 from tavern.evening.story_score import WEIGHTS, Moment, story_moments, story_score
@@ -310,7 +311,8 @@ class TavernRuntime:
                     "speed": lambda item: set_speed(self.world, item),
                     "refill": lambda item: refill_tap(self.world, item),
                     "block": self._block, "force_action": self._force_action,
-                    "save": self._save, "load": self._load, "reset": self._reset, "start": self._start}
+                    "save": self._save, "load": self._load, "reset": self._reset, "start": self._start,
+                    "steer": lambda item: steer(self.world, self.mind, item)}
         if not isinstance(command, Mapping) or not isinstance(command.get("type"), str):
             raise ValueError("Expected a command with a type")
         handler = handlers.get(command["type"])
