@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 
 from tavern.evening.decisions import apply_decision, decision_requests, free_to_decide, stale_requests
+from tavern.hall.player import steered
 from tavern.hall.state import World, find_actor
 from tavern.hall.world import observe_actor
 from tavern.mind.goals import settle_goals
@@ -211,7 +212,8 @@ class MindLoop:
             invitation = scene["invitation"]
             key = (scene["id"], len(scene["turns"]))
             invitee = find_actor(world, invitation["to"]) if invitation else None
-            if (invitation is None or invitee is None or "answer" in invitation or key in self.answering or key in self.answered
+            # The player answers for a steered invitee, if they speak at all.
+            if (invitation is None or invitee is None or steered(world, invitee["id"]) or "answer" in invitation or key in self.answering or key in self.answered
                     or scene["writing"] is not None or scene["written"] is not None
                     or next_speaker(scene) != invitation["to"]):
                 continue
