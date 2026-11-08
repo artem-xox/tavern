@@ -97,3 +97,17 @@ def test_malformed_speaker_fails_loudly() -> None:
     del people(world)["ada"]["drunkenness"]
     with pytest.raises(KeyError):
         speaker_view(world)
+
+
+@pytest.mark.parametrize("asked, speaker", [
+    pytest.param(None, "ada", id="no-speaker-is-the-next-one"),
+    pytest.param("ada", "ada", id="the-next-speaker-given"),
+    pytest.param("bea", "bea", id="another-member-given"),
+    pytest.param("cid", "cid", id="a-joiner-given"),
+])
+def test_view_of_a_given_speaker_is_that_guests(asked: str | None, speaker: str) -> None:
+    world = scene_world(None)
+    scene = conversation_of(world, "ada")
+    view = turn_view(world, scene) if asked is None else turn_view(world, scene, asked)
+    assert view["speaker"]["id"] == speaker
+    assert set(view["speaker"]["opinions"]) == set(scene["participants"]) - {speaker}

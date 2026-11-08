@@ -73,12 +73,14 @@ def next_speaker(scene: Conversation) -> str:
     return people[0]
 
 
-def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
+def turn_view(world: Mapping[str, Any], scene: Conversation, speaker_id: str | None = None) -> dict[str, Any]:
     """Describe a scene from the next speaker's point of view, for a turn writer.
 
     Args:
         world: Current world.
         scene: Scene whose next turn is written.
+        speaker_id: Member to view the scene as, instead of `next_speaker`: the played guest, whose typed line is
+            read from this view.
 
     Returns:
         `conversation`: ID, topic, index of the turn being written, participants (see
@@ -97,7 +99,7 @@ def turn_view(world: Mapping[str, Any], scene: Conversation) -> dict[str, Any]:
         KeyError: The speaker's record lacks a field the view reads.
     """
     people = {item["id"]: item for item in world["actors"]}
-    speaker = people[next_speaker(scene)]
+    speaker = people[speaker_id or next_speaker(scene)]
     places = [{key: item[key] for key in ("id", "kind", "name")} for _, item in
               sorted(speaker["knowledge"]["objects"].items()) if item["kind"] in ("tap", "toilet", "darts")]
     view = {"conversation": {"id": scene["id"], "topic": scene["topic"], "turn": len(scene["turns"]),
