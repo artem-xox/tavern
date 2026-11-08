@@ -3,7 +3,7 @@
 **Goal:** the player walks into the same evening as a character and talks to the guests in typed lines.
 The guests answer, remember it, and act on it.
 
-The player tasks are not written yet. First comes the **R series** below: cleanup and refactors that make
+**R series: done.** The first player task is the next one to write (start with the design question at the end of this file). The R series below: cleanup and refactors that make
 the code ready for a third kind of actor. The outline of the player work:
 
 - **An avatar in the room.** The player has a body on the same activity system: walk, sit, drink, play,
