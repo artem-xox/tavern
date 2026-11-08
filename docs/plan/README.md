@@ -61,16 +61,16 @@ merged before a task starts; tasks whose needs are met run at once.
 | S3-R03 | [Retire the card compiler](3_player/r03_card_compiler.md): no client calls `POST /api/cards/compile` | R00 | done |
 | S3-R04 | [Production switches](3_player/r04_production_switches.md): `lean`, `aims`, `projects` always on, so tests run the evening's path | R01, R03 | done |
 | S3-R05 | [One event log](3_player/r05_event_log.md): one length (200), the logged event returned, one reader of new events | R02 | done |
-| S3-R06 | [Rules read fields](3_player/r06_rules_read_fields.md): `verb`, `invitation`, `inviter_id` on events; save version 23 | R05 | doing |
-| S3-R07 | [Metrics read fields](3_player/r07_metrics_read_fields.md): actions, invitations, talk | R06, R10 | todo |
-| S3-R07b | [More metrics read fields](3_player/r07b_more_metrics_read_fields.md): aims, goals, responses, projects, speeches | R06 | todo |
-| S3-R08 | [One observation](3_player/r08_one_observation.md): built once, typed, `people` only | R04 | doing |
+| S3-R06 | [Rules read fields](3_player/r06_rules_read_fields.md): `verb`, `invitation`, `inviter_id` on events; save version 23 | R05 | done |
+| S3-R07 | [Metrics read fields](3_player/r07_metrics_read_fields.md): actions, invitations, talk | R06, R10 | doing |
+| S3-R07b | [More metrics read fields](3_player/r07b_more_metrics_read_fields.md): aims, goals, responses, projects, speeches | R06 | doing |
+| S3-R08 | [One observation](3_player/r08_one_observation.md): built once, typed, `people` only | R04 | done |
 | S3-R09 | [Whereabouts](3_player/r09_whereabouts.md): table, bar and reach move to `hall/whereabouts.py` | R02 | done |
 | S3-R10 | [The turn view](3_player/r10_turn_view.md): to `mind/turn_view.py`; `TurnResult` out of the cycle (D16) | R02 | done |
-| S3-R11 | [Candidates](3_player/r11_candidates.md): `mind/candidates.py` apart from choosing | R01, R04, R08 | todo |
+| S3-R11 | [Candidates](3_player/r11_candidates.md): `mind/candidates.py` apart from choosing | R01, R04, R08 | doing |
 | S3-R12 | [Haiku's intention question](3_player/r12_haiku_intentions.md): `mind/haiku_intentions.py` | R00 | done |
-| S3-R13 | [One wiring](3_player/r13_evening_wiring.md): config, Claude config, mind loop and end rule shared (D09) | R04 | doing |
-| S3-R14 | [The evening report](3_player/r14_evening_report.md): `evening/report.py`, tested | R04 | doing |
+| S3-R13 | [One wiring](3_player/r13_evening_wiring.md): config, Claude config, mind loop and end rule shared (D09) | R04 | done |
+| S3-R14 | [The evening report](3_player/r14_evening_report.md): `evening/report.py`, tested | R04 | done |
 | S3-R15 | [Shared test steps](3_player/r15_test_steps.md): 20 copied `advance` / `command` helpers go | R00 | done |
 | S3-R16 | [Test audit](3_player/r16_test_audit.md): wording, data and tuning pins; twins merged | R00 | done |
 | S3-R17 | [Pure pose and picking](3_player/r17_scene_logic.md): out of `scene.ts`, tested | — | done |
