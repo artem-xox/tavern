@@ -11,9 +11,10 @@ from collections.abc import Callable, Coroutine, Mapping
 from typing import Any
 
 from tavern.hall.memory import log_event
+from tavern.hall.player import steered
 from tavern.hall.state import World
 from tavern.mind.scripted import scripted_turn
-from tavern.mind.turn_view import turn_view
+from tavern.mind.turn_view import next_speaker, turn_view
 from tavern.social.aims import note_spoken
 from tavern.social.conversation import ACTS
 from tavern.social.heard import hear_line
@@ -114,7 +115,9 @@ def claim_turns(world: Mapping[str, Any]) -> list[tuple[str, int, dict[str, Any]
     claims = []
     for scene in world["conversations"]:
         # A line for a scene that is about to end, or to lose a guest, would never be spoken; none is asked for.
-        if scene["writing"] is None and scene["written"] is None and not awaits_company_change(world, scene):
+        # The player speaks for a steered guest, so no writer is asked (the scene waits: see `speak_turns`).
+        if (scene["writing"] is None and scene["written"] is None and not awaits_company_change(world, scene)
+                and not steered(world, next_speaker(scene))):
             view = turn_view(world, scene)
             scene["writing"] = {"turn": view["conversation"]["turn"], "speaker": view["speaker"]["id"],
                                 "since": world["time"]}

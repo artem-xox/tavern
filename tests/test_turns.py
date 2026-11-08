@@ -474,3 +474,15 @@ def test_the_model_gets_the_timeout_in_real_seconds_at_any_speed(speed: float, r
     claim_turns(world)
     advance(world, real_seconds)
     assert any(event["type"] == "turn" for event in world["events"]) == scripted
+
+
+@pytest.mark.parametrize("player, claimed", [
+    pytest.param(None, 1, id="no-player"),
+    pytest.param({"actor_id": "bea", "steering": True}, 1, id="another-guest-has-the-wheel"),
+    pytest.param({"actor_id": "ada", "steering": True}, 0, id="the-speaker-has-the-wheel"),
+    pytest.param({"actor_id": "ada", "steering": False}, 1, id="the-speaker-is-on-autopilot"),
+])
+def test_no_writer_is_asked_for_the_line_of_a_steered_speaker(player: dict[str, Any] | None, claimed: int) -> None:
+    world = talking()
+    world["player"] = player
+    assert len(claim_turns(world)) == claimed
