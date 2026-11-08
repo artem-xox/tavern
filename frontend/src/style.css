@@ -242,3 +242,8 @@ summary > span:last-child { color: var(--muted); font-size: var(--t-label); text
 .role-sheet dd { margin: 0; }
 .play-as { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
 .play-as button[aria-pressed="true"] { border-color: var(--gold-2); color: var(--on-gold); }
+
+.order-menu { position: fixed; z-index: 50; display: flex; flex-direction: column; min-width: 200px; padding: 4px; background: #2b231d; border: 1px solid var(--gold-2); border-radius: var(--radius); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5); }
+.order-menu button { text-align: left; border: 0; background: transparent; padding: 6px 10px; }
+.order-menu button:hover { background: #4a3a2a; }
+.order-empty { padding: 6px 10px; opacity: 0.8; }

@@ -13,6 +13,8 @@ import { cellAt, hoverText, objectAt, visitorAt } from "./picking.ts";
 import { isLow, onPot, poseOf } from "./pose.ts";
 import { mapParts, type MapParts } from "./mapview";
 import { Speech } from "./speech";
+import { floatToast } from "./toast";
+import type { Pick } from "./orders";
 import { drawRoute } from "./routeview";
 import { markerAt } from "./wheel";
 import { aura, auraPhase, type Haze } from "./aura";
@@ -30,6 +32,8 @@ interface SceneCallbacks {
   select: (actorId: string) => void;
   cell: (x: number, y: number) => void;
   hover: (message: string) => void;
+  /** A click on the map (not while editing): what is under it, and where the pointer is on the page. */
+  pick: (pick: Pick, page: { x: number; y: number }) => void;
 }
 
 interface ActorView {
@@ -321,7 +325,18 @@ export class TavernScene extends Phaser.Scene {
     if (!cell) return;
     if (this.editing) { this.callbacks.cell(cell[0], cell[1]); return; }
     const id: string | null = visitorAt(pointer.x, pointer.y, this.drawnPositions(() => true), size);
-    if (id) this.callbacks.select(id);
+    const object: WorldObject | null = objectAt(cell, this.world.map.objects);
+    const event: MouseEvent | TouchEvent | WheelEvent = pointer.event;
+    const page = event instanceof MouseEvent ? { x: event.clientX, y: event.clientY } : { x: 0, y: 0 };
+    if (id) this.callbacks.pick({ kind: "visitor", id }, page);
+    else if (object) this.callbacks.pick({ kind: "object", id: object.id }, page);
+    else this.callbacks.pick({ kind: "cell", cell }, page);
+  }
+
+  /** Float a short message above a visitor for a few seconds. */
+  toast(actorId: string, message: string): void {
+    const view: ActorView | undefined = this.visitors.get(actorId);
+    if (view) floatToast(this, view.container, message);
   }
 
   /** Where each visitor passing the filter is drawn right now. */

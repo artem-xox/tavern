@@ -8,6 +8,7 @@ export function drawRoute(route: Phaser.GameObjects.Graphics, world: World | nul
   if (!world) return;
   const size: number = world.map.tile_size;
   drawOwnSeats(route, world, size);
+  drawDestination(route, world, size);
   const actor: Actor | undefined = world.actors.find((visitor: Actor): boolean => visitor.id === selectedId);
   if (actor && actor.path.length > 0) {
     const cells: Cell[] = [[actor.x, actor.y], ...actor.path];
@@ -37,4 +38,13 @@ function drawOwnSeats(route: Phaser.GameObjects.Graphics, world: World, size: nu
     route.fillStyle(0x221b16, 0.8).fillCircle(x, y, 4.5);
     route.fillStyle(color).fillCircle(x, y, 3.2);
   }
+}
+
+/** A ring on the cell the played guest is walking to under the player's order, until they arrive or turn to something else. */
+function drawDestination(route: Phaser.GameObjects.Graphics, world: World, size: number): void {
+  const played: Actor | undefined = world.actors.find((actor: Actor): boolean => actor.id === world.player?.actor_id);
+  const cell: Cell | undefined = played?.action?.verb === "walk_to" ? played.action.cell : undefined;
+  if (!cell) return;
+  route.lineStyle(2, 0xffe0a3, 0.9).strokeCircle((cell[0] + 0.5) * size, (cell[1] + 0.5) * size, size * 0.3);
+  route.fillStyle(0xffe0a3, 0.9).fillCircle((cell[0] + 0.5) * size, (cell[1] + 0.5) * size, 3);
 }
