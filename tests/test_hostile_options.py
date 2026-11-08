@@ -5,7 +5,7 @@ from typing import Any
 import pytest
 
 from tavern.body.activities import FAMILIES
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.mind.briefing import brief
 from tavern.mind.local_policy import local_scores
 from tavern.mind.options import family_text, option_text

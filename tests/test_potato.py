@@ -5,7 +5,7 @@ from typing import Any
 import pytest
 
 from tavern.body.items import ITEMS
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.mind.local_policy import local_scores
 from test_gift_options import carrying
 

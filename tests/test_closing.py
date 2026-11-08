@@ -6,7 +6,8 @@ from typing import Any, Callable
 
 import pytest
 
-from tavern.mind.agents import build_candidates, choose_action
+from tavern.mind.agents import choose_action
+from tavern.mind.candidates import build_candidates
 from tavern.mind.briefing import brief
 from tavern.evening.scenario import open_evening, parse_scenario
 from tavern.hall.closing import all_gone

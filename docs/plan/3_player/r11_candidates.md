@@ -1,7 +1,7 @@
 ---
 id: S3-R11
 title: Split agents.py: the options a guest has, apart from how one is chosen
-status: todo
+status: doing
 needs: [S3-R01, S3-R04, S3-R08]
 touches: [mind/agents.py, mind/candidates.py (new), evening/metrics.py, AGENTS.md, tests]
 ---

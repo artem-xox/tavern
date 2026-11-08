@@ -9,7 +9,8 @@ import pytest
 
 from tavern.adapters.persistence import parse_world
 from tavern.hall.world import observe_actor, observe_people
-from tavern.mind.agents import build_candidates, choose_action
+from tavern.mind.agents import choose_action
+from tavern.mind.candidates import build_candidates
 from tavern.mind.local_policy import local_scores
 from tavern.mind.options import option_text
 from dice_hall import advance, guest, happened, start, table, table_hall, who

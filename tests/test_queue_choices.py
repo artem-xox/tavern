@@ -8,7 +8,8 @@ from typing import Any
 
 import pytest
 
-from tavern.mind.agents import build_candidates, choose_action
+from tavern.mind.agents import choose_action
+from tavern.mind.candidates import build_candidates
 from tavern.mind.briefing import brief
 from tavern.evening.decisions import apply_decision, decision_requests
 from tavern.hall.world import create_world, start_action, step_world

@@ -12,7 +12,8 @@ from tavern.body.activities import ACTIVITIES, FAMILIES
 from tavern.body.projects import PROJECTS, honor_projects
 from tavern.evening.decisions import free_to_decide
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action, step_world
-from tavern.mind.agents import Evaluators, build_candidates, choose_action
+from tavern.mind.agents import Evaluators, choose_action
+from tavern.mind.candidates import build_candidates
 from tavern.mind.local_policy import local_scores
 from tavern.social.scenes import conversation_of, start_conversation
 from social_hall import actor, advance, command, know, spotted_hall

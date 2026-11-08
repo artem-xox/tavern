@@ -7,7 +7,7 @@ import pytest
 
 from tavern.adapters.persistence import load_world, save_world
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action, step_world
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.mind.briefing import brief
 from tavern.mind.goals import check_goal, open_kinds, serving, serving_aim, settle_goals
 from tavern.mind.haiku_intentions import parse_stance

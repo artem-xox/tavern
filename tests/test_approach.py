@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.mind.briefing import brief
 from tavern.mind.local_policy import local_scores
 from tavern.hall.whereabouts import side_by_side

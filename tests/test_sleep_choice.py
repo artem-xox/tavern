@@ -6,7 +6,7 @@ import pytest
 
 from tavern.body.activities import FAMILIES
 from tavern.hall.world import create_world, start_action
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.mind.local_policy import local_scores
 from tavern.mind.options import family_text, option_text
 from hostile_view import person, view

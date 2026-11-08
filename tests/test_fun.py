@@ -55,7 +55,7 @@ def test_a_malformed_fun_is_refused(fields: dict[str, Any]) -> None:
 # --- drinking: what a drink in company does ---------------------------------------------------------------------
 
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action, step_world  # noqa: E402
-from tavern.mind.agents import build_candidates  # noqa: E402
+from tavern.mind.candidates import build_candidates  # noqa: E402
 from tavern.mind.briefing import brief  # noqa: E402
 from tavern.mind.local_policy import local_aim_scores, local_scores  # noqa: E402
 

@@ -4,7 +4,7 @@ from typing import Any, Callable
 
 import pytest
 
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.mind.briefing import brief
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action
 from tavern.social.thoughts import think

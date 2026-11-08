@@ -10,7 +10,8 @@ from typing import Any, Awaitable, Callable
 import httpx
 import pytest
 
-from tavern.mind.agents import Evaluators, build_candidates, build_seat_candidates, choose_action
+from tavern.mind.agents import Evaluators, choose_action
+from tavern.mind.candidates import build_candidates, build_seat_candidates
 from tavern.body.projects import PROJECTS
 from tavern.mind.local_policy import ASK_FLOOR, local_seat_scores
 from tavern.adapters.jev import JevError, evaluate_actions, evaluate_seats
