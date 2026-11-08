@@ -77,10 +77,9 @@ def goal_kind_counts(events: Sequence[Mapping[str, Any]]) -> dict[str, int]:
     for event in events:
         if event["type"] != "goal_set":
             continue
-        kind = event.get("goal")
-        if kind not in GOALS:
-            raise ValueError(f"The goal event {event['message']!r} has no known `goal` field: {kind!r}")
-        kinds[kind] += 1
+        if event.get("goal") not in GOALS:
+            raise ValueError(f"The goal event {event['message']!r} has no known `goal` field: {event.get('goal')!r}")
+        kinds[event["goal"]] += 1
     return dict(kinds)
 
 
