@@ -336,7 +336,7 @@ def open_evening(room: Mapping[str, Any], scenario: Scenario, seed: int) -> Worl
         scenario.news, scenario.news_tonight, Random(f"{seed}:news"))
     world.update({"expected": _expected(scenario, seed), "closes_at": scenario.closes_at,
                   "last_call_at": scenario.last_call_at,
-                  "player": None if scenario.player is None else Player(actor_id=scenario.player, steering=True),
+                  "player": None if scenario.player is None else Player(actor_id=scenario.player, steering=True, typing_at=None),
                   "news": [News(**item) for item in news]})
     take_posts(world, scenario.staff)
     admit_arrivals(world)

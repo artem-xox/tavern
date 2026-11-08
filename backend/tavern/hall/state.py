@@ -242,6 +242,9 @@ class Player(TypedDict):
 
     actor_id: str  # an actor cast from one of the scenario's guests, never staff
     steering: bool  # True: the player decides for that guest; False: autopilot, the guest's own mind
+    # Game time of the player's last `typing` command; None before the first. A save from before the field existed
+    # may lack the key, so readers use `.get`.
+    typing_at: NotRequired[float | None]
 
 
 class World(TypedDict):

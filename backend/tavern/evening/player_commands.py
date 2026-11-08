@@ -179,3 +179,21 @@ def _drop_claim(mind: MindLoop, scene_id: str, turn: int) -> None:
         mind.courier.cancel(mind.writing.pop(key))
     if key in mind.answering:
         mind.courier.cancel(mind.answering.pop(key)[0])
+
+
+def typing(world: World, command: Mapping[str, Any]) -> None:
+    """Note that the player just pressed a key, so their scene waits for them (`turns.speak_turns`).
+
+    Not logged: the client sends one at most every 2 s.
+
+    Args:
+        world: Authoritative world, whose player record is updated in place.
+        command: `{"type": "typing"}`.
+
+    Raises:
+        ValueError: The evening has no player, or the guest is on autopilot.
+    """
+    player = world["player"]
+    if player is None or not player["steering"]:
+        raise ValueError("typing needs a player who holds the wheel")
+    player["typing_at"] = world["time"]
