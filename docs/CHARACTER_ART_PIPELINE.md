@@ -275,6 +275,3 @@ covers watch, inspect, wait, and arrival/departure when not moving. The actor
 faces its seat or action target when stationary. The separate mug overlay is
 hidden during Drinking, DrinkingSeated, and TakeBeer, whose art already
 includes a tankard. Only these six 68 px character folders ship in the game.
-
-The existing [tavern pixel art plan](PIXEL_ART_REDESIGN.md) remains the room
-counterpart to this character workflow.
