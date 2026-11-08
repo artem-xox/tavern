@@ -14,7 +14,7 @@ def stage(scores: dict[str, float], kind: str = "actions", actor_id: str = "ada"
 
 def started(verb: str, actor_id: str = "ada", time: float = 1.0) -> dict[str, Any]:
     """The event of an action begun."""
-    return {"time": time, "actor_id": actor_id, "type": "action_started", "message": f"{actor_id.title()} chose {verb}"}
+    return {"time": time, "actor_id": actor_id, "type": "action_started", "message": f"{actor_id.title()} chose {verb}", "verb": verb}
 
 
 def counts(**fields: Any) -> dict[str, Any]:

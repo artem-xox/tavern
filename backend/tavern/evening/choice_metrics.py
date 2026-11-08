@@ -101,9 +101,8 @@ def _repeats(events: Sequence[Mapping[str, Any]], deciders: set[str]) -> float |
     for event in events:
         if event["type"] != "action_started" or event["actor_id"] not in deciders:
             continue
-        verb = event["message"].rpartition(" chose ")[2] if " chose " in event["message"] else ""
-        if not verb:
-            raise ValueError(f"An action event must say what was chosen: {event['message']!r}")
-        verbs.setdefault(event["actor_id"], []).append(verb)
+        if not event.get("verb"):
+            raise ValueError(f"An action event must say what was chosen: {event!r}")
+        verbs.setdefault(event["actor_id"], []).append(event["verb"])
     pairs = [(before, after) for chosen in verbs.values() for before, after in zip(chosen, chosen[1:])]
     return sum(before == after for before, after in pairs) / len(pairs) if pairs else None
