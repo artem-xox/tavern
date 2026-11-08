@@ -115,8 +115,10 @@ def mark_answered(world: World, actor: Actor, action: Mapping[str, Any]) -> None
     if other is None:
         raise ValueError(f"{actor['name']} cannot answer {thought['about']!r}, who is not in the hall")
     thought["answered"] = True
+    after = age_of(thought, world["time"])
     record_event(world, actor, "answered", f"{actor['name']} went to answer {called(actor, other)}, who "
-                                           f"{THOUGHTS[thought['kind']].reason} ({age_of(thought, world['time']):.0f} s later)")
+                                           f"{THOUGHTS[thought['kind']].reason} ({after:.0f} s later)",
+                 fields={"response": thought["kind"], "after": after})
 
 
 def note_calls(world: World) -> None:
