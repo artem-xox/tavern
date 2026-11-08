@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.social.thoughts import think
 from social_hall import actor, advance, command, know, say, scene_of, spotted_hall
 from test_dice_invitation import CHAIRS, TABLE

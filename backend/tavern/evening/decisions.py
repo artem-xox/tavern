@@ -6,8 +6,9 @@ from typing import Any
 from tavern.body.projects import on_project
 from tavern.body.queues import out_of_patience
 from tavern.hall.staff import on_staff
+from tavern.hall.memory import log_event
 from tavern.hall.state import Actor, Decision, World
-from tavern.hall.world import observe_actor, observe_people, start_action
+from tavern.hall.world import observe_actor, start_action
 from tavern.social.errands import fetching_a_drink
 from tavern.social.scenes import conversation_of
 from tavern.social.walk_ups import walker_toward
@@ -51,8 +52,7 @@ def decision_requests(world: Mapping[str, Any], pending: Container[str],
         if world["time"] < next_decision.get(actor["id"], 0):
             continue
         # Decisions also see who else is about and what they are visibly doing.
-        requests.append((actor["id"], {**observe_actor(world, actor["id"]),
-                                       "people": observe_people(world, actor["id"])}))
+        requests.append((actor["id"], dict(observe_actor(world, actor["id"]))))
     return requests
 
 
@@ -92,22 +92,10 @@ def apply_decision(world: World, actor: Actor,
                 actor["decision"][stage] = decision[stage]
         result = start_action(world, actor["id"], decision["action"])
         if not result["accepted"]:
-            log_control(world, f"{actor['name']}: {result['reason']}")
+            log_event(world, None, "control", f"{actor['name']}: {result['reason']}")
     except Exception as error:
         actor["decision"] = {"source": "local", "scores": {}, "error": str(error)}
-        log_control(world, f"Decision failed for {actor['name']}")
+        log_event(world, None, "control", f"Decision failed for {actor['name']}")
     # A second's pause after every answer, applied or refused, keeps a refused visitor from
     # asking again on every tick.
     return world["time"] + 1.0
-
-
-def log_control(world: World, message: str) -> None:
-    """Log an event that no visitor caused, keeping the latest 100 events.
-
-    Args:
-        world: World whose event log is appended to.
-        message: Human-readable description.
-    """
-    world["events"].append({"time": world["time"], "actor_id": None,
-                            "type": "control", "message": message})
-    world["events"] = world["events"][-100:]

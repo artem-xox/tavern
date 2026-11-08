@@ -4,12 +4,13 @@ import { drawCandles, drawSconces } from "./candles";
 import { drawDartPlay, throwMotion } from "./dartplay.ts";
 import { drawDicePlay, rollLunge } from "./diceplay.ts";
 import { EMOTE_KINDS, EMOTE_WORDS, emoteFrame, emoteFrames, emoteMotion, emotePalette } from "./emotes";
-import { fightPose } from "./fightview";
 import { drawFloor } from "./floor";
 import { stageLift } from "./stage";
 import { drawBar, drawChair, drawDarts, drawDiceTable, drawDoor, drawFootlights, drawStage, drawTable, drawTap, drawToilet, drawWindow } from "./furniture";
 import { headingOf, headingToObject } from "./heading";
 import { drawFireplace, drawFlames, drawHearthGlow } from "./hearth";
+import { cellAt, hoverText, objectAt, visitorAt } from "./picking.ts";
+import { isLow, onPot, poseOf } from "./pose.ts";
 import { mapParts, type MapParts } from "./mapview";
 import { Speech } from "./speech";
 import { aura, auraPhase, type Haze } from "./aura";
@@ -17,10 +18,6 @@ import { shippedPose, spriteOf, stills, type SpriteRegistry } from "./sprites";
 import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Facing, Mind, Turn, Verb, World, WorldObject } from "./types";
 import { animateWounds, createWounds, makeCudgelTexture, readWounds, type Wounds } from "./woundview";
 
-/** The seated version of a standing pose, for a visitor who does it from their seat. */
-const SEATED_POSES: Readonly<Record<string, string>> = { Drinking: "DrinkingSeated", Talking: "TalkingSeated", Giving: "GivingSeated", Receiving: "ReceivingSeated" };
-/** Poses drawn low on the cell, as a seated figure sits. */
-const LOW_POSES: readonly string[] = ["Seated", "SleepingSeated", "Bathroom", "HurtSeated", "KnockedOut", ...Object.values(SEATED_POSES)];
 /** Even a sober guest fidgets a little; drink adds to it. */
 const IDLE_SWAY = 0.12;
 
@@ -237,22 +234,22 @@ export class TavernScene extends Phaser.Scene {
     if (actor.status !== "walking") {
       // The server turns heads toward sounds and partners; otherwise the seat or the task decides.
       view.direction = actor.facing ?? seat?.facing ?? (target && actor.status === "interacting" ? target.facing ?? headingToObject(actor, target) ?? view.direction : view.direction);
-      if (this.onPot(actor)) view.direction = "south";
+      if (onPot(actor)) view.direction = "south";
     }
     const { name: character, sheet } = spriteOf(actor, this.sprites);
-    let wanted: string = this.actorPose(actor);
+    let wanted: string = poseOf(actor, this.world, this.activities);
     // A hurt guest on the move walks bent, or simply limps in their usual walk while the bent pose is not drawn yet.
     if (wanted === "Hurt" && actor.status === "walking" && !sheet.poses.includes("Hurt")) wanted = "Walking";
     const pose: string = shippedPose(sheet, wanted);
     const texture: string = `${character}-${pose}-${view.direction}`;
     if (view.sprite.texture.key !== texture) view.sprite.setTexture(texture);
     view.sprite.setDisplaySize(sheet.size, sheet.size);
-    view.wounds.baseY = sheet.lift + (LOW_POSES.includes(pose) ? 3 : 0);
+    view.wounds.baseY = sheet.lift + (isLow(pose) ? 3 : 0);
     readWounds(view.wounds, view.container, actor, this.world?.fights ?? [], this.world?.time ?? 0, wanted, pose, view.direction);
     view.cellX = actor.x;
     view.cellY = actor.y;
     // On the pot the visitor sits in the privy's own cell, not in the spot they walked to.
-    const spot: { x: number; y: number } = this.onPot(actor) && target ? target : actor;
+    const spot: { x: number; y: number } = onPot(actor) && target ? target : actor;
     const x: number = (spot.x + 0.5) * size;
     const y: number = (spot.y + 0.5) * size - stageLift(actor, target);
     if (reset || view.targetX === 0 || Math.hypot(x - view.container.x, y - view.container.y) > size * 3) view.container.setPosition(x, y);
@@ -298,24 +295,6 @@ export class TavernScene extends Phaser.Scene {
     }
   }
 
-  /** A visitor using the WC sits on the pot, facing south, in the ordinary seated pose. */
-  private onPot(actor: Actor): boolean {
-    return actor.status === "interacting" && actor.action?.verb === "use_toilet";
-  }
-
-  private actorPose(actor: Actor): string {
-    const wound: string | null = fightPose(actor);
-    if (wound) return wound;
-    if (actor.status === "walking") return "Walking";
-    if (this.onPot(actor)) return "Seated";
-    // Someone handing this visitor something holds it out to them; they reach for it, whatever they were doing.
-    const offered: boolean = this.world?.actors.some((giver: Actor): boolean => giver.status === "interacting" && giver.action?.verb === "give" && giver.action.target_id === actor.id) ?? false;
-    const pose: string | null | undefined = offered ? "Receiving" : actor.status === "interacting" && actor.action ? this.activities[actor.action.verb]?.pose : null;
-    if (pose) return actor.seat_id ? SEATED_POSES[pose] ?? pose : pose;
-    const chatting: boolean = this.world?.conversations.some((scene: Conversation): boolean => scene.participants.includes(actor.id)) ?? false;
-    return actor.seat_id ? chatting ? "TalkingSeated" : "Seated" : "Idle";
-  }
-
   private drawRoute(): void {
     this.route.clear();
     if (!this.world) return;
@@ -355,34 +334,35 @@ export class TavernScene extends Phaser.Scene {
   private click(pointer: Phaser.Input.Pointer): void {
     if (!this.world) return;
     const size: number = this.world.map.tile_size;
-    const x: number = Math.floor(pointer.x / size);
-    const y: number = Math.floor(pointer.y / size);
-    if (x < 0 || y < 0 || x >= this.world.map.width || y >= this.world.map.height) return;
-    if (this.editing) { this.callbacks.cell(x, y); return; }
-    for (const [id, view] of this.visitors) {
-      if (Math.hypot(pointer.x - view.container.x, pointer.y - view.container.y) <= size * 0.65) {
-        this.callbacks.select(id);
-        return;
-      }
-    }
+    const cell: Cell | null = cellAt(pointer.x, pointer.y, this.world.map);
+    if (!cell) return;
+    if (this.editing) { this.callbacks.cell(cell[0], cell[1]); return; }
+    const id: string | null = visitorAt(pointer.x, pointer.y, this.drawnPositions(() => true), size);
+    if (id) this.callbacks.select(id);
+  }
+
+  /** Where each visitor passing the filter is drawn right now. */
+  private drawnPositions(keep: (view: ActorView) => boolean): Map<string, { x: number; y: number }> {
+    const positions: Map<string, { x: number; y: number }> = new Map();
+    for (const [id, view] of this.visitors) if (keep(view)) positions.set(id, { x: view.container.x, y: view.container.y });
+    return positions;
   }
 
   private hover(pointer: Phaser.Input.Pointer): void {
     if (!this.world) return;
-    for (const view of this.visitors.values()) {
-      if (view.emoteKind !== null && Math.hypot(pointer.x - view.container.x, pointer.y - view.container.y) <= this.world.map.tile_size * 0.65) {
-        this.callbacks.hover(`${view.name.text} · ${EMOTE_WORDS[view.emoteKind]}`);
-        return;
-      }
-    }
-    const x: number = Math.floor(pointer.x / this.world.map.tile_size);
-    const y: number = Math.floor(pointer.y / this.world.map.tile_size);
-    const object: WorldObject | undefined = this.world.map.objects.find((item: WorldObject): boolean => x >= item.x && x < item.x + (item.width ?? 1) && y >= item.y && y < item.y + (item.height ?? 1));
-    const owner: Actor | undefined = this.world.actors.find((actor: Actor): boolean => !!object && actor.favorite_seat_id === object.id);
-    const stock: string = object?.kind === "tap" ? ` · ${object.stock ?? 0} left` : "";
-    const players: string = object?.game ? ` · ${object.game.players.map((id: string): string => this.world?.actors.find((actor: Actor): boolean => actor.id === id)?.name ?? id).join(" and ")} playing` : "";
-    const details: string = stock + players + (object?.appeal !== undefined ? ` · appeal ${object.appeal.toFixed(2)}${object.comforts?.length ? ` (${object.comforts.join(", ")})` : ""}` : "");
-    this.callbacks.hover(object ? `${object.name} · ${object.reserved_by ? "reserved" : "available"}${owner ? ` · ${owner.name}'s seat` : ""}${details} · cell ${x}, ${y}` : `${this.editing ? "Click to toggle obstacle" : "Click a visitor to inspect"} · cell ${x}, ${y}`);
+    const world: World = this.world;
+    const cell: Cell | null = cellAt(pointer.x, pointer.y, world.map);
+    if (!cell) return;
+    const emoter: string | null = visitorAt(pointer.x, pointer.y, this.drawnPositions((view: ActorView): boolean => view.emoteKind !== null), world.map.tile_size);
+    const emoting: ActorView | undefined = emoter ? this.visitors.get(emoter) : undefined;
+    const object: WorldObject | null = objectAt(cell, world.map.objects);
+    const nameOf = (id: string): string => world.actors.find((actor: Actor): boolean => actor.id === id)?.name ?? id;
+    this.callbacks.hover(hoverText({
+      cell, object, editing: this.editing,
+      emoted: emoting?.emoteKind ? { name: emoting.name.text, word: EMOTE_WORDS[emoting.emoteKind] } : null,
+      owner: object ? world.actors.find((actor: Actor): boolean => actor.favorite_seat_id === object.id)?.name ?? null : null,
+      playerNames: object?.game ? object.game.players.map(nameOf) : [],
+    }));
   }
 }
 

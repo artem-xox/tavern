@@ -4,10 +4,11 @@ from typing import Any, Callable
 
 import pytest
 
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.mind.briefing import brief
-from tavern.hall.world import create_world, observe_actor, observe_people, start_action, step_world
+from tavern.hall.world import create_world, observe_actor, observe_people, start_action
 from tavern.social.thoughts import think
+from social_hall import advance
 
 
 def table(table_id: str, name: str, x: int, y: int) -> list[dict[str, Any]]:
@@ -31,12 +32,6 @@ def tavern() -> dict[str, Any]:
         {"id": "ada", "name": "Ada", "x": 4, "y": 7, "traits": {"patience": 0.2, "comfort": 0.9, "curiosity": 0.5}},
         {"id": "bea", "name": "Bea", "x": 6, "y": 7},
     ], "arrival": {"needs": {"thirst": [60, 60]}}}
-
-
-def advance(world: dict[str, Any], seconds: float) -> None:
-    """Advance physical state without requesting decisions."""
-    for _ in range(round(seconds * 10)):
-        step_world(world, 0.1)
 
 
 def look(world: dict[str, Any], actor_id: str) -> dict[str, Any]:

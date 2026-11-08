@@ -11,13 +11,14 @@ from tavern.hall.navigation import find_path
 from tavern.hall.room import impassable_cells
 from tavern.hall.staff import guests, off_limits, on_staff, pour_cell, post_of
 from tavern.hall.state import Actor, World, find_actor
-from tavern.social.scenes import bar_of, conversation_of, pressed
+from tavern.hall.whereabouts import bar_of
+from tavern.social.scenes import conversation_of, pressed
 
 POUR = {"id": "pour_beer", "verb": "pour_beer", "target_id": None}
 STEP = {"id": "wait", "verb": "wait", "target_id": None}
 
 
-def order_at(world: Mapping[str, Any], tap: Mapping[str, Any]) -> Actor | None:
+def _order_at(world: Mapping[str, Any], tap: Mapping[str, Any]) -> Actor | None:
     """Find the guest waiting at a tap for a mug.
 
     Args:
@@ -60,7 +61,7 @@ def tend_bar(world: World) -> None:
 
 def _waiting_guest(world: Mapping[str, Any]) -> Actor | None:
     taps = (item for item in world["map"]["objects"] if item["kind"] == "tap")
-    return next((guest for guest in (order_at(world, tap) for tap in taps) if guest is not None), None)
+    return next((guest for guest in (_order_at(world, tap) for tap in taps) if guest is not None), None)
 
 
 def _hand_over(world: World, barkeep: Actor) -> None:

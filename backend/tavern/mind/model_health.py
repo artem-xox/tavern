@@ -5,9 +5,6 @@ from collections.abc import Awaitable, Callable, Mapping, Sequence
 from typing import TypedDict
 
 SERVICES = ("jev", "claude")
-# What a service can be: not heard from yet, working, without a key, refusing the key, out of credit,
-# not answering, or answering badly too often.
-STATUSES = ("checking", "ok", "no_key", "auth", "no_credit", "unreachable", "degraded")
 # These end a live run before it starts: no call could succeed, however often it is retried.
 UNUSABLE = ("no_key", "auth", "no_credit")
 # A window of the latest calls decides: a service is degraded once this share of them failed.

@@ -225,9 +225,8 @@ tests because source paths change, retaining their coverage and assertions.
   observable habits, recognizable speech, a motive for visiting, and an achievable
   goal. Keep `secret` in the full profile; do not put it in public display text.
   Traits, relationships, inventory, and appearance must support the description.
-- [ ] Explain every existing trait and item constraint. The existing card compiler
-  can propose traits; its output needs validation and author review. Its labeled
-  offline defaults are not model-derived traits. Adding an NPC must not require
+- [ ] Explain every existing trait and item constraint. Proposed
+  traits need validation and author review. Adding an NPC must not require
   inventing a new game mechanic, item kind, or role.
 - [ ] Describe PixelLab MCP calls by name and purpose:
   1. Read the art pipeline and inspect a current character's style reference.

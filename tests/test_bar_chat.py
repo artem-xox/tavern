@@ -6,12 +6,14 @@ from typing import Any
 import pytest
 
 from tavern.hall.world import start_action
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.mind.haiku_turns import turn_content
 from tavern.mind.scripted import scripted_turn
 from tavern.social.invitations import offered_kinds
-from tavern.social.scenes import conversation_of, join_conversation, side_by_side, start_conversation
-from tavern.social.turns import check_turn, turn_view
+from tavern.hall.whereabouts import side_by_side
+from tavern.social.scenes import conversation_of, join_conversation, start_conversation
+from tavern.mind.turn_view import turn_view
+from tavern.social.turns import check_turn
 from staff_hall import HOB, advance, hob_of, opened, person, place, sees
 
 SPOTS = [(3, 3), (4, 3), (5, 3)]

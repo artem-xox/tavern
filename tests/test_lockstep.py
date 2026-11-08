@@ -13,6 +13,7 @@ from tavern.adapters.jev import JevError
 from tavern.evening.lockstep import Evening, Pace, evening_mode, evening_over, run_evening
 from tavern.evening.recording import Record, format_record, parse_records, record_calls, replay_calls
 from tavern.hall.world import create_world, start_action, step_world
+from social_hall import command
 
 KEYED = {"typesafe_api_key": "fake", "model": "jev-latest", "timeout": 1.0, "temperature": 0.0}
 
@@ -43,9 +44,17 @@ def evening(evaluate: Evaluator, guests: Sequence[str] = ("ada", "bea"), latency
             limit: float = 60.0, world: dict[str, Any] | None = None) -> tuple[Evening, dict[str, Any]]:
     """Run a headless evening in the hall with one evaluator for both decision stages."""
     world = world or create_world(hall(guests), 3)
-    result = asyncio.run(run_evening(world, KEYED, Random(3), Evaluators(evaluate, evaluate),
+    result = asyncio.run(run_evening(world, KEYED, Random(3), Evaluators(evaluate, evaluate, aims=evaluate),
                                      Pace(step=0.1, model_latency=latency, time_limit=limit)))
     return result, world
+
+
+def finished_visit(guests: Sequence[str] = ("ada", "bea")) -> dict[str, Any]:
+    """The hall with guests who have had their evening (a long stay, three beers), so going home is worth asking about."""
+    world = create_world(hall(guests), 3)
+    for actor in world["actors"]:
+        actor["visit"].update(seconds=600.0, beers=3)
+    return world
 
 
 def first(result: Evening, actor_id: str, kind: str = "action_started", after: float = -1.0) -> dict[str, Any]:
@@ -109,11 +118,6 @@ def seated_pair() -> dict[str, Any]:
     return world
 
 
-def command(verb: str, target: str | None = None) -> dict[str, Any]:
-    """Build an executable action."""
-    return {"id": verb if target is None else f"{verb}:{target}", "verb": verb, "target_id": target}
-
-
 def test_partner_is_not_pulled_from_a_chat_by_a_late_answer() -> None:
     world = seated_pair()
     seated = world["time"]
@@ -136,7 +140,7 @@ def test_complete_event_log_outlives_the_worlds_trimmed_log() -> None:
     pytest.param("wait", False, ["ada", "bea"], id="time-limit-ends-it"),
 ])
 def test_evening_runs_until_everyone_left_or_the_limit(verb: str, early: bool, staying: list[str]) -> None:
-    result, world = evening(preferring(verb), limit=60.0)
+    result, world = evening(preferring(verb), limit=60.0, world=finished_visit())
     assert (result.end_time < 60.0, [actor["id"] for actor in world["actors"]], result.guests) == (
         early, staying, ["ada", "bea"])
 
@@ -147,7 +151,7 @@ def test_evening_runs_until_everyone_left_or_the_limit(verb: str, early: bool, s
     pytest.param(2.5, 2.6, id="slow-model"),
 ])
 def test_standing_without_an_action_is_logged_as_a_spell(latency: float, still_until: float) -> None:
-    result, _world = evening(preferring("leave"), ["ada"], latency)
+    result, _world = evening(preferring("leave"), ["ada"], latency, world=finished_visit(["ada"]))
     assert result.spells == [{"actor_id": "ada", "start": 0.0, "end": pytest.approx(still_until)}]
 
 
@@ -183,6 +187,11 @@ def sampling(fail_every: int) -> Any:
     return evaluate
 
 
+async def first_aim(view: Any, candidates: Sequence[Any], settings: Any) -> dict[str, float]:
+    """A fake aims evaluator: the first aim wins. It is not recorded, so the replay uses the same one."""
+    return {action["id"]: float(index == 0) for index, action in enumerate(candidates)}
+
+
 def ticking() -> Any:
     """A fake clock that advances a quarter second per reading."""
     readings = count(0.0, 0.25)
@@ -203,9 +212,10 @@ def test_recorded_evening_replays_to_an_identical_event_log(fail_every: int) -> 
     records: list[Record] = []
     model = sampling(fail_every)
     live = run(Evaluators(record_calls("actions", model, records.append, ticking(), JevError),
-                          record_calls("seats", model, records.append, ticking(), JevError)))
+                          record_calls("seats", model, records.append, ticking(), JevError), aims=first_aim))
     stored = parse_records("".join(map(format_record, records)))
-    replay = run(Evaluators(replay_calls("actions", stored, JevError), replay_calls("seats", stored, JevError)))
+    replay = run(Evaluators(replay_calls("actions", stored, JevError), replay_calls("seats", stored, JevError),
+                            aims=first_aim))
     assert (replay.events, replay.choices, replay.spells) == (live.events, live.choices, live.spells)
     assert (len(live.events) > 20, {item["kind"] for item in records}) == (True, {"actions", "seats"})
 

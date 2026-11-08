@@ -6,7 +6,8 @@ import pytest
 
 from tavern.social.quarrels import heat
 from tavern.social.thoughts import opinion_of
-from tavern.social.turns import claim_turns, turn_view
+from tavern.mind.turn_view import turn_view
+from tavern.social.turns import claim_turns
 from social_hall import actor, say, scene_of, seated_talk
 from test_grudges import GRUDGE
 from test_quarrels import foes

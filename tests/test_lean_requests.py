@@ -9,7 +9,7 @@ import pytest
 from tavern.body.activities import ACTIVITIES
 from tavern.mind.agents import Evaluators, choose_action
 from tavern.mind.local_policy import ASK_FLOOR
-from tavern.mind.selection import read_lean, read_switch, worth_asking
+from tavern.mind.selection import read_switch, worth_asking
 
 
 def act(verb: str, target: str | None = None) -> dict[str, Any]:
@@ -61,7 +61,7 @@ def seat_in_sight(**needs: float) -> dict[str, Any]:
             "objects": [chair], "memory": []}
 
 
-def asked_verbs(view: dict[str, Any], key: str | None, lean: bool | None = True) -> list[str]:
+def asked_verbs(view: dict[str, Any], key: str | None) -> list[str]:
     """The verbs of the options the first-stage evaluator is given."""
     seen: list[str] = []
 
@@ -69,8 +69,7 @@ def asked_verbs(view: dict[str, Any], key: str | None, lean: bool | None = True)
         seen.extend([] if seen else [item["verb"] for item in candidates])
         return {item["id"]: 1.0 for item in candidates}
 
-    settings = {"typesafe_api_key": key, "model": "jev-latest", "timeout": 2.0, "temperature": 0.0,
-                **({} if lean is None else {"lean": lean})}
+    settings = {"typesafe_api_key": key, "model": "jev-latest", "timeout": 2.0, "temperature": 0.0}
     asyncio.run(choose_action(view, settings, Random(0), Evaluators(evaluate, evaluate)))
     return seen
 
@@ -84,36 +83,8 @@ def test_the_model_is_asked_only_about_options_worth_weighing(view: dict[str, An
     assert asked_verbs(view, "test") == expected
 
 
-@pytest.mark.parametrize("lean, expected", [
-    pytest.param(True, ["seating", "wait"], id="lean-requests-leave-out-the-fixtures"),
-    pytest.param(False, ["seating", "inspect", "wait"], id="a-plain-request-holds-every-option"),
-    pytest.param(None, ["seating", "inspect", "wait"], id="lean-requests-are-off-unless-the-config-asks"),
-])
-def test_lean_requests_are_a_setting_of_the_config(lean: bool | None, expected: list[str]) -> None:
-    assert asked_verbs(seat_in_sight(), "test", lean) == expected
-
-
 def test_without_a_key_the_lean_setting_changes_nothing() -> None:
-    assert asked_verbs(seat_in_sight(), None, True) == []
-
-
-@pytest.mark.parametrize("config, expected", [
-    pytest.param({}, False, id="absent-is-off"),
-    pytest.param({"lean": True}, True, id="on"),
-    pytest.param({"lean": False}, False, id="off"),
-])
-def test_the_lean_setting_is_read_from_the_config(config: dict[str, Any], expected: bool) -> None:
-    assert read_lean(config) is expected
-
-
-@pytest.mark.parametrize("config", [
-    pytest.param({"lean": "yes"}, id="a-string"),
-    pytest.param({"lean": 1}, id="a-number"),
-    pytest.param({"lean": None}, id="none"),
-])
-def test_a_lean_setting_that_is_not_a_bool_fails_loudly(config: dict[str, Any]) -> None:
-    with pytest.raises(ValueError, match="lean"):
-        read_lean(config)
+    assert asked_verbs(seat_in_sight(), None) == []
 
 
 @pytest.mark.parametrize("text, default, expected", [
@@ -123,9 +94,9 @@ def test_a_lean_setting_that_is_not_a_bool_fails_loudly(config: dict[str, Any]) 
     pytest.param("false", True, False, id="false"),
 ])
 def test_a_switch_is_read_from_the_environment(text: str | None, default: bool, expected: bool) -> None:
-    assert read_switch(text, default, "AI_LEAN") is expected
+    assert read_switch(text, default, "AI_ANSWERS") is expected
 
 
 def test_a_switch_that_is_neither_true_nor_false_fails_loudly() -> None:
-    with pytest.raises(ValueError, match="AI_LEAN"):
-        read_switch("maybe", True, "AI_LEAN")
+    with pytest.raises(ValueError, match="AI_ANSWERS"):
+        read_switch("maybe", True, "AI_ANSWERS")

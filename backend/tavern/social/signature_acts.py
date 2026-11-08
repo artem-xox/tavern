@@ -31,7 +31,7 @@ PROTEST = Sound("protest", 0.6, 30.0, "a protest shouted across the hall")
 THREAT = Sound("threat", 0.4, 12.0, "a threat barked across the room")
 
 
-def log_act(world: World, actor: Actor, verb: str, item: str, subjects: Sequence[str], message: str) -> None:
+def _log_act(world: World, actor: Actor, verb: str, item: str, subjects: Sequence[str], message: str) -> None:
     """Log one use of a signature item: the event, with the verb, the item and whom it concerned.
 
     Args:
@@ -42,12 +42,11 @@ def log_act(world: World, actor: Actor, verb: str, item: str, subjects: Sequence
         subjects: IDs of the guests it was done to or about; empty for none.
         message: What happened, in words.
     """
-    record_event(world, actor, "signature_act", message)
-    for entry in (world["events"][-1], actor["memory"][-1]):
+    for entry in (record_event(world, actor, "signature_act", message), actor["memory"][-1]):
         entry.update(verb=verb, item=item, subject=list(subjects))
 
 
-def in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[Actor]:
+def _in_sight(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[Actor]:
     """List the guests a guest sees from where they stand: anyone not behind a wall, staff left out.
 
     Args:
@@ -145,13 +144,13 @@ def film_room(world: World, actor: Actor, target: Any) -> None:
         actor: Guest filming.
         target: Unused: filming has no target.
     """
-    seen = in_sight(world, actor)
+    seen = _in_sight(world, actor)
     subjects = [other for other in world["actors"] if other["id"] in _footage(world, seen)]
     for subject in subjects:
         message = f"{actor['name']} filmed {subject['name']}"
         think(subject, "filmed", world["time"], f"{called(subject, actor)} filmed me on a phone", message, about=actor)
     names = " and ".join(subject["name"] for subject in subjects)
-    log_act(world, actor, "livestream", "phone", [subject["id"] for subject in subjects],
+    _log_act(world, actor, "livestream", "phone", [subject["id"] for subject in subjects],
             f"{actor['name']} films {names} for the followers" if subjects else f"{actor['name']} films a selfie")
 
 
@@ -166,11 +165,11 @@ def raise_sign(world: World, actor: Actor, target: Any) -> None:
     Raises:
         ValueError: Nobody else is in sight to protest at.
     """
-    accused = accused_of(actor, in_sight(world, actor), world["time"])
+    accused = accused_of(actor, _in_sight(world, actor), world["time"])
     if accused is None:
         raise ValueError(f"{actor['name']} has nobody to raise a protest sign at")
     message = f"{actor['name']} raises a protest sign at {accused['name']} and shouts"
-    log_act(world, actor, "raise_sign", "protest_sign", [accused["id"]], message)
+    _log_act(world, actor, "raise_sign", "protest_sign", [accused["id"]], message)
     stimulus = emit(world, PROTEST, [actor["id"]], [actor["x"], actor["y"]], [accused["id"]], message, "signature_act")
     think(accused, "shamed", world["time"], f"{called(accused, actor)} shamed me with a protest sign", message, about=actor)
     damping = world["rules"]["attention"]["wall_damping"]
@@ -193,11 +192,11 @@ def brandish_flag(world: World, actor: Actor, target: Any) -> None:
     Raises:
         ValueError: Nobody in sight is disliked enough to threaten.
     """
-    threatened = threatened_by(actor, in_sight(world, actor), world["time"])
+    threatened = threatened_by(actor, _in_sight(world, actor), world["time"])
     if threatened is None:
         raise ValueError(f"{actor['name']} has nobody to brandish a flag at")
     message = f"{actor['name']} brandishes a little flag at {threatened['name']} and threatens them"
-    log_act(world, actor, "brandish_flag", "flag", [threatened["id"]], message)
+    _log_act(world, actor, "brandish_flag", "flag", [threatened["id"]], message)
     emit(world, THREAT, [actor["id"]], [actor["x"], actor["y"]], [threatened["id"]], message, "signature_act")
     think(threatened, "threatened", world["time"], f"{called(threatened, actor)} threatened me with a little flag",
           message, about=actor)
@@ -217,7 +216,7 @@ def open_interview(world: World, actor: Actor, partner: Actor) -> None:
         scene["topic"] = f"{actor['name']}'s microphone interview of {partner['name']}"
     friendly = opinion_of(partner, actor["id"], world["time"]) >= 0
     message = f"{actor['name']} sticks a microphone in {partner['name']}'s face"
-    log_act(world, actor, "interview_guest", "microphone", [partner["id"]], message)
+    _log_act(world, actor, "interview_guest", "microphone", [partner["id"]], message)
     if friendly:
         think(partner, "interviewed", world["time"], f"{called(partner, actor)} interviewed me", message, about=actor)
     else:

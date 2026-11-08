@@ -11,7 +11,8 @@ from tavern.hall.world import create_world, start_action
 from tavern.mind.haiku_turns import turn_content
 from tavern.social.conversation import offered_acts
 from tavern.social.invitations import accept, answer_act, answer_options
-from tavern.social.turns import claim_turns, turn_view
+from tavern.mind.turn_view import turn_view
+from tavern.social.turns import claim_turns
 from social_hall import actor, advance, command, know, say, scene_of, spotted_hall
 from test_dice_invitation import CHAIRS, TABLE
 

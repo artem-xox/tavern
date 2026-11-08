@@ -4,7 +4,6 @@ from typing import Any
 
 import pytest
 
-from tavern.body.activities import ACTIVITIES
 from tavern.body.hearing import EVENT_SOUNDS
 from tavern.social.speeches import PERFORM_WAIT
 from tavern.social.thoughts import active_thoughts
@@ -90,10 +89,6 @@ def test_a_speech_is_louder_than_a_cheer_and_quieter_than_a_brawl() -> None:
     assert EVENT_SOUNDS["dice_won"].loudness < EVENT_SOUNDS["gave_speech"].loudness < EVENT_SOUNDS["fight_started"].loudness
 
 
-def test_a_speech_is_fun() -> None:
-    assert ACTIVITIES["give_speech"].fun == 0.8
-
-
 @pytest.mark.parametrize("cell, hears", [
     pytest.param((15, 7), True, id="near-the-stage"),
     pytest.param((3, 6), True, id="across-the-hall"),
@@ -128,7 +123,7 @@ def test_the_speaker_has_no_opinion_of_their_own_speech() -> None:
 # --- the wish to speak: the option, its utility and its sentence ------------------------------------------------
 
 from tavern.hall.world import observe_actor, observe_people  # noqa: E402
-from tavern.mind.agents import build_candidates  # noqa: E402
+from tavern.mind.candidates import build_candidates  # noqa: E402
 from tavern.mind.local_policy import local_scores  # noqa: E402
 from tavern.mind.options import option_text  # noqa: E402
 

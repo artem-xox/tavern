@@ -7,10 +7,11 @@ import pytest
 
 from tavern.adapters.persistence import load_world, save_world
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action, step_world
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.mind.briefing import brief
 from tavern.mind.goals import check_goal, open_kinds, serving, serving_aim, settle_goals
-from tavern.mind.intentions import INTENTION_RULES, intention_due, intention_view, parse_stance
+from tavern.mind.haiku_intentions import parse_stance
+from tavern.mind.intentions import INTENTION_RULES, intention_due, intention_view
 from tavern.mind.local_policy import GOAL_BONUS, local_aim_scores, local_scores
 from tavern.social.thoughts import think
 

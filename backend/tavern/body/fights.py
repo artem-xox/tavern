@@ -13,7 +13,7 @@ from tavern.hall.state import Actor, World, find_actor
 from tavern.social.aftermath import bout_ended
 from tavern.social.hostility import HOSTILITY
 from tavern.social.names import called
-from tavern.social.scenes import within_reach
+from tavern.hall.whereabouts import within_reach
 from tavern.social.thoughts import opinion_of, think
 
 # What may have brought someone to start a fight.
@@ -76,7 +76,7 @@ class Bouts:
     shouting: list[Fight] = field(default_factory=list)
 
 
-def weapon_of(actor: Mapping[str, Any]) -> str:
+def _weapon_of(actor: Mapping[str, Any]) -> str:
     """Tell what a visitor fights with: a cudgel in their hands, else their fists.
 
     Args:
@@ -88,7 +88,7 @@ def weapon_of(actor: Mapping[str, Any]) -> str:
     return "cudgel" if actor["inventory"].get("cudgel") else "fists"
 
 
-def sex_of(actor: Mapping[str, Any]) -> str | None:
+def _sex_of(actor: Mapping[str, Any]) -> str | None:
     """Tell a visitor's sex as their card says it.
 
     Args:
@@ -112,7 +112,7 @@ def fighter_of(actor: Mapping[str, Any], weapon: str) -> Fighter:
         The inputs of the formula (`tavern.body.blows`).
     """
     traits = actor["traits"]
-    return Fighter(strength=traits.get("strength", 0.5), sex=sex_of(actor), brawling=traits.get("brawling", 0.5),
+    return Fighter(strength=traits.get("strength", 0.5), sex=_sex_of(actor), brawling=traits.get("brawling", 0.5),
                    courage=traits.get("courage", 0.5), temper=traits.get("temper", 0.5),
                    drunkenness=actor["drunkenness"], health=actor["health"], fatigue=actor["needs"]["fatigue"],
                    weapon=weapon)
@@ -174,7 +174,7 @@ def open_fight(world: World, attacker: Actor, victim: Actor) -> Fight:
     """
     now = world["time"]
     fight = Fight(id=f"fight-{len(world['fights']) + 1}", a=attacker["id"], b=victim["id"],
-                  weapons={member["id"]: weapon_of(member) for member in (attacker, victim)},
+                  weapons={member["id"]: _weapon_of(member) for member in (attacker, victim)},
                   started_at=now, next_exchange_at=now + EXCHANGE_SECONDS, exchanges=[], waiting=[], witnessed=False, cause=_cause(attacker, victim, now), outcome=None,
                   loser=None, ended_at=None)
     world["fights"].append(fight)

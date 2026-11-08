@@ -46,7 +46,7 @@ ITEMS: Mapping[str, Item] = MappingProxyType({
     "beer": Item("beer", "a mug of ale", "mugs of ale", held="a full mug of ale", hands=2, received="treated"),
     "remedy": Item("remedy", "a herbal remedy", "herbal remedies", held=None, hands=3, received="cared_for", cures=True),
     "keepsake": Item("keepsake", "a keepsake", "keepsakes", held=None, hands=3, received="gifted"),
-    # What a guest fights with when they hold one (`tavern.body.fights.weapon_of`); it is not a gift.
+    # What a guest fights with when they hold one (`tavern.body.fights._weapon_of`); it is not a gift.
     "cudgel": Item("cudgel", "a cudgel", "cudgels", held="a cudgel", hands=1, received="gifted", giftable=False),
     # Signature items: each belongs to one famous guest and gives them an act of their own (`Item.offers`).
     "phone": Item("phone", "a phone", "phones", held="a phone held up to film", hands=1, received="gifted",

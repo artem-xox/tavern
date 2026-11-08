@@ -6,7 +6,7 @@ import pytest
 
 from tavern.hall.world import observe_actor, observe_people
 from tavern.mind.goals import check_goal, open_alone, serving, settle_goals
-from tavern.mind.intentions import parse_stance
+from tavern.mind.haiku_intentions import parse_stance
 from dice_hall import advance, guest, start, table_hall, who
 
 ANSWER = {"thought": "I must speak.", "intention": "Tell them all.", "goal": "address_room", "target": None}

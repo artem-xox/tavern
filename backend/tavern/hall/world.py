@@ -26,15 +26,14 @@ from tavern.hall.routes import plan_route
 from tavern.hall.rules import default_rules
 from tavern.hall.sight import look_around, people_in_sight, visible_cells
 from tavern.hall.staff import check_staff_cells, on_staff
-from tavern.hall.state import World, find_actor
+from tavern.hall.state import Observation, World, find_actor
 from tavern.hall.validation import number, unique_ids
 from tavern.social.aftermath import keep_cursing
 from tavern.social.bystanders import note_started
 from tavern.social.dice import settle_games
 from tavern.social.commitments import promises_of, settle_commitments
-from tavern.social.responses import note_calls
+from tavern.social.responses import mark_answered, note_calls
 from tavern.social.errands import honor_invitations
-from tavern.social.responses import mark_answered
 from tavern.social.invitations import errand_parties, invitations_of
 from tavern.social.tables import mark_ownership
 from tavern.social.walk_ups import face_walkers
@@ -75,7 +74,7 @@ def create_world(map_data: Mapping[str, Any], seed: int = 0) -> World:
     if type(manners) is not bool:
         raise ValueError(f"The layout's table_manners must be true or false, not {manners!r}")
     rules["manners"]["table_intrusion"] = manners
-    world = World(schema_version=22, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
+    world = World(schema_version=23, seed=seed, tick=0, time=0.0, paused=False, speed=1.0,
                   map=world_map, actors=actors, departed=[], expected=[], closes_at=None, last_call_at=None,
                   events=[], stimuli=[], next_stimulus_id=0, conversations=[], next_conversation_id=0,
                   commitments=[], invitations=[], projects=[], news=[], fights=[], rules=rules)
@@ -228,7 +227,7 @@ def _see_off(world: World) -> None:
                 f"{actor['name']} left the inn after {beers} {'beer' if beers == 1 else 'beers'}")
 
 
-def observe_actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
+def observe_actor(world: Mapping[str, Any], actor_id: str) -> Observation:
     """Refresh and return a visitor's personal observation without private leaks.
 
     Args:
@@ -236,7 +235,7 @@ def observe_actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
         actor_id: Visitor making the observation.
 
     Returns:
-        Own actor state, known object records (chairs marked with whose seat they are, tables with whose table), personal memories, map bounds, visible
+        Own actor state, everyone in sight (`people`, as `observe_people`), known object records (chairs marked with whose seat they are, tables with whose table), personal memories, map bounds, visible
         cells, whether the inn has closed, the rules of giving, and who is on an errand (`on_errands`). Unseen resource changes remain
         remembered historical values.
 
@@ -250,17 +249,12 @@ def observe_actor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
     objects = deepcopy(list(actor["knowledge"]["objects"].values()))
     mark_ownership(world, actor, objects)
     return {"actor": deepcopy(actor), "objects": objects,
-            "visitors": _visible_visitors(world, actor),
+            "people": people_in_sight(world, actor),
             "memory": deepcopy(actor["memory"][-10:]), "visible_cells": visible, "time": world["time"],
             "invitations": invitations_of(world, actor), "promises": promises_of(world, actor_id),
             "map": {"width": world["map"]["width"], "height": world["map"]["height"]},
             "closed": inn_closed(world), "called_closing": since_last_call(world), "giving": dict(world["rules"]["giving"]),
             "on_errands": errand_parties(world)}
-
-
-def _visible_visitors(world: Mapping[str, Any], actor: Mapping[str, Any]) -> list[dict[str, Any]]:
-    # Only seated company is actionable in this small social demo.
-    return [person for person in people_in_sight(world, actor) if person["seat_id"]]
 
 
 def observe_people(world: Mapping[str, Any], actor_id: str) -> list[dict[str, Any]]:
@@ -273,7 +267,7 @@ def observe_people(world: Mapping[str, Any], actor_id: str) -> list[dict[str, An
     Returns:
         Public facts about each visible person: ID, name, cell, seat and table, whether they
         are free to talk (in no conversation and in no hurry), the conversation they are in,
-        whether they stand beside the viewer (`scenes.side_by_side`), and their current action
+        whether they stand beside the viewer (`whereabouts.side_by_side`), and their current action
         verb and target name. Needs, inventory, traits and memories stay private.
 
     Raises:

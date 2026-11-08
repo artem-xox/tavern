@@ -46,33 +46,37 @@ def test_a_promise_event_without_a_type_fails_loudly() -> None:
         promise_counts([{"time": 1.0, "message": "no type"}])
 
 
-def setting(message: str) -> dict[str, Any]:
-    """A logged goal set out."""
-    return {"time": 1.0, "actor_id": "ada", "type": "goal_set", "message": message}
+def setting(message: str, goal: str) -> dict[str, Any]:
+    """A logged goal set out, of a kind of `GOALS`."""
+    return {"time": 1.0, "actor_id": "ada", "type": "goal_set", "message": message, "goal": goal}
 
 
 @pytest.mark.parametrize("events, expected", [
     pytest.param([], {}, id="empty"),
-    pytest.param([setting("Ada set out to talk with Bea")], {"talk_to": 1}, id="single"),
-    pytest.param([setting("Ada set out to play a game of dice with Bea"),
-                  setting("Cy set out to play a game of dice with Ada")], {"play_with": 2}, id="duplicates"),
-    pytest.param([setting("Ada set out to buy Bea an ale"), setting("Ada set out to have it out with Cy"),
-                  setting("Ada set out to sit at the same table as Bea"), event("goal_done")],
+    pytest.param([setting("Ada set out to talk with Bea", "talk_to")], {"talk_to": 1}, id="single"),
+    pytest.param([setting("Ada set out to play a game of dice with Bea", "play_with"),
+                  setting("Cy set out to play a game of dice with Ada", "play_with")], {"play_with": 2}, id="duplicates"),
+    pytest.param([setting("Ada set out to buy Bea an ale", "treat"), setting("Ada set out to have it out with Cy", "have_it_out"),
+                  setting("Ada set out to sit at the same table as Bea", "sit_with"), event("goal_done")],
                  {"treat": 1, "have_it_out": 1, "sit_with": 1}, id="every-kind-and-other-events"),
 ])
 def test_goals_are_counted_by_kind(events: list[dict[str, Any]], expected: dict[str, int]) -> None:
     assert goal_kind_counts(events) == expected
 
 
-def test_a_goal_in_words_the_table_lacks_fails_loudly() -> None:
+@pytest.mark.parametrize("fields", [
+    pytest.param({}, id="no-goal-field"),
+    pytest.param({"goal": "fetch_the_moon"}, id="a-kind-the-table-lacks"),
+])
+def test_a_goal_that_cannot_be_read_fails_loudly(fields: dict[str, Any]) -> None:
     with pytest.raises(ValueError):
-        goal_kind_counts([setting("Ada set out to fetch the moon")])
+        goal_kind_counts([{"time": 1.0, "actor_id": "ada", "type": "goal_set", "message": "Ada set out to x", **fields}])
 
 
 def intention(who: str, tail: str = "") -> dict[str, Any]:
     """A logged intention, with what it chases when told."""
     return {"time": 1.0, "actor_id": who, "type": "intention",
-            "message": f"{who} thinks: Hm. Intends: Stay. (after: arrival{tail})"}
+            "message": f"{who} thinks: Hm. Intends: Stay. (after: arrival{tail})", **({"obsession": 0} if tail else {})}
 
 
 @pytest.mark.parametrize("events, expected", [

@@ -9,17 +9,20 @@ way. They differ only in when an answer arrives, which a `Courier` decides.
 from collections.abc import Callable, Coroutine, Mapping, Sequence
 from contextlib import suppress
 import asyncio
+from dataclasses import dataclass
 from typing import Any, Protocol
 
 from tavern.evening.decisions import apply_decision, decision_requests, free_to_decide, stale_requests
 from tavern.hall.state import World, find_actor
-from tavern.hall.world import observe_actor, observe_people
+from tavern.hall.world import observe_actor
 from tavern.mind.goals import settle_goals
 from tavern.mind.intentions import (UNMETERED, IntentionRules, Intender, deliver_intention, intention_requests,
                                     stale_intentions)
+from tavern.mind.turn_view import next_speaker
 from tavern.social.invitations import answer_options
 from tavern.social.stage_lines import StageClaim, deliver_stage, stage_claims, write_scripted_stage
-from tavern.social.turns import TurnResult, claim_turns, deliver_turn, next_speaker
+from tavern.social.scenes import TurnResult
+from tavern.social.turns import claim_turns, deliver_turn
 
 # One answer in flight. What it is belongs to the courier: a task live, a stored coroutine in lockstep.
 Ticket = Any
@@ -213,7 +216,7 @@ class MindLoop:
                     or next_speaker(scene) != invitation["to"]):
                 continue
             options = answer_options(world, scene, invitee)
-            seen = {**observe_actor(world, invitee["id"]), "people": observe_people(world, invitee["id"])}
+            seen = observe_actor(world, invitee["id"])
             scene["writing"] = {"turn": key[1], "speaker": invitee["id"], "since": world["time"]}
             self.answered.add(key)
             self.answering[key] = (self.courier.send(self.answer(seen, dict(invitation), options), world["time"]),
@@ -276,3 +279,33 @@ class MindLoop:
                     self.made[actor_id] = self.made.get(actor_id, 0) + 1
         for actor_id, view in intention_requests(world, self.intending, self.next_intention, self.rules, self.made):
             self.intending[actor_id] = (self.courier.send(intender(view), world["time"]), world["time"], view)
+
+
+@dataclass(frozen=True)
+class EveningPorts:
+    """The model ports of one evening, each with its config and generator already bound by the runner.
+
+    `choose` decides for a visitor, `answer` is how an invitee answers (None: the line writer decides),
+    `write` writes a conversation line, `stage` the words on and at the stage, and `intender` writes
+    intentions (None offline).
+    """
+
+    choose: Decide
+    answer: Answer | None
+    write: Write
+    stage: Stage
+    intender: Intender | None
+
+
+def evening_mind(courier: Courier, ports: EveningPorts, rules: IntentionRules) -> MindLoop:
+    """Build the loop an evening plays, the same way for the live server and the headless runner.
+
+    Args:
+        courier: Carries requests and says when answers are back.
+        ports: The evening's bound model ports.
+        rules: When guests take stock.
+
+    Returns:
+        A loop with nothing in flight.
+    """
+    return MindLoop(courier, ports.choose, ports.write, ports.intender, rules, ports.answer, ports.stage)

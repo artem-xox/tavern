@@ -19,7 +19,8 @@ from tavern.mind.agents import Evaluators
 from tavern.mind.feelings import minds
 from tavern.mind.haiku_turns import RejectedTurn, parse_turn, turn_question
 from tavern.mind.scripted import scripted_turn
-from tavern.social.turns import check_turn, turn_view
+from tavern.mind.turn_view import turn_view
+from tavern.social.turns import check_turn
 from social_hall import actor, advance, scene_of, say, seated_talk
 
 
@@ -786,8 +787,10 @@ def first_evening_played(seed: int) -> dict[str, Any]:
 # and rivalry ties) changed the seeded first evening and the news went no further there; ten of twelve seeds carry it.
 # Seed 2 became 3 (2026-10-26, with the user's approval) when guests began to talk where they stand and walk up to
 # standers (S2-16, S2-17); eleven of twelve seeds carry it.
+# Seed 1 became 2 (2026-11-07, with the user's approval) when `lean`, `aims` and `projects` became the only path
+# (S3-R04): the offline evenings the tests play now take them, and of seeds 0 to 13 all but 1 and 5 carry the news.
 @pytest.mark.parametrize("seed", [
-    pytest.param(1, id="seed-1"),
+    pytest.param(2, id="seed-2"),
     pytest.param(3, id="seed-3"),
 ])
 def test_a_news_item_reaches_a_third_guest_in_other_words(seed: int) -> None:

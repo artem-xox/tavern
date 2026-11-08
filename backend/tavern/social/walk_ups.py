@@ -6,7 +6,8 @@ from typing import Any
 from tavern.body.activities import ACTIVITIES
 from tavern.body.expression import facing_toward
 from tavern.hall.state import Actor, World, find_actor
-from tavern.social.scenes import at_table, conversation_of, pressed
+from tavern.hall.whereabouts import at_table
+from tavern.social.scenes import conversation_of, pressed
 
 
 def walker_toward(world: Mapping[str, Any], actor_id: str) -> Actor | None:

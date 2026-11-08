@@ -16,6 +16,7 @@ from tavern.hall.memory import record_event
 from tavern.adapters.persistence import load_world, save_world
 from tavern.social.thoughts import THOUGHTS, familiarity_of, opinion_of, think
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action, step_world
+from social_hall import advance, command
 
 
 def table_room() -> dict[str, Any]:
@@ -27,17 +28,6 @@ def table_room() -> dict[str, Any]:
         {"id": "table", "kind": "table", "name": "Table", "x": 3, "y": 2}, chair("west", 2, 2), chair("east", 4, 2),
         {"id": "door", "kind": "door", "name": "Door", "x": 7, "y": 5, "interaction_spots": [[6, 5]]},
     ], "actors": [{"id": "ada", "name": "Ada", "x": 2, "y": 2}, {"id": "bea", "name": "Bea", "x": 4, "y": 2}]}
-
-
-def command(verb: str, target: str | None = None) -> dict[str, Any]:
-    """Build an executable action."""
-    return {"id": verb if target is None else f"{verb}:{target}", "verb": verb, "target_id": target}
-
-
-def advance(world: dict[str, Any], seconds: float) -> None:
-    """Advance the world in 0.1 s ticks."""
-    for _ in range(round(seconds * 10)):
-        step_world(world, 0.1)
 
 
 def actor(world: dict[str, Any], actor_id: str) -> dict[str, Any]:
@@ -140,7 +130,7 @@ def view(thoughts: list[dict[str, Any]], time: float) -> dict[str, Any]:
            "traits": {"patience": 0.3, "comfort": 0.5, "curiosity": 0.5}, "favorite_seat_id": None,
            "visit": {"seconds": 120.0, "beers": 0}, "thoughts": thoughts, "relations": {}}
     door = {"id": "door", "kind": "door", "x": 5, "y": 9, "reserved_by": None}
-    return {"actor": own, "objects": [door], "visitors": [], "memory": [], "time": time}
+    return {"actor": own, "objects": [door], "people": [], "memory": [], "time": time}
 
 
 def quarrels(count: int) -> list[dict[str, Any]]:

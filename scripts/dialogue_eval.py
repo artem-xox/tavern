@@ -15,7 +15,7 @@ from typing import Any, Mapping, Sequence
 
 from dotenv import dotenv_values
 
-from tavern.adapters.claude import ClaudeError, ask_claude
+from tavern.adapters.claude import ClaudeError, ask_claude, claude_config
 from tavern.evening.dialogue_judge import CRITERIA, Verdict, judge_dialogue
 from tavern.evening.dialogue_metrics import dialogue_metrics, missed_thresholds, pair_transcript, talk_window
 from tavern.mind.questions import Question
@@ -167,7 +167,7 @@ def main(root: Path) -> None:
     if missing:
         sys.exit(f"The dialogue eval plays live evenings: {', '.join(missing)} missing from {args.env_file}")
     spec = json.loads(args.spec.read_text())
-    claude = {"anthropic_api_key": values["ANTHROPIC_API_KEY"], "model": JUDGE_MODEL, "timeout": 60.0, "retries": 1}
+    claude = claude_config(values["ANTHROPIC_API_KEY"], JUDGE_MODEL, 60.0)
     try:
         results = asyncio.run(run_eval(args, spec, claude))
     except (ClaudeError, RuntimeError, ValueError) as error:

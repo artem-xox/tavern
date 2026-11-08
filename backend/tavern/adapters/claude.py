@@ -11,8 +11,7 @@ import httpx2
 from tavern.evening.recording import Tariff
 from tavern.mind.questions import Question
 
-# Claude Haiku 4.5, USD per million tokens: input, output, cache reads, 5-minute cache writes.
-HAIKU_4_5 = Tariff(input=1.0, output=5.0, cache_read=0.10, cache_write=1.25)
+# USD per million tokens: input, output, cache reads, 5-minute cache writes.
 # Claude Haiku 5.5 for prompts up to 100,000 tokens (ours are about 8,000); above that every price is five times this.
 HAIKU_5_5 = Tariff(input=0.10, output=0.50, cache_read=0.01, cache_write=0.125)
 # The API allows at most four cache breakpoints per request; every system block takes one.
@@ -130,6 +129,20 @@ def _usage(message: Any) -> ClaudeUsage:
     return {"input_tokens": usage.input_tokens, "output_tokens": usage.output_tokens,
             "cache_read_input_tokens": usage.cache_read_input_tokens or 0,
             "cache_creation_input_tokens": usage.cache_creation_input_tokens or 0}
+
+
+def claude_config(key: str, model: str, timeout: float = 30.0) -> dict[str, Any]:
+    """Build the config `ask_claude` reads.
+
+    Args:
+        key: Anthropic API key.
+        model: Claude model ID.
+        timeout: Seconds one request may take.
+
+    Returns:
+        Config with one SDK retry at most, so slow calls show in the latency measure rather than hide in retries.
+    """
+    return {"anthropic_api_key": key, "model": model, "timeout": timeout, "retries": 1}
 
 
 async def ask_claude(question: Question, config: Mapping[str, Any],

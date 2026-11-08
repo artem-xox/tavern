@@ -6,7 +6,7 @@ import pytest
 
 from tavern.social.scenes import conversation_of
 from tavern.social.thoughts import think
-from tavern.social.turns import turn_view
+from tavern.mind.turn_view import turn_view
 from tavern.hall.world import create_world, start_action
 
 CARD = {"id": "ada", "sprite": "visitor", "name": "Ada", "occupation": "salt trader",

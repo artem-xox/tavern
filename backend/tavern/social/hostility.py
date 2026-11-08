@@ -116,7 +116,7 @@ def _willing(observation: Mapping[str, Any], other_id: str, verb: str, now: floa
 
 
 def _near(observation: Mapping[str, Any], person: Mapping[str, Any]) -> bool:
-    # The reach of a chat: the same table, or standing side by side (see `scenes.side_by_side`).
+    # The reach of a chat: the same table, or standing side by side (see `whereabouts.side_by_side`).
     seat = next((item for item in observation["objects"] if item["id"] == observation["actor"].get("seat_id")), None)
     table = seat.get("table_id") if seat else None
     return bool(person.get("beside")) or bool(table and person.get("seat_id") and person.get("table_id") == table)

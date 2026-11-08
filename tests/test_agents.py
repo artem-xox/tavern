@@ -6,7 +6,8 @@ from typing import Any
 
 import pytest
 
-from tavern.mind.agents import Evaluator, Evaluators, build_candidates, choose_action
+from tavern.mind.agents import Evaluator, Evaluators, choose_action
+from tavern.mind.candidates import build_candidates
 from tavern.adapters.jev import JevError
 
 
@@ -57,6 +58,8 @@ def test_candidates_use_only_observed_resources(view, expected):
     pytest.param(observation([resource("tap", stock="many")]), id="malformed-stock"),
     pytest.param(observation([resource("chair"), resource("tap", stock=2)]), id="conflicting-duplicates"),
     pytest.param(observation(needs={"thirst": float("nan"), "fatigue": 0, "bladder": 0}), id="malformed-need"),
+    pytest.param(observation([resource("chair", reserved_by=123)]), id="malformed-reservation"),
+    pytest.param({**observation(), "actor": {**observation()["actor"], "id": ""}}, id="empty-actor-id"),
 ])
 def test_candidates_reject_malformed_observations(view):
     with pytest.raises(ValueError):
@@ -109,11 +112,16 @@ async def no_seat_judgement(observation: Any, candidates: Any, settings: Any) ->
     raise AssertionError("This test expects no judgement of seats")
 
 
+def thirsty():
+    """A visitor with no known tap, thirsty enough that both looking round and waiting clear their `ASK_FLOOR`."""
+    return observation(needs={"thirst": 45, "fatigue": 20, "bladder": 20})
+
+
 def test_jev_success_uses_only_supplied_candidates():
     async def evaluate(view, candidates, settings):
         return {action["id"]: float(action["verb"] == "wait") for action in candidates}
 
-    result = asyncio.run(choose_action(observation(), config(typesafe_api_key="test"), Random(0),
+    result = asyncio.run(choose_action(thirsty(), config(typesafe_api_key="test"), Random(0),
                                        Evaluators(evaluate, no_seat_judgement)))
     assert result == {"action": {"id": "wait", "verb": "wait", "target_id": None},
                       "source": "jev", "scores": {"inspect": 0.0, "wait": 1.0}, "error": None}
@@ -126,15 +134,6 @@ def test_jev_error_produces_visible_local_fallback():
     result = asyncio.run(choose_action(observation(), config(typesafe_api_key="test"), Random(0),
                                        Evaluators(evaluate, no_seat_judgement)))
     assert (result["source"], result["error"]) == ("local", "Jev request timed out")
-
-
-@pytest.mark.parametrize("view", [
-    pytest.param(observation([resource("chair", reserved_by=123)]), id="malformed-reservation"),
-    pytest.param({**observation(), "actor": {**observation()["actor"], "id": ""}}, id="empty-actor-id"),
-])
-def test_malformed_actor_or_reservation_is_not_silently_ignored(view):
-    with pytest.raises(ValueError):
-        build_candidates(view)
 
 
 def preferring(verb: str) -> Evaluator:
@@ -160,7 +159,7 @@ def tired_newcomer() -> dict[str, Any]:
                  ("wait", "jev", None, None), id="action-evaluator-scores-the-next-activity"),
     pytest.param(tired_newcomer(), Evaluators(preferring("seating"), preferring("sit")),
                  ("sit", "jev", None, "jev"), id="seat-evaluator-scores-the-chairs"),
-    pytest.param(observation(), Evaluators(timing_out, preferring("sit")),
+    pytest.param(thirsty(), Evaluators(timing_out, preferring("sit")),
                  ("inspect", "local", "Jev request timed out", None), id="failure-falls-back-to-local"),
 ])
 def test_explicit_evaluators_score_the_decision(

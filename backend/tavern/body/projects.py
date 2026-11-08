@@ -23,7 +23,8 @@ from tavern.social.dice import PLAY, open_chairs
 from tavern.social.errands import fetching_a_drink
 from tavern.social.invitations import errand_parties, known_place
 from tavern.social.responses import calling, mark_answered
-from tavern.social.scenes import conversation_of, table_of, within_reach
+from tavern.hall.whereabouts import table_of, within_reach
+from tavern.social.scenes import conversation_of
 
 # Starts an action the way `world.start_action` does: world, visitor ID, action; returns acceptance.
 Start = Callable[[World, str, Mapping[str, Any]], Mapping[str, Any]]
@@ -209,9 +210,8 @@ def _no_game(world: Mapping[str, Any], actor: Mapping[str, Any], project: Projec
     other = find_actor(world, project["target"])
     if other is None:
         return "they went home"
-    refused = f"from {actor['name']}"
-    if any(item["type"] == "invitation_declined" and item["time"] >= project["started_at"] and refused in item["message"]
-           and "dice" in item["message"] for item in world["events"]):
+    if any(item["type"] == "invitation_declined" and item["time"] >= project["started_at"]
+           and item["inviter_id"] == actor["id"] and item["invitation"] == "dice_together" for item in world["events"]):
         return "they would not play"
     agreed = any(item["kind"] == "dice_together" and {item["from"], item["to"]} == {actor["id"], other["id"]}
                  for item in world["invitations"])
@@ -236,7 +236,7 @@ PROJECTS: Mapping[str, ProjectKind] = MappingProxyType({
 })
 
 
-def project_error(world: Mapping[str, Any], actor: Mapping[str, Any], kind: str, target: str | None) -> str | None:
+def _project_error(world: Mapping[str, Any], actor: Mapping[str, Any], kind: str, target: str | None) -> str | None:
     """Tell why a guest cannot begin a project.
 
     Args:
@@ -263,9 +263,9 @@ def open_project(world: World, actor: Actor, kind: str, target: str | None) -> d
         target: The chair, table or guest it is about (None for a kind that picks its own).
 
     Returns:
-        Acceptance as `world.start_action` reports it: refused with the reason when `project_error` finds one.
+        Acceptance as `world.start_action` reports it: refused with the reason when `_project_error` finds one.
     """
-    reason = project_error(world, actor, kind, target)
+    reason = _project_error(world, actor, kind, target)
     if reason:
         return {"accepted": False, "reason": reason}
     fields = PROJECTS[kind].begin(world, actor, target)[1]
@@ -316,7 +316,8 @@ def honor_projects(world: World, start: Start) -> None:
             words = {"done": kind.done_words, "expired": f"gave up {kind.gerund}",
                      "dropped": f"was called away from {kind.gerund}"}
             message = words[outcome[0]] if outcome[0] in words else f"could not {kind.wording}: {outcome[1]}"
-            record_event(world, actor, f"project_{outcome[0]}", f"{actor['name']} {message} ({project['kind']})")
+            record_event(world, actor, f"project_{outcome[0]}", f"{actor['name']} {message} ({project['kind']})",
+                         fields={"project": project["kind"]})
 
 
 def _carry_on(world: World, actor: Actor, project: Project, start: Start) -> tuple[str, str] | None:

@@ -34,7 +34,7 @@ class Settled:
     released: list[Actor]
 
 
-def form(actor: Mapping[str, Any], rules: DiceRules) -> float:
+def _form(actor: Mapping[str, Any], rules: DiceRules) -> float:
     """Tell how well a guest plays tonight: their traits, less what the ale takes away.
 
     Args:
@@ -65,10 +65,10 @@ def win_chance(first: Mapping[str, Any], second: Mapping[str, Any], rules: DiceR
         symmetric, so the two seats' chances add up to one.
 
     Raises:
-        ValueError: A trait or drunkenness is out of range (see `form`).
+        ValueError: A trait or drunkenness is out of range (see `_form`).
     """
     low, high = rules["odds"]
-    return min(high, max(low, 0.5 + rules["edge"] * (form(first, rules) - form(second, rules))))
+    return min(high, max(low, 0.5 + rules["edge"] * (_form(first, rules) - _form(second, rules))))
 
 
 def winner(world: World, table_id: str, first: Actor, second: Actor) -> Actor:

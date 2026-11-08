@@ -8,7 +8,7 @@ import pytest
 
 from tavern.adapters.persistence import parse_world
 from tavern.hall.world import create_world, observe_actor, start_action
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.mind.briefing import brief
 from tavern.mind.local_policy import local_scores
 from tavern.mind.options import option_text

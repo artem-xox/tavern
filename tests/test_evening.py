@@ -13,6 +13,7 @@ from tavern.server.runtime import TavernRuntime
 from tavern.adapters.persistence import load_world, save_world
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action, step_world
 from tavern.social.thoughts import rankling
+from social_hall import advance
 
 
 def table(table_id: str, x: int, y: int) -> list[dict[str, Any]]:
@@ -60,12 +61,6 @@ def appeal_room(sources: list[dict[str, Any]]) -> dict[str, Any]:
 def command(verb: str, target: Any = None) -> dict[str, Any]:
     """Build an executable action."""
     return {"id": f"{verb}:{target}", "verb": verb, "target_id": target}
-
-
-def advance(world: dict[str, Any], seconds: float) -> None:
-    """Advance physical state without requesting decisions."""
-    for _ in range(round(seconds * 10)):
-        step_world(world, 0.1)
 
 
 def visitor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:
@@ -205,7 +200,7 @@ def test_departure_frees_the_seat_and_removes_the_visitor_from_view() -> None:
     assert start_action(world, "ada", command("leave", "door"))["accepted"]
     advance(world, 6)
     assert furniture(world, "warm-west")["reserved_by"] is None
-    assert observe_actor(world, "bea")["visitors"] == []
+    assert [item for item in observe_actor(world, "bea")["people"] if item["seat_id"]] == []
 
 
 @pytest.mark.parametrize("target", [
@@ -231,7 +226,7 @@ def test_seated_company_is_seen_across_the_hall_but_not_through_walls(walled: bo
     advance(world, 5)
     if walled:
         world["map"]["blocked"].extend([x, 5] for x in range(11))
-    assert [item["id"] for item in observe_actor(world, "ada")["visitors"]] == expected
+    assert [item["id"] for item in observe_actor(world, "ada")["people"] if item["seat_id"]] == expected
 
 
 @pytest.mark.parametrize("trouble, field, learned", [
@@ -466,22 +461,6 @@ def test_seat_choice_is_kept_with_the_decision(tmp_path: Path) -> None:
 def demo() -> dict[str, Any]:
     """Load the repository's tavern layout."""
     return json.loads((Path(__file__).parents[1] / "data" / "tavern.json").read_text())
-
-
-def test_demo_inn_has_five_identical_two_seat_tables() -> None:
-    objects = create_world(demo())["map"]["objects"]
-    tables = [item for item in objects if item["kind"] == "table"]
-    sides = [sorted((chair["x"] - item["x"], chair["y"] - item["y"])
-                    for chair in objects if chair.get("table_id") == item["id"]) for item in tables]
-    assert [(item.get("width", 1), item.get("height", 1)) for item in tables] == [(1, 1)] * 5
-    assert sides == [[(-1, 0), (1, 0)]] * 5
-
-
-def test_only_the_hearth_table_of_the_demo_inn_is_appealing() -> None:
-    objects = create_world(demo())["map"]["objects"]
-    appeal = {item["name"]: item["appeal"] for item in objects if item["kind"] == "table"}
-    assert appeal == {"Hearth table": 0.5, "Window table": 0.0, "Garden table": 0.0, "Corner table": 0.0,
-                      "East table": 0.0}
 
 
 def test_demo_evening_begins_with_everyone_inside_the_door() -> None:

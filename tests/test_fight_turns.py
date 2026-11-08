@@ -6,7 +6,7 @@ import pytest
 
 from tavern.mind.haiku_turns import turn_content
 from tavern.social.scenes import conversation_of
-from tavern.social.turns import turn_view
+from tavern.mind.turn_view import turn_view
 from test_turn_mind import people, scene_world
 
 

@@ -40,7 +40,6 @@ class _Line(NamedTuple):
 ALIKE = 0.7
 # As in `repetition`: lowercase runs of three letters or more, so a, to and of make no two lines alike.
 _WORD = re.compile(r"[a-z][a-z']{2,}")
-_TURN = re.compile(r"(.*?) to (.*?) \(([a-z_]+)\): (.*)", re.DOTALL)
 
 
 def dialogue_metrics(events: Sequence[Mapping[str, Any]], pair: Mapping[str, str],
@@ -48,8 +47,9 @@ def dialogue_metrics(events: Sequence[Mapping[str, Any]], pair: Mapping[str, str
     """Measure how the two guests of a pair talked to each other.
 
     Args:
-        events: The event log; `turn` events are worded "<speaker> to <listener> (<act>): <line>", and
-            `turn_failed` ones "A line for <speaker> failed …".
+        events: The event log; `turn` events carry their `act` and `addressee` and are worded
+            "<speaker> to <listener> (<act>): <line>" (the words of the line are read from the message),
+            and `turn_failed` ones carry the `speaker_id`.
         pair: The two guests, ID to name as the log writes it.
         brief: Words (lowercase) a guest's lines should touch, by ID; a word counts inside a longer one.
 
@@ -57,13 +57,13 @@ def dialogue_metrics(events: Sequence[Mapping[str, Any]], pair: Mapping[str, str
         The metrics; all zero when the two said nothing to each other.
 
     Raises:
-        ValueError: The pair is not two guests, or a turn is worded otherwise.
+        ValueError: The pair is not two guests, or a turn carries no act or addressee.
     """
     if len(pair) != 2:
         raise ValueError(f"A pair is two guests, not {sorted(pair)!r}")
     lines = _pair_lines(events, pair)
-    fallbacks = sum(event["type"] == "turn_failed" and any(
-        event["message"].startswith(f"A line for {name} failed") for name in pair.values()) for event in events)
+    fallbacks = sum(event["type"] == "turn_failed" and event["speaker_id"] in pair
+                    for event in events)
     if not lines:
         return DialogueMetrics(lines=0, balance=0.0, repeated=0.0, echo=0.0, novelty=0.0, variety=0.0,
                                on_brief=0.0, fallbacks=fallbacks)
@@ -90,7 +90,7 @@ def talk_window(events: Sequence[Mapping[str, Any]], pair: Mapping[str, str],
         none when they never spoke to each other.
 
     Raises:
-        ValueError: A turn is worded otherwise.
+        ValueError: A turn carries no act or addressee.
     """
     first = next((event["time"] for event in events if event["type"] == "turn" and _pair_lines([event], pair)), None)
     return [] if first is None else [event for event in events if first <= event["time"] <= first + seconds]
@@ -107,7 +107,7 @@ def pair_transcript(events: Sequence[Mapping[str, Any]], pair: Mapping[str, str]
         "<name> (<act>): <line>" for each line one said to the other, in order.
 
     Raises:
-        ValueError: A turn is worded otherwise.
+        ValueError: A turn carries no act or addressee.
     """
     return [f"{pair[line.speaker]} ({line.act}): {line.text}" for line in _pair_lines(events, pair)]
 
@@ -118,13 +118,13 @@ def _pair_lines(events: Sequence[Mapping[str, Any]], pair: Mapping[str, str]) ->
     for event in events:
         if event["type"] != "turn" or event["actor_id"] not in pair:
             continue
-        match = _TURN.fullmatch(event["message"])
-        if match is None:
-            raise ValueError(f"Cannot read the turn in {event['message']!r}")
-        other = next(name for key, name in pair.items() if key != event["actor_id"])
-        if match.group(2) == other:
-            found.append(_Line(event["actor_id"], match.group(3), match.group(4),
-                               frozenset(_WORD.findall(match.group(4).lower()))))
+        if "act" not in event or "addressee" not in event:
+            raise ValueError(f"A turn must carry its act and addressee: {event!r}")
+        other = next(key for key in pair if key != event["actor_id"])
+        if event["addressee"] == other:
+            # The words are the one thing this module measures from the message: it is the line itself.
+            text = event["message"].split("): ", 1)[1]
+            found.append(_Line(event["actor_id"], event["act"], text, frozenset(_WORD.findall(text.lower()))))
     return found
 
 

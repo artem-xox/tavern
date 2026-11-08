@@ -10,6 +10,7 @@ import pytest
 from tavern.evening.decisions import free_to_decide
 from tavern.hall.world import create_world, start_action, step_world
 from tavern.social.thoughts import rankling
+from social_hall import command
 
 HALL = json.loads((Path(__file__).parents[1] / "data" / "tavern.json").read_text())
 
@@ -19,11 +20,6 @@ def hall(guests: Sequence[tuple[str, int, int]], **fields: Any) -> dict[str, Any
     data = {key: value for key, value in HALL.items() if key != "arrival"}
     return {**data, "actors": [{"id": guest, "name": guest.title(), "x": x, "y": y, **fields}
                                for guest, x, y in guests]}
-
-
-def command(verb: str, target: str | None = None) -> dict[str, Any]:
-    """Build an executable action."""
-    return {"id": verb if target is None else f"{verb}:{target}", "verb": verb, "target_id": target}
 
 
 def visitor(world: Mapping[str, Any], actor_id: str) -> dict[str, Any]:

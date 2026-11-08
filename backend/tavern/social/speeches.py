@@ -105,8 +105,7 @@ def perform(world: World, speaker: Actor, kind: str, target_id: str | None, line
     line = " ".join(lines)
     told = _TOLD[kind].format(target=target["name"] if target else "")
     message = f'{speaker["name"]} {told}: "{line}"'
-    record_event(world, speaker, "gave_speech", message)
-    event = world["events"][-1]
+    event = record_event(world, speaker, "gave_speech", message)
     event.update(line=line, number=kind, target_id=target_id)
     speaker["memory"][-1]["number"] = kind
     listeners = _hear(world, speaker, message, line)
@@ -145,7 +144,8 @@ def _hear(world: World, speaker: Actor, message: str, line: str) -> list[Actor]:
             taken[kind] += 1
             listeners.append(listener)
     log_event(world, speaker["id"], "speech_reaction",
-              f"{speaker['name']}'s speech: {taken['speech_admired']} admired it, {taken['speech_tiresome']} groaned")
+              f"{speaker['name']}'s speech: {taken['speech_admired']} admired it, {taken['speech_tiresome']} groaned"
+              ).update(admired=taken["speech_admired"], groaned=taken["speech_tiresome"])
     return listeners
 
 

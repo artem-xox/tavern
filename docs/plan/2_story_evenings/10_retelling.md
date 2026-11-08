@@ -1,7 +1,7 @@
 ---
 id: S2-10
 title: Retelling
-status: doing
+status: done
 needs: [S2-05]
 touches: [evening/retelling.py (new), adapters/claude.py, server/runtime.py, frontend/src/]
 ---

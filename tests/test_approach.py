@@ -6,10 +6,11 @@ from typing import Any
 import pytest
 
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.mind.briefing import brief
 from tavern.mind.local_policy import local_scores
-from tavern.social.scenes import conversation_of, side_by_side
+from tavern.hall.whereabouts import side_by_side
+from tavern.social.scenes import conversation_of
 from social_hall import actor, advance, command, say, spotted_hall
 
 FAR_SPOTS = [[3, 6], [4, 6]]

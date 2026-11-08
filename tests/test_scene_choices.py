@@ -5,12 +5,13 @@ from typing import Any
 
 import pytest
 
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.mind.briefing import brief
 from tavern.evening.decisions import decision_requests
 from tavern.evening.lockstep import Evening
 from tavern.evening.metrics import conversation_counts
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action, step_world
+from social_hall import command
 
 
 def chair(chair_id: str, x: int, y: int) -> dict[str, Any]:
@@ -29,11 +30,6 @@ def hall(*guests: tuple[str, int, int]) -> dict[str, Any]:
         {"id": "window-b", "kind": "window", "name": "Window", "x": 0, "y": 8,
          "interaction_spots": [[1, 8]], "appeal": 0.2, "reach": 3},
     ], "actors": [{"id": name, "name": name.title(), "x": x, "y": y} for name, x, y in guests]}
-
-
-def command(verb: str, target: str | None = None) -> dict[str, Any]:
-    """Build an executable action."""
-    return {"id": verb if target is None else f"{verb}:{target}", "verb": verb, "target_id": target}
 
 
 def actor(world: dict[str, Any], actor_id: str) -> dict[str, Any]:

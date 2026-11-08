@@ -156,7 +156,7 @@ def _fun(observation: Observation) -> str:
             players = len((table.get("game") or {}).get("players", []))
             notes.append(f"a game of dice is on at {label_of(table)}, and watching it is a show" if players
                          else f"{label_of(table)} stands free for a game of dice")
-    people = observation.get("people", observation.get("visitors", []))
+    people = observation.get("people", [])
     if boredom >= FUN_AT_A_FIGHT and any(person.get("fighting") for person in people):
         notes.append("a fight is on, and a fight is something to watch")
     if any(person.get("seat_id") and _shares_table(observation, person) and not person.get("asleep") for person in people):
@@ -225,7 +225,7 @@ def _unwell(observation: Observation) -> str:
 def _promises(observation: Observation) -> str:
     # What the guest promised in talk and has not yet kept: the game will note whether they did.
     names = [label_of(person) for item in observation.get("promises", [])
-             for person in [*observation.get("visitors", []), *observation.get("people", [])] if person["id"] == item["target"]]
+             for person in observation.get("people", []) if person["id"] == item["target"]]
     return "".join(f"They promised {name} to come and sit with them, and have not yet. " for name in dict.fromkeys(names)).strip()
 
 
@@ -244,7 +244,7 @@ def _answers(observation: Observation, thought: Mapping[str, Any] | None) -> str
 
 def _who(observation: Observation, thought: Mapping[str, Any]) -> str:
     # "Rurik, who beat them at dice": the one the thought is about, as the guest calls them, and what they did.
-    person = next((item for item in [*observation.get("visitors", []), *observation.get("people", [])]
+    person = next((item for item in observation.get("people", [])
                    if item["id"] == thought["about"]), None)
     return f"{label_of(person) if person else 'that guest'}, who {THOUGHTS[thought['kind']].reason}"
 
@@ -254,7 +254,7 @@ def _unanswered(observation: Observation) -> str:
     now = observation.get("time")
     if now is None:
         return ""
-    sight = {item["id"] for item in [*observation.get("visitors", []), *observation.get("people", [])]}
+    sight = {item["id"] for item in observation.get("people", [])}
     waiting = [f"{_who(observation, item)} ({_ago(age_of(item, now))})" for item in calling(observation["actor"], now)
                if item["about"] in sight]
     return f"Unanswered: {'; '.join(waiting)}." if waiting else ""
@@ -275,18 +275,15 @@ def _intention(observation: Observation) -> str:
 
 def _goal_person(observation: Observation, goal: Mapping[str, Any]) -> str | None:
     # The goal's person as the guest calls them, when they are in sight.
-    person = next((item for item in [*observation.get("visitors", []), *observation.get("people", [])]
+    person = next((item for item in observation.get("people", [])
                    if item["id"] == goal["target"]), None)
     return label_of(person) if person else "that guest"
 
 
 
 def _people(observation: Observation) -> str:
-    # `people` lists everyone in sight; bare observations only know seated company.
-    if "people" not in observation:
-        seated = [_person(observation, visitor) for visitor in observation.get("visitors", [])]
-        return f"Seated in sight: {'; '.join(seated)}." if seated else "Nobody is seated in sight."
-    people = [_person(observation, person) for person in observation["people"]]
+    # `people` lists everyone in sight.
+    people = [_person(observation, person) for person in observation.get("people", [])]
     return f"In sight: {'; '.join(people)}." if people else "Nobody else is in sight; they are alone in the inn."
 
 
@@ -337,7 +334,7 @@ def _ago(seconds: float) -> str:
 
 def _memory(memory: Mapping[str, Any]) -> str:
     if memory["type"] == "action_completed":
-        activity = ACTIVITIES.get(memory["message"].rsplit(" ", 1)[-1])
+        activity = ACTIVITIES.get(memory["verb"])
         return activity.done if activity and activity.done else memory["message"]
     if memory["type"] == "action_failed":
         return f"was turned away ({memory['message']})"
@@ -356,7 +353,7 @@ def recollections(memory: Sequence[Mapping[str, Any]], now: float) -> list[str]:
         are left out, and so is a finished chat, which is already remembered as the conversation itself.
     """
     kept = [item for item in memory if item["type"] not in ("action_started", "interrupted", "alerted")
-            and not (item["type"] == "action_completed" and item["message"].endswith(" talk"))]
+            and not (item["type"] == "action_completed" and item["verb"] == "talk")]
     return [f"{_ago(now - item['time'])}, {_memory(item)}" for item in kept]
 
 

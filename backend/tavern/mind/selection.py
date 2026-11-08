@@ -123,36 +123,6 @@ def _flag(config: Mapping[str, Any], name: str) -> bool:
     return value
 
 
-def read_lean(config: Mapping[str, Any]) -> bool:
-    """Read whether requests to a model are made lean (see `worth_asking`) from the AI config.
-
-    Args:
-        config: AI config, with a `lean` entry or none.
-
-    Returns:
-        The setting; requests are plain (every option) when the config does not say.
-
-    Raises:
-        ValueError: The setting is not a bool.
-    """
-    return _flag(config, "lean")
-
-
-def read_projects(config: Mapping[str, Any]) -> bool:
-    """Read whether guests may take on projects (see `tavern.body.projects`) from the AI config.
-
-    Args:
-        config: AI config, with a `projects` entry or none.
-
-    Returns:
-        The setting; no project is offered when the config does not say.
-
-    Raises:
-        ValueError: The setting is not a bool.
-    """
-    return _flag(config, "projects")
-
-
 def read_answers(config: Mapping[str, Any]) -> bool:
     """Read whether an invitee's answer is their own choice (see `tavern.mind.agents.choose_answer`) from the AI config.
 
@@ -166,21 +136,6 @@ def read_answers(config: Mapping[str, Any]) -> bool:
         ValueError: The setting is not a bool.
     """
     return _flag(config, "answers")
-
-
-def read_aims(config: Mapping[str, Any]) -> bool:
-    """Read whether a social option is followed by a choice of aim (see `tavern.social.aims`) from the AI config.
-
-    Args:
-        config: AI config, with an `aims` entry or none.
-
-    Returns:
-        The setting; no aim is chosen when the config does not say.
-
-    Raises:
-        ValueError: The setting is not a bool.
-    """
-    return _flag(config, "aims")
 
 
 def read_switch(text: str | None, default: bool, name: str) -> bool:
@@ -202,6 +157,33 @@ def read_switch(text: str | None, default: bool, name: str) -> bool:
     if text not in ("true", "false"):
         raise ValueError(f"{name} must be true or false, not {text!r}")
     return text == "true"
+
+
+def _read_number(text: str | None, default: str, name: str) -> float:
+    try:
+        return float(text or default)
+    except ValueError:
+        raise ValueError(f"{name} must be a number, not {text!r}") from None
+
+
+def read_ai_config(values: Mapping[str, str | None], key: str | None) -> dict[str, Any]:
+    """Read the AI config that decisions use from the environment.
+
+    Args:
+        values: Environment variables; unset or empty ones take today's defaults.
+        key: The Jev API key, chosen by the caller; None runs the local policy.
+
+    Returns:
+        Config with `typesafe_api_key`, `model` (TYPESAFE_MODEL), `timeout` (AI_TIMEOUT, seconds),
+        `temperature` (AI_TEMPERATURE) and `answers` (AI_ANSWERS).
+
+    Raises:
+        ValueError: A number or the switch is malformed; the message names the variable.
+    """
+    return {"typesafe_api_key": key, "model": values.get("TYPESAFE_MODEL") or "jev-latest",
+            "timeout": _read_number(values.get("AI_TIMEOUT"), "8", "AI_TIMEOUT"),
+            "temperature": _read_number(values.get("AI_TEMPERATURE"), "0.25", "AI_TEMPERATURE"),
+            "answers": read_switch(values.get("AI_ANSWERS"), False, "AI_ANSWERS")}
 
 
 @dataclass(frozen=True)

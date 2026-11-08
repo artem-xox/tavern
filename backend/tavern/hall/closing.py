@@ -6,7 +6,7 @@ from typing import Any
 
 from tavern.body.hearing import EVENT_SOUNDS, emit
 from tavern.hall.memory import log_event, record_event
-from tavern.hall.staff import on_staff
+from tavern.hall.staff import guests, on_staff
 from tavern.hall.state import World
 from tavern.hall.validation import number
 
@@ -23,6 +23,18 @@ def inn_closed(world: Mapping[str, Any]) -> bool:
         True from closing time on; never for an evening without a closing time.
     """
     return world["closes_at"] is not None and world["time"] >= world["closes_at"]
+
+
+def all_gone(world: Mapping[str, Any]) -> bool:
+    """Tell whether everyone has left and nobody else is expected.
+
+    Args:
+        world: World with `actors` and, with a scenario, `expected` arrivals.
+    Returns:
+        True when no guest is in the hall and nobody is expected. Staff stay on, so they never keep an
+        evening going; a world without a scenario expects nobody.
+    """
+    return not guests(world) and not world.get("expected")
 
 
 def closing_called(world: Mapping[str, Any]) -> bool:
@@ -62,11 +74,11 @@ def call_last_orders(world: World, since: float) -> None:
     barkeep = next((actor for actor in world["actors"] if on_staff(actor)), None)
     if barkeep is None:
         message = f'The innkeeper called out: "{LAST_CALL_LINE}"'
-        log_event(world, None, "last_call", message)
+        event = log_event(world, None, "last_call", message)
         emit(world, EVENT_SOUNDS["last_call"], [], _innkeeper(world["map"]), [], message, "last_call")
     else:
-        record_event(world, barkeep, "last_call", f'{barkeep["name"]} called out: "{LAST_CALL_LINE}"')
-    world["events"][-1]["line"] = LAST_CALL_LINE
+        event = record_event(world, barkeep, "last_call", f'{barkeep["name"]} called out: "{LAST_CALL_LINE}"')
+    event["line"] = LAST_CALL_LINE
 
 
 def call_closing(world: World, since: float) -> None:

@@ -20,6 +20,7 @@ make test      # all backend tests
 make check     # tests + frontend typecheck; CI runs this plus `make build`
 make build     # frontend production build
 make evening   # headless scenario evening (Jev with a .env key); SEED, MODE, OUT, LIMIT
+make golden   # four offline evenings, to diff before and after a refactor (S3-R00)
 make eval      # local only, live models: dialogue eval of two famous guests (data/evals/); after a prompt or mind change
 .venv/bin/python -m pytest tests/test_navigation.py -k path -x   # one behavior, fast
 ```
@@ -52,16 +53,17 @@ Functional core, imperative shell. Dependencies point inward only.
 - **Core** — pure rules, no I/O, in `backend/tavern/` packages named for a concept:
   - `hall/` the world and its state (`world.py` public API, `lifecycle.py` action state
     machine, `state.py` types, `rules.py`, `chance`, `room`, `routes`, `sight`, `sightlines`, `staff`, `arrival`, `closing`,
-    `memory` event log, `validation`).
+    `memory` event log, `validation`, `whereabouts`: at which table or bar, whom one can reach).
   - `body/` what executes an action: `activities.py` (the verb table), `actions`, `items` (what a visitor
     can carry), `queues`, `bartending`, `hearing`, `attention`, `expression`, `drunkenness`, `dozing`.
   - `social/` guests among guests: `thoughts`, `ties`, `names`, `scenes`, `conversation`,
     `social_acts`, `invitations`, `errands`, `giving`, `dice`, `overhearing`, `turns`.
   - `mind/` what a guest observes and decides: `briefing`, `options`, `hall_view`,
-    `agents` (candidates and decisions), `local_policy`, `intentions`, `cards`,
-    `haiku_turns`, the model ports (`questions`).
+    `candidates` (the options open now), `agents` (decisions), `local_policy`, `intentions`, `cards`,
+    `turn_view` (what a line writer sees), `haiku_turns`, `haiku_intentions` (Haiku's intention question),
+    the model ports (`questions`).
   - `evening/` an evening as a whole: `scenario`, `decisions`, `mind_loop` (the requests in
-    flight, with a `Courier` port), `lockstep` (headless runs), `metrics`, `recording`.
+    flight, with a `Courier` port), `lockstep` (headless runs), `metrics`, `recording`, `report` (the report of `make evening`).
 - **Adapters** — `adapters/`, one per outside system: `jev.py` (LLM over HTTP), `claude.py`,
   `persistence.py` (JSON files, `FileStore`), `database.py` (PostgreSQL, `DatabaseStore`).
 - **Shell** — `server/` (FastAPI/WebSocket `api.py`, sessions, the live `runtime.py`,
@@ -91,7 +93,7 @@ Rules:
   the concept: pure, tested alone, wired in with one small edit. Do not grow files over
   ~400 lines (`scene.ts` today); split first, as a separate step.
 - Adding a verb means one `Activity` in `activities.py` (targets, timing, preconditions,
-  effects, wording, pose, family), plus its candidate rule in `agents.py`, its local utility
+  effects, wording, pose, family), plus its candidate rule in `candidates.py`, its local utility
   in `local_policy.py` and its option sentence in `options.py`. The world, Jev, saves, and
   the client read the table.
   Put it in an existing `FAMILIES` entry when it answers the same wish; a new family widens
@@ -164,6 +166,11 @@ TypeScript (`frontend/`): no `any`; `types.ts` is the contract with the backend 
   not 20-line inline literals.
 - Run the narrowest test after every change and `make check` before finishing. Paste
   the output.
+- Do not write a test that pins:
+  a wording (a phrase in prompt text; test that the text is *used*, not what it says),
+  data (positions, counts or names in `data/tavern.json`; test a rule over a hand-made hall),
+  a tuning number (a constant equal to a literal; test the behavior it produces),
+  or a twin (same body and assertion shape as another test; add cases to its `parametrize`).
 
 ## Boundaries
 

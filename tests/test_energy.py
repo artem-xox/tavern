@@ -5,7 +5,8 @@ from typing import Any
 import pytest
 
 from tavern.body.energy import tire
-from tavern.hall.world import create_world, start_action, step_world
+from tavern.hall.world import create_world, start_action
+from social_hall import advance
 
 START = 50.0
 
@@ -97,12 +98,6 @@ def test_staff_are_never_tired_by_their_work() -> None:
     world["actors"][0]["post"] = "bar"
     tire(world, 10.0)
     assert fatigue(world) == START
-
-
-def advance(world: dict[str, Any], seconds: float) -> None:
-    """Advance the world in 0.1 s ticks."""
-    for _ in range(round(seconds * 10)):
-        step_world(world, 0.1)
 
 
 @pytest.mark.parametrize("seconds, restored", [

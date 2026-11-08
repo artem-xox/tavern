@@ -13,12 +13,12 @@ from tavern.adapters.jev import evaluate_actions, evaluate_aims, evaluate_answer
 from tavern.adapters.persistence import FileStore
 from tavern.body.activities import ACTIVITIES, client_activities
 from tavern.body.items import client_items
-from tavern.evening.decisions import log_control
-from tavern.evening.mind_loop import MindLoop, TaskCourier
+from tavern.evening.mind_loop import EveningPorts, TaskCourier, evening_mind
 from tavern.evening.retelling import Retelling, retell
 from tavern.evening.scenario import Scenario, open_evening
 from tavern.evening.story_score import WEIGHTS, Moment, story_moments, story_score
-from tavern.hall.staff import guests
+from tavern.hall.memory import fresh_events, log_event
+from tavern.hall.closing import all_gone
 from tavern.hall.state import World
 from tavern.hall.world import create_world, step_world
 from tavern.mind import agents
@@ -106,10 +106,6 @@ class Store(Protocol):
         """Replace the world in a slot."""
 
 
-def _anyone_to_come(world: Mapping[str, Any]) -> bool:
-    return bool(guests(world) or world["expected"])
-
-
 class TavernRuntime:
     """Own world state, one asynchronous decision request per visitor and one line per scene."""
 
@@ -144,9 +140,10 @@ class TavernRuntime:
         # With the answers setting on, an invitee's answer is their own choice, asked before their line.
         answers = ((lambda observation, invitation, options: answer(observation, invitation, options, self.ai_config,
                                                                     self.rng)) if read_answers(self.ai_config) else None)
-        self.mind = MindLoop(TaskCourier(), lambda observation: choose(observation, self.ai_config, self.rng),
-                             lambda view: self.writer(view, self.ai_config), intender, intention_rules, answers,
-                             lambda view: stage_writer(view, self.ai_config))
+        self.mind = evening_mind(TaskCourier(), EveningPorts(
+            lambda observation: choose(observation, self.ai_config, self.rng), answers,
+            lambda view: self.writer(view, self.ai_config), lambda view: stage_writer(view, self.ai_config), intender),
+            intention_rules)
 
     @property
     def pending(self) -> dict[str, tuple[Any, int]]:
@@ -165,10 +162,10 @@ class TavernRuntime:
     def _note_story(self) -> None:
         # The world keeps only its latest 200 events, so the story is gathered tick by tick: what follows the
         # last event seen is new (an event is told apart by identity, as equal events do repeat).
-        events = self.world["events"]
-        seen = next((index for index in range(len(events) - 1, -1, -1) if events[index] is self.chronicle[-1]), -1) \
-            if self.chronicle else -1
-        fresh = events[seen + 1:]
+        # When the last one seen has been trimmed away, the whole log is taken.
+        fresh = fresh_events(self.world["events"], self.chronicle[-1] if self.chronicle else None)
+        if fresh is None:
+            fresh = list(self.world["events"])
         self.chronicle.extend(fresh)
         self.moments.extend(story_moments(fresh))
 
@@ -211,7 +208,7 @@ class TavernRuntime:
                 "telling": self._telling is not None and not self._telling.done()}
 
     def _event(self, message: str) -> None:
-        log_control(self.world, message)
+        log_event(self.world, None, "control", message)
 
     def advance(self, dt: float) -> None:
         """Advance the world without waiting for AI requests.
@@ -221,7 +218,7 @@ class TavernRuntime:
         """
         step_world(self.world, dt)
         self._note_story()
-        if not self.world["paused"] and self.world["closes_at"] is not None and not _anyone_to_come(self.world):
+        if not self.world["paused"] and self.world["closes_at"] is not None and all_gone(self.world):
             # Staff stay at their bars all night, so only guests, present or expected, keep an evening going.
             self.world["paused"] = True
             self._event("The last guest has left: the evening is over")

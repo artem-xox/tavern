@@ -12,7 +12,8 @@ from tavern.body.activities import ACTIVITIES, FAMILIES
 from tavern.body.projects import PROJECTS, honor_projects
 from tavern.evening.decisions import free_to_decide
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action, step_world
-from tavern.mind.agents import Evaluators, build_candidates, choose_action
+from tavern.mind.agents import Evaluators, choose_action
+from tavern.mind.candidates import build_candidates
 from tavern.mind.local_policy import local_scores
 from tavern.social.scenes import conversation_of, start_conversation
 from social_hall import actor, advance, command, know, spotted_hall
@@ -174,7 +175,7 @@ def test_choosing_it_takes_three_levels_the_family_the_verb_and_the_chair() -> N
             return {item["id"]: float(item["id"].startswith(prefix)) for item in candidates}
         return evaluate
 
-    config = {"typesafe_api_key": "k", "model": "jev-latest", "timeout": 1.0, "temperature": 0.0, "projects": True}
+    config = {"typesafe_api_key": "k", "model": "jev-latest", "timeout": 1.0, "temperature": 0.0}
     result = asyncio.run(choose_action(view, config, Random(0), Evaluators(
         favouring("refreshment", "actions"), favouring("sit:n", "seats"), family=favouring("settle_in", "family"))))
     assert (result["action"]["id"], seen, result["family"]["name"], "seat" in result) == (

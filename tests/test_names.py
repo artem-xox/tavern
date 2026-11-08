@@ -11,7 +11,7 @@ from tavern.mind.briefing import brief
 from tavern.mind.cards import parse_card
 from tavern.social.names import as_known, called
 from tavern.adapters.persistence import load_world, save_world
-from tavern.social.turns import turn_view
+from tavern.mind.turn_view import turn_view
 from tavern.hall.world import observe_actor, observe_people
 from tavern.hall.world import start_action
 from social_hall import LOOKS, actor, advance, card, command, say, scene_of, seated_talk

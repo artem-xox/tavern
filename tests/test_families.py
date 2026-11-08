@@ -9,7 +9,8 @@ import httpx
 import pytest
 
 from tavern.body.activities import ACTIVITIES, FAMILIES
-from tavern.mind.agents import Evaluator, Evaluators, build_candidates, choose_action
+from tavern.mind.agents import Evaluator, Evaluators, choose_action
+from tavern.mind.candidates import build_candidates
 from tavern.mind.briefing import brief
 from tavern.evening.decisions import apply_decision
 from tavern.mind.families import family_scores, group_families
@@ -38,7 +39,7 @@ def view(objects: list[dict[str, Any]], needs: dict[str, float] | None = None,
     own = {"id": "ada", "name": "Ada", "x": 5, "y": 5, "inventory": {"beer": 0}, "needs": {**calm, **(needs or {})},
            "traits": {"patience": 0.5, "comfort": 0.5, "curiosity": 0.5}, "favorite_seat_id": None,
            "visit": {"seconds": 120.0, "beers": 1}}
-    return {"actor": {**own, **actor}, "objects": objects, "visitors": visitors or [], "memory": []}
+    return {"actor": {**own, **actor}, "objects": objects, "people": visitors or [], "memory": []}
 
 
 def pastimes() -> list[dict[str, Any]]:
@@ -204,7 +205,10 @@ def test_a_flooded_choice_never_asks_about_more_than_the_limit(verb: str) -> Non
             return {action["id"]: float(action["verb"] == chosen) for action in candidates}
         return evaluate
 
-    evaluators = Evaluators(counting(verb), counting("sit"), counting("none"))
+    async def first_aim(observation: Any, candidates: Any, settings: Any) -> dict[str, float]:
+        return {action["id"]: float(index == 0) for index, action in enumerate(candidates)}
+
+    evaluators = Evaluators(counting(verb), counting("sit"), counting("none"), aims=first_aim)
     result = asyncio.run(choose_action(crowded_inn(), config(typesafe_api_key="test"), Random(0), evaluators,
                                        limit=8))
     concrete = sum(len(option.get("members", [option])) for option in build_candidates(crowded_inn()))

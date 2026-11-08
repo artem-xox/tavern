@@ -14,6 +14,7 @@ from tavern.server.runtime import TavernRuntime
 from tavern.mind.intentions import IntentionRules
 from tavern.evening.lockstep import Pace, run_evening
 from tavern.hall.world import create_world, start_action
+from social_hall import command
 
 RULES = IntentionRules(interval=180.0, min_gap=3.0)
 HOMEWARD = "Go home before this turns ugly."
@@ -34,11 +35,6 @@ def hall() -> dict[str, Any]:
     ], "actors": [{"id": "ada", "name": "Ada", "x": 2, "y": 2}, {"id": "bea", "name": "Bea", "x": 5, "y": 2}]}
 
 
-def command(verb: str, target: str | None = None) -> dict[str, Any]:
-    """Build an executable action."""
-    return {"id": verb if target is None else f"{verb}:{target}", "verb": verb, "target_id": target}
-
-
 def quarrelsome() -> dict[str, Any]:
     """Ada and Bea, seated, tipsy, impatient and each thinking ill of the other, talk; the first line is due at 5 s."""
     world = create_world(hall(), 4)
@@ -46,6 +42,7 @@ def quarrelsome() -> dict[str, Any]:
         assert start_action(world, actor_id, command("sit", seat))["accepted"]
         actor = next(item for item in world["actors"] if item["id"] == actor_id)
         actor["needs"]["social"], actor["visit"]["beers"], actor["traits"]["patience"] = 100.0, 3, 0.0
+        actor["visit"]["seconds"] = 300.0  # a good while in: going home is worth putting to a model (`ASK_FLOOR`)
         other = "bea" if actor_id == "ada" else "ada"
         actor["relations"][other] = {"name": other.title(), "opinion": -40.0, "familiarity": "acquaintance"}
         actor["knowledge"]["objects"]["door"] = {**world["map"]["objects"][3], "last_seen": 0.0}

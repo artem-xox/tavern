@@ -10,7 +10,8 @@ from tavern.body.activities import FAMILIES
 from tavern.body.items import carried_words, empty_inventory
 from tavern.hall.rules import default_rules
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action
-from tavern.mind.agents import Evaluators, build_candidates, choose_action
+from tavern.mind.agents import Evaluators, choose_action
+from tavern.mind.candidates import build_candidates
 from tavern.mind.briefing import brief
 from tavern.mind.local_policy import local_scores
 from tavern.mind.options import option_text
@@ -200,7 +201,7 @@ def test_a_guest_who_decides_to_give_in_the_world_does_and_is_not_offered_it_aga
     def decide() -> dict[str, Any]:
         observation = {**observe_actor(world, "ada"), "people": observe_people(world, "ada")}
         config = {"typesafe_api_key": "key", "model": "jev-latest", "timeout": 2.0, "temperature": 0.0}
-        return asyncio.run(choose_action(observation, config, Random(1), Evaluators(prefer, prefer)))
+        return asyncio.run(choose_action(observation, config, Random(1), Evaluators(prefer, prefer, aims=prefer)))
 
     chosen = decide()["action"]
     assert chosen == {"id": "give:remedy:bea", "verb": "give", "target_id": "bea", "item": "remedy"}

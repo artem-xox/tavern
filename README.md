@@ -13,5 +13,4 @@ The backend reads an optional `.env` for Jev and Claude; Ctrl+C stops both servi
 - [Mind](docs/MIND.md) — how a guest decides what to do and say.
 - [Character catalog](docs/CHARACTER_CATALOG.md) — where characters live and how to add one.
 - [PixelLab character pipeline](docs/CHARACTER_ART_PIPELINE.md) — 68 px characters, eight views per pose.
-- [Tavern pixel art redesign](docs/PIXEL_ART_REDESIGN.md) — asset and renderer replacement plan.
 - [Agent instructions](AGENTS.md) — shared development guidelines.

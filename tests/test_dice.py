@@ -11,8 +11,9 @@ from tavern.adapters.persistence import parse_world
 from tavern.body.hearing import EVENT_SOUNDS
 from tavern.evening.decisions import free_to_decide
 from tavern.hall.rules import check_rules, default_rules
-from tavern.hall.world import create_world, start_action, step_world
+from tavern.hall.world import create_world, start_action
 from tavern.social.dice import win_chance, winner
+from social_hall import advance
 
 LAYOUT = json.loads((Path(__file__).parents[1] / "data" / "tavern.json").read_text())
 RULES = default_rules()["dice"]
@@ -44,12 +45,6 @@ def two_players(**seed_and_traits: Any) -> dict[str, Any]:
 def sit_down(world: dict[str, Any], actor_id: str, chair: str) -> None:
     """Send a visitor to play at a dice chair."""
     assert start_action(world, actor_id, {"id": f"play_dice:{chair}", "verb": "play_dice", "target_id": chair})["accepted"]
-
-
-def advance(world: dict[str, Any], seconds: float) -> None:
-    """Advance the world without requesting decisions."""
-    for _ in range(round(seconds * 10)):
-        step_world(world, 0.1)
 
 
 def who(world: dict[str, Any], actor_id: str) -> dict[str, Any]:

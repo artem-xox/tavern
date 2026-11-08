@@ -11,7 +11,6 @@ from tavern.adapters.jev import JevError, evaluate_aims, evaluate_aims_metered, 
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action
 from tavern.mind.agents import Evaluator, Evaluators, choose_action
 from tavern.mind.local_policy import local_aim_scores
-from tavern.mind.selection import read_aims
 from social_hall import advance, command, know, spotted_hall
 
 
@@ -32,8 +31,8 @@ def ada_sees_bea(social: float = 95.0, facts: dict[str, Any] | None = None) -> d
 
 
 def settings(key: str | None = "test", **fields: Any) -> dict[str, Any]:
-    """The AI config with the aims stage on unless said otherwise."""
-    return {"typesafe_api_key": key, "model": "jev-latest", "timeout": 2.0, "temperature": 0.0, "aims": True, **fields}
+    """The AI config, with a key unless said otherwise."""
+    return {"typesafe_api_key": key, "model": "jev-latest", "timeout": 2.0, "temperature": 0.0, **fields}
 
 
 def favouring(prefix: str | tuple[str, ...], seen: list[Any] | None = None) -> Evaluator:
@@ -86,15 +85,6 @@ def test_a_failing_aims_evaluator_falls_back_to_the_local_scores_and_says_so() -
         "local", "Jev request timed out", True)
 
 
-@pytest.mark.parametrize("config", [
-    pytest.param(settings(aims=False), id="aims-off"),
-    pytest.param({k: v for k, v in settings().items() if k != "aims"}, id="aims-absent"),
-])
-def test_without_the_setting_no_aim_is_chosen(config: dict[str, Any]) -> None:
-    result = decide(ada_sees_bea(), Evaluators(favouring("talk"), favouring("sit"), aims=favouring("win_over")), config)
-    assert ("aim" in result, "aim" in result["action"]) == (False, False)
-
-
 def test_an_action_that_is_not_social_takes_no_aim() -> None:
     result = decide(ada_sees_bea(), Evaluators(favouring("sit"), favouring("sit"), aims=favouring("win_over")))
     assert (result["action"]["verb"], "aim" in result["action"], "aim" in result) == ("sit", False, False)
@@ -108,24 +98,6 @@ def test_without_a_key_the_aim_is_chosen_locally_and_no_model_is_asked() -> None
 def test_an_aims_setting_with_a_key_and_no_aims_evaluator_fails_loudly() -> None:
     with pytest.raises(ValueError, match="aims"):
         decide(ada_sees_bea(), Evaluators(favouring("talk"), favouring("sit")))
-
-
-@pytest.mark.parametrize("config, expected", [
-    pytest.param({}, False, id="absent-is-off"),
-    pytest.param({"aims": True}, True, id="on"),
-    pytest.param({"aims": False}, False, id="off"),
-])
-def test_the_aims_setting_is_read_from_the_config(config: dict[str, Any], expected: bool) -> None:
-    assert read_aims(config) is expected
-
-
-@pytest.mark.parametrize("config", [
-    pytest.param({"aims": "yes"}, id="a-string"),
-    pytest.param({"aims": None}, id="none"),
-])
-def test_an_aims_setting_that_is_not_a_bool_fails_loudly(config: dict[str, Any]) -> None:
-    with pytest.raises(ValueError, match="aims"):
-        read_aims(config)
 
 
 def candidates_for(*aims: str) -> list[dict[str, Any]]:

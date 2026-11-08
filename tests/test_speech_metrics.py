@@ -23,7 +23,7 @@ def test_a_speech_is_a_story_moment_weighted_between_a_quarrel_and_a_fight() -> 
 
 @pytest.mark.parametrize("events, expected", [
     pytest.param([], {"speeches": 0, "speakers": [], "admired": 0, "groaned": 0}, id="no-speeches"),
-    pytest.param([event("gave_speech", "Ada gave a speech"), event("speech_reaction", "Ada's speech: 3 admired it, 1 groaned")],
+    pytest.param([event("gave_speech", "Ada gave a speech"), {**event("speech_reaction", "Ada's speech: 3 admired it, 1 groaned"), "admired": 3, "groaned": 1}],
                  {"speeches": 1, "speakers": ["ada"], "admired": 3, "groaned": 1}, id="one-speech"),
     pytest.param([event("gave_speech", "a", actor_id="ada"), event("gave_speech", "b", time=9.0, actor_id="ada"),
                   event("gave_speech", "c", time=5.0, actor_id="bea")],
@@ -65,3 +65,8 @@ def test_a_heckle_is_a_story_moment_worth_a_gift_and_less_than_the_number() -> N
     moments = story_moments([event("heckled", 'Bea heckled Ada: "Sit down!"', actor_id="bea")])
     assert ([item["moment"] for item in moments], WEIGHTS["gift"] <= WEIGHTS["heckle"] < WEIGHTS["speech"]) == (
         ["heckle"], True)
+
+
+def test_a_speech_reaction_without_its_counts_fails_loudly() -> None:
+    with pytest.raises(ValueError):
+        speech_counts([event("speech_reaction", "Ada's speech: 3 admired it, 1 groaned")])

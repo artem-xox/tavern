@@ -12,42 +12,26 @@ from typing import Any, Callable, Mapping
 from dotenv import dotenv_values
 
 from tavern.adapters import jev
-from tavern.adapters.claude import HAIKU_5_5, ClaudeError, ask_claude
+from tavern.adapters.claude import HAIKU_5_5, ClaudeError, ask_claude, claude_config
 from tavern.adapters.probes import probes
 from tavern.adapters.tracing import (Scorer, Tracer, open_tracer, traced_intender, traced_question, traced_scores,
                                      traced_writer)
-from tavern.evening.aim_metrics import aim_counts
-from tavern.evening.choice_metrics import choice_counts
 from tavern.evening.lockstep import Pace, evening_mode, run_evening
-from tavern.evening.metrics import (attention_counts, bar_metrics, conversation_counts, dice_metrics, evening_metrics,
-                                    intention_counts, news_metrics, sleep_metrics, unspoken_calls, writer_stats)
-from tavern.evening.ailment_metrics import ailment_counts
-from tavern.evening.closing_metrics import closing_counts
-from tavern.evening.fight_metrics import fight_counts
-from tavern.evening.giving_metrics import giving_counts
-from tavern.evening.manner_metrics import manner_counts
-from tavern.evening.drink_metrics import drink_counts
-from tavern.evening.speech_metrics import speech_counts, stage_counts
-from tavern.evening.goal_metrics import chased_counts, goal_counts, goal_kind_counts, promise_counts
-from tavern.evening.repetition import ALIKE, repetition_counts
+from tavern.evening.report import evening_report
 from tavern.evening.retelling import retell
-from tavern.evening.response_metrics import response_counts
-from tavern.evening.story_score import WEIGHTS, story_moments, story_score
-from tavern.evening.invitation_metrics import invitation_counts
-from tavern.evening.project_metrics import project_counts
 from tavern.evening.recording import (Record, format_record, parse_records, record_calls, record_questions, replay_calls,
                               replay_questions)
 from tavern.evening.scenario import open_evening, parse_scenario
-from tavern.hall.staff import on_staff
 from tavern.mind.agents import Evaluators
 from tavern.adapters.characters import load_catalog
 from tavern.mind.haiku_stage import claude_stage_writer
 from tavern.mind.haiku_turns import claude_writer, writer_mode
-from tavern.mind.intentions import Intender, intention_writer
+from tavern.mind.haiku_intentions import intention_writer
+from tavern.mind.intentions import Intender
 from tavern.mind.model_health import HealthBoard, banner, blocking
 from tavern.mind.questions import Question
 from tavern.mind.scripted import write_scripted_turn
-from tavern.mind.selection import read_switch
+from tavern.mind.selection import read_ai_config
 from tavern.social.stage_lines import StageWriter, write_scripted_stage
 from tavern.social.turns import TurnWriter
 
@@ -55,7 +39,7 @@ DECIDES = {"local": "the local policy (no model)", "live": "Jev, recorded", "rep
 RETELLING_MODEL = "claude-sonnet-5-5"  # Tells the evening at the end: one call, so a stronger model costs cents.
 CLAUDE_MODEL = "claude-haiku-5-5"  # The model `app.py` asks too: a measured evening costs what the server's would.
 CASTS_WITH_SCENARIOS = ("locals", "guests")
-TARIFFS = {"turn": HAIKU_5_5, "card": HAIKU_5_5, "intention": HAIKU_5_5, "stage": HAIKU_5_5}
+TARIFFS = {"turn": HAIKU_5_5, "intention": HAIKU_5_5, "stage": HAIKU_5_5}
 
 
 def arguments(root: Path) -> argparse.ArgumentParser:
@@ -109,12 +93,7 @@ def config(values: Mapping[str, Any], mode: str) -> dict[str, Any]:
     # A replay answers from its recording: the placeholder key only switches decisions to the
     # model and is never sent anywhere.
     key = {"live": values.get("TYPESAFE_API_KEY"), "replay": "replay", "local": None}[mode]
-    return {"typesafe_api_key": key, "model": values.get("TYPESAFE_MODEL", "jev-latest"),
-            "timeout": float(values.get("AI_TIMEOUT", "8")), "temperature": float(values.get("AI_TEMPERATURE", "0.25")),
-            "lean": read_switch(values.get("AI_LEAN"), True, "AI_LEAN"),
-            "aims": read_switch(values.get("AI_AIMS"), True, "AI_AIMS"),
-            "projects": read_switch(values.get("AI_PROJECTS"), True, "AI_PROJECTS"),
-            "answers": read_switch(values.get("AI_ANSWERS"), False, "AI_ANSWERS")}
+    return read_ai_config(values, key)
 
 
 def keeper(calls: list[Record], log: Path) -> Callable[[Record], None]:
@@ -183,8 +162,7 @@ def turn_writer(writer: str, mode: str, calls: list[Record], keep: Callable[[Rec
         return write_scripted_turn
     if mode == "replay":
         return claude_writer(replay_questions("turn", calls, ClaudeError))
-    # One SDK retry at most, so slow calls show in the latency measure rather than hide in retries.
-    config = {"anthropic_api_key": values["ANTHROPIC_API_KEY"], "model": CLAUDE_MODEL, "timeout": 30.0, "retries": 1}
+    config = claude_config(values["ANTHROPIC_API_KEY"], CLAUDE_MODEL)
 
     async def ask(question: Question) -> Any:
         return await ask_claude(question, config)
@@ -212,7 +190,7 @@ def stage_writer(writer: str, mode: str, calls: list[Record], keep: Callable[[Re
         return write_scripted_stage
     if mode == "replay":
         return claude_stage_writer(replay_questions("stage", calls, ClaudeError))
-    config = {"anthropic_api_key": values["ANTHROPIC_API_KEY"], "model": CLAUDE_MODEL, "timeout": 30.0, "retries": 1}
+    config = claude_config(values["ANTHROPIC_API_KEY"], CLAUDE_MODEL)
 
     async def ask(question: Question) -> Any:
         return await ask_claude(question, config)
@@ -239,8 +217,7 @@ def mind(mode: str, values: Mapping[str, Any], prefix: str, calls: list[Record],
         return intention_writer(prefix, replay_questions("intention", calls, ClaudeError)), "Claude answers replayed"
     if mode == "local" or not values.get("ANTHROPIC_API_KEY"):
         return None, f"offline: {'local mode' if mode == 'local' else 'no ANTHROPIC_API_KEY'}, so no intentions"
-    claude = {"anthropic_api_key": values["ANTHROPIC_API_KEY"], "model": CLAUDE_MODEL, "timeout": 30.0,
-              "retries": 1}
+    claude = claude_config(values["ANTHROPIC_API_KEY"], CLAUDE_MODEL)
 
     async def metered(question: Question) -> tuple[dict[str, Any], Mapping[str, int]]:
         answer, usage = await ask_claude(question, claude)
@@ -287,7 +264,7 @@ def write_retelling(out: Path, events: list[dict[str, Any]], story: Mapping[str,
     if mode == "replay" or not values.get("ANTHROPIC_API_KEY"):
         print("no retelling: " + ("a replay asks no model" if mode == "replay" else "no ANTHROPIC_API_KEY"))
         return
-    claude = {"anthropic_api_key": values["ANTHROPIC_API_KEY"], "model": RETELLING_MODEL, "timeout": 60.0, "retries": 1}
+    claude = claude_config(values["ANTHROPIC_API_KEY"], RETELLING_MODEL, 60.0)
 
     async def ask(question: Question) -> dict[str, Any]:
         return (await ask_claude(question, claude))[0]
@@ -390,37 +367,15 @@ def main(root: Path) -> None:
     if tracer is not None:
         # The client uploads in the background; what is still queued must leave before the process ends.
         tracer.client.flush()
-    # A replay matches its recording only with the same seed, pace, temperature, lean, aims, projects and answers settings, so they are shown.
-    report = {"run": {"mode": mode, "decides": DECIDES[mode], "note": note, "seed": args.seed,
-                      "model": settings["model"], "temperature": settings["temperature"],
-                      "lean": settings["lean"], "aims": settings["aims"],
-                      "projects": settings["projects"], "answers": settings["answers"], "step": pace.step,
-                      "model_latency": pace.model_latency, "time_limit": pace.time_limit,
-                      "stuck_threshold": args.stuck_threshold, "input_usd_per_million": args.input_price,
-                      "writer": writer, "writer_model": CLAUDE_MODEL if writer == "haiku" else None,
-                      "writer_note": writer_note, "intentions": minded},
-              **evening_metrics(evening, calls, args.input_price, args.stuck_threshold, TARIFFS),
-              "intentions": intention_counts(evening), "repetition": repetition_counts(evening.events, ALIKE),
-              "choice": choice_counts(evening.choices, evening.events),
-              "responses": response_counts(evening.events), "aims": aim_counts(evening.events),
-              "projects": project_counts(evening.events), "invitations": invitation_counts(evening.events),
-              "goals": goal_counts(evening.events), "goal_kinds": goal_kind_counts(evening.events),
-              "chased": chased_counts(evening.events), "promises": promise_counts(evening.events),
-              "attention": attention_counts(evening), "conversation": conversation_counts(evening),
-              "news": news_metrics(world), "dice": dice_metrics(evening.events),
-              "sleep": sleep_metrics(evening.events, world["departed"], world["closes_at"]),
-              "drink": drink_counts(evening.events, [*world["actors"], *world["departed"]]),
-              "speeches": speech_counts(evening.events), "stage": stage_counts(evening.events),
-              "giving": giving_counts(evening.events), "manners": manner_counts(evening.events),
-              "closing": closing_counts(world["departed"], world["last_call_at"], world["closes_at"]),
-              "ailment": ailment_counts(evening.events, {item["id"]: item["name"]
-                                                         for item in [*world["actors"], *world["departed"]]}),
-              "fights": fight_counts(world["fights"], evening.events, {item["id"]: item["name"]
-                                                                       for item in [*world["actors"], *world["departed"]]}),
-              "story": story_score(story_moments(evening.events), WEIGHTS),
-              "bar": bar_metrics(evening.events, [item["id"] for item in world["actors"] if on_staff(item)]),
-              "writer": {**writer_stats(evening, calls, "turn", HAIKU_5_5),
-                         "unspoken_calls": unspoken_calls(evening, calls, "turn")}}
+    # A replay matches its recording only with the same seed, pace, temperature and answers settings, so they are shown.
+    run = {"mode": mode, "decides": DECIDES[mode], "note": note, "seed": args.seed,
+           "model": settings["model"], "temperature": settings["temperature"],
+           "answers": settings["answers"], "step": pace.step,
+           "model_latency": pace.model_latency, "time_limit": pace.time_limit,
+           "stuck_threshold": args.stuck_threshold, "input_usd_per_million": args.input_price,
+           "writer": writer, "writer_model": CLAUDE_MODEL if writer == "haiku" else None,
+           "writer_note": writer_note, "intentions": minded}
+    report = evening_report(evening, world, calls, run, args.input_price, args.stuck_threshold, TARIFFS, HAIKU_5_5)
     (args.out / "events.jsonl").write_text("".join(json.dumps(event, sort_keys=True) + "\n" for event in evening.events))
     (args.out / "metrics.json").write_text(json.dumps(rounded(report), indent=2) + "\n")
     print(json.dumps(rounded(report), indent=2))

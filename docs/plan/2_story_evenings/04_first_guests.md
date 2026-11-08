@@ -1,7 +1,7 @@
 ---
 id: S2-04
 title: First guests
-status: doing
+status: done
 needs: [S2-01, S2-03]
 touches: [characters/guests/, data/scenarios/guests.json]
 ---

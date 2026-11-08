@@ -1,7 +1,7 @@
 ---
 id: S2-07
 title: Fun
-status: doing
+status: done
 needs: [S2-05]
 touches: [body/activities.py, mind/local_policy.py, mind/briefing.py, mind/feelings.py, social/dice.py, body/drunkenness.py]
 ---

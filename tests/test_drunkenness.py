@@ -12,7 +12,8 @@ from tavern.body.drunkenness import (STAGES, drink_beer, drunk_stage, fight_accu
                                 speech_instruction)
 from tavern.adapters.persistence import load_world, save_world
 from tavern.hall.rules import default_rules
-from tavern.hall.world import create_world, observe_actor, start_action, step_world
+from tavern.hall.world import create_world, observe_actor, start_action
+from social_hall import advance, command
 
 RULES = {"per_beer": 0.2, "per_second": 0.0005, "doze_per_second": 0.01}
 
@@ -100,17 +101,6 @@ def table_room(**traits: float) -> dict[str, Any]:
          "table_id": "table", "interaction_spots": [[2, 2]]},
         {"id": "door", "kind": "door", "name": "Door", "x": 7, "y": 5, "interaction_spots": [[6, 5]]},
     ], "actors": [{"id": "ada", "name": "Ada", "x": 2, "y": 2, "traits": traits}]}
-
-
-def advance(world: dict[str, Any], seconds: float) -> None:
-    """Advance the world in 0.1 s ticks."""
-    for _ in range(round(seconds * 10)):
-        step_world(world, 0.1)
-
-
-def command(verb: str, target: str | None = None) -> dict[str, Any]:
-    """Build an executable action."""
-    return {"id": verb if target is None else f"{verb}:{target}", "verb": verb, "target_id": target}
 
 
 @pytest.mark.parametrize("traits, expected", [

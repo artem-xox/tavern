@@ -14,8 +14,10 @@ from tavern.server.runtime import TavernRuntime
 from tavern.evening.lockstep import Pace, run_evening
 from tavern.social.scenes import conversation_of
 from tavern.mind.scripted import scripted_turn
-from tavern.social.turns import check_turn, claim_turns, deliver_turn, next_speaker, reading_time, turn_view
-from tavern.hall.world import create_world, start_action, step_world
+from tavern.mind.turn_view import next_speaker, turn_view
+from tavern.social.turns import check_turn, claim_turns, deliver_turn, reading_time
+from tavern.hall.world import create_world, start_action
+from social_hall import advance, command
 
 RULES = {"min_gap": 2.5, "chars_per_second": 15.0}
 
@@ -35,17 +37,6 @@ def hall() -> dict[str, Any]:
         {"id": "door", "kind": "door", "name": "Door", "x": 0, "y": 5, "interaction_spots": [[0, 4]]},
     ], "actors": [{"id": "ada", "name": "Ada", "x": 2, "y": 2}, {"id": "bea", "name": "Bea", "x": 5, "y": 2},
                   {"id": "cid", "name": "Cid", "x": 3, "y": 1}]}
-
-
-def command(verb: str, target: str | None = None) -> dict[str, Any]:
-    """Build an executable action."""
-    return {"id": verb if target is None else f"{verb}:{target}", "verb": verb, "target_id": target}
-
-
-def advance(world: dict[str, Any], seconds: float) -> None:
-    """Advance the world in 0.1 s ticks, without anyone deciding."""
-    for _ in range(round(seconds * 10)):
-        step_world(world, 0.1)
 
 
 def actor(world: dict[str, Any], actor_id: str) -> dict[str, Any]:

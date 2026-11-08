@@ -10,7 +10,7 @@ import pytest
 from tavern.adapters.persistence import load_world, save_world
 from tavern.hall.memory import record_event
 from tavern.hall.world import create_world, observe_actor, observe_people, start_action
-from tavern.mind.agents import build_candidates
+from tavern.mind.candidates import build_candidates
 from tavern.mind.briefing import brief
 from tavern.mind.intentions import SALIENT_THOUGHTS
 from tavern.mind.options import option_text

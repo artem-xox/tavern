@@ -10,7 +10,7 @@ What we build and why is in [DESIGN.md](../DESIGN.md).
 | [0 — Demo](0_demo/README.md) | Agents move, drink, sit and talk in a browser tavern | done |
 | [1 — A believable evening](1_evening/README.md) | The engine: bodies, minds, talk, news, dice, fights, the barkeep | done (foundation) |
 | [2 — Story evenings](2_story_evenings/README.md) | Famous guests whose evenings turn into chaos worth retelling | **current** |
-| [3 — The player at the bar](3_player/README.md) | The player walks into the same room and talks to guests in typed lines | planned |
+| [3 — The player at the bar](3_player/README.md) | The player walks into the same room and talks to guests in typed lines | prep: the R series |
 
 Known problems that no task owns are in [TECH_DEBT.md](TECH_DEBT.md).
 
@@ -18,20 +18,20 @@ Known problems that no task owns are in [TECH_DEBT.md](TECH_DEBT.md).
 
 | ID | Task | Needs | Status |
 |----|------|-------|--------|
-| S2-00 | [The Story Tavern](2_story_evenings/00_story_tavern.md): new name and setting in the UI, prompts and skill | — | doing |
+| S2-00 | [The Story Tavern](2_story_evenings/00_story_tavern.md): new name and setting in the UI, prompts and skill | — | done |
 | S2-01 | [Two casts](2_story_evenings/01_casts.md): `characters/locals/`, `characters/guests/`, the barkeep as staff | — | done |
 | S2-02 | [Lineup screen](2_story_evenings/02_lineup_screen.md): pick Locals or Guests, then 1–8 faces, before the evening | 01 | done |
-| S2-03 | [Persona cards](2_story_evenings/03_persona_cards.md): public persona, catchphrases, obsessions, mute characters, parody names | 01 | doing |
-| S2-04 | [First guests](2_story_evenings/04_first_guests.md): three famous guests with full art and a scenario | 01, 03 | doing |
+| S2-03 | [Persona cards](2_story_evenings/03_persona_cards.md): public persona, catchphrases, obsessions, mute characters, parody names | 01 | done |
+| S2-04 | [First guests](2_story_evenings/04_first_guests.md): three famous guests with full art and a scenario | 01, 03 | done |
 | S2-05 | [Story score](2_story_evenings/05_story_score.md): count what is worth retelling in every evening | — | done |
 | S2-06 | [Obsessions drive goals](2_story_evenings/06_obsessions.md): a guest's obsession becomes their goals and intentions | 03, 05 | done |
-| S2-07 | [Fun](2_story_evenings/07_fun.md): a need that chaos, games and signature acts fill | 05 | doing |
+| S2-07 | [Fun](2_story_evenings/07_fun.md): a need that chaos, games and signature acts fill | 05 | done |
 | S2-08 | [Signature items](2_story_evenings/08_signature_items.md): the mechanic (an item offers a verb to its carrier) and Kim's phone, `livestream` | 03, 05 | done |
-| S2-09 | [Chaos](2_story_evenings/09_chaos.md): a quarrel that boils over, rivals, shouting, quarrels that escalate into fights | 04, 05 | doing |
-| S2-10 | [Retelling](2_story_evenings/10_retelling.md): a strong model retells the log; a closing screen shows it | 05 | doing |
+| S2-09 | [Chaos](2_story_evenings/09_chaos.md): a quarrel that boils over, rivals, shouting, quarrels that escalate into fights | 04, 05 | done |
+| S2-10 | [Retelling](2_story_evenings/10_retelling.md): a strong model retells the log; a closing screen shows it | 05 | done |
 | S2-11 | [Acceptance](2_story_evenings/11_acceptance.md): live Guest evenings meet the story targets | all | todo |
-| S2-12 | [The stage](2_story_evenings/12_stage.md): a small stage from which a guest addresses the whole room | 06, 07 | doing |
-| S2-13 | [Livelier talk](2_story_evenings/13_livelier_talk.md): no dice nudge on every line, no repeated invitations, a prompt that plays famous guests for satire, a `funny` judge | 03 | doing |
+| S2-12 | [The stage](2_story_evenings/12_stage.md): a small stage from which a guest addresses the whole room | 06, 07 | done |
+| S2-13 | [Livelier talk](2_story_evenings/13_livelier_talk.md): no dice nudge on every line, no repeated invitations, a prompt that plays famous guests for satire, a `funny` judge | 03 | done |
 | S2-14 | [Stage numbers](2_story_evenings/14_stage_numbers.md): toast, roast, pitch or confession, written by Haiku; a heckle from the floor and a comeback | 12, 13 | done |
 | S2-15 | [A stage worth climbing](2_story_evenings/15_stage_look.md): a square 2-by-2 platform with a lectern and footlights that flare during a number | 14 | done |
 | S2-16 | [Talk where you stand](2_story_evenings/16_standing_talk.md): two guests standing still near each other anywhere in the hall can start a conversation | — | done |
@@ -45,6 +45,37 @@ Order: 00, 01 and 05 can run in parallel. 05 lands before 06–09 so that each o
 against a baseline. 08 and 09 both touch `activities.py`, `actions.py` and `local_policy.py`: do not run
 them at the same time. 17 builds on 16's rule and touches the same three files as 08 and 09: run it
 after 16 is merged and not alongside 08 or 09. 18 and 19 build on 08 and touch the same files: run them one at a time, after 08 is merged.
+
+## Stage 3 prep: the R series
+
+Cleanup and refactors before the player tasks are written, on the series branch `claude/s3-prep`. Why each
+exists, the rules (golden check, approved test edits only), the parallel lanes, the waves and their merge order
+are in [3_player/README.md](3_player/README.md#one-series-branch-parallel-lanes). `Needs` here is what must be
+merged before a task starts; tasks whose needs are met run at once.
+
+| ID | Task | Needs | Status |
+|----|------|-------|--------|
+| S3-R00 | [Golden evenings](3_player/r00_golden.md): `make golden`, the baseline every refactor diffs against | — | done |
+| S3-R01 | [Delete dead code](3_player/r01_dead_code.md): 3 unused names, a retired tariff, the benchmark script, a duplicated plan file | R00 | done |
+| S3-R02 | [Private names](3_player/r02_private_names.md): 19 module-local functions get an underscore | R00 | done |
+| S3-R03 | [Retire the card compiler](3_player/r03_card_compiler.md): no client calls `POST /api/cards/compile` | R00 | done |
+| S3-R04 | [Production switches](3_player/r04_production_switches.md): `lean`, `aims`, `projects` always on, so tests run the evening's path | R01, R03 | done |
+| S3-R05 | [One event log](3_player/r05_event_log.md): one length (200), the logged event returned, one reader of new events | R02 | done |
+| S3-R06 | [Rules read fields](3_player/r06_rules_read_fields.md): `verb`, `invitation`, `inviter_id` on events; save version 23 | R05 | done |
+| S3-R07 | [Metrics read fields](3_player/r07_metrics_read_fields.md): actions, invitations, talk | R06, R10 | done |
+| S3-R07b | [More metrics read fields](3_player/r07b_more_metrics_read_fields.md): aims, goals, responses, projects, speeches | R06 | done |
+| S3-R08 | [One observation](3_player/r08_one_observation.md): built once, typed, `people` only | R04 | done |
+| S3-R09 | [Whereabouts](3_player/r09_whereabouts.md): table, bar and reach move to `hall/whereabouts.py` | R02 | done |
+| S3-R10 | [The turn view](3_player/r10_turn_view.md): to `mind/turn_view.py`; `TurnResult` out of the cycle (D16) | R02 | done |
+| S3-R11 | [Candidates](3_player/r11_candidates.md): `mind/candidates.py` apart from choosing | R01, R04, R08 | done |
+| S3-R12 | [Haiku's intention question](3_player/r12_haiku_intentions.md): `mind/haiku_intentions.py` | R00 | done |
+| S3-R13 | [One wiring](3_player/r13_evening_wiring.md): config, Claude config, mind loop and end rule shared (D09) | R04 | done |
+| S3-R14 | [The evening report](3_player/r14_evening_report.md): `evening/report.py`, tested | R04 | done |
+| S3-R15 | [Shared test steps](3_player/r15_test_steps.md): 20 copied `advance` / `command` helpers go | R00 | done |
+| S3-R16 | [Test audit](3_player/r16_test_audit.md): wording, data and tuning pins; twins merged | R00 | done |
+| S3-R17 | [Pure pose and picking](3_player/r17_scene_logic.md): out of `scene.ts`, tested | — | done |
+| S3-R18 | [Frontend tests in CI](3_player/r18_ci_frontend_tests.md): Node 24, `npm test` | — | done |
+| S3-R19 | [Close the series](3_player/r19_close_the_series.md): AGENTS.md, tech debt, index, names, stale docs | all | done |
 
 ## How the plan is kept
 

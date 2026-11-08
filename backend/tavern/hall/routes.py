@@ -8,7 +8,7 @@ from tavern.hall.navigation import find_path, select_interaction_spot
 from tavern.hall.room import find_object, impassable_cells
 from tavern.hall.staff import off_limits
 from tavern.hall.state import Actor, find_actor
-from tavern.social.scenes import at_table, side_by_side, within_reach
+from tavern.hall.whereabouts import at_table, side_by_side, within_reach
 
 
 def reserved_spots(world: Mapping[str, Any], actor_id: str) -> list[tuple[int, int]]:

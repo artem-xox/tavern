@@ -45,11 +45,11 @@ def note_started(world: World) -> None:
                   message, about=attacker)
         barkeep = next((actor for actor in world["actors"] if on_staff(actor)), None)
         if barkeep is not None and line_visible((barkeep["x"], barkeep["y"]), (attacker["x"], attacker["y"]), walls):
-            record_event(world, barkeep, "barkeep_shout", f'{barkeep["name"]} called out: "{BRAWL_LINE}"')
-            world["events"][-1]["line"] = BRAWL_LINE
+            record_event(world, barkeep, "barkeep_shout",
+                         f'{barkeep["name"]} called out: "{BRAWL_LINE}"')["line"] = BRAWL_LINE
 
 
-def fighters_in_sight(observation: Mapping[str, Any]) -> dict[str, str]:
+def _fighters_in_sight(observation: Mapping[str, Any]) -> dict[str, str]:
     """Tell who in sight is fighting whom.
 
     Args:
@@ -77,7 +77,7 @@ def reactions(observation: Mapping[str, Any]) -> list[tuple[str, str | None]]:
     """
     actor, people = observation["actor"], {item["id"]: item for item in observation.get("people", [])}
     now = observation.get("time", -math.inf)
-    fights = fighters_in_sight(observation)
+    fights = _fighters_in_sight(observation)
     options: list[tuple[str, str | None]] = []
     if fights:
         options += [("watch_fight", None), ("cheer", None)]

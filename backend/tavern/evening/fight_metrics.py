@@ -68,7 +68,7 @@ def fight_counts(fights: Sequence[Mapping[str, Any]], events: Sequence[Mapping[s
             outcomes[fight["outcome"]] = outcomes.get(fight["outcome"], 0) + 1
         causes[fight["cause"]] = causes.get(fight["cause"], 0) + 1
     reactions = {verb: sum(1 for event in events if event["type"] == "action_started"
-                           and event["message"].endswith(f" chose {verb}")) for verb in REACTIONS}
+                           and event["verb"] == verb) for verb in REACTIONS}
     once = lambda kind: len({(event["time"], event["message"]) for event in events if event["type"] == kind})  # noqa: E731
     return {"count": len(records), "fights": records, "outcomes": outcomes, "causes": causes, "reactions": reactions,
             "tended": once("tended"), "refused": once("remedy_refused"),

@@ -14,7 +14,8 @@ from tavern.evening.recording import Record, record_questions, replay_questions
 from tavern.social.scenes import conversation_of, start_conversation
 from tavern.mind.scripted import scripted_turn
 from tavern.social.thoughts import think
-from tavern.social.turns import claim_turns, deliver_turn, turn_view
+from tavern.mind.turn_view import turn_view
+from tavern.social.turns import claim_turns, deliver_turn
 from tavern.hall.world import create_world, start_action
 from social_hall import seated_talk
 

@@ -10,7 +10,7 @@ from typing import Any
 
 from fastapi import FastAPI
 
-from tavern.adapters.claude import ClaudeError, ask_claude
+from tavern.adapters.claude import ClaudeError, ask_claude, claude_config
 from tavern.adapters.jev import (evaluate_actions, evaluate_actions_metered, evaluate_aims, evaluate_aims_metered, evaluate_answers, evaluate_answers_metered,
                                  evaluate_seats, evaluate_seats_metered)
 from tavern.adapters.probes import probes
@@ -19,8 +19,8 @@ from tavern.adapters.tracing import (Scorer, Tracer, open_tracer, traced_intende
 from tavern.mind.agents import Evaluator, EvaluatorError, Evaluators, choose_action, choose_answer
 from tavern.mind.haiku_stage import claude_stage_writer
 from tavern.mind.haiku_turns import claude_writer
-from tavern.mind.intentions import intention_writer
-from tavern.mind.selection import read_switch
+from tavern.mind.haiku_intentions import intention_writer
+from tavern.mind.selection import read_ai_config
 from tavern.mind.model_health import HealthBoard
 from tavern.mind.questions import Ask, Question
 from tavern.server.api import create_app
@@ -32,7 +32,7 @@ def create_default_app() -> FastAPI:
 
     Returns:
         Server initialized from the repository's map, first-evening scenario, and
-        environment variables; `ANTHROPIC_API_KEY` enables the card compiler and Haiku lines,
+        environment variables; `ANTHROPIC_API_KEY` enables Haiku lines, intentions and stage numbers,
         and `TAVERN_TRACE=true` (`make run TRACE=true`) traces Jev and Claude calls to LangSmith.
 
     Raises:
@@ -41,14 +41,7 @@ def create_default_app() -> FastAPI:
     working_root = Path.cwd()
     root = (working_root if (working_root / "data" / "tavern.json").is_file()
             else Path(__file__).resolve().parents[2])
-    config = {"typesafe_api_key": os.environ.get("TYPESAFE_API_KEY"),
-              "model": os.environ.get("TYPESAFE_MODEL", "jev-latest"),
-              "timeout": float(os.environ.get("AI_TIMEOUT", "8")),
-              "temperature": float(os.environ.get("AI_TEMPERATURE", "0.25")),
-              "lean": read_switch(os.environ.get("AI_LEAN"), True, "AI_LEAN"),
-              "aims": read_switch(os.environ.get("AI_AIMS"), True, "AI_AIMS"),
-              "projects": read_switch(os.environ.get("AI_PROJECTS"), True, "AI_PROJECTS"),
-              "answers": read_switch(os.environ.get("AI_ANSWERS"), False, "AI_ANSWERS")}
+    config = read_ai_config(os.environ, os.environ.get("TYPESAFE_API_KEY"))
     board = HealthBoard({"jev": bool(config["typesafe_api_key"]), "claude": bool(os.environ.get("ANTHROPIC_API_KEY"))},
                         log=logging.getLogger("tavern.health").warning)
     # Traces spend LangSmith quota, so only an explicit switch turns them on; one server run is one evening.
@@ -73,17 +66,17 @@ def create_default_app() -> FastAPI:
                       database_url=database_url, seed=Random().randrange(1 << 30),
                       scenario_path=root / "data" / "scenarios" / "locals.json", catalog_dir=root / "characters",
                       scenarios_dir=root / "data" / "scenarios",
-                      ask=ask, intender=intender,
+                      intender=intender,
                       choose=choosers[0], answer=choosers[1], storyteller=storyteller, health=board, probes=probes(config, os.environ.get("ANTHROPIC_API_KEY")),
                       **lines)
 
 
 def _claude_port(key: str | None, board: HealthBoard, tracer: Tracer | None,
                  model: str = "claude-haiku-5-5") -> Ask | None:
-    # The key stays on the server; without one the card compiler runs offline.
+    # The key stays on the server; without one the scripted writers run offline.
     if not key:
         return None
-    config = {"anthropic_api_key": key, "model": model, "timeout": 30.0, "retries": 1}
+    config = claude_config(key, model)
 
     async def metered(question: Question) -> tuple[dict[str, Any], Mapping[str, Any]]:
         return await ask_claude(question, config)

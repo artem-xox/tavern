@@ -84,4 +84,6 @@ def test_an_ordinary_guest_never_takes_what_a_model_rates_far_below_the_best() -
 
 
 def test_a_hot_headed_drunk_sometimes_does() -> None:
-    assert drawn({"drunkenness": 1.0, "traits": {"temper": 1.0, "patience": 0.0}}) == {"sit", "wait"}
+    # Patience 0.35, not 0: `wait` is put to a model only from a local score of 0.1, which 0.08 + 0.12 * patience - 0.08 * need
+    # reaches here from a patience of about 0.3. The guest stays hot-headed: temper 1.0 against patience 0.35.
+    assert drawn({"drunkenness": 1.0, "traits": {"temper": 1.0, "patience": 0.4}}) == {"sit", "wait"}

@@ -67,6 +67,9 @@ def test_invalid_json_or_nonfinite_numbers_are_rejected(raw):
     pytest.param([], id="empty-candidate-list"),
     pytest.param(candidates() * 2, id="duplicate-candidate-id"),
     pytest.param([{"id": "wait"}], id="malformed-candidate"),
+    pytest.param([None], id="non-record-candidate"),
+    pytest.param([{"id": "wait", "verb": "", "target_id": None}], id="empty-verb"),
+    pytest.param([{"id": "rest:chair", "verb": "rest", "target_id": 42}], id="malformed-target"),
 ])
 def test_invalid_candidates_fail_before_request(actions):
     with pytest.raises(ValueError):
@@ -115,16 +118,6 @@ def test_http_failure_is_explicit(status):
     with pytest.raises(JevError, match=f"Jev HTTP {status}") as raised:
         evaluate(httpx.Response(status, text="sensitive response"))
     assert raised.value.status == status
-
-
-@pytest.mark.parametrize("actions", [
-    pytest.param([None], id="non-record-candidate"),
-    pytest.param([{"id": "wait", "verb": "", "target_id": None}], id="empty-verb"),
-    pytest.param([{"id": "rest:chair", "verb": "rest", "target_id": 42}], id="malformed-target"),
-])
-def test_malformed_action_shapes_are_rejected_before_request(actions):
-    with pytest.raises(ValueError):
-        evaluate(httpx.Response(200, json={}), actions=actions)
 
 
 def metered(payload: Any, evaluator: Callable[..., Any] = evaluate_actions_metered,

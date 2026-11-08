@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help install run test check build benchmark evening eval
+.PHONY: help install run test check build evening eval golden
 
 SEED ?= 0
 CAST ?= locals
@@ -10,6 +10,7 @@ LIMIT ?= 1200
 TRACE ?=
 SEEDS ?= 1
 ENV ?= .env
+GOLDEN ?= runs/golden
 
 help:
 	@printf 'make run      Start the backend and browser client; Ctrl+C stops both\n'
@@ -18,7 +19,6 @@ help:
 	@printf 'make test     Run backend tests\n'
 	@printf 'make check    Run backend tests, mypy and TypeScript checks\n'
 	@printf 'make build    Build the browser client\n'
-	@printf 'make benchmark Measure one NPC minute using real Jev requests\n'
 	@printf 'make evening  Play a headless evening; writes events.jsonl, metrics.json (+ calls.jsonl live) to OUT\n'
 	@printf '              CAST=locals|guests SEED=0 OUT=runs/evening-SEED LIMIT=1200 game seconds\n'
 	@printf '              MODE=live (default when .env has TYPESAFE_API_KEY), local, or replay CALLS=path/calls.jsonl\n'
@@ -26,6 +26,7 @@ help:
 	@printf '              TRACE=true traces live calls to LangSmith, one thread per character\n'
 	@printf 'make eval     Local only: play the dialogue eval scenarios live (Jev + Haiku), measure and judge a minute\n'
 	@printf '              of talk; writes runs/evals/<time>/report.md. SEEDS="1 2" ENV=path/.env\n'
+	@printf 'make golden   Play four offline evenings (locals, guests × seeds 1, 5) into GOLDEN=runs/golden, to diff before and after a refactor\n'
 
 install:
 	@test -x .venv/bin/python || uv venv .venv
@@ -47,12 +48,16 @@ check: test
 build:
 	npm --prefix frontend run build
 
-benchmark:
-	.venv/bin/python scripts/benchmark_cost.py
-
 evening:
 	.venv/bin/python scripts/evening.py --cast $(CAST) --seed $(SEED) --out $(OUT) --time-limit $(LIMIT) \
 		$(if $(MODE),--mode $(MODE)) $(if $(CALLS),--calls $(CALLS)) $(if $(filter true,$(TRACE)),--trace)
 
 eval:
 	PYTHONPATH=backend .venv/bin/python scripts/dialogue_eval.py --seeds $(SEEDS) --env-file $(ENV)
+
+golden:
+	@for cast in locals guests; do for seed in 1 5; do \
+		PYTHONPATH=backend .venv/bin/python scripts/evening.py --cast $$cast --seed $$seed --mode local --writer scripted \
+			--no-retelling --env-file /dev/null --out $(GOLDEN)/$$cast-$$seed \
+			> $(GOLDEN)-$$cast-$$seed.log 2>&1 || { cat $(GOLDEN)-$$cast-$$seed.log; exit 1; }; \
+	done; done
