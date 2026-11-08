@@ -251,8 +251,15 @@ summary > span:last-child { color: var(--muted); font-size: var(--t-label); text
 .order-menu button:hover { background: #4a3a2a; }
 .order-empty { padding: 6px 10px; opacity: 0.8; }
 
-/* The chat under the hall (S3-09). */
-.chat { padding: 10px 24px; border-top: 1px solid #5a4a30; display: grid; gap: 6px; }
+/* The dialogue popup in the middle of the screen (S3-14; the chat of S3-09). */
+.dialogue { position: fixed; z-index: 40; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(560px, calc(100vw - 32px));
+  display: grid; gap: 8px; padding: 14px 16px; background: #2b231d; border: 1px solid var(--gold-2); border-radius: var(--radius); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); }
+.dialogue header { display: flex; align-items: center; gap: 10px; }
+.dialogue-close { margin-left: auto; min-height: 32px; padding: 4px 10px; }
+.dialogue-hint { margin: 0; font-size: 12px; }
+.dialogue-chip { position: fixed; z-index: 40; left: 50%; bottom: 16px; transform: translateX(-50%); border: 1px solid var(--gold-2); }
+.chat-to { min-height: 32px; padding: 4px 10px; }
+.chat-to.more { margin-left: auto; }
 .chat-lines { max-height: 9em; overflow-y: auto; display: grid; gap: 2px; }
 .chat-line { margin: 0; }
 .chat-line.mine { text-align: right; }
@@ -261,7 +268,7 @@ summary > span:last-child { color: var(--muted); font-size: var(--t-label); text
 .chat-face { padding: 0; width: 32px; height: 32px; }
 .chat-face img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
 .chat-face[aria-pressed="true"] { border-color: var(--gold-2); }
-.chat-turn { margin-left: auto; color: var(--gold-2); }
+.chat-turn { color: var(--gold-2); }
 .chat-input { display: flex; gap: 8px; align-items: center; }
 .chat-input input { flex: 1; }
 .chat-error { margin: 0; color: #e07060; }

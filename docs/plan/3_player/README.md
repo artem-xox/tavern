@@ -90,6 +90,7 @@ arrives, or until `rules.player.silence` passes with no typing, which plays a `s
 | S3-10 | [A scripted player](10_scripted_player.md): headless evenings with a player, golden, replay, metrics | 03, 04 |
 | S3-11 | [The player in the story](11_story.md): the retelling and the closing screen know who was played | 04 |
 | S3-12 | [Acceptance](12_acceptance.md): evenings played by a person and by scripts meet the stage's "done when" | all |
+| S3-14 | [Click a guest](14_click_a_guest.md): inspect anyone while playing; the dialogue popup in the middle, reply by clicking a guest | 08, 09 |
 
 Order: 01 and 02 can start together. Once 02 is merged, 04 and 07 can run beside 03, and 11 can start once 04
 is in. 03, 04, 05 and 10 all
