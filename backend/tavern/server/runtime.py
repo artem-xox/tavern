@@ -15,7 +15,7 @@ from tavern.body.activities import ACTIVITIES, client_activities
 from tavern.body.items import client_items
 from tavern.evening.mind_loop import EveningPorts, TaskCourier, evening_mind
 from tavern.evening.player_commands import PLAYER_COMMANDS, apply_command
-from tavern.evening.retelling import Retelling, retell
+from tavern.evening.retelling import Retelling, cited_events, retell, told
 from tavern.evening.scenario import Scenario, open_evening
 from tavern.evening.story_score import WEIGHTS, Moment, story_moments, story_score
 from tavern.hall.memory import fresh_events, log_event
@@ -160,6 +160,7 @@ class TavernRuntime:
         self.chronicle: list[dict[str, Any]] = list(self.world["events"])
         self.moments: list[Moment] = story_moments(self.chronicle)
         self.retelling: Retelling | None = None
+        self.retelling_events: dict[int, dict[str, Any]] = {}  # What the client needs of the lines it cites.
         self._telling = None
 
     def _note_story(self) -> None:
@@ -176,7 +177,12 @@ class TavernRuntime:
         score = story_score(self.moments, WEIGHTS)
         try:
             assert self.storyteller is not None
-            self.retelling = await retell(self.chronicle, score, self.storyteller)
+            player = self.world["player"]
+            # The played guest may have left by closing, so the departed are searched too.
+            played = None if player is None else next(
+                (guest["name"] for guest in [*self.world["actors"], *self.world["departed"]] if guest["id"] == player["actor_id"]), None)
+            self.retelling = await retell(self.chronicle, score, self.storyteller, played)
+            self.retelling_events = cited_events(told(self.chronicle))
         except (ClaudeError, ValueError) as error:
             self._event(f"The evening could not be retold: {error}")
 
@@ -208,6 +214,7 @@ class TavernRuntime:
             **health,
         }, "activities": client_activities(ACTIVITIES), "items": client_items(), "minds": minds(self.world),
                 "story": story_score(self.moments, WEIGHTS), "retelling": self.retelling,
+                "retelling_events": self.retelling_events if self.retelling else {},
                 "telling": self._telling is not None and not self._telling.done()}
 
     def _event(self, message: str) -> None:

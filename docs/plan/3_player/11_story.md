@@ -1,7 +1,7 @@
 ---
 id: S3-11
 title: The player in the story
-status: todo
+status: in-progress
 needs: [S3-04]
 touches: [backend/tavern/evening/retelling.py, backend/tavern/server/runtime.py, frontend/src/storyview.ts, frontend/src/main.ts, frontend/src/types.ts, frontend/tests/storyview.test.ts]
 ---
@@ -54,3 +54,21 @@ line changing the main incident, so the retelling must cite the player's lines l
   screen with the "You" face and the marked chapter.
 
 ## Results
+
+Done on 2026-11-08 (code and tests); the live part is open.
+
+- `retelling_question(events, score, note, played)` and `retell(..., played)`: the third argument `note` is already
+  the rejection reason of a second try, so the player's name travels in its own `played` argument. The question
+  carries a line naming the played guest only when there is one; without it the question is today's (tested).
+  `player_act` joins the colour kinds, so `told` keeps it; `turn` events keep their `player` field.
+- Deviation, on purpose: a chapter's `events` are positions in the whole chronicle, but the snapshot's world holds
+  only its latest 200 events, so the client cannot look them up there. The snapshot gains one additive field,
+  `retelling_events` (`cited_events(told(chronicle))`: type, actor_id, player per cited position), which
+  `playerChapters(retelling, events, playerId)` reads. `retelling` is unchanged.
+- Closing screen: chapters citing the player's line or act get a gold left bar and a star; the played guest's face is
+  first with a "You" label.
+- `make check`: 4836 passed in 291.77s, mypy clean, `tsc --noEmit` clean, 340 frontend tests pass. `make build`: built.
+- `make golden`: the four offline evenings diff identical against a build of the commit before this task.
+- **Open:** one chapter of a live retelling citing a player line, and a screenshot of the closing screen with the
+  "You" face. Not done in this session (no live Claude run or played evening in a browser; S3-10 is not merged), so
+  the status stays `in-progress`.

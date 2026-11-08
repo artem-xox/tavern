@@ -12,7 +12,7 @@ MAX_CHAPTERS = 5
 MAX_CHAPTER_TEXT = 400  # Characters of one chapter: a few sentences.
 MAX_TOKENS = 1200  # Bounds the answer; emoji take several tokens each.
 # Besides the moments, these logged events give the storyteller the colour of the evening.
-_COLOUR = ("arrival", "departure", "turn", "news_told", "insulted", "last_call")
+_COLOUR = ("arrival", "departure", "turn", "news_told", "insulted", "last_call", "player_act")
 _STYLE = """You are the storyteller of the Story Tavern. At closing time you retell the evening to the people who \
 missed it, from a numbered log of what happened.
 
@@ -78,13 +78,15 @@ def told(events: Sequence[Mapping[str, Any]]) -> dict[int, Mapping[str, Any]]:
     return {index: events[index] for index in sorted(chosen)}
 
 
-def retelling_question(events: Sequence[Mapping[str, Any]], score: StoryScore, note: str | None = None) -> Question:
+def retelling_question(events: Sequence[Mapping[str, Any]], score: StoryScore, note: str | None = None,
+                       played: str | None = None) -> Question:
     """Lay an evening out for the storyteller.
 
     Args:
         events: The evening's event log in order.
         score: Its story score; the counts tell the storyteller how big each kind of moment was.
         note: Why the storyteller's last answer was rejected, when this is the second try.
+        played: The name of the guest a person plays tonight, or None for an evening with no player.
 
     Returns:
         A question whose content lists the chosen lines as `[#number time] words`.
@@ -99,7 +101,9 @@ def retelling_question(events: Sequence[Mapping[str, Any]], score: StoryScore, n
     counts = ", ".join(f"{kind}: {count}" for kind, count in score["moments"].items())
     lines = "\n".join(f"[#{index} {_clock(event['time'])}] {event['message']}" for index, event in shown.items())
     again = "" if note is None else f"\n\nYour last answer was rejected: {note}. Cite only numbers listed above."
-    return {"system": [_STYLE], "content": f"What happened tonight, in order:\n{lines}\n\nMoments counted: {counts}{again}",
+    player = "" if played is None else (f"\n\nThe player played {played}. Tell the evening as usual, in the third person; "
+                                         "their lines and acts are events like any other.")
+    return {"system": [_STYLE], "content": f"What happened tonight, in order:\n{lines}\n\nMoments counted: {counts}{player}{again}",
             "schema": _SCHEMA, "max_tokens": MAX_TOKENS}
 
 
@@ -154,12 +158,26 @@ def _cited_only(answer: Any, shown: Mapping[int, Mapping[str, Any]]) -> Any:
     return {**answer, "chapters": standing}
 
 
-async def retell(events: Sequence[Mapping[str, Any]], score: StoryScore, ask: Ask) -> Retelling:
+def cited_events(shown: Mapping[int, Mapping[str, Any]]) -> dict[int, dict[str, Any]]:
+    """Describe the shown lines for the client, which does not hold the whole log.
+
+    Args:
+        shown: The lines the storyteller saw, from `told`.
+
+    Returns:
+        Per log position, the event's `type`, its `actor_id` and whether the player typed it (`player`).
+    """
+    return {index: {"type": event["type"], "player": event.get("player") is True, "actor_id": event["actor_id"]}
+            for index, event in shown.items()}
+
+
+async def retell(events: Sequence[Mapping[str, Any]], score: StoryScore, ask: Ask, played: str | None = None) -> Retelling:
     """Have the storyteller retell an evening, with every chapter backed by the log.
 
     Args:
         events: The evening's event log in order.
         score: Its story score.
+        played: The name of the guest a person plays tonight, if any; the storyteller is told.
         ask: The model port. It is asked once; when the answer breaks the rules of `parse_retelling` it is asked
             once more with the reason, and then only the chapters that cite lines it was shown are kept.
 
@@ -172,7 +190,7 @@ async def retell(events: Sequence[Mapping[str, Any]], score: StoryScore, ask: As
     """
     shown = told(events)
     try:
-        return parse_retelling(await ask(retelling_question(events, score)), shown)
+        return parse_retelling(await ask(retelling_question(events, score, played=played)), shown)
     except ValueError as rejected:
-        second = await ask(retelling_question(events, score, str(rejected)))
+        second = await ask(retelling_question(events, score, str(rejected), played))
     return parse_retelling(_cited_only(second, shown), shown)

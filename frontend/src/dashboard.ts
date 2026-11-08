@@ -3,8 +3,8 @@ import { html, nothing, render, type TemplateResult } from "lit-html";
 import { repeat } from "lit-html/directives/repeat.js";
 import { renderDebug, renderInspector } from "./inspector";
 import { spriteOf, type SpriteRegistry } from "./sprites";
-import { momentChips, retellingWindow } from "./storyview";
-import type { ActivityView, Actor, Chapter, Command, Conversation, ItemView, Mind, ServiceHealth, Snapshot, Verb, World, WorldEvent, WorldObject } from "./types";
+import { momentChips, playerChapters, playerFirst, retellingWindow } from "./storyview";
+import type { ActivityView, Actor, Chapter, Command, Conversation, ItemView, Mind, Retelling, ServiceHealth, Snapshot, Verb, World, WorldEvent, WorldObject } from "./types";
 
 interface Handlers {
   command: (command: Command) => void;
@@ -223,12 +223,19 @@ export class Dashboard {
     return `<div id="recap-window" class="recap-window" role="dialog" aria-modal="true" aria-labelledby="recap-heading" hidden><div class="recap-card"><h3 id="recap-heading" class="recap-title"></h3><div id="recap-body"></div><div class="recap-actions" id="recap-actions"></div></div></div>`;
   }
 
+  /** The retelling's chapters: the played guest's face first with a "You" label, and a mark on those citing the player. */
+  private chaptersView(snapshot: Snapshot, retelling: Retelling): TemplateResult[] {
+    const playerId = snapshot.state.player?.actor_id ?? null;
+    const marked = playerChapters(retelling, snapshot.retelling_events, playerId);
+    return retelling.chapters.map((chapter: Chapter, index: number) => this.chapterView(chapter, playerId, marked.includes(index)));
+  }
+
   /** A chapter of the retelling: the faces of the guests it is about, then its text. */
-  private chapterView(chapter: Chapter): TemplateResult {
-    const faces = chapter.actors
+  private chapterView(chapter: Chapter, playerId: string | null, marked: boolean): TemplateResult {
+    const faces = playerFirst(chapter.actors, playerId)
       .map((id: string): Actor | undefined => [...(this.world?.actors ?? []), ...(this.world?.departed ?? [])].find((actor: Actor): boolean => actor.id === id))
       .filter((actor: Actor | undefined): actor is Actor => actor !== undefined);
-    return html`<div class="chapter"><div class="faces">${faces.map((actor: Actor) => html`<span class="face" title=${actor.name}><img alt=${actor.name} src="/characters/${spriteOf(actor, this.sprites).name}/Idle/rotations/south.png"></span>`)}</div><p class="recap-text">${chapter.text}</p></div>`;
+    return html`<div class="chapter ${marked ? "yours" : ""}"><div class="faces">${faces.map((actor: Actor) => html`<span class="face" title=${actor.name}><img alt=${actor.name} src="/characters/${spriteOf(actor, this.sprites).name}/Idle/rotations/south.png">${actor.id === playerId ? html`<b class="you">You</b>` : nothing}</span>`)}</div><p class="recap-text">${marked ? html`<span class="you-mark" title="Cites your own words or acts">★ </span>` : nothing}${chapter.text}</p></div>`;
   }
 
   /** The window after closing: ask to wait while the retelling is written, then show it with a way back. */
@@ -241,7 +248,7 @@ export class Dashboard {
     const { retelling, story } = snapshot;
     element(this.root, "#recap-heading").textContent = mode === "told" && retelling ? retelling.title : "Please wait";
     render(mode === "told" && retelling
-      ? html`${retelling.chapters.map((chapter: Chapter) => this.chapterView(chapter))}<p class="story-chips">${momentChips(story).map((chip: string) => html`<span class="small-tag">${chip}</span> `)}</p>`
+      ? html`${this.chaptersView(snapshot, retelling)}<p class="story-chips">${momentChips(story).map((chip: string) => html`<span class="small-tag">${chip}</span> `)}</p>`
       : html`<p class="recap-text">⏳ We are preparing the retelling of your evening…</p>`, element(this.root, "#recap-body"));
     render(mode === "told" ? html`<button @click=${(): void => { this.retellingDismissed = true; element(this.root, "#recap-window").hidden = true; }}>Close</button><button @click=${(): void => this.handlers.lineup()}>Change guests</button><button class="primary" @click=${(): void => this.startOrRestart()}>↻ New evening</button>` : nothing, element(this.root, "#recap-actions"));
   }
@@ -251,7 +258,7 @@ export class Dashboard {
     const { story, retelling } = snapshot;
     const chips = momentChips(story);
     element(this.root, "#story-score").textContent = `Score ${story.score}`;
-    render(html`${retelling ? html`<h4 class="recap-title">${retelling.title}</h4>${retelling.chapters.map((chapter: Chapter) => this.chapterView(chapter))}` : nothing}
+    render(html`${retelling ? html`<h4 class="recap-title">${retelling.title}</h4>${this.chaptersView(snapshot, retelling)}` : nothing}
       <p class="story-chips">${chips.length ? chips.map((chip: string) => html`<span class="small-tag">${chip}</span> `) : "Nothing worth retelling yet."}</p>`, element(this.root, "#story"));
   }
 
