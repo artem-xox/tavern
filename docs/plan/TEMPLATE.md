@@ -30,6 +30,7 @@ writing code; update this section if the code disagrees.
 ## Done when
 
 - `make check` passes (plus `make build` if `frontend/` changed), output pasted in the PR.
+- The critic's findings are triaged in the PR (AGENTS.md, Independent review).
 - <an observable result in an evening, a number in `metrics.json`, or a screen>
 
 ## Results
