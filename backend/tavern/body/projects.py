@@ -236,7 +236,7 @@ PROJECTS: Mapping[str, ProjectKind] = MappingProxyType({
 })
 
 
-def _project_error(world: Mapping[str, Any], actor: Mapping[str, Any], kind: str, target: str | None) -> str | None:
+def project_error(world: Mapping[str, Any], actor: Mapping[str, Any], kind: str, target: str | None) -> str | None:
     """Tell why a guest cannot begin a project.
 
     Args:
@@ -263,9 +263,9 @@ def open_project(world: World, actor: Actor, kind: str, target: str | None) -> d
         target: The chair, table or guest it is about (None for a kind that picks its own).
 
     Returns:
-        Acceptance as `world.start_action` reports it: refused with the reason when `_project_error` finds one.
+        Acceptance as `world.start_action` reports it: refused with the reason when `project_error` finds one.
     """
-    reason = _project_error(world, actor, kind, target)
+    reason = project_error(world, actor, kind, target)
     if reason:
         return {"accepted": False, "reason": reason}
     fields = PROJECTS[kind].begin(world, actor, target)[1]
