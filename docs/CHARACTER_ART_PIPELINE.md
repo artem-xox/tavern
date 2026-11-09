@@ -8,7 +8,7 @@ IDs, the renderer mapping, and the generation limits found in practice.
 north-east, east, south-east, south, south-west, west, and north-west.
 PixelLab Pro Flash generates eight directions for an exact 68 px character;
 preserve and export every direction. Before making another character, verify
-the native canvas is 68 × 68.
+the native canvas is 68 × 68: a standard 68 px request has returned 96 px.
 
 ## What the game needs
 
