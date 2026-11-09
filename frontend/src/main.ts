@@ -57,11 +57,17 @@ function steeringNow(): boolean {
   return world?.player?.steering === true;
 }
 
-function clicked(pick: Pick, page: { x: number; y: number }): void {
-  const order = clickOrder(pick, steeringNow());
+function clicked(pick: Pick, page: { x: number; y: number }, inspect: boolean): void {
+  const order = clickOrder(pick, steeringNow(), { inspect, scene: chat.members() });
+  if (order?.kind === "reply") chat.replyTo(order.to);
   if (order?.kind === "walk") connection.send({ type: "act", action: walkAction(order.cell) });
-  if (order?.kind === "ask") { asked = { target_id: order.target_id, page }; connection.send({ type: "options", target_id: order.target_id }); }
+  if (order?.kind === "ask") askOptions(order.target_id, page);
   if (order?.kind === "inspect" && pick.kind === "visitor") selectVisitor(order.id);
+}
+
+function askOptions(target_id: string, page: { x: number; y: number }): void {
+  asked = { target_id, page };
+  connection.send({ type: "options", target_id });
 }
 
 function showMenu(reply: OptionsMessage): void {
@@ -70,7 +76,8 @@ function showMenu(reply: OptionsMessage): void {
   for (const actor of world.actors) names[actor.id] = actor.name;
   for (const object of world.map.objects) names[object.id] = object.name;
   const target: string = asked.target_id;
-  menu.open(menuRows(reply, names), asked.page);
+  const visitor: boolean = world.actors.some((actor): boolean => actor.id === target);
+  menu.open(menuRows(reply, names, visitor), asked.page);
   inspectTarget = (): void => { if (names[target] && world?.actors.some((actor): boolean => actor.id === target)) selectVisitor(target); };
 }
 let inspectTarget: () => void = (): void => {};
@@ -97,8 +104,12 @@ application.querySelector(".game-surround")?.before(wheelHost);
 const wheel: WheelBar = new WheelBar(wheelHost, (command): void => connection.send(command), (): void => skipAhead());
 const chatHost: HTMLElement = document.createElement("div");
 application.append(chatHost);
-const chat: ChatPanel = new ChatPanel(chatHost, (command): void => connection.send(command),
-  (): void => scene.setPending(world?.player ? chat.pendingBubble(world.player.actor_id) : null));
+const chat: ChatPanel = new ChatPanel(chatHost, {
+  send: (command): void => connection.send(command),
+  // The rest of the verbs on a guest one is talking with: the order menu, opened in the middle of the screen.
+  more: (id: string): void => askOptions(id, { x: window.innerWidth / 2 - 100, y: window.innerHeight / 2 }),
+  pendingChanged: (): void => scene.setPending(world?.player ? chat.pendingBubble(world.player.actor_id) : null),
+});
 const menu: OrderMenu = new OrderMenu(document.body, {
   act: (action): void => connection.send({ type: "act", action }),
   inspect: (): void => inspectTarget(),

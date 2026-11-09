@@ -91,6 +91,7 @@ arrives, or until `rules.player.silence` passes with no typing, which plays a `s
 | S3-11 | [The player in the story](11_story.md): the retelling and the closing screen know who was played | 04 |
 | S3-12 | [Acceptance](12_acceptance.md): evenings played by a person and by scripts meet the stage's "done when" | all |
 | S3-13 | [What the body may do](13_body_options.md): the player's options are what the world accepts, so any free chair and a clicked table seat them | 03, 08 |
+| S3-14 | [Click a guest](14_click_a_guest.md): inspect anyone while playing; the dialogue popup in the middle, reply by clicking a guest | 08, 09 |
 | S3-16 | [Cut the dead air](16_dead_air.md) (P5): the line shows at once, auto-pause for a person, skip ahead, a 10-minute played evening | 05, 09 |
 
 Order: 01 and 02 can start together. Once 02 is merged, 04 and 07 can run beside 03, and 11 can start once 04

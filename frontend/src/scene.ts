@@ -14,7 +14,7 @@ import { isLow, onPot, poseOf } from "./pose.ts";
 import { mapParts, type MapParts } from "./mapview";
 import { Speech } from "./speech";
 import { floatToast } from "./toast";
-import type { Pick } from "./orders";
+import { inspectClick, type Pick } from "./orders";
 import { drawRoute } from "./routeview";
 import { markerAt } from "./wheel";
 import { aura, auraPhase, type Haze } from "./aura";
@@ -33,8 +33,8 @@ interface SceneCallbacks {
   select: (actorId: string) => void;
   cell: (x: number, y: number) => void;
   hover: (message: string) => void;
-  /** A click on the map (not while editing): what is under it, and where the pointer is on the page. */
-  pick: (pick: Pick, page: { x: number; y: number }) => void;
+  /** A click on the map (not while editing): what is under it, where the pointer is on the page, and whether it only inspects. */
+  pick: (pick: Pick, page: { x: number; y: number }, inspect: boolean) => void;
 }
 
 interface ActorView {
@@ -121,6 +121,7 @@ export class TavernScene extends Phaser.Scene {
     this.dicePlay = this.add.graphics().setDepth(9);
     this.route = this.add.graphics();
     this.you = this.add.graphics().setDepth(20);
+    this.input.mouse?.disableContextMenu();
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer): void => this.click(pointer));
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer): void => this.hover(pointer));
     this.ready = true;
@@ -332,9 +333,10 @@ export class TavernScene extends Phaser.Scene {
     const object: WorldObject | null = objectAt(cell, this.world.map.objects);
     const event: MouseEvent | TouchEvent | WheelEvent = pointer.event;
     const page = event instanceof MouseEvent ? { x: event.clientX, y: event.clientY } : { x: 0, y: 0 };
-    if (id) this.callbacks.pick({ kind: "visitor", id }, page);
-    else if (object) this.callbacks.pick({ kind: "object", id: object.id }, page);
-    else this.callbacks.pick({ kind: "cell", cell }, page);
+    const inspect: boolean = event instanceof MouseEvent && inspectClick(event);
+    if (id) this.callbacks.pick({ kind: "visitor", id }, page, inspect);
+    else if (object) this.callbacks.pick({ kind: "object", id: object.id }, page, inspect);
+    else this.callbacks.pick({ kind: "cell", cell }, page, inspect);
   }
 
   /** Show the played guest's pending line over them until it is spoken (null: none waits). */
