@@ -1,7 +1,9 @@
 # AGENTS.md
 
 Shared instructions for coding agents. Keep this file tool-agnostic and short: every
-line must prevent a mistake an agent would otherwise make.
+line must prevent a mistake an agent would otherwise make. When a critic finding or a
+user correction exposes a missing rule, propose the one line in your PR; do not edit
+this file on your own.
 
 ## Project
 
@@ -25,8 +27,9 @@ make eval      # local only, live models: dialogue eval of two famous guests (da
 .venv/bin/python -m pytest tests/test_navigation.py -k path -x   # one behavior, fast
 ```
 
-"Done" means `make check` passes, plus `make build` if `frontend/` changed. Paste the
-run. Never write "tests pass" without it.
+"Done" means `make check` passes, plus `make build` if `frontend/` changed, and the
+critic's findings are triaged (Independent review). Paste the run. Never write "tests
+pass" or "verified" without the command and its output.
 
 ## Workflow
 
@@ -38,38 +41,56 @@ Test first for everything with a Python seam: core, adapters (with fakes), HTTP.
 3. Green: write the least code that passes. No behavior the tests do not demand.
 4. Refactor: only while green, without editing tests. If a refactor needs a test edit,
    it changed behavior: go back to step 2.
-5. Bug fix: first a failing test that reproduces it, then the fix.
+5. Bug fix: first a failing test that reproduces it, then the fix. Two fixes failed for
+   the same failure: stop editing, write down the competing explanations and test them
+   one at a time. Never stack a fix on a guess.
 6. Keep refactors and behavior changes in separate commits.
+7. Review: run the critic on the diff (below) before you call the task done.
 
 `frontend/` keeps logic out of Phaser and the DOM. A pure module (`bubble.ts`, `pixels.ts`) is tested
 in `frontend/tests/<module>.test.ts` with `node:test` (Node 24 runs `.ts` directly: import `../src/<module>.ts`
 with the extension, and a pure module that imports another one writes `.ts` there too; `tsconfig` allows it). Run `npm --prefix frontend test`
 (`make check` does). Verify the rest with `make check`, `make build`, and by running the app.
 
+## Independent review
+
+The reasoning that wrote a bug also excuses it, so no agent signs off its own change to
+code or tests. The critic is a fresh agent that never saw your conversation, prompted
+by `.claude/agents/critic.md` (Claude Code: the `critic` subagent; another tool: a new
+session with that file as its prompt). Give it the task file, the mode, the base
+branch and your claims, never your reasoning. It reads and runs; it never edits.
+
+- Plan mode, before code, when the task changes the snapshot, the saved-world format,
+  a port, or more than three modules: the critic reads Shape and Steps and looks for a
+  missing case, a wrong layer, a simpler design.
+- Diff mode, after `make check` is green.
+- Triage every finding: fix it (a bug starts with a failing test) or decline it in one
+  line. Decline a finding that has neither a failure scenario nor an AGENTS.md rule
+  behind it: fixing every remark grows abstractions and tests nobody needs.
+- After fixing a blocker or major, run a new critic on the new diff: at most three
+  diff-mode runs per task, then report what is still open.
+- Cannot start an agent (you are a subagent yourself)? Say so in your report; your
+  caller runs the critic before accepting the work. Never skip it silently.
+- The PR lists each finding with its disposition, next to the pasted `make check`.
+
 ## Architecture
 
 Functional core, imperative shell. Dependencies point inward only.
 
 - **Core** — pure rules, no I/O, in `backend/tavern/` packages named for a concept:
-  - `hall/` the world and its state (`world.py` public API, `lifecycle.py` action state
-    machine, `state.py` types, `rules.py`, `chance`, `room`, `routes`, `sight`, `sightlines`, `staff`, `arrival`, `closing`,
-    `memory` event log, `validation`, `whereabouts`: at which table or bar, whom one can reach).
-  - `body/` what executes an action: `activity.py` (what a verb is), `effects.py` (what it does when it lands), `activities.py` (the verb table), `actions`, `items` (what a visitor
-    can carry), `queues`, `bartending`, `hearing`, `attention`, `expression`, `drunkenness`, `dozing`.
-  - `social/` guests among guests: `thoughts`, `ties`, `names`, `scenes`, `conversation`,
-    `social_acts`, `invitations`, `errands`, `giving`, `dice`, `overhearing`, `turns`.
-  - `mind/` what a guest observes and decides: `briefing`, `options`, `hall_view`,
-    `candidates` (the options open now), `agents` (decisions), `local_policy`, `intentions`, `cards`,
-    `turn_view` (what a line writer sees), `haiku_turns`, `haiku_intentions` (Haiku's intention question),
-    the model ports (`questions`).
-  - `evening/` an evening as a whole: `scenario`, `decisions`, `mind_loop` (the requests in
-    flight, with a `Courier` port), `lockstep` (headless runs), `metrics`, `recording`, `report` (the report of `make evening`).
+  `hall/` the world and its state (`world.py` is its public API), `body/` what executes
+  an action (`activities.py` is the verb table), `social/` guests among guests, `mind/`
+  what a guest observes and decides (`questions.py` holds the model ports), `evening/`
+  an evening as a whole (`mind_loop`, `lockstep`, `metrics`).
 - **Adapters** — `adapters/`, one per outside system: `jev.py` (LLM over HTTP), `claude.py`,
   `persistence.py` (JSON files, `FileStore`), `database.py` (PostgreSQL, `DatabaseStore`).
 - **Shell** — `server/` (FastAPI/WebSocket `api.py`, sessions, the live `runtime.py`,
   operator `controls.py`) and `app.py`, the only place that reads the environment and
   wires concrete adapters (`create_default_app`).
 - **Client** — `frontend/src/`: renders snapshots and sends commands.
+
+The module map is the docstrings, never a list here: `grep -m1 -H '"""'
+backend/tavern/<package>/*.py` prints what each module owns.
 
 Rules:
 - Core imports only the stdlib and other core modules. Never `fastapi`, `httpx`,
@@ -90,8 +111,11 @@ Rules:
 ## Extending
 
 - A new game system (signature items, fun, retelling) is a new module named for
-  the concept: pure, tested alone, wired in with one small edit. Do not grow files over
-  ~400 lines (`scene.ts` today); split first, as a separate step.
+  the concept: pure, tested alone, wired in with one small edit. No source file in
+  `backend/tavern/` or `frontend/src/` grows past 400 lines; split first, as a separate
+  step. `tests/test_module_rules.py` holds the ones already past it at their exact size
+  (`CAPS`): lower a cap in the commit that shrinks its file, drop it at 400 or under,
+  re-key it when the file moves; never raise or add one.
 - Adding a verb means one `Activity` in `activities.py` (an effect it needs goes in `effects.py`; targets, timing, preconditions,
   effects, wording, pose, family), plus its candidate rule in `candidates.py`, its local utility
   in `local_policy.py` and its option sentence in `options.py`. The world, Jev, saves, and
@@ -117,8 +141,10 @@ SOLID, applied only where it earns its keep:
 ## Navigability
 
 - Name files, functions and tests for the domain concept (`story_score.py`, `find_path`).
-  Never `utils`, `helpers`, `common`, `manager` or `base`.
-- Open every module with a one-line docstring saying what it owns. Read a module's test
+  Never `utils`, `helpers`, `common`, `manager` or `base` (`test_module_rules.py` checks
+  source file names; function, test and package names are on review).
+- Open every module with a one-line docstring saying what it owns (checked for
+  `backend/tavern/`). Read a module's test
   file first: it is the spec.
 - Anything not imported elsewhere is `_private`. No `import *`, no re-export modules, no
   string-keyed dynamic dispatch: grep must find every caller.
@@ -146,7 +172,8 @@ TypeScript (`frontend/`): no `any`; `types.ts` is the contract with the backend 
 
 - Never modify an existing test to make it pass. If a test looks wrong, stop and
   explain why instead of editing it. A test changes only when the user asked for the
-  behavior it specifies to change; name the test and the reason before editing.
+  behavior it specifies to change; name the test and the reason before editing. The
+  one unasked edit: lowering, dropping or re-keying a `CAPS` entry (Extending).
   Never delete, skip, `xfail` or weaken an assertion to get green.
 - pytest only. No `unittest` classes, no assert helpers that hide the comparison.
 - Use `@pytest.mark.parametrize` by default: the case list is the visible spec. Every
@@ -176,29 +203,22 @@ TypeScript (`frontend/`): no `any`; `types.ts` is the contract with the backend 
 ## Boundaries
 
 - **Always**: follow the nearest existing pattern; keep `types.ts` in step with the
-  snapshot.
+  snapshot; make character art by `docs/CHARACTER_ART_PIPELINE.md` (all eight views).
 - **Ask first**: a new dependency (pip or npm); a new top-level package or layer;
   changing the saved-world format (sessions persist in files and PostgreSQL); `.github/`
   or `.do/` deploy config; spending PixelLab credits.
 - **Never**: commit secrets or `.env`; call the real Jev or network from tests; edit
   generated `frontend/dist/`; add module-level mutable state.
 
-## Character art rule
-
-Generate and ship all eight compass views for tavern characters: north,
-north-east, east, south-east, south, south-west, west, and north-west. Check
-the actual PixelLab export size before generating poses; the standard 68 px
-request has returned 96 px. PixelLab Pro Flash's eight-view export is the
-approved route for a 68 px character. See `docs/CHARACTER_ART_PIPELINE.md` for
-the tested workflow and current limit.
-
 ## Working principles
 
 Bias toward caution over speed; for trivial tasks, use judgment.
 
 - **Think before coding.** State assumptions. If several readings exist, present them.
-  If a simpler approach exists, say so and push back. If something is unclear, stop and
-  ask.
+  If a simpler approach exists, say so and push back. Ask only when the readings lead
+  to a different Shape (fields, ports, saves) or the work is on the Ask first list;
+  otherwise take the reading closest to the task file (or the request), list it under
+  Assumptions in the PR description, and go on.
 - **Simplicity first.** The minimum code that solves the problem; nothing speculative: no
   extra features, flexibility or error handling nobody asked for. The layers above exist
   to keep the core pure, not to be added for their own sake. If 200 lines could be 50,
