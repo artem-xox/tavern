@@ -19,7 +19,8 @@ import { drawRoute } from "./routeview";
 import { markerAt } from "./wheel";
 import { aura, auraPhase, type Haze } from "./aura";
 import { shippedPose, spriteOf, stills, type SpriteRegistry } from "./sprites";
-import type { ActivityView, Actor, Cell, Conversation, EmoteKind, Facing, Mind, Turn, Verb, World, WorldObject } from "./types";
+import type { Conversation, Turn } from "./talk";
+import type { ActivityView, Actor, Cell, EmoteKind, Facing, Mind, Verb, World, WorldObject } from "./types";
 import { animateWounds, createWounds, makeCudgelTexture, readWounds, type Wounds } from "./woundview";
 
 /** Even a sober guest fidgets a little; drink adds to it. */

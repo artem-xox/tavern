@@ -1,7 +1,8 @@
 /** A figure's fight and wound effects on screen: the cudgel in hand, the stars, and the per-frame motion and tint. */
 import Phaser from "phaser";
 import { blowFlash, blowShake, cudgelHand, fightMotion, healthTint, lastBlowOn, limp, showsCudgel, starsOrbit } from "./fightview";
-import type { Actor, Facing, Fight } from "./types";
+import type { Fight } from "./fights";
+import type { Actor, Facing } from "./types";
 
 /** A cudgel's pixels (`.` clear, `1` wood, `2` grip, `3` shadow), drawn at twice their size in a hand. */
 const CUDGEL: readonly string[] = ["..11..", ".1111.", ".1131.", ".1131.", ".1131.", "..11..", "..22..", "..22..", "..22.."];

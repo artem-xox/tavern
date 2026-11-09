@@ -1,6 +1,7 @@
 import { html, nothing, render, type TemplateResult } from "lit-html";
 import { canStart, eveningMinutes, keepPlayer, MAX_GUESTS, MINUTE_CHOICES, startCommand, togglePick } from "./lineup";
-import type { Cast, Command } from "./types";
+import type { Cast } from "./characters";
+import type { Command } from "./commands";
 
 /** The start screen: choose a cast, click up to six faces, choose the length, and open the evening. */
 export class LineupScreen {

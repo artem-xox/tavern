@@ -1,6 +1,6 @@
 /** How the story score reads on the screen: one chip per kind of moment that happened. */
 
-import type { CitedEvent, Retelling, Story } from "./types.ts";
+import type { CitedEvent, Retelling, Story } from "./story.ts";
 
 const MARKS: Record<string, string> = {
   quarrel: "😡", fight: "👊", knockout: "💫", played_together: "🎲", gift: "🎁", fell_asleep: "💤", limped_home: "🩹", got_drunk: "🥴",

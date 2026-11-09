@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { clickOrder, menuRows, walkAction, type Pick } from "../src/orders.ts";
-import type { Action, OptionsMessage } from "../src/types.ts";
+import type { OptionsMessage } from "../src/commands.ts";
+import type { Action } from "../src/types.ts";
 
 const floor: Pick = { kind: "cell", cell: [4, 5] };
 const guest: Pick = { kind: "visitor", id: "putin" };

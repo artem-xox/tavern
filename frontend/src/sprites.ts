@@ -1,5 +1,6 @@
 import { STAND_INS } from "./fightview.ts";
-import type { Actor, CharacterCatalog } from "./types";
+import type { CharacterCatalog } from "./characters";
+import type { Actor } from "./types";
 
 /** How one catalog character's sprites are drawn. */
 export interface SpriteSheet {

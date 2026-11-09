@@ -1,7 +1,8 @@
 /** The wheel bar above the hall: the played guest's face and name, a You / Autopilot switch, Pause, and the role sheet. */
 import { html, nothing, render } from "lit-html";
 import { roleSheet, roleSheetView } from "./rolesheet";
-import type { Actor, Command, PlayerTurn, World } from "./types";
+import type { Command } from "./commands";
+import type { Actor, PlayerTurn, World } from "./types";
 import { wheelState, type WheelState } from "./wheel";
 
 /** Whether a key press is meant for a field the person is typing in (or a control that takes Space itself). */

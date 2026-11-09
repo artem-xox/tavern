@@ -1,5 +1,7 @@
 /** What the chat panel shows and sends, worked out from a snapshot: the scene's lines, who is in it, what the input says. */
-import type { Actor, Command, Conversation, PlayerTurn, Snapshot, Turn } from "./types";
+import type { Command } from "./commands";
+import type { Conversation, Turn } from "./talk";
+import type { Actor, PlayerTurn, Snapshot } from "./types";
 
 export interface ChatMember { id: string; name: string; face: string }
 export interface ChatLine { speaker: string; addressee: string | null; words: string; mine: boolean }

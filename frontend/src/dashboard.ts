@@ -4,7 +4,10 @@ import { repeat } from "lit-html/directives/repeat.js";
 import { renderDebug, renderInspector } from "./inspector";
 import { spriteOf, type SpriteRegistry } from "./sprites";
 import { momentChips, playerChapters, playerFirst, retellingWindow } from "./storyview";
-import type { ActivityView, Actor, Chapter, Command, Conversation, ItemView, Mind, Retelling, ServiceHealth, Snapshot, Verb, World, WorldEvent, WorldObject } from "./types";
+import type { Command } from "./commands";
+import type { Chapter, Retelling } from "./story";
+import type { Conversation } from "./talk";
+import type { ActivityView, Actor, ItemView, Mind, ServiceHealth, Snapshot, Verb, World, WorldEvent, WorldObject } from "./types";
 
 interface Handlers {
   command: (command: Command) => void;

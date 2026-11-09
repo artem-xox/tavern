@@ -1,5 +1,6 @@
 /** What a click means for the played guest: walk, ask what can be done, or inspect; and the rows of the order menu. */
-import type { Action, Cell, OptionsMessage } from "./types";
+import type { OptionsMessage } from "./commands";
+import type { Action, Cell } from "./types";
 
 /** What lies under a click: a free floor cell, a visitor, or an object. */
 export type Pick = { kind: "cell"; cell: Cell } | { kind: "visitor"; id: string } | { kind: "object"; id: string };

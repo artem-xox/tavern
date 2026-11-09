@@ -1,3 +1,8 @@
+import type { CharacterCard, Tie } from "./characters";
+import type { Fight } from "./fights";
+import type { CitedEvent, Retelling, Story } from "./story";
+import type { Conversation, Errand, Fact, News } from "./talk";
+
 export type Cell = [number, number];
 /** The models the server watches. */
 export type Service = "jev" | "claude";
@@ -91,13 +96,6 @@ export interface Action {
   cell?: [number, number];
 }
 
-/** The reply to the `options` command: what is open to the played guest now, each action with its verb's label. */
-export interface OptionsMessage {
-  type: "options";
-  target_id: string | null;
-  options: { action: Action; label: string }[];
-}
-
 export interface Actor {
   id: string;
   name: string;
@@ -153,30 +151,6 @@ export interface Actor {
   intention: Intention | null;
 }
 
-/** One swing of a fight: when, who swung, whether it landed, and the health it took. */
-export interface Exchange {
-  time: number;
-  attacker: string;
-  hit: boolean;
-  damage: number;
-}
-
-/** A fight between two (`a` started it); `outcome` is null while it runs. Bystanders may wait a turn against one of them. */
-export interface Fight {
-  id: string;
-  a: string;
-  b: string;
-  weapons: Record<string, "fists" | "cudgel">;
-  started_at: number;
-  next_exchange_at: number;
-  exchanges: Exchange[];
-  waiting: { id: string; against: string }[];
-  witnessed: boolean;
-  outcome: "knockout" | "double_knockout" | "yielded" | "shouting" | "parted" | "separated" | null;
-  loser: string | null;
-  ended_at: number | null;
-}
-
 /** A line a visitor spoke or heard; `speaker` is what the visitor called the speaker at that moment. */
 export interface Heard {
   time: number;
@@ -197,72 +171,6 @@ export interface Intention {
   obsession?: number;
   written_at: number;
   trigger: { kind: string; text: string; time: number };
-}
-
-/** Who a guest is in words, plus the 0–1 params the rules read. */
-export interface CharacterCard {
-  id: string;
-  name: string;
-  sprite: string;
-  occupation: string;
-  background: string;
-  temperament: string;
-  speech: string;
-  quirks: string;
-  goal: string;
-  params: Record<string, number>;
-  /** How strangers see the guest until they learn the name. */
-  looks?: string;
-  /** What a famous guest cannot leave alone tonight, up to three; an intention's `obsession` indexes it. */
-  obsessions?: string[];
-  /** Lines the guest is known for; the first closes a number on the stage. */
-  catchphrases?: string[];
-  /** Counts only in how much punishment a fighter takes. */
-  sex?: "female" | "male";
-}
-
-/** Public rendering data returned by the server's character catalog. */
-export interface CharacterVisuals {
-  size: number;
-  lift: number;
-  poses: string[];
-}
-
-export interface PublicCharacter {
-  id: string;
-  role: "guest" | "bartender";
-  /** The folder the character lives in: locals, famous guests, or the bar's staff. */
-  cast: "locals" | "guests" | "staff";
-  name: string;
-  color: string;
-  sprite: string;
-  visuals: CharacterVisuals;
-}
-
-export interface CharacterCatalog {
-  characters: PublicCharacter[];
-}
-
-/** A guest's face on the start screen: the name and the card's occupation. */
-export interface CastMember {
-  id: string;
-  name: string;
-  description: string;
-}
-
-/** A cast the player can pick the evening's guests from (`/api/casts`). */
-export interface Cast {
-  id: string;
-  title: string;
-  characters: CastMember[];
-}
-
-/** A starting relationship as one guest holds it. */
-export interface Tie {
-  with: string;
-  name: string;
-  kind: "old friends" | "rivals" | "bad blood";
-  note: string;
 }
 
 /** The eight ways a visitor can face; a chair or a bar looks only one of the four straight ones. */
@@ -381,75 +289,6 @@ export interface Stimulus {
   event: string | null;
 }
 
-/** One spoken line of a conversation scene; `addressee` null speaks to everyone. */
-export interface Turn {
-  speaker: string;
-  addressee: string | null;
-  line: string;
-  act: string;
-  time: number;
-  /** The invitation kind an `invite` offers. */
-  invitation?: InvitationKind;
-  /** The news a `share_news` tells (a key of the speaker's `knowledge.facts`). */
-  fact_id?: string;
-}
-
-export type InvitationKind = "join_table" | "darts_together" | "dice_together" | "buy_drink" | "leave_together"
-  | "move_together";
-
-/** An invitation waiting in a scene for the invitee's answer. */
-export interface Invitation {
-  kind: InvitationKind;
-  from: string;
-  to: string;
-}
-
-/** An accepted invitation the world is carrying out. */
-export interface Errand extends Invitation {
-  stage: "accepted" | "fetching" | "carrying" | "following" | "seating";
-  /** Ale the inviter held before fetching one for the invitee. */
-  held: number;
-}
-
-/** A conversation scene: who talks, at which table (null when standing), and what was said. */
-export interface Conversation {
-  id: string;
-  participants: string[];
-  table_id: string | null;
-  topic: string;
-  turns: Turn[];
-  started_at: number;
-  /** Game time the next line is due. */
-  next_turn_at: number;
-  /** The turn a model is writing, if any, and its answer waiting to be spoken. */
-  writing: { turn: number; speaker: string; since: number } | null;
-  written: { line: string; act: string; addressee: string | null; topic: string; invitation?: InvitationKind;
-    fact_id?: string } | null;
-  invitation: Invitation | null;
-}
-
-/** A news item of tonight's scenario: the original words, and the guests who start out knowing it. */
-export interface News {
-  id: string;
-  topic: string;
-  text: string;
-  known_by: string[];
-}
-
-/** One visitor's copy of a news item: the words they heard it in, from whom, and how far they believe it. */
-export interface Fact {
-  topic: string;
-  told_as: string;
-  /** The visitor who told it; null for a first holder (hops 0). */
-  heard_from: string | null;
-  heard_at: number;
-  /** 0 (not at all) to 1 (sure). */
-  confidence: number;
-  hops: number;
-  /** Caught from a conversation the visitor was not in. */
-  overheard: boolean;
-}
-
 /** What the player's scene waits for: the chat reads it (`player_lines.player_turn`); null where the evening has no player. */
 export interface PlayerTurn {
   scene_id: string | null;
@@ -546,44 +385,3 @@ export interface Snapshot {
   /** True while the hall's clock holds still for the person's due line (auto-pause). */
   turn_held: boolean;
 }
-
-/** The server's story score: moments counted per kind, and their weighted total. */
-export interface Story {
-  moments: Record<string, number>;
-  score: number;
-}
-
-/** One chapter of a retelling: its text, the log positions it cites, and the IDs of the guests who did those things. */
-export interface Chapter {
-  text: string;
-  events: number[];
-  actors: string[];
-}
-
-/** An evening retold: a catchy title and a few cited chapters. */
-export interface Retelling {
-  title: string;
-  chapters: Chapter[];
-}
-
-/** What the client knows of a log line a chapter cites, by its position: what it was, who did it, and whether the player typed it. */
-export interface CitedEvent {
-  type: string;
-  actor_id: string | null;
-  player: boolean;
-}
-
-export type Command =
-  | { type: "pause"; paused: boolean }
-  | { type: "speed"; value: number }
-  | { type: "refill"; object_id: string; amount: number }
-  | { type: "block"; x: number; y: number; blocked: boolean }
-  | { type: "force_action"; actor_id: string; action: Action }
-  | { type: "start"; cast: string; guests: string[]; minutes: number; player: string | null }
-  | { type: "steer"; on: boolean }
-  | { type: "typing" }
-  | { type: "let_pass" }
-  | { type: "say"; text: string; to: "auto" | "everyone" | string }
-  | { type: "act"; action: Action }
-  | { type: "options"; target_id?: string }
-  | { type: "save" | "load" | "reset" };

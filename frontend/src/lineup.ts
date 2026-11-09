@@ -1,4 +1,4 @@
-import type { Command } from "./types";
+import type { Command } from "./commands";
 
 export const MAX_GUESTS: number = 8;
 export const DEFAULT_MINUTES: number = 5;

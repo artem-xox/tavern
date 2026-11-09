@@ -166,7 +166,8 @@ Python (`backend/`):
 - Entry points only do I/O and wiring; logic is importable and testable without files
   or network.
 
-TypeScript (`frontend/`): no `any`; `types.ts` is the contract with the backend snapshot.
+TypeScript (`frontend/`): no `any`; `types.ts` and the type modules it imports (`characters`, `talk`, `fights`,
+`story`, `commands`) are the contract with the backend snapshot.
 
 ## Testing
 

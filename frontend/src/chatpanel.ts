@@ -3,7 +3,8 @@ import { html, nothing, render, type TemplateResult } from "lit-html";
 import { chatModel, nextPing, sayCommand, type ChatLine, type ChatMember, type ChatModel } from "./chat";
 import { pendingLine, pendingSpoken, settle, type PendingLine } from "./pendingline";
 import type { Spoken } from "./bubble";
-import type { Command, Snapshot } from "./types";
+import type { Command } from "./commands";
+import type { Snapshot } from "./types";
 
 const MAX_LINE = 200;
 /** How long after sending an `error` reply still belongs to the line (real ms). */

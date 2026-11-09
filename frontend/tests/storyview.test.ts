@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { momentChips } from "../src/storyview.ts";
-import type { Story } from "../src/types.ts";
+import type { Story } from "../src/story.ts";
 
 const story = (moments: Record<string, number>): Story => ({ moments, score: 0 });
 
@@ -37,7 +37,7 @@ for (const [name, telling, recap, dismissed, expected] of [
 }
 
 import { playerChapters, playerFirst } from "../src/storyview.ts";
-import type { CitedEvent } from "../src/types.ts";
+import type { CitedEvent } from "../src/story.ts";
 
 const cite = (type: string, actor_id: string, player = false): CitedEvent => ({ type, actor_id, player });
 const chapter = (...events: number[]) => ({ text: "S", events, actors: [] });

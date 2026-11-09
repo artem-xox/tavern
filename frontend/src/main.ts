@@ -9,7 +9,9 @@ import { clickOrder, menuRows, walkAction, type Pick } from "./orders";
 import { WheelBar } from "./wheelbar";
 import { ChatPanel } from "./chatpanel";
 import { canSkip, SKIP_SPEED, SKIP_WORDS, skipFrom, skipStop, type Skip } from "./skipahead";
-import type { Cast, CharacterCatalog, OptionsMessage, Snapshot, World } from "./types";
+import type { Cast, CharacterCatalog } from "./characters";
+import type { OptionsMessage } from "./commands";
+import type { Snapshot, World } from "./types";
 import "./style.css";
 
 const root: HTMLElement | null = document.querySelector("#app");

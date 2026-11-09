@@ -1,6 +1,7 @@
 /** The player's line between Enter and the real turn: shown at once in the chat and over their head, until the turn lands. */
 import type { Spoken } from "./bubble.ts";
-import type { Conversation, Snapshot, WorldEvent } from "./types.ts";
+import type { Conversation } from "./talk.ts";
+import type { Snapshot, WorldEvent } from "./types.ts";
 
 /** A line the player sent and the server has not yet spoken: where it was said, and what the world looked like then. */
 export interface PendingLine {
