@@ -7,7 +7,7 @@ import pytest
 
 from tavern.body.activities import ACTIVITIES
 from tavern.evening.player_commands import act, options
-from tavern.hall.world import create_world
+from tavern.hall.world import create_world, start_action, step_world
 from test_decisions import room
 
 TAKE_BEER = {"id": "take_beer:tap", "verb": "take_beer", "target_id": "tap"}
@@ -140,3 +140,73 @@ def test_options_need_a_played_guest_in_the_hall(prepare: Callable[[dict[str, An
 def test_options_refuse_a_target_that_is_not_an_id(target: Any) -> None:
     with pytest.raises(ValueError, match="target_id"):
         options(played(), {"type": "options", "target_id": target})
+
+
+
+def sat(world: dict[str, Any], actor_id: str, chair: str) -> None:
+    """Seat a guest in a chair at the table, as their own sitting down does."""
+    assert start_action(world, actor_id, {"id": f"sit:{chair}", "verb": "sit", "target_id": chair})["accepted"]
+    for _ in range(200):
+        step_world(world, 0.1)
+
+
+def own_seat_west(world: dict[str, Any]) -> None:
+    """The west chair is Ada's own seat, and it is free."""
+    ada(world)["favorite_seat_id"] = "table-west"
+
+
+def bea_sits_east(world: dict[str, Any]) -> None:
+    """Bea sits in the east chair; Ada's own seat is the west one."""
+    own_seat_west(world)
+    sat(world, "bea", "table-east")
+
+
+def both_chairs_taken(world: dict[str, Any]) -> None:
+    """Bea and Cy hold both chairs at the table."""
+    sat(world, "bea", "table-east")
+    sat(world, "cy", "table-west")
+
+
+def three_guests() -> dict[str, Any]:
+    """The room of `played`, with Cy by the wall as well, Ada the played guest by the tap."""
+    layout = room()
+    layout["actors"].append({"id": "cy", "name": "Cy", "x": 0, "y": 0})
+    world = create_world(layout)
+    ada(world).update(x=5, y=1)
+    world["player"] = {"actor_id": "ada", "steering": True}
+    return world
+
+
+@pytest.mark.parametrize("prepare, target, expected", [
+    pytest.param(own_seat_west, "table-west", ["sit:table-west"], id="own-seat"),
+    pytest.param(own_seat_west, "table-east", ["sit:table-east"], id="a-strangers-free-chair"),
+    pytest.param(None, "table-east", ["sit:table-east"], id="a-free-chair-before-owning-a-seat"),
+    pytest.param(bea_sits_east, "table-east", [], id="a-taken-chair"),
+    pytest.param(bea_sits_east, "table", ["sit:table-west"], id="a-table-with-one-free-chair"),
+    pytest.param(None, "table", ["sit:table-east", "sit:table-west"], id="a-table-with-two-free-chairs"),
+    pytest.param(both_chairs_taken, "table", [], id="a-table-with-no-free-chair"),
+])
+def test_options_offer_every_free_chair_the_played_guest_may_sit_in(
+        prepare: Callable[[dict[str, Any]], None] | None, target: str, expected: list[str]) -> None:
+    world = three_guests()
+    if prepare:
+        prepare(world)
+    reply = options(world, {"type": "options", "target_id": target})
+    assert sorted(item["action"]["id"] for item in reply["options"] if item["action"]["verb"] == "sit") == expected
+
+
+def test_sitting_in_a_strangers_chair_from_the_options_makes_it_the_guests_seat() -> None:
+    world = three_guests()
+    own_seat_west(world)
+    reply = options(world, {"type": "options", "target_id": "table"})
+    east = next(item["action"] for item in reply["options"] if item["action"]["id"] == "sit:table-east")
+    act(world, {"type": "act", "action": east})
+    for _ in range(200):
+        step_world(world, 0.1)
+    assert (ada(world)["seat_id"], ada(world)["favorite_seat_id"]) == ("table-east", "table-east")
+
+
+def test_options_offer_what_the_body_may_do_though_the_guest_does_not_want_it() -> None:
+    world = played()
+    ada(world)["needs"].update(thirst=0.0, social=0.0)
+    assert "take_beer" in verbs(options(world, {"type": "options", "target_id": "tap"}))
