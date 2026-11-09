@@ -97,7 +97,8 @@ export class ChatPanel {
         ${model.secondsLeft !== null ? html`<span class="chat-turn">Your turn · ${Math.ceil(model.secondsLeft)} s${typing ? " · they wait while you type" : ""}</span>` : nothing}
         <button class="dialogue-close" aria-label="Close" title="Close (Esc)" @click=${(): void => this.step({ kind: "close" })}>×</button></header>
       <div class="chat-lines" aria-live="polite">${model.lines.slice(-SHOWN_LINES).map((line: ChatLine): TemplateResult => html`
-        <p class=${line.mine ? "chat-line mine" : "chat-line"}><strong>${line.speaker}</strong>${line.addressee ? html` <span class="muted">to ${line.addressee}</span>` : nothing}: ${line.words}</p>`)}
+        <p class=${line.mine ? "chat-line mine" : "chat-line"}><strong>${line.speaker}</strong>${line.addressee ? html` <span class="muted">to ${line.addressee}</span>` : nothing}: ${line.words}${line.reading ? html`<span class=${line.reading.refused ? "chat-reading refused" : "chat-reading"}
+          title=${line.reading.refused ? "The world could not read this as meant" : "How the world read it"}>${line.reading.text}</span>` : nothing}</p>`)}
         ${this.sent && model.state === "reading" ? html`<p class="chat-line mine pending">${this.sent.text}</p>` : nothing}</div>
       ${model.picker ? this.picker(model.members) : nothing}
       <div class="chat-input"><input type="text" maxlength=${MAX_LINE} autocomplete="off" aria-label="Say" .value=${this.draft}
