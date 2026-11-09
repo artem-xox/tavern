@@ -9,6 +9,7 @@ import { clickOrder, menuRows, walkAction, type Pick } from "./orders";
 import { WheelBar } from "./wheelbar";
 import { ChatPanel } from "./chatpanel";
 import { canSkip, SKIP_SPEED, SKIP_WORDS, skipFrom, skipStop, type Skip } from "./skipahead";
+import { reactions, stacked } from "./reactions";
 import type { Cast, CharacterCatalog } from "./characters";
 import type { OptionsMessage } from "./commands";
 import type { Snapshot, World } from "./types";
@@ -151,6 +152,9 @@ function followSkip(snapshot: Snapshot): void {
   if (words && snapshot.state.player) scene.toast(snapshot.state.player.actor_id, words);
 }
 
+/** The snapshot before this one, for what the player's lines and acts caused since. */
+let previous: Snapshot | null = null;
+
 function applySnapshot(snapshot: Snapshot): void {
   const first: boolean = world === null;
   world = snapshot.state;
@@ -163,6 +167,8 @@ function applySnapshot(snapshot: Snapshot): void {
   wheel.apply(world, { state: snapshot.player_turn?.state ?? null, held: snapshot.turn_held,
     skip: skip ? "running" : canSkip(snapshot) ? "can" : "no" });
   chat.apply(snapshot);
+  for (const [actor, text] of stacked(reactions(previous, snapshot))) scene.toast(actor, text);
+  previous = snapshot;
   // Departed visitors stay selectable, so their evening can still be inspected.
   if (!selectedId || ![...world.actors, ...world.departed].some((actor): boolean => actor.id === selectedId)) {
     selectedId = world.actors[0]?.id ?? null;

@@ -82,3 +82,16 @@ test("chatModel: while the hall waits for the player's line, no countdown runs",
   assert.deepEqual([chatModel(held)?.secondsLeft, chatModel(held)?.held], [null, true]);
   assert.equal(chatModel(snapshot(turn))?.held, false);
 });
+
+test("chatModel: the player's own lines carry their reading, a refused one as a remark", () => {
+  const shot = snapshot({ scene_id: "c1", state: "free", silence_at: null });
+  const turns = [{ speaker: "putin", addressee: "monroe", line: "Marilyn.", act: "remark", time: 1 },
+    { speaker: "trump", addressee: null, line: "", act: "silence", time: 2 },
+    { speaker: "monroe", addressee: null, line: "Hello, all.", act: "remark", time: 3 }];
+  const conversations = [{ id: "c1", participants: ["monroe", "putin", "trump"], turns }];
+  const lines = (events: unknown[]) => chatModel({ ...shot, state: { ...shot.state, conversations, events } } as unknown as Snapshot)
+    ?.lines.map((item) => item.reading);
+  assert.deepEqual(lines([]), [null, null, { text: "remark → everyone", refused: false }]);
+  assert.deepEqual(lines([{ time: 0, actor_id: "monroe", type: "misread", message: "", speaker_id: "monroe" }]),
+    [null, null, { text: "remark", refused: true }]);
+});
