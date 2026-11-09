@@ -8,8 +8,10 @@ from tavern.evening.mind_loop import MindLoop
 from tavern.hall.memory import log_event
 from tavern.hall.player import steered
 from tavern.hall.state import Actor, World, find_actor
-from tavern.hall.world import observe_actor, start_action
-from tavern.mind.candidates import open_actions
+from tavern.body.items import ITEMS
+from tavern.body.queues import cut_in, must_wait
+from tavern.hall.world import observe_actor, start_action, start_refusal
+from tavern.mind.candidates import Action, action, open_actions
 from tavern.mind.scripted import MAX_LINE
 from tavern.social.heckles import answer_heckle
 from tavern.social.player_lines import player_turn
@@ -130,11 +132,39 @@ def options(world: World, command: Mapping[str, Any]) -> dict[str, Any]:
     target = command.get("target_id")
     if target is not None and (not isinstance(target, str) or not target):
         raise ValueError(f"options needs target_id to be a nonempty string, not {target!r}")
-    listed = [item for item in open_actions(observe_actor(world, guest["id"]))
-              if target is None or item["target_id"] == target]
+    aimed = _aimed_at(world, target)
+    wanted = [item for item in open_actions(observe_actor(world, guest["id"]))
+              if target is None or item["target_id"] in aimed]
+    listed = list({item["id"]: item for item in [*wanted, *_body_actions(world, guest, aimed)]}.values())
     return {"type": "options", "target_id": target,
             "options": [{"action": item, "label": ACTIVITIES[item["verb"]].label or item["verb"].replace("_", " ")}
                         for item in listed]}
+
+
+def _aimed_at(world: World, target: str | None) -> list[str | None]:
+    # A click on a table means its own places too (its chairs): what stands at it carries its `table_id`.
+    if target is None:
+        return [None]
+    return [target, *(item["id"] for item in world["map"]["objects"] if item.get("table_id") == target)]
+
+
+def _body_actions(world: World, guest: Actor, targets: list[str | None]) -> list[Action]:
+    # Every verb the body may start now at these targets (`start_refusal`), wanted by the guest's mind or not. Decision
+    # steps, plans and floor walks are left to the mind's list and the floor click; an item-naming verb is tried with
+    # each item in hand. A cut in line nobody waits in is the plain use of the place, already listed, so it is dropped.
+    found: list[Action] = []
+    for verb, activity in ACTIVITIES.items():
+        if activity.duration is None or activity.opens_project or activity.to_cell or activity.staff_only:
+            continue
+        items = [kind for kind in ITEMS if guest["inventory"].get(kind)] if activity.names_item else [None]
+        for target in targets:
+            for item in items:
+                candidate = action(verb, target, item)
+                resolved = cut_in(world, candidate)[0]
+                if start_refusal(world, guest["id"], candidate) is None and (
+                        resolved["verb"] == verb or must_wait(world, guest, resolved)):
+                    found.append(candidate)
+    return found
 
 
 def say(world: World, mind: MindLoop, command: Mapping[str, Any]) -> None:

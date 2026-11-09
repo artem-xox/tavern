@@ -96,6 +96,7 @@ The decisions behind them (owner, 2026-11-08), the principles and the order are 
 | S3-10 | [A scripted player](3_player/10_scripted_player.md): headless evenings with a player, golden, replay, metrics | 03, 04 | todo |
 | S3-11 | [The player in the story](3_player/11_story.md): the retelling and the closing screen know who was played | 04 | todo |
 | S3-12 | [Acceptance](3_player/12_acceptance.md): played and scripted evenings meet the stage's "done when" | all | todo |
+| S3-13 | [What the body may do](3_player/13_body_options.md): the player's options are what the world accepts (any free chair, a clicked table) | 03, 08 | done |
 | S3-16 | [Cut the dead air](3_player/16_dead_air.md) (P5): the line shows at once, auto-pause for a person, skip ahead, a 10-minute played evening | 05, 09 | done |
 
 ## How the plan is kept
