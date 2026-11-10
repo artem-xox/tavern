@@ -1,4 +1,5 @@
-import type { Command, OptionsMessage, Snapshot } from "./types";
+import type { Command, OptionsMessage } from "./commands";
+import type { Snapshot } from "./types";
 
 interface Callbacks {
   snapshot: (snapshot: Snapshot) => void;

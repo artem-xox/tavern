@@ -1,6 +1,7 @@
 /** What the player's lines and acts caused on the people they touched, found by diffing two snapshots. */
 import { INVITATION_WORDS } from "./readings.ts";
-import type { Actor, InvitationKind, Snapshot, Thought, WorldEvent } from "./types";
+import type { InvitationKind } from "./talk";
+import type { Actor, Snapshot, Thought, WorldEvent } from "./types";
 
 /** A floating message: a `thought` over the guest who had it, a `toast` over the played guest. */
 export interface Reaction { actor_id: string; kind: "thought" | "toast"; text: string }

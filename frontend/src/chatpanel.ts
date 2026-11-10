@@ -2,7 +2,10 @@
 import { html, nothing, render, type TemplateResult } from "lit-html";
 import { chatModel, nextPing, PING_EVERY, sayCommand, type ChatLine, type ChatMember, type ChatModel } from "./chat";
 import { CLOSED, dialogueStep, type DialogueEvent, type DialogueState } from "./dialogue";
-import type { Command, Snapshot } from "./types";
+import { pendingLine, pendingSpoken, settle, type PendingLine } from "./pendingline";
+import type { Spoken } from "./bubble";
+import type { Command } from "./commands";
+import type { Snapshot } from "./types";
 
 const MAX_LINE = 200;
 /** How many of the scene's lines the popup shows; the speech bubbles show the rest as it happens. */
@@ -16,12 +19,15 @@ export class ChatPanel {
   private model: ChatModel | null = null;
   private state: DialogueState = CLOSED;
   private draft: string = "";
-  private sent: { text: string; at: number } | null = null;
+  private snapshot: Snapshot | null = null;
+  /** The line just sent, shown at once until its real turn lands, and when it was sent (real ms). */
+  private pending: PendingLine | null = null;
+  private sentAt: number = 0;
   private failure: string | null = null;
   private lastPing: number | null = null;
   private focused: boolean = false;
 
-  constructor(private readonly host: HTMLElement, private readonly handlers: { send: (command: Command) => void; more: (id: string) => void }) {
+  constructor(private readonly host: HTMLElement, private readonly handlers: { send: (command: Command) => void; more: (id: string) => void; pendingChanged: () => void }) {
     this.host.className = "dialogue-host";
     window.addEventListener("keydown", (event: KeyboardEvent): void => {
       if (event.key === "Escape" && this.state.open) this.step({ kind: "close" });
@@ -32,7 +38,9 @@ export class ChatPanel {
   apply(snapshot: Snapshot): void {
     this.model = chatModel(snapshot);
     const turn = snapshot.player_turn;
-    if (this.model?.state !== "reading") this.sent = null;
+    this.snapshot = snapshot;
+    this.pending = settle(this.pending, snapshot);
+    this.handlers.pendingChanged();
     this.step({ kind: "snapshot", scene: turn?.scene_id ?? null, turn: turn?.state ?? "none", steering: snapshot.state.player?.steering === true });
   }
 
@@ -48,12 +56,18 @@ export class ChatPanel {
 
   /** Take an `error` reply when it answers the line just sent; false when it is not the chat's. */
   fail(message: string): boolean {
-    if (!this.sent || Date.now() - this.sent.at > REPLY_WINDOW_MS) return false;
+    if (!this.pending || Date.now() - this.sentAt > REPLY_WINDOW_MS) return false;
     this.failure = message;
-    this.draft = this.sent.text;
-    this.sent = null;
+    this.draft = this.pending.text;
+    this.pending = null;
+    this.handlers.pendingChanged();
     this.step({ kind: "failed" });
     return true;
+  }
+
+  /** The line sent and not yet spoken, as a bubble over the played guest; null when none waits. */
+  pendingBubble(actorId: string): Spoken | null {
+    return this.pending ? pendingSpoken(this.pending, actorId) : null;
   }
 
   private step(event: DialogueEvent): void {
@@ -69,7 +83,7 @@ export class ChatPanel {
     const command: Command | null = this.model?.enabled ? sayCommand(this.draft, this.state.to) : null;
     if (command === null || command.type !== "say") return;
     this.handlers.send(command);
-    this.sent = { text: command.text, at: Date.now() };
+    if (this.snapshot) { this.pending = pendingLine(command.text, this.snapshot); this.sentAt = Date.now(); this.handlers.pendingChanged(); }
     this.draft = "";
     this.failure = null;
     this.step({ kind: "sent" });
@@ -95,11 +109,12 @@ export class ChatPanel {
     render(html`<div class="dialogue" role="dialog" aria-label="Talk">
       <header><strong>${HEADINGS[model.state] ?? (names ? `Talking with ${names}` : "Talk")}</strong>
         ${model.secondsLeft !== null ? html`<span class="chat-turn">Your turn · ${Math.ceil(model.secondsLeft)} s${typing ? " · they wait while you type" : ""}</span>` : nothing}
+        ${model.held ? html`<span class="chat-turn">Your turn · the hall waits</span>` : nothing}
         <button class="dialogue-close" aria-label="Close" title="Close (Esc)" @click=${(): void => this.step({ kind: "close" })}>×</button></header>
       <div class="chat-lines" aria-live="polite">${model.lines.slice(-SHOWN_LINES).map((line: ChatLine): TemplateResult => html`
         <p class=${line.mine ? "chat-line mine" : "chat-line"}><strong>${line.speaker}</strong>${line.addressee ? html` <span class="muted">to ${line.addressee}</span>` : nothing}: ${line.words}${line.reading ? html`<span class=${line.reading.refused ? "chat-reading refused" : "chat-reading"}
           title=${line.reading.refused ? "The world could not read this as meant" : "How the world read it"}>${line.reading.text}</span>` : nothing}</p>`)}
-        ${this.sent && model.state === "reading" ? html`<p class="chat-line mine pending">${this.sent.text}</p>` : nothing}</div>
+        ${this.pending ? html`<p class="chat-line mine pending">${this.pending.text} <span class="muted">being read…</span></p>` : nothing}</div>
       ${model.picker ? this.picker(model.members) : nothing}
       <div class="chat-input"><input type="text" maxlength=${MAX_LINE} autocomplete="off" aria-label="Say" .value=${this.draft}
         ?disabled=${!model.enabled} placeholder=${model.placeholder}

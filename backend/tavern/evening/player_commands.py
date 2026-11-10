@@ -14,9 +14,11 @@ from tavern.hall.world import observe_actor, start_action, start_refusal
 from tavern.mind.candidates import Action, action, open_actions
 from tavern.mind.scripted import MAX_LINE
 from tavern.social.heckles import answer_heckle
+from tavern.social.player_lines import player_turn
 from tavern.social.scenes import conversation_of
 from tavern.social.speeches import on_stage_for
 from tavern.social.stage_lines import comeback_owed_to
+from tavern.social.turns import SILENCE_LINE
 
 
 def steer(world: World, mind: MindLoop, command: Mapping[str, Any]) -> None:
@@ -253,7 +255,34 @@ def typing(world: World, command: Mapping[str, Any]) -> None:
     player["typing_at"] = world["time"]
 
 
-PLAYER_COMMANDS = ("steer", "act", "say", "options", "typing")
+def let_pass(world: World, command: Mapping[str, Any]) -> None:
+    """Let the played guest's due line pass in silence now, instead of when the wait runs out.
+
+    The silence is the scene's next line, due now and spoken on the next step (`turns.speak_turns`), with the effect
+    any silence has. A
+    heckle owed a comeback is left unanswered: it lapses as it would have.
+
+    Args:
+        world: Authoritative world, whose scene gets the silence as its written line.
+        command: `{"type": "let_pass"}`.
+
+    Raises:
+        ValueError: The evening has no player, the guest is on autopilot, or no line of theirs is due.
+    """
+    player = world["player"]
+    if player is None or not player["steering"]:
+        raise ValueError("let_pass needs a player who holds the wheel")
+    turn = player_turn(world)
+    if turn is not None and turn["state"] == "comeback":
+        return
+    scene = conversation_of(world, player["actor_id"])
+    if turn is None or turn["state"] != "your_turn" or scene is None:
+        raise ValueError("let_pass: no line of the player's is due")
+    scene["written"] = {"line": SILENCE_LINE, "act": "silence", "addressee": None, "topic": scene["topic"]}
+    scene["next_turn_at"] = min(scene["next_turn_at"], world["time"])
+
+
+PLAYER_COMMANDS = ("steer", "act", "say", "options", "typing", "let_pass")
 
 
 def apply_command(world: World, mind: MindLoop, command: Mapping[str, Any]) -> dict[str, Any] | None:
@@ -262,7 +291,7 @@ def apply_command(world: World, mind: MindLoop, command: Mapping[str, Any]) -> d
     Args:
         world: Authoritative world.
         mind: The evening's requests in flight.
-        command: A `steer`, `act`, `say`, `options` or `typing` command.
+        command: A `steer`, `act`, `say`, `options`, `typing` or `let_pass` command.
 
     Returns:
         The reply to send back (`options` has one), or None.
@@ -281,6 +310,8 @@ def apply_command(world: World, mind: MindLoop, command: Mapping[str, Any]) -> d
         return options(world, command)
     elif kind == "typing":
         typing(world, command)
+    elif kind == "let_pass":
+        let_pass(world, command)
     else:
         raise ValueError(f"Unknown player command {kind!r}; choose one of {PLAYER_COMMANDS}")
     return None

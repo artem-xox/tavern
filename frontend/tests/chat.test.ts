@@ -76,6 +76,13 @@ test("sayCommand: trims the text and carries the addressee", () => {
   assert.equal(sayCommand("   ", "auto"), null);
 });
 
+test("chatModel: while the hall waits for the player's line, no countdown runs", () => {
+  const turn: PlayerTurn = { scene_id: "c1", state: "your_turn", silence_at: 140 };
+  const held = { ...snapshot(turn), turn_held: true } as Snapshot;
+  assert.deepEqual([chatModel(held)?.secondsLeft, chatModel(held)?.held], [null, true]);
+  assert.equal(chatModel(snapshot(turn))?.held, false);
+});
+
 test("chatModel: the player's own lines carry their reading, a refused one as a remark", () => {
   const shot = snapshot({ scene_id: "c1", state: "free", silence_at: null });
   const turns = [{ speaker: "putin", addressee: "monroe", line: "Marilyn.", act: "remark", time: 1 },

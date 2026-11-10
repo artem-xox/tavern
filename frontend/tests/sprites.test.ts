@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { shippedPose, spriteSheets, stills, type SpriteRegistry, type SpriteSheet } from "../src/sprites.ts";
-import type { CharacterCatalog } from "../src/types.ts";
+import type { CharacterCatalog } from "../src/characters.ts";
 
 const sheet = (poses: readonly string[]): SpriteSheet => ({ size: 68, lift: -16, poses });
 const GUEST_POSES = ["Idle", "Seated", "SleepingSeated", "Fighting", "KnockedOut", "Hurt", "HurtSeated", "Shoving", "HelpingUp"];

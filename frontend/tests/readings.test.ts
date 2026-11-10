@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readingOf, refusedTurns } from "../src/readings.ts";
-import type { Turn, WorldEvent } from "../src/types.ts";
+import type { Turn } from "../src/talk.ts";
+import type { WorldEvent } from "../src/types.ts";
 
 const NAMES = new Map<string, string>([["trump", "Trump"], ["monroe", "Monroe"]]);
 const nameOf = (id: string): string => NAMES.get(id) ?? id;

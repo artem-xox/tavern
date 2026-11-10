@@ -27,7 +27,6 @@ CAPS = {
     "backend/tavern/social/invitations.py": 461,
     "backend/tavern/social/scenes.py": 418,
     "backend/tavern/social/thoughts.py": 413,
-    "frontend/src/types.ts": 586,
 }
 
 

@@ -33,10 +33,13 @@ class TavernSessions:
                  choose: Chooser | None = None, health: HealthBoard | None = None,
                  answer: Answerer | None = None, storyteller: Ask | None = None,
                  lineup: Lineup | None = None, stage_writer: StageWriter = write_scripted_stage,
-                 reader: ReadLine = read_as_remark, number_reader: ReadNumber = read_as_pitch) -> None:
+                 reader: ReadLine = read_as_remark, number_reader: ReadNumber = read_as_pitch,
+                 auto_pause: bool = True) -> None:
         self.map_data = deepcopy(dict(map_data))
         self.writer, self.writer_label, self.stage_writer = writer, writer_label, stage_writer
         self.reader, self.number_reader = reader, number_reader
+        # A page is a person: their guest's due line holds the clock (`TavernRuntime.auto_pause`).
+        self.auto_pause = auto_pause
         self.save_dir = save_dir
         self.intender = intender
         self.ai_config = dict(ai_config)
@@ -82,7 +85,7 @@ class TavernSessions:
                                 choose=self.choose or choose_action, health=self.health,
                                 answer=self.answer or choose_invitation_answer, storyteller=self.storyteller,
                                 lineup=self.lineup, stage_writer=self.stage_writer, reader=self.reader,
-                                number_reader=self.number_reader)
+                                number_reader=self.number_reader, auto_pause=self.auto_pause)
         if not runtime.restore():
             # A new evening waits at the door until someone presses Start.
             runtime.world["paused"] = True

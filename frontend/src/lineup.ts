@@ -1,9 +1,16 @@
-import type { Command } from "./types";
+import type { Command } from "./commands";
 
 export const MAX_GUESTS: number = 8;
 export const DEFAULT_MINUTES: number = 5;
+/** A played evening's length unless the person picks one: long enough to play a few scenes (600 game seconds). */
+export const PLAY_MINUTES: number = 10;
 /** The evening lengths on offer, in minutes at the standard speed. */
 export const MINUTE_CHOICES: readonly number[] = [3, 5, 10, 15, 30];
+
+/** The evening's length: the one the person chose, otherwise `PLAY_MINUTES` when they play a guest and `DEFAULT_MINUTES` when they watch. */
+export function eveningMinutes(player: string | null, chosen: number | null): number {
+  return chosen ?? (player === null ? DEFAULT_MINUTES : PLAY_MINUTES);
+}
 
 /** Pick a face, or put a picked one back; a ninth pick is ignored. */
 export function togglePick(picked: readonly string[], id: string): string[] {

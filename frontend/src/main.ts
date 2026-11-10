@@ -8,8 +8,11 @@ import { OrderMenu } from "./ordermenu";
 import { clickOrder, menuRows, walkAction, type Pick } from "./orders";
 import { WheelBar } from "./wheelbar";
 import { ChatPanel } from "./chatpanel";
+import { canSkip, SKIP_SPEED, SKIP_WORDS, skipFrom, skipStop, type Skip } from "./skipahead";
 import { reactions, stacked } from "./reactions";
-import type { Cast, CharacterCatalog, OptionsMessage, Snapshot, World } from "./types";
+import type { Cast, CharacterCatalog } from "./characters";
+import type { OptionsMessage } from "./commands";
+import type { Snapshot, World } from "./types";
 import "./style.css";
 
 const root: HTMLElement | null = document.querySelector("#app");
@@ -81,8 +84,9 @@ function showMenu(reply: OptionsMessage): void {
 let inspectTarget: () => void = (): void => {};
 
 function showError(message: string): void {
-  if (chat.fail(message)) return;
   const played: string | undefined = world?.player?.actor_id;
+  // A refused line leaves the chat with its words back in the input, and a toast over the played guest.
+  if (chat.fail(message)) { if (played) scene.toast(played, message); return; }
   if (steeringNow() && played) scene.toast(played, message);
   else dashboard.showError(message);
 }
@@ -98,13 +102,14 @@ const dashboard: Dashboard = new Dashboard(application, {
 }, sprites);
 const wheelHost: HTMLElement = document.createElement("div");
 application.querySelector(".game-surround")?.before(wheelHost);
-const wheel: WheelBar = new WheelBar(wheelHost, (command): void => connection.send(command));
+const wheel: WheelBar = new WheelBar(wheelHost, (command): void => connection.send(command), (): void => skipAhead());
 const chatHost: HTMLElement = document.createElement("div");
 application.append(chatHost);
 const chat: ChatPanel = new ChatPanel(chatHost, {
   send: (command): void => connection.send(command),
   // The rest of the verbs on a guest one is talking with: the order menu, opened in the middle of the screen.
   more: (id: string): void => askOptions(id, { x: window.innerWidth / 2 - 100, y: window.innerHeight / 2 }),
+  pendingChanged: (): void => scene.setPending(world?.player ? chat.pendingBubble(world.player.actor_id) : null),
 });
 const menu: OrderMenu = new OrderMenu(document.body, {
   act: (action): void => connection.send({ type: "act", action }),
@@ -125,17 +130,42 @@ const game: Phaser.Game = new Phaser.Game({
   scene,
 });
 
+/** A skip ahead under way, and the snapshot last seen (to tell whether one may start). */
+let skip: Skip | null = null;
+let latest: Snapshot | null = null;
+
+/** Start a skip ahead, or call off the one running: the hall runs at full speed until something concerns the player. */
+function skipAhead(): void {
+  if (skip) { connection.send({ type: "speed", value: skip.speed }); skip = null; return; }
+  if (!latest || !canSkip(latest)) return;
+  skip = skipFrom(latest.state);
+  connection.send({ type: "speed", value: SKIP_SPEED });
+}
+
+/** Drop a skip back to its speed once something concerns the player, and say what. */
+function followSkip(snapshot: Snapshot): void {
+  const stop = skip ? skipStop(skip, snapshot) : null;
+  if (!skip || stop === null) return;
+  connection.send({ type: "speed", value: skip.speed });
+  skip = null;
+  const words: string | null = SKIP_WORDS[stop];
+  if (words && snapshot.state.player) scene.toast(snapshot.state.player.actor_id, words);
+}
+
 /** The snapshot before this one, for what the player's lines and acts caused since. */
 let previous: Snapshot | null = null;
 
 function applySnapshot(snapshot: Snapshot): void {
   const first: boolean = world === null;
   world = snapshot.state;
+  latest = snapshot;
+  followSkip(snapshot);
   // The screen greets a page that has just opened; an evening restored from a save can be resumed from it.
   if (first) lineup.open(world.tick > 0);
   scene.setWorld(world, snapshot.activities, snapshot.minds);
   dashboard.apply(snapshot);
-  wheel.apply(world);
+  wheel.apply(world, { state: snapshot.player_turn?.state ?? null, held: snapshot.turn_held,
+    skip: skip ? "running" : canSkip(snapshot) ? "can" : "no" });
   chat.apply(snapshot);
   for (const [actor, text] of stacked(reactions(previous, snapshot))) scene.toast(actor, text);
   previous = snapshot;

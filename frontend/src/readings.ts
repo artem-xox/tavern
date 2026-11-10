@@ -1,5 +1,6 @@
 /** How the world read each of the player's chat lines: the act, its target, and whether the reading was refused. */
-import type { InvitationKind, Turn, WorldEvent } from "./types";
+import type { InvitationKind, Turn } from "./talk";
+import type { WorldEvent } from "./types";
 
 /** The chip under a line: `insult → Trump`, or a bare `remark` when the world refused the reading. */
 export interface Reading { text: string; refused: boolean }
